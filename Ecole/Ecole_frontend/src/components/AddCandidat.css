@@ -1,0 +1,77 @@
+/* Style général du formulaire */
+form {
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    background-color: #f9f9f9;
+    font-family: Arial, sans-serif;
+}
+
+/* Style pour les champs de saisie */
+input[type="text"],
+input[type="email"],
+select {
+    width: 100%;
+    padding: 10px;
+    margin: 8px 0;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+    transition: border-color 0.3s ease;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+select:focus {
+    border-color: royalblue;
+    outline: none;
+}
+
+/* Style du bouton */
+button[type="submit"] {
+    width: 100%;
+    padding: 12px;
+    margin-top: 10px;
+    background-color: royalblue;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+button[type="submit"]:hover {
+    background-color: #0052cc;
+}
+
+/* Style pour les messages de succès et d'erreur */
+p {
+    font-size: 14px;
+    font-weight: bold;
+    text-align: center;
+    margin-top: 10px;
+}
+
+p[style*="color: red"] {
+    color: #e63946;
+}
+
+p[style*="color: green"] {
+    color: #2a9d8f;
+}
+
+/* Style pour l'affichage du numéro de matricule */
+p:last-of-type {
+    font-size: 14px;
+    font-weight: normal;
+    color: #555;
+    text-align: center;
+    margin-top: 12px;
+    background-color: #f0f8ff;
+    padding: 10px;
+    border-radius: 4px;
+}

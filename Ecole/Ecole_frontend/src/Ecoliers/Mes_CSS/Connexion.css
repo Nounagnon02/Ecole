@@ -1,0 +1,292 @@
+:root {
+    --primary: #4361ee;
+    --secondary: #3f37c9;
+    --success: #4cc9f0;
+    --info: #4895ef;
+    --infos: #478ad7;
+    --warning: #f72585;
+    --danger: #e63946;
+    --light: #f8f9fa;
+    --dark: #212529;
+    --grey: #f1faee;
+    --greye: rgb(3, 215, 230);
+    --grasa: rgb(225, 226, 214);
+    --grase: rgba(255, 234, 0, 0.82);
+    --origi: #f5f7fb;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: rgb(245, 245, 245);
+}
+
+/* Structure principale */
+.container {
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.Tout {
+    display: grid;
+    width: 100%;
+    min-height: 100vh;
+    position: relative;
+}
+
+/* Formulaire */
+.corps {
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    padding: 30px;
+    width: 90%;
+    max-width: 600px;
+    margin: 50px auto;
+}
+
+.H2 {
+    text-align: center;
+    margin-bottom: 25px;
+    color: var(--dark);
+}
+
+.toust {
+    margin-bottom: 20px;
+}
+
+.tous {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+    transition: border-color 0.3s;
+}
+
+.tous:focus {
+    outline: none;
+    border-color: var(--infos);
+}
+
+.tous:disabled {
+    background-color: #f5f5f5;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* Champ mot de passe avec icône */
+.password-field {
+    position: relative;
+}
+
+.password-input {
+    padding-right: 45px !important;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    color: #666;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.3s;
+}
+
+.password-toggle:hover {
+    color: var(--infos);
+}
+
+.password-toggle:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.buttonI {
+    text-align: center;
+}
+
+.bi {
+    background-color: var(--success);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 12px 25px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    width: auto;
+    min-width: 150px;
+    margin-left: 200px;
+    margin-bottom: 20px;
+}
+
+.bi:hover:not(:disabled) {
+    background-color: var(--secondary);
+}
+
+.bi:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* Messages d'erreur et de succès */
+.error {
+    background-color: #ffe6e6;
+    color: var(--danger);
+    border: 1px solid var(--danger);
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.success {
+    background-color: #e6f7ff;
+    color: var(--success);
+    border: 1px solid var(--success);
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+/* Liens en bas du formulaire */
+.form-links {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 20px;
+    align-items: center;
+}
+
+.link-button {
+    background: none;
+    border: none;
+    color: var(--infos);
+    cursor: pointer;
+    font-size: 14px;
+    text-decoration: underline;
+    padding: 5px 10px;
+    border-radius: 3px;
+    transition: all 0.3s;
+}
+
+.link-button:hover:not(:disabled) {
+    color: var(--secondary);
+    background-color: #f0f4ff;
+}
+
+.link-button:disabled {
+    color: #999;
+    cursor: not-allowed;
+    text-decoration: none;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .Tout {
+        grid-template-columns: 200px 1fr;
+    }
+    
+    .corps {
+        width: 95%;
+    }
+    
+    .bi {
+        margin-left: 100px;
+    }
+}
+
+@media (max-width: 768px) {
+    .Tout {
+        grid-template-columns: 1fr;
+    }
+    
+    .corps {
+        margin: 80px auto 30px auto;
+        width: 90%;
+    }
+    
+    .bi {
+        margin-left: 50px;
+    }
+    
+    .form-links {
+        margin-top: 15px;
+    }
+    
+    .link-button {
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 480px) {
+    body {
+        font-size: 14px;
+    }
+    
+    .corps {
+        padding: 20px 15px;
+        width: 95%;
+    }
+    
+    .H2 {
+        font-size: 20px;
+    }
+    
+    .tous {
+        padding: 10px;
+        font-size: 14px;
+    }
+    
+    .password-input {
+        padding-right: 40px !important;
+    }
+    
+    .password-toggle {
+        right: 10px;
+        font-size: 16px;
+        width: 20px;
+        height: 20px;
+    }
+    
+    .bi {
+        width: 100%;
+        margin-left: 0;
+        padding: 12px;
+        font-size: 14px;
+    }
+    
+    .form-links {
+        gap: 8px;
+        margin-top: 15px;
+    }
+    
+    .link-button {
+        font-size: 12px;
+        padding: 8px;
+    }
+    
+    .error, .success {
+        font-size: 13px;
+        padding: 8px;
+    }
+}

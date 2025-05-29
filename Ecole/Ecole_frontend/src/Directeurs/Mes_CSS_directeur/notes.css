@@ -1,0 +1,101 @@
+.notes-container {
+  padding: 1.5rem;
+  background-color: var(--bg-secondary);
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.notes-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.notes-filters {
+  display: flex;
+  gap: 1rem;
+}
+
+.notes-select {
+  padding: 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.25rem;
+  background-color: white;
+  min-width: 150px;
+}
+
+.notes-table-container {
+  overflow-x: auto;
+}
+
+.notes-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: white;
+  border-radius: 0.5rem;
+}
+
+.notes-table th,
+.notes-table td {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.notes-table th {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.notes-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.notes-btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.notes-btn-edit {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.notes-btn-delete {
+  background-color: var(--color-danger);
+  color: white;
+}
+
+.notes-loading {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-secondary);
+}
+
+.notes-error {
+  text-align: center;
+  padding: 2rem;
+  color: var(--color-danger);
+}
+
+@media (max-width: 768px) {
+  .notes-header {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .notes-filters {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .notes-select {
+    width: 100%;
+  }
+}

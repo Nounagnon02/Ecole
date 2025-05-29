@@ -1,0 +1,145 @@
+
+
+:root {
+    --primary: #4361ee;
+    --secondary: #3f37c9;
+    --success: #4cc9f0;
+    --info: #4895ef;
+    --infos: #478ad7;
+    --warning: #f72585;
+    --danger: #e63946;
+    --light: #f8f9fa;
+    --dark: #212529;
+    --grey: #f1faee;
+    --greye: rgb(3, 215, 230);
+    --grasa: rgb(225, 226, 214);
+    --grase: rgba(255, 234, 0, 0.82);
+    --origi: #f5f7fb;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: rgb(245, 245, 245);
+}
+
+/* Structure principale */
+.container {
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.Tout {
+    display: grid;
+    width: 100%;
+    min-height: 100vh;
+    position: relative;
+}
+
+/* Formulaire */
+.corps {
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    padding: 30px;
+    width: 90%;
+    max-width: 600px;
+    margin: 50px auto;
+}
+
+.H2 {
+    text-align: center;
+    margin-bottom: 25px;
+    color: var(--dark);
+}
+
+.toust {
+    margin-bottom: 20px;
+}
+
+.tous {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+    transition: border-color 0.3s;
+}
+
+.tous:focus {
+    outline: none;
+    border-color: var(--infos);
+}
+
+.buttonI {
+    text-align: center;
+}
+
+.bi {
+    background-color: var(--success);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 12px 25px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    width: auto;
+    min-width: 150px;
+    margin-left: 200px;
+}
+
+.bi:hover {
+    background-color: var(--secondary);
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .Tout {
+        grid-template-columns: 200px 1fr;
+    }
+    
+    .corps {
+        width: 95%;
+    }
+}
+
+@media (max-width: 768px) {
+    .Tout {
+        grid-template-columns: 1fr;
+    }
+    
+    .corps {
+        margin: 80px auto 30px auto;
+        width: 90%;
+    }
+}
+
+@media (max-width: 480px) {
+    body {
+        font-size: 14px;
+    }
+    
+    .corps {
+        padding: 20px 15px;
+        width: 95%;
+    }
+    
+    .H2 {
+        font-size: 20px;
+    }
+    
+    .tous {
+        padding: 10px;
+    }
+    
+    .bi {
+        width: 100%;
+    }
+}

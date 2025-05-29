@@ -1,0 +1,113 @@
+/* Styles globaux (déjà définis) */
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #f9fafb;
+    color: #333;
+    margin: 0;
+    padding: 20px;
+}
+
+/* Conteneur principal */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Titre principal */
+h2 {
+    font-size: 2rem;
+    color: #4a90e2;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+/* Styles pour la table */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+thead {
+    background-color: #4a90e2;
+    color: #fff;
+}
+
+th, td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+th {
+    font-weight: 600;
+}
+
+td {
+    background-color: #f8f8f8;
+    vertical-align: middle;
+}
+
+/* Matières dans une session */
+td span {
+    display: inline-block;
+    padding: 3px 8px;
+    background-color: #e0f7fa;
+    color: #00796b;
+    border-radius: 5px;
+    margin-right: 5px;
+    font-size: 0.9rem;
+}
+
+/* Si aucune matière n'est associée */
+td span:first-of-type:last-of-type {
+    background-color: #f5f5f5;
+    color: #999;
+    padding: 0;
+}
+
+/* Boutons d'action dans la table */
+td button {
+    padding: 8px 16px;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9rem;
+    margin-right: 10px;
+    transition: background-color 0.3s ease;
+}
+
+td button:first-of-type {
+    background-color: #4caf50;
+    color: white;
+}
+
+td button:last-of-type {
+    background-color: #e74c3c;
+    color: white;
+}
+
+/* État au survol des boutons */
+td button:first-of-type:hover {
+    background-color: #45a049;
+}
+
+td button:last-of-type:hover {
+    background-color: #d73e2d;
+}
+
+/* Responsive design pour la table sur les petits écrans */
+@media (max-width: 768px) {
+    table, th, td {
+        font-size: 0.9rem;
+    }
+
+    td button {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+    }
+}

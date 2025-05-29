@@ -1,0 +1,71 @@
+/* App.css */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f8f9fa;
+  color: #333;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.container {
+  width: 100%;
+  max-width: 900px;
+  margin: 20px;
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+  text-align: center;
+  color: #0d6efd;
+  font-size: 1.8em;
+  margin-bottom: 20px;
+}
+
+nav {
+  display: flex;
+  justify-content: center;
+  background-color: #343a40;
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 20px;
+}
+
+nav ul {
+  list-style: none;
+  display: flex;
+  gap: 20px;
+}
+
+nav ul li a {
+  color: #f8f9fa;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+nav ul li a:hover {
+  color: #ffc107;
+}
+
+.content {
+  padding: 20px;
+}
+
+.route-container {
+  padding: 20px;
+  background-color: #f1f3f5;
+  border-radius: 5px;
+  margin-top: 10px;
+}
