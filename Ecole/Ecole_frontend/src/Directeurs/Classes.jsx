@@ -167,23 +167,27 @@ export default function Classes() {
 
         try {
             setLoading(true);
-            await axios.put(`http://localhost:8000/api/classes/update/${id}`, {
+            const response = await axios.put(`http://localhost:8000/api/classes/update/${id}`, {
                 nom_classe: editValue,
                 categorie_classe: editCategorie
-            }, {
-                headers: {
-                    'Content-Type': 'application/json'
-                }
             });
-            await fetchClasses();
+
+            // Mise à jour du state local
+            setClasses(classes.map(classe => 
+                classe.id === id 
+                    ? {...classe, nom_classe: editValue, categorie_classe: editCategorie}
+                    : classe
+            ));
+
             setMessage('Classe modifiée avec succès');
             setEditingId(null);
             setEditValue('');
             setEditCategorie('');
             setError('');
-            setLoading(false);
         } catch (err) {
-            setError('Erreur lors de la modification');
+            console.error('Erreur de modification:', err);
+            setError(err.response?.data?.message || 'Erreur lors de la modification');
+        } finally {
             setLoading(false);
         }
     };

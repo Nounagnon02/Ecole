@@ -11,6 +11,7 @@ class SeriesMatieres extends Pivot
     protected $fillable = [
         'serie_id',
         'matiere_id',
-        'coefficient'
+        'coefficient',
+        'classe_id',
     ];
 }

@@ -10,18 +10,16 @@ export function Connexion() {
         password: '',
     });
 
-    const [Conf, SetConf] = useState('');
     const [error, SetError] = useState(false);
     const [message, SetMessage] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
 
     const navigate = useNavigate();
-    const { setAuthData } = useAuth();
+    const { login } = useAuth(); // Utilisez la fonction login du contexte
 
     const HandleChange = (e) => {
         SetEleve({ ...eleve, [e.target.name]: e.target.value });
-        // Effacer les messages d'erreur lors de la saisie
         if (error) {
             SetError(false);
             SetMessage('');
@@ -56,98 +54,44 @@ export function Connexion() {
 
     const HandleSubmit = async (e) => {
         e.preventDefault();
-
-        if (!validateForm()) {
-            return;
-        }
+        if (!validateForm()) return;
 
         setIsLoading(true);
         SetError(false);
         SetMessage('');
 
         try {
-            const response = await axios.post('http://localhost:8000/api/connexion', eleve, {
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                timeout: 10000 // Timeout de 10 secondes
-            });
+            const response = await axios.post('http://localhost:8000/api/connexion', eleve);
+            console.log('Réponse du serveur:', response.data);
 
-            if (response.status === 200) {
-                // Stocker dans le contexte d'authentification
-                if (response.data.user && response.data.token) {
-                    setAuthData({
-                        user: response.data.user,
-                        token: response.data.token
-                    });
-                    
-                    // Stocker le token pour les requêtes futures
-                    axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
-                    
-                } else if (response.data.role) {
-                    setAuthData({
-                        user: { role: response.data.role }
-                    });
-                }
+            if (response.data.token || response.data.role) {
+                // Préparer les données utilisateur
+                const userData = response.data.user || {
+                    identifiant: eleve.identifiant,
+                    nom: response.data.user?.nom || 'Utilisateur',
+                    prenom: response.data.user?.prenom || 'Spécial',
+                    role: response.data.role
+                };
 
-                SetMessage('Connexion réussie! Redirection en cours...');
-                SetError(false);
-                
-                // Nettoyer le formulaire
-                SetEleve({ identifiant: '', password: '' });
-                SetConf('');
+                // Utiliser la fonction login du contexte
+                login({
+                    user: userData,
+                    token: response.data.token || null
+                });
 
-                // Redirection côté client avec un petit délai pour afficher le message de succès
+                SetMessage('Connexion réussie ! Redirection...');
+
                 setTimeout(() => {
-                    if (response.data.redirect_to) {
-                        navigate(response.data.redirect_to, { replace: true });
-                    } else {
-                        // Redirection par défaut selon le rôle
-                        const userRole = response.data.user?.role || response.data.role;
-                        switch(userRole) {
-                            case 'admin':
-                                navigate('/admin/dashboard', { replace: true });
-                                break;
-                            case 'teacher':
-                                navigate('/teacher/dashboard', { replace: true });
-                                break;
-                            case 'student':
-                                navigate('/student/dashboard', { replace: true });
-                                break;
-                            default:
-                                navigate('/dashboard', { replace: true });
-                        }
-                    }
+                    const redirectPath = response.data.redirect_to || '/';
+                    navigate(redirectPath, { replace: true });
                 }, 1500);
+            } else {
+                throw new Error('Réponse inattendue du serveur');
             }
         } catch (err) {
+            console.error('Erreur de connexion:', err);
             SetError(true);
-            
-            if (err.code === 'ECONNABORTED') {
-                SetMessage('Délai de connexion dépassé. Veuillez réessayer.');
-            } else if (err.response) {
-                // Erreur de réponse du serveur
-                switch(err.response.status) {
-                    case 401:
-                        SetMessage('Identifiants incorrects.');
-                        break;
-                    case 403:
-                        SetMessage('Accès refusé. Votre compte pourrait être suspendu.');
-                        break;
-                    case 429:
-                        SetMessage('Trop de tentatives. Veuillez patienter avant de réessayer.');
-                        break;
-                    case 500:
-                        SetMessage('Erreur serveur. Veuillez réessayer plus tard.');
-                        break;
-                    default:
-                        SetMessage(err.response.data?.message || 'Une erreur est survenue.');
-                }
-            } else if (err.request) {
-                SetMessage('Impossible de se connecter au serveur. Vérifiez votre connexion internet.');
-            } else {
-                SetMessage('Une erreur inattendue est survenue.');
-            }
+            SetMessage(err.response?.data?.message || 'Identifiants incorrects');
         } finally {
             setIsLoading(false);
         }

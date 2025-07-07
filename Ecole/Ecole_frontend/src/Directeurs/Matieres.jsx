@@ -343,7 +343,7 @@ export default function Matieres()  {
           <div className="header-content">
             <h2 className="page-title">
               {activeTab === 'matieres' ? 'Gestion des Matières' : 
-               activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
+                activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
             </h2>
             <div className="header-actions">
               <div className="notification-wrapper">

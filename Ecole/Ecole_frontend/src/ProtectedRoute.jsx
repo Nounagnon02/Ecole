@@ -13,9 +13,17 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
         // Rediriger vers une page "non autorisé" ou la page par défaut selon le rôle
         const defaultRoute = 
             authData.user.role === 'eleve' 
-            ? '/passeport' 
+            ? '/dashboard-eleve' 
+            :authData.user.role === 'parent' 
+            ? '/dashboard-parent'
             : authData.user.role === 'directeur' 
                 ? '/dashboard-admin' 
+            : authData.user.role === 'directeurM' 
+                ? '/dashboard-maternelle' 
+            : authData.user.role === 'directeurP' 
+                ? '/dashboard-primaire' 
+            : authData.user.role === 'directeurS' 
+                ? '/dashboard-secondaire' 
             
             : authData.user.role === 'censeur' 
                 ? '/dashboard-censeur' 

@@ -13,17 +13,16 @@ return new class extends Migration
     {
         //
     
-    Schema::create('enseignants_M_P', function (Blueprint $table) {
+    Schema::create('enseignants_martenel_primaire', function (Blueprint $table) {
         $table->id();
         $table->string('role');
-        $table->string('nom_de_eleve');
-        $table->string('prenoms_eleve');
-        $table->bigInteger('numero_de_telephone');
-        $table->string('identifiant')->unique(); // <-- Ajoute cette ligne
+        $table->string('nom');
+        $table->string('prenom');  // Changé de 'prenoms' à 'prenom'
+        $table->string('numero_de_telephone');  // Changé de bigInteger à string
+        $table->string('identifiant')->unique();
         $table->string('password1');
-        $table->string('email');
-        $table->foreignId('class_id');
-        $table->foreignId('serie_id');
+        $table->string('email')->unique();
+        $table->foreignId('class_id')->constrained('classes');
         $table->timestamps();
     });
     }
@@ -36,6 +35,6 @@ return new class extends Migration
     public function down(): void
     {
         //
-        Schema::dropIfExists('enseignants_M_P');
+        Schema::dropIfExists('enseignants_martenel_primaire');
     }
 };

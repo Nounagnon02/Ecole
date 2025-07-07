@@ -4,28 +4,32 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Contracts\Auth\Authenticatable;
+use Laravel\Sanctum\HasApiTokens;
 
 class Eleves extends Model
 {
-    use HasFactory;
-    protected $fillable=[
+    use HasFactory, HasApiTokens, Notifiable;
+
+    protected $fillable = [
         'role',
-        'nom_de_eleve',
-        'prenoms_eleve',
+        'nom',
+        'prenom',
         'numero_de_telephone',
         'identifiant',
         'password1',
+        'numero_matricule',
         'class_id',
-        'serie_id',
-        'numero_matricule'
-];
+        'serie_id'
+    ];
 
     public function sessions(){
         return $this->belongsToMany(Sessions::class,'sessions_eleves');
     }
-    public function notes()
+    public function note()
     {
-        return $this->hasMany(Notes::class);
+        return $this->hasMany(Notes::class, 'eleve_id');
     }
 
     public function moyennes(){
@@ -42,101 +46,22 @@ class Eleves extends Model
     {
         return $this->belongsTo(Classes::class, 'class_id');
     }
+    public function parents()
+    {
+        return $this->belongsToMany(
+            Parent::class, 
+            'eleves_parents', 
+            'eleve_id', 
+            'parent_id'
+        );
+    }
 
     // Ajout de la relation avec Series
     public function serie()
     {
-        return $this->belongsTo(Series::class, 'serie_id');
-    }
-
-    public function scopeActif($query)
-{
-    return $query->whereHas('classe', function($q) {
-        $q->active();
-    });
-}
-public function moyenneParMatiere($matiere_id, $periode = null)
-    {
-        $query = $this->notes()
-            ->where('matiere_id', $matiere_id);
-            
-        if ($periode) {
-            $query->where('periode', $periode);
-        }
-
-        return $query->avg('note');
-    }
-
-    // Nouvelle méthode pour calculer la moyenne générale
-    public function moyenneGenerale($periode = null)
-    {
-        $notes = $this->notes()
-            ->when($periode, function($query) use ($periode) {
-                return $query->where('periode', $periode);
-            })
-            ->get()
-            ->groupBy('matiere_id')
-            ->map(function($notesMatiere) {
-                return $notesMatiere->avg('note');
-            });
-
-        // Récupération des coefficients de la série
-        $coefficients = $this->serie->matieres()
-            ->withPivot('coefficient')
-            ->get()
-            ->pluck('pivot.coefficient', 'id');
-
-        $totalPoints = 0;
-        $totalCoefficients = 0;
-
-        foreach ($notes as $matiereId => $moyenne) {
-            $coefficient = $coefficients[$matiereId] ?? 1;
-            $totalPoints += $moyenne * $coefficient;
-            $totalCoefficients += $coefficient;
-        }
-
-        return $totalCoefficients > 0 ? $totalPoints / $totalCoefficients : 0;
-    }
-
-    // Méthode pour obtenir le classement de l'élève
-    public function getClassement($periode = null)
-    {
-        $moyennes = static::where('class_id', $this->class_id)
-            ->get()
-            ->map(function($eleve) use ($periode) {
-                return [
-                    'eleve_id' => $eleve->id,
-                    'moyenne' => $eleve->moyenneGenerale($periode)
-                ];
-            })
-            ->sortByDesc('moyenne')
-            ->values();
-
-        $position = $moyennes->search(function($item) {
-            return $item['eleve_id'] === $this->id;
-        }) + 1;
-
-        return [
-            'position' => $position,
-            'total_eleves' => $moyennes->count()
-        ];
+        return $this->belongsTo(Series::class);
     }
 
 
-    // Méthode pour vérifier si l'élève est en échec
-    public function estEnEchec($periode = null)
-    {
-        return $this->moyenneGenerale($periode) < 10;
-    }
-
-
-// Exemples d'utilisation
-/*$classe = Classes::find(1);
-$eleves = $classe->eleves; // Liste des élèves
-$effectif = $classe->effectif(); // Nombre d'élèves
-
-$eleve = Eleves::find(1);
-$classe = $eleve->classe; // Classe de l'élève
-$moyenne = $eleve->moyenneParMatiere(1); // Moyenne dans une matière*/
 }
 

@@ -4,10 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Notifications\Notifiable;
 
 class Enseignants extends Model
 {
-    use HasFactory;
+    use HasFactory ,HasApiTokens, Notifiable;
     protected $fillable= [
         'role',
         'nom',
@@ -25,7 +27,8 @@ class Enseignants extends Model
         return $this->hasMany(Classes::class);
     }
 
-    public function matiere(){
-        return $this->hasOne(matieres::class);
+    public function matieres()
+    {
+        return $this->belongsToMany(Matieres::class, 'enseignant_matiere');
     }
 }

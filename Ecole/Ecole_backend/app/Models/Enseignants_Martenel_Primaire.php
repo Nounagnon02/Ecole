@@ -1,15 +1,17 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Laravel\Sanctum\HasApiTokens;
 
-class Enseignants_Martenel_Primaire extends Model
+class Enseignants_Martenel_Primaire extends Authenticatable
 {
-    use HasFactory;
+    use HasFactory, HasApiTokens;
 
-    protected $fillable= [
+    protected $table = 'enseignants_martenel_primaire';
+
+    protected $fillable = [
         'role',
         'nom',
         'prenom',
@@ -20,7 +22,18 @@ class Enseignants_Martenel_Primaire extends Model
         'password1',
     ];
 
+    protected $hidden = [
+        'password1',
+        'remember_token',
+    ];
 
+    public function classe()
+    {
+        return $this->belongsTo(Classes::class,
+            'enseignantmp_classe',
+            'classe_id',              
+            'enseignants_id');
+    }
     public function matiere(){
         return $this->hasMany(matieres::class);
     }

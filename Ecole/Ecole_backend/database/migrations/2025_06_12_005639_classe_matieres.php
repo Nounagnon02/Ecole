@@ -6,21 +6,31 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * Run the migrations.
+     *
+     * @return void
+     */
     public function up()
     {
-        Schema::create('series_matieres', function (Blueprint $table) {
+        //
+        Schema::create('classe_matieres', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('serie_id')->constrained()->onDelete('cascade');
+            $table->foreignId('classe_id')->constrained()->onDelete('cascade');
             $table->foreignId('matiere_id')->constrained()->onDelete('cascade');
             $table->float('coefficient')->default(1);
             $table->timestamps();
-
-            $table->unique(['serie_id', 'matiere_id']);
         });
     }
 
+    /**
+     * Reverse the migrations.
+     *
+     * @return void
+     */
     public function down()
     {
-        Schema::dropIfExists('series_matieres');
+        //
+        Schema::dropIfExists('classe_matieres');
     }
 };

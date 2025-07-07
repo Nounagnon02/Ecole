@@ -7,13 +7,19 @@ import Dashboard from './Directeurs/dash';
 import ProtectedRoute from './ProtectedRoute';
 import AuthProvider from './AuthContext';
 import Matieres from './Directeurs/Matieres';
-import Classes from './Directeurs/Classes';
+import Classes from './Directeurs/Classes'; 
+import ParentDashboard from './Parents/dash'; // Assuming you have a ParentDashboard component
+import Dashboard_Secretaire from './Secretaire/dashboard';
+import DashboardM from './DirecteursM/dash';
+import DashboardP from './DirecteursP/dash';
+import DashboardS from './DirecteursS/dash';
 
 function App() {
     return (
         <Router>
             <AuthProvider>
                 <Routes>
+                    <Route path="/dash" element={<DashboardE />} />
                     <Route path="/connexion" element={<Connexion />} />
                     <Route path="/inscription" element={<InscriptionE />} />
                     <Route path="/matieres" element={<Matieres />} />
@@ -32,6 +38,24 @@ function App() {
                         </ProtectedRoute>
                     } />
 
+                    <Route path="/dashboard-maternelle" element={
+                        <ProtectedRoute allowedRoles={['directeurM']}>
+                            <DashboardM />
+                        </ProtectedRoute>
+                    } />
+
+                    <Route path="/dashboard-primaire" element={
+                        <ProtectedRoute allowedRoles={['directeurP']}>
+                            <DashboardP />
+                        </ProtectedRoute>
+                    } />
+
+                    <Route path="/dashboard-secondaire" element={
+                        <ProtectedRoute allowedRoles={['directeurS']}>
+                            <DashboardS />
+                        </ProtectedRoute>
+                    } />
+
                     <Route path="/dashboard-censeur" element={
                         <ProtectedRoute allowedRoles={['censeur']}>
                             <Dashboard />
@@ -46,7 +70,7 @@ function App() {
 
                     <Route path="/dashboard-secretaire" element={
                         <ProtectedRoute allowedRoles={['secretaire']}>
-                            <Dashboard />
+                            <Dashboard_Secretaire />
                         </ProtectedRoute>
                     } />
 
@@ -71,6 +95,11 @@ function App() {
                     <Route path="/dashboard-enseignementP" element={
                         <ProtectedRoute allowedRoles={['enseignementP']}>
                             <Dashboard />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/dashboard-parent" element={
+                        <ProtectedRoute allowedRoles={['parent']}>
+                            <ParentDashboard />
                         </ProtectedRoute>
                     } />
                 </Routes>
