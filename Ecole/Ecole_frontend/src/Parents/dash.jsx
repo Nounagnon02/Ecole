@@ -21,6 +21,7 @@ import axios from 'axios';
 import  jsPDF  from "jspdf";
 //import autoTable from  'jspdf-autotable';
 import  'jspdf-autotable';
+import { useNavigate } from 'react-router-dom'; // Ajoute ceci en haut
 
 const ParentDashboard = () => {
   const [loading, setLoading] = useState(true);
@@ -35,6 +36,8 @@ const ParentDashboard = () => {
   const [notifications, setNotifications] = useState([]);
   const [currentPeriode, setCurrentPeriode] = useState('Semestre 1');
   const [debugMode, setDebugMode] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const navigate = useNavigate(); // Ajoute ceci dans ParentDashboard
 
   // Données mockées pour les absences
   const absences = 
@@ -77,6 +80,14 @@ const ParentDashboard = () => {
   useEffect(() => {
     fetchDashboardData();
   }, []);
+
+  useEffect(() => {
+    const handleClick = (e) => {
+      if (!e.target.closest('.profile-container')) setShowProfileMenu(false);
+    };
+    if (showProfileMenu) document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [showProfileMenu]);
 
   // Fonction utilitaire pour récupérer l'ID parent
   const getParentId = () => {
@@ -1097,7 +1108,22 @@ const renderBulletins = () => {
                 </div>
                 <div className="dashboard-header__brand-info">
                   <h1 className="dashboard-header__title">Espace Parent</h1>
-                  <p className="dashboard-header__subtitle">Bienvenue, {parentData?.name}</p>
+                  <p
+                      className="dashboard-header__subtitle"
+                      onClick={() => setShowProfileMenu((v) => !v)}
+                      style={{ cursor: 'pointer' }}
+                      aria-haspopup="true"
+                      aria-expanded={showProfileMenu}
+                      tabIndex={0}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' || e.key === ' ') setShowProfileMenu(v => !v);
+                      }}
+                    >
+                      Bienvenue, {parentData?.name}
+                    </p>
+                    <span className="profile-name"></span>
+                  
+
                 </div>
               </div>
             </div>
@@ -1110,9 +1136,68 @@ const renderBulletins = () => {
                   </span>
                 )}
               </div>
-              <div className="dashboard-header__user">
+              <div className="profile-container" style={{ position: 'relative' }} tabIndex={0}>
                 <User className="dashboard-header__user-icon" />
-                <span className="dashboard-header__user-name">{parentData?.name}</span>
+                <span
+                  className="dashboard-header__user-name"
+                  onClick={() => setShowProfileMenu((v) => !v)}
+                  style={{ cursor: 'pointer' }}
+                  aria-haspopup="true"
+                  aria-expanded={showProfileMenu}
+                  tabIndex={0}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' || e.key === ' ') setShowProfileMenu(v => !v);
+                  }}
+                >
+                  {parentData?.name}
+                </span>
+                <span className="profile-name"></span>
+                {showProfileMenu && (
+                  <div
+                    className="profile-menu"
+                    role="menu"
+                    style={{
+                      position: 'absolute',
+                      top: '100%',
+                      right: 0,
+                      background: '#fff',
+                      border: '1px solid #ddd',
+                      borderRadius: 4,
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                      zIndex: 10,
+                      minWidth: 140
+                    }}
+                    onKeyDown={e => {
+                      if (e.key === 'Escape') setShowProfileMenu(false);
+                    }}
+                  >
+                    <button
+                      className="profile-menu-item"
+                      style={{ width: '100%', padding: '8px', border: 'none', background: 'none', textAlign: 'left', cursor: 'pointer' }}
+                      onClick={() => {
+                        setShowProfileMenu(false);
+                        setActiveTab('profil');
+                        // navigate('/profil'); // décommente si tu veux naviguer
+                      }}
+                      role="menuitem"
+                    >
+                      Profil
+                    </button>
+                    <button
+                      className="profile-menu-item"
+                      style={{ width: '100%', padding: '8px', border: 'none', background: 'none', textAlign: 'left', cursor: 'pointer' }}
+                      onClick={() => {
+                        setShowProfileMenu(false);
+                        localStorage.clear();
+                        sessionStorage.clear();
+                        window.location.href = '/connexion';
+                      }}
+                      role="menuitem"
+                    >
+                      Déconnexion
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>

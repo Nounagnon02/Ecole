@@ -48,14 +48,15 @@ class Classes extends Model
         );
     }
 
-    public function TypeEvaluation()
+
+    public function typeEvaluations()
     {
         return $this->belongsToMany(
-            TypeEvaluation::class,
-            'typeEvaluation_classe',    // nom de la table pivot
-            'classe_id',              // clé locale sur la table pivot
-            'evaluations_id'          // clé étrangère sur la table pivot
-        );
+            \App\Models\TypeEvaluation::class,
+            'typeevaluation_classes',
+            'classe_id',
+            'typeevaluation_id'
+        )->withPivot('periode_id')->withTimestamps();
     }
     /*public function matieres()
 {

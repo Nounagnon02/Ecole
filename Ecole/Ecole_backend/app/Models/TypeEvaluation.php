@@ -12,13 +12,13 @@ class TypeEvaluation extends Model
     protected $fillable=['nom'];
 
 
-    public function classes()
+    public function periodes()
     {
         return $this->belongsToMany(
-            Classes::class,
-            'typeEvaluation_classe',    // nom de la table pivot
-            'classe_id',              // clé locale sur la table pivot
-            'evaluations_id'          // clé étrangère sur la table pivot
-        );
+            \App\Models\periodes::class,
+            'typeevaluation_classes',
+            'typeevaluation_id',
+            'periode_id'
+        )->withPivot('classe_id')->withTimestamps();
     }
 }

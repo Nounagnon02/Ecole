@@ -433,7 +433,7 @@ public function getByMatricule($matricule)
 {
     // Regroupe les élèves du secondaire par mois d'inscription
     $data = DB::table('eleves')
-        ->join('Classes', 'eleves.class_id', '=', 'classes.id')
+        ->join('classes', 'eleves.class_id', '=', 'classes.id')
         ->where('categorie_classe','maternelle')
         ->selectRaw("DATE_FORMAT(eleves.created_at, '%M') as name, COUNT(*) as students")
         ->groupBy(DB::raw("DATE_FORMAT(eleves.created_at, '%M')"))
@@ -447,7 +447,7 @@ public function getByMatricule($matricule)
 {
     // Regroupe les élèves du secondaire par mois d'inscription
     $data = DB::table('eleves')
-        ->join('Classes', 'eleves.class_id', '=', 'classes.id')
+        ->join('classes', 'eleves.class_id', '=', 'classes.id')
         ->where('categorie_classe','primaire')
         ->selectRaw("DATE_FORMAT(eleves.created_at, '%M') as name, COUNT(*) as students")
         ->groupBy(DB::raw("DATE_FORMAT(eleves.created_at, '%M')"))
@@ -461,7 +461,7 @@ public function getByMatricule($matricule)
 {
     // Regroupe les élèves du secondaire par mois d'inscription
     $data = DB::table('eleves')
-        ->join('Classes', 'eleves.class_id', '=', 'classes.id')
+        ->join('classes', 'eleves.class_id', '=', 'classes.id')
         ->where('categorie_classe','secondaire')
         ->selectRaw("DATE_FORMAT(eleves.created_at, '%M') as name, COUNT(*) as students")
         ->groupBy(DB::raw("DATE_FORMAT(eleves.created_at, '%M')"))
@@ -472,9 +472,9 @@ public function getByMatricule($matricule)
 }
     public function evolutionEffectifs()
 {
-    // Regroupe les élèves du secondaire par mois d'inscription
+    // Regroupe les élèves par mois d'inscription
     $data = DB::table('eleves')
-        ->join('Classes', 'eleves.class_id', '=', 'classes.id')
+        ->join('classes', 'eleves.class_id', '=', 'classes.id')
         ->selectRaw("DATE_FORMAT(eleves.created_at, '%M') as name, COUNT(*) as students")
         ->groupBy(DB::raw("DATE_FORMAT(eleves.created_at, '%M')"))
         ->orderBy(DB::raw("MIN(eleves.created_at)"))

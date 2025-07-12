@@ -803,10 +803,10 @@ public function repartitionNotesMaternelle()
 {
     // Regroupe les notes du secondaire par tranche
     $data = [
-        ['name' => '0-5', 'value' => DB::table('notes')->join('Classes', 'notes.classe_id', '=', 'classes.id')->where('categorie_classe','maternelle')->where('note', '>=', 0)->where('note', '<=', 5)->count()],
-        ['name' => '6-10', 'value' => DB::table('notes')->join('Classes', 'notes.classe_id', '=', 'classes.id')->where('categorie_classe','maternelle')->where('note', '>=', 6)->where('note', '<=', 10)->count()],
-        ['name' => '11-15', 'value' => DB::table('notes')->join('Classes', 'notes.classe_id', '=', 'classes.id')->where('categorie_classe','maternelle')->where('note', '>=', 11)->where('note', '<=', 15)->count()],
-        ['name' => '16-20', 'value' => DB::table('notes')->join('Classes', 'notes.classe_id', '=', 'classes.id')->where('categorie_classe','maternelle')->where('note', '>=', 16)->where('note', '<=', 20)->count()],
+        ['name' => '0-5', 'value' => DB::table('notes')->join('classes', 'notes.classe_id', '=', 'classes.id')->where('categorie_classe','maternelle')->where('note', '>=', 0)->where('note', '<=', 5)->count()],
+        ['name' => '6-10', 'value' => DB::table('notes')->join('classes', 'notes.classe_id', '=', 'classes.id')->where('categorie_classe','maternelle')->where('note', '>=', 6)->where('note', '<=', 10)->count()],
+        ['name' => '11-15', 'value' => DB::table('notes')->join('classes', 'notes.classe_id', '=', 'classes.id')->where('categorie_classe','maternelle')->where('note', '>=', 11)->where('note', '<=', 15)->count()],
+        ['name' => '16-20', 'value' => DB::table('notes')->join('classes', 'notes.classe_id', '=', 'classes.id')->where('categorie_classe','maternelle')->where('note', '>=', 16)->where('note', '<=', 20)->count()],
     ];
 
     return response()->json($data);
@@ -815,10 +815,10 @@ public function repartitionNotesPrimaire()
 {
     // Regroupe les notes du secondaire par tranche
     $data = [
-        ['name' => '0-5', 'value' => DB::table('notes')->join('Classes', 'notes.classe_id', '=', 'classes.id')->where('categorie_classe','primaire')->where('note', '>=', 0)->where('note', '<=', 5)->count()],
-        ['name' => '6-10', 'value' => DB::table('notes')->join('Classes', 'notes.classe_id', '=', 'classes.id')->where('categorie_classe','primaire')->where('note', '>=', 6)->where('note', '<=', 10)->count()],
-        ['name' => '11-15', 'value' => DB::table('notes')->join('Classes', 'notes.classe_id', '=', 'classes.id')->where('categorie_classe','primaire')->where('note', '>=', 11)->where('note', '<=', 15)->count()],
-        ['name' => '16-20', 'value' => DB::table('notes')->join('Classes', 'notes.classe_id', '=', 'classes.id')->where('categorie_classe','primaire')->where('note', '>=', 16)->where('note', '<=', 20)->count()],
+        ['name' => '0-5', 'value' => DB::table('notes')->join('classes', 'notes.classe_id', '=', 'classes.id')->where('categorie_classe','primaire')->where('note', '>=', 0)->where('note', '<=', 5)->count()],
+        ['name' => '6-10', 'value' => DB::table('notes')->join('classes', 'notes.classe_id', '=', 'classes.id')->where('categorie_classe','primaire')->where('note', '>=', 6)->where('note', '<=', 10)->count()],
+        ['name' => '11-15', 'value' => DB::table('notes')->join('classes', 'notes.classe_id', '=', 'classes.id')->where('categorie_classe','primaire')->where('note', '>=', 11)->where('note', '<=', 15)->count()],
+        ['name' => '16-20', 'value' => DB::table('notes')->join('classes', 'notes.classe_id', '=', 'classes.id')->where('categorie_classe','primaire')->where('note', '>=', 16)->where('note', '<=', 20)->count()],
     ];
 
     return response()->json($data);
@@ -827,10 +827,10 @@ public function repartitionNotesSecondaire()
 {
     // Regroupe les notes du secondaire par tranche
     $data = [
-        ['name' => '0-5', 'value' => DB::table('notes')->join('Classes', 'notes.classe_id', '=', 'classes.id')->where('categorie_classe','secondaire')->where('note', '>=', 0)->where('note', '<=', 5)->count()],
-        ['name' => '6-10', 'value' => DB::table('notes')->join('Classes', 'notes.classe_id', '=', 'classes.id')->where('categorie_classe','secondaire')->where('note', '>=', 6)->where('note', '<=', 10)->count()],
-        ['name' => '11-15', 'value' => DB::table('notes')->join('Classes', 'notes.classe_id', '=', 'classes.id')->where('categorie_classe','secondaire')->where('note', '>=', 11)->where('note', '<=', 15)->count()],
-        ['name' => '16-20', 'value' => DB::table('notes')->join('Classes', 'notes.classe_id', '=', 'classes.id')->where('categorie_classe','secondaire')->where('note', '>=', 16)->where('note', '<=', 20)->count()],
+        ['name' => '0-5', 'value' => DB::table('notes')->join('classes', 'notes.classe_id', '=', 'classes.id')->where('categorie_classe','secondaire')->where('note', '>=', 0)->where('note', '<=', 5)->count()],
+        ['name' => '6-10', 'value' => DB::table('notes')->join('classes', 'notes.classe_id', '=', 'classes.id')->where('categorie_classe','secondaire')->where('note', '>=', 6)->where('note', '<=', 10)->count()],
+        ['name' => '11-15', 'value' => DB::table('notes')->join('classes', 'notes.classe_id', '=', 'classes.id')->where('categorie_classe','secondaire')->where('note', '>=', 11)->where('note', '<=', 15)->count()],
+        ['name' => '16-20', 'value' => DB::table('notes')->join('classes', 'notes.classe_id', '=', 'classes.id')->where('categorie_classe','secondaire')->where('note', '>=', 16)->where('note', '<=', 20)->count()],
     ];
 
     return response()->json($data);
@@ -840,10 +840,10 @@ public function repartitionNotes()
 {
     // Regroupe les notes du secondaire par tranche
     $data = [
-        ['name' => '0-5', 'value' => DB::table('notes')->join('Classes', 'notes.classe_id', '=', 'classes.id')->where('note', '>=', 0)->where('note', '<=', 5)->count()],
-        ['name' => '6-10', 'value' => DB::table('notes')->join('Classes', 'notes.classe_id', '=', 'classes.id')->where('note', '>=', 6)->where('note', '<=', 10)->count()],
-        ['name' => '11-15', 'value' => DB::table('notes')->join('Classes', 'notes.classe_id', '=', 'classes.id')->where('note', '>=', 11)->where('note', '<=', 15)->count()],
-        ['name' => '16-20', 'value' => DB::table('notes')->join('Classes', 'notes.classe_id', '=', 'classes.id')->where('note', '>=', 16)->where('note', '<=', 20)->count()],
+        ['name' => '0-5', 'value' => DB::table('notes')->join('classes', 'notes.classe_id', '=', 'classes.id')->where('note', '>=', 0)->where('note', '<=', 5)->count()],
+        ['name' => '6-10', 'value' => DB::table('notes')->join('classes', 'notes.classe_id', '=', 'classes.id')->where('note', '>=', 6)->where('note', '<=', 10)->count()],
+        ['name' => '11-15', 'value' => DB::table('notes')->join('classes', 'notes.classe_id', '=', 'classes.id')->where('note', '>=', 11)->where('note', '<=', 15)->count()],
+        ['name' => '16-20', 'value' => DB::table('notes')->join('classes', 'notes.classe_id', '=', 'classes.id')->where('note', '>=', 16)->where('note', '<=', 20)->count()],
     ];
 
     return response()->json($data);

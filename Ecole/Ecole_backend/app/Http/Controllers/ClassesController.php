@@ -422,6 +422,18 @@ public function updateSeries(Request $request, $id)
     }
 
 
+    //Recuperer un classe specifique avec leur series
+    public function getClasseWithSeries($id)
+    {
+        $classe = Classes::with('series')->find($id);
+        if (!$classe) {
+            return response()->json(['message' => 'Classe non trouvée'], 404);
+        }
+        return response()->json($classe, 200);
+    }
+    
+
+
     
 /*public function updateSeriesMatieres(Request $request, $classId, $serieId)
 {
@@ -600,6 +612,43 @@ public function updateSeries(Request $request, $id)
             return response()->json(['message' => 'Aucune classe trouvée pour cette catégorie'], 404);
         }
         
+        return response()->json($classes, 200);
+    }
+
+
+    //recuperer les classes du Secondaire avec les periodes et les types d'evaluation
+    public function getClassesWithPeriodesAndTypesS(Request $request)
+    {
+        $classes = Classes::where('categorie_classe', 'Secondaire') 
+            ->with(['typeEvaluations'])
+            ->get();
+        if ($classes->isEmpty()) {
+            return response()->json(['message' => 'Aucune classe trouvée pour cette catégorie'], 404);
+        }
+        return response()->json($classes, 200);
+    }
+
+    //recuperer les classes du Secondaire avec les periodes et les types d'evaluation
+    public function getClassesWithPeriodesAndTypesP(Request $request)
+    {
+        $classes = Classes::where('categorie_classe', 'Primaire') 
+            ->with(['typeEvaluations'])
+            ->get();
+        if ($classes->isEmpty()) {
+            return response()->json(['message' => 'Aucune classe trouvée pour cette catégorie'], 404);
+        }
+        return response()->json($classes, 200);
+    }
+
+    //recuperer les classes du Maternelle avec les periodes et les types d'evaluation
+    public function getClassesWithPeriodesAndTypesM(Request $request)
+    {
+        $classes = Classes::where('categorie_classe', 'Matrnelle') 
+            ->with(['typeEvaluations'])
+            ->get();
+        if ($classes->isEmpty()) {
+            return response()->json(['message' => 'Aucune classe trouvée pour cette catégorie'], 404);
+        }
         return response()->json($classes, 200);
     }
 
