@@ -31,75 +31,7 @@ class BulletinController extends Controller
         return round($somme / $interrogations->count(), 2);
     }
 
-    // Méthode pour calculer la moyenne d'une matière
-    /*private function calculerMoyenneMatiere($eleveId, $matiereId, $periode)
-    {
-        try {
-            // Récupérer toutes les notes en une seule requête
-            $notes = Notes::where([
-                'eleve_id' => $eleveId,
-                'matiere_id' => $matiereId,
-                'periode' => $periode
-            ])->get()->groupBy('type_evaluation');
-
-            Log::info("Notes trouvées pour élève $eleveId, matière $matiereId, période $periode:", $notes->toArray());
-
-            // Cas Secondaire (Devoirs/Interrogations)
-            if (
-                ($notes->has('Devoir1') && $notes->get('Devoir1')->count() > 0) ||
-                ($notes->has('Devoir2') && $notes->get('Devoir2')->count() > 0) ||
-                ($notes->has('Interrogation') && $notes->get('Interrogation')->count() > 0)
-            ) {
-                $noteDevoir1 = ($notes->has('Devoir1') && $notes->get('Devoir1')->count() > 0)
-                    ? $notes->get('Devoir1')->first()->note : 0;
-                $noteDevoir2 = ($notes->has('Devoir2') && $notes->get('Devoir2')->count() > 0)
-                    ? $notes->get('Devoir2')->first()->note : 0;
-                $moyenneInterros = ($notes->has('Interrogation') && $notes->get('Interrogation')->count() > 0)
-                    ? $notes->get('Interrogation')->avg('note') : 0;
-
-                // Calcul de la moyenne (évite la division par zéro)
-                $nb = 0;
-                if ($notes->has('Devoir1') && $notes->get('Devoir1')->count() > 0) $nb++;
-                if ($notes->has('Devoir2') && $notes->get('Devoir2')->count() > 0) $nb++;
-                if ($notes->has('Interrogation') && $notes->get('Interrogation')->count() > 0) $nb++;
-                $nb = $nb > 0 ? $nb : 1;
-
-                $moyenne = ($noteDevoir1 + $noteDevoir2 + $moyenneInterros) / $nb;
-                return round($moyenne, 2);
-            }
-
-            // Cas Maternelle/Primaire (évaluations)
-            $evalTypes = [
-                '1ère evaluation', '2ème evaluation', '3ème evaluation',
-                '4ème evaluation', '5ème evaluation', '6ème evaluation'
-            ];
-
-            // Si toutes les évaluations sont présentes
-            $allEvalPresent = true;
-            $evalSums = 0;
-            $evalCount = 0;
-            foreach ($evalTypes as $type) {
-                if ($notes->has($type) && $notes->get($type)->count() > 0) {
-                    $evalSums += $notes->get($type)->avg('note');
-                    $evalCount++;
-                } else {
-                    $allEvalPresent = false;
-                }
-            }
-            if ($evalCount > 0) {
-                $moyenneTotale = $evalSums / $evalCount;
-                Log::info("Moyenne évaluations calculée pour élève $eleveId, matière $matiereId: $moyenneTotale");
-                return round($moyenneTotale, 2);
-            }
-
-            // Si aucun cas ne correspond, retourne 0
-            return 0;
-
-        } catch (\Exception $e) {
-            Log::error('Erreur calcul moyenne matière: ' . $e->getMessage());
-            return 0; // Retourne 0 en cas d'erreur
-        }
-    }*/
+    
 
     private function calculerMoyenneMatiere($eleveId, $matiereId, $periode)
     {
@@ -193,8 +125,6 @@ class BulletinController extends Controller
         return $coefficient ?: 1;
     }
 
-
-
     // Méthode utilitaire pour formater les données de l'élève
     private function formatEleveData($eleve, $categorie)
     {
@@ -217,6 +147,84 @@ class BulletinController extends Controller
     }
 
 
+    public function getNotesDevoirs($eleveId, $matiereId, $periode)
+    {
+        $notes = Notes::where([
+            'eleve_id' => $eleveId,
+            'matiere_id' => $matiereId,
+            'periode' => $periode,
+            'type_evaluation' => 'Devoir1' || 'Devoir2'
+        ])->get();
+        if ($notes->isEmpty()) {
+            return 0; // Retourne 0 si aucune note trouvée
+        }
+        return $notes;
+    }
+
+    //Recuper les moyennes d'interrogation , de devoir de tous les eleves
+
+    public function GenerateFile(Request $request)
+    {
+        try {
+            Log::info('GenerateFile request received', $request->all());
+
+            $classe_id = $request->query('classe_id');
+            $serie_id = $request->query('serie_id');
+            $matiere_id = $request->query('matiere_id');
+            $periode = $request->query('periode');
+            $categorie_id = $request->query('categorie_id');
+
+            $query = Eleves::query();
+
+            if ($classe_id) {
+                $query->where('class_id', $classe_id);
+            }
+            if ($serie_id) {
+                $query->where('serie_id', $serie_id);
+            }
+            
+            if ($categorie_id) {
+                $query->whereHas('classe', function($q) use ($categorie_id) {
+                    $q->where('categorie_classe', $categorie_id);
+                });
+            }
+
+            Log::info('Executing query: ' . $query->toSql(), $query->getBindings());
+
+            $eleves = $query->get();
+            
+            Log::info('Found ' . $eleves->count() . ' eleves.');
+
+            $data = [];
+            foreach ($eleves as $eleve) {
+                $moyenneInterrogations = $this->calculerMoyenneInterrogations($eleve->id, $matiere_id, $periode);
+                $moyenneDevoirs = $this->getNotesDevoirs($eleve->id, $matiere_id, $periode);
+                $data[] = [
+                    'eleve_id' => $eleve->id,
+                    'nom' => $eleve->nom,
+                    'prenom' => $eleve->prenom,
+                    'numero_matricule' => $eleve->numero_matricule,
+                    'moyenne_interrogations' => $moyenneInterrogations,
+                    'Devoirs' => $moyenneDevoirs,
+                    'periode' => $periode
+                ];
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => $data
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error in GenerateFile: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'An internal server error occurred.'
+            ], 500);
+        }
+    }
 
     public function getBulletin($eleveId, Request $request)
     {
@@ -445,6 +453,8 @@ class BulletinController extends Controller
             ], 500);
         }
     }
+
+    
 
     // Rang général pour toutes les evaluations d'un élève dans une classe et une période
     private function calculateRankEvaluation1($eleveId, $classeId, $periode, $type, $matieres)

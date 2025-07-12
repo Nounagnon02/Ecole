@@ -1449,3 +1449,144 @@ body {
   background-color: #93c5fd;
   cursor: not-allowed;
 }
+
+/* Ajoutez ces styles à dashboard_directeur.css */
+
+/* Styles pour le conteneur des matières */
+.matieres-container {
+  background-color: white;
+  border-radius: 12px;
+  padding: 25px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  margin-bottom: 30px;
+}
+
+.matieres-container .section-title {
+  color: var(--dark-color);
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--light-color);
+}
+
+/* Formulaire d'ajout */
+.add-form {
+  background-color: #f0f9ff;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 30px;
+  border: 1px dashed #bae6fd;
+}
+
+.add-form .form-title {
+  color: var(--primary-dark);
+  font-size: 1.2rem;
+  margin-bottom: 15px;
+}
+
+/* Liste des matières */
+.matieres-list {
+  margin-top: 30px;
+}
+
+.matiere-item {
+  background-color: white;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  margin-bottom: 15px;
+  transition: all 0.3s ease;
+  border: 1px solid #eee;
+}
+
+.matiere-item:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.matiere-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.matiere-info {
+  flex: 1;
+}
+
+.matiere-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--dark-color);
+  margin-bottom: 5px;
+}
+
+.matiere-id {
+  font-size: 0.85rem;
+  color: var(--secondary-color);
+}
+
+/* Boutons d'action */
+.matiere-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-edit, .btn-danger {
+  padding: 8px 15px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+
+.btn-edit {
+  background-color: var(--warning-color);
+  color: white;
+}
+
+.btn-edit:hover {
+  background-color: #e69009;
+}
+
+.btn-danger {
+  background-color: var(--danger-color);
+  color: white;
+}
+
+.btn-danger:hover {
+  background-color: #dc2626;
+}
+
+/* Formulaire d'édition */
+.edit-form {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  align-items: center;
+}
+
+.edit-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.95rem;
+}
+
+.edit-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* État vide */
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--secondary-color);
+  font-size: 0.95rem;
+  background-color: #f9fafb;
+  border-radius: 8px;
+}

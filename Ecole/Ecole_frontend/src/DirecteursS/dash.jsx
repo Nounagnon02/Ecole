@@ -6,6 +6,10 @@ import './Mes_CSS_directeur/dashboard_directeur.css';
 import { NavLink } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import * as pdfjsLib from 'pdfjs-dist';
+import { Page, Text, View, Document, StyleSheet, PDFViewer, PDFDownloadLink, Image } from '@react-pdf/renderer';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+
 
 
 
@@ -384,7 +388,7 @@ const handleNoteChange = (e) => {
     } else {
         setNewNote(prev => ({
             ...prev,
-            [name]: value
+            [name]: value,
         }));
     }
 };
@@ -1090,26 +1094,36 @@ const groupElevesByClasse = (eleves) => {
 
           <div 
             className={`sidebar-item ${activeTab === 'Types et Periodes' ? 'active' : ''}`} 
-            onClick={() => setActiveTab('Types et Periodes')}
+            onClick={() => setActiveTab('Types')}
           >
-            <ClipboardList size={20} />
-            {sidebarOpen && <span className="sidebar-item-text">Notes</span>}
+            <Calendar size={20} />
+            {sidebarOpen && <span className="sidebar-item-text">Types et Periodes</span>}
           </div>
 
           <div 
-            className={`sidebar-item ${activeTab === 'personnel' ? 'active' : ''}`} 
-            onClick={() => setActiveTab('personnel')}
-          >
-            <User size={20} />
-            {sidebarOpen && <span className="sidebar-item-text">Personnel</span>}
-          </div>
-          <div 
-            className={`sidebar-item ${activeTab === 'paramètres' ? 'active' : ''}`} 
-            onClick={() => setActiveTab('paramètres')}
+            className={`sidebar-item ${activeTab === 'Contributions' ? 'active' : ''}`} 
+            onClick={() => setActiveTab('Contributions')}
           >
             <Settings size={20} />
-            {sidebarOpen && <span className="sidebar-item-text">Paramètres</span>}
+            {sidebarOpen && <span className="sidebar-item-text">Contributions</span>}
           </div>
+
+          <div 
+            className={`sidebar-item ${activeTab === 'liaisonClassesPeriodesTypes' ? 'active' : ''}`} 
+            onClick={() => setActiveTab('liaisonClassesPeriodesTypes')}
+          >
+            <User size={20} />
+            {sidebarOpen && <span className="sidebar-item-text">Liaison Classes aux evaluations</span>}
+          </div>
+          <div 
+            className={`sidebar-item ${activeTab === 'Fichier' ? 'active' : ''}`} 
+            onClick={() => setActiveTab('Fichier')}
+          >
+            <Settings size={20} />
+            {sidebarOpen && <span className="sidebar-item-text">Fichier EducMaster</span>}
+          </div>
+
+          
           <div className="sidebar-logout">
                                 <LogOut size={20} />
                                 <button
@@ -2045,11 +2059,23 @@ const groupElevesByClasse = (eleves) => {
             <LierEnseignantsAuxMatieres />
           )}
 
-          {activeTab === 'Types et Periodes' && (
-            <TypeEvas />
+          {activeTab === 'Types' && (
+            <TypeEvas2 />
           )}
 
-          {(activeTab !== 'aperçu' && activeTab !== 'élèves' && activeTab !== 'classes' && activeTab !== 'matieres' && activeTab !== 'LiaisonSeriesClass'  && activeTab !== 'LiaisonMatieresAvecCoefficientEtSerieClasses' && activeTab !== 'notes' && activeTab !== 'enseignantsauxclasses'&& activeTab !== 'Types et Periodes') && (
+          {activeTab === 'Contributions' && (
+            <Contributions />
+          )}
+          
+          {activeTab === 'liaisonClassesPeriodesTypes' && (
+            <LierTypeClassePeriode />
+          )}
+
+          {activeTab === 'Fichier' && (
+            <FilterGenerate />
+          )}
+          
+          {(activeTab !== 'aperçu' && activeTab !== 'élèves' && activeTab !== 'classes' && activeTab !== 'matieres' && activeTab !== 'LiaisonSeriesClass'  && activeTab !== 'LiaisonMatieresAvecCoefficientEtSerieClasses' && activeTab !== 'notes' && activeTab !== 'enseignantsauxclasses'&& activeTab !== 'Types') && (
             <div className="coming-soon">
               <h3>Section {activeTab} en cours de développement</h3>
               <p>Cette fonctionnalité sera disponible prochainement</p>
@@ -2869,120 +2895,1528 @@ const LierEnseignantsAuxMatieres = () => {
   );
 };
 
-const TypeEvas = () =>{
-  const [newTypeName,setNewTypeName] = useState();
-  const [newPeriodeName,setNewPeriodeName] = useState();
-  const [loading,setLoading] = useState(false);
-  const [classes,setClasses] = useState();
-  const [message,setMessage] = useState();
-  const [error,setError] = useState();
+
+const TypeEvas2 = () => {
+  const [newTypeName, setNewTypeName] = useState('');
+  const [newDebutDName, setNewDebutDName] = useState('');
+  const [newDebutFName, setNewDebutFName] = useState('');
+  const [newPeriodeName, setNewPeriodeName] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+  const [types, setTypes] = useState([]);
+  const [periodes, setPeriodes] = useState([]);
+  const [showAllTypes, setShowAllTypes] = useState(false);
+  const [showAllPeriodes, setShowAllPeriodes] = useState(false);
+
+  // Charger les types et périodes au montage ou après ajout
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [typesRes, periodesRes] = await Promise.all([
+          axios.get('http://localhost:8000/api/types'),
+          axios.get('http://localhost:8000/api/periodes'),
+        ]);
+        setTypes(typesRes.data);
+        setPeriodes(periodesRes.data);
+      } catch (err) {
+        setError("Erreur lors du chargement des types ou périodes");
+      }
+    };
+    fetchData();
+  }, []);
 
   const AjouterType = async () => {
-        if (!newTypeName.trim()) {
-            setError("Le nom de l'evaluation ne peut pas être vide");
-            return;
-        }
-        
-
-        try {
-            setLoading(true);
-            const res = await axios.post('http://localhost:8000/api/types/store', {
-                nom: newTypeName,
-            }, {
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-            setClasses([...classes, res.data]);
-            setNewTypeName('');
-            setError('');
-            setLoading(false);
-        } catch (err) {
-            const errorMessage = err.response?.data?.message || "Erreur lors de l'ajout";
-            const errorDetails = err.response?.data?.errors || err.response?.data?.error || err.message;
-            setMessage(`${errorMessage}: ${JSON.stringify(errorDetails)}`);
-            setError(true);
-            setLoading(false);
-        }
+    if (!newTypeName.trim()) {
+      setError("Le nom de l'évaluation ne peut pas être vide");
+      return;
+    }
+    try {
+      setLoading(true);
+      setError('');
+      await axios.post('http://localhost:8000/api/types/store', {
+        nom: newTypeName,
+      }, {
+        headers: { 'Content-Type': 'application/json' }
+      });
+      setNewTypeName('');
+      setMessage("Type d'évaluation ajouté !");
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || "Erreur lors de l'ajout";
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
   };
-
 
   const AjouterPeriode = async () => {
-        if (!newPeriodeName.trim()) {
-            setError("Le nom de l'evaluation ne peut pas être vide");
-            return;
-        }
-        
+    if (!newPeriodeName.trim()) {
+      setError("Le nom de la période ne peut pas être vide");
+      return;
+    }
+    if (!newDebutDName || !newDebutFName) {
+      setError("Les dates de début et de fin ne peuvent pas être vides");
+      return;
+    }
+    if (newDebutDName > newDebutFName) {
+      setError("La date de début ne peut pas être postérieure à la date de fin");
+      return;
+    }
+    try {
+      setLoading(true);
+      setError('');
+      await axios.post('http://localhost:8000/api/periodes/store', {
+        nom: newPeriodeName,
+        date_debut: newDebutDName,
+        date_fin: newDebutFName,
+      }, {
+        headers: { 'Content-Type': 'application/json' }
+      });
+      setNewPeriodeName('');
+      setNewDebutDName('');
+      setNewDebutFName('');
+      setMessage("Période ajoutée !");
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || "Erreur lors de l'ajout";
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        try {
-            setLoading(true);
-            const res = await axios.post('http://localhost:8000/api/periodes/store', {
-                nom: newTypeName,
-            }, {
-                headers: {
-                    'Content-Type': 'application/json'
-                }
+  return (
+    <div>
+      {error && <div style={{ color: 'red', marginBottom: 8 }}>{error}</div>}
+      {message && <div style={{ color: 'green', marginBottom: 8 }}>{message}</div>}
+
+      <div className="add-form">
+        <h2 className="form-title">Ajouter un nouveau type d'évaluation</h2>
+        <div className="form-controls">
+          <input
+            type="text"
+            value={newTypeName}
+            onChange={(e) => setNewTypeName(e.target.value)}
+            placeholder="Nom du type d'évaluation"
+            className="input-field"
+          />
+          <button
+            onClick={AjouterType}
+            disabled={loading}
+            className="btn btn-primary"
+          >
+            <Plus size={18} />
+            Ajouter
+          </button>
+        </div>
+      </div>
+
+      {/* Liste des types d'évaluation */}
+      <div className="list-section">
+        <h3>Types d'évaluation</h3>
+        <ul>
+          {(showAllTypes ? types : types.slice(0, 3)).map(type => (
+            <li key={type.id}>{type.nom}</li>
+          ))}
+        </ul>
+        {types.length > 3 && (
+          <button
+            className="btn btn-link"
+            onClick={() => setShowAllTypes(v => !v)}
+          >
+            {showAllTypes ? 'Réduire' : 'Voir plus'}
+          </button>
+        )}
+      </div>
+
+      <div className="add-form">
+        <h2 className="form-title">Ajouter une nouvelle période</h2>
+        <div className="form-controls">
+          <input
+            type="text"
+            value={newPeriodeName}
+            onChange={(e) => setNewPeriodeName(e.target.value)}
+            placeholder="Nom de la période"
+            className="input-field"
+          />
+          <input
+            type="date"
+            value={newDebutDName}
+            onChange={(e) => setNewDebutDName(e.target.value)}
+            className="input-field"
+          />
+          <input
+            type="date"
+            value={newDebutFName}
+            onChange={(e) => setNewDebutFName(e.target.value)}
+            className="input-field"
+          />
+          <button
+            onClick={AjouterPeriode}
+            disabled={loading}
+            className="btn btn-primary"
+          >
+            <Plus size={18} />
+            Ajouter
+          </button>
+        </div>
+      </div>
+
+      {/* Liste des périodes */}
+      <div className="list-section">
+        <h3>Périodes</h3>
+        <ul>
+          {(showAllPeriodes ? periodes : periodes.slice(0, 3)).map(periode => (
+            <li key={periode.id}>
+              {periode.nom} ({periode.date_debut} - {periode.date_fin})
+            </li>
+          ))}
+        </ul>
+        {periodes.length > 3 && (
+          <button
+            className="btn btn-link"
+            onClick={() => setShowAllPeriodes(v => !v)}
+          >
+            {showAllPeriodes ? 'Réduire' : 'Voir plus'}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
+
+
+const LierTypeClassePeriode = () => {
+  const [classes, setClasses] = useState([]);
+  const [periodes, setPeriodes] = useState([]);
+  const [types, setTypes] = useState([]);
+  const [classesWithSeries, setClassesWithSeries] = useState([]);
+  const [liaisons, setLiaisons] = useState([]);
+  const [editingLiaison, setEditingLiaison] = useState(null);
+
+  // États pour les sélections
+  const [selectedClasses, setSelectedClasses] = useState([]);
+  const [selectedPeriodes, setSelectedPeriodes] = useState([]);
+  const [selectedTypes, setSelectedTypes] = useState([]);
+  const [selectedSeries, setSelectedSeries] = useState({});
+
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState({ text: '', type: '' });
+
+
+  // Gestionnaire générique pour les cases à cocher (périodes, types)
+const handleCheckboxChange = (setter, currentSelection, id) => {
+  setter(prev =>
+    prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+  );
+};
+
+// Gestionnaire spécifique pour les cases à cocher des classes
+const handleClassCheckboxChange = (id) => {
+  setSelectedClasses(prev => {
+    const newSelection = prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id];
+    // Si une classe est désélectionnée, supprimez ses sélections de séries
+    if (!newSelection.includes(id)) {
+      setSelectedSeries(prevSeries => {
+        const newSeries = { ...prevSeries };
+        delete newSeries[id];
+        return newSeries;
+      });
+    }
+    return newSelection;
+  });
+};
+
+// Gestionnaire spécifique pour les cases à cocher des séries
+const handleSeriesCheckboxChange = (classId, serieId) => {
+  setSelectedSeries(prev => {
+    const currentSeriesForClass = prev[classId] || [];
+    const newSeriesForClass = currentSeriesForClass.includes(serieId)
+      ? currentSeriesForClass.filter(item => item !== serieId)
+      : [...currentSeriesForClass, serieId];
+    return {
+      ...prev,
+      [classId]: newSeriesForClass,
+    };
+  });
+};
+  // Charger les données initiales
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [classesRes, periodesRes, typesRes, liaisonsRes, classesSeriesRes] = await Promise.all([
+          axios.get('http://localhost:8000/api/classesS?with_series=true&with_matieres=true'),
+          axios.get('http://localhost:8000/api/periodes'),
+          axios.get('http://localhost:8000/api/types'),
+          axios.get('http://localhost:8000/api/typeevaluationETclasseS'),
+          axios.get('http://localhost:8000/api/classes-with-series'),
+        ]);
+        setClasses(classesRes.data);
+        setPeriodes(periodesRes.data);
+        setTypes(typesRes.data);
+        setLiaisons(liaisonsRes.data);
+        setClassesWithSeries(classesSeriesRes.data);
+      } catch (error) {
+        setMessage({ text: 'Erreur lors du chargement des données', type: 'error' });
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  // Gérer la suppression d'une liaison
+  const handleDeleteLiaison = async (liaisonId) => {
+    if (!window.confirm("Êtes-vous sûr de vouloir supprimer cette liaison ?")) return;
+
+    try {
+      setLoading(true);
+      await axios.delete(`http://localhost:8000/api/typeevaluation-classe/${liaisonId}`);
+      
+      setMessage({ text: 'Liaison supprimée avec succès', type: 'success' });
+      const liaisonsRes = await axios.get('http://localhost:8000/api/typeevaluationETclasseS');
+      setLiaisons(liaisonsRes.data);
+    } catch (error) {
+      setMessage({ 
+        text: error.response?.data?.message || 'Erreur lors de la suppression', 
+        type: 'error' 
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Préparer l'édition d'une liaison
+  const handleEditLiaison = (liaison) => {
+    setEditingLiaison(liaison);
+    setSelectedPeriodes([liaison.periode_id]);
+    setSelectedTypes([liaison.typeevaluation_id]);
+    setSelectedClasses([liaison.classe_id]);
+    
+    // Si la liaison a une série, la sélectionner
+    if (liaison.serie_id) {
+      setSelectedSeries({
+        [liaison.classe_id]: [liaison.serie_id]
+      });
+    }
+  };
+
+  // Annuler l'édition
+  const cancelEdit = () => {
+    setEditingLiaison(null);
+    setSelectedClasses([]);
+    setSelectedPeriodes([]);
+    setSelectedTypes([]);
+    setSelectedSeries({});
+  };
+
+  // Soumettre le formulaire (création ou modification)
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (selectedPeriodes.length === 0 || selectedTypes.length === 0 || selectedClasses.length === 0) {
+      setMessage({ text: 'Veuillez sélectionner au moins une période, un type et une classe.', type: 'error' });
+      return;
+    }
+
+    const liaisonsToCreate = [];
+
+    for (const classId of selectedClasses) {
+      const seriesForClass = selectedSeries[classId] || [];
+
+      if (seriesForClass.length === 0) {
+        for (const periodeId of selectedPeriodes) {
+          for (const typeId of selectedTypes) {
+            liaisonsToCreate.push({
+              classe_id: classId,
+              periode_id: periodeId,
+              typeevaluation_id: typeId,
+              serie_id: null,
             });
-            setClasses([...classes, res.data]);
-            setNewPeriodeName('');
-            setError('');
-            setLoading(false);
-        } catch (err) {
-            const errorMessage = err.response?.data?.message || "Erreur lors de l'ajout";
-            const errorDetails = err.response?.data?.errors || err.response?.data?.error || err.message;
-            setMessage(`${errorMessage}: ${JSON.stringify(errorDetails)}`);
-            setError(true);
-            setLoading(false);
+          }
         }
+      } else {
+        for (const serieId of seriesForClass) {
+          for (const periodeId of selectedPeriodes) {
+            for (const typeId of selectedTypes) {
+              liaisonsToCreate.push({
+                classe_id: classId,
+                serie_id: serieId,
+                periode_id: periodeId,
+                typeevaluation_id: typeId,
+              });
+            }
+          }
+        }
+      }
+    }
+
+    try {
+      setLoading(true);
+      
+      if (editingLiaison) {
+        // Mise à jour de la liaison existante
+        await axios.put(`http://localhost:8000/api/typeevaluation-classe/${editingLiaison.id}`, liaisonsToCreate[0]);
+        setMessage({ text: 'Liaison mise à jour avec succès', type: 'success' });
+      } else {
+        // Création de nouvelles liaisons
+        await axios.post('http://localhost:8000/api/typeevaluation-classe/attach-multiple', {
+          liaisons: liaisonsToCreate,
+        });
+        setMessage({ text: 'Liaisons ajoutées avec succès', type: 'success' });
+      }
+
+      // Recharger les liaisons
+      const liaisonsRes = await axios.get('http://localhost:8000/api/typeevaluationETclasseS');
+      setLiaisons(liaisonsRes.data);
+      
+      // Réinitialiser le formulaire
+      cancelEdit();
+    } catch (error) {
+      setMessage({ text: error.response?.data?.message || 'Erreur lors de la liaison', type: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Organiser les liaisons par classe puis par période
+  const getOrganizedLiaisons = () => {
+    const organized = {};
+
+    // Initialiser avec les classes
+    classes.forEach(classe => {
+      organized[classe.id] = {
+        nom: classe.nom_classe,
+        periodes: {}
+      };
+    });
+
+    // Initialiser avec les périodes
+    periodes.forEach(periode => {
+      Object.values(organized).forEach(classe => {
+        classe.periodes[periode.id] = {
+          nom: periode.nom,
+          date_debut: periode.date_debut,
+          date_fin: periode.date_fin,
+          types: []
+        };
+      });
+    });
+
+    // Ajouter les liaisons existantes
+    liaisons.forEach(liaison => {
+      if (organized[liaison.classe_id] && organized[liaison.classe_id].periodes[liaison.periode_id]) {
+        const typeExists = organized[liaison.classe_id].periodes[liaison.periode_id].types.some(
+          t => t.id === liaison.typeevaluation_id
+        );
+        
+        if (!typeExists) {
+          const type = types.find(t => t.id === liaison.typeevaluation_id);
+          if (type) {
+            organized[liaison.classe_id].periodes[liaison.periode_id].types.push({
+              id: type.id,
+              nom: type.nom,
+              liaisonId: liaison.id,
+              serieId: liaison.serie_id,
+              serieNom: liaison.serie_id 
+                ? classesWithSeries
+                    .find(c => c.id === liaison.classe_id)
+                    ?.series?.find(s => s.id === liaison.serie_id)?.nom
+                : null
+            });
+          }
+        }
+      }
+    });
+
+    return organized;
+  };
+
+  const organizedLiaisons = getOrganizedLiaisons();
+
+  return (
+    <div className="link-type-classe-periode-container">
+      <div className="form-card">
+        <h2 className="form-title">
+          {editingLiaison ? 'Modifier une liaison' : 'Créer une liaison'}
+        </h2>
+        
+        {message.text && (
+          <div className={`message ${message.type}`}>
+            {message.text}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit}>
+          {/* Périodes Checkboxes */}
+          <div className="form-group">
+            <label>Période(s)</label>
+            <div className="checkbox-group">
+              {periodes.map(periode => (
+                <label key={periode.id}>
+                  <input
+                    type="checkbox"
+                    value={periode.id}
+                    checked={selectedPeriodes.includes(periode.id)}
+                    onChange={() => handleCheckboxChange(setSelectedPeriodes, selectedPeriodes, periode.id)}
+                    disabled={loading}
+                  />
+                  {periode.nom} ({periode.date_debut} - {periode.date_fin})
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Types d'évaluation Checkboxes */}
+          <div className="form-group">
+            <label>Type(s) d'évaluation</label>
+            <div className="checkbox-group">
+              {types.map(type => (
+                <label key={type.id}>
+                  <input
+                    type="checkbox"
+                    value={type.id}
+                    checked={selectedTypes.includes(type.id)}
+                    onChange={() => handleCheckboxChange(setSelectedTypes, selectedTypes, type.id)}
+                    disabled={loading}
+                  />
+                  {type.nom}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Classes Checkboxes */}
+          <div className="form-group">
+            <label>Classe(s)</label>
+            <div className="checkbox-group">
+              {classes.map(classe => (
+                <label key={classe.id}>
+                  <input
+                    type="checkbox"
+                    value={classe.id}
+                    checked={selectedClasses.includes(classe.id)}
+                    onChange={() => handleClassCheckboxChange(classe.id)}
+                    disabled={loading}
+                  />
+                  {classe.nom_classe}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Séries Checkboxes */}
+          {selectedClasses.length > 0 && (
+            <div className="form-group">
+              <label>Série(s) par Classe sélectionnée</label>
+              {selectedClasses.map(classId => {
+                const classe = classesWithSeries.find(c => c.id == classId);
+                if (!classe || !classe.series || classe.series.length === 0) {
+                  return null;
+                }
+                return (
+                  <div key={`series-for-${classId}`} className="checkbox-group series-group">
+                    <h4>{classe.nom_classe}:</h4>
+                    {classe.series.map(serie => (
+                      <label key={serie.id}>
+                        <input
+                          type="checkbox"
+                          value={serie.id}
+                          checked={(selectedSeries[classId] || []).includes(serie.id)}
+                          onChange={() => handleSeriesCheckboxChange(classId, serie.id)}
+                          disabled={loading}
+                        />
+                        {serie.nom}
+                      </label>
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          <div className="form-actions">
+            <button
+              type="submit"
+              disabled={loading || selectedClasses.length === 0 || selectedPeriodes.length === 0 || selectedTypes.length === 0}
+              className="submit-button"
+            >
+              {loading ? 'Enregistrement...' : editingLiaison ? 'Mettre à jour' : 'Enregistrer'}
+            </button>
+            
+            {editingLiaison && (
+              <button
+                type="button"
+                onClick={cancelEdit}
+                className="cancel-button"
+              >
+                Annuler
+              </button>
+            )}
+          </div>
+        </form>
+      </div>
+
+      <div className="relationships-card">
+        <h2>Liaisons existantes</h2>
+        
+        {loading ? (
+          <p>Chargement...</p>
+        ) : Object.keys(organizedLiaisons).length === 0 ? (
+          <p>Aucune liaison trouvée</p>
+        ) : (
+          <div className="classes-accordion">
+            {Object.entries(organizedLiaisons).map(([classId, classeData]) => (
+              <div key={`class-${classId}`} className="class-group">
+                <h3 className="class-title">{classeData.nom}</h3>
+                
+                {Object.entries(classeData.periodes).map(([periodeId, periodeData]) => (
+                  <div key={`periode-${periodeId}`} className="periode-group">
+                    <h4 className="periode-title">
+                      {periodeData.nom} ({periodeData.date_debut} - {periodeData.date_fin})
+                    </h4>
+                    
+                    {periodeData.types.length > 0 ? (
+                      <table className="liaisons-table">
+                        <thead>
+                          <tr>
+                            <th>Type d'évaluation</th>
+                            <th>Série</th>
+                            <th>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {periodeData.types.map(type => (
+                            <tr key={`type-${type.id}`}>
+                              <td>{type.nom}</td>
+                              <td>{type.serieNom || 'Général'}</td>
+                              <td className="actions-cell">
+                                <button 
+                                  className="edit-btn"
+                                  onClick={() => handleEditLiaison({
+                                    id: type.liaisonId,
+                                    classe_id: parseInt(classId),
+                                    periode_id: parseInt(periodeId),
+                                    typeevaluation_id: type.id,
+                                    serie_id: type.serieId
+                                  })}
+                                >
+                                  Modifier
+                                </button>
+                                <button 
+                                  className="delete-btn"
+                                  onClick={() => handleDeleteLiaison(type.liaisonId)}
+                                >
+                                  Supprimer
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    ) : (
+                      <p>Aucun type d'évaluation configuré pour cette période</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const filegeneratePDF = async (data) => {
+  const response = await axios.get('http://127.0.0.1:8000/api/v1/pdf', {
+    responseType: 'arraybuffer',
+    params: {
+      data: JSON.stringify(data),
+    },
+  });
+  const blob = new Blob([response.data], { type: 'application/pdf' });
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', 'document.pdf');
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};  
+
+const FilterGenerate = () => {
+
+  const [filters, setFilters] = useState({
+    classe_id:'',
+    categorie_id:'',
+    serie_id:'',
+    matiere_id:'',
+    periode:'',
+    });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [series, setSeries] = useState([]);
+  const [matieres, setMatieres] = useState([]);
+  const [periodes, setPeriodes] = useState([]);
+  const [types, setTypes] = useState([]);
+  const [classesMat,setClassesMat] = useState([]);
+  const [classesWithData, setClassesWithData] = useState([]);
+  const [matieres1, setMatieres1] = useState([]); 
+  const [message, setMessage] = useState({ text: '', type: '' }); 
+  const [classes, setClasses] = useState([]);
+  const [dataEducmaster, setDataEducmaster] = useState([]);
+  const [showDownloadButton, setShowDownloadButton] = useState(false);
+
+
+  const getMatieresBySerie = (serieId) => {
+    if (!serieId) return [];
+    
+    const serie = matieres.find(s => s.id == serieId);
+    return serie && serie.matieres ? serie.matieres : [];
   };
   
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [classesRes,classesMatieresRes, matieresRes, matieres1Res, seriesRes] = await Promise.all([
+          axios.get('http://localhost:8000/api/classesS?with_series=true&with_matieres=true'),
+          axios.get('http://localhost:8000/api/with-series-matieresSecondaire'),
+          axios.get('http://localhost:8000/api/matieres-with-series'),
+          axios.get("http://localhost:8000/api/matieres"),
+          axios.get('http://localhost:8000/api/series'),
+        ]);
+        
+        setClasses(classesRes.data);
+        setClassesMat(classesMatieresRes.data);
+        setMatieres(matieresRes.data);
+        setMatieres1(matieres1Res.data);
+        setClassesWithData(classesMatieresRes.data);
+        setSeries(seriesRes.data);
+        setMessage({ text: '', type: '' });
+      } catch (error) {
+        setMessage({ 
+          text: 'Erreur lors du chargement des données', 
+          type: 'error' 
+        });
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+  // Gérer les changements de filtres
+const handleFilterChange = (e) => {
+  const { name, value } = e.target;
+  setFilters(prev => ({
+    ...prev,
+    [name]: value
+  }));
+};
+
+useEffect(() => {
+    if (filters.classe_id) {
+        const selectedClasse = classes.find(c => c.id == filters.classe_id);
+        if (selectedClasse) {
+            setFilters(prev => ({
+                ...prev,
+                categorie_id: selectedClasse.categorie_classe || ''
+            }));
+        }
+    }
+}, [filters.classe_id, classes]);
+
+    // Fonction pour appliquer les filtres
+  const applyFilters = async () => {
+    setShowDownloadButton(false);
+    try {
+      setLoading(true);
+      
+      // Construction de l'URL avec les paramètres de filtrage
+      let url = 'http://localhost:8000/api/EducMasterFile';
+      const params = new URLSearchParams();
+      
+      // Ajouter uniquement les filtres non vides
+      for (const [key, value] of Object.entries(filters)) {
+        if (value) {
+          params.append(key, value);
+        }
+      }
+      
+      const response = await axios.get(`${url}?${params.toString()}`);
+      
+      if (response.data.success) {
+        setDataEducmaster(response.data.data);
+        if (response.data.data.length > 0) {
+          setShowDownloadButton(true);
+        }
+        console.log('Données du Fichier Educmaster :', response.data.data);
+      } else {
+        throw new Error(response.data.message || 'Erreur lors du filtrage');
+      }
+    } catch (error) {
+      console.error('Erreur lors de la recuperation des données:', error);
+      setError(error.message || 'Erreur lors de la recuperation des données pour le fichier educmaster');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDownload = () => {
+    const doc = new jsPDF();
+    doc.text("Fichier EducMaster de la classe de", 14, 15);
+
+    const tableColumn = ["Matricule", "Nom", "Prénoms","Moy. Interro", "Devoir 1", "Devoir 2"];
+    const tableRows = [];
+    console.log(dataEducmaster);
+
+    dataEducmaster.forEach(item => {
+        // Vérification que Devoirs existe et est un tableau
+        const devoirs = Array.isArray(item.Devoirs) ? item.Devoirs : [];
+        
+        const devoir1 = devoirs.find(d => d.type_evaluation === 'Devoir1')?.note || 'N/A';
+        const devoir2 = devoirs.find(d => d.type_evaluation === 'Devoir2')?.note || 'N/A';
+        
+        const rowData = [
+            item.numero_matricule || 'N/A',
+            item.nom || 'N/A',
+            item.prenom || 'N/A',
+            item.moyenne_interrogations || 'N/A',
+            devoir1,
+            devoir2,
+        ];
+        tableRows.push(rowData);
+    });
+
+    doc.autoTable({
+        head: [tableColumn],
+        body: tableRows,
+        startY: 20,
+    });
+
+    doc.save('educmaster_data.pdf');
+};
+
+
+  return(<div className="filters-section">
+    <div className="filters-grid">
+      <div className="filter-item">
+        <label>Classe</label>
+                      <select
+                        name="classe_id"
+                        value={filters.classe_id}
+                        onChange={handleFilterChange}
+                        className="filter-select"
+                        required
+                      >
+                        <option value="">Sélectionner une classe</option>
+                        {classes.map(classe => (
+                          <option key={classe.id} value={classe.id}>
+                            {classe.nom_classe}
+                          </option>
+                        ))}
+                      </select>
+      </div>
+
+       <div className="filter-item">
+        <label>Categorie</label>
+                      
+
+                      <input 
+                        type="text" 
+                        name="categorie_id"
+                        value={
+                          filters.classe_id 
+                          ? classes.find(c => c.id == filters.classe_id)?.categorie_classe || 'Classe non trouvée'
+                          : ''}
+                        onChange={handleFilterChange}
+                        className="filter-select"
+                        readOnly
+                      />
+      </div>
+
+      <div className="filter-item">
+                      <label>Séries</label>
+                      <select
+                        name="serie_id"
+                        value={filters.serie_id}
+                        onChange={handleFilterChange}
+                        className="filter-select"
+                        required
+                      >
+                        <option value="">Sélectionner une série</option>
+                        {filters.classe_id && (() => {
+                          const classe = classesMat.find(c => c.id == filters.classe_id);
+                          if (!classe || !classe.series) return null;
+                          
+                          return classe.series.map(serie => (
+                            <option key={serie.id} value={serie.id}>
+                              {serie.nom}
+                            </option>
+                          ));
+                        })()}     
+                      </select>
+      </div>
+
+      <div className="filter-item">
+        <label>Matière</label>
+        <select
+                        name="matiere_id"
+                        value={filters.matiere_id}
+                        onChange={handleFilterChange}
+                        className="filter-select"
+                        disabled={!filters.serie_id}
+                        required
+                      >
+                        <option value="">Sélectionner une matière</option>
+                        {filters.serie_id && getMatieresBySerie(filters.serie_id).map(matiere => (
+                          <option key={matiere.id} value={matiere.id}>
+                            {matiere.nom}
+                          </option>
+                        ))}
+                      </select>
+      </div>
+
+      
+
+      <div className="filter-item">
+        <label>Période</label>
+        <select 
+          name="periode"
+          value={filters.periode}
+          onChange={handleFilterChange}
+          className="filter-select"
+        >
+          <option value="">Toutes les périodes</option>
+          <option value="Semestre 1">Semestre 1</option>
+          <option value="Semestre 2">Semestre 2</option>
+        </select>
+      </div>
+
+      <div className="filter-item">
+        <button 
+          onClick={applyFilters}
+          className="btn-filter"
+          disabled={loading}
+        >
+          {loading ? 'Chargement...' : 'Rechercher'}
+        </button>
+        {showDownloadButton && (
+          <button 
+            onClick={handleDownload}
+            className="btn-filter"
+            style={{marginLeft: '10px'}}
+          >
+            Télécharger
+          </button>
+        )}
+      </div>
+    </div>
+  </div>);
+};
+
+/*const Contributions = () => {
+  const [classes, setClasses] = useState([]);
+  const [contributions, setContributions] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [montant, setMontant ] = useState([]);
+  const [selectedClassID, setSelectedClassID] = useState('');
+  const [date_fin_premiere_tranche, setDate_fin_premiere_tranche] = useState('');
+  const [date_fin_deuxieme_tranche, setDate_fin_deuxieme_tranche] = useState('');
+  const [date_fin_troisieme_tranche, setDate_fin_troisieme_tranche] = useState('');
+
+  // Charger les classes et contributions au montage
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const classesRes = await axios.get('http://localhost:8000/api/classesS?with_series=true&with_matieres=true');
+        setClasses(classesRes.data);
+
+        const contributionsRes = await axios.get('http://localhost:8000/api/contributions');
+        setContributions(contributionsRes.data);
+      } catch (err) {
+        setError("Erreur lors du chargement des données");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  return (
+    <div className="contributions-container">
+      <h2>Contributions</h2>
+      {error && <div style={{ color: 'red', marginBottom: 8 }}>{error}</div>}
+      <div className="filter-section">
+        <input type="int" 
+          value={montant} 
+          onChange={(e) => setMontant(e.target.value)} 
+          className="filter-input" 
+          placeholder="Montant" 
+          style={{ marginRight: 10 }}
+        />
+        <label>Classe</label>
+        <select
+          value={selectedClassID}
+          onChange={(e) => setSelectedClassID(e.target.value)}
+          className="filter-select"
+        >
+          <option value="">Toutes les classes</option>
+          {classes.map(classe => (
+            <option key={classe.id} value={classe.id}>
+              {classe.nom_classe}
+            </option>
+          ))}
+        </select>
+
+        <input
+          type="date"
+          placeholder="Date de la fin de la premiere tranche"
+          value={date_fin_premiere_tranche}
+          onChange={(e) => setDate_fin_premiere_tranche(e.target.value)}
+          className="input-field"
+        />
+        <input
+            type="date"
+            placeholder="Date de la fin de la deuxieme tranche"
+            value={date_fin_deuxieme_tranche}
+            onChange={(e) => setDate_fin_deuxieme_tranche(e.target.value)}
+            className="input-field"
+          />
+        <input
+            type="date"
+            placeholder="Date de la fin de la troisieme tranche"
+            value={date_fin_troisieme_tranche}
+            onChange={(e) => setDate_fin_troisieme_tranche(e.target.value)}
+            className="input-field"
+          />
+      </div>
+      
+      <button
+        onClick={async () => {
+          setLoading(true);
+          try {
+            const response = await axios.post('http://localhost:8000/api/contributions/store', {
+              montant: montant,
+              id_classe: selectedClassID,
+              date_fin_premiere_tranche: date_fin_premiere_tranche,
+              date_fin_deuxieme_tranche: date_fin_deuxieme_tranche,
+              date_fin_troisieme_tranche: date_fin_troisieme_tranche,
+            });
+            console.log(response.data)
+            setMontant('');
+            setSelectedClassID('');
+            setDate_fin_premiere_tranche('');
+            setDate_fin_deuxieme_tranche('');
+            setDate_fin_troisieme_tranche('');
+            setLoading(false);
+            setContributions((contributions) => [...contributions, response.data]);
+          } catch (error) {
+            console.error(error);
+            setLoading(false);
+          }
+        }}
+        className="add-button"
+      >
+        Ajouter
+      </button>
+    
+      <div className="contributions-list">
+        {loading ? (
+          <p>Chargement...</p>
+        ) : (
+          contributions.filter(c => !selectedClassID ? true : c.classe_id === selectedClassID).map(contribution => (
+            <div key={contribution.id} className="contribution-item">
+              <h3>{contribution.nom}</h3>
+              <p>Montant: {contribution.montant} FCFA</p>
+              <p>Classe: {contribution.classe.nom_classe}</p>
+              <p>Date de fin première tranche: {contribution.date_fin_premiere_tranche}</p>
+              <p>Date de fin deuxième tranche: {contribution.date_fin_deuxieme_tranche}</p>
+              <p>Date de fin troisième tranche: {contribution.date_fin_troisieme_tranche}</p>
+           </div>
+          ))
+        )}
+        </div>
+    </div>
+  );
+}*/
+
+/*const Contributions = () => {
+  const [classes, setClasses] = useState([]);
+  const [contributions, setContributions] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [montant, setMontant] = useState('');
+  const [selectedClassID, setSelectedClassID] = useState('');
+  const [date_fin_premiere_tranche, setDate_fin_premiere_tranche] = useState('');
+  const [date_fin_deuxieme_tranche, setDate_fin_deuxieme_tranche] = useState('');
+  const [date_fin_troisieme_tranche, setDate_fin_troisieme_tranche] = useState('');
+  const [editingId, setEditingId] = useState(null);
+
+  // Charger les données
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [classesRes, contributionsRes] = await Promise.all([
+          axios.get('http://localhost:8000/api/classesS?with_series=true&with_matieres=true'),
+          axios.get('http://localhost:8000/api/contributions')
+        ]);
+        setClasses(classesRes.data);
+        setContributions(contributionsRes.data);
+      } catch (err) {
+        setError("Erreur lors du chargement des données");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const data = {
+        montant: parseInt(montant),
+        id_classe: selectedClassID,
+        date_fin_premiere_tranche,
+        date_fin_deuxieme_tranche,
+        date_fin_troisieme_tranche
+      };
+
+      let response;
+      if (editingId) {
+        response = await axios.put(`http://localhost:8000/api/contributions/${editingId}`, data);
+        setContributions(contributions.map(c => c.id === editingId ? response.data : c));
+        setEditingId(null);
+      } else {
+        response = await axios.post('http://localhost:8000/api/contributions/store', data);
+        setContributions([...contributions, response.data]);
+      }
+
+      // Réinitialiser le formulaire
+      resetForm();
+    } catch (error) {
+      console.error(error);
+      setError("Erreur lors de l'enregistrement");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEdit = (contribution) => {
+    setEditingId(contribution.id);
+    setMontant(contribution.montant);
+    setSelectedClassID(contribution.id_classe);
+    setDate_fin_premiere_tranche(contribution.date_fin_premiere_tranche);
+    setDate_fin_deuxieme_tranche(contribution.date_fin_deuxieme_tranche);
+    setDate_fin_troisieme_tranche(contribution.date_fin_troisieme_tranche);
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm("Êtes-vous sûr de vouloir supprimer cette contribution?")) {
+      try {
+        await axios.delete(`http://localhost:8000/api/contributions/${id}`);
+        setContributions(contributions.filter(c => c.id !== id));
+      } catch (error) {
+        console.error(error);
+        setError("Erreur lors de la suppression");
+      }
+    }
+  };
+
+  const resetForm = () => {
+    setMontant('');
+    setSelectedClassID('');
+    setDate_fin_premiere_tranche('');
+    setDate_fin_deuxieme_tranche('');
+    setDate_fin_troisieme_tranche('');
+  };
+
+  const filteredContributions = selectedClassID 
+    ? contributions.filter(c => c.id_classe === parseInt(selectedClassID))
+    : contributions;
+
+  return (
+    <div className="contributions-container">
+      <h2>Gestion des Contributions</h2>
+      {error && <div className="error-message">{error}</div>}
+      
+      <form onSubmit={handleSubmit} className="contribution-form">
+        <div className="form-group">
+          <label>Montant (FCFA)</label>
+          <input 
+            type="number" 
+            value={montant} 
+            onChange={(e) => setMontant(e.target.value)} 
+            required 
+          />
+        </div>
+
+        <div className="form-group">
+          <label>Classe</label>
+          <select
+            value={selectedClassID}
+            onChange={(e) => setSelectedClassID(e.target.value)}
+            required
+          >
+            <option value="">Sélectionnez une classe</option>
+            {classes.map(classe => (
+              <option key={classe.id} value={classe.id}>
+                {classe.nom_classe}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="form-group">
+          <label>Date fin 1ère tranche</label>
+          <input
+            type="date"
+            value={date_fin_premiere_tranche}
+            onChange={(e) => setDate_fin_premiere_tranche(e.target.value)}
+            required
+          />
+        </div>
+
+        <div className="form-group">
+          <label>Date fin 2ème tranche</label>
+          <input
+            type="date"
+            value={date_fin_deuxieme_tranche}
+            onChange={(e) => setDate_fin_deuxieme_tranche(e.target.value)}
+            required
+          />
+        </div>
+
+        <div className="form-group">
+          <label>Date fin 3ème tranche</label>
+          <input
+            type="date"
+            value={date_fin_troisieme_tranche}
+            onChange={(e) => setDate_fin_troisieme_tranche(e.target.value)}
+            required
+          />
+        </div>
+
+        <button type="submit" disabled={loading}>
+          {loading ? 'Enregistrement...' : editingId ? 'Modifier' : 'Ajouter'}
+        </button>
+        {editingId && (
+          <button type="button" onClick={() => {
+            setEditingId(null);
+            resetForm();
+          }}>
+            Annuler
+          </button>
+        )}
+      </form>
+
+      <div className="contributions-list">
+        <h3>Liste des Contributions</h3>
+        <div className="filter-section">
+          <label>Filtrer par classe: </label>
+          <select
+            value={selectedClassID}
+            onChange={(e) => setSelectedClassID(e.target.value)}
+          >
+            <option value="">Toutes les classes</option>
+            {classes.map(classe => (
+              <option key={classe.id} value={classe.id}>
+                {classe.nom_classe}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {loading ? (
+          <p>Chargement...</p>
+        ) : filteredContributions.length === 0 ? (
+          <p>Aucune contribution trouvée</p>
+        ) : (
+          <table>
+            <thead>
+              <tr>
+                <th>Classe</th>
+                <th>Montant</th>
+                <th>1ère tranche</th>
+                <th>2ème tranche</th>
+                <th>3ème tranche</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredContributions.map(contribution => {
+                const classe = classes.find(c => c.id === contribution.id_classe);
+                return (
+                  <tr key={contribution.id}>
+                    <td>{classe ? classe.nom_classe : 'Inconnue'}</td>
+                    <td>{contribution.montant} FCFA</td>
+                    <td>{new Date(contribution.date_fin_premiere_tranche).toLocaleDateString()}</td>
+                    <td>{new Date(contribution.date_fin_deuxieme_tranche).toLocaleDateString()}</td>
+                    <td>{new Date(contribution.date_fin_troisieme_tranche).toLocaleDateString()}</td>
+                    <td>
+                      <button onClick={() => handleEdit(contribution)}>Modifier</button>
+                      <button onClick={() => handleDelete(contribution.id)}>Supprimer</button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  );
+};*/
+
+
+const Contributions = () => {
+  const [classes, setClasses] = useState([]);
+  const [contributions, setContributions] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [montant, setMontant] = useState('');
+  const [selectedClassID, setSelectedClassID] = useState('');
+  const [date_fin_premiere_tranche, setDate_fin_premiere_tranche] = useState('');
+  const [date_fin_deuxieme_tranche, setDate_fin_deuxieme_tranche] = useState('');
+  const [date_fin_troisieme_tranche, setDate_fin_troisieme_tranche] = useState('');
+  const [editingId, setEditingId] = useState(null);
+
+  // Charger les données
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [classesRes, contributionsRes] = await Promise.all([
+          axios.get('http://localhost:8000/api/classesS?with_series=true&with_matieres=true'),
+          axios.get('http://localhost:8000/api/contributions')
+        ]);
+        setClasses(classesRes.data);
+        setContributions(contributionsRes.data);
+      } catch (err) {
+        setError("Erreur lors du chargement des données");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const data = {
+        montant: parseInt(montant),
+        id_classe: selectedClassID,
+        date_fin_premiere_tranche,
+        date_fin_deuxieme_tranche,
+        date_fin_troisieme_tranche
+      };
+
+      let response;
+      if (editingId) {
+        response = await axios.put(`http://localhost:8000/api/contributions/${editingId}`, data);
+        setContributions(contributions.map(c => c.id === editingId ? response.data : c));
+        setEditingId(null);
+      } else {
+        response = await axios.post('http://localhost:8000/api/contributions/store', data);
+        setContributions([...contributions, response.data]);
+      }
+
+      // Réinitialiser le formulaire
+      resetForm();
+    } catch (error) {
+      console.error(error);
+      setError("Erreur lors de l'enregistrement");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEdit = (contribution) => {
+    setEditingId(contribution.id);
+    setMontant(contribution.montant);
+    setSelectedClassID(contribution.id_classe);
+    setDate_fin_premiere_tranche(contribution.date_fin_premiere_tranche);
+    setDate_fin_deuxieme_tranche(contribution.date_fin_deuxieme_tranche);
+    setDate_fin_troisieme_tranche(contribution.date_fin_troisieme_tranche);
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm("Êtes-vous sûr de vouloir supprimer cette contribution?")) {
+      try {
+        await axios.delete(`http://localhost:8000/api/contributions/${id}`);
+        setContributions(contributions.filter(c => c.id !== id));
+      } catch (error) {
+        console.error(error);
+        setError("Erreur lors de la suppression");
+      }
+    }
+  };
+
+  const resetForm = () => {
+    setMontant('');
+    setSelectedClassID('');
+    setDate_fin_premiere_tranche('');
+    setDate_fin_deuxieme_tranche('');
+    setDate_fin_troisieme_tranche('');
+  };
+
+  const filteredContributions = selectedClassID 
+    ? contributions.filter(c => c.id_classe === parseInt(selectedClassID))
+    : contributions;
+
   
 
-return (
-  <div>
-    <div className="add-form">
-              <h2 className="form-title">Ajouter une nouvelle type d'evaluation</h2>
-              <div className="form-controls">
-                <input
-                  type="text"
-                  value={newTypeName}
-                  onChange={(e) => setNewTypeName(e.target.value)}
-                  placeholder="Nom de la Type d'evaluation"
-                  className="input-field"
-                />
-                <button
-                  onClick={AjouterType}
-                  disabled={loading}
-                  className="btn btn-primary"
-                >
-                  <Plus size={18} />
-                  Ajouter
-                </button>
-              </div>
-            </div>
+  return (
+    <div className="contributions-container">
+      <h2>Gestion des Contributions</h2>
+      {error && <div className="error-message">{error}</div>}
+      
+      <form onSubmit={handleSubmit} className="contribution-form">
+        <div className="form-group">
+          <label>Montant (FCFA)</label>
+          <input 
+            type="number" 
+            value={montant} 
+            onChange={(e) => setMontant(e.target.value)} 
+            required 
+          />
+        </div>
 
-    <div className="add-form">
-              <h2 className="form-title">Ajouter une nouvelle Periode</h2>
-              <div className="form-controls">
-                <input
-                  type="text"
-                  value={newPeriodeName}
-                  onChange={(e) => setNewPeriodeName(e.target.value)}
-                  placeholder="Nom de la Période"
-                  className="input-field"
-                />
-                <button
-                  onClick={AjouterPeriode}
-                  disabled={loading}
-                  className="btn btn-primary"
-                >
-                  <Plus size={18} />
-                  Ajouter
-                </button>
-              </div>
-            </div>
+        <div className="form-group">
+          <label>Classe</label>
+          <select
+            value={selectedClassID}
+            onChange={(e) => setSelectedClassID(e.target.value)}
+            required
+          >
+            <option value="">Sélectionnez une classe</option>
+            {classes.map(classe => (
+              <option key={classe.id} value={classe.id}>
+                {classe.nom_classe}
+              </option>
+            ))}
+          </select>
+        </div>
 
-  </div>
-)
+        <div className="form-group">
+          <label>Date fin 1ère tranche</label>
+          <input
+            type="date"
+            value={date_fin_premiere_tranche}
+            onChange={(e) => setDate_fin_premiere_tranche(e.target.value)}
+            required
+          />
+        </div>
 
-}
+        <div className="form-group">
+          <label>Date fin 2ème tranche</label>
+          <input
+            type="date"
+            value={date_fin_deuxieme_tranche}
+            onChange={(e) => setDate_fin_deuxieme_tranche(e.target.value)}
+            required
+          />
+        </div>
+
+        <div className="form-group">
+          <label>Date fin 3ème tranche</label>
+          <input
+            type="date"
+            value={date_fin_troisieme_tranche}
+            onChange={(e) => setDate_fin_troisieme_tranche(e.target.value)}
+            required
+          />
+        </div>
+
+        <button type="submit" disabled={loading}>
+          {loading ? 'Enregistrement...' : editingId ? 'Modifier' : 'Ajouter'}
+        </button>
+        {editingId && (
+          <button type="button" onClick={() => {
+            setEditingId(null);
+            resetForm();
+          }}>
+            Annuler
+          </button>
+        )}
+      </form>
+
+      <div className="contributions-list">
+        <h3>Liste des Contributions</h3>
+        <div className="filter-section">
+          <label>Filtrer par classe: </label>
+          <select
+            value={selectedClassID}
+            onChange={(e) => setSelectedClassID(e.target.value)}
+          >
+            <option value="">Toutes les classes</option>
+            {classes.map(classe => (
+              <option key={classe.id} value={classe.id}>
+                {classe.nom_classe}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {loading ? (
+          <p>Chargement...</p>
+        ) : filteredContributions.length === 0 ? (
+          <p>Aucune contribution trouvée</p>
+        ) : (
+          <table>
+            <thead>
+              <tr>
+                <th>Classe</th>
+                <th>Montant</th>
+                <th>1ère tranche</th>
+                <th>2ème tranche</th>
+                <th>3ème tranche</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredContributions.map(contribution => {
+                const classe = classes.find(c => c.id === contribution.id_classe);
+                return (
+                  <tr key={contribution.id}>
+                    <td>{classe ? classe.nom_classe : 'Inconnue'}</td>
+                    <td>{contribution.montant} FCFA</td>
+                    <td>{new Date(contribution.date_fin_premiere_tranche).toLocaleDateString()}</td>
+                    <td>{new Date(contribution.date_fin_deuxieme_tranche).toLocaleDateString()}</td>
+                    <td>{new Date(contribution.date_fin_troisieme_tranche).toLocaleDateString()}</td>
+                    <td>
+                      <div className="action-buttons">
+                        <button 
+                          className="edit-btn"
+                          onClick={() => handleEdit(contribution)}
+                        >
+                          <Edit2 size={14} /> Modifier
+                        </button>
+                        <button 
+                          className="delete-btn"
+                          onClick={() => handleDelete(contribution.id)}
+                        >
+                          <Trash2 size={14} /> Supprimer
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  );
+};

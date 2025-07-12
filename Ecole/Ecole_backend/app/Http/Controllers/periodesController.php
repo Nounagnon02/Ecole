@@ -18,4 +18,31 @@ class periodesController extends Controller
 
         return response()->json($periodes, 201);
     }
+
+    public function setActive($id)
+
+
+    {
+        // Désactive toutes les périodes
+        periodes::query()->update(['is_active' => false]);
+        // Active celle voulue
+        $periode = periodes::findOrFail($id);
+        $periode->is_active = true;
+        $periode->save();
+
+        return response()->json($periode);
+    }
+
+    public function getActive()
+    {
+        $periode = periodes::where('is_active', true)->first();
+        return response()->json($periode);
+    }
+
+    public function Index()
+    {
+        $periodes = periodes::all();
+        return response()->json($periodes);
+    }
+
 }

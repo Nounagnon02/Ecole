@@ -14,6 +14,7 @@ use App\Http\Controllers\EnseignantsController;
 use App\Models\Eleves;
 use App\Http\Controllers\typeEvaluationController;
 use App\Http\Controllers\periodesController;
+use App\Http\Controllers\ContributionsController;
 
 // Auth
 Route::post('/inscription', [AuthController::class, 'inscription']);
@@ -211,3 +212,29 @@ Route::post('/types/store', [typeEvaluationController::class, 'store']);
 Route::get('/types', [typeEvaluationController::class, 'index']);
 Route::post('/periodes/store', [periodesController::class, 'store']);
 Route::get('/periodes', [periodesController::class, 'index']);
+Route::post('/periodes/{id}/active', [periodesController::class, 'setActive']);
+
+Route::post('/typeevaluation-classe/attach', [typeEvaluationController::class, 'attach']);
+Route::post('/typeevaluation-classe/attach-multiple', [typeEvaluationController::class, 'attachMultiple']);
+Route::get('/typeevaluation-classe/by-classe/{classe_id}', [typeEvaluationController::class, 'getByClasse']);
+Route::get('/typeevaluationETclasseM', [ClassesController::class, 'getClassesWithPeriodesAndTypesM']);
+Route::get('/typeevaluationETclasseP', [ClassesController::class, 'getClassesWithPeriodesAndTypesP']);
+Route::get('/typeevaluationETclasseS', [ClassesController::class, 'getClassesWithPeriodesAndTypesS']);
+Route::get('/typeevaluationETclasse', [typeEvaluationController::class, 'getClassesWithPeriodesAndTypes']);
+
+Route::delete('/typeevaluation-classe/{id}', [typeEvaluationController::class, 'destroy']);
+
+
+Route::get('/classes/{classeId}/series/{serieId}/matieres', [SeriesController::class,'getMatieresSC']);
+Route::get('/classesAvecSeries', [ClassesController::class,'getClasseWithSeries']);
+
+
+//Route pour le fichier educMaster
+Route::get('EducMasterFile', [BulletinController::class,'GenerateFile']);
+
+//Route pour les contributions
+Route::get('/contributions', [ContributionsController::class, 'index']);
+Route::post('/contributions/store', [ContributionsController::class, 'store']);
+Route::get('/contributions/{id}', [ContributionsController::class, 'show']);
+Route::put('/contributions/{id}', [ContributionsController::class, 'update']);
+Route::delete('/contributions/{id}', [ContributionsController::class, 'destroy']);

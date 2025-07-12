@@ -7,30 +7,7 @@ import { NavLink } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import * as pdfjsLib from 'pdfjs-dist';
 
-// Données fictives
-const studentData = [
-  { name: 'Janvier', students: 320 },
-  { name: 'Février', students: 335 },
-  { name: 'Mars', students: 338 },
-  { name: 'Avril', students: 342 },
-  { name: 'Mai', students: 345 },
-  { name: 'Juin', students: 350 },
-];
 
-const attendanceData = [
-  { name: 'Lundi', présent: 92, absent: 8 },
-  { name: 'Mardi', présent: 95, absent: 5 },
-  { name: 'Mercredi', présent: 90, absent: 10 },
-  { name: 'Jeudi', présent: 88, absent: 12 },
-  { name: 'Vendredi', présent: 85, absent: 15 },
-];
-
-const gradeData = [
-  { name: '0-5', value: 5 },
-  { name: '6-10', value: 15 },
-  { name: '11-15', value: 40 },
-  { name: '16-20', value: 25 },
-];
 
 const classesList = [
   { id: 1, nom: "CP", effectif: 28, enseignant: "Mme Dupont", salle: "A101" },
@@ -1061,18 +1038,18 @@ const groupElevesByClasse = (eleves) => {
             {sidebarOpen && <span className="sidebar-item-text">Lier enseignant classes</span>}
           </div>
           <div 
-            className={`sidebar-item ${activeTab === 'personnel' ? 'active' : ''}`} 
-            onClick={() => setActiveTab('personnel')}
+            className={`sidebar-item ${activeTab === 'Types' ? 'active' : ''}`} 
+            onClick={() => setActiveTab('Types')}
           >
             <User size={20} />
-            {sidebarOpen && <span className="sidebar-item-text">Personnel</span>}
+            {sidebarOpen && <span className="sidebar-item-text">Types d'evaluation</span>}
           </div>
           <div 
-            className={`sidebar-item ${activeTab === 'paramètres' ? 'active' : ''}`} 
-            onClick={() => setActiveTab('paramètres')}
+            className={`sidebar-item ${activeTab === 'LiaisonClassesPeriodeTypesEvaluation' ? 'active' : ''}`} 
+            onClick={() => setActiveTab('LiaisonClassesPeriodeTypesEvaluation')}
           >
             <Settings size={20} />
-            {sidebarOpen && <span className="sidebar-item-text">Paramètres</span>}
+            {sidebarOpen && <span className="sidebar-item-text">Liaison des Classes aux evaluations</span>}
           </div>
           <div className="sidebar-logout">
                       <LogOut size={20} />
@@ -2025,6 +2002,14 @@ const groupElevesByClasse = (eleves) => {
             <LierEnseignantsAuxMatieres/>
           )}
 
+          {activeTab === 'Types' && (
+            <TypeEvas2/>
+          )}
+
+          {activeTab === 'LiaisonClassesPeriodeTypesEvaluation' && (
+            <LierTypeClassePeriode/>
+          )}
+
           {(activeTab !== 'aperçu' && activeTab !== 'élèves' && activeTab !== 'classes' && activeTab !== 'matieres' && activeTab !== 'LiaisonSeriesClass'  && activeTab !== 'LiaisonMatieresAvecCoefficientEtSerieClasses' && activeTab !== 'notes' && activeTab !== 'enseignantsauxclasses') && (
             <div className="coming-soon">
               <h3>Section {activeTab} en cours de développement</h3>
@@ -2490,6 +2475,7 @@ const groupUniqueSeries = (series) => {
 };
 
 
+
 const LierEnseignantsAuxMatieres = () => {
   const [classes, setClasses] = useState([]);
   const [matieres, setMatieres] = useState([]);
@@ -2806,3 +2792,761 @@ const LierEnseignantsAuxMatieres = () => {
     </div>
   );
 };
+
+const TypeEvas2 = () => {
+  const [newTypeName, setNewTypeName] = useState('');
+  const [newDebutDName, setNewDebutDName] = useState('');
+  const [newDebutFName, setNewDebutFName] = useState('');
+  const [newPeriodeName, setNewPeriodeName] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+  const [types, setTypes] = useState([]);
+  const [periodes, setPeriodes] = useState([]);
+  const [showAllTypes, setShowAllTypes] = useState(false);
+  const [showAllPeriodes, setShowAllPeriodes] = useState(false);
+
+  // Charger les types et périodes au montage ou après ajout
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [typesRes, periodesRes] = await Promise.all([
+          axios.get('http://localhost:8000/api/types'),
+          axios.get('http://localhost:8000/api/periodes'),
+        ]);
+        setTypes(typesRes.data);
+        setPeriodes(periodesRes.data);
+      } catch (err) {
+        setError("Erreur lors du chargement des types ou périodes");
+      }
+    };
+    fetchData();
+  }, []);
+
+  const AjouterType = async () => {
+    if (!newTypeName.trim()) {
+      setError("Le nom de l'évaluation ne peut pas être vide");
+      return;
+    }
+    try {
+      setLoading(true);
+      setError('');
+      await axios.post('http://localhost:8000/api/types/store', {
+        nom: newTypeName,
+      }, {
+        headers: { 'Content-Type': 'application/json' }
+      });
+      setNewTypeName('');
+      setMessage("Type d'évaluation ajouté !");
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || "Erreur lors de l'ajout";
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const AjouterPeriode = async () => {
+    if (!newPeriodeName.trim()) {
+      setError("Le nom de la période ne peut pas être vide");
+      return;
+    }
+    if (!newDebutDName || !newDebutFName) {
+      setError("Les dates de début et de fin ne peuvent pas être vides");
+      return;
+    }
+    if (newDebutDName > newDebutFName) {
+      setError("La date de début ne peut pas être postérieure à la date de fin");
+      return;
+    }
+    try {
+      setLoading(true);
+      setError('');
+      await axios.post('http://localhost:8000/api/periodes/store', {
+        nom: newPeriodeName,
+        date_debut: newDebutDName,
+        date_fin: newDebutFName,
+      }, {
+        headers: { 'Content-Type': 'application/json' }
+      });
+      setNewPeriodeName('');
+      setNewDebutDName('');
+      setNewDebutFName('');
+      setMessage("Période ajoutée !");
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || "Erreur lors de l'ajout";
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div>
+      {error && <div style={{ color: 'red', marginBottom: 8 }}>{error}</div>}
+      {message && <div style={{ color: 'green', marginBottom: 8 }}>{message}</div>}
+
+      <div className="add-form">
+        <h2 className="form-title">Ajouter un nouveau type d'évaluation</h2>
+        <div className="form-controls">
+          <input
+            type="text"
+            value={newTypeName}
+            onChange={(e) => setNewTypeName(e.target.value)}
+            placeholder="Nom du type d'évaluation"
+            className="input-field"
+          />
+          <button
+            onClick={AjouterType}
+            disabled={loading}
+            className="btn btn-primary"
+          >
+            <Plus size={18} />
+            Ajouter
+          </button>
+        </div>
+      </div>
+
+      {/* Liste des types d'évaluation */}
+      <div className="list-section">
+        <h3>Types d'évaluation</h3>
+        <ul>
+          {(showAllTypes ? types : types.slice(0, 3)).map(type => (
+            <li key={type.id}>{type.nom}</li>
+          ))}
+        </ul>
+        {types.length > 3 && (
+          <button
+            className="btn btn-link"
+            onClick={() => setShowAllTypes(v => !v)}
+          >
+            {showAllTypes ? 'Réduire' : 'Voir plus'}
+          </button>
+        )}
+      </div>
+
+      <div className="add-form">
+        <h2 className="form-title">Ajouter une nouvelle période</h2>
+        <div className="form-controls">
+          <input
+            type="text"
+            value={newPeriodeName}
+            onChange={(e) => setNewPeriodeName(e.target.value)}
+            placeholder="Nom de la période"
+            className="input-field"
+          />
+          <input
+            type="date"
+            value={newDebutDName}
+            onChange={(e) => setNewDebutDName(e.target.value)}
+            className="input-field"
+          />
+          <input
+            type="date"
+            value={newDebutFName}
+            onChange={(e) => setNewDebutFName(e.target.value)}
+            className="input-field"
+          />
+          <button
+            onClick={AjouterPeriode}
+            disabled={loading}
+            className="btn btn-primary"
+          >
+            <Plus size={18} />
+            Ajouter
+          </button>
+        </div>
+      </div>
+
+      {/* Liste des périodes */}
+      <div className="list-section">
+        <h3>Périodes</h3>
+        <ul>
+          {(showAllPeriodes ? periodes : periodes.slice(0, 3)).map(periode => (
+            <li key={periode.id}>
+              {periode.nom} ({periode.date_debut} - {periode.date_fin})
+            </li>
+          ))}
+        </ul>
+        {periodes.length > 3 && (
+          <button
+            className="btn btn-link"
+            onClick={() => setShowAllPeriodes(v => !v)}
+          >
+            {showAllPeriodes ? 'Réduire' : 'Voir plus'}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
+
+
+/*const LierTypeClassePeriode = () => {
+  const [classes, setClasses] = useState([]);
+  const [periodes, setPeriodes] = useState([]);
+  const [types, setTypes] = useState([]);
+  const [selectedClass, setSelectedClass] = useState('');
+  const [selectedPeriode, setSelectedPeriode] = useState('');
+  const [selectedType, setSelectedType] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState({ text: '', type: '' });
+  const [liaisons, setLiaisons] = useState([]);
+
+  // Charger les données initiales
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [classesRes, periodesRes, typesRes, liaisonsRes] = await Promise.all([
+          axios.get('http://localhost:8000/api/classesP'),
+          axios.get('http://localhost:8000/api/periodes'),
+          axios.get('http://localhost:8000/api/types'),
+          axios.get('http://localhost:8000/api/typeevaluationETclasseP'),
+        ]);
+        setClasses(classesRes.data);
+        setPeriodes(periodesRes.data);
+        setTypes(typesRes.data);
+        setLiaisons(liaisonsRes.data);
+        setMessage({ text: '', type: '' });
+      } catch (error) {
+        setMessage({ text: 'Erreur lors du chargement des données', type: 'error' });
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedClass || !selectedPeriode || !selectedType) {
+      setMessage({ text: 'Veuillez sélectionner une classe, une période et un type', type: 'error' });
+      return;
+    }
+    try {
+      setLoading(true);
+      await axios.post('http://localhost:8000/api/typeevaluation-classe/attach', {
+        classe_id: selectedClass,
+        periode_id: selectedPeriode,
+        typeevaluation_id: selectedType,
+      });
+      setMessage({ text: 'Liaison ajoutée avec succès', type: 'success' });
+    } catch (error) {
+      setMessage({ text: error.response?.data?.message || 'Erreur lors de la liaison', type: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Afficher les liaisons existantes
+  const filteredLiaisons = liaisons.filter(liaison =>
+    (!selectedClass || liaison.classe_id == selectedClass)
+  );
+
+  return (
+    <div className="link-type-classe-periode-container">
+      <h1 className="section-title">Lier Classe, Période et Type d'évaluation</h1>
+      {message.text && (
+        <div className={`message ${message.type === 'error' ? 'error-message' : 'success-message'}`}>
+          {message.text}
+          <button className="message-close" onClick={() => setMessage({ text: '', type: '' })}>×</button>
+        </div>
+      )}
+
+      <div className="form-grid">
+        <div className="form-card">
+          <h2 className="form-title">Créer une liaison</h2>
+          <form onSubmit={handleSubmit}>
+            <div className="form-group">
+              <label>Classe</label>
+              <select
+                value={selectedClass}
+                onChange={e => { setSelectedClass(e.target.value); }}
+                disabled={loading}
+              >
+                <option value="">Sélectionnez une classe</option>
+                {classes.map(classe => (
+                  <option key={classe.id} value={classe.id}>{classe.nom_classe}</option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Période</label>
+              <select
+                value={selectedPeriode}
+                onChange={e => setSelectedPeriode(e.target.value)}
+                disabled={loading}
+              >
+                <option value="">Sélectionnez une période</option>
+                {periodes.map(periode => (
+                  <option key={periode.id} value={periode.id}>
+                    {periode.nom} ({periode.date_debut} - {periode.date_fin})
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Type d'évaluation</label>
+              <select
+                value={selectedType}
+                onChange={e => setSelectedType(e.target.value)}
+                disabled={loading}
+              >
+                <option value="">Sélectionnez un type</option>
+                {types.map(type => (
+                  <option key={type.id} value={type.id}>{type.nom}</option>
+                ))}
+              </select>
+            </div>
+            <button
+              type="submit"
+              disabled={loading || !selectedClass || !selectedPeriode || !selectedType}
+              className="submit-button"
+            >
+              {loading ? 'Enregistrement...' : 'Enregistrer'}
+            </button>
+          </form>
+        </div>
+
+        <div className="relationships-card">
+          <h2>Liaisons existantes</h2>
+          {filteredLiaisons.length === 0 ? (
+            <p>Aucune liaison trouvée</p>
+          ) : (
+            <table className="liaisons-table">
+              <thead>
+                <tr>
+                  <th>Classe</th>
+                  <th>Période</th>
+                  <th>Type d'évaluation</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredLiaisons.map(liaison => (
+                  <tr key={liaison.id || `${liaison.classe_id}-${liaison.periode_id}-${liaison.typeevaluation_id}`}>
+                    <td>{classes.find(c => c.id == liaison.classe_id)?.nom_classe || liaison.classe_id}</td>
+                    <td>{periodes.find(p => p.id == liaison.periode_id)?.nom || liaison.periode_id}</td>
+                    <td>{types.find(t => t.id == liaison.typeevaluation_id)?.nom || liaison.typeevaluation_id}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};*/
+
+
+const LierTypeClassePeriode = () => {
+  const [classes, setClasses] = useState([]);
+  const [periodes, setPeriodes] = useState([]);
+  const [types, setTypes] = useState([]);
+  const [classesWithSeries, setClassesWithSeries] = useState([]);
+  const [liaisons, setLiaisons] = useState([]);
+  const [editingLiaison, setEditingLiaison] = useState(null);
+
+  // États pour les sélections
+  const [selectedClasses, setSelectedClasses] = useState([]);
+  const [selectedPeriodes, setSelectedPeriodes] = useState([]);
+  const [selectedTypes, setSelectedTypes] = useState([]);
+  const [selectedSeries, setSelectedSeries] = useState({});
+
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState({ text: '', type: '' });
+
+  // Gestionnaire générique pour les cases à cocher
+  const handleCheckboxChange = (setter, currentSelection, id) => {
+    setter(prev =>
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
+
+  // Gestionnaire spécifique pour les classes
+  const handleClassCheckboxChange = (id) => {
+    setSelectedClasses(prev => {
+      const newSelection = prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id];
+      if (!newSelection.includes(id)) {
+        setSelectedSeries(prevSeries => {
+          const newSeries = { ...prevSeries };
+          delete newSeries[id];
+          return newSeries;
+        });
+      }
+      return newSelection;
+    });
+  };
+
+  // Gestionnaire spécifique pour les séries
+  const handleSeriesCheckboxChange = (classId, serieId) => {
+    setSelectedSeries(prev => {
+      const currentSeriesForClass = prev[classId] || [];
+      const newSeriesForClass = currentSeriesForClass.includes(serieId)
+        ? currentSeriesForClass.filter(item => item !== serieId)
+        : [...currentSeriesForClass, serieId];
+      return {
+        ...prev,
+        [classId]: newSeriesForClass,
+      };
+    });
+  };
+
+  // Charger les données initiales
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [classesRes, periodesRes, typesRes, liaisonsRes, classesSeriesRes] = await Promise.all([
+          axios.get('http://localhost:8000/api/classesP?with_series=true'),
+          axios.get('http://localhost:8000/api/periodes'),
+          axios.get('http://localhost:8000/api/types'),
+          axios.get('http://localhost:8000/api/typeevaluationETclasseP'),
+          axios.get('http://localhost:8000/api/classes-with-series'),
+        ]);
+
+        setClasses(classesRes.data);
+        setPeriodes(periodesRes.data);
+        setTypes(typesRes.data);
+        setLiaisons(liaisonsRes.data);
+        setClassesWithSeries(classesSeriesRes.data);
+      } catch (error) {
+        setMessage({ text: 'Erreur lors du chargement des données', type: 'error' });
+        console.error("Erreur:", error.response?.data || error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  // Gérer la suppression d'une liaison
+  const handleDeleteLiaison = async (liaisonId) => {
+    if (!window.confirm("Êtes-vous sûr de vouloir supprimer cette liaison ?")) return;
+
+    try {
+      setLoading(true);
+      await axios.delete(`http://localhost:8000/api/typeevaluation-classe/${liaisonId}`);
+      
+      setMessage({ text: 'Liaison supprimée avec succès', type: 'success' });
+      const liaisonsRes = await axios.get('http://localhost:8000/api/typeevaluationETclasseP');
+      setLiaisons(liaisonsRes.data);
+    } catch (error) {
+      setMessage({ 
+        text: error.response?.data?.message || 'Erreur lors de la suppression', 
+        type: 'error' 
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Préparer l'édition d'une liaison
+  const handleEditLiaison = (liaison) => {
+    setEditingLiaison(liaison);
+    setSelectedPeriodes([liaison.periode_id]);
+    setSelectedTypes([liaison.typeevaluation_id]);
+    setSelectedClasses([liaison.classe_id]);
+    
+    if (liaison.serie_id) {
+      setSelectedSeries({
+        [liaison.classe_id]: [liaison.serie_id]
+      });
+    }
+  };
+
+  // Annuler l'édition
+  const cancelEdit = () => {
+    setEditingLiaison(null);
+    setSelectedClasses([]);
+    setSelectedPeriodes([]);
+    setSelectedTypes([]);
+    setSelectedSeries({});
+  };
+
+  // Soumettre le formulaire
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (selectedPeriodes.length === 0 || selectedTypes.length === 0 || selectedClasses.length === 0) {
+      setMessage({ text: 'Veuillez sélectionner au moins une période, un type et une classe.', type: 'error' });
+      return;
+    }
+
+    const liaisonsToCreate = [];
+
+    for (const classId of selectedClasses) {
+      const seriesForClass = selectedSeries[classId] || [];
+
+      if (seriesForClass.length === 0) {
+        for (const periodeId of selectedPeriodes) {
+          for (const typeId of selectedTypes) {
+            liaisonsToCreate.push({
+              classe_id: classId,
+              periode_id: periodeId,
+              typeevaluation_id: typeId,
+              serie_id: null,
+            });
+          }
+        }
+      } else {
+        for (const serieId of seriesForClass) {
+          for (const periodeId of selectedPeriodes) {
+            for (const typeId of selectedTypes) {
+              liaisonsToCreate.push({
+                classe_id: classId,
+                serie_id: serieId,
+                periode_id: periodeId,
+                typeevaluation_id: typeId,
+              });
+            }
+          }
+        }
+      }
+    }
+
+    try {
+      setLoading(true);
+      
+      if (editingLiaison) {
+        await axios.put(`http://localhost:8000/api/typeevaluation-classe/${editingLiaison.id}`, liaisonsToCreate[0]);
+        setMessage({ text: 'Liaison mise à jour avec succès', type: 'success' });
+      } else {
+        await axios.post('http://localhost:8000/api/typeevaluation-classe/attach-multiple', {
+          liaisons: liaisonsToCreate,
+        });
+        setMessage({ text: 'Liaisons ajoutées avec succès', type: 'success' });
+      }
+
+      const liaisonsRes = await axios.get('http://localhost:8000/api/typeevaluationETclasseP');
+      setLiaisons(liaisonsRes.data);
+      cancelEdit();
+    } catch (error) {
+      setMessage({ text: error.response?.data?.message || 'Erreur lors de la liaison', type: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Organiser les liaisons pour l'affichage
+  const getOrganizedLiaisons = () => {
+    const organized = {};
+
+    // Vérifier que liaisons est un tableau
+    if (!Array.isArray(liaisons)) {
+      console.error("Les liaisons ne sont pas un tableau:", liaisons);
+      return organized;
+    }
+
+    // Initialiser avec les classes
+    classes.forEach(classe => {
+      organized[classe.id] = {
+        nom: classe.nom_classe,
+        periodes: {}
+      };
+    });
+
+    // Initialiser avec les périodes
+    periodes.forEach(periode => {
+      Object.values(organized).forEach(classe => {
+        classe.periodes[periode.id] = {
+          nom: periode.nom,
+          date_debut: periode.date_debut,
+          date_fin: periode.date_fin,
+          types: []
+        };
+      });
+    });
+
+    // Ajouter les liaisons existantes
+    liaisons.forEach(classeData => {
+      if (!classeData || !classeData.liaisons) return;
+
+      classeData.liaisons.forEach(liaison => {
+        if (organized[classeData.id]?.periodes[liaison.periode_id]) {
+          const typeExists = organized[classeData.id].periodes[liaison.periode_id].types.some(
+            t => t.id === liaison.typeevaluation_id
+          );
+          
+          if (!typeExists) {
+            const type = types.find(t => t.id === liaison.typeevaluation_id);
+            if (type) {
+              organized[classeData.id].periodes[liaison.periode_id].types.push({
+                id: type.id,
+                nom: type.nom,
+                liaisonId: liaison.id,
+                serieId: liaison.serie_id,
+                serieNom: liaison.serie_nom || 'Général'
+              });
+            }
+          }
+        }
+      });
+    });
+
+    return organized;
+  };
+
+  const organizedLiaisons = getOrganizedLiaisons();
+
+  return (
+    <div className="link-type-classe-periode-container">
+      <div className="form-card">
+        <h2>{editingLiaison ? 'Modifier une liaison' : 'Créer une liaison'}</h2>
+        
+        {message.text && (
+          <div className={`message ${message.type}`}>{message.text}</div>
+        )}
+
+        <form onSubmit={handleSubmit}>
+          {/* Périodes */}
+          <div className="form-group">
+            <label>Période(s)</label>
+            <div className="checkbox-group">
+              {periodes.map(periode => (
+                <label key={periode.id}>
+                  <input
+                    type="checkbox"
+                    checked={selectedPeriodes.includes(periode.id)}
+                    onChange={() => handleCheckboxChange(setSelectedPeriodes, selectedPeriodes, periode.id)}
+                  />
+                  {periode.nom} ({periode.date_debut} - {periode.date_fin})
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Types d'évaluation */}
+          <div className="form-group">
+            <label>Type(s) d'évaluation</label>
+            <div className="checkbox-group">
+              {types.map(type => (
+                <label key={type.id}>
+                  <input
+                    type="checkbox"
+                    checked={selectedTypes.includes(type.id)}
+                    onChange={() => handleCheckboxChange(setSelectedTypes, selectedTypes, type.id)}
+                  />
+                  {type.nom}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Classes */}
+          <div className="form-group">
+            <label>Classe(s)</label>
+            <div className="checkbox-group">
+              {classes.map(classe => (
+                <label key={classe.id}>
+                  <input
+                    type="checkbox"
+                    checked={selectedClasses.includes(classe.id)}
+                    onChange={() => handleClassCheckboxChange(classe.id)}
+                  />
+                  {classe.nom_classe}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Séries */}
+          {selectedClasses.length > 0 && (
+            <div className="form-group">
+              <label>Série(s) par Classe</label>
+              {selectedClasses.map(classId => {
+                const classe = classesWithSeries.find(c => c.id == classId);
+                if (!classe?.series?.length) return null;
+                
+                return (
+                  <div key={`series-${classId}`} className="series-group">
+                    <h4>{classe.nom_classe}</h4>
+                    {classe.series.map(serie => (
+                      <label key={serie.id}>
+                        <input
+                          type="checkbox"
+                          checked={(selectedSeries[classId] || []).includes(serie.id)}
+                          onChange={() => handleSeriesCheckboxChange(classId, serie.id)}
+                        />
+                        {serie.nom}
+                      </label>
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          <div className="form-actions">
+            <button type="submit" disabled={loading}>
+              {loading ? 'Enregistrement...' : editingLiaison ? 'Mettre à jour' : 'Enregistrer'}
+            </button>
+            {editingLiaison && (
+              <button type="button" onClick={cancelEdit}>Annuler</button>
+            )}
+          </div>
+        </form>
+      </div>
+
+      <div className="relationships-card">
+        <h2>Liaisons existantes</h2>
+        
+        {loading ? (
+          <p>Chargement...</p>
+        ) : Object.keys(organizedLiaisons).length === 0 ? (
+          <p>Aucune liaison trouvée</p>
+        ) : (
+          <div className="classes-accordion">
+            {Object.entries(organizedLiaisons).map(([classId, classeData]) => (
+              <div key={`class-${classId}`} className="class-group">
+                <h3>{classeData.nom}</h3>
+                
+                {Object.entries(classeData.periodes)
+                  .filter(([_, periodeData]) => periodeData.types.length > 0)
+                  .map(([periodeId, periodeData]) => (
+                    <div key={`periode-${periodeId}`} className="periode-group">
+                      <h4>{periodeData.nom} ({periodeData.date_debut} - {periodeData.date_fin})</h4>
+                      
+                      <table className="liaisons-table">
+                        <thead>
+                          <tr>
+                            <th>Type</th>
+                            <th>Série</th>
+                            <th>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {periodeData.types.map(type => (
+                            <tr key={`type-${type.id}-${periodeId}`}>
+                              <td>{type.nom}</td>
+                              <td>{type.serieNom}</td>
+                              <td>
+                                <button onClick={() => handleEditLiaison({
+                                  id: type.liaisonId,
+                                  classe_id: parseInt(classId),
+                                  periode_id: parseInt(periodeId),
+                                  typeevaluation_id: type.id,
+                                  serie_id: type.serieId
+                                })}>
+                                  Modifier
+                                </button>
+                                <button onClick={() => handleDeleteLiaison(type.liaisonId)}>
+                                  Supprimer
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ))}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+

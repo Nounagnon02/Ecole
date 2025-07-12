@@ -16,12 +16,13 @@ return new class extends Migration
         //
         Schema::create('typeevaluation_classes', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('periode_id')->constrained()->onDelete('cascade');
             $table->foreignId('serie_id')->constrained()->onDelete('cascade');
             $table->foreignId('typeevaluation_id')->constrained()->onDelete('cascade');
             $table->foreignId('classe_id')->constrained()->onDelete('cascade');
             $table->timestamps();
 
-            $table->unique(['serie_id', 'typeevaluation_id', 'classe_id']);
+            $table->unique(['periode_id', 'typeevaluation_id', 'classe_id']);
         });
     }
 
