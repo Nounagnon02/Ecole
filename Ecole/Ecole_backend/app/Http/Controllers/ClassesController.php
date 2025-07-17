@@ -434,89 +434,7 @@ public function updateSeries(Request $request, $id)
     
 
 
-    
-/*public function updateSeriesMatieres(Request $request, $classId, $serieId)
-{
-    try {
-        // Valider la classe
-        $class = Classes::findOrFail($classId);
-        
-        // Valider la série
-        $serie = $class->series()->findOrFail($serieId);
-        if (!$serie) {
-            return response()->json(['message' => 'Série non trouvée pour cette classe'], 404);
-        }
 
-        // Valider les données
-        $validated = $request->validate([
-            'matieres' => 'required|array',
-            'matieres.*.matiere_id' => 'required|exists:matieres,id',
-            'matieres.*.coefficient' => 'required|numeric|min:1'
-        ]);
-
-        // Préparer les données pour sync
-        $matieresSync = [];
-        foreach ($validated['matieres'] as $matiere) {
-            $matieresSync[$matiere['matiere_id']] = [
-                'coefficient' => $matiere['coefficient'],
-                'classe_id' => $classId
-            ];
-        }
-
-        // Synchroniser les matières avec leurs coefficients
-        $serie->matieres()->sync($matieresSync);
-
-        // Recharger les relations pour la réponse
-        $serie->load(['matieres' => function($query) use ($classId) {
-            $query->withPivot('coefficient', 'classe_id')
-                    ->where('serie_matieres.classe_id', $classId);
-        }]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Matières et coefficients mis à jour avec succès',
-            'data' => $serie
-        ]);
-
-    } catch (ModelNotFoundException $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Ressource non trouvée'
-        ], 404);
-    } catch (ValidationException $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Données invalides',
-            'errors' => $e->errors()
-        ], 422);
-    } catch (\Exception $e) {
-        Log::error('Erreur mise à jour série-matières:', [
-            'error' => $e->getMessage(),
-            'classe_id' => $classId,
-            'serie_id' => $serieId
-        ]);
-
-        return response()->json([
-            'success' => false,
-            'message' => 'Erreur lors de la mise à jour'
-        ], 500);
-    }
-}*/
-
-    /* public function index(Request $request)
-{
-    $query = Classes::query();
-    
-    if ($request->has('with_series')) {
-        $query->with(['series' => function($query) {
-            $query->with(['matieres' => function($query) {
-                $query->withPivot('coefficient');
-            }]);
-        }]);
-    }
-    
-    return $query->get();
-}*/
 
     // Récupère toutes les classes avec leurs séries, matières et enseignants
     public function index(Request $request)
@@ -549,9 +467,10 @@ public function updateSeries(Request $request, $id)
         
         // Chargement des relations selon les paramètres
         if ($request->has('with_series')) {
-            $query->with('series')->unique('id')->values();
+            $query->with('series');    
         }
-        
+            
+            
         if ($request->has('with_matieres')) {
             $query->with('series.matieres');
         }

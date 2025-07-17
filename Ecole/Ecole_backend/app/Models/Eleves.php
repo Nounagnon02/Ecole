@@ -62,6 +62,13 @@ class Eleves extends Model
         return $this->belongsTo(Series::class);
     }
 
+    public function contribution(){
+        return $this->belongsTo(Contributions::class);
+    }
 
+    public function paiementEleve()
+    {
+        return $this->hasMany(PaiementEleve::class, 'id_eleve');
+    }
 }
 

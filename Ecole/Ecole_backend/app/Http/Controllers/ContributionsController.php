@@ -17,9 +17,13 @@ class ContributionsController extends Controller
         $validated = $request->validate([
             'montant' => 'required|integer',
             'date_fin_premiere_tranche' => 'required|date',
+            'montant_premiere_tranche' => 'required|integer',
             'date_fin_deuxieme_tranche' => 'required|date',
+            'montant_deuxieme_tranche' => 'required|integer',
             'date_fin_troisieme_tranche' => 'required|date',
+            'montant_troisieme_tranche' => 'required|integer',
             'id_classe' => 'required|exists:classes,id',
+            'id_serie'=> 'required|exists:series,id',
         ]);
 
         $contribution = Contributions::create($validated);

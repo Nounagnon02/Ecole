@@ -17,6 +17,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import './Mes_CSS_parent/dashboard_parent.css';
+import PaymentForm from '../paiements/paiement';
 import axios from 'axios';
 import  jsPDF  from "jspdf";
 //import autoTable from  'jspdf-autotable';
@@ -37,6 +38,8 @@ const ParentDashboard = () => {
   const [currentPeriode, setCurrentPeriode] = useState('Semestre 1');
   const [debugMode, setDebugMode] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [paiementDisplay, setPaiementDisplay] = useState([]);
+
   const navigate = useNavigate(); // Ajoute ceci dans ParentDashboard
 
   // Données mockées pour les absences
@@ -52,10 +55,10 @@ const ParentDashboard = () => {
   };
 
   const payments = [
-    { id: 1, description: "Frais de scolarité - Mai 2025", amount: 250, status: "Payé", date: "2025-05-01" },
-    { id: 2, description: "Cantine - Mai 2025", amount: 85, status: "Payé", date: "2025-05-01" },
-    { id: 3, description: "Frais de scolarité - Juin 2025", amount: 250, status: "En attente", date: "2025-06-01" },
-    { id: 4, description: "Sortie pédagogique", amount: 35, status: "En attente", date: "2025-06-15" }
+    { id: 1, description: "Frais de scolarité - Mai 2025", amount: 250000, status: "Payé", date: "2025-05-01" },
+    { id: 2, description: "Cantine - Mai 2025", amount: 8500, status: "Payé", date: "2025-05-01" },
+    { id: 3, description: "Frais de scolarité - Juin 2025", amount: 250000, status: "En attente", date: "2025-06-01" },
+    { id: 4, description: "Sortie pédagogique", amount: 95000, status: "En attente", date: "2025-06-15" }
   ];
 
   const messages = [
@@ -151,6 +154,9 @@ const ParentDashboard = () => {
           'Content-Type': 'application/json'
         }
       });
+
+      setPaiementDisplay(response.data.data.children || []);
+      console.log("Données de paiement récupérées:", response.data.data.children);
 
       console.log("Réponse complète du serveur:", response);
 
@@ -255,160 +261,6 @@ const fetchChildBulletin = async (childId, parentId, periode = currentPeriode) =
       console.error(`Erreur debug élève ${childId}:`, err);
     }
   };
-
-/*const generateBulletinPDF = () => {
-
-  
-  const child = children[selectedChild];
-  const bulletin = bulletins[child.id];
-  const isLoading = bulletinLoading[child.id];
-  const error = bulletinErrors[child.id];
-
-  const formatNumber = (num) => {
-    if (num === null || num === undefined) return 'N/A';
-    return typeof num === 'number' ? num.toFixed(2) : num;
-  };
-  if (!bulletin || !child) return;
-
-  const doc = new jsPDF();
-  const pageWidth = doc.internal.pageSize.getWidth();
-  
-  // Styles
-  const mainColor = [44, 62, 80]; // Couleur bleu foncé
-  const secondaryColor = [231, 76, 60]; // Couleur rouge
-
-  // En-tête avec logo et informations
-  doc.setFontSize(16);
-  doc.setTextColor(...mainColor);
-  doc.setFont("helvetica", "bold");
-  doc.text("COMPLEXE SCOLAIRE JACQUES-WILLIAM 1er", pageWidth / 2, 20, { align: 'center' });
-  
-  doc.setFontSize(12);
-  doc.setTextColor(100);
-  doc.setFont("helvetica", "normal");
-  doc.text("Établissement d'enseignement général, technique et professionnel", pageWidth / 2, 28, { align: 'center' });
-  
-  // Ligne séparatrice
-  doc.setDrawColor(...mainColor);
-  doc.setLineWidth(0.5);
-  doc.line(15, 35, pageWidth - 15, 35);
-
-  // Informations élève
-  doc.setFontSize(12);
-  doc.setTextColor(0);
-  doc.setFont("helvetica", "bold");
-  doc.text("ÉLÈVE", 20, 45);
-  
-  doc.setFont("helvetica", "normal");
-  doc.text(`Nom : ${child.lastName || 'N/A'}`, 20, 55);
-  doc.text(`Prénom : ${child.name}`, 20, 65);
-  doc.text(`Date de naissance : ${child.birthDate || 'N/A'}`, 20, 75);
-  doc.text(`Classe : ${child.class}`, 100, 55);
-  doc.text(`Année scolaire : 2024-2025`, 100, 65);
-
-  // Titre bulletin
-  doc.setFontSize(14);
-  doc.setTextColor(...secondaryColor);
-  doc.setFont("helvetica", "bold");
-  doc.text(`BULLETIN DE NOTES DU ${currentPeriode.toUpperCase()}`, pageWidth / 2, 90, { align: 'center' });
-
-  // Tableau des notes
-  const notesHeaders = [
-    "Matières",
-    "Coef",
-    "Devoir 1",
-    "Devoir 2",
-    "Moyenne des interrogations",
-    "Moyenne dans la matieres",
-    "Moyenne Pondérée"
-  ];
-
-  const notesData = bulletin.moyennes_par_matiere.map(matiere => [
-    matiere.matiere,
-    matiere.coefficient,
-    formatNumber(matiere.details.devoir1),
-    formatNumber(matiere.details.devoir2),
-    formatNumber(matiere.details.moyenne_interrogations),
-    formatNumber(matiere.moyenne),
-    formatNumber(matiere.moyenne_ponderee)
-  ]);
-
-  doc.autoTable({
-    startY: 100,
-    head: [notesHeaders],
-    body: notesData,
-    margin: { left: 15 },
-    styles: {
-      fontSize: 8,
-      cellPadding: 2,
-      valign: 'middle',
-    },
-    headStyles: {
-      fillColor: mainColor,
-      textColor: [255, 255, 255],
-      fontStyle: 'bold'
-    },
-    columnStyles: {
-      0: { cellWidth: 40 }, // Matière
-      1: { cellWidth: 10 }, // Coef
-      2: { cellWidth: 20 }, // Note1
-      3: { cellWidth: 20 }, // Note2
-      4: { cellWidth: 30 }, // Note3
-      5: { cellWidth: 30 }, // Moy
-      6: { cellWidth: 15 }  // Moy. Pond
-    },
-    didDrawCell: (data) => {
-      // Colorer les notes en fonction de leur valeur
-      if (data.column.index >= 2 && data.column.index <= 5) {
-        const note = parseFloat(data.cell.raw);
-        if (!isNaN(note)) {
-          if (note < 10) {
-            doc.setTextColor(231, 76, 60); // Rouge
-          } else if (note < 12) {
-            doc.setTextColor(230, 126, 34); // Orange
-          } else {
-            doc.setTextColor(39, 174, 96); // Vert
-          }
-        }
-      }
-    }
-  });
-
-  // Totaux et rang
-  const finalY = doc.lastAutoTable.finalY + 10;
-  
-  doc.setFontSize(10);
-  doc.setTextColor(0);
-  doc.setFont("helvetica", "bold");
-  doc.text("TOTAUX", 20, finalY);
-  
-  doc.setFont("helvetica", "normal");
-  doc.text(`Moyenne Générale: ${formatNumber(bulletin.moyenne_generale)}`, 20, finalY + 10);
-  doc.text(`Rang: ${bulletin.rang?.position ? `${bulletin.rang.position}/${bulletin.rang.total_eleves}` : 'N/A'}`, 20, finalY + 20);
-
-  // Appréciations
-  doc.setFont("helvetica", "bold");
-  doc.text("APPRÉCIATIONS", 100, finalY);
-  
-  doc.setFont("helvetica", "normal");
-  doc.text("Conduite: Très bien", 100, finalY + 10);
-  doc.text("Travail: Satisfaisant", 100, finalY + 20);
-  doc.text("Observations:", 100, finalY + 30);
-  doc.text("Élève sérieux et appliqué", 100, finalY + 40);
-
-  // Pied de page
-  doc.setFontSize(8);
-  doc.setTextColor(100);
-  doc.text("Fait à Cotonou, le " + new Date().toLocaleDateString(), 20, 280);
-  doc.text("Le Directeur", pageWidth - 40, 280, { align: 'right' });
-
-  // Signature
-  doc.setLineWidth(0.5);
-  doc.line(pageWidth - 40, 285, pageWidth - 10, 285);
-
-  // Enregistrement du PDF
-  doc.save(`Bulletin_${child.name}_${currentPeriode.replace(' ', '_')}.pdf`);
-};*/
 
 const generateBulletinPDF = () => {
   const child = children[selectedChild];
@@ -1030,35 +882,75 @@ const renderBulletins = () => {
           <table className="payments-table">
             <thead>
               <tr className="payments-table__header">
-                <th className="payments-table__th payments-table__th--left">Description</th>
+                <th className="payments-table__th payments-table__th--left">Noms et Prénoms</th>
                 <th className="payments-table__th payments-table__th--center">Montant</th>
-                <th className="payments-table__th payments-table__th--center">Date</th>
-                <th className="payments-table__th payments-table__th--center">Statut</th>
+                <th className="payments-table__th payments-table__th--center">Montant 1ère Tranche et Delais</th>
+                <th className="payments-table__th payments-table__th--center">Montant 2ème Tranche et Delais</th>
+                <th className="payments-table__th payments-table__th--center">Montant 3ème Tranche et Delais</th>
+                <th className="payments-table__th payments-table__th--center">Montant restant</th>
                 <th className="payments-table__th payments-table__th--center">Action</th>
               </tr>
             </thead>
             <tbody>
-              {payments.map(payment => (
-                <tr key={payment.id} className="payments-table__row">
-                  <td className="payments-table__td">{payment.description}</td>
-                  <td className="payments-table__td payments-table__td--center payments-table__amount">{payment.amount}€</td>
-                  <td className="payments-table__td payments-table__td--center">{payment.date}</td>
-                  <td className="payments-table__td payments-table__td--center">
-                    <span className={`payment-status ${
-                      payment.status === 'Payé' 
-                        ? 'payment-status--paid' 
-                        : 'payment-status--pending'
-                    }`}>
-                      {payment.status}
+              {paiementDisplay.map(paiement => (
+                <tr key={paiement.id} className="payments-table__row">
+                  <td className="payments-table__td">{paiement.name}</td>
+                  {paiement.contributions.map((contribution, idx) => (
+                    <React.Fragment key={contribution.id || idx}>
+                      <td className="payments-table__td payments-table__td--center payments-table__amount">
+                        {contribution.montant} FCFA
+                      </td>
+                      <td className="payments-table__td payments-table__td--center">
+                        {contribution.montant_premiere_tranche} — {contribution.date_fin_premiere_tranche.split('T')[0]}
+                      </td>
+                      <td className="payments-table__td payments-table__td--center">
+                        {contribution.montant_deuxieme_tranche} — {contribution.date_fin_deuxieme_tranche.split('T')[0]}
+                      </td>
+                      <td className="payments-table__td payments-table__td--center">
+                        {contribution.montant_troisieme_tranche} — {contribution.date_fin_troisieme_tranche.split('T')[0]}
+                      </td>
+                    </React.Fragment>
+                  ))}
+
+                  
+
+                  <td>
+                    {paiement.paiements.map((p, idx) => (
+                      <React.Fragment key={p.id || idx}>
+                        <td className="payments-table__td payments-table__td--center">{p.montant_restant}</td>
+                        {/*<td className="payments-table__td payments-table__td--center">
+                          <span
+                            className={`payment-status ${
+                              p.status === 'Payé'
+                                ? 'payment-status--paid'
+                                : 'payment-status--pending'
+                            }`}
+                          >
+                            {p.status_global}
+                          </span>
+                        </td>*/}
+
+                        <td className="payments-table__td payments-table__td--center">
+                          
+                          {['EN_ATTENTE','EN_COURS','EN ATTENTE','EN COURS'].includes(p.statut_global) && (
+                            <button className="payment-button" onClick={() => navigate('/paiement')}>Payer</button>
+                          )}
+                        </td>
+                      </React.Fragment>
+                    ))}
+                  </td>
+                  {/*<td className="payments-table__td payments-table__td--center">
+                    <span
+                      className={`payment-status ${
+                        paiement.status === 'Payé'
+                          ? 'payment-status--paid'
+                          : 'payment-status--pending'
+                      }`}
+                    >
+                      {paiement.status}
                     </span>
-                  </td>
-                  <td className="payments-table__td payments-table__td--center">
-                    {payment.status === 'En attente' && (
-                      <button className="payment-button">
-                        Payer
-                      </button>
-                    )}
-                  </td>
+                  </td>*/}
+                  
                 </tr>
               ))}
             </tbody>

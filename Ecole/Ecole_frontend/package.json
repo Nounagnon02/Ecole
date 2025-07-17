@@ -11,6 +11,7 @@
     "file-saver": "^2.0.5",
     "jspdf": "^2.5.1",
     "jspdf-autotable": "^3.5.28",
+    "kkiapay": "^2.0.23",
     "lucide-react": "^0.511.0",
     "pdfjs-dist": "^2.16.105",
     "react": "^18.3.1",
