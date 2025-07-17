@@ -7,7 +7,7 @@ import Dashboard from './Directeurs/dash';
 import ProtectedRoute from './ProtectedRoute';
 import AuthProvider from './AuthContext';
 import Matieres from './Directeurs/Matieres';
-import Classes from './Directeurs/Classes'; 
+
 import ParentDashboard from './Parents/dash'; // Assuming you have a ParentDashboard component
 import Dashboard_Secretaire from './Secretaire/dashboard';
 import DashboardM from './DirecteursM/dash';
