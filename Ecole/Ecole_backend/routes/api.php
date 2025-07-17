@@ -14,7 +14,8 @@ use App\Http\Controllers\EnseignantsController;
 use App\Models\Eleves;
 use App\Http\Controllers\typeEvaluationController;
 use App\Http\Controllers\periodesController;
-use App\Http\Controllers\ContributionsController;
+use App\Http\Controllers\ContributionsController; 
+use App\Http\Controllers\PaymentController;
 
 // Auth
 Route::post('/inscription', [AuthController::class, 'inscription']);
@@ -238,3 +239,13 @@ Route::post('/contributions/store', [ContributionsController::class, 'store']);
 Route::get('/contributions/{id}', [ContributionsController::class, 'show']);
 Route::put('/contributions/{id}', [ContributionsController::class, 'update']);
 Route::delete('/contributions/{id}', [ContributionsController::class, 'destroy']);
+
+//Route pour les paiements
+Route::prefix('payments')->group(function () {
+    Route::post('/initiate', [PaymentController::class, 'initiatePayment']);
+    Route::get('/status/{transaction_id}', [PaymentController::class, 'checkPaymentStatus']);
+    Route::get('/return', [PaymentController::class, 'paymentReturn']);
+    Route::post('/notify', [PaymentController::class, 'paymentNotify']);
+    Route::get('/available-tranches/{paiementEleveId}', [PaymentController::class, 'getAvailableTranches']);
+    Route::get('/history/{eleveId}', [PaymentController::class, 'getPaymentHistory']);
+});

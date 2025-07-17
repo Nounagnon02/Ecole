@@ -73,6 +73,9 @@ public function series()
 }
 
 
-
+  public function contributions()
+    {
+        return $this->hasMany(\App\Models\Contributions::class, 'id_classe');
+    }
 
 }

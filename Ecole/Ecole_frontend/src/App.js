@@ -13,17 +13,22 @@ import Dashboard_Secretaire from './Secretaire/dashboard';
 import DashboardM from './DirecteursM/dash';
 import DashboardP from './DirecteursP/dash';
 import DashboardS from './DirecteursS/dash';
+import PaymentForm from './paiements/paiement';
+import PaymentSuccess from './paiements/paiementSucces';
 
 function App() {
     return (
         <Router>
             <AuthProvider>
                 <Routes>
+                     <Route path="/payment-success" element={<PaymentSuccess />} />
+                    <Route path="/paiement" element={<PaymentForm />} />
+                    <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/dash" element={<DashboardE />} />
                     <Route path="/connexion" element={<Connexion />} />
                     <Route path="/inscription" element={<InscriptionE />} />
                     <Route path="/matieres" element={<Matieres />} />
-                    <Route path="/classes" element={<Classes />} />
+                    {/*<Route path="/paiement" element={<KKiaPayPayment />} />*/}
                     <Route path="/" element={<Connexion />} />
 
                     <Route path="/dashboard-eleve" element={

@@ -14,6 +14,11 @@ use Laravel\Sanctum\HasApiTokens;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Illuminate\Database\QueryException;
 use Smalot\PdfParser\Parser as PdfParser;
+use App\Models\PaiementEleve;
+use App\Models\StatutTranche;
+use App\Models\Contributions;
+use App\Models\TransactionPaiement;
+use Illuminate\Support\Facades\Log;
 
 
 
@@ -66,9 +71,12 @@ public function inscription(Request $request)
             // Chercher l'id de la classe et de la série
             $classe = \App\Models\Classes::where('nom_classe', $validated['classe'])->first();
             $serie = \App\Models\Series::where('nom', $validated['serie'])->first();
-
+            $contribution = \App\Models\Contributions::where('id_classe', $classe->id)->where('id_serie', $serie->id)->first();
             if (!$classe || !$serie) {
                 return response()->json(['message' => 'Classe ou série invalide'], 422);
+            }
+            if (!$contribution) {
+                return response()->json(['message' => 'Aucune contribution trouvée pour cette classe'], 422);
             }
 
             $eleve = Eleves::create([
@@ -82,6 +90,18 @@ public function inscription(Request $request)
                 'class_id' => $classe->id,
                 'serie_id' => $serie->id,
             ]);
+
+            // Création du paiement élève
+            $paiementEleve = \App\Models\PaiementEleve::create([
+                'id_eleve' => $eleve->id,
+                'id_contribution' => $contribution->id,
+                'mode_paiement' => 'TRANCHE',
+                'montant_total_paye' => 0,
+                'montant_restant' => $contribution->montant,
+                'statut_global' => 'EN_ATTENTE',
+            ]);
+
+            event(new Registered($paiementEleve));
 
             event(new Registered($eleve));
             return response()->json([
@@ -404,8 +424,287 @@ private function processExcelFile($file)
         return $data;
     }
 
+    private function creerStatutsTranches($paiementEleve, $contribution)
+    {
+        $tranches = [
+            'PREMIERE' => [
+                'date_limite' => $contribution->date_fin_premiere_tranche,
+                'montant' => $contribution->montant_premiere_tranche
+            ],
+            'DEUXIEME' => [
+                'date_limite' => $contribution->date_fin_deuxieme_tranche,
+                'montant' => $contribution->montant_deuxieme_tranche
+            ],
+            'TROISIEME' => [
+                'date_limite' => $contribution->date_fin_troisieme_tranche,
+                'montant' => $contribution->montant_troisieme_tranche
+            ]
+        ];
+
+        foreach ($tranches as $tranche => $info) {
+            StatutTranche::create([
+                'id_paiement_eleve' => $paiementEleve->id,
+                'tranche' => $tranche,
+                'statut' => 'EN_ATTENTE',
+                'date_limite' => $info['date_limite'],
+                'montant_tranche' => $info['montant']
+            ]);
+        }
+    }
+
+    public function changerModePaiement($paiementEleveId, $nouveauMode)
+    {
+        try {
+            $paiementEleve = PaiementEleve::find($paiementEleveId);
+            
+            if (!$paiementEleve) {
+                throw new \Exception('Paiement non trouvé');
+            }
+
+            $paiementEleve->update(['mode_paiement' => $nouveauMode]);
+
+            return [
+                'success' => true,
+                'message' => 'Mode de paiement mis à jour'
+            ];
+
+        } catch (\Exception $e) {
+            Log::error('Erreur changement mode paiement: ' . $e->getMessage());
+            return [
+                'success' => false,
+                'message' => 'Erreur lors du changement de mode',
+                'error' => $e->getMessage()
+            ];
+        }
+    }
 
 
+     public function verifierPaiementsEnRetard()
+    {
+        try {
+            $tranchesEnRetard = StatutTranche::where('statut', 'EN_ATTENTE')
+                                           ->where('date_limite', '<', now())
+                                           ->get();
+
+            foreach ($tranchesEnRetard as $tranche) {
+                $tranche->update(['statut' => 'RETARD']);
+            }
+
+            return [
+                'success' => true,
+                'tranches_mises_a_jour' => $tranchesEnRetard->count()
+            ];
+
+        } catch (\Exception $e) {
+            Log::error('Erreur vérification retards: ' . $e->getMessage());
+            return [
+                'success' => false,
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+
+
+
+    /**
+     * Obtenir les statistiques de paiement pour un élève
+     */
+    public function getStatistiquesPaiement($eleveId)
+    {
+        try {
+            $paiementEleve = PaiementEleve::with(['transactions', 'statutsTranches', 'contribution'])
+                                        ->where('id_eleve', $eleveId)
+                                        ->first();
+
+            if (!$paiementEleve) {
+                return [
+                    'success' => false,
+                    'message' => 'Aucun paiement trouvé pour cet élève'
+                ];
+            }
+
+            $stats = [
+                'montant_total' => $paiementEleve->contribution->montant,
+                'montant_paye' => $paiementEleve->montant_total_paye,
+                'montant_restant' => $paiementEleve->montant_restant,
+                'pourcentage_paye' => $paiementEleve->pourcentage_paiement,
+                'statut_global' => $paiementEleve->statut_global,
+                'mode_paiement' => $paiementEleve->mode_paiement,
+                'tranches' => $paiementEleve->statutsTranches->map(function($tranche) {
+                    return [
+                        'tranche' => $tranche->tranche,
+                        'montant' => $tranche->montant_tranche,
+                        'statut' => $tranche->statut,
+                        'date_limite' => $tranche->date_limite,
+                        'date_paiement' => $tranche->date_paiement,
+                        'est_en_retard' => $tranche->est_en_retard
+                    ];
+                }),
+                'transactions' => $paiementEleve->transactions->map(function($transaction) {
+                    return [
+                        'tranche' => $transaction->tranche,
+                        'montant' => $transaction->montant_paye,
+                        'date' => $transaction->date_paiement,
+                        'methode' => $transaction->methode_paiement,
+                        'reference' => $transaction->reference_transaction
+                    ];
+                })
+            ];
+
+            return [
+                'success' => true,
+                'statistiques' => $stats
+            ];
+
+        } catch (\Exception $e) {
+            Log::error('Erreur statistiques paiement: ' . $e->getMessage());
+            return [
+                'success' => false,
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+
+
+     /**
+     * Changer le mode de paiement d'un élève
+     */
+    /*public function changerModePaiement(Request $request, $paiementEleveId)
+    {
+        $request->validate([
+            'mode_paiement' => 'required|in:INTEGRAL,TRANCHE'
+        ]);
+
+        try {
+            $resultat = $this->inscriptionService->changerModePaiement(
+                $paiementEleveId,
+                $request->mode_paiement
+            );
+
+            if ($resultat['success']) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $resultat['message']
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => $resultat['message']
+                ], 400);
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Erreur changement mode paiement: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors du changement de mode'
+            ], 500);
+        }
+    }*/
+
+    /**
+     * Obtenir les statistiques de paiement d'un élève
+     */
+    /*public function getStatistiquesPaiement($eleveId)
+    {
+        try {
+            $resultat = $this->inscriptionService->getStatistiquesPaiement($eleveId);
+
+            if ($resultat['success']) {
+                return response()->json([
+                    'success' => true,
+                    'statistiques' => $resultat['statistiques']
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => $resultat['message']
+                ], 404);
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Erreur statistiques paiement: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la récupération des statistiques'
+            ], 500);
+        }
+    }*/
+
+    /**
+     * Lister les élèves avec leurs statuts de paiement
+     */
+    public function listerElevesAvecPaiements(Request $request)
+    {
+        try {
+            $query = \App\Models\Eleves::with(['paiementEleve.contribution', 'paiementEleve.statutsTranches']);
+
+            // Filtres optionnels
+            if ($request->has('classe_id')) {
+                $query->where('id_classe', $request->classe_id);
+            }
+
+            if ($request->has('serie_id')) {
+                $query->where('id_serie', $request->serie_id);
+            }
+
+            if ($request->has('statut_paiement')) {
+                $query->whereHas('paiementEleve', function($q) use ($request) {
+                    $q->where('statut_global', $request->statut_paiement);
+                });
+            }
+
+            $eleves = $query->paginate(20);
+
+            return response()->json([
+                'success' => true,
+                'eleves' => $eleves
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Erreur liste élèves: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la récupération des élèves'
+            ], 500);
+        }
+    }
+
+    /**
+     * Tableau de bord des paiements
+     */
+    public function tableauDeBord()
+    {
+        try {
+            $stats = [
+                'total_eleves' => \App\Models\Eleves::count(),
+                'paiements_termines' => \App\Models\PaiementEleve::where('statut_global', 'TERMINE')->count(),
+                'paiements_en_cours' => \App\Models\PaiementEleve::where('statut_global', 'EN_COURS')->count(),
+                'paiements_en_attente' => \App\Models\PaiementEleve::where('statut_global', 'EN_ATTENTE')->count(),
+                'montant_total_attendu' => \App\Models\PaiementEleve::join('contributions', 'paiement_eleves.id_contribution', '=', 'contributions.id')
+                                                                  ->sum('contributions.montant'),
+                'montant_total_collecte' => \App\Models\PaiementEleve::sum('montant_total_paye'),
+                'tranches_en_retard' => \App\Models\StatutTranche::where('statut', 'RETARD')->count(),
+            ];
+
+            // Pourcentage de recouvrement
+            $stats['pourcentage_recouvrement'] = $stats['montant_total_attendu'] > 0 
+                ? ($stats['montant_total_collecte'] / $stats['montant_total_attendu']) * 100 
+                : 0;
+
+            return response()->json([
+                'success' => true,
+                'statistiques' => $stats
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Erreur tableau de bord: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la récupération du tableau de bord'
+            ], 500);
+        }
+    }
 
 
 }

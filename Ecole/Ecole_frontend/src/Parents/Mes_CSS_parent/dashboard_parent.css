@@ -656,39 +656,78 @@ body {
   animation: pulse 2s infinite;
 }
 
-/* Payments Section */
-.payments-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  margin: 1rem 0;
+/* Payments Section - Modern Table Design */
+.payments-section {
+  margin-top: 2rem;
 }
 
-.payments-table th {
-  background: rgba(108, 92, 231, 0.1);
+.payments-table-container {
+  overflow-x: auto;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  background: white;
+  margin-top: 1.5rem;
+}
+
+.payments-table {
+  width: 100%;
+  min-width: 1000px;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.payments-table__header {
+  background: linear-gradient(135deg, rgba(108, 92, 231, 0.1) 0%, rgba(0, 206, 201, 0.1) 100%);
+}
+
+.payments-table__th {
+  padding: 1.25rem 1rem;
+  font-weight: 600;
   color: var(--dark);
-  font-weight: 500;
-  padding: 1rem;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.5px;
+}
+
+.payments-table__th--left {
   text-align: left;
 }
 
-.payments-table td {
-  padding: 1rem;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-  background: white;
+.payments-table__th--center {
+  text-align: center;
 }
 
-.payments-table__amount {
-  font-weight: 600;
-  color: var(--dark);
+.payments-table__row {
+  transition: all 0.2s ease;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.payments-table__row:last-child {
+  border-bottom: none;
+}
+
+.payments-table__row:hover {
+  background-color: rgba(108, 92, 231, 0.03);
+}
+
+.payments-table__td {
+  padding: 1.25rem 1rem;
+  color: #444;
+  vertical-align: middle;
+}
+
+.payments-table__td--center {
+  text-align: center;
 }
 
 .payment-status {
+  display: inline-block;
   padding: 0.5rem 1rem;
   border-radius: 50px;
   font-size: 0.85rem;
   font-weight: 500;
-  display: inline-block;
+  min-width: 100px;
+  text-align: center;
 }
 
 .payment-status--paid {
@@ -705,18 +744,160 @@ body {
   background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
   color: white;
   border: none;
-  padding: 0.5rem 1.5rem;
+  padding: 0.6rem 1.5rem;
   border-radius: 50px;
   font-size: 0.85rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(108, 92, 231, 0.2);
 }
 
 .payment-button:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(108, 92, 231, 0.3);
+  opacity: 0.9;
 }
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .payments-table__th,
+  .payments-table__td {
+    padding: 1rem 0.75rem;
+    font-size: 0.85rem;
+  }
+  
+  .payment-status {
+    padding: 0.4rem 0.8rem;
+    min-width: 80px;
+  }
+  
+  .payment-button {
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+  }
+}
+
+/* Sticky header for better scrolling */
+.payments-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+/* Zebra striping for better readability */
+.payments-table__row:nth-child(even) {
+  background-color: rgba(0, 0, 0, 0.01);
+}
+
+
+
+/* Amount cells styling */
+.payments-table__amount {
+  font-weight: 600;
+  color: var(--dark);
+  white-space: nowrap;
+}
+
+/* En-têtes du tableau des paiements */
+.payments-table__header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: linear-gradient(135deg, rgba(108, 92, 231, 0.15) 0%, rgba(0, 206, 201, 0.15) 100%);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  border-bottom: 2px solid rgba(108, 92, 231, 0.2);
+}
+
+.payments-table__th {
+  padding: 1rem 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #2d3436;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.payments-table__th--left {
+  text-align: left;
+  padding-left: 1.5rem;
+}
+
+.payments-table__th--center {
+  text-align: center;
+}
+
+/* Effet de séparation entre colonnes */
+.payments-table__th:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  height: 60%;
+  width: 1px;
+  background: rgba(108, 92, 231, 0.2);
+}
+
+/* Effet au survol */
+.payments-table__th:hover {
+  background: rgba(108, 92, 231, 0.1);
+}
+
+/* Style spécifique pour les colonnes importantes */
+.payments-table__th:nth-child(1) { /* Nom */
+  min-width: 220px;
+}
+
+.payments-table__th:nth-child(2) { /* Montant */
+  min-width: 120px;
+}
+
+.payments-table__th:nth-child(3),
+.payments-table__th:nth-child(4),
+.payments-table__th:nth-child(5) { /* Tranches */
+  min-width: 180px;
+}
+
+.payments-table__th:last-child { /* Action */
+  min-width: 120px;
+}
+
+/* Style responsive */
+@media (max-width: 1024px) {
+  .payments-table__th {
+    padding: 0.85rem 0.5rem;
+    font-size: 0.8rem;
+  }
+  
+  .payments-table__th--left {
+    padding-left: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .payments-table__th {
+    padding: 0.75rem 0.4rem;
+    font-size: 0.75rem;
+  }
+  
+  .payments-table__th::after {
+    height: 50%;
+  }
+}
+
+/* Date cells styling */
+.payments-table__date {
+  font-size: 0.85rem;
+  color: #666;
+  white-space: nowrap;
+}
+
+
+
 
 /* Loading and Error States */
 .loading-container {

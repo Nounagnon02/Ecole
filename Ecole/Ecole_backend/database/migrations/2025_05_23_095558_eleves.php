@@ -18,7 +18,10 @@ return new class extends Migration
         $table->id();
         $table->string('role');
         $table->string('nom');           
-        $table->string('prenom');          
+        $table->string('prenom'); 
+        $table->date('date_naissance')->nullable();//pas encore migrate
+        $table->string('lieu_naissance')->nullable();//pas encore migrate
+        $table->string('sexe')->nullable();      // 'M' pour masculin, 'F' pour féminin , pas encore migrate
         $table->string('numero_de_telephone');
         $table->string('identifiant')->unique();
         $table->string('password1');

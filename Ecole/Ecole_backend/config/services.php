@@ -31,4 +31,20 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'kkiapay' => [
+    'public_key' => env('***CLE-RETIREE-R46***'),
+    'private_key' => env('***CLE-RETIREE-R46***'),
+    'secret_key' => env('***CLE-RETIREE-R46***'),
+    'sandbox' => env('KKIAPAY_SANDBOX', true),
+
+    ],
+
+    'cinetpay' => [
+        'api_key' => env('CINETPAY_API_KEY'),
+        'site_id' => env('CINETPAY_SITE_ID'),
+        'secret_key' => env('CINETPAY_SECRET_KEY'),
+        'environment' => env('CINETPAY_ENVIRONMENT', 'sandbox'),
+        'currency' => env('CINETPAY_CURRENCY', 'XOF'),
+    ],
 ];
+
