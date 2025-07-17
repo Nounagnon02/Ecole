@@ -447,7 +447,7 @@ const fetchClassesSeries = async () => {
   }
 
   // Fonction principale pour gérer la soumission du formulaire
-  const handleImportSubmit = async (e) => {
+const handleImportSubmit = async (e) => {
   e.preventDefault();
   
   if (!importData.classe_id || !importData.serie_id || !importData.matiere_id || 
@@ -2280,12 +2280,24 @@ const handleSubmit = async (e) => {
     
     if (response.data.success) {
       // Rafraîchir les données
-      const classesRes = await axios.get(
-        'http://localhost:8000/api/with-series-matieresSecondaire'
-      );
       
-      setClasses(classesRes.data);
-      setClassesWithData(classesRes.data);
+        const [classesRes,classesMatieresRes, matieresRes, matieres1Res, seriesRes] = await Promise.all([
+          axios.get('http://localhost:8000/api/classesS?with_series=true&with_matieres=true'),
+          axios.get('http://localhost:8000/api/with-series-matieresSecondaire'),
+          axios.get('http://localhost:8000/api/matieres-with-series'),
+          axios.get("http://localhost:8000/api/matieres"),
+          axios.get('http://localhost:8000/api/series'),
+        ]);
+        
+        setClasses(classesRes.data);
+        setClassesMat(classesMatieresRes.data);
+        setMatieres(matieresRes.data);
+        setMatieres1(matieres1Res.data);
+        setClassesWithData(classesMatieresRes.data);
+        setSeries(seriesRes.data);
+        setMessage({ text: '', type: '' });
+      
+
       
       setMessage({ 
         text: 'Matières et coefficients mis à jour avec succès', 
@@ -2540,7 +2552,7 @@ const groupUniqueSeries = (series) => {
   );
 };
 
-const LierEnseignantsAuxMatieres = () => {
+/*const LierEnseignantsAuxMatieres = () => {
   const [classes, setClasses] = useState([]);
   const [matieres, setMatieres] = useState([]);
   const [enseignants, setEnseignants] = useState([]);
@@ -2867,6 +2879,349 @@ const LierEnseignantsAuxMatieres = () => {
                                       <ul className="enseignants-list">
                                         {matiere.enseignants.map(enseignant => (
                                           <li key={enseignant.id}>
+                                            {enseignant.nom} {enseignant.prenom}
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    ) : (
+                                      <span className="no-enseignants">Aucun enseignant</span>
+                                    )}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        ) : (
+                          <p>Aucune matière associée</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};*/
+
+
+const LierEnseignantsAuxMatieres = () => {
+  const [classes, setClasses] = useState([]);
+  const [matieres, setMatieres] = useState([]);
+  const [enseignants, setEnseignants] = useState([]);
+  const [selectedClass, setSelectedClass] = useState('');
+  const [selectedSerie, setSelectedSerie] = useState('');
+  const [selectedMatieres, setSelectedMatieres] = useState([]);
+  const [enseignantsParMatiere, setEnseignantsParMatiere] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState({ text: '', type: '' });
+  const [classesWithData, setClassesWithData] = useState([]);
+  const [classesS, setClassesS] = useState([]);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [classesRes, matieresRes, enseignantsRes] = await Promise.all([
+          axios.get('http://localhost:8000/api/classesES?with_series=true&with_matieres=true&with_enseignants=true'),
+          axios.get('http://localhost:8000/api/matieres'),
+          axios.get('http://localhost:8000/api/enseignants?with_matieres=true'),
+        ]);
+        
+        const processedClasses = classesRes.data.map(classe => ({
+          ...classe,
+          series: classe.series ? [...new Map(classe.series.map(serie => [serie.id, serie])).values()] : []
+        }));
+        
+        setClasses(processedClasses);
+        setMatieres(matieresRes.data);
+        setEnseignants(enseignantsRes.data);
+        setClassesWithData(processedClasses);
+        setMessage({ text: '', type: '' });
+      } catch (error) {
+        setMessage({ text: 'Erreur lors du chargement des données', type: 'error' });
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+    fetchClassesSeries();
+  }, []);
+
+  const fetchClassesSeries = async () => {
+    try {
+      setLoading(true);
+      const res = await axios.get('http://localhost:8000/api/classes-with-series');
+      const processedData = res.data.map(classe => ({
+        ...classe,
+        series: classe.series ? [...new Map(classe.series.map(serie => [serie.id, serie])).values()] : []
+      }));
+      setClassesS(processedData);
+      setLoading(false);
+    } catch (err) {
+      console.error(err);
+      setError('Erreur lors du chargement des séries');
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const fetchSeriesMatieres = async () => {
+      if (!selectedClass || !selectedSerie) {
+        setSelectedMatieres([]);
+        setEnseignantsParMatiere({});
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const response = await axios.get(
+          `http://localhost:8000/api/classes/${selectedClass}/series/${selectedSerie}/matieres?with_enseignants=true`
+        );
+        
+        const uniqueMatieres = [...new Map(response.data.map(matiere => [matiere.id, matiere])).values()];
+        setSelectedMatieres(uniqueMatieres.map(matiere => matiere.id));
+        
+        const enseignantsData = {};
+        uniqueMatieres.forEach(matiere => {
+          enseignantsData[matiere.id] = matiere.enseignants?.map(e => e.id) || [];
+        });
+        setEnseignantsParMatiere(enseignantsData);
+      } catch (error) {
+        setMessage({ text: 'Erreur lors du chargement des données', type: 'error' });
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSeriesMatieres();
+  }, [selectedClass, selectedSerie]);
+
+  const handleEnseignantChange = (matiereId, enseignantId) => {
+    setEnseignantsParMatiere(prev => ({
+      ...prev,
+      [matiereId]: [...(prev[matiereId] || []), enseignantId]
+    }));
+  };
+
+  const handleRemoveEnseignant = (matiereId, enseignantId) => {
+    setEnseignantsParMatiere(prev => ({
+      ...prev,
+      [matiereId]: (prev[matiereId] || []).filter(id => id !== enseignantId)
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!selectedClass || !selectedSerie) {
+      setMessage({ text: 'Veuillez sélectionner une classe et une série', type: 'error' });
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const matieresData = selectedMatieres.map(matiereId => ({
+        matiere_id: matiereId,
+        enseignants: enseignantsParMatiere[matiereId] || []
+      }));
+      
+      const response = await axios.put(
+        `http://localhost:8000/api/classes/${selectedClass}/series/${selectedSerie}/matieres/enseignants`,
+        { matieres: matieresData }
+      );
+      
+      if (response.data.success) {
+        const classesRes = await axios.get(
+          'http://localhost:8000/api/classesES?with_series=true&with_matieres=true&with_enseignants=true'
+        );
+        
+        const processedClasses = classesRes.data.map(classe => ({
+          ...classe,
+          series: classe.series ? [...new Map(classe.series.map(serie => [serie.id, serie])).values()] : []
+        }));
+        
+        setClassesWithData(processedClasses);
+        setMessage({ text: 'Enseignants associés avec succès', type: 'success' });
+      } else {
+        throw new Error(response.data.message || 'Erreur lors de la mise à jour');
+      }
+    } catch (error) {
+      setMessage({ 
+        text: error.response?.data?.message || error.message || 'Erreur lors de la mise à jour', 
+        type: 'error' 
+      });
+      console.error('Error updating enseignants:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getSeriesForSelectedClass = () => {
+    if (!selectedClass) return [];
+    const classe = classesS.find(c => c.id == selectedClass);
+    return classe && Array.isArray(classe.series) ? classe.series : [];
+  };
+
+  const getEnseignantsForMatiere = (matiereId) => {
+    return enseignants.filter(enseignant => 
+      enseignant.matieres?.some(m => m.id == matiereId)
+    );
+  };
+
+  return (
+    <div className="link-enseignants-container">
+      <h1 className="section-title">Gérer les enseignants par matière/série/classe</h1>
+      
+      {message.text && (
+        <div className={`message ${message.type === 'error' ? 'error-message' : 'success-message'}`}>
+          {message.text}
+          <button 
+            className="message-close" 
+            onClick={() => setMessage({ text: '', type: '' })}
+            aria-label="Fermer le message"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
+      <div className="form-grid">
+        <div className="form-card">
+          <h2 className="form-title">Associer des enseignants</h2>
+          
+          <form onSubmit={handleSubmit}>
+            <div className="form-group">
+              <label>Classe</label>
+              <select
+                value={selectedClass}
+                onChange={(e) => {
+                  setSelectedClass(e.target.value);
+                  setSelectedSerie('');
+                }}
+                disabled={loading}
+              >
+                <option value="">Sélectionnez une classe</option>
+                {classes.map(classe => (
+                  <option key={`classe-opt-${classe.id}`} value={classe.id}>
+                    {classe.nom_classe}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label>Série</label>
+              <select
+                value={selectedSerie}
+                onChange={(e) => setSelectedSerie(e.target.value)}
+                disabled={loading || !selectedClass}
+              >
+                <option value="">Sélectionnez une série</option>
+                {getSeriesForSelectedClass().map(serie => (
+                  <option key={`serie-opt-${serie.id}`} value={serie.id}>
+                    {serie.nom}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {selectedSerie && (
+              <div className="form-group">
+                <label>Matières et enseignants</label>
+                <div className="matieres-enseignants-list">
+                  {selectedMatieres.map(matiereId => {
+                    const matiere = matieres.find(m => m.id == matiereId);
+                    const enseignantsMatiere = getEnseignantsForMatiere(matiereId);
+                    const selectedEnseignants = enseignantsParMatiere[matiereId] || [];
+                    
+                    return (
+                      <div key={`matiere-block-${matiereId}`} className="matiere-enseignants-item">
+                        <h4>{matiere?.nom || 'Matière inconnue'}</h4>
+                        
+                        {enseignantsMatiere.length > 0 ? (
+                          <div className="enseignants-selection">
+                            {enseignantsMatiere.map(enseignant => (
+                              <div key={`enseignant-${enseignant.id}-${matiereId}`} className="enseignant-item">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedEnseignants.includes(enseignant.id)}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      handleEnseignantChange(matiereId, enseignant.id);
+                                    } else {
+                                      handleRemoveEnseignant(matiereId, enseignant.id);
+                                    }
+                                  }}
+                                  disabled={loading}
+                                />
+                                <label>
+                                  {enseignant.nom} {enseignant.prenom}
+                                  {enseignant.matieres?.length > 1 && (
+                                    <span className="matieres-count"> ({enseignant.matieres.length} matières)</span>
+                                  )}
+                                </label>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="no-enseignants">Aucun enseignant disponible pour cette matière</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            <button 
+              type="submit" 
+              disabled={loading || !selectedClass || !selectedSerie}
+              className="submit-button"
+            >
+              {loading ? 'Enregistrement...' : 'Enregistrer'}
+            </button>
+          </form>
+        </div>
+
+        <div className="relationships-card">
+          <h2>Enseignants par matière/série/classe</h2>
+          
+          {classesWithData.length === 0 ? (
+            <p>Aucune donnée disponible</p>
+          ) : (
+            <div className="classes-list">
+              {classesWithData.map(classe => (
+                <div key={`classe-view-${classe.id}`} className="class-item">
+                  <h3>{classe.nom_classe}</h3>
+                  {classe.series?.map(serie => (
+                    <div key={`serie-view-${serie.id}-${classe.id}`} className="serie-item">
+                      <h4>{serie.nom}</h4>
+                      <div className="matieres-list">
+                        {serie.matieres?.length > 0 ? (
+                          <table className="matieres-enseignants-table">
+                            <thead>
+                              <tr>
+                                <th>Matière</th>
+                                <th>Enseignants</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {serie.matieres.map(matiere => (
+                                <tr key={`matiere-row-${matiere.id}-${serie.id}`}>
+                                  <td>{matiere.nom}</td>
+                                  <td>
+                                    {matiere.enseignants?.length > 0 ? (
+                                      <ul className="enseignants-list">
+                                        {matiere.enseignants.map(enseignant => (
+                                          <li key={`enseignant-li-${enseignant.id}-${matiere.id}`}>
                                             {enseignant.nom} {enseignant.prenom}
                                           </li>
                                         ))}
@@ -3818,373 +4173,20 @@ useEffect(() => {
   </div>);
 };
 
-/*const Contributions = () => {
-  const [classes, setClasses] = useState([]);
-  const [contributions, setContributions] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [montant, setMontant ] = useState([]);
-  const [selectedClassID, setSelectedClassID] = useState('');
-  const [date_fin_premiere_tranche, setDate_fin_premiere_tranche] = useState('');
-  const [date_fin_deuxieme_tranche, setDate_fin_deuxieme_tranche] = useState('');
-  const [date_fin_troisieme_tranche, setDate_fin_troisieme_tranche] = useState('');
-
-  // Charger les classes et contributions au montage
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const classesRes = await axios.get('http://localhost:8000/api/classesS?with_series=true&with_matieres=true');
-        setClasses(classesRes.data);
-
-        const contributionsRes = await axios.get('http://localhost:8000/api/contributions');
-        setContributions(contributionsRes.data);
-      } catch (err) {
-        setError("Erreur lors du chargement des données");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
-
-  return (
-    <div className="contributions-container">
-      <h2>Contributions</h2>
-      {error && <div style={{ color: 'red', marginBottom: 8 }}>{error}</div>}
-      <div className="filter-section">
-        <input type="int" 
-          value={montant} 
-          onChange={(e) => setMontant(e.target.value)} 
-          className="filter-input" 
-          placeholder="Montant" 
-          style={{ marginRight: 10 }}
-        />
-        <label>Classe</label>
-        <select
-          value={selectedClassID}
-          onChange={(e) => setSelectedClassID(e.target.value)}
-          className="filter-select"
-        >
-          <option value="">Toutes les classes</option>
-          {classes.map(classe => (
-            <option key={classe.id} value={classe.id}>
-              {classe.nom_classe}
-            </option>
-          ))}
-        </select>
-
-        <input
-          type="date"
-          placeholder="Date de la fin de la premiere tranche"
-          value={date_fin_premiere_tranche}
-          onChange={(e) => setDate_fin_premiere_tranche(e.target.value)}
-          className="input-field"
-        />
-        <input
-            type="date"
-            placeholder="Date de la fin de la deuxieme tranche"
-            value={date_fin_deuxieme_tranche}
-            onChange={(e) => setDate_fin_deuxieme_tranche(e.target.value)}
-            className="input-field"
-          />
-        <input
-            type="date"
-            placeholder="Date de la fin de la troisieme tranche"
-            value={date_fin_troisieme_tranche}
-            onChange={(e) => setDate_fin_troisieme_tranche(e.target.value)}
-            className="input-field"
-          />
-      </div>
-      
-      <button
-        onClick={async () => {
-          setLoading(true);
-          try {
-            const response = await axios.post('http://localhost:8000/api/contributions/store', {
-              montant: montant,
-              id_classe: selectedClassID,
-              date_fin_premiere_tranche: date_fin_premiere_tranche,
-              date_fin_deuxieme_tranche: date_fin_deuxieme_tranche,
-              date_fin_troisieme_tranche: date_fin_troisieme_tranche,
-            });
-            console.log(response.data)
-            setMontant('');
-            setSelectedClassID('');
-            setDate_fin_premiere_tranche('');
-            setDate_fin_deuxieme_tranche('');
-            setDate_fin_troisieme_tranche('');
-            setLoading(false);
-            setContributions((contributions) => [...contributions, response.data]);
-          } catch (error) {
-            console.error(error);
-            setLoading(false);
-          }
-        }}
-        className="add-button"
-      >
-        Ajouter
-      </button>
-    
-      <div className="contributions-list">
-        {loading ? (
-          <p>Chargement...</p>
-        ) : (
-          contributions.filter(c => !selectedClassID ? true : c.classe_id === selectedClassID).map(contribution => (
-            <div key={contribution.id} className="contribution-item">
-              <h3>{contribution.nom}</h3>
-              <p>Montant: {contribution.montant} FCFA</p>
-              <p>Classe: {contribution.classe.nom_classe}</p>
-              <p>Date de fin première tranche: {contribution.date_fin_premiere_tranche}</p>
-              <p>Date de fin deuxième tranche: {contribution.date_fin_deuxieme_tranche}</p>
-              <p>Date de fin troisième tranche: {contribution.date_fin_troisieme_tranche}</p>
-           </div>
-          ))
-        )}
-        </div>
-    </div>
-  );
-}*/
-
-/*const Contributions = () => {
-  const [classes, setClasses] = useState([]);
-  const [contributions, setContributions] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [montant, setMontant] = useState('');
-  const [selectedClassID, setSelectedClassID] = useState('');
-  const [date_fin_premiere_tranche, setDate_fin_premiere_tranche] = useState('');
-  const [date_fin_deuxieme_tranche, setDate_fin_deuxieme_tranche] = useState('');
-  const [date_fin_troisieme_tranche, setDate_fin_troisieme_tranche] = useState('');
-  const [editingId, setEditingId] = useState(null);
-
-  // Charger les données
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const [classesRes, contributionsRes] = await Promise.all([
-          axios.get('http://localhost:8000/api/classesS?with_series=true&with_matieres=true'),
-          axios.get('http://localhost:8000/api/contributions')
-        ]);
-        setClasses(classesRes.data);
-        setContributions(contributionsRes.data);
-      } catch (err) {
-        setError("Erreur lors du chargement des données");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      const data = {
-        montant: parseInt(montant),
-        id_classe: selectedClassID,
-        date_fin_premiere_tranche,
-        date_fin_deuxieme_tranche,
-        date_fin_troisieme_tranche
-      };
-
-      let response;
-      if (editingId) {
-        response = await axios.put(`http://localhost:8000/api/contributions/${editingId}`, data);
-        setContributions(contributions.map(c => c.id === editingId ? response.data : c));
-        setEditingId(null);
-      } else {
-        response = await axios.post('http://localhost:8000/api/contributions/store', data);
-        setContributions([...contributions, response.data]);
-      }
-
-      // Réinitialiser le formulaire
-      resetForm();
-    } catch (error) {
-      console.error(error);
-      setError("Erreur lors de l'enregistrement");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleEdit = (contribution) => {
-    setEditingId(contribution.id);
-    setMontant(contribution.montant);
-    setSelectedClassID(contribution.id_classe);
-    setDate_fin_premiere_tranche(contribution.date_fin_premiere_tranche);
-    setDate_fin_deuxieme_tranche(contribution.date_fin_deuxieme_tranche);
-    setDate_fin_troisieme_tranche(contribution.date_fin_troisieme_tranche);
-  };
-
-  const handleDelete = async (id) => {
-    if (window.confirm("Êtes-vous sûr de vouloir supprimer cette contribution?")) {
-      try {
-        await axios.delete(`http://localhost:8000/api/contributions/${id}`);
-        setContributions(contributions.filter(c => c.id !== id));
-      } catch (error) {
-        console.error(error);
-        setError("Erreur lors de la suppression");
-      }
-    }
-  };
-
-  const resetForm = () => {
-    setMontant('');
-    setSelectedClassID('');
-    setDate_fin_premiere_tranche('');
-    setDate_fin_deuxieme_tranche('');
-    setDate_fin_troisieme_tranche('');
-  };
-
-  const filteredContributions = selectedClassID 
-    ? contributions.filter(c => c.id_classe === parseInt(selectedClassID))
-    : contributions;
-
-  return (
-    <div className="contributions-container">
-      <h2>Gestion des Contributions</h2>
-      {error && <div className="error-message">{error}</div>}
-      
-      <form onSubmit={handleSubmit} className="contribution-form">
-        <div className="form-group">
-          <label>Montant (FCFA)</label>
-          <input 
-            type="number" 
-            value={montant} 
-            onChange={(e) => setMontant(e.target.value)} 
-            required 
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Classe</label>
-          <select
-            value={selectedClassID}
-            onChange={(e) => setSelectedClassID(e.target.value)}
-            required
-          >
-            <option value="">Sélectionnez une classe</option>
-            {classes.map(classe => (
-              <option key={classe.id} value={classe.id}>
-                {classe.nom_classe}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="form-group">
-          <label>Date fin 1ère tranche</label>
-          <input
-            type="date"
-            value={date_fin_premiere_tranche}
-            onChange={(e) => setDate_fin_premiere_tranche(e.target.value)}
-            required
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Date fin 2ème tranche</label>
-          <input
-            type="date"
-            value={date_fin_deuxieme_tranche}
-            onChange={(e) => setDate_fin_deuxieme_tranche(e.target.value)}
-            required
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Date fin 3ème tranche</label>
-          <input
-            type="date"
-            value={date_fin_troisieme_tranche}
-            onChange={(e) => setDate_fin_troisieme_tranche(e.target.value)}
-            required
-          />
-        </div>
-
-        <button type="submit" disabled={loading}>
-          {loading ? 'Enregistrement...' : editingId ? 'Modifier' : 'Ajouter'}
-        </button>
-        {editingId && (
-          <button type="button" onClick={() => {
-            setEditingId(null);
-            resetForm();
-          }}>
-            Annuler
-          </button>
-        )}
-      </form>
-
-      <div className="contributions-list">
-        <h3>Liste des Contributions</h3>
-        <div className="filter-section">
-          <label>Filtrer par classe: </label>
-          <select
-            value={selectedClassID}
-            onChange={(e) => setSelectedClassID(e.target.value)}
-          >
-            <option value="">Toutes les classes</option>
-            {classes.map(classe => (
-              <option key={classe.id} value={classe.id}>
-                {classe.nom_classe}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {loading ? (
-          <p>Chargement...</p>
-        ) : filteredContributions.length === 0 ? (
-          <p>Aucune contribution trouvée</p>
-        ) : (
-          <table>
-            <thead>
-              <tr>
-                <th>Classe</th>
-                <th>Montant</th>
-                <th>1ère tranche</th>
-                <th>2ème tranche</th>
-                <th>3ème tranche</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredContributions.map(contribution => {
-                const classe = classes.find(c => c.id === contribution.id_classe);
-                return (
-                  <tr key={contribution.id}>
-                    <td>{classe ? classe.nom_classe : 'Inconnue'}</td>
-                    <td>{contribution.montant} FCFA</td>
-                    <td>{new Date(contribution.date_fin_premiere_tranche).toLocaleDateString()}</td>
-                    <td>{new Date(contribution.date_fin_deuxieme_tranche).toLocaleDateString()}</td>
-                    <td>{new Date(contribution.date_fin_troisieme_tranche).toLocaleDateString()}</td>
-                    <td>
-                      <button onClick={() => handleEdit(contribution)}>Modifier</button>
-                      <button onClick={() => handleDelete(contribution.id)}>Supprimer</button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
-      </div>
-    </div>
-  );
-};*/
-
 
 const Contributions = () => {
   const [classes, setClasses] = useState([]);
   const [contributions, setContributions] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [classesMat, setClassesMat] = useState([]);
+   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [montant, setMontant] = useState('');
   const [selectedClassID, setSelectedClassID] = useState('');
+  const [selectedSerieID, setSelectedSerieID] = useState('');
   const [date_fin_premiere_tranche, setDate_fin_premiere_tranche] = useState('');
+  const [montant_premiere_tranche,setMontantPT] = useState('');
+  const [montant_deuxieme_tranche,setMontantDT] = useState('');
+  const [montant_troisieme_tranche,setMontantTT] = useState('');
   const [date_fin_deuxieme_tranche, setDate_fin_deuxieme_tranche] = useState('');
   const [date_fin_troisieme_tranche, setDate_fin_troisieme_tranche] = useState('');
   const [editingId, setEditingId] = useState(null);
@@ -4194,12 +4196,14 @@ const Contributions = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [classesRes, contributionsRes] = await Promise.all([
+        const [classesRes, contributionsRes, classesetSeriesRes] = await Promise.all([
           axios.get('http://localhost:8000/api/classesS?with_series=true&with_matieres=true'),
-          axios.get('http://localhost:8000/api/contributions')
+          axios.get('http://localhost:8000/api/contributions'),
+          axios.get('http://localhost:8000/api/with-series-matieresSecondaire'),
         ]);
         setClasses(classesRes.data);
         setContributions(contributionsRes.data);
+        setClassesMat(classesetSeriesRes.data);
       } catch (err) {
         setError("Erreur lors du chargement des données");
       } finally {
@@ -4216,9 +4220,13 @@ const Contributions = () => {
       const data = {
         montant: parseInt(montant),
         id_classe: selectedClassID,
+        id_serie: selectedSerieID,
+        montant_premiere_tranche: parseInt(montant_premiere_tranche),
         date_fin_premiere_tranche,
+        montant_deuxieme_tranche: parseInt(montant_deuxieme_tranche),
         date_fin_deuxieme_tranche,
-        date_fin_troisieme_tranche
+        montant_troisieme_tranche: parseInt(montant_troisieme_tranche),
+        date_fin_troisieme_tranche,
       };
 
       let response;
@@ -4245,8 +4253,11 @@ const Contributions = () => {
     setEditingId(contribution.id);
     setMontant(contribution.montant);
     setSelectedClassID(contribution.id_classe);
+    setMontantPT(contribution.montant_premiere_tranche);
     setDate_fin_premiere_tranche(contribution.date_fin_premiere_tranche);
+    setMontantDT(contribution.montant_deuxieme_tranche);
     setDate_fin_deuxieme_tranche(contribution.date_fin_deuxieme_tranche);
+    setMontantTT(contribution.montant_troisieme_tranche);
     setDate_fin_troisieme_tranche(contribution.date_fin_troisieme_tranche);
   };
 
@@ -4309,12 +4320,53 @@ const Contributions = () => {
         </div>
 
         <div className="form-group">
+          <label>Serie</label>
+          <select
+            value={selectedSerieID}
+            onChange={(e) => setSelectedSerieID(e.target.value)}
+            required
+          >
+            <option value="">Sélectionnez une série</option>
+            {selectedClassID && (() => {
+                const classe = classesMat.find(c => c.id == selectedClassID);
+                if (!classe || !classe.series) return null;
+                          
+                return classe.series.map(serie => (
+                      <option key={serie.id} value={serie.id}>
+                        {serie.nom}
+                      </option>
+                    ));
+                })()}  
+          </select>
+        </div>
+
+        <div className="form-group">
+          <label>Montant de la premiere tranche (FCFA)</label>
+          <input 
+            type="number" 
+            value={montant_premiere_tranche} 
+            onChange={(e) => setMontantPT(e.target.value)} 
+            required 
+          />
+        </div>
+
+        <div className="form-group">
           <label>Date fin 1ère tranche</label>
           <input
             type="date"
             value={date_fin_premiere_tranche}
             onChange={(e) => setDate_fin_premiere_tranche(e.target.value)}
             required
+          />
+        </div>
+
+        <div className="form-group">
+          <label>Montant de la deuxieme tranche (FCFA)</label>
+          <input 
+            type="number" 
+            value={montant_deuxieme_tranche} 
+            onChange={(e) => setMontantDT(e.target.value)} 
+            required 
           />
         </div>
 
@@ -4328,6 +4380,15 @@ const Contributions = () => {
           />
         </div>
 
+        <div className="form-group">
+          <label>Montant de la troisieme tranche (FCFA)</label>
+          <input 
+            type="number" 
+            value={montant_troisieme_tranche} 
+            onChange={(e) => setMontantTT(e.target.value)} 
+            required 
+          />
+        </div>
         <div className="form-group">
           <label>Date fin 3ème tranche</label>
           <input
@@ -4378,22 +4439,22 @@ const Contributions = () => {
               <tr>
                 <th>Classe</th>
                 <th>Montant</th>
-                <th>1ère tranche</th>
-                <th>2ème tranche</th>
-                <th>3ème tranche</th>
+                <th>Montant et date de fin de la 1ère tranche</th>
+                <th>Montant et date de fin de la 2ème tranche</th>
+                <th>Montant et date de fin de la 3ème tranche</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {filteredContributions.map(contribution => {
-                const classe = classes.find(c => c.id === contribution.id_classe);
+                const classe = classesMat.find(c => c.id === contribution.id_classe);
                 return (
                   <tr key={contribution.id}>
-                    <td>{classe ? classe.nom_classe : 'Inconnue'}</td>
+                    <td>{classe ? classe.nom : 'Inconnue'}</td>
                     <td>{contribution.montant} FCFA</td>
-                    <td>{new Date(contribution.date_fin_premiere_tranche).toLocaleDateString()}</td>
-                    <td>{new Date(contribution.date_fin_deuxieme_tranche).toLocaleDateString()}</td>
-                    <td>{new Date(contribution.date_fin_troisieme_tranche).toLocaleDateString()}</td>
+                    <td>{contribution.montant_premiere_tranche} FCFA {new Date(contribution.date_fin_premiere_tranche).toLocaleDateString()}</td>
+                    <td>{contribution.montant_deuxieme_tranche} FCFA {new Date(contribution.date_fin_deuxieme_tranche).toLocaleDateString()}</td>
+                    <td>{contribution.montant_troisieme_tranche} FCFA {new Date(contribution.date_fin_troisieme_tranche).toLocaleDateString()}</td>
                     <td>
                       <div className="action-buttons">
                         <button 

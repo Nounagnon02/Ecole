@@ -63,7 +63,7 @@ export function InscriptionE() {
                         nom.includes('ci')|| nom.includes('cp') || nom.includes('ce1') || 
                         nom.includes('ce2') || nom.includes('cm1') || nom.includes('cm2') ||
                         nom.includes('6ème')  || nom.includes('5ème') || nom.includes('4ème') || 
-                        nom.includes('3ème') || nom.includes('2nde') || nom.includes('1ère') || 
+                        nom.includes('3ème') || nom.includes('2nde') || nom.includes('2nd') || nom.includes('1ère') || 
                         nom.includes('terminale') || nom.includes('tle') || nom.includes('seconde') || 
                         nom.includes('première');
                 });
@@ -90,7 +90,7 @@ export function InscriptionE() {
                 return classes.filter(classe => {
                     const nom = classe.nom_classe.toLowerCase();
                     return nom.includes('6ème') || nom.includes('5ème') || nom.includes('4ème') || 
-                        nom.includes('3ème') || nom.includes('2nde') || nom.includes('1ère') || 
+                        nom.includes('3ème') || nom.includes('2nde') || nom.includes('2nd') || nom.includes('1ère') || 
                         nom.includes('terminale') || nom.includes('tle') || nom.includes('seconde') || 
                         nom.includes('première');
                 });
@@ -166,7 +166,7 @@ export function InscriptionE() {
                 serie.nom.toLowerCase().includes('3ème')
             )
         }
-        else if (classeNom.includes('2nde') || classeNom.includes('seconde') ||
+        else if (classeNom.includes('2nde') ||classeNom.includes('2nd') || classeNom.includes('seconde') ||
                 classeNom.includes('1ère') || classeNom.includes('première') ||
                 classeNom.includes('terminale') || classeNom.includes('tle')) {
             
@@ -570,7 +570,7 @@ useEffect(() => {
             return false;
         }
 
-        if (utilisateur.password1.length < 6) {
+        if (utilisateur.password1.length < 8) {
             setError(true);
             setMessage('Le mot de passe doit contenir au moins 6 caractères');
             return false;
@@ -638,6 +638,8 @@ useEffect(() => {
                 return false;
             }
 
+            
+
 
             if (!validateEmail(utilisateur.email)) {
                 setError(true);
@@ -647,6 +649,8 @@ useEffect(() => {
 
             
         }
+
+        
 
         return true;
     };
@@ -663,16 +667,18 @@ useEffect(() => {
             const dataToSend = {
                 nom: utilisateur.nom.trim(),
                 prenom: utilisateur.prenom.trim(),
-                classe: utilisateur.classe.trim(),
-                serie: utilisateur.role === 'eleve' ? utilisateur.serie : null,
-                matiere: utilisateur.role === 'enseignement' ? utilisateur.matiere : null,
+                classe: utilisateur.classe?.trim() || null, // Gérer le cas undefined
+                serie: utilisateur.role === 'eleve' ? utilisateur.serie?.trim() : null,
+                matiere: ['enseignement'].includes(utilisateur.role) ? utilisateur.matiere?.trim() : null,
                 numero_de_telephone: utilisateur.numero_de_telephone.trim(),
-                email: utilisateur.email?.trim(),
-                numero_matricule: utilisateur.numero_matricule?.trim(),
-                password1: utilisateur.password1,
+                email: utilisateur.email?.trim() || null,
+                numero_matricule: utilisateur.numero_matricule?.trim() || null,
+                password1: utilisateur.password1, // Renommer en password pour correspondre peut-être au back
                 role: utilisateur.role,
                 identifiant: utilisateur.identifiant
             };
+
+            console.log('Données envoyées pour l\'inscription:', dataToSend);
 
             const response = await axios.post('http://localhost:8000/api/inscription', dataToSend);
 
@@ -689,16 +695,25 @@ useEffect(() => {
                 throw new Error('Erreur lors de l\'inscription');
             }
         } catch (err) {
+            
             setError(true);
-            const errorMessage = err.response?.data?.message || 
-                            err.message || 
-                            'Erreur lors de l\'inscription';
+            let errorMessage = 'Erreur lors de l\'inscription';
+            
+            if (err.response) {
+                // Afficher les erreurs de validation du serveur
+                if (err.response.status === 422 && err.response.data.errors) {
+                    errorMessage = Object.values(err.response.data.errors).join('\n');
+                } else if (err.response.data.message) {
+                    errorMessage = err.response.data.message;
+                }
+            } else {
+                errorMessage = err.message;
+            }
+            
             setMessage(errorMessage);
-            console.error('Détails de l\'erreur:', err);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+            console.error('Détails de l\'erreur:', err.response?.data || err);
+                }
+        };
 
     const togglePasswordVisibility = () => setShowPassword(!showPassword);
     const toggleConfirmPasswordVisibility = () => setShowConfirmPassword(!showConfirmPassword);
