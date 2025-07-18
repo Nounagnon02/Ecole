@@ -1,199 +1,86 @@
 <?php
-
 namespace App\Services;
 
 use CinetPay\CinetPay;
-use Illuminate\Support\Facades\Log;
-use App\Models\PaiementEleve;
-use App\Models\TransactionPaiement;
-use App\Models\StatutTranche;
+use Illuminate\Support\Str;
 
 class CinetPayService
 {
-    private $cinetpay;
-    
+    private string $siteId;
+    private string $apiKey;
+    private string $mode;
+    private string $notifyUrl;
+    private string $returnUrl;
+
     public function __construct()
     {
-        $this->cinetpay = new CinetPay(
-            config('services.cinetpay.site_id'),
-            config('services.cinetpay.api_key'),
-            config('services.cinetpay.environment', 'sandbox')
-        );
+        $this->siteId    = config('cinetpay.site_id');
+        $this->apiKey    = config('cinetpay.api_key');
+        $this->mode      = config('cinetpay.mode');
+        $this->notifyUrl = config('cinetpay.notify_url');
+        $this->returnUrl = config('cinetpay.return_url');
     }
 
     /**
-     * Initier un paiement pour une tranche spécifique
+     * Build and return a CinetPay client instance
      */
-    public function initiatePayment($paiementEleve, $tranche, $montant, $eleveInfo)
+    private function client(): CinetPay
     {
-        $transactionId = 'PAY_' . $paiementEleve->id . '_' . $tranche . '_' . time();
-        
-        $paymentData = [
-            'amount' => $montant,
-            'currency' => config('services.cinetpay.currency', 'XOF'),
-            'description' => "Paiement frais scolaires - {$eleveInfo['nom']} {$eleveInfo['prenom']} - Tranche: {$tranche}",
-            'return_url' => route('payment.return'),
-            'notify_url' => route('payment.notify'),
-            'customer_name' => $eleveInfo['nom'] . ' ' . $eleveInfo['prenom'],
-            'customer_email' => $eleveInfo['email'] ?? 'parent@example.com',
-            'customer_phone_number' => $eleveInfo['telephone'] ?? '',
-            'metadata' => [
-                'paiement_eleve_id' => $paiementEleve->id,
-                'tranche' => $tranche,
-                'eleve_id' => $paiementEleve->id_eleve,
-                'contribution_id' => $paiementEleve->id_contribution
-            ]
+        return new CinetPay($this->siteId, $this->apiKey, $this->mode);
+    }
+
+    /**
+     * Initiate a payment and return payment link
+     */
+    public function initiate(array $payload): array
+    {
+        $cp = $this->client();
+        $transId = $payload['transaction_id'] ?? Str::uuid()->toString();
+
+        $cp->setTransId($transId)
+           ->setAmount((float)$payload['amount'])
+           ->setCurrency(config('cinetpay.currency'))
+           ->setDescription($payload['description'])
+           ->setNotifyUrl($this->notifyUrl)
+           ->setReturnUrl($this->returnUrl)
+           ->setCustomerName($payload['customer_name'])
+           ->setCustomerEmail($payload['customer_email'])
+           ->setCustomerPhoneNumber($payload['customer_phone'])
+           ->setChannels($payload['channels'] ?? 'ALL');
+
+        $result = $cp->generatePaymentLink();
+
+        if (isset($result['code']) && $result['code'] !== '201') {
+            throw new \Exception($result['message'] ?? 'Erreur lors de la génération du lien de paiement');
+        }
+
+        return [
+            'success'        => true,
+            'payment_url'    => $result['data']['payment_url'] ?? null,
+            'transaction_id' => $transId,
         ];
-        
-        return $this->createPayment($transactionId, $paymentData);
     }
 
     /**
-     * Créer un paiement avec CinetPay
+     * Verify IPN signature from CinetPay
      */
-    public function createPayment($transactionId, $paymentData)
+    public function verifySignature(array $data): bool
     {
-        try {
-            $this->cinetpay->setAmount($paymentData['amount'])
-                          ->setCurrency($paymentData['currency'])
-                          ->setDescription($paymentData['description'])
-                          ->setCustomData('metadata', json_encode($paymentData['metadata']))
-                          ->setClientPhoneNumber($paymentData['customer_phone_number'])
-                          ->setClientEmail($paymentData['customer_email'])
-                          ->setClientName($paymentData['customer_name'])
-                          ->setNotifyUrl($paymentData['notify_url'])
-                          ->setReturnUrl($paymentData['return_url'])
-                          ->setCancelUrl($paymentData['return_url']);
-
-            $paymentResponse = $this->cinetpay->createPayment($transactionId);
-            
-            return [
-                'success' => true,
-                'payment_url' => $paymentResponse['payment_url'],
-                'transaction_id' => $transactionId,
-                'payment_token' => $paymentResponse['payment_token'] ?? null
-            ];
-            
-        } catch (\Exception $e) {
-            Log::error('CinetPay Error: ' . $e->getMessage());
-            return [
-                'success' => false,
-                'message' => 'Erreur lors de la création du paiement',
-                'error' => $e->getMessage()
-            ];
-        }
+        return $this->client()->isValidSignature($data);
     }
 
     /**
-     * Vérifier le statut d'un paiement
+     * Get status of a transaction
      */
-    public function checkPaymentStatus($transactionId)
+    public function status(string $transId): array
     {
-        try {
-            $status = $this->cinetpay->checkPaymentStatus($transactionId);
-            
-            return [
-                'success' => true,
-                'status' => $status['status'],
-                'operator' => $status['operator'] ?? null,
-                'payment_method' => $status['payment_method'] ?? null,
-                'amount' => $status['amount'] ?? null,
-                'currency' => $status['currency'] ?? null
-            ];
-            
-        } catch (\Exception $e) {
-            Log::error('CinetPay Status Error: ' . $e->getMessage());
-            return [
-                'success' => false,
-                'message' => 'Erreur de vérification du statut',
-                'error' => $e->getMessage()
-            ];
-        }
-    }
+        $cp = $this->client();
+        $cp->setTransId($transId)->getPayStatus();
 
-    /**
-     * Vérifier la signature pour les notifications
-     */
-    public function verifySignature($receivedData)
-    {
-        $apiKey = config('services.cinetpay.api_key');
-        $siteId = config('services.cinetpay.site_id');
-        
-        $signatureData = $receivedData['cpm_trans_id'] . 
-                        $receivedData['cpm_amount'] . 
-                        $receivedData['cpm_currency'] . 
-                        $apiKey . 
-                        $siteId;
-        
-        return hash_equals(hash('sha256', $signatureData), $receivedData['signature'] ?? '');
-    }
-
-    /**
-     * Traiter le paiement réussi
-     */
-    public function processSuccessfulPayment($transactionId, $paymentData)
-    {
-        try {
-            $metadata = json_decode($paymentData['metadata'] ?? '{}', true);
-            
-            $paiementEleve = PaiementEleve::find($metadata['paiement_eleve_id']);
-            if (!$paiementEleve) {
-                throw new \Exception('Paiement élève non trouvé');
-            }
-
-            // Créer la transaction
-            $transaction = TransactionPaiement::create([
-                'id_paiement_eleve' => $paiementEleve->id,
-                'tranche' => $metadata['tranche'],
-                'montant_paye' => $paymentData['cpm_amount'],
-                'date_paiement' => now(),
-                'statut' => 'PAYE',
-                'methode_paiement' => 'MOBILE_MONEY',
-                'reference_transaction' => $transactionId,
-                'recu_par' => 'Système CinetPay',
-                'observation' => 'Paiement en ligne via CinetPay'
-            ]);
-
-            // Mettre à jour le statut de la tranche
-            $this->updateTrancheStatus($paiementEleve->id, $metadata['tranche'], $paymentData['cpm_amount']);
-
-            // Mettre à jour le paiement global
-            $this->updatePaiementGlobal($paiementEleve);
-
-            return ['success' => true, 'transaction' => $transaction];
-            
-        } catch (\Exception $e) {
-            Log::error('Erreur traitement paiement: ' . $e->getMessage());
-            return ['success' => false, 'error' => $e->getMessage()];
-        }
-    }
-
-    /**
-     * Mettre à jour le statut d'une tranche
-     */
-    private function updateTrancheStatus($paiementEleveId, $tranche, $montant)
-    {
-        StatutTranche::where('id_paiement_eleve', $paiementEleveId)
-                    ->where('tranche', $tranche)
-                    ->update([
-                        'statut' => 'PAYE',
-                        'date_paiement' => now()
-                    ]);
-    }
-
-    /**
-     * Mettre à jour le paiement global
-     */
-    private function updatePaiementGlobal($paiementEleve)
-    {
-        $totalPaye = TransactionPaiement::where('id_paiement_eleve', $paiementEleve->id)
-                                      ->where('statut', 'PAYE')
-                                      ->sum('montant_paye');
-
-        $paiementEleve->update([
-            'montant_total_paye' => $totalPaye,
-            'montant_restant' => $paiementEleve->contribution->montant - $totalPaye,
-            'statut_global' => $totalPaye >= $paiementEleve->contribution->montant ? 'TERMINE' : 'EN_COURS'
-        ]);
+        return [
+            'status'   => ($cp->_cpm_result === '00') ? 'ACCEPTED' : 'FAILED',
+            'amount'   => $cp->_cpm_amount,
+            'currency' => $cp->_cpm_currency,
+        ];
     }
 }

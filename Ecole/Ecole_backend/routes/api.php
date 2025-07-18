@@ -241,11 +241,8 @@ Route::put('/contributions/{id}', [ContributionsController::class, 'update']);
 Route::delete('/contributions/{id}', [ContributionsController::class, 'destroy']);
 
 //Route pour les paiements
-Route::prefix('payments')->group(function () {
-    Route::post('/initiate', [PaymentController::class, 'initiatePayment']);
-    Route::get('/status/{transaction_id}', [PaymentController::class, 'checkPaymentStatus']);
-    Route::get('/return', [PaymentController::class, 'paymentReturn']);
-    Route::post('/notify', [PaymentController::class, 'paymentNotify']);
-    Route::get('/available-tranches/{paiementEleveId}', [PaymentController::class, 'getAvailableTranches']);
-    Route::get('/history/{eleveId}', [PaymentController::class, 'getPaymentHistory']);
+Route::prefix('cinetpay')->group(function () {
+    Route::post('/init',     [PaymentController::class, 'initiatePayment']);
+    Route::post('/notify',   [PaymentController::class, 'paymentNotify']);
+    Route::get ('/return',   [PaymentController::class, 'paymentReturn']);
 });
