@@ -14,7 +14,7 @@ return new class extends Migration
     public function up()
     {
         //
-        Schema::create("transactions_paiement", function (Blueprint $table) {
+        Schema::create("transaction_paiements", function (Blueprint $table) {
             $table->increments("id");
             $table->foreignId("id_paiement_eleve")->constrained("paiements_eleves");
             $table->enum("tranche", ["PREMIERE", "DEUXIEME", "TROISIEME", "INTEGRAL"]);
@@ -25,6 +25,8 @@ return new class extends Migration
             $table->string("reference_transaction")->nullable();
             $table->string("recu_par"); // Nom du responsable qui a reçu le paiement
             $table->text("observation")->nullable();
+            $table->string("cinetpay_transaction_id")->nullable();
+            $table->string("cinetpay_payment_url")->nullable();
             $table->timestamps();
         });
     }

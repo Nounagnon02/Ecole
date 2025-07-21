@@ -9,7 +9,7 @@ import AuthProvider from './AuthContext';
 import Matieres from './Directeurs/Matieres';
 
 import ParentDashboard from './Parents/dash'; // Assuming you have a ParentDashboard component
-import Dashboard_Secretaire from './Secretaire/dashboard';
+import DashboardSecretaire from './Secretaire/dashboard';
 import DashboardM from './DirecteursM/dash';
 import DashboardP from './DirecteursP/dash';
 import DashboardS from './DirecteursS/dash';
@@ -75,7 +75,7 @@ function App() {
 
                     <Route path="/dashboard-secretaire" element={
                         <ProtectedRoute allowedRoles={['secretaire']}>
-                            <Dashboard_Secretaire />
+                            <DashboardSecretaire />
                         </ProtectedRoute>
                     } />
 
