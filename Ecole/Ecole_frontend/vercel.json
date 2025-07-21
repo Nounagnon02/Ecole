@@ -1,5 +1,8 @@
 {
   "version": 2,
+  "buildCommand": "npm run build",
+  "outputDirectory": "build",
+  "installCommand": "npm ci --production=false",
   "builds": [
     {
       "src": "package.json",
@@ -23,3 +26,7 @@
     "DISABLE_OPTIMIZATION": "true"
   }
 }
+
+
+
+

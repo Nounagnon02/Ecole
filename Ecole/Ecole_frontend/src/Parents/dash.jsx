@@ -453,6 +453,36 @@ const getCategorieClasse = (child) => {
   return classe?.categorie_classe || '';*/
 };
 
+// --- Fonction d’init du paiement CinetPay ---
+const initierPaiementCinetPay = async (transactionId) => {
+  try {
+    const token = localStorage.getItem('token');
+    const res = await axios.post(
+      `http://localhost:8000/api/cinetpay/init/${transactionId}`,
+      {},
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    // res.data contient l’URL CinetPay renvoyée par votre contrôleur
+    if (res.data.payment_url) {
+      window.location.href = res.data.payment_url; // Redirection vers CinetPay
+    } else {
+      alert('Erreur CinetPay : ' + res.data.message);
+    }
+  } catch (err) {
+    console.error(err);
+    alert('Impossible de démarrer le paiement.');
+  }
+};
+
+useEffect(() => {
+  // Vérifie les paramètres d'URL pour un statut de succès
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('status') === 'success') {
+    fetchDashboardData();
+  }
+}, []);
+
 
 const renderBulletins = () => {
   if (!children.length) {
@@ -933,7 +963,13 @@ const renderBulletins = () => {
                         <td className="payments-table__td payments-table__td--center">
                           
                           {['EN_ATTENTE','EN_COURS','EN ATTENTE','EN COURS'].includes(p.statut_global) && (
-                            <button className="payment-button" onClick={() => navigate('/paiement')}>Payer</button>
+                            <button
+                              className="payment-button"
+                              onClick={() => initierPaiementCinetPay(p.id)}
+                              disabled={p.statut === 'PAYE'}
+                            >
+                              Payer
+                            </button>
                           )}
                         </td>
                       </React.Fragment>
