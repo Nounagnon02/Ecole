@@ -16,6 +16,7 @@ class VerifyCsrfToken extends Middleware
         'api/payment/webhook',
         'cinetpay/notify',
         'cinetpay/return',
+        'cinetpay/*',
         
     ];
 

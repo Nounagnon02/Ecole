@@ -16,6 +16,8 @@ use App\Http\Controllers\typeEvaluationController;
 use App\Http\Controllers\periodesController;
 use App\Http\Controllers\ContributionsController; 
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\CinetPayController;
+use Illuminate\Support\Facades\DB;
 
 // Auth
 Route::post('/inscription', [AuthController::class, 'inscription']);
@@ -242,7 +244,20 @@ Route::delete('/contributions/{id}', [ContributionsController::class, 'destroy']
 
 //Route pour les paiements
 Route::prefix('cinetpay')->group(function () {
-    Route::post('/init',     [PaymentController::class, 'initiatePayment']);
-    Route::post('/notify',   [PaymentController::class, 'paymentNotify']);
-    Route::get ('/return',   [PaymentController::class, 'paymentReturn']);
+    Route::post('/init', [CinetPayController::class, 'initier'])->name('cinetpay.init');
+    Route::get('/return',          [CinetPayController::class, 'retour'])->name('cinetpay.return');
+    Route::post('/notify',         [CinetPayController::class, 'notifier'])->name('cinetpay.notify');
+});
+
+Route::post('test', fn () => response()->json(['ok' => true]));
+
+
+
+Route::get('/health', function () {
+    try {
+        DB::connection()->getPdo();
+        return response()->json(['db' => 'OK']);
+    } catch (\Exception $e) {
+        return response()->json(['db' => 'KO', 'error' => $e->getMessage()], 500);
+    }
 });

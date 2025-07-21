@@ -22,18 +22,21 @@ class CinetPayService
     }
 
     /**
-     * Build and return a CinetPay client instance
+     * @return \CinetPay\CinetPay
      */
     private function client(): CinetPay
     {
         return new CinetPay($this->siteId, $this->apiKey, $this->mode);
     }
+    
 
     /**
      * Initiate a payment and return payment link
      */
     public function initiate(array $payload): array
     {
+        /** @var \CinetPay\CinetPay $cp */
+        /** @var \CinetPay\CinetPay $cp */
         $cp = $this->client();
         $transId = $payload['transaction_id'] ?? Str::uuid()->toString();
 
