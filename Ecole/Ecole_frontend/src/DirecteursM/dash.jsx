@@ -93,7 +93,7 @@ export default function DashboardM() {
 const effectifEM = async () => {
   try{
     setLoading(true);
-    const res = await axios.get('http://localhost:8000/api/enseignants/effectif/maternelle');
+    const res = await axios.get(`${process.env.REACT_APP_API_URL}/enseignants/effectif/maternelle`);
     setEffectifE(res.data);  
   }catch (err){
     console.err(err);
@@ -105,7 +105,7 @@ const effectifEM = async () => {
 const effectifM = async () => {
   try{
     setLoading(true);
-    const res = await  axios.get('http://localhost:8000/api/classes/effectif/maternelle');
+    const res = await  axios.get('`${process.env.REACT_APP_API_URL}/classes/effectif/maternelle');
     setEffectif(res.data);
   }catch (err) {
     console.error(err);
@@ -135,8 +135,8 @@ const fetchSeries = async () => {
     try {
       setLoading(true);
       const [res, result] = await Promise.all([
-        axios.get('http://localhost:8000/api/matieres-with-series'),
-        axios.get('http://localhost:8000/api/series')
+        axios.get(`${process.env.REACT_APP_API_URL}/matieres-with-series`),
+        axios.get(`${process.env.REACT_APP_API_URL}/series`)
       ])
 
       setSeries(res.data);
@@ -246,7 +246,7 @@ const applyFilters = async () => {
     setLoading(true);
     
     // Construction de l'URL avec les paramètres de filtrage
-    let url = 'http://localhost:8000/api/notes/filterM?';
+    let url = `${process.env.REACT_APP_API_URL}/notes/filterM?`;
     const params = new URLSearchParams();
     
     // Ajouter uniquement les filtres non vides
@@ -339,7 +339,7 @@ const handleNoteChange = (e) => {
 const fetchClassesSeries = async () => {
   try {
     setLoading(true);
-    const res = await axios.get('http://localhost:8000/api/classes-with-series');
+    const res = await axios.get(`${process.env.REACT_APP_API_URL}/classes-with-series`);
     console.log('Données reçues de l\'API:', res.data); 
     setClassesS(res.data); //  Vous utilisez setClasses, pas setSeries
     console.log("Classes avec séries:", res.data);
@@ -428,7 +428,7 @@ const fetchClassesSeries = async () => {
     formData.append('fichier', importData.fichier);
     
     // Envoi au backend
-    const response = await axios.post('http://localhost:8000/api/notes/import', formData, {
+    const response = await axios.post(`${process.env.REACT_APP_API_URL}/notes/import`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       }
@@ -467,7 +467,7 @@ const fetchClassesSeries = async () => {
   const fetchMatieres = async () => {
     try {
       setLoading(true);
-      const res = await axios.get('http://localhost:8000/api/matieresM');
+      const res = await axios.get(`${process.env.REACT_APP_API_URL}/matieresM`);
       setMatieres(res.data.data);
       console.log("Réponse complète du serveur:", res);
       setLoading(false);
@@ -482,7 +482,7 @@ const fetchClassesSeries = async () => {
 // Fonction pour récupérer les classes depuis l'API
   const fetchClasses = async () => {
     try {
-      const res = await axios.get('http://localhost:8000/api/classesM');
+      const res = await axios.get('`${process.env.REACT_APP_API_URL}/classesM');
       setClasses(res.data);
     } catch (err) {
       console.error(err);
@@ -492,7 +492,7 @@ const fetchClassesSeries = async () => {
 
 //Fonction pour recuperer les classes avec leur effectif et categorie
 const fetchClassesAvecEffectifMaternelle = async () => {
-  const res = await axios.get('http://localhost:8000/api/classes/effectifParClassedeMaternelle');
+  const res = await axios.get(`${process.env.REACT_APP_API_URL}/classes/effectifParClassedeMaternelle`);
   try {
     setClasses1(res.data);
     console.log("Classes avec effectif et catégorie:", res.data);
@@ -506,7 +506,7 @@ const fetchClassesAvecEffectifMaternelle = async () => {
 
 const fetchElevesParClasseMaternelle = async () => {
   try{
-    const res = await axios.get('http://localhost:8000/api/eleves/listeChaqueClasseMaternelle');
+    const res = await axios.get(`${process.env.REACT_APP_API_URL}/eleves/listeChaqueClasseMaternelle`);
     setElevesMaternelle(res.data);
     console.log("Élèves par classe de maternelle:", res.data);
   } catch (err) {
@@ -518,7 +518,7 @@ const fetchElevesParClasseMaternelle = async () => {
 // Fonction pour récupérer les élèves depuis l'API
 const fetchEleves = async () => {
   try {
-    const res = await axios.get('http://localhost:8000/api/elevesM');
+    const res = await axios.get(`${process.env.REACT_APP_API_URL}/elevesM`);
     
     // Accès sécurisé aux données avec vérifications
     const elevesData = res.data?.data?.par_classe?.[""] || [];
@@ -542,7 +542,7 @@ const fetchEleves = async () => {
 
     try {
       setLoading(true);
-      const res = await axios.post('http://localhost:8000/api/matieres/store', { nom: newMatiere }, {
+      const res = await axios.post(`${process.env.REACT_APP_API_URL}/matieres/store`, { nom: newMatiere }, {
         headers: {
           'Content-Type': 'application/json'
         }
@@ -574,7 +574,7 @@ const AjouterClasse = async () => {
 
         try {
             setLoading(true);
-            const res = await axios.post('http://localhost:8000/api/classes/store', {
+            const res = await axios.post(`${process.env.REACT_APP_API_URL}/classes/store`, {
                 nom_classe: newClassName,
                 categorie_classe: newClassCategory,
             }, {
@@ -628,7 +628,7 @@ const [loading, setLoading] = useState(false);
 
     try {
       setLoading(true);
-      await axios.put(`http://localhost:8000/api/matieres/update/${id}`, { nom: editValue }, {
+      await axios.put(`${process.env.REACT_APP_API_URL}/matieres/update/${id}`, { nom: editValue }, {
         headers: {
           'Content-Type': 'application/json'
         }
@@ -653,7 +653,7 @@ const ModificationClasse = async (id) => {
 
     try {
       setLoading(true);
-      await axios.put(`http://localhost:8000/api/classes/update/${id}`, { nom: editValue }, {
+      await axios.put(`${process.env.REACT_APP_API_URL}/classes/update/${id}`, { nom: editValue }, {
         headers: {
           'Content-Type': 'application/json'
         }
@@ -683,7 +683,7 @@ const ModificationClasse = async (id) => {
 
     try {
       setLoading(true);
-      await axios.delete(`http://localhost:8000/api/matieres/delete/${id}`);
+      await axios.delete(`${process.env.REACT_APP_API_URL}/matieres/delete/${id}`);
       fetchMatieres();
       setMessage('Matière supprimée avec succès');
       setLoading(false);
@@ -699,7 +699,7 @@ const ModificationClasse = async (id) => {
 
     try {
       setLoading(true);
-      await axios.delete(`http://localhost:8000/api/classes/delete/${id}`);
+      await axios.delete(`${process.env.REACT_APP_API_URL}/classes/delete/${id}`);
       fetchMatieres();
       setMessage('Classe supprimée avec succès');
       setLoading(false);
@@ -712,7 +712,7 @@ const ModificationClasse = async (id) => {
   const handleAddNote = async () => {
   try {
     setLoading(true);
-    const res = await axios.post('http://localhost:8000/api/notes', newNote);
+    const res = await axios.post(`${process.env.REACT_APP_API_URL}/notes`, newNote);
     // Vérifiez que la réponse est valide
     if (res.data && typeof res.data === 'object') {
       setNotes(prev => Array.isArray(prev) ? [...prev, res.data] : [res.data]);
@@ -917,7 +917,7 @@ const handleDeleteNote = async (noteId) => {
 
   try {
     setLoading(true);
-    await axios.delete(`http://localhost:8000/api/notes/${noteId}`);
+    await axios.delete(`${process.env.REACT_APP_API_URL}/notes/${noteId}`);
     await applyFilters(); // Recharger les notes
     setMessage('Note supprimée avec succès');
   } catch (err) {
@@ -930,7 +930,7 @@ const handleDeleteNote = async (noteId) => {
 
 const fetchStudentData = async () => {
   try {
-    const res = await axios.get('http://localhost:8000/api/stats/effectifs-maternelle');
+    const res = await axios.get(`${process.env.REACT_APP_API_URL}/stats/effectifs-maternelle`);
     setStudentData(res.data);
   } catch (err) {
     console.error('Erreur lors du chargement des effectifs:', err);
@@ -939,7 +939,7 @@ const fetchStudentData = async () => {
 
 const fetchGradeData = async () => {
   try {
-    const res = await axios.get('http://localhost:8000/api/stats/repartition-notes-maternelle');
+    const res = await axios.get(`${process.env.REACT_APP_API_URL}/stats/repartition-notes-maternelle`);
     setGradeData(res.data);
   } catch (err) {
     console.error('Erreur lors du chargement des notes:', err);
@@ -2025,11 +2025,11 @@ const LierMatieresauxClasses = () => {
       try {
         setLoading(true);
         const [classesRes,classesMatieresRes, matieresRes, matieres1Res, seriesRes] = await Promise.all([
-          axios.get('http://localhost:8000/api/classesM?with_series=true&with_matieres=true'),
-          axios.get('http://localhost:8000/api/with-series-matieresMaternelle'),
-          axios.get('http://localhost:8000/api/matieres-with-series'),
-          axios.get("http://localhost:8000/api/matieres"),
-          axios.get('http://localhost:8000/api/series'),
+          axios.get(`${process.env.REACT_APP_API_URL}/classesM?with_series=true&with_matieres=true`),
+          axios.get(`${process.env.REACT_APP_API_URL}/with-series-matieresMaternelle`),
+          axios.get(`${process.env.REACT_APP_API_URL}/matieres-with-series`),
+          axios.get(`${process.env.REACT_APP_API_URL}/matieres`),
+          axios.get(`${process.env.REACT_APP_API_URL}/series`),
         ]);
         
         setClasses(classesRes.data);
@@ -2065,7 +2065,7 @@ const LierMatieresauxClasses = () => {
       try {
         setLoading(true);
         const response = await axios.get(
-          `http://localhost:8000/api/classes/${selectedClass}/series/${selectedSerie}/matieres`
+          `${process.env.REACT_APP_API_URL}/classes/${selectedClass}/series/${selectedSerie}/matieres`
         );
         
         const matieresData = response.data;
@@ -2185,7 +2185,7 @@ const handleSubmit = async (e) => {
     
     // Envoyer les données au backend
     const response = await axios.put(
-      `http://localhost:8000/api/series/${selectedSerie}/matieres/sync`,
+      `${process.env.REACT_APP_API_URL}/series/${selectedSerie}/matieres/sync`,
       { matieres: matieresData },
       {
         headers: {
@@ -2197,7 +2197,7 @@ const handleSubmit = async (e) => {
     if (response.data.success) {
       // Rafraîchir les données
       const classesRes = await axios.get(
-        'http://localhost:8000/api/with-series-matieres'
+        `${process.env.REACT_APP_API_URL}/with-series-matieres`
       );
       
       setClasses(classesRes.data);
@@ -2482,9 +2482,9 @@ const LierEnseignantsAuxMatieres = () => {
       try {
         setLoading(true);
         const [classesRes, matieresRes, enseignantsRes, seriesRes] = await Promise.all([
-          axios.get('http://localhost:8000/api/classesM?with_series=true&with_matieres=true&with_enseignants=true'),
-          axios.get('http://localhost:8000/api/matieres'),
-          axios.get('http://localhost:8000/api/enseignants/MP'),
+          axios.get(`${process.env.REACT_APP_API_URL}/classesM?with_series=true&with_matieres=true&with_enseignants=true`),
+          axios.get(`${process.env.REACT_APP_API_URL}/matieres`),
+          axios.get(`${process.env.REACT_APP_API_URL}/enseignants/MP`),
           
         ]);
         
@@ -2511,7 +2511,7 @@ const LierEnseignantsAuxMatieres = () => {
   const fetchClassesSeries = async () => {
   try {
     setLoading(true);
-    const res = await axios.get('http://localhost:8000/api/classes-with-series');
+    const res = await axios.get(`${process.env.REACT_APP_API_URL}/classes-with-series`);
     console.log('Données reçues de l\'API:', res.data); 
     setClassesS(res.data); //  Vous utilisez setClasses, pas setSeries
     console.log("Classes avec séries:", res.data);
@@ -2539,7 +2539,7 @@ const LierEnseignantsAuxMatieres = () => {
         try {
           setLoading(true);
           const response = await axios.get(
-            `http://localhost:8000/api/classes/${selectedClass}/series/${selectedSerie}/matieres?with_enseignants=true`
+            `${process.env.REACT_APP_API_URL}/classes/${selectedClass}/series/${selectedSerie}/matieres?with_enseignants=true`
           );
           console.log('Matieres data:', response.data);
           
@@ -2601,7 +2601,7 @@ const LierEnseignantsAuxMatieres = () => {
         ];
 
           const response = await axios.put(
-            `http://localhost:8000/api/classes/${selectedClass}/enseignantsMP`,
+            `${process.env.REACT_APP_API_URL}/classes/${selectedClass}/enseignantsMP`,
             { classes: classesData }
           );
 
@@ -2610,7 +2610,7 @@ const LierEnseignantsAuxMatieres = () => {
         if (response.data.success) {
           // Rafraîchir les données
           const classesRes = await axios.get(
-            'http://localhost:8000/api/classes?with_series=true&with_matieres=true&with_enseignants=true'
+            `${process.env.REACT_APP_API_URL}/classes?with_series=true&with_matieres=true&with_enseignants=true`
           );
           
           setClassesWithData(classesRes.data);
@@ -2797,8 +2797,8 @@ const TypeEvas2 = () => {
     const fetchData = async () => {
       try {
         const [typesRes, periodesRes] = await Promise.all([
-          axios.get('http://localhost:8000/api/types'),
-          axios.get('http://localhost:8000/api/periodes'),
+          axios.get(`${process.env.REACT_APP_API_URL}/types`),
+          axios.get(`${process.env.REACT_APP_API_URL}/periodes`),
         ]);
         setTypes(typesRes.data);
         setPeriodes(periodesRes.data);
@@ -2817,7 +2817,7 @@ const TypeEvas2 = () => {
     try {
       setLoading(true);
       setError('');
-      await axios.post('http://localhost:8000/api/types/store', {
+      await axios.post(`${process.env.REACT_APP_API_URL}/types/store`, {
         nom: newTypeName,
       }, {
         headers: { 'Content-Type': 'application/json' }
@@ -2848,7 +2848,7 @@ const TypeEvas2 = () => {
     try {
       setLoading(true);
       setError('');
-      await axios.post('http://localhost:8000/api/periodes/store', {
+      await axios.post(`${process.env.REACT_APP_API_URL}/periodes/store`, {
         nom: newPeriodeName,
         date_debut: newDebutDName,
         date_fin: newDebutFName,
@@ -2991,11 +2991,11 @@ const LierTypeClassePeriode = () => {
       try {
         setLoading(true);
         const [classesRes, periodesRes, typesRes, liaisonsRes, classesSeriesRes] = await Promise.all([
-          axios.get('http://localhost:8000/api/classesM?with_series=true&with_matieres=true'), // Peut-être pas nécessaire si classes-with-series est suffisant
-          axios.get('http://localhost:8000/api/periodes'),
-          axios.get('http://localhost:8000/api/types'),
-          axios.get('http://localhost:8000/api/typeevaluationETclasseM'), // Récupère les liaisons existantes
-          axios.get('http://localhost:8000/api/classes-with-series'), // Récupère les classes avec leurs séries
+          axios.get(`${process.env.REACT_APP_API_URL}/classesM?with_series=true&with_matieres=true`), // Peut-être pas nécessaire si classes-with-series est suffisant
+          axios.get(`${process.env.REACT_APP_API_URL}/periodes`),
+          axios.get(`${process.env.REACT_APP_API_URL}/types`),
+          axios.get(`${process.env.REACT_APP_API_URL}/typeevaluationETclasseM`), // Récupère les liaisons existantes
+          axios.get(`${process.env.REACT_APP_API_URL}/classes-with-series`), // Récupère les classes avec leurs séries
         ]);
         setClasses(classesRes.data); // Utilisé pour la liste des classes
         setPeriodes(periodesRes.data);
@@ -3021,12 +3021,12 @@ const LierTypeClassePeriode = () => {
 
       try {
         setLoading(true);
-        await axios.delete(`http://localhost:8000/api/typeevaluation-classe/${liaisonId}`);
+        await axios.delete(`${process.env.REACT_APP_API_URL}/typeevaluation-classe/${liaisonId}`);
         
         setMessage({ text: 'Liaison supprimée avec succès', type: 'success' });
         
         // Rafraîchir les liaisons après suppression
-        const liaisonsRes = await axios.get('http://localhost:8000/api/typeevaluationETclasse');
+        const liaisonsRes = await axios.get(`${process.env.REACT_APP_API_URL}/typeevaluationETclasse`);
         setLiaisons(liaisonsRes.data);
         
       } catch (error) {
@@ -3119,12 +3119,12 @@ const LierTypeClassePeriode = () => {
     try {
       setLoading(true);
       // Point de terminaison API qui accepte un tableau de liaisons
-      await axios.post('http://localhost:8000/api/typeevaluation-classe/attach-multiple', {
+      await axios.post(`${process.env.REACT_APP_API_URL}/typeevaluation-classe/attach-multiple`, {
         liaisons: liaisonsToCreate,
       });
       setMessage({ text: 'Liaisons ajoutées avec succès', type: 'success' });
       // Recharger les liaisons pour mettre à jour l'affichage
-      const liaisonsRes = await axios.get('http://localhost:8000/api/typeevaluationETclasseS');
+      const liaisonsRes = await axios.get(`${process.env.REACT_APP_API_URL}/typeevaluationETclasseS`);
       setLiaisons(liaisonsRes.data);
       // Effacer les sélections après soumission réussie
       setSelectedClasses([]);

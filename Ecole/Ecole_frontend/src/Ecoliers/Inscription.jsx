@@ -22,6 +22,9 @@ export function InscriptionE() {
     const initialState = {
         nom: '',
         prenom: '',
+        datedeNaissance:'',
+        lieudeNaissance: '',
+        sexe: '',
         classe: '',
         numero_de_telephone: '',
         password1: '',
@@ -464,9 +467,9 @@ useEffect(() => {
             setIsLoading(true);
             try {
                 const [classesRes, matieresRes, seriesRes] = await Promise.all([
-                    axios.get('http://localhost:8000/api/classes'),
-                    axios.get('http://localhost:8000/api/matieres'),
-                    axios.get('http://localhost:8000/api/series'),
+                    axios.get(`${process.env.REACT_APP_API_URL}/classes`),
+                    axios.get(`${process.env.REACT_APP_API_URL}/matieres`),
+                    axios.get(`${process.env.REACT_APP_API_URL}/series`),
                 ]);
                 setClasses(classesRes.data);
                 setMatieres(matieresRes.data);
@@ -489,6 +492,9 @@ useEffect(() => {
             setUtilisateur({ 
                 ...initialState,
                 nom: utilisateur.nom,
+                datedeNaissance: utilisateur.datedeNaissance,
+                lieudeNaissance: utilisateur.lieudeNaissance,
+                sexe: utilisateur.sexe,
                 prenom: utilisateur.prenom,
                 numero_de_telephone: utilisateur.numero_de_telephone,
                 password1: utilisateur.password1,
@@ -550,7 +556,24 @@ useEffect(() => {
             return false;
         }
 
-        
+        if (!utilisateur.datedeNaissance) {
+            setError(true);
+            setMessage('La date de naissance est requise');
+            return false;
+        };
+
+        if(!utilisateur.lieudeNaissance?.trim()) {
+            setError(true);
+            setMessage('Le lieu de naissance est requis');
+            return false;
+        }
+
+        if(!utilisateur.sexe?.trim()) {
+            setError(true);
+            setMessage('Le sexe est requis');
+            return false;
+        }
+
 
         if (!utilisateur.numero_de_telephone?.trim()) {
             setError(true);
@@ -667,6 +690,9 @@ useEffect(() => {
             const dataToSend = {
                 nom: utilisateur.nom.trim(),
                 prenom: utilisateur.prenom.trim(),
+                datedeNaissance: utilisateur.datedeNaissance?.trim(),
+                lieudeNaissance: utilisateur.lieudeNaissance?.trim(),
+                sexe: utilisateur.sexe?.trim(),
                 classe: utilisateur.classe?.trim() || null, // Gérer le cas undefined
                 serie: utilisateur.role === 'eleve' ? utilisateur.serie?.trim() : null,
                 matiere: ['enseignement'].includes(utilisateur.role) ? utilisateur.matiere?.trim() : null,
@@ -680,7 +706,7 @@ useEffect(() => {
 
             console.log('Données envoyées pour l\'inscription:', dataToSend);
 
-            const response = await axios.post('http://localhost:8000/api/inscription', dataToSend);
+            const response = await axios.post(`${process.env.REACT_APP_API_URL}/inscription`, dataToSend);
 
             if (response.data?.message) {
                 setMessage(response.data.message);
@@ -772,7 +798,7 @@ useEffect(() => {
                         name="nom"
                         value={utilisateur.nom}
                         onChange={handleChange}
-                        placeholder="Votre Nom *"
+                        placeholder="Votre Nom  "
                         disabled={isLoading}
                         required
                         minLength="2"
@@ -786,11 +812,57 @@ useEffect(() => {
                         name="prenom"
                         value={utilisateur.prenom}
                         onChange={handleChange}
-                        placeholder="Votre/vos Prénom(s) *"
+                        placeholder="Votre/vos Prénom(s)  "
                         disabled={isLoading}
                         required
                         minLength="2"
                     />
+                </div>
+
+                
+
+                <div className="toust">
+                    <input
+                        type="date"
+                        className="tous"
+                        name="datedeNaissance"
+                        value={utilisateur.datedeNaissance}
+                        onChange={handleChange}
+                        placeholder="Date de naissance"
+                        disabled={isLoading}
+                        required
+                        minLength="2"
+                    />
+                </div>
+
+                <div className="toust">
+                    <input
+                        type="text"
+                        className="tous"
+                        name="lieudeNaissance"
+                        value={utilisateur.lieudeNaissance}
+                        onChange={handleChange}
+                        placeholder="Lieu de naissance"
+                        disabled={isLoading}
+                        required
+                        minLength="2"
+                    />
+                </div>
+
+                <div className="toust">
+                    <select 
+                        name="sexe"
+                        className="tous"
+                        value={utilisateur.sexe}
+                        onChange={handleChange}
+                        /*disabled={isLoading}*/
+                        required
+                    >
+                        <option value="">selectionnez votre sexe</option>
+                        <option value="M">Masculin</option>
+                        <option value="F">Féminin</option>
+
+                    </select>
                 </div>
 
                 
