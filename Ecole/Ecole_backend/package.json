@@ -1,0 +1,36 @@
+{
+    "private": true,
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build"
+    },
+    "devDependencies": {
+        "axios": "^1.1.2",
+        "laravel-vite-plugin": "^0.7.2",
+        "lodash": "^4.17.19",
+        "postcss": "^8.1.14",
+        "vite": "^4.0.0"
+    },
+    "eslintConfig": {
+        "extends": [
+            "react-app",
+            "react-app/jest"
+        ],
+        "env": {
+            "jest/global": true
+        }
+    },
+    "dependencies": {
+        "@react-pdf/renderer": "^4.3.0"
+    },
+
+    "build": {
+    "builder": "NIXPACKS",
+    "buildCommand": "composer install --optimize-autoloader --no-dev",
+    "zeroConfig": false,
+    "disableNpm": true
+    },
+    "deploy": {
+        "startCommand": "php artisan serve --host=0.0.0.0 --port=${PORT}"
+    }
+}
