@@ -4,8 +4,7 @@
 return [
     'paths' => ['api/*', 'sanctum/csrf-cookie', 'login', 'logout', 'register', 'cinetpay/*'],
     'allowed_methods' => ['*'],
-    'allowed_origins' => ['http://localhost:3000','http://ecole-production-2c90.up.railway.app','https://ecole-one.vercel.app', // Vercel
-], // Remplacez par votre URL frontend
+    'allowed_origins' => ['http://localhost:3000','http://ecole-production-2c90.up.railway.app','https://ecole-one.vercel.app',],
     'allowed_origins_patterns' => [],
     'allowed_headers' => ['*'],
     'exposed_headers' => [],
