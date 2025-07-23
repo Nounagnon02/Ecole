@@ -1,0 +1,9 @@
+{
+  "name": "backend-laravel",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Backend Laravel - Pas de dépendances Node",
+  "scripts": {
+    "start": "echo 'Backend PHP - Ignorer npm' && exit 0"
+  }
+}
