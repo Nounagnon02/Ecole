@@ -1,0 +1,11 @@
+[phases.setup]
+nix_pkgs = ["php", "composer"]
+
+[phases.build]
+commands = [
+    "composer install --optimize-autoloader --no-dev",
+    "php artisan config:cache"
+]
+
+[phases.start]
+command = "php artisan serve --host=0.0.0.0 --port=${PORT}"
