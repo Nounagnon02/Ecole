@@ -61,7 +61,7 @@ export function Connexion() {
         SetMessage('');
 
         try {
-            const response = await axios.post('http://ecole-production-2c90.up.railway.appconnexion', eleve);
+            const response = await axios.post(`${process.env.REACT_APP_API_URL}/connexion`, eleve);
             console.log('Réponse du serveur:', response.data);
 
             if (response.data.token || response.data.role) {
