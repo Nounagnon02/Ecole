@@ -1,7 +1,0 @@
-{
-  "build": {
-    "builder": "NIXPACKS",
-    "buildCommand": "composer install --optimize-autoloader --no-dev",
-    "skipNpmInstall": true
-  }
-}
