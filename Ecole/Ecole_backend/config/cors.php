@@ -12,7 +12,7 @@ return [
     ],
     'allowed_origins' => [
         'http://localhost:3000',
-        /*'https://ecole-production-2c90.up.railway.app',*/ // HTTPS seulement
+        'https://ecoleprojet.up.railway.app', // HTTPS seulement
         'https://ecole-one.vercel.app'
     ],
     'allowed_headers' => ['*'],
