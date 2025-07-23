@@ -17,6 +17,12 @@ class EleveController extends Controller
         // Récupère les sessions avec leurs matières associées
     $sessions = Eleves::all();
 
+    //verifier si la collection est vide , si oui retourner un tableau vide
+    if ($sessions->isEmpty()) {
+        return response()->json([]);
+    }
+
+
     return response()->json($sessions);
     }
 public function getByMatricule($matricule)
@@ -120,11 +126,10 @@ public function getByMatricule($matricule)
             ->orderBy('class_id')
             ->get();
         
+        // Vérifier si la collection est vide et retourner un tableau vide si c'est le cas
         if ($eleves->isEmpty()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Aucun élève de la maternelle trouvé'
-            ], 404);
+        return response()->json([]);
+    
         }else{
             return response()->json([
                 'success' => true,
@@ -146,10 +151,8 @@ public function getByMatricule($matricule)
             ->orderBy('class_id')
             ->get();
         if ($eleves->isEmpty()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Aucun élève du primaire trouvé'
-            ], 404);
+        return response()->json([]);
+    
         }else{
             return response()->json([
                 'success' => true,
@@ -172,10 +175,8 @@ public function getByMatricule($matricule)
             ->orderBy('class_id')
             ->get();
         if ($eleves->isEmpty()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Aucun élève du secondaire trouvé'
-            ], 404);
+        return response()->json([]);
+    
         }else{
             return response()->json([   
                 'success' => true,
@@ -198,10 +199,8 @@ public function getByMatricule($matricule)
                 ->get();
 
             if ($eleves->isEmpty()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Aucun élève trouvé pour cette classe et série'
-                ], 404);
+                return response()->json([]);
+        
             }
 
             return response()->json([

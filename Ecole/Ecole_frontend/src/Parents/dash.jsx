@@ -42,6 +42,7 @@ const ParentDashboard = () => {
 
   const navigate = useNavigate(); // Ajoute ceci dans ParentDashboard
 
+  const urlBase = 'https://ecole-one.vercel.app' || 'http://localhost:3000'; // URL de base pour les requêtes
   // Données mockées pour les absences
   const absences = 
   {

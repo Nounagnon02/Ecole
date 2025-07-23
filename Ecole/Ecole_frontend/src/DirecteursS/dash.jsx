@@ -3509,7 +3509,19 @@ const handleSeriesCheckboxChange = (classId, serieId) => {
         setClasses(classesRes.data);
         setPeriodes(periodesRes.data);
         setTypes(typesRes.data);
+        const raw = liaisonsRes.data.data || [];
+  const flatLiaisons = raw.flatMap(classe =>
+    classe.type_evaluations.map(te => ({
+      id: te.id,
+      classe_id: classe.id,
+      periode_id: te.periode_id,
+      typeevaluation_id: te.typeevaluation_id,
+      serie_id: te.serie_id
+    }))
+  );
+  setLiaisons(flatLiaisons);
         setLiaisons(liaisonsRes.data);
+        console.log("liaison 1", liaisonsRes.data);
         setClassesWithSeries(classesSeriesRes.data);
       } catch (error) {
         setMessage({ text: 'Erreur lors du chargement des données', type: 'error' });
@@ -3530,7 +3542,7 @@ const handleSeriesCheckboxChange = (classId, serieId) => {
       
       setMessage({ text: 'Liaison supprimée avec succès', type: 'success' });
       const liaisonsRes = await axios.get('http://localhost:8000/api/typeevaluationETclasseS');
-      setLiaisons(liaisonsRes.data);
+      setLiaisons(liaisonsRes.data.data);
     } catch (error) {
       setMessage({ 
         text: error.response?.data?.message || 'Erreur lors de la suppression', 
@@ -3623,7 +3635,9 @@ const handleSeriesCheckboxChange = (classId, serieId) => {
 
       // Recharger les liaisons
       const liaisonsRes = await axios.get('http://localhost:8000/api/typeevaluationETclasseS');
-      setLiaisons(liaisonsRes.data);
+      setLiaisons(liaisonsRes.data.data);
+
+      //console.log("Liaison 1" , liaisonsRes.data.data)
       
       // Réinitialiser le formulaire
       cancelEdit();
@@ -3646,6 +3660,9 @@ const handleSeriesCheckboxChange = (classId, serieId) => {
       };
     });
 
+    
+    console.log("liasons", liaisons);
+
     // Initialiser avec les périodes
     periodes.forEach(periode => {
       Object.values(organized).forEach(classe => {
@@ -3657,6 +3674,10 @@ const handleSeriesCheckboxChange = (classId, serieId) => {
         };
       });
     });
+
+    if (!Array.isArray(liaisons)) {
+      return organized;
+    }
 
     // Ajouter les liaisons existantes
     liaisons.forEach(liaison => {
@@ -4293,15 +4314,6 @@ const Contributions = () => {
       {error && <div className="error-message">{error}</div>}
       
       <form onSubmit={handleSubmit} className="contribution-form">
-        <div className="form-group">
-          <label>Montant (FCFA)</label>
-          <input 
-            type="number" 
-            value={montant} 
-            onChange={(e) => setMontant(e.target.value)} 
-            required 
-          />
-        </div>
 
         <div className="form-group">
           <label>Classe</label>
@@ -4339,6 +4351,19 @@ const Contributions = () => {
                 })()}  
           </select>
         </div>
+
+        <div className="form-group">
+          <label>Montant (FCFA)</label>
+          <input 
+            type="number" 
+            value={montant} 
+            placeholder='Montant de la contribution'
+            onChange={(e) => setMontant(e.target.value)} 
+            required 
+          />
+        </div>
+
+        
 
         <div className="form-group">
           <label>Montant de la premiere tranche (FCFA)</label>
@@ -4450,7 +4475,7 @@ const Contributions = () => {
                 const classe = classesMat.find(c => c.id === contribution.id_classe);
                 return (
                   <tr key={contribution.id}>
-                    <td>{classe ? classe.nom : 'Inconnue'}</td>
+                    <td>{classe ? classe.nom_classe : 'Inconnue'}</td>
                     <td>{contribution.montant} FCFA</td>
                     <td>{contribution.montant_premiere_tranche} FCFA {new Date(contribution.date_fin_premiere_tranche).toLocaleDateString()}</td>
                     <td>{contribution.montant_deuxieme_tranche} FCFA {new Date(contribution.date_fin_deuxieme_tranche).toLocaleDateString()}</td>
