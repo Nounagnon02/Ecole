@@ -149,7 +149,7 @@ const ParentDashboard = () => {
         throw new Error("Token d'authentification manquant");
       }
 
-      const response = await axios.get(`http://localhost:8000/api/parents/${parentId}/dashboard`, {
+      const response = await axios.get(`${process.env.react_app_api_url}/parents/${parentId}/dashboard`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -203,7 +203,7 @@ const fetchChildBulletin = async (childId, parentId, periode = currentPeriode) =
         const token = localStorage.getItem('token');
         
         const response = await axios.get(
-            `http://localhost:8000/api/eleves/${childId}/bulletin`,
+            `${process.env.react_app_api_url}/eleves/${childId}/bulletin`,
             { 
                 params: { periode },
                 headers: {
@@ -246,7 +246,7 @@ const fetchChildBulletin = async (childId, parentId, periode = currentPeriode) =
       const token = localStorage.getItem('token');
       
       const response = await axios.get(
-        `http://localhost:8000/api/bulletin/debug/${childId}`,
+        `${process.env.react_app_api_url}/bulletin/debug/${childId}`,
         { 
           params: { periode: currentPeriode },
           headers: {
@@ -459,7 +459,7 @@ const initierPaiementCinetPay = async (transactionId) => {
   try {
     const token = localStorage.getItem('token');
     const res = await axios.post(
-      `http://localhost:8000/api/cinetpay/init/${transactionId}`,
+      `${process.env.react_app_api_url}/cinetpay/init/${transactionId}`,
       {},
       { headers: { Authorization: `Bearer ${token}` } }
     );

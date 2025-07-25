@@ -274,6 +274,241 @@ public function getClassesWithPeriodesAndTypesS()
         return response()->json($data);
     }
 
+    // Récupérer les types d'évaluation d'une classe spécifique
+    public function getTypesByClasse($classeId)
+    {
+        $types = TypeEvaluation::whereHas('periodes', function($query) use ($classeId) {
+            $query->whereHas('classes', function($q) use ($classeId) {
+                $q->where('classes.id', $classeId);
+            });
+        })->get();
+
+        return response()->json($types);
+    }
+
+    // Récupérer les types d'évaluation d'une catégorie de classe
+    public function getTypesByCategorie($categorie)
+    {
+        $types = TypeEvaluation::whereHas('periodes', function($query) use ($categorie) {
+            $query->whereHas('classes', function($q) use ($categorie) {
+                $q->where('classes.categorie_classe', $categorie);
+            });
+        })->get();
+
+        return response()->json($types);
+    }
+
+    // Récupérer les types d'évaluation de la maternelle
+    public function getTypesMaternelle()
+    {
+        $types = TypeEvaluation::whereHas('periodes', function($query) {
+            $query->whereHas('classes', function($q) {
+                $q->where('classes.categorie_classe', 'maternelle');
+            });
+        })->get();
+        return response()->json($types);
+    }
+
+    // Récupérer les types d'évaluation du primaire
+    public function getTypesPrimaire()
+    {
+        $types = TypeEvaluation::whereHas('periodes', function($query) {
+            $query->whereHas('classes', function($q) {
+                $q->where('classes.categorie_classe', 'Primaire');
+            });
+        })->get();
+        return response()->json($types);
+    }
+
+    // Récupérer les types d'évaluation du secondaire
+    public function getTypesSecondaire()
+    {
+        $types = TypeEvaluation::whereHas('periodes', function($query) {
+            $query->whereHas('classes', function($q) {
+                $q->where('classes.categorie_classe', 'secondaire');
+            });
+        })->get();
+        return response()->json($types);
+    }
+
+    // Récupérer les types d'évaluation avec leurs périodes pour une classe
+    public function getTypesWithPeriodesByClasse($classeId)
+    {
+        $data = DB::table('typeevaluation_classes')
+            ->where('classe_id', $classeId)
+            ->join('type_evaluations', 'typeevaluation_classes.typeevaluation_id', '=', 'type_evaluations.id')
+            ->join('periodes', 'typeevaluation_classes.periode_id', '=', 'periodes.id')
+            ->select(
+                'type_evaluations.id as type_id',
+                'type_evaluations.nom as type_nom',
+                'periodes.id as periode_id',
+                'periodes.nom as periode_nom',
+                'periodes.date_debut',
+                'periodes.date_fin'
+            )
+            ->get();
+
+        return response()->json($data);
+    }
+
+    // Récupérer les types d'évaluation avec leurs périodes pour une classe avec séries
+    public function getTypesWithPeriodesByClasseWithSeries($classeId)
+    {
+        $data = DB::table('typeevaluation_classes')
+            ->where('classe_id', $classeId)
+            ->join('type_evaluations', 'typeevaluation_classes.typeevaluation_id', '=', 'type_evaluations.id')
+            ->join('periodes', 'typeevaluation_classes.periode_id', '=', 'periodes.id')
+            ->join('series', 'typeevaluation_classes.serie_id', '=', 'series.id')
+            ->select(
+                'type_evaluations.id as type_id',
+                'type_evaluations.nom as type_nom',
+                'periodes.id as periode_id',
+                'periodes.nom as periode_nom',
+                'periodes.date_debut',
+                'periodes.date_fin',
+                'series.id as serie_id',
+                'series.nom as serie_nom'
+            )
+            ->get();
+        return response()->json($data);
+    }
+
+    // Récupérer les types d'évaluation avec leurs périodes pour une catégorie
+    public function getTypesWithPeriodesByCategorie($categorie)
+    {
+        $data = DB::table('typeevaluation_classes')
+            ->join('classes', 'typeevaluation_classes.classe_id', '=', 'classes.id')
+            ->join('type_evaluations', 'typeevaluation_classes.typeevaluation_id', '=', 'type_evaluations.id')
+            ->join('periodes', 'typeevaluation_classes.periode_id', '=', 'periodes.id')
+            ->where('classes.categorie_classe', $categorie)
+            ->select(
+                'type_evaluations.id as type_id',
+                'type_evaluations.nom as type_nom',
+                'periodes.id as periode_id',
+                'periodes.nom as periode_nom',
+                'periodes.date_debut',
+                'periodes.date_fin',
+                'classes.id as classe_id',
+                'classes.nom_classe'
+            )
+            ->get();
+
+        return response()->json($data);
+    }
+
+    // Récupérer les types d'évaluation avec leurs périodes pour la maternelle
+    public function getTypesWithPeriodesMaternelle()
+    {
+        $data = DB::table('typeevaluation_classes')
+            ->join('classes', 'typeevaluation_classes.classe_id', '=', 'classes.id')
+            ->join('type_evaluations', 'typeevaluation_classes.typeevaluation_id', '=', 'type_evaluations.id')
+            ->join('periodes', 'typeevaluation_classes.periode_id', '=', 'periodes.id')
+            ->where('classes.categorie_classe', 'maternelle')
+            ->select(
+                'type_evaluations.id as type_id',
+                'type_evaluations.nom as type_nom',
+                'periodes.id as periode_id',
+                'periodes.nom as periode_nom',
+                'periodes.date_debut',
+                'periodes.date_fin',
+                'classes.id as classe_id',
+                'classes.nom_classe'
+            )
+            ->get();
+        return response()->json($data);
+    }
+
+    // Récupérer les types d'évaluation avec leurs périodes pour le primaire
+    public function getTypesWithPeriodesPrimaire()
+    {
+        $data = DB::table('typeevaluation_classes')
+            ->join('classes', 'typeevaluation_classes.classe_id', '=', 'classes.id')
+            ->join('type_evaluations', 'typeevaluation_classes.typeevaluation_id', '=', 'type_evaluations.id')
+            ->join('periodes', 'typeevaluation_classes.periode_id', '=', 'periodes.id')
+            ->where('classes.categorie_classe', 'Primaire')
+            ->select(
+                'type_evaluations.id as type_id',
+                'type_evaluations.nom as type_nom',
+                'periodes.id as periode_id',
+                'periodes.nom as periode_nom',
+                'periodes.date_debut',
+                'periodes.date_fin',
+                'classes.id as classe_id',
+                'classes.nom_classe'
+            )
+            ->get();
+        return response()->json($data);
+    }
+
+
+    // Récupérer les types d'évaluation avec leurs périodes pour le secondaire
+    public function getTypesWithPeriodesSecondaire()
+    {
+        $data = DB::table('typeevaluation_classes')
+            ->join('classes', 'typeevaluation_classes.classe_id', '=', 'classes.id')
+            ->join('type_evaluations', 'typeevaluation_classes.typeevaluation_id', '=', 'type_evaluations.id')
+            ->join('periodes', 'typeevaluation_classes.periode_id', '=', 'periodes.id')
+            ->where('classes.categorie_classe', 'secondaire')
+            ->select(
+                'type_evaluations.id as type_id',
+                'type_evaluations.nom as type_nom',
+                'periodes.id as periode_id',
+                'periodes.nom as periode_nom',
+                'periodes.date_debut',
+                'periodes.date_fin',
+                'classes.id as classe_id',
+                'classes.nom_classe'
+            )
+            ->get();
+        return response()->json($data);
+    }
+
+    // Récupérer les types d'évaluation avec leurs périodes par classes et séries
+    public function getTypesWithPeriodesByClassesAndSeries()
+    {
+        $data = DB::table('typeevaluation_classes')
+            ->join('classes', 'typeevaluation_classes.classe_id', '=', 'classes.id')
+            ->join('type_evaluations', 'typeevaluation_classes.typeevaluation_id', '=', 'type_evaluations.id')
+            ->join('periodes', 'typeevaluation_classes.periode_id', '=', 'periodes.id')
+            ->join('series', 'typeevaluation_classes.serie_id', '=', 'series.id')
+            ->select(
+                'type_evaluations.id as type_id',
+                'type_evaluations.nom as type_nom',
+                'periodes.id as periode_id',
+                'periodes.nom as periode_nom',
+                'periodes.date_debut',
+                'periodes.date_fin',
+                'classes.id as classe_id',
+                'classes.nom_classe',
+                'series.id as serie_id',
+                'series.nom as serie_nom'
+            )
+            ->get();
+        return response()->json($data);
+    }
+    // Récupérer les types d'évaluation avec leurs périodes et séries pour une classe
+    public function getTypesWithPeriodesAndSeriesByClasse($classeId)
+    {
+        $data = DB::table('typeevaluation_classes')
+            ->where('classe_id', $classeId)
+            ->join('type_evaluations', 'typeevaluation_classes.typeevaluation_id', '=', 'type_evaluations.id')
+            ->join('periodes', 'typeevaluation_classes.periode_id', '=', 'periodes.id')
+            ->join('series', 'typeevaluation_classes.serie_id', '=', 'series.id')
+            ->select(
+                'type_evaluations.id as type_id',
+                'type_evaluations.nom as type_nom',
+                'periodes.id as periode_id',
+                'periodes.nom as periode_nom',
+                'periodes.date_debut',
+                'periodes.date_fin',
+                'series.id as serie_id',
+                'series.nom as serie_nom'
+            )
+            ->get();
+
+        return response()->json($data);
+    }
+
 }
 
 
