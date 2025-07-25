@@ -1,7 +1,7 @@
 <?php
 // Ecole/Ecole_backend/config/cors.php
 return [
-    'paths' => ['api/*', 'sanctum/csrf-cookie', 'login', 'logout', 'register', 'cinetpay/*'],
+    'paths' => ['api/*', 'sanctum/csrf-cookie', 'login', 'logout', 'register', 'cinetpay/*', '*'],
     /*'allowed_methods' => [
         'GET',
         'POST',
