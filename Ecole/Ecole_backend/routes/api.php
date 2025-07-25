@@ -261,3 +261,25 @@ Route::get('/health', function () {
         return response()->json(['db' => 'KO', 'error' => $e->getMessage()], 500);
     }
 });
+
+
+
+
+// Routes pour les périodes
+Route::get('/periodes/classe/{classeId}', [periodesController::class, 'getPeriodesByClasse']);
+Route::get('/periodes/categorie/{categorie}', [periodesController::class, 'getPeriodesByCategorie']);
+Route::get('/periodes/categorie/maternelle', [periodesController::class, 'getTypesByMaterlle']);
+Route::get('/periodes/categorie/primaire', [periodesController::class, 'getTypesByPrimaire']);
+Route::get('/periodes/categorie/secondaire', [periodesController::class, 'getTypesBySecondaire']);
+Route::get('/periodes/active/categorie/{categorie}', [periodesController::class, 'getActivePeriodesByCategorie']);
+
+
+// Routes pour les types d'évaluation
+Route::get('/types-evaluation/classe/{classeId}', [typeEvaluationController::class, 'getTypesByClasse']);
+Route::get('/types-evaluation/categorie/{categorie}', [typeEvaluationController::class, 'getTypesByCategorie']);
+Route::get('/types-evaluation/categorie/maternelle', [typeEvaluationController::class, 'getTypesByMaterlle']);
+Route::get('/types-evaluation/categorie/primaire', [typeEvaluationController::class, 'getTypesByPrimaire']);
+Route::get('/types-evaluation/categorie/secondaire', [typeEvaluationController::class, 'getTypesBySecondaire']);
+Route::get('/types-evaluation/active/categorie/tousavecseriesetclasses', [typeEvaluationController::class, 'getTypesWithPeriodesByClassesAndSeries']);
+Route::get('/types-evaluation/with-periodes/classe/{classeId}', [typeEvaluationController::class, 'getTypesWithPeriodesByClasse']);
+Route::get('/types-evaluation/with-periodes/categorie/{categorie}', [typeEvaluationController::class, 'getTypesWithPeriodesByCategorie']);

@@ -105,7 +105,7 @@ const effectifEM = async () => {
 const effectifM = async () => {
   try{
     setLoading(true);
-    const res = await  axios.get('`${process.env.REACT_APP_API_URL}/classes/effectif/maternelle');
+    const res = await  axios.get(`${process.env.REACT_APP_API_URL}/classes/effectif/maternelle`);
     setEffectif(res.data);
   }catch (err) {
     console.error(err);
