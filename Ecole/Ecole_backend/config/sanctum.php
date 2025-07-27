@@ -19,8 +19,8 @@ return [
         '%s%s',
         'localhost,localhost:3000,127.0.0.1,127.0.0.1:8000,::1',
         Sanctum::currentApplicationUrlWithPort(),
-        'ecole-one.vercel.app',
-        'ecole-gestionkp.com'
+        env('APP_URL', 'https://ecoleprojet.up.railway.app'),
+        env('FRONTEND_URL', 'https://ecole-projet.vercel.app'),
 
     ))),
 
