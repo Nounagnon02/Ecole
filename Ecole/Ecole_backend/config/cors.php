@@ -15,13 +15,9 @@ return [
     'allowed_origins' => [
         'http://localhost:3000',
         'https://ecoleprojet.up.railway.app',
-        'https://ecole-one.vercel.app'
+        'https://ecole-projet.vercel.app'
     ],
-    'allowed_origins' => [
-        'http://localhost:3000',
-        'https://ecoleprojet.up.railway.app',
-        'https://ecole-one.vercel.app',
-    ],
+    'allowed_origins_patterns' => [],
     'allowed_headers' => ['*'],
     'exposed_headers' => [],
     'max_age' => 0,
