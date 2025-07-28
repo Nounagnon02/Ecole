@@ -248,6 +248,13 @@ public function inscription(Request $request)
 }
 
 
+    /**
+     * Permet de se connecter à l'application avec un identifiant et un mot de passe.
+     * 
+     * @param \Illuminate\Http\Request $request
+     * 
+     * @return \Illuminate\Http\JsonResponse
+     */
 public function connexion(Request $request)
 {
     $request->validate([

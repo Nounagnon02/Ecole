@@ -32,14 +32,13 @@ class CorsMiddleware
             ]);
         }
 
-        $response = $next($request);
+         $response = $next($request);
 
-        // Applique les headers CORS
-        $response->headers->set('Access-Control-Allow-Origin', implode(',', config('cors.allowed_origins')));
-        $response->headers->set('Access-Control-Allow-Methods', implode(',', config('cors.allowed_methods')));
-        $response->headers->set('Access-Control-Allow-Headers', '*');
-        $response->headers->set('Access-Control-Allow-Credentials', 'true');
+            $response->headers->set('Access-Control-Allow-Origin', '*');
+            $response->headers->set('Access-Control-Allow-Methods', 'POST, GET, OPTIONS, PUT, DELETE');
+            $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, X-Auth-Token, Origin, Authorization');
+            $response->headers->set('Access-Control-Expose-Headers', 'Authorization');
 
-        return $response;
+            return $response;
     }
 }
