@@ -283,3 +283,52 @@ Route::get('/types-evaluation/categorie/secondaire', [typeEvaluationController::
 Route::get('/types-evaluation/active/categorie/tousavecseriesetclasses', [typeEvaluationController::class, 'getTypesWithPeriodesByClassesAndSeries']);
 Route::get('/types-evaluation/with-periodes/classe/{classeId}', [typeEvaluationController::class, 'getTypesWithPeriodesByClasse']);
 Route::get('/types-evaluation/with-periodes/categorie/{categorie}', [typeEvaluationController::class, 'getTypesWithPeriodesByCategorie']);
+
+
+
+
+Route::get('/test-db', function () {
+    try {
+        // Test de connexion DB
+        $connection = DB::connection();
+        $connection->getPdo();
+        
+        // Test simple query
+        $result = DB::select('SELECT 1 as test');
+        
+        return response()->json([
+            'database' => 'Connexion réussie',
+            'driver' => config('database.default'),
+            'host' => config('database.connections.' . config('database.default') . '.host'),
+            'port' => config('database.connections.' . config('database.default') . '.port'),
+            'database_name' => config('database.connections.' . config('database.default') . '.database'),
+            'test_query' => $result,
+            'env_vars' => [
+                'DB_HOST' => env('DB_HOST'),
+                'DB_PORT' => env('DB_PORT'),
+                'DB_DATABASE' => env('DB_DATABASE'),
+                'DB_USERNAME' => env('DB_USERNAME'),
+                'DB_PASSWORD' => env('DB_PASSWORD') ? '***masqué***' : 'non défini',
+            ]
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => 'Erreur de connexion DB',
+            'message' => $e->getMessage(),
+            'config' => [
+                'driver' => config('database.default'),
+                'host' => config('database.connections.' . config('database.default') . '.host'),
+                'port' => config('database.connections.' . config('database.default') . '.port'),
+            ]
+        ], 500);
+    }
+})->middleware('api');
+
+// Endpoint de test simple sans DB
+Route::get('/test-simple', function () {
+    return response()->json([
+        'message' => 'API fonctionne',
+        'timestamp' => now(),
+        'env' => app()->environment(),
+    ]);
+})->middleware('api');
