@@ -17,7 +17,7 @@ return [
         'https://ecoleprojet.up.railway.app',
         'https://ecole-projet.vercel.app'
     ],
-    'allowed_origins_patterns' => [],
+    'allowed_origins_patterns' => ['https://*.vercel.app', 'https://*.railway.app'],
     'allowed_headers' => ['*'],
     'exposed_headers' => [],
     'max_age' => 0,
