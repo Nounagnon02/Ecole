@@ -9,6 +9,7 @@ import { pdfjs } from 'react-pdf';
 import * as pdfjsLib from 'pdfjs-dist/build/pdf';
 import 'pdfjs-dist/build/pdf.worker.entry'; 
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
+import api from '../api';
 
 // Configuration du worker PDF.js
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`
@@ -467,9 +468,9 @@ useEffect(() => {
             setIsLoading(true);
             try {
                 const [classesRes, matieresRes, seriesRes] = await Promise.all([
-                    axios.get(`${process.env.REACT_APP_API_URL}/classes`),
-                    axios.get(`${process.env.REACT_APP_API_URL}/matieres`),
-                    axios.get(`${process.env.REACT_APP_API_URL}/series`),
+                    api.get(`/classes`),
+                    api.get(`/matieres`),
+                    api.get(`/series`),
                 ]);
                 setClasses(classesRes.data);
                 setMatieres(matieresRes.data);
@@ -706,7 +707,7 @@ useEffect(() => {
 
             console.log('Données envoyées pour l\'inscription:', dataToSend);
 
-            const response = await axios.post(`${process.env.REACT_APP_API_URL}/inscription`, dataToSend);
+            const response = await api.post(`/inscription`, dataToSend);
 
             if (response.data?.message) {
                 setMessage(response.data.message);
