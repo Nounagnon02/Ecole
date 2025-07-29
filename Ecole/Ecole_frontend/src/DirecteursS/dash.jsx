@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { PieChart, Pie, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
 import { Edit2, Trash2, Save, RefreshCcw, X, Plus, Menu, Home, Users, Book, User, Settings, LogOut, Bell, Calendar, ChevronDown, ChevronUp, ClipboardList } from 'lucide-react';
-import api from 'api';
+import api from '../api';
+import axios from 'axios';
 import './Mes_CSS_directeur/dashboard_directeur.css';
 import { NavLink } from 'react-router-dom';
 import * as XLSX from 'xlsx';
