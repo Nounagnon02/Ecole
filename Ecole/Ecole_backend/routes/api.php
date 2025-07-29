@@ -27,7 +27,7 @@ Route::post('/connexion', [AuthController::class, 'connexion']);
 // Matieres
 Route::post('/matieres/store', [MatieresController::class, 'store']);
 Route::get('/matieres', [MatieresController::class, 'index']);
-Route::put('/matieres/update/{id}', [MatieresController::class, 'update']);
+Route::post('/matieres/update/{id}', [MatieresController::class, 'update']);
 Route::delete('/matieres/delete/{id}', [MatieresController::class, 'destroy']);
 Route::get('/matieresM', [MatieresController::class, 'getMatieresM']); // Récupérer les matières de la maternelle
 Route::get('/matieresP', [MatieresController::class, 'getMatieresP']); // Récupérer les matières de la primaire

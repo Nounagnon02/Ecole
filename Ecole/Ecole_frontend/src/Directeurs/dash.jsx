@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { PieChart, Pie, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
 import { Edit2, Trash2, Save, X, Plus, Menu, Home, Users, Book, User, Settings, LogOut, Bell, Calendar, ChevronDown, ChevronUp, ClipboardList } from 'lucide-react';
-import axios from 'axios';
 import './Mes_CSS_directeur/dashboard_directeur.css';
 import { NavLink } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import * as pdfjsLib from 'pdfjs-dist';
+import api from '../api';
 
 
 
@@ -215,7 +215,7 @@ const applyFilters = async () => {
     setLoading(true);
     
     // Construction de l'URL avec les paramètres de filtrage
-    let url = 'http://localhost:8000/api/notes/filter?';
+    let url = '/notes/filter?';
     const params = new URLSearchParams();
     
     // Ajouter uniquement les filtres non vides
@@ -227,7 +227,7 @@ const applyFilters = async () => {
     
     url += params.toString();
     
-    const response = await axios.get(url);
+    const response = await api.get('notes/filter?');
     
     if (response.data.success) {
       setFilteredNotes(response.data.data);
@@ -297,7 +297,7 @@ const handleNoteChange = (e) => {
   const fetchMatieres = async () => {
     try {
       setLoading(true);
-      const res = await axios.get('http://localhost:8000/api/matieres');
+      const res = await api.get('/matieres');
       setMatieres1(res.data);
       setLoading(false);
     } catch (err) {
@@ -310,7 +310,7 @@ const handleNoteChange = (e) => {
   const fetchMatieresSeries = async () => {
     try {
       setLoading(true);
-      const res = await axios.get('http://localhost:8000/api/matieres-with-series');
+      const res = await api.get('/matieres-with-series');
       setMatieres(res.data);
       setLoading(false);
     } catch (err) {
@@ -323,7 +323,7 @@ const handleNoteChange = (e) => {
   const fetchClassesSeries = async () => {
   try {
     setLoading(true);
-    const res = await axios.get('http://localhost:8000/api/classes-with-series');
+    const res = await api.get('/classes-with-series');
     console.log('Données reçues de l\'API:', res.data); // 👈 Ajoutez ceci
     setClasses(res.data); //  Vous utilisez setClasses, pas setSeries
     setLoading(false);
@@ -339,7 +339,7 @@ const handleNoteChange = (e) => {
   const fetchSeries = async () => {
   try {
     setLoading(true);
-    const res = await axios.get('http://localhost:8000/api/matieres-with-series');
+    const res = await api.get('/matieres-with-series');
     setSeries(res.data);
     setLoading(false);
   } catch (err) {
@@ -352,7 +352,7 @@ const handleNoteChange = (e) => {
 // Fonction pour récupérer les classes depuis l'API
   const fetchClasses = async () => {
     try {
-      const res = await axios.get('http://localhost:8000/api/classes');
+      const res = await api.get('/classes');
       setClasses(res.data);
     } catch (err) {
       console.error(err);
@@ -362,7 +362,7 @@ const handleNoteChange = (e) => {
 // Fonction pour récupérer les élèves depuis l'API
   const fetchEleves = async () => {
     try {
-      const res = await axios.get('http://localhost:8000/api/eleves');
+      const res = await api.get('/eleves');
       setEleves(res.data);
     } catch (err) {
       console.error(err);
@@ -379,7 +379,7 @@ const handleNoteChange = (e) => {
 
     try {
       setLoading(true);
-      const res = await axios.post('http://localhost:8000/api/matieres/store', { nom: newMatiere }, {
+      const res = await api.post('/matieres/store', { nom: newMatiere }, {
         headers: {
           'Content-Type': 'application/json'
         }
@@ -407,7 +407,7 @@ const handleNoteChange = (e) => {
 
     try {
         setLoading(true);
-        const res = await axios.post('http://localhost:8000/api/series/store', { 
+        const res = await api.post('/series', { 
             nom: newSerie 
         }, {
             headers: {
@@ -439,7 +439,7 @@ const AjouterClasse = async () => {
 
         try {
             setLoading(true);
-            const res = await axios.post('http://localhost:8000/api/classes/store', {
+            const res = await api.post('/classes/store', {
                 nom_classe: newClassName,
                 categorie_classe: newClassCategory,
             }, {
@@ -493,7 +493,7 @@ const [loading, setLoading] = useState(false);
 
     try {
       setLoading(true);
-      await axios.put(`http://localhost:8000/api/matieres/update/${id}`, { nom: editValue }, {
+      await api.put('/matieres/update/${id}', { nom: editValue }, {
         headers: {
           'Content-Type': 'application/json'
         }
@@ -518,7 +518,7 @@ const [loading, setLoading] = useState(false);
 
     try {
       setLoading(true);
-      await axios.put(`http://localhost:8000/api/series/update/${id}`, { nom: editValue }, {
+      await api.put('/series/update/${id}', { nom: editValue }, {
         headers: {
           'Content-Type': 'application/json'
         }
@@ -543,7 +543,7 @@ const ModificationClasse = async (id) => {
 
     try {
       setLoading(true);
-      await axios.put(`http://localhost:8000/api/classes/update/${id}`, { nom: editValue }, {
+      await api.put('/classes/update/${id}', { nom: editValue }, {
         headers: {
           'Content-Type': 'application/json'
         }
@@ -573,7 +573,7 @@ const ModificationClasse = async (id) => {
 
     try {
       setLoading(true);
-      await axios.delete(`http://localhost:8000/api/matieres/delete/${id}`);
+      await api.delete(`/matieres/delete/${id}`);
       fetchMatieres();
       setMessage('Matière supprimée avec succès');
       setLoading(false);
@@ -589,7 +589,7 @@ const ModificationClasse = async (id) => {
 
     try {
       setLoading(true);
-      await axios.delete(`http://localhost:8000/api/classes/delete/${id}`);
+      await api.delete('/classes/delete/${id}');
       fetchMatieres();
       setMessage('Classe supprimée avec succès');
       setLoading(false);
@@ -602,7 +602,7 @@ const ModificationClasse = async (id) => {
   const handleAddNote = async () => {
   try {
     setLoading(true);
-    const res = await axios.post('http://localhost:8000/api/notes', newNote);
+    const res = await api.post('/notes', newNote);
     // Vérifiez que la réponse est valide
     if (res.data && typeof res.data === 'object') {
       setNotes(prev => Array.isArray(prev) ? [...prev, res.data] : [res.data]);
@@ -853,7 +853,7 @@ const processExcelFile = async (file) => {
     formData.append('fichier', importData.fichier);
     
     // Envoi au backend
-    const response = await axios.post('http://localhost:8000/api/notes/import', formData, {
+    const response = await api.post('/notes/import', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       }
@@ -921,7 +921,7 @@ const handleDeleteNote = async (noteId) => {
 
   try {
     setLoading(true);
-    await axios.delete(`http://localhost:8000/api/notes/${noteId}`);
+    await api.delete('/notes/${noteId}');
     await applyFilters(); // Recharger les notes
     setMessage('Note supprimée avec succès');
   } catch (err) {
@@ -986,7 +986,7 @@ const TypeEvaluationSelect = ({ value, onChange, categorie }) => {
 
 const fetchStudentData = async () => {
   try {
-    const res = await axios.get('http://localhost:8000/api/stats/effectifs');
+    const res = await api.get('/stats/effectifs');
     setStudentData(res.data);
   } catch (err) {
     console.error('Erreur lors du chargement des effectifs:', err);
@@ -995,7 +995,7 @@ const fetchStudentData = async () => {
 
 const fetchGradeData = async () => {
   try {
-    const res = await axios.get('http://localhost:8000/api/stats/repartition-notes');
+    const res = await api.get('/stats/repartition-notes');
     setGradeData(res.data);
   } catch (err) {
     console.error('Erreur lors du chargement des notes:', err);
@@ -2092,8 +2092,8 @@ const LierSeriesauxClasses = () => {
       try {
         setLoading(true);
         const [classesRes, seriesRes] = await Promise.all([
-          axios.get('http://localhost:8000/api/classes?with_series=true'),
-          axios.get('http://localhost:8000/api/series')
+          api.get('/classes?with_series=true'),
+          api.get('/series')
         ]);
         
         setClasses(classesRes.data);
@@ -2124,7 +2124,7 @@ const LierSeriesauxClasses = () => {
 
       try {
         setLoading(true);
-        const response = await axios.get(`http://localhost:8000/api/classes/${selectedClass}/series`);
+        const response = await api.get('/classes/${selectedClass}/series');
         setSelectedSeries(response.data.map(serie => serie.id));
         setMessage({ text: '', type: '' });
       } catch (error) {
@@ -2163,13 +2163,13 @@ const LierSeriesauxClasses = () => {
       setLoading(true);
       
       // Mettre à jour les séries de la classe via l'API
-      await axios.put(`http://localhost:8000/api/classes/${selectedClass}/series`, {
+      await api.put('/classes/${selectedClass}/series', {
         series: selectedSeries
       });
       
       // Rafraîchir les données
       const [classesRes] = await Promise.all([
-        axios.get('http://localhost:8000/api/classes?with_series=true')
+        api.get('/classes?with_series=true')
       ]);
       
       setClassesWithSeries(classesRes.data);
@@ -2270,11 +2270,11 @@ const LierMatieresauxClasses = () => {
       try {
         setLoading(true);
         const [classesRes,classesMatieresRes, matieresRes, matieres1Res, seriesRes] = await Promise.all([
-          axios.get('http://localhost:8000/api/classes-with-series'),
-          axios.get('http://localhost:8000/api/with-series-matieres'),
-          axios.get('http://localhost:8000/api/matieres-with-series'),
-          axios.get("http://localhost:8000/api/matieres"),
-          axios.get('http://localhost:8000/api/series'),
+          api.get('/classes-with-series'),
+          api.get('/with-series-matieres'),
+          api.get('/matieres-with-series'),
+          api.get('/matieres'),
+          api.get('/series'),
         ]);
         
         setClasses(classesRes.data);
@@ -2309,8 +2309,8 @@ const LierMatieresauxClasses = () => {
 
       try {
         setLoading(true);
-        const response = await axios.get(
-          `http://localhost:8000/api/classes/${selectedClass}/series/${selectedSerie}/matieres`
+        const response = await api.get(
+          '/classes/${selectedClass}/series/${selectedSerie}/matieres'
         );
         
         const matieresData = response.data;
@@ -2429,8 +2429,8 @@ const handleSubmit = async (e) => {
     });
     
     // Envoyer les données au backend
-    const response = await axios.put(
-      `http://localhost:8000/api/series/${selectedSerie}/matieres/sync`,
+    const response = await api.put(
+      '/series/${selectedSerie}/matieres/sync',
       { matieres: matieresData },
       {
         headers: {
@@ -2441,8 +2441,8 @@ const handleSubmit = async (e) => {
     
     if (response.data.success) {
       // Rafraîchir les données
-      const classesRes = await axios.get(
-        'http://localhost:8000/api/with-series-matieres'
+      const classesRes = await api.get(
+        '/with-series-matieres'
       );
       
       setClasses(classesRes.data);
@@ -2725,8 +2725,8 @@ const LierElevesAuxParents = () => {
       try {
         setLoading(true);
         const [parentsRes, elevesRes] = await Promise.all([
-          axios.get('http://localhost:8000/api/parents?with_eleves=true'), // Ajout du paramètre
-          axios.get('http://localhost:8000/api/eleves')
+          api.get('/parents?with_eleves=true'), // Ajout du paramètre
+          api.get('/eleves')
         ]);
       
         setParents(parentsRes.data);
@@ -2774,7 +2774,7 @@ const LierElevesAuxParents = () => {
 
       try {
         setLoading(true);
-        const response = await axios.get(`http://localhost:8000/api/parents/${selectedParent}/eleves`);
+        const response = await api.get('/parents/${selectedParent}/eleves');
         setSelectedEleves(response.data.map(eleve => eleve.id));
         setMessage({ text: '', type: '' });
       } catch (error) {
@@ -2818,13 +2818,13 @@ const LierElevesAuxParents = () => {
       setLoading(true);
       
       // Mettre à jour les élèves du parent via l'API
-      await axios.put(`http://localhost:8000/api/parents/${selectedParent}/eleves`, {
+      await api.put('/parents/${selectedParent}/eleves', {
         eleve_ids: selectedEleves  
       });
       
       // Rafraîchir les données
       const [parentsRes] = await Promise.all([
-        axios.get('http://localhost:8000/api/parents?with_eleves=true')
+        api.get('/parents?with_eleves=true')
       ]);
       
       setParentsWithEleves(parentsRes.data);
@@ -3077,8 +3077,8 @@ const LierEnseignantsAuxClasses = () => {
       try {
         setLoading(true);
         const [classesRes, enseignantsRes] = await Promise.all([
-          axios.get('http://localhost:8000/api/classes?with_enseignants=true'),
-          axios.get('http://localhost:8000/api/enseignants')
+          api.get('/classes?with_enseignants=true'),
+          api.get('/enseignants')
         ]);
         
         setClasses(classesRes.data);
@@ -3109,7 +3109,7 @@ const LierEnseignantsAuxClasses = () => {
 
       try {
         setLoading(true);
-        const response = await axios.get(`http://localhost:8000/api/classes/${selectedClass}/enseignants`);
+        const response = await api.get('/classes/${selectedClass}/enseignants');
         setSelectedEnseignants(response.data.map(ens => ens.id));
         setMessage({ text: '', type: '' });
       } catch (error) {
@@ -3152,13 +3152,13 @@ const LierEnseignantsAuxClasses = () => {
       setLoading(true);
       
       // Mettre à jour les enseignants de la classe via l'API
-      await axios.put(`http://localhost:8000/api/classes/${selectedClass}/enseignants`, {
+      await api.put('/classes/${selectedClass}/enseignants', {
         enseignant_ids: selectedEnseignants  
       });
       
       // Rafraîchir les données
       const [classesRes] = await Promise.all([
-        axios.get('http://localhost:8000/api/classes?with_enseignants=true')
+        api.get('/classes?with_enseignants=true')
       ]);
       
       setClassesWithEnseignants(classesRes.data);
@@ -3338,10 +3338,10 @@ const LierEnseignantsAuxMatieres = () => {
       try {
         setLoading(true);
         const [classesRes, matieresRes, enseignantsRes] = await Promise.all([
-          axios.get('http://localhost:8000/api/classes?with_series=true&with_matieres=true&with_enseignants=true'),
-          axios.get('http://localhost:8000/api/matieres'),
-          axios.get('http://localhost:8000/api/enseignants?with_matieres=true'),
-          axios.get('http://localhost:8000/api/enseignantsMP?with_matieres=true'),
+          api.get('/classes?with_series=true&with_matieres=true&with_enseignants=true'),
+          api.get('/matieres'),
+          api.get('/enseignants?with_matieres=true'),
+          api.get('/enseignantsMP?with_matieres=true'),
         ]);
         
         setClasses(classesRes.data);
@@ -3374,8 +3374,8 @@ const LierEnseignantsAuxMatieres = () => {
 
       try {
         setLoading(true);
-        const response = await axios.get(
-          `http://localhost:8000/api/classes/${selectedClass}/series/${selectedSerie}/matieres?with_enseignants=true`
+        const response = await api.get(
+          '/classes/${selectedClass}/series/${selectedSerie}/matieres?with_enseignants=true'
         );
         console.log('Matieres data:', response.data);
         
@@ -3435,15 +3435,15 @@ const LierEnseignantsAuxMatieres = () => {
       }));
       
       // Envoyer les données au backend
-      const response = await axios.put(
-        `http://localhost:8000/api/classes/${selectedClass}/series/${selectedSerie}/matieres/enseignants`,
+      const response = await api.put(
+        '/classes/${selectedClass}/series/${selectedSerie}/matieres/enseignants',
         { matieres: matieresData }
       );
       
       if (response.data.success) {
         // Rafraîchir les données
-        const classesRes = await axios.get(
-          'http://localhost:8000/api/classes?with_series=true&with_matieres=true&with_enseignants=true'
+        const classesRes = await api.get(
+          '/classes?with_series=true&with_matieres=true&with_enseignants=true'
         );
         
         setClassesWithData(classesRes.data);
@@ -3672,8 +3672,8 @@ const LierMatieresauxClasses1 = () => {
       try {
         setLoading(true);
         const [classesRes, matieresRes] = await Promise.all([
-          axios.get('http://localhost:8000/api/classes?with_series=true&with_matieres=true&with_coefficients=true'),
-          axios.get('http://localhost:8000/api/matieres')
+          api.get('/classes?with_series=true&with_matieres=true&with_coefficients=true'),
+          api.get('/matieres')
         ]);
         
         setClasses(classesRes.data);
@@ -3705,8 +3705,8 @@ const LierMatieresauxClasses1 = () => {
 
       try {
         setLoading(true);
-        const response = await axios.get(
-          `http://localhost:8000/api/series/${selectedSerie}/matieres?classe_id=${selectedClass}`
+        const response = await api.get(
+          '/series/${selectedSerie}/matieres?classe_id=${selectedClass}'
         );
         
         const matieresData = response.data;
@@ -3778,15 +3778,15 @@ const LierMatieresauxClasses1 = () => {
       }));
       
       // Envoyer les données au backend
-      const response = await axios.put(
-        `http://localhost:8000/api/series/${selectedSerie}/matieres/sync`,
+      const response = await api.put(
+        '/series/${selectedSerie}/matieres/sync',
         { matieres: matieresData }
       );
       
       if (response.data.success) {
         // Rafraîchir les données
-        const classesRes = await axios.get(
-          'http://localhost:8000/api/classes?with_series=true&with_matieres=true&with_coefficients=true'
+        const classesRes = await api.get(
+          '/classes?with_series=true&with_matieres=true&with_coefficients=true'
         );
         
         setClasses(classesRes.data);
@@ -3893,7 +3893,7 @@ const LierMatieresauxClasses2 = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await axios.get('http://localhost:8000/api/classes-with-series-matieres');
+        const response = await api.get('/classes-with-series-matieres');
         setClasses(response.data);
         setMessage({ text: '', type: '' });
       } catch (error) {

@@ -3,7 +3,7 @@ import './Mes_CSS/Connexion.css';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
-
+import api from '../api'; 
 export function Connexion() {
     const [eleve, SetEleve] = useState({
         identifiant: '',
@@ -61,7 +61,7 @@ export function Connexion() {
         SetMessage('');
 
         try {
-            const response = await axios.post(`${process.env.REACT_APP_API_URL}/connexion`, eleve);
+            const response = await api.post(`/connexion`, eleve);
             console.log('Réponse du serveur:', response.data);
 
             if (response.data.token || response.data.role) {
