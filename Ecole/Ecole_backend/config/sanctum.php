@@ -20,7 +20,7 @@ return [
         'localhost,localhost:3000,127.0.0.1,127.0.0.1:8000,::1',
         Sanctum::currentApplicationUrlWithPort(),
         env('APP_URL', 'https://ecole-2.onrender.com'),
-        env('FRONTEND_URL', 'https://ecole-projet.vercel.app'),
+        env('FRONTEND_URL', 'https://ecole-zgfn.vercel.app'),
 
     ))),
 
