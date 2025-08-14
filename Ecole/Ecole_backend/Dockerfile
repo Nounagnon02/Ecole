@@ -1,34 +1,40 @@
-### Step 1: Node.js for frontend (Vite)
-FROM node:18 AS node-builder
-
+# === Étape 1 : Build du Frontend (React) ===
+FROM node:18 AS frontend-builder
 WORKDIR /app
-COPY . .
 
-RUN npm install && npm run build
+# Copier les fichiers du frontend
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm install
 
+# Build React
+COPY frontend/ ./
+RUN npm run build  # Génère les assets dans /app/dist
 
-### Step 2: PHP for Laravel backend
+# === Étape 2 : Backend (Laravel) ===
 FROM php:8.2-fpm
 
-WORKDIR /var/www
-
+# Installer les dépendances système
 RUN apt-get update && apt-get install -y \
-    zip unzip curl git libxml2-dev libzip-dev libpng-dev libjpeg-dev libonig-dev \
-    sqlite3 libsqlite3-dev
+    nginx unzip libzip-dev libpng-dev libonig-dev libxml2-dev \
+    && docker-php-ext-install pdo pdo_mysql zip mbstring
 
-RUN docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath gd zip
-
+# Installer Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-COPY . /var/www
-COPY --chown=www-data:www-data . /var/www
+# Copier le backend Laravel
+WORKDIR /var/www
+COPY backend/ .
 
-# Copy only built frontend assets (from Vite)
-COPY --from=node-builder /app/public/build /var/www/public/build
+# Copier les assets compilés de React
+COPY --from=frontend-builder /app/dist /var/www/public/build
 
-RUN composer install
-COPY .env.example .env
-RUN php artisan key:generate
+# Installer les dépendances PHP
+RUN composer install --no-dev --optimize-autoloader
 
-EXPOSE 8000
-CMD php artisan serve --host=0.0.0.0 --port=8000
+# Configurer Nginx
+COPY docker/nginx.conf /etc/nginx/sites-available/default
+RUN chown -R www-data:www-data /var/www/storage
+
+# Exposer le port 80 et démarrer
+EXPOSE 80
+CMD sh -c "php artisan migrate --force && php-fpm && nginx -g 'daemon off;'"
