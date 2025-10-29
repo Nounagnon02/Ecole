@@ -180,9 +180,9 @@ public function getDashboardData($parentId)
                     })->toArray()
                     : [];
                 //Recuperer les paiements de l'élève*
-                $paiement =   PaiementEleve::where('id_eleve', $eleve->id)
+                $paiement =   PaiementEleve::where('eleve_id', $eleve->id)
                     ->get();
-                /*$paiements = PaiementEleve::where('id_eleve', $eleve->id)
+                /*$paiements = PaiementEleve::where('eleve_id', $eleve->id)
                     ->get()? ->map(function ($paiement) {
                     return [
                         'id' => $paiement->id,
@@ -238,7 +238,8 @@ public function getDashboardData($parentId)
     }
 
 
-public function getChildBulletin($parentId, $eleveId, $periode)
+
+    public function getChildBulletin($parentId, $eleveId, $periode)
 {
     try {
         $parent = Parents::findOrFail($parentId);
@@ -256,6 +257,7 @@ public function getChildBulletin($parentId, $eleveId, $periode)
         ], 500);
     }
 }
+
 public function index(Request $request) 
 {
     try {

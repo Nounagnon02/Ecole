@@ -12,7 +12,7 @@ class Matieres extends Model
 
 
 
-    
+
     public function series()
     {
         return $this->belongsToMany(Series::class, 'serie_matieres', 'matiere_id', 'serie_id')
@@ -67,9 +67,16 @@ public function coefficientsParClasse()
     return $this->hasMany(Coefficients::class, 'matiere_id');
 }
 
+
+
     public function enseignants()
     {
-        return $this->belongsToMany(Enseignants::class, 'enseignant_matiere');
+        return $this->belongsToMany(
+            Enseignants::class,
+            'enseignant_matiere',
+            'matiere_id',
+            'enseignant_id'
+        )->withPivot(['classe_id', 'serie_id']);
     }
 
     /*public function enseignantPrimaire()
@@ -80,7 +87,7 @@ public function coefficientsParClasse()
     {
         return $this->belongsTo(Classes::class, 'class_id');
     }
-    
-    
+
+
 
 }

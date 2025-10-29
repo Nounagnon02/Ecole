@@ -1,0 +1,376 @@
+/* ===== CORRECTION DROPDOWNS - NOTIFICATIONS ET PROFIL ===== */
+
+/* Conteneur notifications - Position relative critique */
+.dashboard-header__notifications {
+  position: relative;
+  z-index: 1001;
+}
+
+/* Bouton de notification */
+.notification-bell {
+  position: relative;
+  background: rgba(255, 255, 255, 0.9);
+  border: 2px solid rgba(108, 92, 231, 0.2);
+  cursor: pointer;
+  padding: 10px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  z-index: 1;
+}
+
+.notification-bell:hover {
+  background: rgba(108, 92, 231, 0.1);
+  border-color: rgba(108, 92, 231, 0.4);
+  transform: scale(1.05);
+}
+
+.notification-bell:active {
+  transform: scale(0.95);
+}
+
+/* Badge de notification */
+.notification-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #e74c3c;
+  color: white;
+  font-size: 11px;
+  font-weight: bold;
+  padding: 3px 6px;
+  border-radius: 12px;
+  min-width: 20px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(231, 76, 60, 0.4);
+  z-index: 2;
+  animation: pulse-badge 2s infinite;
+}
+
+@keyframes pulse-badge {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+/* Dropdown des notifications - STYLES CORRIGÉS */
+.notifications-dropdown {
+  position: absolute !important;
+  top: calc(100% + 10px) !important;
+  right: 0 !important;
+  width: 380px;
+  max-width: 90vw;
+  background: white;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15) !important;
+  z-index: 10000 !important;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* En-tête du dropdown notifications */
+.notifications-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  background: linear-gradient(135deg, rgba(108, 92, 231, 0.05) 0%, rgba(0, 206, 201, 0.05) 100%);
+}
+
+.notifications-header h4 {
+  margin: 0;
+  color: #2d3436;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.notifications-header button {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #636e72;
+  cursor: pointer;
+  padding: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.notifications-header button:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #2d3436;
+}
+
+/* Liste des notifications */
+.notifications-list {
+  max-height: 400px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(108, 92, 231, 0.3) transparent;
+}
+
+.notifications-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.notifications-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.notifications-list::-webkit-scrollbar-thumb {
+  background: rgba(108, 92, 231, 0.3);
+  border-radius: 3px;
+}
+
+.notifications-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(108, 92, 231, 0.5);
+}
+
+/* Item de notification */
+.notification-item {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.notification-item:last-child {
+  border-bottom: none;
+}
+
+.notification-item:hover {
+  background: rgba(108, 92, 231, 0.03);
+}
+
+.notification-item.unread {
+  background: rgba(66, 153, 225, 0.05);
+  border-left: 3px solid #4299e1;
+}
+
+.notification-item.unread::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 1.25rem;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  background: #4299e1;
+  border-radius: 50%;
+}
+
+.notification-title {
+  font-weight: 600;
+  color: #2d3436;
+  margin: 0 0 0.25rem 0;
+  font-size: 0.9rem;
+}
+
+.notification-message {
+  color: #636e72;
+  margin: 0 0 0.5rem 0;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.notification-date {
+  font-size: 0.75rem;
+  color: #b2bec3;
+}
+
+.no-notifications {
+  padding: 3rem 1.25rem;
+  text-align: center;
+  color: #b2bec3;
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
+/* ===== MENU PROFIL - STYLES CORRIGÉS ===== */
+
+/* Conteneur profil */
+.profile-container {
+  position: relative;
+  z-index: 1000;
+}
+
+/* Trigger du menu profil */
+.profile-trigger {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 1.2rem;
+  border-radius: 50px;
+  background: linear-gradient(135deg, rgba(108, 92, 231, 0.1) 0%, rgba(0, 206, 201, 0.1) 100%);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border: 2px solid transparent;
+}
+
+.profile-trigger:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(108, 92, 231, 0.2);
+  border-color: rgba(108, 92, 231, 0.2);
+}
+
+.profile-trigger:active {
+  transform: translateY(0);
+}
+
+/* Menu profil dropdown - STYLES CORRIGÉS */
+.profile-menu {
+  position: absolute !important;
+  top: calc(100% + 10px) !important;
+  right: 0 !important;
+  background: white;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15) !important;
+  z-index: 10000 !important;
+  min-width: 200px;
+  overflow: hidden;
+  animation: slideDown 0.3s ease;
+}
+
+/* Items du menu profil */
+.profile-menu-item {
+  width: 100%;
+  padding: 0.9rem 1.2rem;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  font-size: 0.95rem;
+  color: #2d3436;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 500;
+}
+
+.profile-menu-item:first-child {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.profile-menu-item:hover {
+  background: rgba(108, 92, 231, 0.08);
+  color: #6c5ce7;
+}
+
+.profile-menu-item:active {
+  background: rgba(108, 92, 231, 0.12);
+}
+
+/* Icônes utilisateur */
+.dashboard-header__user-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  color: #6c5ce7;
+}
+
+.dashboard-header__user-name {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #2d3436;
+}
+
+/* ===== OVERLAY POUR FERMER LES DROPDOWNS ===== */
+.dropdown-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
+  background: transparent;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .notifications-dropdown {
+    position: fixed !important;
+    top: 80px !important;
+    right: 10px !important;
+    left: 10px !important;
+    width: auto !important;
+    max-width: none !important;
+  }
+  
+  .profile-menu {
+    position: fixed !important;
+    top: 80px !important;
+    right: 10px !important;
+    left: auto !important;
+    min-width: 180px !important;
+  }
+  
+  .profile-trigger {
+    padding: 0.5rem 1rem;
+  }
+  
+  .dashboard-header__user-name {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .notification-bell {
+    width: 40px;
+    height: 40px;
+    padding: 8px;
+  }
+  
+  .notifications-dropdown {
+    top: 70px !important;
+  }
+  
+  .profile-menu {
+    top: 70px !important;
+  }
+}
+
+/* ===== CORRECTION Z-INDEX HIERARCHY ===== */
+.dashboard-header {
+  position: relative;
+  z-index: 100;
+}
+
+.dashboard-nav {
+  position: relative;
+  z-index: 90;
+}
+
+.dashboard-main {
+  position: relative;
+  z-index: 10;
+}
+
+/* Assurer que les dropdowns sont au-dessus de tout */
+.notifications-dropdown,
+.profile-menu {
+  z-index: 10000 !important;
+}

@@ -7,9 +7,14 @@ import Dashboard from './Directeurs/dash';
 import ProtectedRoute from './ProtectedRoute';
 import AuthProvider from './AuthContext';
 import Matieres from './Directeurs/Matieres';
+import DashboardSecretaire from './Secretaire/DashboardSecretaire';
+import DashboardEnseignant from './Enseignants/DashboardEnseignant';
+import DashboardEnseignantPrimaire from './Enseignants_primaire/DashboardEnseignantPrimaire';
+import DashboardEnseignantSecondaire from './Enseignants_secondaire/DashboardEnseignantSecondaire';
+import DashboardEleve from './Eleves/DashboardEleve';
+import DashboardCenseur from './Censeur/DashboardCenseur';
 
-import ParentDashboard from './Parents/dash'; // Assuming you have a ParentDashboard component
-import DashboardSecretaire from './Secretaire/dashboard';
+import ParentDashboard from './Parents/dash';
 import DashboardM from './DirecteursM/dash';
 import DashboardP from './DirecteursP/dash';
 import DashboardS from './DirecteursS/dash';
@@ -21,7 +26,10 @@ function App() {
         <Router>
             <AuthProvider>
                 <Routes>
-                     <Route path="/payment-success" element={<PaymentSuccess />} />
+                    <Route path="/dash2" element={<DashboardEleve />} />
+                    <Route path="/dash1" element={<DashboardEnseignant />} />
+                    <Route path="/dash" element={<DashboardSecretaire />} />
+                    <Route path="/payment-success" element={<PaymentSuccess />} />
                     <Route path="/paiement" element={<PaymentForm />} />
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/dash" element={<DashboardE />} />
@@ -39,7 +47,7 @@ function App() {
                     
                     <Route path="/dashboard-admin" element={
                         <ProtectedRoute allowedRoles={['directeur', 'admin']}>
-                            <Dashboard />
+                            < Dashboard/>
                         </ProtectedRoute>
                     } />
 
@@ -63,7 +71,7 @@ function App() {
 
                     <Route path="/dashboard-censeur" element={
                         <ProtectedRoute allowedRoles={['censeur']}>
-                            <Dashboard />
+                            <DashboardCenseur />
                         </ProtectedRoute>
                     } />
 
@@ -85,21 +93,21 @@ function App() {
                         </ProtectedRoute>
                     } />
 
-                    <Route path="/dashboard-enseignement" element={
+                    <Route path="/dashboard-enseignant" element={
                         <ProtectedRoute allowedRoles={['enseignement']}>
-                            <Dashboard />
+                            <DashboardEnseignantSecondaire />
                         </ProtectedRoute>
                     } />
 
                     <Route path="/dashboard-enseignementM" element={
                         <ProtectedRoute allowedRoles={['enseignementM']}>
-                            <Dashboard />
+                            <DashboardEnseignantPrimaire />
                         </ProtectedRoute>
                     } />
 
                     <Route path="/dashboard-enseignementP" element={
                         <ProtectedRoute allowedRoles={['enseignementP']}>
-                            <Dashboard />
+                            <DashboardEnseignantPrimaire />
                         </ProtectedRoute>
                     } />
                     <Route path="/dashboard-parent" element={
