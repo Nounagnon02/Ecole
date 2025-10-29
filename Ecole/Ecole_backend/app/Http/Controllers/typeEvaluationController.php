@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\TypeEvaluation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class typeEvaluationController extends Controller
 {
@@ -45,8 +46,115 @@ class typeEvaluationController extends Controller
     }
 
 
+
     public function attachMultiple(Request $request)
     {
+        // Log incoming request for debugging
+        Log::info('Received attachMultiple request:', $request->all());
+
+        try {
+            $validated = $request->validate([
+                'liaisons' => 'required|array',
+                'liaisons.*.classe_id' => 'required|integer|exists:classes,id',
+                'liaisons.*.periode_id' => 'required|integer|exists:periodes,id',
+                'liaisons.*.typeevaluation_id' => 'required|integer|exists:type_evaluations,id',
+                'liaisons.*.serie_id' => 'nullable|integer|exists:series,id',
+            ]);
+
+            $created = [];
+            $errors = [];
+
+            DB::beginTransaction();
+
+            foreach ($validated['liaisons'] as $index => $liaison) {
+                try {
+                    // Check if liaison already exists
+                    $exists = DB::table('typeevaluation_classes')
+                        ->where([
+                            'classe_id' => $liaison['classe_id'],
+                            'periode_id' => $liaison['periode_id'],
+                            'typeevaluation_id' => $liaison['typeevaluation_id'],
+                            'serie_id' => $liaison['serie_id'] ?? null,
+                        ])
+                        ->exists();
+
+                    if ($exists) {
+                        $errors[] = [
+                            'index' => $index,
+                            'liaison' => $liaison,
+                            'message' => 'Cette liaison existe déjà'
+                        ];
+                        continue;
+                    }
+
+                    // Insert new liaison
+                    $inserted = DB::table('typeevaluation_classes')->insert([
+                        'classe_id' => $liaison['classe_id'],
+                        'periode_id' => $liaison['periode_id'],
+                        'typeevaluation_id' => $liaison['typeevaluation_id'],
+                        'serie_id' => $liaison['serie_id'] ?? null,
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ]);
+
+                    if ($inserted) {
+                        $created[] = $liaison;
+                    }
+
+                } catch (\Exception $e) {
+                    Log::error('Error creating liaison:', [
+                        'liaison' => $liaison,
+                        'error' => $e->getMessage()
+                    ]);
+
+                    $errors[] = [
+                        'index' => $index,
+                        'liaison' => $liaison,
+                        'message' => 'Erreur lors de la création: ' . $e->getMessage()
+                    ];
+                }
+            }
+
+            if (count($created) > 0) {
+                DB::commit();
+                return response()->json([
+                    'success' => true,
+                    'created' => $created,
+                    'errors' => $errors,
+                    'message' => count($created) . ' liaison(s) créée(s) avec succès'
+                ], 201);
+            } else {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'created' => [],
+                    'errors' => $errors,
+                    'message' => 'Aucune liaison créée'
+                ], 400);
+            }
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::error('Validation error:', ['errors' => $e->errors()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur de validation',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('Unexpected error:', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Une erreur inattendue est survenue',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+
+    /*public function attachMultiple(Request $request)
+    {
+        Log::info('Received request:', $request->all());
+
         $validated = $request->validate([
             'liaisons' => 'required|array',
             'liaisons.*.classe_id' => 'required|exists:classes,id',
@@ -55,10 +163,9 @@ class typeEvaluationController extends Controller
             'liaisons.*.serie_id' => 'nullable|exists:series,id',
         ]);
 
-        $created = [];
-        $errors = [];
+        try {
 
-        foreach ($validated['liaisons'] as $liaison) {
+            foreach ($request->liaisons as $liaison) {
             try {
                 // Vérifier si la liaison existe déjà
                 $exists = DB::table('typeevaluation_classes')
@@ -92,14 +199,12 @@ class typeEvaluationController extends Controller
             }
         }
 
-        return response()->json([
-            'created' => $created,
-            'errors' => $errors,
-            'message' => count($created) > 0 
-                ? 'Liaisons créées avec succès' 
-                : 'Aucune liaison créée',
-        ], count($created) > 0 ? 201 : 400);
-    }
+            return response()->json(['message' => 'Liaisons created successfully']);
+        } catch (\Exception $e) {
+            Log::error('Error creating liaisons:', ['error' => $e->getMessage()]);
+            return response()->json(['message' => $e->getMessage()], 400);
+        }
+    }*/
 
 
     //Recuper les chaque classe avec ses series et periodes et types d'evaluations
@@ -523,4 +628,4 @@ public function getClassesWithPeriodesAndTypesS()
 
 
 
-    
+

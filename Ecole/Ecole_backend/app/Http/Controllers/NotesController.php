@@ -700,10 +700,8 @@ public function filter(Request $request)
         }
 
         if ($request->filled('serie_id')) {
-            $query->whereHas('classe', function($q) use ($request) {
-                $q->whereHas('series', function($q) use ($request) {
-                    $q->where('series.id', $request->serie_id);
-                });
+            $query->whereHas('eleve', function($q) use ($request) {
+                $q->where('serie_id', $request->serie_id);
             });
         }
 

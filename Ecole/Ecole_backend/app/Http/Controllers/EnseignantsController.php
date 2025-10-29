@@ -12,26 +12,52 @@ class EnseignantsController extends Controller
     public function getEnseignants(Request $request)
     {
         $query = Enseignants::query();
-        
+
         if ($request->has('with_matieres')) {
             $query->with('matieres');
         }
 
         $enseignants = $query->get();
-        
+
         return response()->json($enseignants);
     }
 
     public function getEnseignantsMP(Request $request)
     {
         $query = Enseignants_Martenel_Primaire::query();
-        
+
         if ($request->has('with_classes')) {
             $query->with('classes');
         }
 
         $enseignants = $query->get();
-        
+
+        return response()->json($enseignants);
+    }
+
+    public function getEnseignantsM(Request $request)
+    {
+        $query = Enseignants_Martenel_Primaire::query();
+
+        if ($request->has('with_classes')) {
+            $query->with('classes');
+        }
+
+        $enseignants = $query->get()->where('role', 'enseignementM');
+
+        return response()->json($enseignants);
+    }
+
+    public function getEnseignantsP(Request $request)
+    {
+        $query = Enseignants_Martenel_Primaire::query();
+
+        if ($request->has('with_classes')) {
+            $query->with('classes');
+        }
+
+        $enseignants = $query->get()->where('role', 'enseignementP');
+
         return response()->json($enseignants);
     }
 
@@ -48,5 +74,5 @@ class EnseignantsController extends Controller
         return response()->json( $effectif);
     }
 
-    
+
 }

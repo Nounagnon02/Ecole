@@ -1014,6 +1014,13 @@ const groupElevesByClasse = (eleves) => {
             <Book size={20} />
             {sidebarOpen && <span className="sidebar-item-text">Matières</span>}
           </div>
+
+          <div className={`sidebar-item ${activeTab === 'emploi' ? 'active' : ''}`} 
+                      onClick={() => setActiveTab('emploi')}
+                    >
+                      <Calendar size={20} />
+                      {sidebarOpen && <span className="sidebar-item-text">Emploi du temps</span>}
+                    </div>
           
           <div 
             className={`sidebar-item ${activeTab === 'notes' ? 'active' : ''}`} 
@@ -1920,7 +1927,7 @@ const groupElevesByClasse = (eleves) => {
                               onKeyPress={(e) => e.key === 'Enter' && ModificationClasse(classe.id)}
                             />
                           ) : (
-                            classe.nom
+                            classe.nom_classe
                           )}
                         </td>
                         <td>
@@ -1933,7 +1940,7 @@ const groupElevesByClasse = (eleves) => {
                               onKeyPress={(e) => e.key === 'Enter' && ModificationClasse(classe.id)}
                             />
                           ) : (
-                            classe.categorie
+                            classe.categorie_classe
                           )}
                         </td>
                         <td>{classe.effectif}</td>
@@ -1996,6 +2003,10 @@ const groupElevesByClasse = (eleves) => {
 
           {activeTab === 'LiaisonMatieresAvecCoefficientEtSerieClasses' && (
             <LierMatieresauxClasses />
+          )}
+
+          {activeTab === 'emploi' && (
+            <EmploiDuTemps />
           )}
 
         
@@ -2246,7 +2257,7 @@ const handleSubmit = async (e) => {
   }
 };
   
-  const getFilteredSeries = () => {
+const getFilteredSeries = () => {
     // Vérification des données requises
     if (!series?.length || !selectedClass || !classes?.length) {
         console.log("Données manquantes:", { 
@@ -2267,12 +2278,6 @@ const handleSubmit = async (e) => {
     const classeNom = selectedClasse.nom_classe.toLowerCase();
     console.log("Nom de classe trouvé:", classeNom);
 
-    // Vérifier si c'est une classe du secondaire
-    const classesSecondaire = ['2nde', 'seconde', '1ère', 'première', 'terminale', 'tle'];
-    if (classesSecondaire.some(niveau => classeNom.includes(niveau))) {
-        return series;
-    }
-
     // Mapping des niveaux
     const niveauxMap = {
         'ci': 'ci',
@@ -2289,7 +2294,17 @@ const handleSubmit = async (e) => {
         '3ème': '3ème'
     };
 
-    // Filtrer les séries selon le niveau
+    // Vérifier si c'est une classe du secondaire
+    const classesSecondaire = ['2nde', 'seconde', '1ère', 'première', 'terminale', 'tle'];
+    if (classesSecondaire.some(niveau => classeNom.includes(niveau))) {
+        // Pour le secondaire, exclure les séries du niveauxMap
+        const seriesExclues = Object.values(niveauxMap).map(s => s.toLowerCase());
+        const filteredSeries = series.filter(serie => !seriesExclues.includes(serie?.nom?.toLowerCase()));
+        console.log("Séries filtrées pour le secondaire:", filteredSeries);
+        return filteredSeries;
+    }
+
+    // Filtrer les séries selon le niveau pour le primaire/maternelle
     for (const [niveau, serieNom] of Object.entries(niveauxMap)) {
         if (classeNom.includes(niveau)) {
             const filteredSeries = series.filter(serie => 
@@ -2304,6 +2319,7 @@ const handleSubmit = async (e) => {
     console.log("Aucune correspondance trouvée");
     return series;
 };
+
 
 const groupUniqueSeries = (series) => {
     const uniqueSeries = {};
@@ -3547,6 +3563,131 @@ const LierTypeClassePeriode = () => {
           </div>
         )}
       </div>
+    </div>
+  );
+};
+
+const EmploiDuTemps = () => {
+  const [classes, setClasses] = useState([]);
+  const [matieres, setMatieres] = useState([]);
+  const [enseignants, setEnseignants] = useState([]);
+  const [selectedClasse, setSelectedClasse] = useState('');
+  const [emplois, setEmplois] = useState([]);
+  const [form, setForm] = useState({
+    classe_id: '',
+    matiere_id: '',
+    enseignant_id: '',
+    jour: 'Lundi',
+    heure_debut: '',
+    heure_fin: '',
+    salle: ''
+  });
+
+  useEffect(() => {
+    loadClasses();
+    loadMatieres();
+    loadEnseignants();
+  }, []);
+
+  const loadClasses = async () => {
+    const res = await api.get('/classesP');
+    setClasses(res.data);
+  };
+
+  const loadMatieres = async () => {
+    const res = await api.get('/matieresP');
+    setMatieres(res.data);
+  };
+
+  const loadEnseignants = async () => {
+    const res = await api.get('/enseignants/P');
+    setEnseignants(res.data);
+  };
+
+  const loadEmplois = async (classId) => {
+    const res = await api.get(`/emplois-du-temps/classe/${classId}`);
+    setEmplois(res.data.data || []);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    await api.post('/emplois-du-temps', form);
+    loadEmplois(form.classe_id);
+    setForm({ ...form, matiere_id: '', enseignant_id: '', heure_debut: '', heure_fin: '', salle: '' });
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm('Supprimer ce cours ?')) {
+      await api.delete(`/emplois-du-temps/${id}`);
+      loadEmplois(selectedClasse);
+    }
+  };
+
+  return (
+    <div style={{ padding: '20px' }}>
+      <h2>Gestion des Emplois du Temps</h2>
+      
+      <form onSubmit={handleSubmit} style={{ marginBottom: '20px', padding: '20px', border: '1px solid #ddd', borderRadius: '8px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px' }}>
+          <select value={form.classe_id} onChange={(e) => { setForm({...form, classe_id: e.target.value}); setSelectedClasse(e.target.value); loadEmplois(e.target.value); }} required>
+            <option value="">Sélectionner une classe</option>
+            {classes.map(c => <option key={c.id} value={c.id}>{c.nom_classe}</option>)}
+          </select>
+          
+          <select value={form.matiere_id} onChange={(e) => setForm({...form, matiere_id: e.target.value})} required>
+            <option value="">Sélectionner une matière</option>
+            {matieres.map(m => <option key={m.id} value={m.id}>{m.nom}</option>)}
+          </select>
+          
+          <select value={form.enseignant_id} onChange={(e) => setForm({...form, enseignant_id: e.target.value})} required>
+            <option value="">Sélectionner un enseignant</option>
+            {enseignants.map(e => <option key={e.id} value={e.id}>{e.nom} {e.prenom}</option>)}
+          </select>
+          
+          <select value={form.jour} onChange={(e) => setForm({...form, jour: e.target.value})} required>
+            <option value="Lundi">Lundi</option>
+            <option value="Mardi">Mardi</option>
+            <option value="Mercredi">Mercredi</option>
+            <option value="Jeudi">Jeudi</option>
+            <option value="Vendredi">Vendredi</option>
+            <option value="Samedi">Samedi</option>
+          </select>
+          
+          <input type="time" value={form.heure_debut} onChange={(e) => setForm({...form, heure_debut: e.target.value})} required />
+          <input type="time" value={form.heure_fin} onChange={(e) => setForm({...form, heure_fin: e.target.value})} required />
+          <input type="text" placeholder="Salle" value={form.salle} onChange={(e) => setForm({...form, salle: e.target.value})} />
+        </div>
+        <button type="submit" style={{ marginTop: '10px', padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Ajouter</button>
+      </form>
+
+      {selectedClasse && (
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr style={{ background: '#f0f0f0' }}>
+              <th style={{ padding: '10px', border: '1px solid #ddd' }}>Jour</th>
+              <th style={{ padding: '10px', border: '1px solid #ddd' }}>Heure</th>
+              <th style={{ padding: '10px', border: '1px solid #ddd' }}>Matière</th>
+              <th style={{ padding: '10px', border: '1px solid #ddd' }}>Professeur</th>
+              <th style={{ padding: '10px', border: '1px solid #ddd' }}>Salle</th>
+              <th style={{ padding: '10px', border: '1px solid #ddd' }}>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {emplois.map(e => (
+              <tr key={e.id}>
+                <td style={{ padding: '10px', border: '1px solid #ddd' }}>{e.jour}</td>
+                <td style={{ padding: '10px', border: '1px solid #ddd' }}>{e.heure_debut} - {e.heure_fin}</td>
+                <td style={{ padding: '10px', border: '1px solid #ddd' }}>{e.matiere}</td>
+                <td style={{ padding: '10px', border: '1px solid #ddd' }}>{e.professeur}</td>
+                <td style={{ padding: '10px', border: '1px solid #ddd' }}>{e.salle}</td>
+                <td style={{ padding: '10px', border: '1px solid #ddd' }}>
+                  <button onClick={() => handleDelete(e.id)} style={{ background: '#f44336', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>Supprimer</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </div>
   );
 };

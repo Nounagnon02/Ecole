@@ -3,6 +3,7 @@
     "scripts": {
         "dev": "vite",
         "build": "vite build"
+
     },
     "devDependencies": {
         "axios": "^1.1.2",
@@ -24,3 +25,5 @@
         "@react-pdf/renderer": "^4.3.0"
     }
 }
+
+

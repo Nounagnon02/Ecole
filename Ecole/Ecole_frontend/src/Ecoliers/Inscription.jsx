@@ -108,6 +108,21 @@ export function InscriptionE() {
         if (!series.length || !utilisateur.classe) return [];
         
         const classeNom = utilisateur.classe.toLowerCase();
+
+         const niveauxMap = {
+        'ci': 'ci',
+        'maternelle 2': 'maternelle 2',
+        'maternelle 1': 'maternelle 1',
+        'cp': 'cp',
+        'ce1': 'ce1',
+        'ce2': 'ce2',
+        'cm1': 'cm1',
+        'cm2': 'cm2',
+        '6ème': '6ème',
+        '5ème': '5ème',
+        '4ème': '4ème',
+        '3ème': '3ème'
+    };
         
         if ( classeNom.includes('ci') ){
             
@@ -174,7 +189,12 @@ export function InscriptionE() {
                 classeNom.includes('1ère') || classeNom.includes('première') ||
                 classeNom.includes('terminale') || classeNom.includes('tle')) {
             
-            return series;
+                // Pour le secondaire, exclure les séries du niveauxMap
+                const seriesExclues = Object.values(niveauxMap).map(s => s.toLowerCase());
+                const filteredSeries = series.filter(serie => !seriesExclues.includes(serie?.nom?.toLowerCase()));
+                console.log("Séries filtrées pour le secondaire:", filteredSeries);
+                return filteredSeries;
+            
         }
         
         return series;
@@ -720,6 +740,7 @@ useEffect(() => {
                 }, 2000);
             } else {
                 throw new Error('Erreur lors de l\'inscription');
+                setIsLoading(false);
             }
         } catch (err) {
             
@@ -730,8 +751,10 @@ useEffect(() => {
                 // Afficher les erreurs de validation du serveur
                 if (err.response.status === 422 && err.response.data.errors) {
                     errorMessage = Object.values(err.response.data.errors).join('\n');
+                    setIsLoading(false);
                 } else if (err.response.data.message) {
                     errorMessage = err.response.data.message;
+                    setIsLoading(false);
                 }
             } else {
                 errorMessage = err.message;
@@ -739,7 +762,7 @@ useEffect(() => {
             
             setMessage(errorMessage);
             console.error('Détails de l\'erreur:', err.response?.data || err);
-                }
+            setIsLoading(false);}
         };
 
     const togglePasswordVisibility = () => setShowPassword(!showPassword);

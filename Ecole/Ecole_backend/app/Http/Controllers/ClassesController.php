@@ -33,7 +33,7 @@ class ClassesController extends Controller
                 event(new Registered($classe));
                 return response()->json($classe, 201);
 
-            } 
+            }
             catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'message' => 'Validation error',
@@ -77,7 +77,7 @@ public function attachMatieres(Request $request, $id)
 {
     try {
         $classe = Classes::findOrFail($id);
-        
+
         $validated = $request->validate([
             'matieres' => 'required|array',
             'matieres.*.id' => 'required|exists:matieres,id',
@@ -115,7 +115,7 @@ public function getClassesWithSeriesAndMatieres()
     }])->get()->map(function($classe) {
         return [
             'id' => $classe->id,
-            'nom' => $classe->nom_classe,
+            'nom_classe' => $classe->nom_classe,
             'series' => $classe->series->unique('id')->map(function($serie) {
                 return [
                     'id' => $serie->id,
@@ -228,14 +228,13 @@ public function getClassesWithSeriesAndMatieresSecondaire()
 public function getClassesWithEffectifM()
 {
     // Récupère l'effectif de chaque classe de la maternelle
-    $classes = Classes::where('categorie_classe', 'Maternelle')
-        ->withCount('eleves')
+    $classes = Classes::withCount('eleves')
         ->get()
         ->map(function($classe) {
             return [
                 'id' => $classe->id,
-                'nom' => $classe->nom_classe,
-                'categorie' => $classe->categorie_classe,
+                'nom_classe' => $classe->nom_classe,
+                'categorie_classe' => $classe->categorie_classe,
                 'effectif' => $classe->eleves_count,
                 // Ajout  du nom  de l'enseignants
                 'enseignants' => $classe->enseignantsMP->map(function($enseignant) {
@@ -248,7 +247,7 @@ public function getClassesWithEffectifM()
             ];
         });
 
-    Log::info('Classes maternelle avec effectif', ['classes' => $classes]);
+    Log::info('Toutes les Classes avec effectif', ['classes' => $classes]);
 
     return response()->json($classes, 200);
 }
@@ -258,8 +257,8 @@ public function getClassesWithEffectifP(){
     $classes = Classes::where('categorie_classe', 'Primaire')->withCount('eleves')->get()->map(function($classe) {
         return [
             'id' => $classe->id,
-            'nom' => $classe->nom_classe,
-            'categorie' => $classe->categorie_classe,
+            'nom_classe' => $classe->nom_classe,
+            'categorie_classe' => $classe->categorie_classe,
             'effectif' => $classe->eleves_count,
             'enseignants' => $classe->enseignantsMP->map(function($enseignant) {
                     return [
@@ -272,10 +271,10 @@ public function getClassesWithEffectifP(){
     });
 
     Log::info($classes);
-    
+
     return response()->json($classes);
 
-    
+
 }
 
 public function getClassesWithEffectifS(){
@@ -283,17 +282,17 @@ public function getClassesWithEffectifS(){
     $classes = Classes::where('categorie_classe', 'Secondaire')->withCount('eleves')->get()->map(function($classe) {
         return [
             'id' => $classe->id,
-            'nom' => $classe->nom_classe,
-            'categorie' => $classe->categorie_classe,
+            'nom_classe' => $classe->nom_classe,
+            'categorie_classe' => $classe->categorie_classe,
             'effectif' => $classe->eleves_count,
             'enseignants' =>$classe->enseignants_count,
         ];
     });
-    
+
     return response()->json($classes);
 
     Log::info($classes);
-}   
+}
 
 
 
@@ -319,7 +318,7 @@ public function getMatieres($id)
 }
 
 
-public function getSeries($id) 
+public function getSeries($id)
 {
     $class = Classes::with('series')->find($id);
     if (!$class) {
@@ -328,7 +327,7 @@ public function getSeries($id)
     return response()->json($class->series, 200);
 }
 
-public function updateSeries(Request $request, $id) 
+public function updateSeries(Request $request, $id)
 {
     $class = Classes::find($id);
     if (!$class) {
@@ -352,11 +351,11 @@ public function updateSeries(Request $request, $id)
     public function index1(Request $request)
 {
     $query = Classes::query();
-    
+
     if ($request->has('with_series')) {
         $query->with('series');
     }
-    
+
     return $query->get();
 }
 
@@ -431,7 +430,7 @@ public function updateSeries(Request $request, $id)
         }
         return response()->json($classe, 200);
     }
-    
+
 
 
 
@@ -448,43 +447,44 @@ public function updateSeries(Request $request, $id)
         if ($request->has('with_series')) {
             $query->with('series');
         }
-        
+
         if ($request->has('with_matieres')) {
             $query->with('series.matieres');
         }
-        
+
         if ($request->has('with_enseignants')) {
             $query->with('series.matieres.enseignants');
         }
 
         $classes = $query->get();
-        
+
         return response()->json($classes);
     }
     public function indexS(Request $request)
     {
         $query = Classes::where('categorie_classe', "Secondaire");
-        
+
         // Chargement des relations selon les paramètres
         if ($request->has('with_series')) {
-            $query->with('series');    
+            $query->with('series');
         }
-            
-            
+
+
         if ($request->has('with_matieres')) {
             $query->with('series.matieres');
         }
-        
+
         if ($request->has('with_enseignants')) {
             $query->with('series.matieres.enseignants');
         }
 
         $classes = $query->get();
-        
+
         return response()->json($classes);
     }
 
-    
+
+
 
     // Récupère une classe spécifique
     public function show($id)
@@ -514,11 +514,11 @@ public function updateSeries(Request $request, $id)
     public function getClassesM(Request $request)
     {
         $classes = Classes::where('categorie_classe', 'Maternelle')->with('enseignantsMP')->get();
-        
+
         if ($classes->isEmpty()) {
             return response()->json(['message' => 'Aucune classe trouvée pour cette catégorie'], 404);
         }
-        
+
         return response()->json($classes, 200);
     }
 
@@ -526,11 +526,11 @@ public function updateSeries(Request $request, $id)
     public function getClassesP(Request $request)
     {
         $classes = Classes::where('categorie_classe', 'Primaire')->with('enseignantsMP')->get();
-        
+
         if ($classes->isEmpty()) {
             return response()->json(['message' => 'Aucune classe trouvée pour cette catégorie'], 404);
         }
-        
+
         return response()->json($classes, 200);
     }
 
@@ -538,7 +538,7 @@ public function updateSeries(Request $request, $id)
     //recuperer les classes du Secondaire avec les periodes et les types d'evaluation
     public function getClassesWithPeriodesAndTypesS(Request $request)
     {
-        $classes = Classes::where('categorie_classe', 'Secondaire') 
+        $classes = Classes::where('categorie_classe', 'Secondaire')
             ->with(['typeEvaluations'])
             ->get();
         if ($classes->isEmpty()) {
@@ -550,7 +550,7 @@ public function updateSeries(Request $request, $id)
     //recuperer les classes du Secondaire avec les periodes et les types d'evaluation
     public function getClassesWithPeriodesAndTypesP(Request $request)
     {
-        $classes = Classes::where('categorie_classe', 'Primaire') 
+        $classes = Classes::where('categorie_classe', 'Primaire')
             ->with(['typeEvaluations'])
             ->get();
         if ($classes->isEmpty()) {
@@ -562,7 +562,7 @@ public function updateSeries(Request $request, $id)
     //recuperer les classes du Maternelle avec les periodes et les types d'evaluation
     public function getClassesWithPeriodesAndTypesM(Request $request)
     {
-        $classes = Classes::where('categorie_classe', 'Matrnelle') 
+        $classes = Classes::where('categorie_classe', 'Matrnelle')
             ->with(['typeEvaluations'])
             ->get();
         if ($classes->isEmpty()) {
@@ -575,12 +575,22 @@ public function updateSeries(Request $request, $id)
     public function getClassesS(Request $request)
     {
         $classes = Classes::where('categorie_classe', 'Secondaire')->get();
-        
+
         if ($classes->isEmpty()) {
             return response()->json(['message' => 'Aucune classe trouvée pour cette catégorie'], 404);
         }
-        
+
         return response()->json($classes, 200);
+    }
+
+    public function getEleves($id)
+    {
+        $eleves = DB::table('eleves')
+            ->where('classe_id', $id)
+            ->select('id', 'nom', 'prenom', 'matricule')
+            ->get();
+
+        return response()->json(['success' => true, 'data' => $eleves]);
     }
 
 }
