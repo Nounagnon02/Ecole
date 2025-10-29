@@ -1,34 +1,30 @@
 {
-  "name": "gestion_examen_frontend",
-  "version": "0.1.0",
+  "name": "ecole-frontend",
+  "version": "1.0.0",
   "private": true,
   "dependencies": {
-    "@react-pdf/renderer": "^4.3.0",
-    "@testing-library/jest-dom": "^5.17.0",
-    "@testing-library/react": "^13.4.0",
+    "@testing-library/jest-dom": "^5.16.4",
+    "@testing-library/react": "^13.3.0",
     "@testing-library/user-event": "^13.5.0",
-    "axios": "^1.7.7",
-    "file-saver": "^2.0.5",
+    "axios": "^1.4.0",
     "jspdf": "^2.5.1",
-    "jspdf-autotable": "^3.5.28",
-    "kkiapay": "^2.0.23",
-    "lucide-react": "^0.511.0",
-    "pdfjs-dist": "^2.16.105",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "react-pdf": "^5.7.2",
-    "react-router-dom": "^6.27.0",
-    "react-scripts": "^5.0.1",
-    "recharts": "^2.15.3",
-    "uuid": "^11.0.1",
+    "jspdf-autotable": "^3.5.31",
+    "lucide-react": "^0.263.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.14.1",
+    "react-scripts": "5.0.1",
+    "recharts": "^2.7.2",
     "web-vitals": "^2.1.4",
     "xlsx": "^0.18.5"
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "GENERATE_SOURCEMAP=false react-scripts build",
+    "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "lint": "eslint src --ext .js,.jsx,.ts,.tsx",
+    "lint:fix": "eslint src --ext .js,.jsx,.ts,.tsx --fix"
   },
   "eslintConfig": {
     "extends": [
@@ -49,7 +45,6 @@
     ]
   },
   "devDependencies": {
-    "eslint": "^8.56.0",
-    "eslint-config-react-app": "^7.0.1"
+    "eslint": "^8.44.0"
   }
 }

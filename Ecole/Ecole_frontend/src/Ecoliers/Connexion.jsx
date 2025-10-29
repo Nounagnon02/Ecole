@@ -4,6 +4,8 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import api from '../api'; 
+import { urlBase } from '../api';
+
 export function Connexion() {
     const [eleve, SetEleve] = useState({
         identifiant: '',
@@ -61,7 +63,16 @@ export function Connexion() {
         SetMessage('');
 
         try {
-            const response = await api.post(`/connexion`, eleve);
+            //const response = await api.post(`/connexion`, eleve);
+            const response = await axios.post(
+            'http://localhost:8000/api/connexion', 
+            eleve,
+            {
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
             console.log('Réponse du serveur:', response.data);
 
             if (response.data.token || response.data.role) {

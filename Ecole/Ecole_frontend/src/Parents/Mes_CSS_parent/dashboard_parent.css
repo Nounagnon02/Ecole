@@ -1075,3 +1075,502 @@ body {
 .profile-menu-item:focus {
   background: #f5f5f5;
 }
+
+
+/* ===== AMÉLIORATION DE LA DISPOSITION DU BULLETIN ===== */
+
+/* En-tête du bulletin */
+.bulletin-header {
+  background: linear-gradient(135deg, rgba(108, 92, 231, 0.05) 0%, rgba(0, 206, 201, 0.05) 100%);
+  padding: 2rem;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+  border-left: 5px solid var(--primary);
+}
+
+.bulletin-header h2 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.bulletin-header p {
+  font-size: 1.1rem;
+  color: #666;
+  margin-bottom: 1rem;
+}
+
+.bulletin-controls {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.refresh-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: white;
+  border: 1px solid rgba(108, 92, 231, 0.3);
+  color: var(--primary);
+  padding: 0.75rem 1.5rem;
+  border-radius: 50px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.refresh-btn:hover:not(:disabled) {
+  background: var(--primary);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(108, 92, 231, 0.3);
+}
+
+.refresh-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+/* Tableau des notes amélioré */
+.notes-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin: 2rem 0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.notes-table thead {
+  background: linear-gradient(135deg, #6c5ce7 0%, #00cec9 100%);
+}
+
+.notes-table th {
+  color: white;
+  font-weight: 600;
+  padding: 1.25rem 1rem;
+  text-align: left;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 3px solid rgba(255, 255, 255, 0.2);
+}
+
+.notes-table th:first-child {
+  padding-left: 1.5rem;
+  border-top-left-radius: 12px;
+}
+
+.notes-table th:last-child {
+  border-top-right-radius: 12px;
+}
+
+.notes-table tbody tr {
+  background: white;
+  transition: all 0.3s ease;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.notes-table tbody tr:hover {
+  background: rgba(108, 92, 231, 0.05);
+  transform: scale(1.01);
+  box-shadow: 0 2px 8px rgba(108, 92, 231, 0.1);
+}
+
+.notes-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.notes-table td {
+  padding: 1.25rem 1rem;
+  color: #2d3436;
+  font-size: 0.95rem;
+  vertical-align: middle;
+}
+
+.notes-table td:first-child {
+  padding-left: 1.5rem;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+/* Cellule de détails */
+.details-cell {
+  font-size: 0.85rem;
+  line-height: 1.8;
+}
+
+.details-cell div {
+  padding: 0.25rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.details-cell div::before {
+  content: '•';
+  color: var(--primary);
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+/* Pied de tableau */
+.notes-table tfoot {
+  background: linear-gradient(135deg, rgba(108, 92, 231, 0.1) 0%, rgba(0, 206, 201, 0.1) 100%);
+  font-weight: 600;
+}
+
+.notes-table tfoot th,
+.notes-table tfoot td {
+  padding: 1.25rem 1rem;
+  color: var(--dark);
+  font-size: 1.05rem;
+  border-top: 2px solid rgba(108, 92, 231, 0.2);
+}
+
+.notes-table tfoot th:first-child {
+  padding-left: 1.5rem;
+}
+
+/* Indicateurs de performance */
+.notes-table td:nth-child(3),
+.notes-table td:nth-child(6) {
+  font-weight: 600;
+}
+
+/* Couleurs selon la moyenne */
+.notes-table tbody tr td:nth-child(6) {
+  position: relative;
+}
+
+.notes-table tbody tr td:nth-child(6)::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 60%;
+  border-radius: 0 4px 4px 0;
+}
+
+/* Vert pour >= 14 */
+.notes-table tbody tr:has(td:nth-child(6):contains("1[4-9]"), td:nth-child(6):contains("20")) td:nth-child(6)::after {
+  background: var(--success);
+}
+
+/* Orange pour 10-13.99 */
+.notes-table tbody tr:has(td:nth-child(6):contains("1[0-3]")) td:nth-child(6)::after {
+  background: var(--warning);
+}
+
+/* Rouge pour < 10 */
+.notes-table tbody tr:has(td:nth-child(6):contains("[0-9]\.")) td:nth-child(6)::after {
+  background: var(--danger);
+}
+
+/* États de chargement et d'erreur */
+.bulletin-loading-full,
+.bulletin-error-full {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+  background: rgba(108, 92, 231, 0.03);
+  border-radius: 12px;
+  min-height: 300px;
+}
+
+.bulletin-loading-full p,
+.bulletin-error-full p {
+  margin-top: 1rem;
+  color: #666;
+  font-size: 1.1rem;
+}
+
+.error-icon-large {
+  width: 4rem;
+  height: 4rem;
+  color: var(--danger);
+  margin-bottom: 1rem;
+}
+
+.error-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.debug-btn {
+  background: rgba(253, 203, 110, 0.2);
+  color: #e17055;
+  border: 1px solid rgba(253, 203, 110, 0.5);
+}
+
+.debug-btn:hover {
+  background: rgba(253, 203, 110, 0.3);
+  border-color: #e17055;
+}
+
+/* Aucune donnée */
+.no-bulletin-data {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+  background: rgba(108, 92, 231, 0.03);
+  border-radius: 12px;
+}
+
+.no-data-icon {
+  width: 4rem;
+  height: 4rem;
+  color: #dfe6e9;
+  margin-bottom: 1rem;
+}
+
+.no-bulletin-data h3 {
+  color: var(--dark);
+  margin-bottom: 0.5rem;
+}
+
+.no-bulletin-data p {
+  color: #666;
+  margin-bottom: 2rem;
+}
+
+/* Actions du bulletin */
+.bulletin-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 2px solid rgba(108, 92, 231, 0.1);
+  flex-wrap: wrap;
+}
+
+.bulletin-actions button {
+  flex: 1;
+  min-width: 200px;
+  background: white;
+  border: 2px solid rgba(108, 92, 231, 0.3);
+  color: var(--primary);
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.bulletin-actions button:hover {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  color: white;
+  border-color: transparent;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(108, 92, 231, 0.3);
+}
+
+.debug-toggle {
+  background: rgba(253, 203, 110, 0.1);
+  border-color: rgba(253, 203, 110, 0.5);
+  color: #e17055;
+}
+
+.debug-toggle:hover {
+  background: rgba(253, 203, 110, 0.2);
+  border-color: #e17055;
+  color: #e17055;
+}
+
+/* Informations de debug */
+.debug-info {
+  background: rgba(253, 203, 110, 0.1);
+  border: 1px solid rgba(253, 203, 110, 0.3);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-top: 2rem;
+}
+
+.debug-info h4 {
+  color: #e17055;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+}
+
+.debug-info p {
+  color: #666;
+  margin-bottom: 0.5rem;
+  font-family: 'Courier New', monospace;
+}
+
+/* Responsive pour le bulletin */
+@media (max-width: 1024px) {
+  .notes-table {
+    font-size: 0.9rem;
+  }
+  
+  .notes-table th,
+  .notes-table td {
+    padding: 1rem 0.75rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .bulletin-header {
+    padding: 1.5rem;
+  }
+  
+  .bulletin-header h2 {
+    font-size: 1.5rem;
+  }
+  
+  .bulletin-controls {
+    width: 100%;
+  }
+  
+  .periode-select,
+  .refresh-btn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .notes-table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .notes-table th,
+  .notes-table td {
+    padding: 0.75rem 0.5rem;
+    font-size: 0.85rem;
+  }
+  
+  .bulletin-actions {
+    flex-direction: column;
+  }
+  
+  .bulletin-actions button {
+    width: 100%;
+    min-width: auto;
+  }
+}
+
+/* Impression du bulletin */
+@media print {
+  .bulletin-header,
+  .bulletin-controls,
+  .bulletin-actions,
+  .dashboard-header,
+  .dashboard-nav {
+    display: none !important;
+  }
+  
+  .notes-table {
+    box-shadow: none;
+    border: 1px solid #ddd;
+  }
+  
+  .notes-table tbody tr:hover {
+    background: white;
+    transform: none;
+    box-shadow: none;
+  }
+  
+  .bulletin-container {
+    box-shadow: none;
+    padding: 0;
+  }
+}
+
+/* ===== CORRECTION AFFICHAGE NOTIFICATIONS ===== */
+/* Styles spécifiques pour le composant NotificationBell dans le dashboard parent */
+.dashboard-header__notifications .notification-bell-container {
+  position: static;
+}
+
+.dashboard-header__notifications .notification-panel {
+  position: fixed !important;
+  top: 80px !important;
+  right: 20px !important;
+  z-index: 10000 !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+/* Assurer que le conteneur de notifications a un z-index élevé */
+.dashboard-header__notifications {
+  z-index: 1000;
+}
+
+/* Responsive pour les notifications */
+@media (max-width: 768px) {
+  .dashboard-header__notifications .notification-panel {
+    position: fixed !important;
+    top: 70px !important;
+    right: 10px !important;
+    left: 10px !important;
+    width: auto !important;
+    max-width: none !important;
+  }
+}
+
+/* Correction du z-index pour éviter les conflits avec d'autres éléments */
+.dashboard-header {
+  z-index: 100;
+}
+
+.dashboard-nav {
+  z-index: 90;
+}
+
+.dashboard-main {
+  z-index: 10;
+}
+/* Styles pour la cloche de notification */
+.notification-bell {
+  position: relative;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background 0.2s;
+  color: var(--primary);
+}
+
+.notification-bell:hover {
+  background: rgba(108, 92, 231, 0.1);
+}
+
+.notification-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  background: #e74c3c;
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 10px;
+  min-width: 16px;
+  text-align: center;
+}

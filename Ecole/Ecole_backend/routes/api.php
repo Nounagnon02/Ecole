@@ -1,23 +1,8 @@
 <?php
-// Ecole_backend/routes/api.php
 
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\ClassesController;
-use App\Http\Controllers\EleveController;
-use App\Http\Controllers\MatieresController;
-use App\Http\Controllers\NotesController;
-use App\Http\Controllers\SeriesController;
-use App\Http\Controllers\ParentsController;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\BulletinController;
-use App\Http\Controllers\EnseignantsController;
+use App\Http\Controllers\{AuthController, ClassesController, EleveController, MatieresController, NotesController, SeriesController, ParentsController, BulletinController, EnseignantsController, typeEvaluationController, periodesController, ContributionsController, PaymentController, CinetPayController, DirecteurController, EnseignantController, ParentController, ComptableController, SurveillantController, CenseurController, InfirmierController, BibliothecaireController, SecretaireController, NoteController, MessageController, NotificationController, EmploiDuTempsController, ExerciceController};
+use Illuminate\Support\Facades\{Route, DB};
 use App\Models\Eleves;
-use App\Http\Controllers\typeEvaluationController;
-use App\Http\Controllers\periodesController;
-use App\Http\Controllers\ContributionsController; 
-use App\Http\Controllers\PaymentController;
-use App\Http\Controllers\CinetPayController;
-use Illuminate\Support\Facades\DB;
 
 // Auth
 Route::post('/inscription', [AuthController::class, 'inscription']);
@@ -38,21 +23,23 @@ Route::post('/classes/store', [ClassesController::class, 'store']);
 Route::get('/classes', [ClassesController::class, 'index']);
 Route::get('/classesES', [ClassesController::class, 'indexS']);
 Route::get('/classesM', [ClassesController::class, 'getClassesM']); // Récupérer les classes de la maternelle
-Route::get('/classesP', [ClassesController::class, 'getClassesP']); // Récupérer les classes de la primaire 
+Route::get('/classesP', [ClassesController::class, 'getClassesP']); // Récupérer les classes de la primaire
 Route::get('/classesS', [ClassesController::class, 'getClassesS']); // Récupérer les classes du secondaire
 Route::get('classes/effectif/maternelle', [ClassesController::class, 'getEffectifMaternelle'] );
 Route::get('classes/effectif/primaire', [ClassesController::class, 'getEffectifPrimaire'] );
 Route::get('classes/effectif/secondaire', [ClassesController::class, 'getEffectifSecondaire'] );
+Route::get('/classes/effectifParClasse', [ClassesController::class, 'getClassesWithEffectifM']);
 Route::get('/classes/effectifParClassedeMaternelle', [ClassesController::class, 'getClassesWithEffectifM']);
 Route::get('/classes/effectifParClassedePrimaire', [ClassesController::class, 'getClassesWithEffectifP']);
 Route::get('/classes/effectifParClassedeSecondaire', [ClassesController::class, 'getClassesWithEffectifS']);
 Route::put('/classes/update/{id}', [ClassesController::class, 'update']);
 Route::delete('/classes/delete/{id}', [ClassesController::class, 'destroy']);
 Route::get('/classes/{id}', [ClassesController::class, 'show']);
+Route::get('/classes/{id}/eleves', [ClassesController::class, 'getEleves']);
 
 // Eleves
 
-Route::get('/elevesT', [EleveController::class, 'getEleves']); 
+Route::get('/elevesT', [EleveController::class, 'getEleves']);
 Route::get('/eleves', [EleveController::class, 'index']);
 Route::post('/eleves/store', [EleveController::class, 'store']);
 Route::get('/eleves/listeChaqueClasseMaternelle', [EleveController::class, 'getElevesByClasseMaternelle']);
@@ -85,7 +72,7 @@ Route::prefix('notes')->group(function () {
     Route::get('/data/classes', [NotesController::class, 'getClasses']);
     Route::get('/data/matieres', [NotesController::class, 'getMatieres']);
     Route::get('/data/eleves/{classe_id}', [NotesController::class, 'getElevesByClasse']);
-    
+
     Route::get('/eleve/{eleveId}/{periode?}', [NotesController::class, 'getNotesEleve']);
     Route::get('/statistiques/{eleveId}/{periode}', [NotesController::class, 'getStatistiquesEleve']);
     Route::get('/check/{eleveId}/{matiereId}/{typeEvaluation}/{periode}', [NotesController::class, 'checkNotesRestantes']);
@@ -134,19 +121,19 @@ Route::apiResource('series', SeriesController::class);
 Route::prefix('series/{id}')->group(function () {
     // Récupérer les matières d'une série avec coefficients
     Route::get('matieres', [SeriesController::class, 'getMatieresWithCoefficients']);
-    
+
     // Attacher une matière à une série
     Route::post('matieres', [SeriesController::class, 'attachMatiere']);
-    
+
     // Synchroniser toutes les matières d'une série
     Route::put('matieres/sync', [SeriesController::class, 'syncMatieres']);
-    
+
     // Mettre à jour le coefficient d'une matière
     Route::put('matieres/{matiere_id}', [SeriesController::class, 'updateMatiereCoefficient']);
-    
+
     // Détacher une matière d'une série
     Route::delete('matieres/{matiere_id}', [SeriesController::class, 'detachMatiere']);
-    
+
 
 });
 
@@ -166,7 +153,7 @@ Route::get('/classes-with-series', [SeriesController::class, 'Classe_avec_series
 Route::get('/with-series-matieres', [ClassesController::class, 'getClassesWithSeriesAndMatieres']);
 Route::get('/with-series-matieresMaternelle', [ClassesController::class, 'getClassesWithSeriesAndMatieresMaternelle']);
 Route::get('/with-series-matieresPrimaire', [ClassesController::class, 'getClassesWithSeriesAndMatieresPrimaire']);
-Route::get(('/with-series-matieresSecondaire'), [ClassesController::class, 'getClassesWithSeriesAndMatieresSecondaire']);   
+Route::get(('/with-series-matieresSecondaire'), [ClassesController::class, 'getClassesWithSeriesAndMatieresSecondaire']);
 // Routes pour les parents
 Route::prefix('parents')->group(function () {
     Route::get('/{id}', [ParentsController::class, 'show']);
@@ -181,7 +168,7 @@ Route::prefix('parents')->group(function () {
 
 Route::get('eleves/{childId}/bulletin', [BulletinController::class, 'getBulletin']);
 
-// Routes pour les enseignants
+// Routes pour les w
 Route::prefix('enseignants')->group(function () {
     Route::get('/', [EnseignantsController::class, 'getEnseignants']);
     Route::get('/MP', [EnseignantsController::class, 'getEnseignantsMP']);
@@ -292,10 +279,10 @@ Route::get('/test-db', function () {
         // Test de connexion DB
         $connection = DB::connection();
         $connection->getPdo();
-        
+
         // Test simple query
         $result = DB::select('SELECT 1 as test');
-        
+
         return response()->json([
             'database' => 'Connexion réussie',
             'driver' => config('database.default'),
@@ -332,3 +319,145 @@ Route::get('/test-simple', function () {
         'env' => app()->environment(),
     ]);
 })->middleware('api');
+
+
+// Routes spécifiques par rôle
+Route::prefix('directeur')->group(function () {
+    Route::get('/stats', [DirecteurController::class, 'stats']);
+    Route::get('/classes', [DirecteurController::class, 'classes']);
+    Route::get('/enseignants', [DirecteurController::class, 'enseignants']);
+});
+
+Route::prefix('enseignant')->group(function () {
+    Route::get('/classes', [EnseignantController::class, 'classes']);
+    Route::get('/notes', [EnseignantController::class, 'notes']);
+});
+
+Route::get('/enseignants/{id}/classes', [EnseignantController::class, 'getClasses']);
+Route::get('/enseignants/{id}/emploi-temps', [EnseignantController::class, 'getEmploiTemps']);
+Route::get('/classes/{id}/eleves', [ClassesController::class, 'getEleves']);
+
+// Routes pour exercices
+Route::prefix('exercices')->group(function () {
+    Route::get('/', [ExerciceController::class, 'index']);
+    Route::post('/', [ExerciceController::class, 'store']);
+    Route::put('/{id}', [ExerciceController::class, 'update']);
+    Route::delete('/{id}', [ExerciceController::class, 'destroy']);
+});
+
+// Routes pour notes
+Route::prefix('notes-management')->group(function () {
+    Route::post('/', [NoteController::class, 'store']);
+    Route::get('/eleve/{eleveId}', [NoteController::class, 'getByEleve']);
+    Route::get('/classe/{classeId}', [NoteController::class, 'getByClasse']);
+});
+
+// Routes pour messagerie
+Route::prefix('messages')->group(function () {
+    Route::get('/received', [MessageController::class, 'index']);
+    Route::get('/sent', [MessageController::class, 'sent']);
+    Route::get('/conversations', [MessageController::class, 'getConversations']);
+    Route::get('/conversation/{contactId}', [MessageController::class, 'getConversation']);
+    Route::post('/', [MessageController::class, 'store']);
+    Route::put('/{id}/read', [MessageController::class, 'markAsRead']);
+    Route::get('/unread-count', [MessageController::class, 'unreadCount']);
+    Route::get('/users', [MessageController::class, 'getUsers']);
+});
+
+// Routes pour notifications
+Route::prefix('notifications')->group(function () {
+    Route::get('/', [NotificationController::class, 'index']);
+    Route::post('/', [NotificationController::class, 'store']);
+    Route::put('/{id}/read', [NotificationController::class, 'markAsRead']);
+    Route::put('/mark-all-read', [NotificationController::class, 'markAllAsRead']);
+    Route::get('/unread-count', [NotificationController::class, 'unreadCount']);
+    Route::delete('/{id}', [NotificationController::class, 'destroy']);
+});
+
+Route::prefix('eleve')->group(function () {
+    Route::get('/bulletin/{periode}', [EleveController::class, 'bulletin']);
+    Route::get('/exercices', [EleveController::class, 'exercices']);
+    Route::get('/emploi-du-temps', [EleveController::class, 'emploiDuTemps']);
+});
+
+Route::prefix('parent')->group(function () {
+    Route::get('/enfants', [ParentController::class, 'enfants']);
+    Route::get('/bulletins', [ParentController::class, 'bulletins']);
+    Route::get('/bulletin/{enfantId}/{periode}', [ParentController::class, 'bulletin']);
+    Route::get('/messages', [ParentController::class, 'messages']);
+    Route::get('/rendez-vous', [ParentController::class, 'rendezVous']);
+});
+
+Route::prefix('comptable')->group(function () {
+    Route::get('/paiements', [ComptableController::class, 'paiements']);
+    Route::get('/finances', [ComptableController::class, 'finances']);
+    Route::get('/bourses', [ComptableController::class, 'bourses']);
+    Route::post('/paiements', [ComptableController::class, 'storePaiement']);
+    Route::post('/bourses', [ComptableController::class, 'storeBourse']);
+});
+
+Route::prefix('surveillant')->group(function () {
+    Route::get('/absences', [SurveillantController::class, 'absences']);
+    Route::get('/incidents', [SurveillantController::class, 'incidents']);
+    Route::get('/sanctions', [SurveillantController::class, 'sanctions']);
+    Route::post('/absences', [SurveillantController::class, 'storeAbsence']);
+    Route::post('/incidents', [SurveillantController::class, 'storeIncident']);
+    Route::post('/sanctions', [SurveillantController::class, 'storeSanction']);
+});
+
+Route::prefix('censeur')->group(function () {
+    Route::get('/resultats', [CenseurController::class, 'resultats']);
+    Route::get('/conseils-classe', [CenseurController::class, 'conseilsClasse']);
+    Route::get('/examens', [CenseurController::class, 'examens']);
+    Route::get('/stats-chart', [CenseurController::class, 'statsChart']);
+    Route::post('/conseils-classe', [CenseurController::class, 'storeConseilClasse']);
+    Route::post('/examens', [CenseurController::class, 'storeExamen']);
+});
+
+Route::prefix('infirmier')->group(function () {
+    Route::get('/consultations', [InfirmierController::class, 'consultations']);
+    Route::get('/dossiers-medicaux', [InfirmierController::class, 'dossiersMedicaux']);
+    Route::get('/vaccinations', [InfirmierController::class, 'vaccinations']);
+    Route::get('/statistiques', [InfirmierController::class, 'statistiques']);
+    Route::post('/consultations', [InfirmierController::class, 'storeConsultation']);
+    Route::post('/dossiers-medicaux', [InfirmierController::class, 'storeDossierMedical']);
+    Route::post('/vaccinations', [InfirmierController::class, 'storeVaccination']);
+});
+
+Route::prefix('bibliothecaire')->group(function () {
+    Route::get('/livres', [BibliothecaireController::class, 'livres']);
+    Route::get('/emprunts', [BibliothecaireController::class, 'emprunts']);
+    Route::get('/reservations', [BibliothecaireController::class, 'reservations']);
+    Route::get('/statistiques', [BibliothecaireController::class, 'statistiques']);
+    Route::post('/livres', [BibliothecaireController::class, 'storeLivre']);
+    Route::post('/emprunts', [BibliothecaireController::class, 'storeEmprunt']);
+    Route::post('/reservations', [BibliothecaireController::class, 'storeReservation']);
+    Route::put('/emprunts/{id}/retour', [BibliothecaireController::class, 'retournerLivre']);
+    Route::put('/reservations/{id}/confirmer', [BibliothecaireController::class, 'confirmerReservation']);
+});
+
+Route::prefix('secretaire')->group(function () {
+    Route::get('/dossiers-eleves', [SecretaireController::class, 'dossiersEleves']);
+    Route::get('/rendez-vous', [SecretaireController::class, 'rendezVous']);
+    Route::get('/certificats', [SecretaireController::class, 'certificats']);
+    Route::get('/statistiques', [SecretaireController::class, 'statistiques']);
+    Route::post('/rendez-vous', [SecretaireController::class, 'storeRendezVous']);
+    Route::post('/certificats', [SecretaireController::class, 'storeCertificat']);
+    Route::put('/certificats/{id}/delivrer', [SecretaireController::class, 'delivrerCertificat']);
+});
+
+Route::get('/test-connexion', function() {
+    return 'ok';
+});
+
+// Routes pour emplois du temps
+Route::prefix('emplois-du-temps')->group(function () {
+    Route::get('/', [EmploiDuTempsController::class, 'index']);
+    Route::post('/', [EmploiDuTempsController::class, 'store']);
+    Route::put('/{id}', [EmploiDuTempsController::class, 'update']);
+    Route::delete('/{id}', [EmploiDuTempsController::class, 'destroy']);
+    Route::get('/classe/{classeId}', [EmploiDuTempsController::class, 'getByClasse']);
+});
+
+
+

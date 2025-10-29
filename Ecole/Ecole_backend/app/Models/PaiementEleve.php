@@ -8,11 +8,15 @@ use Illuminate\Database\Eloquent\Model;
 class PaiementEleve extends Model
 {
     use HasFactory;
+    
+    protected $table = 'paiements';
+    
     protected $fillable = [
-        "id_eleve",
-        "id_contribution",
-        "mode_paiement",
-        "montant_total_paye",
+        "eleve_id",
+        "parents_id",
+        "contribution_id",
+        "montant_total",
+        "montant_paye",
         "montant_restant",
         "statut_global",
     ];
@@ -29,13 +33,17 @@ class PaiementEleve extends Model
 
     public function eleve()
     {
-        return $this->belongsTo(Eleves::class, 'id_eleve');
+        return $this->belongsTo(Eleves::class, 'eleve_id');
     }
 
+    public function parent()
+    {
+        return $this->belongsTo(Parents::class, 'parents_id');
+    }
 
     public function contribution()
     {
-        return $this->belongsTo(Contributions::class, 'id_contribution');
+        return $this->belongsTo(Contributions::class, 'contribution_id');
     }
 
     public function transactions()

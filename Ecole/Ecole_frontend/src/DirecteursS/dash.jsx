@@ -13,7 +13,6 @@ import 'jspdf-autotable';
 
 
 
-
 const notifications = [
   { id: 1, message: "Réunion des enseignants demain à 14h", date: "Aujourd'hui, 10:30" },
   { id: 2, message: "Sortie scolaire prévue pour le CM1 vendredi", date: "Hier, 15:45" },
@@ -543,15 +542,20 @@ const fetchMatieres = async () => {
 
 
 // Fonction pour récupérer les classes depuis l'API
+
   const fetchClasses = async () => {
-    try {
-      const res = await api.get(`/classesS`);
-      setClasses(res.data);
-    } catch (err) {
-      console.error(err);
-      setError('Erreur lors du chargement des classes');
-    }
-  };
+      try {
+        setLoading(true);
+        const res = await api.get('/classesS');
+        setClasses(res.data);
+        console.log("Reponse du serveur pour les classe de la maternelle:", res);
+        setLoading(false);
+      } catch (err) {
+        console.error(err);
+        setError('Erreur lors du chargement des classes');
+        setLoading(false);
+      }
+    };
 
 //Fonction pour recuperer les classes avec leur effectif et categorie
 const fetchClassesAvecEffectifMaternelle = async () => {
@@ -1108,7 +1112,12 @@ const groupElevesByClasse = (eleves) => {
             <Settings size={20} />
             {sidebarOpen && <span className="sidebar-item-text">Contributions</span>}
           </div>
-
+          <div className={`sidebar-item ${activeTab === 'emploi' ? 'active' : ''}`} 
+                      onClick={() => setActiveTab('emploi')}
+                    >
+                      <Calendar size={20} />
+                      {sidebarOpen && <span className="sidebar-item-text">Emploi du temps</span>}
+                    </div>
           <div 
             className={`sidebar-item ${activeTab === 'liaisonClassesPeriodesTypes' ? 'active' : ''}`} 
             onClick={() => setActiveTab('liaisonClassesPeriodesTypes')}
@@ -1981,7 +1990,7 @@ const groupElevesByClasse = (eleves) => {
                               onKeyPress={(e) => e.key === 'Enter' && ModificationClasse(classe.id)}
                             />
                           ) : (
-                            classe.nom
+                            classe.nom_classe
                           )}
                         </td>
                         <td>
@@ -1994,7 +2003,7 @@ const groupElevesByClasse = (eleves) => {
                               onKeyPress={(e) => e.key === 'Enter' && ModificationClasse(classe.id)}
                             />
                           ) : (
-                            classe.categorie
+                            classe.categorie_classe
                           )}
                         </td>
                         <td>{classe.effectif}</td>                        
@@ -2060,6 +2069,10 @@ const groupElevesByClasse = (eleves) => {
             <LierEnseignantsAuxMatieres />
           )}
 
+          {activeTab === 'emploi' && (
+            <EmploiDuTemps />
+          )}
+
           {activeTab === 'Types' && (
             <TypeEvas2 />
           )}
@@ -2076,7 +2089,7 @@ const groupElevesByClasse = (eleves) => {
             <FilterGenerate />
           )}
           
-          {(activeTab !== 'aperçu' && activeTab !== 'élèves' && activeTab !== 'classes' && activeTab !== 'matieres' && activeTab !== 'LiaisonSeriesClass'  && activeTab !== 'LiaisonMatieresAvecCoefficientEtSerieClasses' && activeTab !== 'notes' && activeTab !== 'enseignantsauxclasses'&& activeTab !== 'Types') && (
+          {(activeTab !== 'aperçu' && activeTab !== 'élèves' && activeTab !== 'classes' && activeTab !== 'matieres' && activeTab !== 'LiaisonSeriesClass'  && activeTab !== 'LiaisonMatieresAvecCoefficientEtSerieClasses' && activeTab !== 'notes' && activeTab !== 'enseignantsauxclasses'&& activeTab !== 'Types' && activeTab !== 'Contributions') && (
             <div className="coming-soon">
               <h3>Section {activeTab} en cours de développement</h3>
               <p>Cette fonctionnalité sera disponible prochainement</p>
@@ -2324,7 +2337,7 @@ const handleSubmit = async (e) => {
   }
 };
   
-  const getFilteredSeries = () => {
+const getFilteredSeries = () => {
     // Vérification des données requises
     if (!series?.length || !selectedClass || !classes?.length) {
         console.log("Données manquantes:", { 
@@ -2345,12 +2358,6 @@ const handleSubmit = async (e) => {
     const classeNom = selectedClasse.nom_classe.toLowerCase();
     console.log("Nom de classe trouvé:", classeNom);
 
-    // Vérifier si c'est une classe du secondaire
-    const classesSecondaire = ['2nde', 'seconde', '1ère', 'première', 'terminale', 'tle'];
-    if (classesSecondaire.some(niveau => classeNom.includes(niveau))) {
-        return series;
-    }
-
     // Mapping des niveaux
     const niveauxMap = {
         'ci': 'ci',
@@ -2367,7 +2374,17 @@ const handleSubmit = async (e) => {
         '3ème': '3ème'
     };
 
-    // Filtrer les séries selon le niveau
+    // Vérifier si c'est une classe du secondaire
+    const classesSecondaire = ['2nde', 'seconde', '1ère', 'première', 'terminale', 'tle'];
+    if (classesSecondaire.some(niveau => classeNom.includes(niveau))) {
+        // Pour le secondaire, exclure les séries du niveauxMap
+        const seriesExclues = Object.values(niveauxMap).map(s => s.toLowerCase());
+        const filteredSeries = series.filter(serie => !seriesExclues.includes(serie?.nom?.toLowerCase()));
+        console.log("Séries filtrées pour le secondaire:", filteredSeries);
+        return filteredSeries;
+    }
+
+    // Filtrer les séries selon le niveau pour le primaire/maternelle
     for (const [niveau, serieNom] of Object.entries(niveauxMap)) {
         if (classeNom.includes(niveau)) {
             const filteredSeries = series.filter(serie => 
@@ -2382,6 +2399,7 @@ const handleSubmit = async (e) => {
     console.log("Aucune correspondance trouvée");
     return series;
 };
+
 
 const groupUniqueSeries = (series) => {
     const uniqueSeries = {};
@@ -2923,7 +2941,7 @@ const LierEnseignantsAuxMatieres = () => {
   const [classesS, setClassesS] = useState([]);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
+  /*useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
@@ -2942,6 +2960,7 @@ const LierEnseignantsAuxMatieres = () => {
         setMatieres(matieresRes.data);
         setEnseignants(enseignantsRes.data);
         setClassesWithData(processedClasses);
+        console.log("voci les erreurs:", classesRes)
         setMessage({ text: '', type: '' });
       } catch (error) {
         setMessage({ text: 'Erreur lors du chargement des données', type: 'error' });
@@ -2953,7 +2972,61 @@ const LierEnseignantsAuxMatieres = () => {
 
     fetchData();
     fetchClassesSeries();
-  }, []);
+  }, []);*/
+
+
+  useEffect(() => {
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [classesRes, matieresRes, enseignantsRes] = await Promise.all([
+        api.get(`/classesES?with_series=true&with_matieres=true&with_enseignants=true`),
+        api.get(`/matieres`),
+        api.get(`/enseignants?with_matieres=true`),
+      ]);
+
+      setClasses(classesRes.data);
+      setMatieres(matieresRes.data);
+      setEnseignants(enseignantsRes.data);
+
+      // Filtrer les données pour éviter les doublons
+      const filteredClassesData = classesRes.data.map(classe => ({
+        ...classe,
+        // Filtrer les séries uniques en utilisant un Set
+        series: Array.from(new Set(
+          classe.series?.map(serie => JSON.stringify({
+            id: serie.id,
+            nom: serie.nom,
+            matieres: serie.matieres
+          }))
+        )).map(str => {
+          const serie = JSON.parse(str);
+          return {
+            ...serie,
+            matieres: serie.matieres?.map(matiere => ({
+              ...matiere,
+              enseignants: (matiere.enseignants || []).filter(enseignant => 
+                enseignant.matiere_id === matiere.id &&
+                enseignant.pivot?.classe_id === classe.id &&
+                enseignant.pivot?.serie_id === serie.id
+              )
+            }))
+          };
+        })
+      }));
+
+      setClassesWithData(filteredClassesData);
+      
+    } catch (error) {
+      setMessage({ text: 'Erreur lors du chargement des données', type: 'error' });
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchData();
+}, []);
 
   const fetchClassesSeries = async () => {
     try {
@@ -3030,6 +3103,8 @@ const LierEnseignantsAuxMatieres = () => {
     try {
       setLoading(true);
       const matieresData = selectedMatieres.map(matiereId => ({
+        classe_id: Number(selectedClass),
+        serie_id: Number(selectedSerie),
         matiere_id: matiereId,
         enseignants: enseignantsParMatiere[matiereId] || []
       }));
@@ -3044,14 +3119,25 @@ const LierEnseignantsAuxMatieres = () => {
           `/classesES?with_series=true&with_matieres=true&with_enseignants=true`
         );
         
-        const processedClasses = classesRes.data.map(classe => ({
+        // Filtrer les données comme dans useEffect
+        const filteredClassesData = classesRes.data.map(classe => ({
           ...classe,
-          series: classe.series ? [...new Map(classe.series.map(serie => [serie.id, serie])).values()] : []
+          series: classe.series?.map(serie => ({
+            ...serie,
+            matieres: serie.matieres?.map(matiere => ({
+              ...matiere,
+              enseignants: (matiere.enseignants || []).filter(enseignant => 
+                enseignant.matiere_id === matiere.id &&
+                enseignant.pivot?.classe_id === classe.id &&
+                enseignant.pivot?.serie_id === serie.id
+              )
+            }))
+          }))
         }));
-        
-        setClassesWithData(processedClasses);
+
+        setClassesWithData(filteredClassesData);
         setMessage({ text: 'Enseignants associés avec succès', type: 'success' });
-      } else {
+      }else {
         throw new Error(response.data.message || 'Erreur lors de la mise à jour');
       }
     } catch (error) {
@@ -3071,11 +3157,27 @@ const LierEnseignantsAuxMatieres = () => {
     return classe && Array.isArray(classe.series) ? classe.series : [];
   };
 
-  const getEnseignantsForMatiere = (matiereId) => {
+  /*const getEnseignantsForMatiere = (matiereId) => {
     return enseignants.filter(enseignant => 
       enseignant.matieres?.some(m => m.id == matiereId)
     );
+  };*/
+
+  /*const getEnseignantsForMatiere = (matiereId) => {
+    return enseignants.filter(enseignant => 
+      Array.isArray(enseignant.matieres) && enseignant.matieres.some(m => m.id == matiereId)
+    );
+  };*/
+
+  const getEnseignantsForMatiere = (matiereId) => {
+    return enseignants.filter(enseignant => 
+      enseignant.matiere_id === matiereId && 
+      (!enseignant.pivot || 
+        (enseignant.pivot.classe_id === parseInt(selectedClass) && 
+        enseignant.pivot.serie_id === parseInt(selectedSerie)))
+    );
   };
+  
 
   return (
     <div className="link-enseignants-container">
@@ -3141,6 +3243,7 @@ const LierEnseignantsAuxMatieres = () => {
                   {selectedMatieres.map(matiereId => {
                     const matiere = matieres.find(m => m.id == matiereId);
                     const enseignantsMatiere = getEnseignantsForMatiere(matiereId);
+                    console.log("Enseignants pour la matière", matiereId, enseignantsMatiere);
                     const selectedEnseignants = enseignantsParMatiere[matiereId] || [];
                     
                     return (
@@ -4476,7 +4579,7 @@ const Contributions = () => {
                 const classe = classesMat.find(c => c.id === contribution.id_classe);
                 return (
                   <tr key={contribution.id}>
-                    <td>{classe ? classe.nom_classe : 'Inconnue'}</td>
+                    <td>{classe ? classe.nom : 'Inconnue'}</td>
                     <td>{contribution.montant} FCFA</td>
                     <td>{contribution.montant_premiere_tranche} FCFA {new Date(contribution.date_fin_premiere_tranche).toLocaleDateString()}</td>
                     <td>{contribution.montant_deuxieme_tranche} FCFA {new Date(contribution.date_fin_deuxieme_tranche).toLocaleDateString()}</td>
@@ -4504,6 +4607,131 @@ const Contributions = () => {
           </table>
         )}
       </div>
+    </div>
+  );
+};
+
+const EmploiDuTemps = () => {
+  const [classes, setClasses] = useState([]);
+  const [matieres, setMatieres] = useState([]);
+  const [enseignants, setEnseignants] = useState([]);
+  const [selectedClasse, setSelectedClasse] = useState('');
+  const [emplois, setEmplois] = useState([]);
+  const [form, setForm] = useState({
+    classe_id: '',
+    matiere_id: '',
+    enseignant_id: '',
+    jour: 'Lundi',
+    heure_debut: '',
+    heure_fin: '',
+    salle: ''
+  });
+
+  useEffect(() => {
+    loadClasses();
+    loadMatieres();
+    loadEnseignants();
+  }, []);
+
+  const loadClasses = async () => {
+    const res = await api.get('/classesS');
+    setClasses(res.data);
+  };
+
+  const loadMatieres = async () => {
+    const res = await api.get('/matieresS');
+    setMatieres(res.data);
+  };
+
+  const loadEnseignants = async () => {
+    const res = await api.get('/enseignants');
+    setEnseignants(res.data);
+  };
+
+  const loadEmplois = async (classId) => {
+    const res = await api.get(`/emplois-du-temps/classe/${classId}`);
+    setEmplois(res.data.data || []);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    await api.post('/emplois-du-temps', form);
+    loadEmplois(form.classe_id);
+    setForm({ ...form, matiere_id: '', enseignant_id: '', heure_debut: '', heure_fin: '', salle: '' });
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm('Supprimer ce cours ?')) {
+      await api.delete(`/emplois-du-temps/${id}`);
+      loadEmplois(selectedClasse);
+    }
+  };
+
+  return (
+    <div style={{ padding: '20px' }}>
+      <h2>Gestion des Emplois du Temps</h2>
+      
+      <form onSubmit={handleSubmit} style={{ marginBottom: '20px', padding: '20px', border: '1px solid #ddd', borderRadius: '8px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px' }}>
+          <select value={form.classe_id} onChange={(e) => { setForm({...form, classe_id: e.target.value}); setSelectedClasse(e.target.value); loadEmplois(e.target.value); }} required>
+            <option value="">Sélectionner une classe</option>
+            {classes.map(c => <option key={c.id} value={c.id}>{c.nom_classe}</option>)}
+          </select>
+          
+          <select value={form.matiere_id} onChange={(e) => setForm({...form, matiere_id: e.target.value})} required>
+            <option value="">Sélectionner une matière</option>
+            {matieres.map(m => <option key={m.id} value={m.id}>{m.nom}</option>)}
+          </select>
+          
+          <select value={form.enseignant_id} onChange={(e) => setForm({...form, enseignant_id: e.target.value})} required>
+            <option value="">Sélectionner un enseignant</option>
+            {enseignants.map(e => <option key={e.id} value={e.id}>{e.nom} {e.prenom}</option>)}
+          </select>
+          
+          <select value={form.jour} onChange={(e) => setForm({...form, jour: e.target.value})} required>
+            <option value="Lundi">Lundi</option>
+            <option value="Mardi">Mardi</option>
+            <option value="Mercredi">Mercredi</option>
+            <option value="Jeudi">Jeudi</option>
+            <option value="Vendredi">Vendredi</option>
+            <option value="Samedi">Samedi</option>
+          </select>
+          
+          <input type="time" value={form.heure_debut} onChange={(e) => setForm({...form, heure_debut: e.target.value})} required />
+          <input type="time" value={form.heure_fin} onChange={(e) => setForm({...form, heure_fin: e.target.value})} required />
+          <input type="text" placeholder="Salle" value={form.salle} onChange={(e) => setForm({...form, salle: e.target.value})} />
+        </div>
+        <button type="submit" style={{ marginTop: '10px', padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Ajouter</button>
+      </form>
+
+      {selectedClasse && (
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr style={{ background: '#f0f0f0' }}>
+              <th style={{ padding: '10px', border: '1px solid #ddd' }}>Jour</th>
+              <th style={{ padding: '10px', border: '1px solid #ddd' }}>Heure</th>
+              <th style={{ padding: '10px', border: '1px solid #ddd' }}>Matière</th>
+              <th style={{ padding: '10px', border: '1px solid #ddd' }}>Professeur</th>
+              <th style={{ padding: '10px', border: '1px solid #ddd' }}>Salle</th>
+              <th style={{ padding: '10px', border: '1px solid #ddd' }}>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {emplois.map(e => (
+              <tr key={e.id}>
+                <td style={{ padding: '10px', border: '1px solid #ddd' }}>{e.jour}</td>
+                <td style={{ padding: '10px', border: '1px solid #ddd' }}>{e.heure_debut} - {e.heure_fin}</td>
+                <td style={{ padding: '10px', border: '1px solid #ddd' }}>{e.matiere}</td>
+                <td style={{ padding: '10px', border: '1px solid #ddd' }}>{e.professeur}</td>
+                <td style={{ padding: '10px', border: '1px solid #ddd' }}>{e.salle}</td>
+                <td style={{ padding: '10px', border: '1px solid #ddd' }}>
+                  <button onClick={() => handleDelete(e.id)} style={{ background: '#f44336', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>Supprimer</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </div>
   );
 };

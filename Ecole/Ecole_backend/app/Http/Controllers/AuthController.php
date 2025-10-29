@@ -25,7 +25,7 @@ use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
-    
+
 
 
 
@@ -54,7 +54,7 @@ protected function getRedirectRouteBasedOnRole($role)
 public function inscription(Request $request)
 {
     try {
-        
+
         if ($request->role === 'eleve') {
             $validated = $request->validate([
                 'role' => 'required|in:eleve',
@@ -98,11 +98,12 @@ public function inscription(Request $request)
             ]);
 
             // Création du paiement élève
-            $paiementEleve = \App\Models\PaiementEleve::create([
-                'id_eleve' => $eleve->id,
-                'id_contribution' => $contribution->id,
-                'mode_paiement' => 'TRANCHE',
-                'montant_total_paye' => 0,
+            $paiementEleve = \App\Models\Paiement::create([
+                'eleve_id' => $eleve->id,
+                'parents_id' => null, // À définir si nécessaire
+                'contribution_id' => $contribution->id,
+                'montant_total' => $contribution->montant,
+                'montant_paye' => 0,
                 'montant_restant' => $contribution->montant,
                 'statut_global' => 'EN_ATTENTE',
             ]);
@@ -250,9 +251,9 @@ public function inscription(Request $request)
 
     /**
      * Permet de se connecter à l'application avec un identifiant et un mot de passe.
-     * 
+     *
      * @param \Illuminate\Http\Request $request
-     * 
+     *
      * @return \Illuminate\Http\JsonResponse
      */
 public function connexion(Request $request)
@@ -296,8 +297,8 @@ public function connexion(Request $request)
         return response()->json([
             'user' => $enseignant,
             'token' => $token,
-            'role' => 'enseignement',
-            'redirect_to' => $this->getRedirectRouteBasedOnRole('enseignement')
+            'role' => $enseignant->role, 
+            'redirect_to' => $this->getRedirectRouteBasedOnRole($enseignant->role)
         ]);
     }
 
@@ -375,7 +376,7 @@ public function connexion(Request $request)
                 'prenom' => $account['prenom'],
                 'role' => $account['role']
             ]);
-            
+
             return response()->json([
                 'user' => [
                     'identifiant' => $identifiant,
@@ -409,7 +410,7 @@ private function processExcelFile($file)
         $data = [];
 
         $highestRow = $worksheet->getHighestRow();
-        
+
         for ($row = 2; $row <= $highestRow; $row++) {
             $eleve = $worksheet->getCell('A' . $row)->getValue();
             $note = $worksheet->getCell('B' . $row)->getValue();
@@ -434,7 +435,7 @@ private function processExcelFile($file)
         $parser = new PdfParser();
         $pdf = $parser->parseFile($file->getPathname());
         $text = $pdf->getText();
-        
+
         // Logique simple pour extraire les notes du PDF
         // À adapter selon le format de vos PDFs
         $lines = explode("\n", $text);
@@ -487,7 +488,7 @@ private function processExcelFile($file)
     {
         try {
             $paiementEleve = PaiementEleve::find($paiementEleveId);
-            
+
             if (!$paiementEleve) {
                 throw new \Exception('Paiement non trouvé');
             }
@@ -544,7 +545,7 @@ private function processExcelFile($file)
     {
         try {
             $paiementEleve = PaiementEleve::with(['transactions', 'statutsTranches', 'contribution'])
-                                        ->where('id_eleve', $eleveId)
+                                        ->where('eleve_id', $eleveId)
                                         ->first();
 
             if (!$paiementEleve) {
@@ -712,15 +713,15 @@ private function processExcelFile($file)
                 'paiements_termines' => \App\Models\PaiementEleve::where('statut_global', 'TERMINE')->count(),
                 'paiements_en_cours' => \App\Models\PaiementEleve::where('statut_global', 'EN_COURS')->count(),
                 'paiements_en_attente' => \App\Models\PaiementEleve::where('statut_global', 'EN_ATTENTE')->count(),
-                'montant_total_attendu' => \App\Models\PaiementEleve::join('contributions', 'paiement_eleves.id_contribution', '=', 'contributions.id')
+                'montant_total_attendu' => \App\Models\Paiement::join('contributions', 'paiements.contribution_id', '=', 'contributions.id')
                                                                   ->sum('contributions.montant'),
-                'montant_total_collecte' => \App\Models\PaiementEleve::sum('montant_total_paye'),
+                'montant_total_collecte' => \App\Models\Paiement::sum('montant_paye'),
                 'tranches_en_retard' => \App\Models\StatutTranche::where('statut', 'RETARD')->count(),
             ];
 
             // Pourcentage de recouvrement
-            $stats['pourcentage_recouvrement'] = $stats['montant_total_attendu'] > 0 
-                ? ($stats['montant_total_collecte'] / $stats['montant_total_attendu']) * 100 
+            $stats['pourcentage_recouvrement'] = $stats['montant_total_attendu'] > 0
+                ? ($stats['montant_total_collecte'] / $stats['montant_total_attendu']) * 100
                 : 0;
 
             return response()->json([

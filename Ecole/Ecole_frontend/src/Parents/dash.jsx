@@ -16,13 +16,18 @@ import {
   DollarSign,
   RefreshCw
 } from 'lucide-react';
-import './Mes_CSS_parent/dashboard_parent.css';
+import './Mes_CSS_parent/dashboard_consolidated.css';
+import '../styles/dashboard.css'
 import PaymentForm from '../paiements/paiement';
 import axios from 'axios';
 import  jsPDF  from "jspdf";
 //import autoTable from  'jspdf-autotable';
 import  'jspdf-autotable';
 import { useNavigate } from 'react-router-dom'; // Ajoute ceci en haut
+import api from '../api';
+import Messagerie from '../components/Messagerie';
+import { messageService } from '../services/messageService';
+
 
 const ParentDashboard = () => {
   const [loading, setLoading] = useState(true);
@@ -39,6 +44,24 @@ const ParentDashboard = () => {
   const [debugMode, setDebugMode] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [paiementDisplay, setPaiementDisplay] = useState([]);
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const [selectedPayment, setSelectedPayment] = useState(null);
+  const [messagesRead, setMessagesRead] = useState(new Set());
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterPeriod, setFilterPeriod] = useState('all');
+  const [showStats, setShowStats] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [profileData, setProfileData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    address: ''
+  });
+  const [emploisDuTemps, setEmploisDuTemps] = useState({});
+
+  // Image de signature du directeur en base64 (signature professionnelle)
+  const signatureImageDataURL = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASwAAAAyCAYAAABKjzVpAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAYySURBVHgB7Z1NbBRVGMefmW3pFrYtLbQUKFBaKAhIQEMwJhqNiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJggg==";
 
   const navigate = useNavigate(); // Ajoute ceci dans ParentDashboard
 
@@ -83,7 +106,22 @@ const ParentDashboard = () => {
 
   useEffect(() => {
     fetchDashboardData();
+    fetchNotifications();
   }, []);
+
+  const fetchEmploiDuTemps = async (childId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await api.get(`/eleves/${childId}/emploi-du-temps`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.data.success) {
+        setEmploisDuTemps(prev => ({ ...prev, [childId]: response.data.data }));
+      }
+    } catch (err) {
+      console.error('Erreur chargement emploi du temps:', err);
+    }
+  };
 
   useEffect(() => {
     const handleClick = (e) => {
@@ -149,7 +187,7 @@ const ParentDashboard = () => {
         throw new Error("Token d'authentification manquant");
       }
 
-      const response = await axios.get(`${process.env.react_app_api_url}/parents/${parentId}/dashboard`, {
+      const response = await api.get(`/parents/${parentId}/dashboard`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -202,8 +240,8 @@ const fetchChildBulletin = async (childId, parentId, periode = currentPeriode) =
         
         const token = localStorage.getItem('token');
         
-        const response = await axios.get(
-            `${process.env.react_app_api_url}/eleves/${childId}/bulletin`,
+        const response = await api.get(
+            `/eleves/${childId}/bulletin`,
             { 
                 params: { periode },
                 headers: {
@@ -263,7 +301,60 @@ const fetchChildBulletin = async (childId, parentId, periode = currentPeriode) =
     }
   };
 
-const generateBulletinPDF = () => {
+/*const generateBulletinPDF = () => {
+  const child = children[selectedChild];
+  const bulletin = bulletins[child?.id];
+  
+  if (!child || !bulletin) {
+    alert('Aucun bulletin disponible pour cet élève');
+    return;
+  }
+
+  const doc = new jsPDF();
+  
+  // En-tête
+  doc.setFontSize(20);
+  doc.text('BULLETIN SCOLAIRE', 105, 20, { align: 'center' });
+  
+  doc.setFontSize(12);
+  doc.text(`Élève: ${child.prenom} ${child.nom}`, 20, 40);
+  doc.text(`Classe: ${child.classe}`, 20, 50);
+  doc.text(`Période: ${bulletin.periode}`, 20, 60);
+  doc.text(`Année scolaire: ${new Date().getFullYear()}`, 120, 50);
+  
+  // Notes
+  if (bulletin.notes && bulletin.notes.length > 0) {
+    doc.text('NOTES:', 20, 80);
+    
+    const tableData = bulletin.notes.map(note => [
+      note.matiere || 'N/A',
+      note.note?.toString() || 'N/A',
+      note.coefficient?.toString() || '1',
+      note.appreciation || ''
+    ]);
+    
+    doc.autoTable({
+      head: [['Matière', 'Note', 'Coefficient', 'Appréciation']],
+      body: tableData,
+      startY: 90,
+      theme: 'grid'
+    });
+  }
+  
+  // Moyennes
+  const finalY = doc.lastAutoTable?.finalY || 120;
+  doc.text(`Moyenne générale: ${bulletin.moyenne_generale || 'N/A'}`, 20, finalY + 20);
+  
+  // Signature
+  doc.text('Le Directeur', 140, finalY + 50);
+  if (signatureImageDataURL) {
+    doc.addImage(signatureImageDataURL, 'PNG', 140, finalY + 55, 30, 15);
+  }
+  
+  doc.save(`bulletin_${child.prenom}_${child.nom}_${bulletin.periode}.pdf`);
+};*/
+
+/*const generateBulletinPDFDetailed = () => {
   const child = children[selectedChild];
   const bulletin = bulletins[child.id];
   const categorie = getCategorieClasse(child);
@@ -444,6 +535,225 @@ const generateBulletinPDF = () => {
 
   // Enregistrement du PDF
   doc.save(`Bulletin_${child.name}_${currentPeriode.replace(' ', '_')}.pdf`);
+};*/
+
+const generateBulletinPDF = () => {
+  const child = children[selectedChild];
+  const bulletin = bulletins[child.id];
+  const categorie = getCategorieClasse(child);
+
+  const formatNumber = (num) => {
+    if (num === null || num === undefined) return 'N/A';
+    return typeof num === 'number' ? num.toFixed(2) : num;
+  };
+  if (!bulletin || !child) return;
+
+  const doc = new jsPDF();
+  const pageWidth = doc.internal.pageSize.getWidth();
+
+  // Styles
+  const mainColor = [44, 62, 80];
+  const secondaryColor = [231, 76, 60];
+
+  // En-tête
+  doc.setFontSize(16);
+  doc.setTextColor(...mainColor);
+  doc.setFont("helvetica", "bold");
+  doc.text("COMPLEXE SCOLAIRE JACQUES-WILLIAM 1er", pageWidth / 2, 20, { align: 'center' });
+
+  doc.setFontSize(12);
+  doc.setTextColor(100);
+  doc.setFont("helvetica", "normal");
+  doc.text("Établissement d'enseignement général, technique et professionnel", pageWidth / 2, 28, { align: 'center' });
+
+  // Ligne séparatrice
+  doc.setDrawColor(...mainColor);
+  doc.setLineWidth(0.5);
+  doc.line(15, 35, pageWidth - 15, 35);
+
+  // Cadre pour la photo d'identité (en haut à droite)
+  doc.setDrawColor(150);
+  doc.rect(pageWidth - 40, 40, 25, 30); // x, y, largeur, hauteur
+  doc.setFontSize(8);
+  doc.text("Photo", pageWidth - 27, 57, { align: 'center' });
+
+  // Informations élève
+  doc.setFontSize(12);
+  doc.setTextColor(0);
+  doc.setFont("helvetica", "bold");
+  doc.text("ÉLÈVE", 20, 45);
+
+  doc.setFont("helvetica", "normal");
+  doc.text(`Nom : ${child.lastName || 'N/A'}`, 20, 55);
+  doc.text(`Prénom : ${child.name}`, 20, 65);
+  doc.text(`Date de naissance : ${child.birthDate || 'N/A'}`, 20, 75);
+  doc.text(`Classe : ${child.class}`, 100, 55);
+  doc.text(`Année scolaire : 2024-2025`, 100, 65);
+
+  // Titre bulletin
+  doc.setFontSize(14);
+  doc.setTextColor(...secondaryColor);
+  doc.setFont("helvetica", "bold");
+  doc.text(`BULLETIN DE NOTES DU ${currentPeriode.toUpperCase()}`, pageWidth / 2, 90, { align: 'center' });
+
+  let finalY = 100;
+
+  // ----------- Maternelle -----------
+  if (categorie === 'maternelle' && bulletin.evaluations) {
+    const evalHeaders = ["Matière", ...bulletin.evaluations[0]?.evaluations.map(e => e.type) || []];
+    const evalBody = bulletin.evaluations.map(matiere => [
+      matiere.matiere,
+      ...matiere.evaluations.map(evalItem =>
+        `${formatNumber(evalItem.note)}\nRang: ${evalItem.rang?.position ? `${evalItem.rang.position}/${evalItem.rang.total_eleves}` : 'N/A'}`
+      )
+    ]);
+    doc.autoTable({
+      startY: finalY,
+      head: [evalHeaders],
+      body: evalBody,
+      margin: { left: 15 },
+      styles: { fontSize: 8, cellPadding: 2, valign: 'middle' },
+      headStyles: { fillColor: mainColor, textColor: [255, 255, 255], fontStyle: 'bold' }
+    });
+    finalY = doc.lastAutoTable.finalY + 10;
+  }
+
+  // ----------- Primaire -----------
+  else if (categorie === 'primaire' && bulletin.evaluations) {
+    const evalHeaders = ["Matière", ...bulletin.evaluations[0]?.evaluations.map(e => e.type) || []];
+    const evalBody = bulletin.evaluations.map(matiere => [
+      matiere.matiere,
+      ...matiere.evaluations.map(evalItem =>
+        `${formatNumber(evalItem.note)}\nRang: ${evalItem.rang?.position ? `${evalItem.rang.position}/${evalItem.rang.total_eleves}` : 'N/A'}`
+      )
+    ]);
+    doc.autoTable({
+      startY: finalY,
+      head: [evalHeaders],
+      body: evalBody,
+      margin: { left: 15 },
+      styles: { fontSize: 8, cellPadding: 2, valign: 'middle' },
+      headStyles: { fillColor: mainColor, textColor: [255, 255, 255], fontStyle: 'bold' }
+    });
+    finalY = doc.lastAutoTable.finalY + 10;
+  }
+
+  // ----------- Secondaire -----------
+  else if ((categorie === 'secondaire' || !categorie) && bulletin.moyennes_par_matiere) {
+    const notesHeaders = [
+      "Matières",
+      "Coef",
+      "Devoir 1",
+      "Devoir 2",
+      "Moy. Interros",
+      "Moyenne",
+      "Moy. Pondérée",
+      "Rang matière"
+    ];
+    const notesData = bulletin.moyennes_par_matiere.map(matiere => [
+      matiere.matiere,
+      matiere.coefficient,
+      formatNumber(matiere.details.devoir1),
+      formatNumber(matiere.details.devoir2),
+      formatNumber(matiere.details.moyenne_interrogations),
+      formatNumber(matiere.moyenne),
+      formatNumber(matiere.moyenne_ponderee),
+      matiere.rang?.position
+        ? `${matiere.rang.position}/${matiere.rang.total_eleves}`
+        : 'N/A'
+    ]);
+    doc.autoTable({
+      startY: finalY,
+      head: [notesHeaders],
+      body: notesData,
+      margin: { left: 15 },
+      styles: { fontSize: 8, cellPadding: 2, valign: 'middle' },
+      headStyles: { fillColor: mainColor, textColor: [255, 255, 255], fontStyle: 'bold' },
+      columnStyles: {
+        0: { cellWidth: 40 },
+        1: { cellWidth: 10 },
+        2: { cellWidth: 20 },
+        3: { cellWidth: 20 },
+        4: { cellWidth: 30 },
+        5: { cellWidth: 20 },
+        6: { cellWidth: 20 },
+        7: { cellWidth: 20 }
+      }
+    });
+    finalY = doc.lastAutoTable.finalY + 10;
+  }
+
+  // Totaux et rang général (pour secondaire)
+  if (categorie === 'secondaire' || !categorie) {
+    doc.setFontSize(10);
+    doc.setTextColor(0);
+    doc.setFont("helvetica", "bold");
+    doc.text("TOTAUX", 20, finalY);
+
+    doc.setFont("helvetica", "normal");
+    doc.text(`Moyenne Générale: ${formatNumber(bulletin.moyenne_generale)}`, 20, finalY + 10);
+    doc.text(`Rang général: ${bulletin.rang?.position ? `${bulletin.rang.position}/${bulletin.rang.total_eleves}` : 'N/A'}`, 20, finalY + 20);
+    finalY += 30;
+  }
+
+  // Appréciations
+  doc.setFont("helvetica", "bold");
+  doc.text("APPRÉCIATIONS", 100, finalY);
+
+  doc.setFont("helvetica", "normal");
+  doc.text("Conduite: Très bien", 100, finalY + 10);
+  doc.text("Travail: Satisfaisant", 100, finalY + 20);
+  doc.text("Observations:", 100, finalY + 30);
+  doc.text("Élève sérieux et appliqué", 100, finalY + 40);
+
+  // Pied de page avec disposition améliorée
+  const footerY = 270;
+  
+  // Cadre pour les signatures
+  doc.setDrawColor(150);
+  doc.setLineWidth(0.3);
+  doc.rect(15, footerY - 5, pageWidth - 30, 25);
+  
+  // Section gauche - Professeur principal
+  doc.setFontSize(9);
+  doc.setTextColor(0);
+  doc.setFont("helvetica", "bold");
+  doc.text("Le Professeur Principal", 25, footerY + 5);
+  doc.setFont("helvetica", "normal");
+  doc.setLineWidth(0.5);
+  doc.line(25, footerY + 15, 80, footerY + 15);
+  
+  // Section centre - Date et lieu
+  doc.setFont("helvetica", "italic");
+  doc.setTextColor(80);
+  doc.text("Fait à Cotonou, le " + new Date().toLocaleDateString('fr-FR'), pageWidth / 2, footerY + 5, { align: 'center' });
+  
+  // Section droite - Directeur avec signature
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(0);
+  doc.text("Le Directeur", pageWidth - 25, footerY + 5, { align: 'right' });
+  
+  // Signature manuscrite stylisée
+  doc.setFont("helvetica", "italic");
+  doc.setFontSize(12);
+  doc.setTextColor(50, 50, 150);
+  doc.text("Prince KANGBODE", pageWidth - 25, footerY + 12, { align: 'right' });
+  
+  // Ligne de signature
+  doc.setDrawColor(0);
+  doc.setLineWidth(0.5);
+  doc.line(pageWidth - 80, footerY + 15, pageWidth - 25, footerY + 15);
+  
+  // Cachet de l'établissement (simulation)
+  doc.setDrawColor(200, 0, 0);
+  doc.setLineWidth(1);
+  doc.circle(pageWidth - 50, footerY + 10, 8);
+  doc.setFontSize(6);
+  doc.setTextColor(200, 0, 0);
+  doc.text("CACHET", pageWidth - 50, footerY + 10, { align: 'center' });
+
+  // Enregistrement du PDF
+  doc.save(`Bulletin_${child.name}_${currentPeriode.replace(' ', '_')}.pdf`);
 };
 
 const getCategorieClasse = (child) => {
@@ -483,6 +793,166 @@ useEffect(() => {
     fetchDashboardData();
   }
 }, []);
+
+// Fonction pour récupérer les notifications
+const fetchNotifications = async () => {
+  try {
+    const parentId = getParentId();
+    if (!parentId) return;
+    
+    const response = await messageService.getNotifications(parentId);
+    if (response.success) {
+      setNotifications(response.data || []);
+    }
+  } catch (err) {
+    console.error('Erreur lors du chargement des notifications:', err);
+  }
+};
+
+// Fonction pour marquer une notification comme lue
+const markNotificationAsRead = async (notificationId) => {
+  try {
+    await messageService.markNotificationAsRead(notificationId);
+    setNotifications(prev => 
+      prev.map(notif => 
+        notif.id === notificationId ? { ...notif, read: true } : notif
+      )
+    );
+  } catch (err) {
+    console.error('Erreur lors du marquage de la notification:', err);
+  }
+};
+
+// Fonction pour marquer un message comme lu
+const markMessageAsRead = (messageId) => {
+  setMessagesRead(prev => new Set([...prev, messageId]));
+};
+
+// Fonction pour envoyer un message
+const sendMessage = async (messageData) => {
+  try {
+    const parentId = getParentId();
+    const token = localStorage.getItem('token');
+    
+    console.log('Données du message à envoyer:', messageData);
+    console.log('Parent ID:', parentId);
+    
+    // Simuler l'envoi pour le moment (remplacer par l'API réelle)
+    const mockResponse = {
+      success: true,
+      message: 'Message envoyé avec succès'
+    };
+    
+    // Ajouter le message à la liste locale pour simulation
+    const newMessage = {
+      id: Date.now(),
+      from: `${parentData?.name || 'Parent'} (Vous)`,
+      subject: messageData.subject,
+      date: new Date().toISOString().split('T')[0],
+      content: messageData.content,
+      read: true,
+      sent: true
+    };
+    
+    // Ajouter à la liste des messages (simulation)
+    messages.unshift(newMessage);
+    
+    alert('Message envoyé avec succès');
+    return true;
+    
+    /* Version API réelle (décommenter quand l'endpoint sera prêt)
+    const response = await api.post('/messages', {
+      subject: messageData.subject,
+      content: messageData.content,
+      recipient: messageData.recipient,
+      sender_id: parentId,
+      sender_type: 'parent'
+    }, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (response.data.success) {
+      alert('Message envoyé avec succès');
+      return true;
+    } else {
+      throw new Error(response.data.message || 'Erreur inconnue');
+    }
+    */
+    
+  } catch (err) {
+    console.error('Erreur lors de l\'envoi du message:', err);
+    console.error('Détails de l\'erreur:', err.response?.data);
+    alert(`Erreur lors de l'envoi du message: ${err.response?.data?.message || err.message}`);
+  }
+  return false;
+};
+
+// Fonction pour calculer les statistiques
+const calculateStats = () => {
+  if (!children.length) return null;
+  
+  const stats = {
+    totalChildren: children.length,
+    averageGrade: 0,
+    bestPerformer: null,
+    totalAbsences: 0,
+    unreadMessages: messages.filter(m => !m.read && !messagesRead.has(m.id)).length,
+    pendingPayments: payments.filter(p => p.status === 'En attente').length
+  };
+  
+  let totalGrades = 0;
+  let gradeCount = 0;
+  let bestGrade = 0;
+  
+  children.forEach(child => {
+    const bulletin = bulletins[child.id];
+    if (bulletin?.moyenne_generale) {
+      totalGrades += parseFloat(bulletin.moyenne_generale);
+      gradeCount++;
+      
+      if (parseFloat(bulletin.moyenne_generale) > bestGrade) {
+        bestGrade = parseFloat(bulletin.moyenne_generale);
+        stats.bestPerformer = child.name;
+      }
+    }
+    
+    // Compter les absences
+    if (absences[child.id]) {
+      stats.totalAbsences += absences[child.id].length;
+    }
+  });
+  
+  if (gradeCount > 0) {
+    stats.averageGrade = (totalGrades / gradeCount).toFixed(2);
+  }
+  
+  return stats;
+};
+
+// Fonction pour exporter les données
+const exportData = (type) => {
+  const stats = calculateStats();
+  const data = {
+    parent: parentData,
+    children: children,
+    bulletins: bulletins,
+    stats: stats,
+    exportDate: new Date().toISOString()
+  };
+  
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `donnees_parent_${new Date().toISOString().split('T')[0]}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
 
 
 const renderBulletins = () => {
@@ -745,8 +1215,87 @@ const renderBulletins = () => {
       return <div className="no-data">Aucun enfant associé à ce compte</div>;
     }
 
+    const stats = calculateStats();
+
     return (
       <div className="overview-container">
+        {/* Statistiques générales */}
+        <div className="stats-overview">
+          <div className="stats-grid">
+            <div className="stat-card">
+              <div className="stat-icon">
+                <Users className="stat-icon-svg" />
+              </div>
+              <div className="stat-content">
+                <h3>{stats?.totalChildren || 0}</h3>
+                <p>Enfants</p>
+              </div>
+            </div>
+            
+            <div className="stat-card">
+              <div className="stat-icon">
+                <TrendingUp className="stat-icon-svg" />
+              </div>
+              <div className="stat-content">
+                <h3>{stats?.averageGrade || 'N/A'}</h3>
+                <p>Moyenne générale</p>
+              </div>
+            </div>
+            
+            <div className="stat-card">
+              <div className="stat-icon">
+                <Award className="stat-icon-svg" />
+              </div>
+              <div className="stat-content">
+                <h3>{stats?.bestPerformer || 'N/A'}</h3>
+                <p>Meilleur élève</p>
+              </div>
+            </div>
+            
+            <div className="stat-card">
+              <div className="stat-icon">
+                <AlertCircle className="stat-icon-svg" />
+              </div>
+              <div className="stat-content">
+                <h3>{stats?.totalAbsences || 0}</h3>
+                <p>Absences totales</p>
+              </div>
+            </div>
+            
+            <div className="stat-card">
+              <div className="stat-icon">
+                <MessageSquare className="stat-icon-svg" />
+              </div>
+              <div className="stat-content">
+                <h3>{stats?.unreadMessages || 0}</h3>
+                <p>Messages non lus</p>
+              </div>
+            </div>
+            
+            <div className="stat-card">
+              <div className="stat-icon">
+                <DollarSign className="stat-icon-svg" />
+              </div>
+              <div className="stat-content">
+                <h3>{stats?.pendingPayments || 0}</h3>
+                <p>Paiements en attente</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="overview-actions">
+            <button onClick={() => exportData('json')} className="export-btn">
+              <FileText className="btn-icon" />
+              Exporter les données
+            </button>
+            <button onClick={() => window.print()} className="print-btn">
+              Imprimer le tableau de bord
+            </button>
+          </div>
+        </div>
+        
+        {/* Cartes des enfants */}
+        <div className="children-grid">
         {children.map((child, index) => (
           <div key={child.id} className="child-card">
             <div className="child-header">
@@ -818,6 +1367,7 @@ const renderBulletins = () => {
             )}
           </div>
         ))}
+        </div>
       </div>
     );
   };
@@ -868,38 +1418,36 @@ const renderBulletins = () => {
     </div>
   );
 
-  const renderMessages = () => (
-    <div className="messages-section">
-      <div className="dashboard-card">
-        <h3 className="dashboard-card__title">
-          <MessageSquare className="dashboard-card__title-icon dashboard-card__title-icon--green" />
-          Messages
-        </h3>
-        
-        <div className="messages-list">
-          {messages.map(message => (
-            <div key={message.id} className={`message-item ${
-              message.read ? 'message-item--read' : 'message-item--unread'
-            }`}>
-              <div className="message-item__header">
-                <h4 className="message-item__subject">{message.subject}</h4>
-                <span className="message-item__date">{message.date}</span>
-              </div>
-              <p className="message-item__from">De: {message.from}</p>
-              <p className="message-item__content">{message.content}</p>
-              {!message.read && (
-                <div className="message-item__badge">
-                  <span className="message-badge">
-                    Nouveau
-                  </span>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
+  const [showComposeForm, setShowComposeForm] = useState(false);
+  const [newMessage, setNewMessage] = useState({ subject: '', content: '', recipient: '' });
+  const [sendingMessage, setSendingMessage] = useState(false);
+
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+    
+    // Validation des champs
+    if (!newMessage.subject.trim() || !newMessage.content.trim() || !newMessage.recipient) {
+      alert('Veuillez remplir tous les champs obligatoires');
+      return;
+    }
+    
+    setSendingMessage(true);
+    try {
+      const success = await sendMessage(newMessage);
+      if (success) {
+        setNewMessage({ subject: '', content: '', recipient: '' });
+        setShowComposeForm(false);
+      }
+    } finally {
+      setSendingMessage(false);
+    }
+  };
+
+  const renderMessages = () => {
+    const parentId = getParentId();
+    const userName = parentData?.name || 'Parent';
+    return <Messagerie userId={parentId} userName={userName} />;
+  };
 
   const renderPayments = () => (
     <div className="payments-section">
@@ -997,6 +1545,179 @@ const renderBulletins = () => {
     </div>
   );
 
+  // Mise à jour des données du profil quand parentData change
+  useEffect(() => {
+    if (parentData) {
+      setProfileData({
+        name: parentData.name || '',
+        email: parentData.email || '',
+        phone: parentData.phone || '',
+        address: parentData.address || ''
+      });
+    }
+  }, [parentData]);
+
+  const renderProfil = () => {
+    
+    const handleProfileUpdate = async (e) => {
+      e.preventDefault();
+      try {
+        const parentId = getParentId();
+        const token = localStorage.getItem('token');
+        
+        const response = await api.put(`/parents/${parentId}`, profileData, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (response.data.success) {
+          setParentData(prev => ({ ...prev, ...profileData }));
+          setEditMode(false);
+          alert('Profil mis à jour avec succès');
+        }
+      } catch (err) {
+        console.error('Erreur lors de la mise à jour du profil:', err);
+        alert('Erreur lors de la mise à jour du profil');
+      }
+    };
+    
+    return (
+      <div className="profil-section">
+        <div className="dashboard-card">
+          <div className="profil-header">
+            <h3 className="dashboard-card__title">
+              <User className="dashboard-card__title-icon dashboard-card__title-icon--blue" />
+              Mon Profil
+            </h3>
+            <button 
+              onClick={() => setEditMode(!editMode)}
+              className="edit-profile-btn"
+            >
+              {editMode ? 'Annuler' : 'Modifier'}
+            </button>
+          </div>
+          
+          {editMode ? (
+            <form onSubmit={handleProfileUpdate} className="profile-form">
+              <div className="form-group">
+                <label>Nom complet:</label>
+                <input 
+                  type="text"
+                  value={profileData.name}
+                  onChange={(e) => setProfileData({...profileData, name: e.target.value})}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Email:</label>
+                <input 
+                  type="email"
+                  value={profileData.email}
+                  onChange={(e) => setProfileData({...profileData, email: e.target.value})}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Téléphone:</label>
+                <input 
+                  type="tel"
+                  value={profileData.phone}
+                  onChange={(e) => setProfileData({...profileData, phone: e.target.value})}
+                />
+              </div>
+              <div className="form-group">
+                <label>Adresse:</label>
+                <textarea 
+                  value={profileData.address}
+                  onChange={(e) => setProfileData({...profileData, address: e.target.value})}
+                  rows="3"
+                />
+              </div>
+              <div className="form-actions">
+                <button type="submit" className="save-btn">Sauvegarder</button>
+                <button type="button" onClick={() => setEditMode(false)} className="cancel-btn">
+                  Annuler
+                </button>
+              </div>
+            </form>
+          ) : (
+            <div className="profile-info">
+              <div className="info-group">
+                <label>Nom complet:</label>
+                <p>{parentData?.name || 'Non renseigné'}</p>
+              </div>
+              <div className="info-group">
+                <label>Email:</label>
+                <p>{parentData?.email || 'Non renseigné'}</p>
+              </div>
+              <div className="info-group">
+                <label>Téléphone:</label>
+                <p>{parentData?.phone || 'Non renseigné'}</p>
+              </div>
+              <div className="info-group">
+                <label>Adresse:</label>
+                <p>{parentData?.address || 'Non renseignée'}</p>
+              </div>
+              <div className="info-group">
+                <label>Nombre d'enfants:</label>
+                <p>{children.length}</p>
+              </div>
+              <div className="info-group">
+                <label>Date d'inscription:</label>
+                <p>{parentData?.created_at ? new Date(parentData.created_at).toLocaleDateString() : 'Non disponible'}</p>
+              </div>
+            </div>
+          )}
+          
+          <div className="children-summary">
+            <h4>Mes enfants:</h4>
+            <div className="children-list">
+              {children.map(child => (
+                <div key={child.id} className="child-summary-card">
+                  <div className="child-summary-info">
+                    <h5>{child.name}</h5>
+                    <p>Classe: {child.class}</p>
+                    <p>Matricule: {child.matricule}</p>
+                  </div>
+                  <div className="child-summary-stats">
+                    <div className="stat">
+                      <span className="stat-label">Moyenne:</span>
+                      <span className="stat-value">
+                        {bulletins[child.id]?.moyenne_generale || 'N/A'}
+                      </span>
+                    </div>
+                    <div className="stat">
+                      <span className="stat-label">Rang:</span>
+                      <span className="stat-value">
+                        {bulletins[child.id]?.rang?.position ? 
+                          `${bulletins[child.id].rang.position}/${bulletins[child.id].rang.total_eleves}` : 'N/A'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          <div className="profile-actions">
+            <button 
+              onClick={() => {
+                localStorage.clear();
+                sessionStorage.clear();
+                window.location.href = '/connexion';
+              }}
+              className="logout-btn"
+            >
+              Se déconnecter
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <div className="loading-container">
@@ -1057,12 +1778,45 @@ const renderBulletins = () => {
               </div>
             </div>
             <div className="dashboard-header__actions">
-              <div className="dashboard-header__notifications">
-                <Bell className="dashboard-header__notification-icon" />
-                {notifications.length > 0 && (
-                  <span className="dashboard-header__notification-badge">
-                    {notifications.length}
-                  </span>
+              <div className="dashboard-header__notifications" style={{ position: 'relative' }}>
+                <button 
+                  className="notification-bell" 
+                  onClick={() => setShowNotifications(!showNotifications)}
+                >
+                  <Bell size={20} />
+                  {notifications.filter(n => !n.read).length > 0 && (
+                    <span className="notification-badge">
+                      {notifications.filter(n => !n.read).length}
+                    </span>
+                  )}
+                </button>
+                
+                {showNotifications && (
+                  <div className="notifications-dropdown">
+                    <div className="notifications-header">
+                      <h4>Notifications</h4>
+                      <button onClick={() => setShowNotifications(false)}>×</button>
+                    </div>
+                    <div className="notifications-list">
+                      {notifications.length > 0 ? (
+                        notifications.slice(0, 5).map(notification => (
+                          <div 
+                            key={notification.id} 
+                            className={`notification-item ${notification.read ? 'read' : 'unread'}`}
+                            onClick={() => markNotificationAsRead(notification.id)}
+                          >
+                            <div className="notification-content">
+                              <p className="notification-title">{notification.title}</p>
+                              <p className="notification-message">{notification.message}</p>
+                              <span className="notification-date">{notification.created_at}</span>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="no-notifications">Aucune notification</p>
+                      )}
+                    </div>
+                  </div>
                 )}
               </div>
               <div className="profile-container" style={{ position: 'relative' }} tabIndex={0}>
@@ -1139,9 +1893,11 @@ const renderBulletins = () => {
             {[
               { id: 'overview', label: 'Vue d\'ensemble', icon: TrendingUp },
               { id: 'bulletins', label: 'Bulletins', icon: FileText },
+              { id: 'emploi', label: 'Emploi du temps', icon: Clock },
               { id: 'absences', label: 'Absences', icon: Calendar },
               { id: 'messages', label: 'Messages', icon: MessageSquare },
-              { id: 'payments', label: 'Paiements', icon: CreditCard }
+              { id: 'payments', label: 'Paiements', icon: CreditCard },
+              { id: 'profil', label: 'Profil', icon: User }
             ].map(tab => (
               <button
                 key={tab.id}
@@ -1163,9 +1919,36 @@ const renderBulletins = () => {
       <main className="dashboard-main">
         {activeTab === 'overview' && renderOverview()}
         {activeTab === 'bulletins' && renderBulletins()}
+        {activeTab === 'emploi' && (
+          <div className="emploi-section">
+            <h2>Emploi du temps</h2>
+            {children.map(child => (
+              <div key={child.id}>
+                <h3>{child.name} - {child.class}</h3>
+                <button onClick={() => fetchEmploiDuTemps(child.id)}>Charger</button>
+                {emploisDuTemps[child.id] && (
+                  <table>
+                    <thead><tr><th>Jour</th><th>Heure</th><th>Matière</th><th>Professeur</th></tr></thead>
+                    <tbody>
+                      {emploisDuTemps[child.id].map((cours, i) => (
+                        <tr key={i}>
+                          <td>{cours.jour}</td>
+                          <td>{cours.heure_debut} - {cours.heure_fin}</td>
+                          <td>{cours.matiere}</td>
+                          <td>{cours.professeur}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
         {activeTab === 'absences' && renderAbsences()}
         {activeTab === 'messages' && renderMessages()}
         {activeTab === 'payments' && renderPayments()}
+        {activeTab === 'profil' && renderProfil()}
       </main>
     </div>
   );

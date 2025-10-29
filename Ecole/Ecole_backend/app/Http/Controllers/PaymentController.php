@@ -179,7 +179,7 @@ class PaymentController extends Controller
     {
         try {
             $paiements = PaiementEleve::with(['transactions', 'contribution'])
-                                   ->where('id_eleve', $eleveId)
+                                   ->where('eleve_id', $eleveId)
                                    ->get();
 
             return response()->json([

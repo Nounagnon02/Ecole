@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { PieChart, Pie, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
-import { Edit2, Trash2, Save, X, Plus, Menu, Home, Users, Book, User, Settings, LogOut, Bell, Calendar, ChevronDown, ChevronUp, ClipboardList } from 'lucide-react';
-import './Mes_CSS_directeur/dashboard_directeur.css';
+import { Edit2, Trash2, Save, X, Plus, Menu, Home, Users, Book, User, Settings, LogOut, Bell, Calendar, ChevronDown, ChevronUp, ClipboardList, MessageSquare } from 'lucide-react';
+import './Mes_CSS_directeur/dashboard.css';
 import { NavLink } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import * as pdfjsLib from 'pdfjs-dist';
 import api from '../api';
+import Messagerie from '../components/Messagerie';
+import NotificationBell from '../components/NotificationBell';
+import EmploiDuTemps from './EmploiDuTemps';
 
 
 
@@ -44,8 +47,17 @@ export default function Dashboard() {
   const [matieres1, setMatieres1] = useState([]);
   const [series, setSeries] = useState([]);
   const [classes, setClasses] = useState([]);
-  const [evenements, setEvenements] = useState([]);
-  const [notifications, setNotifications] = useState([]);
+  const [evenements, setEvenements] = useState([
+    { id: 1, titre: "Conseil de classe", date: "30 Avril, 2025", lieu: "Salle des professeurs" },
+    { id: 2, titre: "Fête de l'école", date: "15 Mai, 2025", lieu: "Cour principale" },
+    { id: 3, titre: "Réunion parents-profs", date: "10 Mai, 2025", lieu: "Amphithéâtre" },
+  ]);
+  const [notifications, setNotifications] = useState([
+    { id: 1, message: "Réunion des enseignants demain à 14h", date: "Aujourd'hui, 10:30" },
+    { id: 2, message: "Sortie scolaire prévue pour le CM1 vendredi", date: "Hier, 15:45" },
+    { id: 3, message: "Rappel: retour des bulletins à signer", date: "21/04, 09:15" },
+    { id: 4, message: "Maintenance système informatique samedi", date: "20/04, 16:00" },
+  ]);
   const [editClassCategory,setEditClassCategory] = useState('');
   const [newClassName, setNewClassName] = useState('');
   const [newnom_classe, setNewnom_classe] = useState('');
@@ -77,6 +89,7 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('aperçu');
   const [showNotifications, setShowNotifications] = useState(false);
   const [expandedSection, setExpandedSection] = useState('statistiques');
+  const [classes1, setClasses1] = useState([])
   // État pour les notes et les filtres
 const [notes, setNotes] = useState([]);
 const [filteredNotes, setFilteredNotes] = useState([]);
@@ -227,7 +240,7 @@ const applyFilters = async () => {
     
     url += params.toString();
     
-    const response = await api.get('notes/filter?');
+    const response = await api.post('notes/filter?');
     
     if (response.data.success) {
       setFilteredNotes(response.data.data);
@@ -257,8 +270,21 @@ useEffect(() => {
     applyFilters();
     fetchStudentData();
     fetchGradeData();
-    fetchClassesSeries(); // Charger les classes avec leurs séries
+    fetchClassesSeries(); 
+    fetchClassesAvecEffectiftoutesclasses();
 }, []);
+
+//Fonction pour recuperer les classes avec leur effectif et categorie
+const fetchClassesAvecEffectiftoutesclasses = async () => {
+  try {
+    const res = await api.get(`/classes/effectifParClasse`);
+    setClasses1(res.data);
+    console.log("Classes avec effectif et catégorie:", res.data);
+  } catch (err) {
+    console.error("Erreur lors de la récupération des classes:", err);
+    setError('Erreur lors du chargement des classes avec effectif et catégorie');
+  }
+}
 
 // Modifiez la fonction handleNoteChange :
 const handleNoteChange = (e) => {
@@ -299,10 +325,10 @@ const handleNoteChange = (e) => {
       setLoading(true);
       const res = await api.get('/matieres');
       setMatieres1(res.data);
-      setLoading(false);
     } catch (err) {
       console.error(err);
       setError('Erreur lors du chargement des matières');
+    } finally {
       setLoading(false);
     }
   };
@@ -312,10 +338,10 @@ const handleNoteChange = (e) => {
       setLoading(true);
       const res = await api.get('/matieres-with-series');
       setMatieres(res.data);
-      setLoading(false);
     } catch (err) {
       console.error(err);
       setError('Erreur lors du chargement des matières');
+    } finally {
       setLoading(false);
     }
   };
@@ -339,12 +365,12 @@ const handleNoteChange = (e) => {
   const fetchSeries = async () => {
   try {
     setLoading(true);
-    const res = await api.get('/matieres-with-series');
+    const res = await api.get('/series');
     setSeries(res.data);
-    setLoading(false);
   } catch (err) {
     console.error(err);
     setError('Erreur lors du chargement des séries');
+  } finally {
     setLoading(false);
   }
 };
@@ -385,11 +411,11 @@ const handleNoteChange = (e) => {
         }
       });       
       
-      setMatieres([...matieres, res.data]);
+      setMatieres1([...matieres1, res.data]);
       setNewMatiere('');
       setError('');
       setMessage('Matière ajoutée avec succès');
-      setLoading(false);
+      await fetchMatieres();
     } catch (err) {
       const errorMessage = err.response?.data?.message || "Erreur lors de l'ajout";
       const errorDetails = err.response?.data?.errors || err.response?.data?.error || err.message;
@@ -447,11 +473,11 @@ const AjouterClasse = async () => {
                     'Content-Type': 'application/json'
                 }
             });
-            setClasses([...classes, res.data]);
-            setNewnom_classe('');
-            setNewcategorie_classe('');
+            setClasses1([...classes1, res.data]);
+            setNewClassName('');
+            setNewClassCategory('');
             setError('');
-            setLoading(false);
+            await fetchClassesAvecEffectiftoutesclasses();
         } catch (err) {
             const errorMessage = err.response?.data?.message || "Erreur lors de l'ajout";
             const errorDetails = err.response?.data?.errors || err.response?.data?.error || err.message;
@@ -493,7 +519,7 @@ const [loading, setLoading] = useState(false);
 
     try {
       setLoading(true);
-      await api.put('/matieres/update/${id}', { nom: editValue }, {
+      await api.put(`/matieres/update/${id}`, { nom: editValue }, {
         headers: {
           'Content-Type': 'application/json'
         }
@@ -503,7 +529,6 @@ const [loading, setLoading] = useState(false);
       setEditingId(null);
       setEditValue('');
       setError('');
-      setLoading(false);
     } catch (err) {
       setError('Erreur lors de la modification');
       setLoading(false);
@@ -518,17 +543,16 @@ const [loading, setLoading] = useState(false);
 
     try {
       setLoading(true);
-      await api.put('/series/update/${id}', { nom: editValue }, {
+      await api.put(`/series/update/${id}`, { nom: editValue }, {
         headers: {
           'Content-Type': 'application/json'
         }
       });
-      await fetchMatieres();
+      await fetchSeries();
       setMessage('Série modifiée avec succès');      
       setEditingId(null);
       setEditValue('');
       setError('');
-      setLoading(false);
     } catch (err) {
       setError('Erreur lors de la modification');
       setLoading(false);
@@ -543,17 +567,16 @@ const ModificationClasse = async (id) => {
 
     try {
       setLoading(true);
-      await api.put('/classes/update/${id}', { nom: editValue }, {
+      await api.put(`/classes/update/${id}`, { nom: editValue }, {
         headers: {
           'Content-Type': 'application/json'
         }
       });
-      await fetchMatieres();
+      await fetchClassesAvecEffectiftoutesclasses();
       setMessage('Classe modifiée avec succès');      
       setEditingId(null);
       setEditValue('');
       setError('');
-      setLoading(false);
     } catch (err) {
       setError('Erreur lors de la modification');
       setLoading(false);
@@ -574,9 +597,8 @@ const ModificationClasse = async (id) => {
     try {
       setLoading(true);
       await api.delete(`/matieres/delete/${id}`);
-      fetchMatieres();
+      await fetchMatieres();
       setMessage('Matière supprimée avec succès');
-      setLoading(false);
     } catch (err) {
       setError('Erreur lors de la suppression');
       setLoading(false);
@@ -589,10 +611,9 @@ const ModificationClasse = async (id) => {
 
     try {
       setLoading(true);
-      await api.delete('/classes/delete/${id}');
-      fetchMatieres();
+      await api.delete(`/classes/delete/${id}`);
+      await fetchClassesAvecEffectiftoutesclasses();
       setMessage('Classe supprimée avec succès');
-      setLoading(false);
     } catch (err) {
       setError('Erreur lors de la suppression');
       setLoading(false);
@@ -921,7 +942,7 @@ const handleDeleteNote = async (noteId) => {
 
   try {
     setLoading(true);
-    await api.delete('/notes/${noteId}');
+    await api.delete(`/notes/${noteId}`);
     await applyFilters(); // Recharger les notes
     setMessage('Note supprimée avec succès');
   } catch (err) {
@@ -1086,6 +1107,20 @@ const fetchGradeData = async () => {
             {sidebarOpen && <span className="sidebar-item-text">Lier enseignant classes</span>}
           </div>
           <div 
+            className={`sidebar-item ${activeTab === 'emploi' ? 'active' : ''}`} 
+            onClick={() => setActiveTab('emploi')}
+          >
+            <Calendar size={20} />
+            {sidebarOpen && <span className="sidebar-item-text">Emploi du temps</span>}
+          </div>
+          <div 
+            className={`sidebar-item ${activeTab === 'messages' ? 'active' : ''}`} 
+            onClick={() => setActiveTab('messages')}
+          >
+            <MessageSquare size={20} />
+            {sidebarOpen && <span className="sidebar-item-text">Messages</span>}
+          </div>
+          <div 
             className={`sidebar-item ${activeTab === 'personnel' ? 'active' : ''}`} 
             onClick={() => setActiveTab('personnel')}
           >
@@ -1113,13 +1148,7 @@ const fetchGradeData = async () => {
           <h2 className="header-title">{activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}</h2>
           <div className="header-actions">
             <div className="notifications-container">
-              <button 
-                onClick={() => setShowNotifications(!showNotifications)} 
-                className="notifications-button"
-              >
-                <Bell size={20} />
-                <span className="notification-badge">4</span>
-              </button>
+              <NotificationBell userId={localStorage.getItem('userId')} />
               {showNotifications && (
                 <div className="notifications-dropdown">
                   <h3 className="notifications-header">Notifications</h3>
@@ -1318,11 +1347,11 @@ const fetchGradeData = async () => {
                   <h2 className="list-title">Liste des Matières</h2>
                 </div>
                 
-                {loading && matieres.length === 0 ? (
+                {loading && matieres1.length === 0 ? (
                   <div className="empty-state">
                     Chargement des matières...
                   </div>
-                ) : matieres.length === 0 ? (
+                ) : matieres1.length === 0 ? (
                   <div className="empty-state">
                     Aucune matière trouvée. Ajoutez-en une ci-dessus.
                   </div>
@@ -1431,11 +1460,11 @@ const fetchGradeData = async () => {
                 
                 {loading && series.length === 0 ? (
                   <div className="empty-state">
-                    Chargement des Serie...
+                    Chargement des séries...
                   </div>
                 ) : series.length === 0 ? (
                   <div className="empty-state">
-                    Aucune série  trouvée. Ajoutez-en une ci-dessus.
+                    Aucune série trouvée. Ajoutez-en une ci-dessus.
                   </div>
                 ) : (
                   <div className="series-items">
@@ -1942,11 +1971,11 @@ const fetchGradeData = async () => {
                 <h2 className="section-title">Liste des classes</h2>
               </div>
               
-              {loading && classesList.length === 0 ? (
+              {loading && classes1.length === 0 ? (
                 <div className="empty-state">
                   Chargement des classes...
                 </div>
-              ) : classesList.length === 0 ? (
+              ) : classes1.length === 0 ? (
                 <div className="empty-state">
                   Aucune classe trouvée. Ajoutez-en une ci-dessus.
                 </div>
@@ -1963,7 +1992,7 @@ const fetchGradeData = async () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {classesList.map((classe) => (
+                    {classes1.map((classe) => (
                       <tr key={classe.id}>
                         <td>
                           {editingId === classe.id ? (
@@ -1975,7 +2004,7 @@ const fetchGradeData = async () => {
                               onKeyPress={(e) => e.key === 'Enter' && ModificationClasse(classe.id)}
                             />
                           ) : (
-                            classe.nom
+                            classe.nom_classe
                           )}
                         </td>
                         <td>
@@ -1988,7 +2017,7 @@ const fetchGradeData = async () => {
                               onKeyPress={(e) => e.key === 'Enter' && ModificationClasse(classe.id)}
                             />
                           ) : (
-                            classe.categorie
+                            classe.categorie_classe
                           )}
                         </td>
                         <td>{classe.effectif} élèves</td>
@@ -2062,7 +2091,15 @@ const fetchGradeData = async () => {
             <LierEnseignantsAuxMatieres />
           )}
 
-          {(activeTab !== 'aperçu' && activeTab !== 'classes' && activeTab !== 'matieres' && activeTab !== 'LiaisonSeriesClass'  && activeTab !== 'LiaisonMatieresAvecCoefficientEtSerieClasses' && activeTab !== 'notes' && activeTab !== 'enseignantsauxclasses') && (
+          {activeTab === 'emploi' && (
+            <EmploiDuTemps />
+          )}
+
+          {activeTab === 'messages' && (
+            <Messagerie userId={localStorage.getItem('userId')} userName={localStorage.getItem('userName') || 'Directeur'} />
+          )}
+
+          {(activeTab !== 'aperçu' && activeTab !== 'classes' && activeTab !== 'matieres' && activeTab !== 'LiaisonSeriesClass'  && activeTab !== 'LiaisonMatieresAvecCoefficientEtSerieClasses' && activeTab !== 'notes' && activeTab !== 'enseignantsauxclasses' && activeTab !== 'emploi' && activeTab !== 'messages') && (
             <div className="coming-soon">
               <h3>Section {activeTab} en cours de développement</h3>
               <p>Cette fonctionnalité sera disponible prochainement</p>
@@ -2124,7 +2161,7 @@ const LierSeriesauxClasses = () => {
 
       try {
         setLoading(true);
-        const response = await api.get('/classes/${selectedClass}/series');
+        const response = await api.get(`/classes/${selectedClass}/series`);
         setSelectedSeries(response.data.map(serie => serie.id));
         setMessage({ text: '', type: '' });
       } catch (error) {
@@ -2163,7 +2200,7 @@ const LierSeriesauxClasses = () => {
       setLoading(true);
       
       // Mettre à jour les séries de la classe via l'API
-      await api.put('/classes/${selectedClass}/series', {
+      await api.put(`/classes/${selectedClass}/series`, {
         series: selectedSeries
       });
       
@@ -2310,7 +2347,7 @@ const LierMatieresauxClasses = () => {
       try {
         setLoading(true);
         const response = await api.get(
-          '/classes/${selectedClass}/series/${selectedSerie}/matieres'
+          `/classes/${selectedClass}/series/${selectedSerie}/matieres`
         );
         
         const matieresData = response.data;
@@ -2430,7 +2467,7 @@ const handleSubmit = async (e) => {
     
     // Envoyer les données au backend
     const response = await api.put(
-      '/series/${selectedSerie}/matieres/sync',
+      `/series/${selectedSerie}/matieres/sync`,
       { matieres: matieresData },
       {
         headers: {
@@ -2493,12 +2530,6 @@ const getFilteredSeries = () => {
     const classeNom = selectedClasse.nom_classe.toLowerCase();
     console.log("Nom de classe trouvé:", classeNom);
 
-    // Vérifier si c'est une classe du secondaire
-    const classesSecondaire = ['2nde', 'seconde', '1ère', 'première', 'terminale', 'tle'];
-    if (classesSecondaire.some(niveau => classeNom.includes(niveau))) {
-        return series;
-    }
-
     // Mapping des niveaux
     const niveauxMap = {
         'ci': 'ci',
@@ -2515,7 +2546,17 @@ const getFilteredSeries = () => {
         '3ème': '3ème'
     };
 
-    // Filtrer les séries selon le niveau
+    // Vérifier si c'est une classe du secondaire
+    const classesSecondaire = ['2nde', 'seconde', '1ère', 'première', 'terminale', 'tle'];
+    if (classesSecondaire.some(niveau => classeNom.includes(niveau))) {
+        // Pour le secondaire, exclure les séries du niveauxMap
+        const seriesExclues = Object.values(niveauxMap).map(s => s.toLowerCase());
+        const filteredSeries = series.filter(serie => !seriesExclues.includes(serie?.nom?.toLowerCase()));
+        console.log("Séries filtrées pour le secondaire:", filteredSeries);
+        return filteredSeries;
+    }
+
+    // Filtrer les séries selon le niveau pour le primaire/maternelle
     for (const [niveau, serieNom] of Object.entries(niveauxMap)) {
         if (classeNom.includes(niveau)) {
             const filteredSeries = series.filter(serie => 
@@ -2530,6 +2571,7 @@ const getFilteredSeries = () => {
     console.log("Aucune correspondance trouvée");
     return series;
 };
+
 
 const groupUniqueSeries = (series) => {
     const uniqueSeries = {};
@@ -2663,7 +2705,7 @@ const groupUniqueSeries = (series) => {
             <div className="classes-list">
               {classesWithData.map(classe => (
                 <div key={classe.id} className="class-item">
-                  <h3>Classe: {classe.nom}</h3> 
+                  <h3>Classe: {classe.nom_classe}</h3> 
                   
                   {classe.series?.length > 0 ? (
                     groupUniqueSeries(classe.series).map(serie => (
@@ -2774,7 +2816,7 @@ const LierElevesAuxParents = () => {
 
       try {
         setLoading(true);
-        const response = await api.get('/parents/${selectedParent}/eleves');
+        const response = await api.get(`/parents/${selectedParent}/eleves`);
         setSelectedEleves(response.data.map(eleve => eleve.id));
         setMessage({ text: '', type: '' });
       } catch (error) {
@@ -2818,7 +2860,7 @@ const LierElevesAuxParents = () => {
       setLoading(true);
       
       // Mettre à jour les élèves du parent via l'API
-      await api.put('/parents/${selectedParent}/eleves', {
+      await api.put(`/parents/${selectedParent}/eleves`, {
         eleve_ids: selectedEleves  
       });
       
@@ -3109,7 +3151,7 @@ const LierEnseignantsAuxClasses = () => {
 
       try {
         setLoading(true);
-        const response = await api.get('/classes/${selectedClass}/enseignants');
+        const response = await api.get(`/classes/${selectedClass}/enseignants`);
         setSelectedEnseignants(response.data.map(ens => ens.id));
         setMessage({ text: '', type: '' });
       } catch (error) {
@@ -3152,7 +3194,7 @@ const LierEnseignantsAuxClasses = () => {
       setLoading(true);
       
       // Mettre à jour les enseignants de la classe via l'API
-      await api.put('/classes/${selectedClass}/enseignants', {
+      await api.put(`/classes/${selectedClass}/enseignants`, {
         enseignant_ids: selectedEnseignants  
       });
       
@@ -3341,7 +3383,7 @@ const LierEnseignantsAuxMatieres = () => {
           api.get('/classes?with_series=true&with_matieres=true&with_enseignants=true'),
           api.get('/matieres'),
           api.get('/enseignants?with_matieres=true'),
-          api.get('/enseignantsMP?with_matieres=true'),
+          api.get('/enseignants/MP?with_matieres=true'),
         ]);
         
         setClasses(classesRes.data);
@@ -3375,7 +3417,7 @@ const LierEnseignantsAuxMatieres = () => {
       try {
         setLoading(true);
         const response = await api.get(
-          '/classes/${selectedClass}/series/${selectedSerie}/matieres?with_enseignants=true'
+          `/classes/${selectedClass}/series/${selectedSerie}/matieres?with_enseignants=true`
         );
         console.log('Matieres data:', response.data);
         
@@ -3436,7 +3478,7 @@ const LierEnseignantsAuxMatieres = () => {
       
       // Envoyer les données au backend
       const response = await api.put(
-        '/classes/${selectedClass}/series/${selectedSerie}/matieres/enseignants',
+        `/classes/${selectedClass}/series/${selectedSerie}/matieres/enseignants`,
         { matieres: matieresData }
       );
       
@@ -3476,9 +3518,7 @@ const LierEnseignantsAuxMatieres = () => {
 
   // Obtenir les enseignants qui enseignent une matière spécifique
   const getEnseignantsForMatiere = (matiereId) => {
-    return enseignants.filter(enseignant => 
-      enseignant.matiere_id == matiereId
-    );
+    return enseignants.filter(enseignant => enseignant.matieres?.some(m => m.id == matiereId));
   };
 
   return (
@@ -3706,7 +3746,7 @@ const LierMatieresauxClasses1 = () => {
       try {
         setLoading(true);
         const response = await api.get(
-          '/series/${selectedSerie}/matieres?classe_id=${selectedClass}'
+          `/series/${selectedSerie}/matieres?classe_id=${selectedClass}`
         );
         
         const matieresData = response.data;
@@ -3779,7 +3819,7 @@ const LierMatieresauxClasses1 = () => {
       
       // Envoyer les données au backend
       const response = await api.put(
-        '/series/${selectedSerie}/matieres/sync',
+        `/series/${selectedSerie}/matieres/sync`,
         { matieres: matieresData }
       );
       

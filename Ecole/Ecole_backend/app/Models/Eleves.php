@@ -71,7 +71,7 @@ class Eleves extends Model
 
     public function paiementEleve()
     {
-        return $this->hasMany(PaiementEleve::class, 'id_eleve');
+        return $this->hasMany(PaiementEleve::class, 'eleve_id');
     }
 }
 

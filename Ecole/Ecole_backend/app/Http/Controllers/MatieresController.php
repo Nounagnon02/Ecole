@@ -47,7 +47,7 @@ class MatieresController extends Controller
         }));
     }
 
-    
+
     public function store(Request $request){
         $validated = $request->validate([
             'nom' => 'string|required'
@@ -120,7 +120,7 @@ class MatieresController extends Controller
     }
 
     //Recuperer les matieres des classe de la maternelle
-    
+
     public function getMatieresM()
 {
     try {
@@ -164,13 +164,13 @@ class MatieresController extends Controller
 }
 
     //Recuperer les matieres des classes du primaire
-    
+
 
     //Recuperer les matieres des classes du primaire
     public function getMatieresP()
     {
         try {
-            // Récupérer toutes les séries du primaire 
+            // Récupérer toutes les matieres du primaire
             $primaireSeries = Series::whereIn('nom', ['CI', 'CP', 'CE1', 'CE2', 'CM1', 'CM2'])
                 ->with(['matieres' => function($query) {
                     $query->select('matieres.id', 'matieres.nom')
@@ -180,7 +180,7 @@ class MatieresController extends Controller
 
             if ($primaireSeries->isEmpty()) {
                 return response()->json([
-                    'success' => false,
+                    'success' => true,
                     'message' => 'Aucune série de primaire trouvée'
                 ], 404);
             }
@@ -210,11 +210,11 @@ class MatieresController extends Controller
         }
     }
 
-    //Recuperer les matieres des classes du secondaire 
+    //Recuperer les matieres des classes du secondaire
     public function getMatieresS()
     {
         try {
-            // Récupérer toutes les séries du secondaire 
+            // Récupérer toutes les séries du secondaire
             $secondaireSeries = Series::whereIn('nom', ['6ème', '5ème', '4ème', '3ème', '2nde', '1ère', 'Terminale','Tle'])
                 ->with(['matieres' => function($query) {
                     $query->select('matieres.id', 'matieres.nom')
@@ -253,5 +253,5 @@ class MatieresController extends Controller
             ], 500);
         }
     }
-    
+
 }

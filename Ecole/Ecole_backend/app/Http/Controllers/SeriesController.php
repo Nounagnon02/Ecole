@@ -16,7 +16,7 @@ class SeriesController extends Controller
      * SeriesController constructor.
      */
 
-    
+
     public function index(){
         return Series::all();
     }
@@ -30,7 +30,7 @@ class SeriesController extends Controller
     {
         // Récupère toutes les classes avec leurs séries associées
         return Classes::with('series')->get();
-        
+
     }*/
 
 
@@ -290,7 +290,7 @@ public function Classe_avec_series()
         return response()->json($series, 200);
     }
 
-        
+
     /*public function attachMatiere(Request $request, $id)
     {
         $serie = Series::find($id);
@@ -410,12 +410,12 @@ public function Classe_avec_series()
 
         try {
             $serie->matieres()->sync($syncData);
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Matières synchronisées avec succès'
             ], 200);
-            
+
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -436,7 +436,7 @@ public function getMatieresWithCoefficients(Request $request, $id)
     }
 
     $classeId = $request->query('classe_id');
-    
+
     $query = $serie->matieres()
         ->when($classeId, function($query) use ($classeId) {
             return $query->wherePivot('classe_id', $classeId);
@@ -456,7 +456,7 @@ public function getMatieresWithCoefficients(Request $request, $id)
         }])->findOrFail($classeId);
 
         $serie = $classe->series->find($serieId);
-        
+
         if (!$serie) {
             return response()->json(['message' => 'Série non trouvée'], 404);
         }
@@ -469,6 +469,8 @@ public function getMatieresWithCoefficients(Request $request, $id)
     {
         $request->validate([
             'matieres' => 'required|array',
+            'matieres.*.classe_id' => 'required|exists:classes,id',
+            'matieres.*.serie_id' => 'required|exists:series,id',
             'matieres.*.matiere_id' => 'required|exists:matieres,id',
             'matieres.*.enseignants' => 'array',
             'matieres.*.enseignants.*' => 'exists:enseignants,id'
@@ -477,11 +479,21 @@ public function getMatieresWithCoefficients(Request $request, $id)
         $classe = Classes::findOrFail($classeId);
         $serie = $classe->series()->findOrFail($serieId);
 
+        
+
         foreach ($request->matieres as $matiereData) {
             $matiere = $serie->matieres()->findOrFail($matiereData['matiere_id']);
-            
-            // Sync permet de synchroniser les enseignants (ajoute/supprime selon besoin)
-            $matiere->enseignants()->sync($matiereData['enseignants'] ?? []);
+
+            // Préparer le tableau pour sync avec données pivot
+            $syncData = [];
+            foreach ($matiereData['enseignants'] ?? [] as $enseignantId) {
+                $syncData[$enseignantId] = [
+                    'classe_id' => $matiereData['classe_id'],
+                    'serie_id' => $matiereData['serie_id'],
+                ];
+            }
+
+            $matiere->enseignants()->sync($syncData);
         }
 
         return response()->json([
