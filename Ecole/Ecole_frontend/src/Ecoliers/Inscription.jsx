@@ -10,6 +10,7 @@ import * as pdfjsLib from 'pdfjs-dist/build/pdf';
 import 'pdfjs-dist/build/pdf.worker.entry'; 
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import api from '../api';
+import EcoleSelector from '../components/EcoleSelector';
 
 // Configuration du worker PDF.js
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`
@@ -35,6 +36,7 @@ export function InscriptionE() {
         matiere: '',
         role: 'eleve',
         identifiant: generateId(),
+        ecole_id: '',
     };
 
     const [utilisateur, setUtilisateur] = useState(initialState);
@@ -50,6 +52,7 @@ export function InscriptionE() {
     const [fileError, setFileError] = useState('');
     const [isProcessingFile, setIsProcessingFile] = useState(false);
     const [matriculeFound, setMatriculeFound] = useState(false);
+    const [ecoles, setEcoles] = useState([]);
     
     const { login } = useAuth();
     const navigate = useNavigate();
@@ -487,14 +490,16 @@ useEffect(() => {
         const fetchData = async () => {
             setIsLoading(true);
             try {
-                const [classesRes, matieresRes, seriesRes] = await Promise.all([
+                const [classesRes, matieresRes, seriesRes, ecolesRes] = await Promise.all([
                     api.get(`/classes`),
                     api.get(`/matieres`),
                     api.get(`/series`),
+                    api.get(`/ecoles`),
                 ]);
                 setClasses(classesRes.data);
                 setMatieres(matieresRes.data);
                 setSeries(seriesRes.data);
+                setEcoles(ecolesRes.data.data || ecolesRes.data);
             } catch (err) {
                 console.error('Erreur de chargement des données:', err);
                 setError(true);
@@ -512,6 +517,7 @@ useEffect(() => {
         if (name === 'role') {
             setUtilisateur({ 
                 ...initialState,
+                ecole_id: utilisateur.ecole_id,
                 nom: utilisateur.nom,
                 datedeNaissance: utilisateur.datedeNaissance,
                 lieudeNaissance: utilisateur.lieudeNaissance,
@@ -709,6 +715,7 @@ useEffect(() => {
 
         try {
             const dataToSend = {
+                ecole_id: utilisateur.ecole_id,
                 nom: utilisateur.nom.trim(),
                 prenom: utilisateur.prenom.trim(),
                 datedeNaissance: utilisateur.datedeNaissance?.trim(),
@@ -813,6 +820,29 @@ useEffect(() => {
                 <div className="role-info">
                     <small>Rôle sélectionné : <strong>{getRoleLabel(utilisateur.role)}</strong></small>
                     <small>Voilà l'Identifiant généré avec lequel vous allez vous connectez : <strong>{utilisateur.identifiant}</strong></small>
+                </div>
+
+                <div className="toust">
+                    <select
+                        name="ecole_id"
+                        className="tous"
+                        value={utilisateur.ecole_id || ''}
+                        onChange={handleChange}
+                        disabled={isLoading || ecoles.length === 0}
+                        required
+                    >
+                        <option value="">
+                            {ecoles.length === 0 
+                            ? 'Aucune école disponible'
+                            : 'Sélectionnez votre école *'
+                            }
+                        </option>
+                        {ecoles.map(ecole => (
+                            <option key={ecole.id} value={ecole.id}>
+                                {ecole.nom}
+                            </option>
+                        ))}
+                    </select>
                 </div>
 
                 <div className="toust">
@@ -1112,14 +1142,16 @@ useEffect(() => {
                 <div className="form-info">
                     <small>* Champs obligatoires</small>
                 </div>
-
-                <button 
-                    className="bi" 
-                    type="submit"
-                    disabled={isLoading}
-                >
-                    {isLoading ? 'Inscription en cours...' : "S'inscrire"}
-                </button>
+                <div className='BI'>
+                    <button 
+                        className="bi" 
+                        type="submit"
+                        disabled={isLoading}
+                    >
+                        {isLoading ? 'Inscription en cours...' : "S'inscrire"}
+                    </button>
+                </div>
+                
 
                 <div className="form-links">
                     <button

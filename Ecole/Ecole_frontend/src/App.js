@@ -13,6 +13,10 @@ import DashboardEnseignantPrimaire from './Enseignants_primaire/DashboardEnseign
 import DashboardEnseignantSecondaire from './Enseignants_secondaire/DashboardEnseignantSecondaire';
 import DashboardEleve from './Eleves/DashboardEleve';
 import DashboardCenseur from './Censeur/DashboardCenseur';
+import Home from './home/home.jsx';
+import EcoleManagement from './components/EcoleManagement';
+import SuperAdminDashboard from './components/SuperAdminDashboard';
+
 
 import ParentDashboard from './Parents/dash';
 import DashboardM from './DirecteursM/dash';
@@ -26,6 +30,14 @@ function App() {
         <Router>
             <AuthProvider>
                 <Routes>
+                    <Route path="/admin/ecoles" element={
+            
+              
+              <SuperAdminDashboard />
+
+            
+          } />
+                    <Route path="/" element={<Home />} />
                     <Route path="/dash2" element={<DashboardEleve />} />
                     <Route path="/dash1" element={<DashboardEnseignant />} />
                     <Route path="/dash" element={<DashboardSecretaire />} />
@@ -37,7 +49,7 @@ function App() {
                     <Route path="/inscription" element={<InscriptionE />} />
                     <Route path="/matieres" element={<Matieres />} />
                     {/*<Route path="/paiement" element={<KKiaPayPayment />} />*/}
-                    <Route path="/" element={<Connexion />} />
+                    {/*<Route path="/" element={<Connexion />} />*/}
 
                     <Route path="/dashboard-eleve" element={
                         <ProtectedRoute allowedRoles={['eleve']}>

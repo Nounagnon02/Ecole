@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Matieres;
@@ -11,7 +12,7 @@ use App\Models\Enseignants;
 
 class Notes extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToEcole;
 
     protected $fillable = [
         'eleve_id',
@@ -23,7 +24,8 @@ class Notes extends Model
         'date_evaluation',
         'periode',
         'observation',
-        'created_by'
+        'created_by',
+        'ecole_id'
     ];
 
     protected $casts = [

@@ -2,15 +2,16 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Vaccination extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToEcole;
 
     protected $fillable = [
-        'eleve_id', 'nom_vaccin', 'date_vaccination', 'numero_lot', 'date_rappel', 'effets_secondaires'
+        'eleve_id', 'nom_vaccin', 'date_vaccination', 'numero_lot', 'date_rappel', 'effets_secondaires', 'ecole_id'
     ];
 
     protected $casts = [

@@ -48,12 +48,16 @@ export const AuthProvider = ({ children }) => {
       const response = await api.post('/auth/login', credentials);
       
       if (response.data.success) {
-        const { token, user } = response.data;
+        const { token, user, ecole_id } = response.data;
         
         localStorage.setItem('token', token);
         localStorage.setItem('user', JSON.stringify(user));
         localStorage.setItem('userId', user.id);
         localStorage.setItem('userRole', user.role);
+        
+        if (ecole_id) {
+          localStorage.setItem('ecole_id', ecole_id);
+        }
         
         setToken(token);
         setUser(user);
@@ -75,6 +79,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('user');
     localStorage.removeItem('userId');
     localStorage.removeItem('userRole');
+    localStorage.removeItem('ecole_id');
     setToken(null);
     setUser(null);
   };

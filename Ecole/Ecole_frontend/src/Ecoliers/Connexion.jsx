@@ -1,13 +1,15 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './Mes_CSS/Connexion.css';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import api from '../api'; 
 import { urlBase } from '../api';
+import EcoleManagement from '../components/EcoleManagement';
 
 export function Connexion() {
     const [eleve, SetEleve] = useState({
+        ecole_id: '',
         identifiant: '',
         password: '',
     });
@@ -16,6 +18,7 @@ export function Connexion() {
     const [message, SetMessage] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [ecoles, setEcoles] = useState([]);
 
     const navigate = useNavigate();
     const { login } = useAuth(); // Utilisez la fonction login du contexte
@@ -27,6 +30,23 @@ export function Connexion() {
             SetMessage('');
         }
     };
+
+    useEffect(() => {
+        const fetchData = async () => {
+            setIsLoading(true);
+            try {
+                const response = await api.get('/ecoles');
+                const data = Array.isArray(response.data) ? response.data : (response.data.data || []);
+                setEcoles(data);
+            } catch (err) {
+                console.error('Erreur de chargement des données:', err);
+                setEcoles([]);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchData();
+    }, []);
 
     const togglePasswordVisibility = () => {
         setShowPassword(!showPassword);
@@ -51,6 +71,12 @@ export function Connexion() {
             return false;
         }
 
+        if (!eleve.ecole_id) {  
+            SetError(true);
+            SetMessage('Veuillez sélectionner une école');
+            return false;
+        }
+
         return true;
     };
 
@@ -63,21 +89,24 @@ export function Connexion() {
         SetMessage('');
 
         try {
-            //const response = await api.post(`/connexion`, eleve);
+            // Stocker ecole_id avant la connexion
+            localStorage.setItem('ecole_id', eleve.ecole_id);
+            
             const response = await axios.post(
-            'http://localhost:8000/api/connexion', 
-            eleve,
-            {
-                headers: {
-                    'Content-Type': 'application/json'
+                'http://localhost:8000/api/connexion', 
+                eleve,
+                {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
                 }
-            }
-        );
+            );
             console.log('Réponse du serveur:', response.data);
 
             if (response.data.token || response.data.role) {
                 // Préparer les données utilisateur
                 const userData = response.data.user || {
+                    ecole_id: eleve.ecole_id,
                     identifiant: eleve.identifiant,
                     nom: response.data.user?.nom || 'Utilisateur',
                     prenom: response.data.user?.prenom || 'Spécial',
@@ -127,6 +156,30 @@ export function Connexion() {
                     </div>
                 )}
 
+                
+                <div className="toust">
+                    <select
+                        name="ecole_id"
+                        className="tous"
+                        value={eleve.ecole_id}
+                        onChange={HandleChange}
+                        disabled={isLoading || ecoles.length === 0}
+                        required
+                    >
+                        <option value="">
+                            {ecoles.length === 0 
+                            ? 'Aucune école disponible'
+                            : 'Sélectionnez une école'
+                            }
+                        </option>
+                        {Array.isArray(ecoles) && ecoles.map(ecole => (
+                            <option key={ecole.id} value={ecole.id}>
+                                {ecole.nom}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
                 <div className="toust">
                     <input
                         type="text"
@@ -164,13 +217,16 @@ export function Connexion() {
                     </button>
                 </div>
 
-                <button 
-                    className="bi" 
-                    type="submit" 
-                    disabled={isLoading}
-                >
-                    {isLoading ? 'Connexion en cours...' : 'Connexion'}
-                </button>
+                <div className='BI'>
+                    <button 
+                        className="bi" 
+                        type="submit" 
+                        disabled={isLoading}
+                    >
+                        {isLoading ? 'Connexion en cours...' : 'Connexion'}
+                    </button>
+                </div>
+                
 
                 <div className="form-links">
                     <button

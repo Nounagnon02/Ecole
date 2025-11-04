@@ -12,4 +12,23 @@ const api = axios.create({
   }
 });
 
+// Intercepteur pour ajouter le token et ecole_id
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    const ecoleId = localStorage.getItem('ecole_id');
+    
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    
+    if (ecoleId) {
+      config.headers['X-Ecole-Id'] = ecoleId;
+    }
+    
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
 export default api;

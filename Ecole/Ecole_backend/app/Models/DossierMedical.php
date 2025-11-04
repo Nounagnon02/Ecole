@@ -2,18 +2,19 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class DossierMedical extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToEcole;
 
     protected $table = 'dossiers_medicaux';
 
     protected $fillable = [
         'eleve_id', 'groupe_sanguin', 'allergies', 'maladies_chroniques', 
-        'contact_urgence', 'derniere_visite', 'vaccins_a_jour', 'aptitude_sport'
+        'contact_urgence', 'derniere_visite', 'vaccins_a_jour', 'aptitude_sport', 'ecole_id'
     ];
 
     protected $casts = [

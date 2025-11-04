@@ -2,17 +2,19 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class periodes extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToEcole;
     protected $fillable = [
         'nom',
         'date_debut',
         'date_fin',
-        'is_active'
+        'is_active',
+        'ecole_id'
     ];
 
     public function typeEvaluations()

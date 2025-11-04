@@ -2,14 +2,15 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class TypeEvaluation extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToEcole;
 
-    protected $fillable=['nom'];
+    protected $fillable=['nom','ecole_id'];
 
 
     public function periodes()

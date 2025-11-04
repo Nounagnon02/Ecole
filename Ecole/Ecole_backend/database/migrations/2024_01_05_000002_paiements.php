@@ -16,8 +16,8 @@ return new class extends Migration
         //
         Schema::create('paiements', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('parents_id')->constrained()->onDelete('cascade');
-            $table->foreignId('eleves_id')->constrained()->onDelete('cascade');
+            $table->foreignId('parents_id')->nullable()->constrained()->onDelete('cascade');
+            $table->foreignId('eleves_id')->nullable()->constrained()->onDelete('cascade');
             $table->decimal('montant', 10, 2);
             $table->string('mode_paiement');
             $table->dateTime('date_paiement');
