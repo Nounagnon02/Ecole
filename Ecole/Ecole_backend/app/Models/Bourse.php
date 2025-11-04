@@ -2,15 +2,16 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Bourse extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToEcole;
 
     protected $fillable = [
-        'eleve_id', 'type_bourse', 'montant', 'pourcentage', 'periode', 'statut'
+        'eleve_id', 'type_bourse', 'montant', 'pourcentage', 'periode', 'statut', 'ecole_id'
     ];
 
     protected $casts = [

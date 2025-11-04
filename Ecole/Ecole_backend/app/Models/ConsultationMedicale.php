@@ -2,15 +2,16 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class ConsultationMedicale extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToEcole;
 
     protected $fillable = [
-        'eleve_id', 'motif', 'diagnostic', 'date', 'traitement', 'urgence'
+        'eleve_id', 'motif', 'diagnostic', 'date', 'traitement', 'urgence', 'ecole_id'
     ];
 
     protected $casts = [

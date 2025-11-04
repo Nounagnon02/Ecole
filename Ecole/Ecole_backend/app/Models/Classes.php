@@ -3,6 +3,7 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -11,12 +12,11 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Classes extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToEcole;
     protected $fillable= [
-        
         'nom_classe',
         'categorie_classe',
-        
+        'ecole_id'
     ];
 
     public function eleves()

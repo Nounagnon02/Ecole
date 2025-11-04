@@ -2,15 +2,15 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Notifications\Notifiable;
 
-
 class Parents extends Model
 {
-    use HasFactory ,HasApiTokens, Notifiable;
+    use HasFactory, HasApiTokens, Notifiable, BelongsToEcole;
     protected $fillable= [
         'role',
         'nom',
@@ -19,6 +19,7 @@ class Parents extends Model
         'identifiant',
         'numero_de_telephone',
         'password1',
+        'ecole_id'
     ];
 
     public function eleves()

@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class PaiementEleve extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToEcole;
     
     protected $table = 'paiements';
     
@@ -19,6 +20,7 @@ class PaiementEleve extends Model
         "montant_paye",
         "montant_restant",
         "statut_global",
+        "ecole_id",
     ];
 
     public function paiement()

@@ -1,13 +1,14 @@
 <?php
 namespace App\Models;
 
+use App\Traits\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Laravel\Sanctum\HasApiTokens;
 
 class Enseignants_Martenel_Primaire extends Authenticatable
 {
-    use HasFactory, HasApiTokens;
+    use HasFactory, HasApiTokens, BelongsToEcole;
 
     protected $table = 'enseignants_martenel_primaire';
 
@@ -23,6 +24,7 @@ class Enseignants_Martenel_Primaire extends Authenticatable
         'numero_de_telephone',
         'class_id',
         'password1',
+        'ecole_id',
     ];
 
     protected $hidden = [

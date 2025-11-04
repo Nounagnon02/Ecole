@@ -3,14 +3,15 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Series extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToEcole;
     
-    protected $fillable = ['nom'];
+    protected $fillable = ['nom', 'ecole_id'];
     protected $hidden = ['created_at', 'updated_at'];
 
 
