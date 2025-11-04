@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { User, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import EcoleSelector from './EcoleSelector';
 
 const LoginForm = () => {
-  const [credentials, setCredentials] = useState({ email: '', password: '', role: '' });
+  const [credentials, setCredentials] = useState({ email: '', password: '', role: '', ecole_id: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -30,6 +31,15 @@ const LoginForm = () => {
     setLoading(true);
     setError('');
 
+    if (!credentials.ecole_id) {
+      setError('Veuillez sélectionner une école');
+      setLoading(false);
+      return;
+    }
+
+    // Stocker ecole_id avant la connexion
+    localStorage.setItem('ecole_id', credentials.ecole_id);
+
     const result = await login(credentials);
     
     if (result.success) {
@@ -48,6 +58,11 @@ const LoginForm = () => {
         {error && <div className="error-message"><AlertCircle size={16} />{error}</div>}
         
         <form onSubmit={handleSubmit}>
+          <EcoleSelector 
+            selectedEcoleId={credentials.ecole_id}
+            onSelect={(ecoleId) => setCredentials({...credentials, ecole_id: ecoleId})}
+          />
+
           <div className="form-group">
             <label>Email</label>
             <div className="input-with-icon">

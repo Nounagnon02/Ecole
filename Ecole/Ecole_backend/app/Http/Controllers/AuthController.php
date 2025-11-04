@@ -69,6 +69,7 @@ public function inscription(Request $request)
                 'classe' => 'required|string', // nom de la classe
                 'serie' => 'required|string',  // nom de la série
                 'numero_matricule' => 'required|string|unique:eleves',
+                'ecole_id' => 'required|exists:ecoles,id',
             ]);
 
             // Chercher l'id de la classe et de la série
@@ -95,6 +96,7 @@ public function inscription(Request $request)
                 'numero_matricule' => $validated['numero_matricule'],
                 'class_id' => $classe->id,
                 'serie_id' => $serie->id,
+                'ecole_id' => $validated['ecole_id'],
             ]);
 
             // Création du paiement élève
@@ -108,7 +110,7 @@ public function inscription(Request $request)
                 'statut_global' => 'EN_ATTENTE',
             ]);
 
-            event(new Registered($paiementEleve));
+            //event(new Registered($paiementEleve));
 
             event(new Registered($eleve));
             return response()->json([
@@ -128,6 +130,7 @@ public function inscription(Request $request)
                 'numero_de_telephone' => 'required|string',
                 'identifiant' => 'required|unique:parents,identifiant',
                 'password1' => 'required|string|min:8',
+                'ecole_id' => 'required|exists:ecoles,id',
             ]);
 
 
@@ -142,6 +145,7 @@ public function inscription(Request $request)
                 'numero_de_telephone' => $validated['numero_de_telephone'],
                 'identifiant' => $validated['identifiant'],
                 'password1' => bcrypt($validated['password1']),
+                'ecole_id' => $validated['ecole_id'],
             ]);
 
             event(new Registered($parent));
@@ -164,6 +168,7 @@ public function inscription(Request $request)
                 'matiere' => 'required|string',
                 'classe' => 'required|string',
                 'password1' => 'required|string|min:8',
+                'ecole_id' => 'required|exists:ecoles,id',
             ]);
 
             $classe = \App\Models\Classes::where('nom_classe', $validated['classe'])->firstOrFail();
@@ -182,6 +187,7 @@ public function inscription(Request $request)
                 'matiere_id' => $matiere->id,
                 'class_id' => $classe->id,
                 'password1' => bcrypt($validated['password1']),
+                'ecole_id' => $validated['ecole_id'],
             ]);
 
             event(new Registered($enseignant));
@@ -203,6 +209,7 @@ public function inscription(Request $request)
                 'identifiant' => 'required|unique:enseignants_martenel_primaire,identifiant',
                 'classe' => 'required|string',
                 'password1' => 'required|string|min:8',
+                'ecole_id' => 'required|exists:ecoles,id',
             ]);
 
             $classe = \App\Models\Classes::where('nom_classe', $validated['classe'])->firstOrFail();
@@ -219,6 +226,7 @@ public function inscription(Request $request)
                 'identifiant' => $validated['identifiant'],
                 'class_id' => $classe->id,
                 'password1' => bcrypt($validated['password1']),
+                'ecole_id' => $validated['ecole_id'],
             ]);
 
             event(new Registered($enseignant));
@@ -274,6 +282,7 @@ public function connexion(Request $request)
             'user' => $eleve,
             'token' => $token,
             'role' => 'eleve',
+            'ecole_id' => $eleve->ecole_id,
             'redirect_to' => $this->getRedirectRouteBasedOnRole('eleve')
         ]);
     }
@@ -286,6 +295,7 @@ public function connexion(Request $request)
             'user' => $parent,
             'token' => $token,
             'role' => 'parent',
+            'ecole_id' => $parent->ecole_id,
             'redirect_to' => $this->getRedirectRouteBasedOnRole('parent')
         ]);
     }
@@ -297,7 +307,8 @@ public function connexion(Request $request)
         return response()->json([
             'user' => $enseignant,
             'token' => $token,
-            'role' => $enseignant->role, 
+            'role' => $enseignant->role,
+            'ecole_id' => $enseignant->ecole_id,
             'redirect_to' => $this->getRedirectRouteBasedOnRole($enseignant->role)
         ]);
     }
@@ -310,59 +321,81 @@ public function connexion(Request $request)
             'user' => $enseignantMP,
             'token' => $token,
             'role' => $enseignantMP->role, // 'enseignementM' ou 'enseignementP'
+            'ecole_id' => $enseignantMP->ecole_id,
             'redirect_to' => $this->getRedirectRouteBasedOnRole($enseignantMP->role)
         ]);
     }
 
-    // Vérification des comptes spéciaux
+    // Vérification dans la table users pour les comptes admin
+    $user = User::where('email', $identifiant)->first();
+    if ($user && Hash::check($password, $user->password)) {
+        $token = $user->createToken('api-token')->plainTextToken;
+        return response()->json([
+            'user' => $user,
+            'token' => $token,
+            'role' => $user->role,
+            'ecole_id' => $user->ecole_id,
+            'redirect_to' => $this->getRedirectRouteBasedOnRole($user->role)
+        ]);
+    }
+
+    // Vérification des comptes spéciaux (DEPRECATED - à migrer vers table users)
     $specialAccounts = [
         "directeurecoleA@gmail.cj" => [
             'password' => "director'spassword1234567@",
             'role' => 'directeur',
             'nom' => 'Directeur',
-            'prenom' => 'École'
+            'prenom' => 'École',
+            'ecole_id' => 1 // ID de l'école par défaut
         ],
         "directeurMecoleA@gmail.cj" => [
             'password' => "directorM'spassword1234567@",
             'role' => 'directeurM',
             'nom' => 'Directeur',
-            'prenom' => 'École'
+            'prenom' => 'École',
+            'ecole_id' => 1
         ],
         "directeurPecoleA@gmail.cj" => [
             'password' => "directorP'spassword1234567@",
             'role' => 'directeurP',
             'nom' => 'Directeur',
-            'prenom' => 'École'
+            'prenom' => 'École',
+            'ecole_id' => 1
         ],
         "directeurSecoleA@gmail.cj" => [
             'password' => "directorS'spassword1234567@",
             'role' => 'directeurS',
             'nom' => 'Directeur',
-            'prenom' => 'École'
+            'prenom' => 'École',
+            'ecole_id' => 1
         ],
         "censeurecoleA@gmail.cj" => [
             'password' => "censeur'spassword1234567@",
             'role' => 'censeur',
             'nom' => 'Censeur',
-            'prenom' => 'École'
+            'prenom' => 'École',
+            'ecole_id' => 1
         ],
         "secretaireecoleA@gmail.cj" => [
             'password' => "secretaire'spassword1234567@",
             'role' => 'secretaire',
             'nom' => 'Secrétaire',
-            'prenom' => 'École'
+            'prenom' => 'École',
+            'ecole_id' => 1
         ],
         "comptablecoleA@gmail.cj" => [
             'password' => "comptable'spassword1234567@",
             'role' => 'comptable',
             'nom' => 'Comptable',
-            'prenom' => 'École'
+            'prenom' => 'École',
+            'ecole_id' => 1
         ],
         "surveillantecoleA@gmail.cj" => [
             'password' => "surveillant'spassword1234567@",
             'role' => 'surveillant',
             'nom' => 'Surveillant',
-            'prenom' => 'École'
+            'prenom' => 'École',
+            'ecole_id' => 1
         ]
     ];
 
@@ -382,9 +415,11 @@ public function connexion(Request $request)
                     'identifiant' => $identifiant,
                     'nom' => $account['nom'],
                     'prenom' => $account['prenom'],
-                    'role' => $account['role']
+                    'role' => $account['role'],
+                    'ecole_id' => $account['ecole_id']
                 ],
                 'role' => $account['role'],
+                'ecole_id' => $account['ecole_id'],
                 'redirect_to' => $this->getRedirectRouteBasedOnRole($account['role'])
             ]);
         }
@@ -738,5 +773,100 @@ private function processExcelFile($file)
         }
     }
 
+    /**
+     * Récupérer le profil de l'utilisateur connecté
+     */
+    public function getProfile(Request $request)
+    {
+        try {
+            $userId = $request->header('X-User-Id');
+            $role = $request->header('X-User-Role');
+            
+            if (!$userId || !$role) {
+                return response()->json(['message' => 'Utilisateur non authentifié'], 401);
+            }
+
+            $user = null;
+            switch ($role) {
+                case 'eleve':
+                    $user = Eleves::find($userId);
+                    break;
+                case 'parent':
+                    $user = Parents::find($userId);
+                    break;
+                case 'enseignement':
+                    $user = Enseignants::find($userId);
+                    break;
+                case 'enseignementM':
+                case 'enseignementP':
+                    $user = \App\Models\Enseignants_Martenel_Primaire::find($userId);
+                    break;
+                default:
+                    $user = User::find($userId);
+            }
+
+            if (!$user) {
+                return response()->json(['message' => 'Utilisateur non trouvé'], 404);
+            }
+
+            return response()->json($user);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Erreur lors de la récupération du profil'], 500);
+        }
+    }
+
+    /**
+     * Mettre à jour le profil de l'utilisateur connecté
+     */
+    public function updateProfile(Request $request)
+    {
+        try {
+            $userId = $request->header('X-User-Id');
+            $role = $request->header('X-User-Role');
+            
+            if (!$userId || !$role) {
+                return response()->json(['message' => 'Utilisateur non authentifié'], 401);
+            }
+
+            $validated = $request->validate([
+                'nom' => 'sometimes|string',
+                'prenom' => 'sometimes|string',
+                'email' => 'sometimes|email',
+                'telephone' => 'sometimes|string',
+            ]);
+
+            $user = null;
+            switch ($role) {
+                case 'eleve':
+                    $user = Eleves::find($userId);
+                    break;
+                case 'parent':
+                    $user = Parents::find($userId);
+                    break;
+                case 'enseignement':
+                    $user = Enseignants::find($userId);
+                    break;
+                case 'enseignementM':
+                case 'enseignementP':
+                    $user = \App\Models\Enseignants_Martenel_Primaire::find($userId);
+                    break;
+                default:
+                    $user = User::find($userId);
+            }
+
+            if (!$user) {
+                return response()->json(['message' => 'Utilisateur non trouvé'], 404);
+            }
+
+            $user->update($validated);
+
+            return response()->json([
+                'message' => 'Profil mis à jour avec succès',
+                'user' => $user
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Erreur lors de la mise à jour du profil'], 500);
+        }
+    }
 
 }

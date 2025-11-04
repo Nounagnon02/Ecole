@@ -1,16 +1,16 @@
 <?php
-
+//ancien fichier du model Eleve.php
 namespace App\Models;
 
+use App\Traits\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Contracts\Auth\Authenticatable;
 use Laravel\Sanctum\HasApiTokens;
 
 class Eleves extends Model
 {
-    use HasFactory, HasApiTokens, Notifiable;
+    use HasFactory, HasApiTokens, Notifiable, BelongsToEcole;
 
     protected $fillable = [
         'role',
@@ -24,7 +24,8 @@ class Eleves extends Model
         'password1',
         'numero_matricule',
         'class_id',
-        'serie_id'
+        'serie_id',
+        'ecole_id'
     ];
 
     public function sessions(){
@@ -64,6 +65,14 @@ class Eleves extends Model
     {
         return $this->belongsTo(Series::class);
     }
+    
+    // ajout de la relation avec les ecoles
+
+    public function ecole() {
+        return $this->belongsTo(Ecole::class, 'ecole_id');
+    }
+
+
 
     public function contribution(){
         return $this->belongsTo(Contributions::class);

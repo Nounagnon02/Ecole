@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\BelongsToEcole;
 
 class Eleve extends Model
 {
+    use BelongsToEcole;
     protected $fillable = [
         'user_id', 'parent_id', 'classe_id', 'matricule', 
         'date_naissance', 'lieu_naissance', 'sexe'
@@ -23,12 +25,17 @@ class Eleve extends Model
 
     public function classe()
     {
-        return $this->belongsTo(Classe::class);
+        return $this->belongsTo(Classes::class , 'class_id');
     }
 
+/**
+ * Return the notes of the eleve
+ *
+ * @return \Illuminate\Database\Eloquent\Relations\HasMany
+ */
     public function notes()
     {
-        return $this->hasMany(Note::class);
+        return $this->hasMany(Notes::class);
     }
 
     public function absences()
@@ -39,5 +46,11 @@ class Eleve extends Model
     public function paiements()
     {
         return $this->hasMany(Paiement::class);
+    }
+
+    // ajout de la relation avec les ecoles
+
+    public function ecole() {
+        return $this->belongsTo(Ecole::class, 'ecole_id');
     }
 }

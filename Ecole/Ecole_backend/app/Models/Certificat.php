@@ -2,15 +2,16 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Certificat extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToEcole;
 
     protected $fillable = [
-        'type_certificat', 'eleve_id', 'date_emission', 'numero_certificat', 'delivre'
+        'type_certificat', 'eleve_id', 'date_emission', 'numero_certificat', 'delivre', 'ecole_id'
     ];
 
     protected $casts = [

@@ -16,6 +16,7 @@ import DashboardCenseur from './Censeur/DashboardCenseur';
 import DashboardInfirmier from './Infirmier/DashboardInfirmier';
 import DashboardBibliothecaire from './Bibliothecaire/DashboardBibliothecaire';
 import DashboardSecretaire from './Secretaire/DashboardSecretaire';
+import EcoleManagement from './components/EcoleManagement';
 
 const UnauthorizedPage = () => (
   <div className="error-container">
@@ -91,6 +92,12 @@ function App() {
           <Route path="/secretaire/dashboard" element={
             <ProtectedRoute requiredRole="secretaire">
               <DashboardSecretaire />
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/admin/ecoles" element={
+            <ProtectedRoute requiredRole="directeur">
+              <EcoleManagement />
             </ProtectedRoute>
           } />
           

@@ -2,15 +2,16 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Absence extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToEcole;
 
     protected $fillable = [
-        'eleve_id', 'date', 'type', 'justifiee', 'motif'
+        'eleve_id', 'date', 'type', 'justifiee', 'motif', 'ecole_id'
     ];
 
     protected $casts = [

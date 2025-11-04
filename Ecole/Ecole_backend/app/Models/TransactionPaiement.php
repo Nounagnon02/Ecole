@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class TransactionPaiement extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToEcole;
 
     protected $fillable = [
         'id_paiement_eleve',
@@ -19,6 +20,7 @@ class TransactionPaiement extends Model
         'reference_transaction',
         'recu_par',
         'observation',
+        'ecole_id',
     ];
 
     protected $casts = [

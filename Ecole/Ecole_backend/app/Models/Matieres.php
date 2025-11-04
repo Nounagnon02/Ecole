@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Matieres extends Model
 {
-    use HasFactory;
-    protected $fillable=['nom'];
+    use HasFactory, BelongsToEcole;
+    protected $fillable=['nom', 'ecole_id'];
 
 
 

@@ -1,8 +1,11 @@
 <?php
 
-use App\Http\Controllers\{AuthController, ClassesController, EleveController, MatieresController, NotesController, SeriesController, ParentsController, BulletinController, EnseignantsController, typeEvaluationController, periodesController, ContributionsController, PaymentController, CinetPayController, DirecteurController, EnseignantController, ParentController, ComptableController, SurveillantController, CenseurController, InfirmierController, BibliothecaireController, SecretaireController, NoteController, MessageController, NotificationController, EmploiDuTempsController, ExerciceController};
+use App\Http\Controllers\{AuthController, ClassesController, EleveController, MatieresController, NotesController, SeriesController, ParentsController, BulletinController, EnseignantsController, typeEvaluationController, periodesController, ContributionsController, PaymentController, CinetPayController, DirecteurController, EnseignantController, ParentController, ComptableController, SurveillantController, CenseurController, InfirmierController, BibliothecaireController, SecretaireController, NoteController, MessageController, NotificationController, EmploiDuTempsController, ExerciceController, EcoleController};
 use Illuminate\Support\Facades\{Route, DB};
 use App\Models\Eleves;
+
+// Ecoles
+Route::apiResource('ecoles', EcoleController::class);
 
 // Auth
 Route::post('/inscription', [AuthController::class, 'inscription']);
@@ -457,6 +460,12 @@ Route::prefix('emplois-du-temps')->group(function () {
     Route::put('/{id}', [EmploiDuTempsController::class, 'update']);
     Route::delete('/{id}', [EmploiDuTempsController::class, 'destroy']);
     Route::get('/classe/{classeId}', [EmploiDuTempsController::class, 'getByClasse']);
+});
+
+// Routes pour profil utilisateur
+Route::prefix('user')->group(function () {
+    Route::get('/profile', [AuthController::class, 'getProfile']);
+    Route::put('/profile', [AuthController::class, 'updateProfile']);
 });
 
 

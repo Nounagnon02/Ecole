@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class StatutTranche extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToEcole;
     protected $fillable = [
         'id_paiement_eleve',
         'tranche',
@@ -15,6 +16,7 @@ class StatutTranche extends Model
         'date_limite',
         'montant_tranche',
         'date_paiement',
+        'ecole_id',
     ];
     protected $casts = [
         'date_limite' => 'datetime',

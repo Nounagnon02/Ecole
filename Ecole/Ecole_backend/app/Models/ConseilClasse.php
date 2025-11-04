@@ -2,17 +2,18 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class ConseilClasse extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToEcole;
 
     protected $table = 'conseils_classe';
 
     protected $fillable = [
-        'classe_id', 'date', 'trimestre', 'participants', 'decisions', 'statut'
+        'classe_id', 'date', 'trimestre', 'participants', 'decisions', 'statut', 'ecole_id'
     ];
 
     protected $casts = [

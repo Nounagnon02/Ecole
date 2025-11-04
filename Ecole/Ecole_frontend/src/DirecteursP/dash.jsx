@@ -97,8 +97,9 @@ const effectifEP = async () => {
     const res = await api.get(`/enseignants/effectif/primaire`);
     setEffectifE(res.data);  
   }catch (err){
-    console.err(err);
-    setError("erreur lors du chargement de l'effectif des  enseignants du Primaire");
+    setEffectifE(0);
+    console.error(err);
+    //setError("erreur lors du chargement de l'effectif des  enseignants du Primaire");
     setLoading(false);
   }
 }
@@ -109,9 +110,10 @@ const effectifM = async () => {
     const res = await  api.get(`/classes/effectif/primaire`);
     setEffectif(res.data);
   }catch (err) {
+    setEffectif(0);
     console.error(err);
-      setError('Erreur lors du chargement des effectifs du primaire');
-      setLoading(false);
+    //setError('Erreur lors du chargement des effectifs du primaire');
+    setLoading(false);
   }
 }
 
@@ -140,8 +142,9 @@ const fetchSeries = async () => {
       setSeries(res.data);
       setLoading(false);
     } catch (err) {
+      setSeries([]);
       console.error(err);
-      setError('Erreur lors du chargement des séries');
+      //setError('Erreur lors du chargement des séries');
       setLoading(false);
     }
   };
@@ -283,11 +286,13 @@ const applyFilters = async () => {
       setFilteredNotes(response.data.data);
       console.log('Notes filtrées:', response.data.data);
     } else {
+      setFilteredNotes([]);
       throw new Error(response.data.message || 'Erreur lors du filtrage');
     }
   } catch (error) {
+    setFilteredNotes([]);
     console.error('Erreur lors du filtrage:', error);
-    setError(error.message || 'Erreur lors du filtrage des notes');
+    //setError(error.message || 'Erreur lors du filtrage des notes');
   } finally {
     setLoading(false);
   }
@@ -364,8 +369,9 @@ const fetchClassesSeries = async () => {
     console.log("Classes avec séries:", res.data);
     setLoading(false);
   } catch (err) {
+    setClassesS([]);
     console.error(err);
-    setError('Erreur lors du chargement des séries');
+    //setError('Erreur lors du chargement des séries');
     setLoading(false);
   }
 };
@@ -495,8 +501,9 @@ const fetchMatieres = async () => {
     console.log("Matieres du Primaire:", uniqueMatieres);
     setLoading(false);
   } catch (err) {
+    setMatieres([]);
     console.error(err);
-    setError('Erreur lors du chargement des matières');
+    //setError('Erreur lors du chargement des matières');
     setLoading(false);
   }
 };
@@ -508,7 +515,8 @@ const fetchMatieres = async () => {
       setClasses(res.data);
     } catch (err) {
       console.error(err);
-      setError('Erreur lors du chargement des classes');
+      setClasses([]);
+      //setError('Erreur lors du chargement des classes');
     }
   };
 
@@ -519,8 +527,9 @@ const fetchClassesAvecEffectifMaternelle = async () => {
     setClasses1(res.data);
     console.log("Classes avec effectif et catégorie:", res.data);
   } catch (err) {
+    setClasses1([]);
     console.error("Erreur lors de la récupération des classes:", err);
-    setError('Erreur lors du chargement des classes avec effectif et catégorie');
+    //setError('Erreur lors du chargement des classes avec effectif et catégorie');
   }
 }
 
@@ -532,8 +541,9 @@ const fetchElevesParClasseMaternelle = async () => {
     setElevesMaternelle(res.data);
     console.log("Élèves par classe de maternelle:", res.data);
   } catch (err) {
+    setElevesMaternelle([]);
     console.error("Erreur lors de la récupération des élèves par classe:", err);
-    setError('Erreur lors du chargement des élèves par classe de maternelle');
+    //setError('Erreur lors du chargement des élèves par classe de maternelle');
   }
 }
 
@@ -550,8 +560,10 @@ const fetchEleves = async () => {
     setEleves(elevesData);
     console.log("Élèves chargés:", elevesData);
   } catch (err) {
+    setEleves([]);
+    setElevesET(0);
     console.error("Erreur détaillée:", err.response?.data || err.message);
-    setError('Erreur lors du chargement des élèves');
+    //setError('Erreur lors du chargement des élèves');
   }
 };
 
@@ -662,7 +674,8 @@ const [loading, setLoading] = useState(false);
       setError('');
       setLoading(false);
     } catch (err) {
-      setError('Erreur lors de la modification');
+      console.error('Erreur détaillée:', err.response?.data || err.message);
+      //setError('Erreur lors de la modification');
       setLoading(false);
     }
   };
@@ -687,7 +700,8 @@ const ModificationClasse = async (id) => {
       setError('');
       setLoading(false);
     } catch (err) {
-      setError('Erreur lors de la modification');
+      console.error('Erreur détaillée:', err.response?.data || err.message);
+      //setError('Erreur lors de la modification');
       setLoading(false);
     }
   };
@@ -2022,7 +2036,11 @@ const groupElevesByClasse = (eleves) => {
             <LierTypeClassePeriode/>
           )}
 
-          {(activeTab !== 'aperçu' && activeTab !== 'élèves' && activeTab !== 'classes' && activeTab !== 'matieres' && activeTab !== 'LiaisonSeriesClass'  && activeTab !== 'LiaisonMatieresAvecCoefficientEtSerieClasses' && activeTab !== 'notes' && activeTab !== 'enseignantsauxclasses') && (
+          {activeTab === 'profil' && (
+            <Profil />
+          )}
+
+          {(activeTab !== 'aperçu' && activeTab !== 'élèves' && activeTab !== 'classes' && activeTab !== 'matieres' && activeTab !== 'LiaisonSeriesClass'  && activeTab !== 'LiaisonMatieresAvecCoefficientEtSerieClasses' && activeTab !== 'notes' && activeTab !== 'enseignantsauxclasses' && activeTab !== 'emploi' && activeTab !== 'Types' && activeTab !== 'LiaisonClassesPeriodeTypesEvaluation' && activeTab !== 'profil') && (
             <div className="coming-soon">
               <h3>Section {activeTab} en cours de développement</h3>
               <p>Cette fonctionnalité sera disponible prochainement</p>
@@ -2054,13 +2072,21 @@ const LierMatieresauxClasses = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [classesRes,classesMatieresRes, matieresRes, matieres1Res, seriesRes] = await Promise.all([
-          api.get(`/classesP?with_series=true&with_matieres=true`),
-          api.get(`/with-series-matieresPrimaire`),
-          api.get(`/matieres-with-series`),
-          api.get(`/matieres`),
-          api.get(`/series`),
-        ]);
+        
+        // Load data sequentially with small delays to avoid rate limiting
+        const classesRes = await api.get(`/classesP?with_series=true&with_matieres=true`);
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        const classesMatieresRes = await api.get(`/with-series-matieresPrimaire`);
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        const matieresRes = await api.get(`/matieres-with-series`);
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        const matieres1Res = await api.get(`/matieres`);
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        const seriesRes = await api.get(`/series`);
         
         setClasses(classesRes.data);
         setClassesMat(classesMatieresRes.data);
@@ -2070,10 +2096,28 @@ const LierMatieresauxClasses = () => {
         setSeries(seriesRes.data);
         setMessage({ text: '', type: '' });
       } catch (error) {
-        setMessage({ 
+        setClasses([]);
+        setClassesMat([]);
+        setMatieres([]);
+        setMatieres1([]);
+        setSeries([]);
+        setClassesWithData([]);
+
+        if (error.response && error.response.status === 500) {
+          setMessage({ 
+            text: 'Erreur serveur. Veuillez réessayer plus tard.', 
+            type: 'error' 
+          });
+        } else {
+          /*setMessage({ 
+            text: 'Erreur lors du chargement des données', 
+            type: 'error' 
+          });*/
+        }
+        /*setMessage({ 
           text: 'Erreur lors du chargement des données', 
           type: 'error' 
-        });
+        });*/
         console.error('Error fetching data:', error);
       } finally {
         setLoading(false);
@@ -2525,10 +2569,26 @@ const LierEnseignantsAuxMatieres = () => {
         setClassesWithData(classesRes.data);
         setMessage({ text: '', type: '' });
       } catch (error) {
-        setMessage({ 
+        setClasses([]);
+        setMatieres([]);
+        setEnseignants([]);
+        setClassesWithData([]);
+
+        if (error.response && error.response.status === 500) {
+          setMessage({ 
+            text: 'Erreur serveur. Veuillez réessayer plus tard.', 
+            type: 'error' 
+          });
+        } else {
+          /*setMessage({ 
+            text: 'Erreur lors du chargement des données', 
+            type: 'error' 
+          });*/
+        }
+        /*setMessage({ 
           text: 'Erreur lors du chargement des données', 
           type: 'error' 
-        });
+        });*/
         console.error('Error fetching data:', error);
       } finally {
         setLoading(false);
@@ -2548,8 +2608,9 @@ const LierEnseignantsAuxMatieres = () => {
     console.log("Classes avec séries:", res.data);
     setLoading(false);
   } catch (err) {
+    setClassesS([]);
     console.error(err);
-    setError('Erreur lors du chargement des séries');
+    //setError('Erreur lors du chargement des séries');
     setLoading(false);
   }
   };
@@ -2585,10 +2646,22 @@ const LierEnseignantsAuxMatieres = () => {
           setEnseignantsParMatiere(enseignantsData);
           
         } catch (error) {
-          setMessage({ 
+          setEnseignantsParMatiere({});
+          if (error.response && error.response.status === 500) {
+            setMessage({ 
+              text: 'Erreur serveur. Veuillez réessayer plus tard.', 
+              type: 'error' 
+            });
+          } else {
+            /*setMessage({ 
+              text: 'Erreur lors du chargement des données', 
+              type: 'error' 
+            });*/
+          }
+          /*setMessage({ 
             text: 'Erreur lors du chargement des données', 
             type: 'error' 
-          });
+          });*/
           console.error('Error fetching data:', error);
         } finally {
           setLoading(false);
@@ -2834,7 +2907,9 @@ const TypeEvas2 = () => {
         setTypes(typesRes.data);
         setPeriodes(periodesRes.data);
       } catch (err) {
-        setError("Erreur lors du chargement des types ou périodes");
+        setTypes([]);
+        setPeriodes([]);
+        //setError("Erreur lors du chargement des types ou périodes");
       }
     };
     fetchData();
@@ -2857,7 +2932,8 @@ const TypeEvas2 = () => {
       setMessage("Type d'évaluation ajouté !");
     } catch (err) {
       const errorMessage = err.response?.data?.message || "Erreur lors de l'ajout";
-      setError(errorMessage);
+      console.error('Error adding type:', err);
+      //setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -2892,7 +2968,8 @@ const TypeEvas2 = () => {
       setMessage("Période ajoutée !");
     } catch (err) {
       const errorMessage = err.response?.data?.message || "Erreur lors de l'ajout";
-      setError(errorMessage);
+      console.error('Error adding periode:', err);
+      //setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -3229,7 +3306,12 @@ const LierTypeClassePeriode = () => {
         setLiaisons(liaisonsRes.data);
         setClassesWithSeries(classesSeriesRes.data);
       } catch (error) {
-        setMessage({ text: 'Erreur lors du chargement des données', type: 'error' });
+        setClasses([]);
+        setPeriodes([]);
+        setTypes([]);
+        setLiaisons([]);
+        setClassesWithSeries([]);
+        //setMessage({ text: 'Erreur lors du chargement des données', type: 'error' });
         console.error("Erreur:", error.response?.data || error.message);
       } finally {
         setLoading(false);
@@ -3688,6 +3770,173 @@ const EmploiDuTemps = () => {
           </tbody>
         </table>
       )}
+    </div>
+  );
+};
+
+const Profil = () => {
+  const [user, setUser] = useState({
+    nom: '',
+    prenom: '',
+    email: '',
+    telephone: '',
+    role: ''
+  });
+  const [editing, setEditing] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState({ text: '', type: '' });
+
+  useEffect(() => {
+    loadUserProfile();
+  }, []);
+
+  const loadUserProfile = async () => {
+    try {
+      setLoading(true);
+      const userData = JSON.parse(localStorage.getItem('user') || '{}');
+      const res = await api.get('/user/profile', {
+        headers: {
+          'X-User-Id': userData.id,
+          'X-User-Role': userData.role
+        }
+      });
+      setUser(res.data);
+    } catch (error) {
+      console.error('Erreur chargement profil:', error);
+      setMessage({ text: 'Erreur lors du chargement du profil', type: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleChange = (e) => {
+    setUser({ ...user, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      setLoading(true);
+      const userData = JSON.parse(localStorage.getItem('user') || '{}');
+      await api.put('/user/profile', user, {
+        headers: {
+          'X-User-Id': userData.id,
+          'X-User-Role': userData.role
+        }
+      });
+      setMessage({ text: 'Profil mis à jour avec succès', type: 'success' });
+      setEditing(false);
+    } catch (error) {
+      setMessage({ text: 'Erreur lors de la mise à jour', type: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="profil-container">
+      <h2>Mon Profil</h2>
+      
+      {message.text && (
+        <div className={`message ${message.type === 'error' ? 'error-message' : 'success-message'}`}>
+          {message.text}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="profil-form">
+        <div className="form-group">
+          <label>Nom</label>
+          <input
+            type="text"
+            name="nom"
+            value={user.nom}
+            onChange={handleChange}
+            disabled={!editing}
+            className="form-input"
+          />
+        </div>
+
+        <div className="form-group">
+          <label>Prénom</label>
+          <input
+            type="text"
+            name="prenom"
+            value={user.prenom}
+            onChange={handleChange}
+            disabled={!editing}
+            className="form-input"
+          />
+        </div>
+
+        <div className="form-group">
+          <label>Email</label>
+          <input
+            type="email"
+            name="email"
+            value={user.email}
+            onChange={handleChange}
+            disabled={!editing}
+            className="form-input"
+          />
+        </div>
+
+        <div className="form-group">
+          <label>Téléphone</label>
+          <input
+            type="tel"
+            name="telephone"
+            value={user.telephone}
+            onChange={handleChange}
+            disabled={!editing}
+            className="form-input"
+          />
+        </div>
+
+        <div className="form-group">
+          <label>Rôle</label>
+          <input
+            type="text"
+            value={user.role}
+            disabled
+            className="form-input"
+          />
+        </div>
+
+        <div className="form-actions">
+          {!editing ? (
+            <button
+              type="button"
+              onClick={() => setEditing(true)}
+              className="btn btn-primary"
+            >
+              <Edit2 size={16} />
+              Modifier
+            </button>
+          ) : (
+            <>
+              <button
+                type="submit"
+                disabled={loading}
+                className="btn btn-success"
+              >
+                <Save size={16} />
+                Enregistrer
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setEditing(false);
+                  loadUserProfile();
+                }}
+                className="btn btn-secondary"
+              >
+                <X size={16} />
+                Annuler
+              </button>
+            </>
+          )}
+        </div>
+      </form>
     </div>
   );
 };

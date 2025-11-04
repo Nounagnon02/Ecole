@@ -2,15 +2,16 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Livre extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToEcole;
 
     protected $fillable = [
-        'titre', 'auteur', 'isbn', 'categorie', 'annee_publication', 'nombre_exemplaires', 'disponible'
+        'titre', 'auteur', 'isbn', 'categorie', 'annee_publication', 'nombre_exemplaires', 'disponible', 'ecole_id'
     ];
 
     protected $casts = [

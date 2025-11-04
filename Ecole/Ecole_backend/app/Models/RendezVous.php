@@ -2,17 +2,18 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class RendezVous extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToEcole;
 
     protected $table = 'rendez_vous';
 
     protected $fillable = [
-        'motif', 'parent_id', 'eleve_id', 'enseignant_id', 'date', 'heure', 'statut'
+        'motif', 'parent_id', 'eleve_id', 'enseignant_id', 'date', 'heure', 'statut', 'ecole_id'
     ];
 
     protected $casts = [

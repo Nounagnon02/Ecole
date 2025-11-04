@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Contributions extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToEcole;
     protected $fillable = [
         'montant',
         'date_fin_premiere_tranche',
@@ -18,6 +19,7 @@ class Contributions extends Model
         'montant_troisieme_tranche',
         'id_classe',
         'id_serie',
+        'ecole_id',
     ];
 
     protected $casts = [

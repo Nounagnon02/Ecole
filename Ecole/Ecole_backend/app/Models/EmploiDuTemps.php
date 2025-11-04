@@ -2,17 +2,18 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class EmploiDuTemps extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToEcole;
 
     protected $table = 'emplois_du_temps';
 
     protected $fillable = [
-        'class_id', 'matiere_id', 'enseignant_id', 'jour', 'heure_debut', 'heure_fin', 'salle'
+        'class_id', 'matiere_id', 'enseignant_id', 'jour', 'heure_debut', 'heure_fin', 'salle', 'ecole_id'
     ];
 
     protected $casts = [
