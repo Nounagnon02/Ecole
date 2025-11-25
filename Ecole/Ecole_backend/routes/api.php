@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\{AuthController, ClassesController, EleveController, MatieresController, NotesController, SeriesController, ParentsController, BulletinController, EnseignantsController, typeEvaluationController, periodesController, ContributionsController, PaymentController, CinetPayController, DirecteurController, EnseignantController, ParentController, ComptableController, SurveillantController, CenseurController, InfirmierController, BibliothecaireController, SecretaireController, NoteController, MessageController, NotificationController, EmploiDuTempsController, ExerciceController, EcoleController};
+use App\Http\Controllers\{AuthController, ClassesController, EleveController, MatieresController, NotesController, SeriesController, ParentsController, BulletinController, EnseignantsController, typeEvaluationController, periodesController, ContributionsController, PaymentController, DirecteurController, EnseignantController, ParentController, ComptableController, SurveillantController, CenseurController, InfirmierController, BibliothecaireController, SecretaireController, NoteController, MessageController, NotificationController, EmploiDuTempsController, ExerciceController, EcoleController};
 use Illuminate\Support\Facades\{Route, DB};
 use App\Models\Eleves;
 
@@ -233,10 +233,17 @@ Route::put('/contributions/{id}', [ContributionsController::class, 'update']);
 Route::delete('/contributions/{id}', [ContributionsController::class, 'destroy']);
 
 //Route pour les paiements
-Route::prefix('cinetpay')->group(function () {
-    Route::post('/init', [CinetPayController::class, 'initier'])->name('cinetpay.init');
-    Route::get('/return',          [CinetPayController::class, 'retour'])->name('cinetpay.return');
-    Route::post('/notify',         [CinetPayController::class, 'notifier'])->name('cinetpay.notify');
+Route::prefix('payments')->group(function () {
+    Route::post('/initialize', [PaymentController::class, 'initializePayment']);
+    Route::post('/mobile-money', [PaymentController::class, 'processMobileMoney']);
+    Route::get('/history', [PaymentController::class, 'getPaymentHistory']);
+    Route::get('/stats', [PaymentController::class, 'getPaymentStats']);
+    Route::post('/refund/request', [PaymentController::class, 'requestRefund']);
+    Route::post('/refund/process', [PaymentController::class, 'processRefund']);
+    Route::get('/export', [PaymentController::class, 'exportPayments']);
+    Route::get('/status', [PaymentController::class, 'checkStatus']);
+    Route::get('/callback', [PaymentController::class, 'callback'])->name('payment.callback');
+    Route::post('/webhook', [PaymentController::class, 'webhook']);
 });
 
 Route::post('test', fn () => response()->json(['ok' => true]));
@@ -440,14 +447,20 @@ Route::prefix('bibliothecaire')->group(function () {
 });
 
 Route::prefix('secretaire')->group(function () {
+    Route::get('/dossiers', [SecretaireController::class, 'dossiersEleves']);
     Route::get('/dossiers-eleves', [SecretaireController::class, 'dossiersEleves']);
     Route::get('/rendez-vous', [SecretaireController::class, 'rendezVous']);
+    Route::get('/courriers', [SecretaireController::class, 'courriers']);
     Route::get('/certificats', [SecretaireController::class, 'certificats']);
     Route::get('/statistiques', [SecretaireController::class, 'statistiques']);
     Route::post('/rendez-vous', [SecretaireController::class, 'storeRendezVous']);
     Route::post('/certificats', [SecretaireController::class, 'storeCertificat']);
     Route::put('/certificats/{id}/delivrer', [SecretaireController::class, 'delivrerCertificat']);
 });
+
+Route::post('/dossiers-eleves', [SecretaireController::class, 'storeDossier']);
+Route::post('/courriers', [SecretaireController::class, 'storeCourrier']);
+Route::post('/visiteurs', [SecretaireController::class, 'storeVisiteur']);
 
 Route::get('/test-connexion', function() {
     return 'ok';
@@ -466,6 +479,68 @@ Route::prefix('emplois-du-temps')->group(function () {
 Route::prefix('user')->group(function () {
     Route::get('/profile', [AuthController::class, 'getProfile']);
     Route::put('/profile', [AuthController::class, 'updateProfile']);
+});
+
+// ==================== ROUTES UNIVERSITAIRES ====================
+use App\Http\Controllers\Universite\{
+    UniversiteController,
+    FaculteController,
+    DepartementController,
+    FiliereController,
+    EtudiantController,
+    EnseignantController as UnivEnseignantController,
+    MatiereController as UnivMatiereController,
+    NoteController as UnivNoteController,
+    InscriptionController,
+    SemestreController,
+    AnneeAcademiqueController,
+    PersonnelController,
+    PaiementController as UnivPaiementController,
+    DiplomeController
+};
+
+Route::prefix('universite')->group(function () {
+    // Universités
+    Route::apiResource('universites', UniversiteController::class);
+    
+    // Facultés
+    Route::apiResource('facultes', FaculteController::class);
+    
+    // Départements
+    Route::apiResource('departements', DepartementController::class);
+    
+    // Filières
+    Route::apiResource('filieres', FiliereController::class);
+    
+    // Étudiants
+    Route::apiResource('etudiants', EtudiantController::class);
+    
+    // Enseignants universitaires
+    Route::apiResource('enseignants', UnivEnseignantController::class);
+    
+    // Matières/UE
+    Route::apiResource('matieres', UnivMatiereController::class);
+    
+    // Notes
+    Route::apiResource('notes', UnivNoteController::class);
+    
+    // Inscriptions
+    Route::apiResource('inscriptions', InscriptionController::class);
+    
+    // Semestres
+    Route::apiResource('semestres', SemestreController::class);
+    
+    // Années académiques
+    Route::apiResource('annees-academiques', AnneeAcademiqueController::class);
+    
+    // Personnel
+    Route::apiResource('personnels', PersonnelController::class);
+    
+    // Paiements
+    Route::apiResource('paiements', UnivPaiementController::class);
+    
+    // Diplômes
+    Route::apiResource('diplomes', DiplomeController::class);
 });
 
 
