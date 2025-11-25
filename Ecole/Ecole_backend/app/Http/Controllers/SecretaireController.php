@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{Eleves, RendezVous, Certificat};
+use App\Models\{Eleves, RendezVous, Certificat, Courrier, Visiteur};
 use Illuminate\Http\Request;
 
 class SecretaireController extends Controller
@@ -93,5 +93,47 @@ class SecretaireController extends Controller
     private function generateNumeroCertificat()
     {
         return 'CERT-' . date('Y') . '-' . str_pad(Certificat::count() + 1, 4, '0', STR_PAD_LEFT);
+    }
+
+    public function courriers()
+    {
+        return response()->json([]);
+    }
+
+    public function storeDossier(Request $request)
+    {
+        $request->validate([
+            'eleve_nom' => 'required|string',
+            'eleve_prenom' => 'required|string',
+            'classe_id' => 'required|exists:classes,id',
+            'type_dossier' => 'required|string'
+        ]);
+
+        return response()->json(['message' => 'Dossier créé', 'id' => rand(1, 1000)]);
+    }
+
+    public function storeCourrier(Request $request)
+    {
+        $request->validate([
+            'expediteur' => 'required|string',
+            'destinataire' => 'required|string',
+            'objet' => 'required|string',
+            'type' => 'required|in:entrant,sortant',
+            'date_reception' => 'required|date'
+        ]);
+
+        return response()->json(['message' => 'Courrier enregistré', 'id' => rand(1, 1000)]);
+    }
+
+    public function storeVisiteur(Request $request)
+    {
+        $request->validate([
+            'nom_visiteur' => 'required|string',
+            'motif' => 'required|string',
+            'heure_arrivee' => 'required|string',
+            'date_visite' => 'required|date'
+        ]);
+
+        return response()->json(['message' => 'Visiteur enregistré', 'id' => rand(1, 1000)]);
     }
 }
