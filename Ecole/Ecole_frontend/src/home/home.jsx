@@ -5,15 +5,6 @@ import { useNavigate } from 'react-router-dom';
 export default function Home() {
   const navigate = useNavigate();
 
-  // S'assurer que le viewport est correct
-  /*useEffect(() => {
-     Forcer le viewport sur mobile
-    const viewport = document.querySelector('meta[name="viewport"]');
-    if (viewport) {
-      viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
-    }
-  }, []);*/
-
   return (
     <div className="landing-page">
       {/* Header */}
@@ -21,15 +12,23 @@ export default function Home() {
         <nav className="nav">
           <div className="logo">School Management</div>
           <div className="nav-buttons">
-            <button className="btn-login" onClick={() => navigate('/connexion')}>Se connecter</button>
-            <button className="btn-signup" onClick={() => navigate('/inscription')}>S'inscrire</button>
+            <button className="btn-student" onClick={() => navigate('/espace-etudiant')}>
+              Espace étudiant
+            </button>
+            <button className="btn-login" onClick={() => navigate('/connexion')}>
+              Se connecter
+            </button>
+            <button className="btn-signup" onClick={() => navigate('/inscription')}>
+              S'inscrire
+            </button>
           </div>
         </nav>
       </header>
 
-      {/* Hero Section */}
-      <section className="hero-section">
-        <div className="hero-section">
+      {/* Main Content */}
+      
+        {/* Hero Section */}
+        <section className="hero-section">
           {/* Icon/Logo */}
           <div className="hero-icon-wrapper">
             <div className="hero-icon">
@@ -55,7 +54,9 @@ export default function Home() {
             <button className="btn-primary" onClick={() => navigate('/inscription')}>
               Commencer gratuitement
             </button>
-            <button className="btn-secondary">En savoir plus</button>
+            <button className="btn-secondary">
+              En savoir plus
+            </button>
           </div>
 
           {/* Features */}
@@ -67,7 +68,9 @@ export default function Home() {
                 </svg>
               </div>
               <h3 className="feature-title">Simple & Intuitif</h3>
-              <p className="feature-text">Une interface conçue pour une prise en main immédiate</p>
+              <p className="feature-text">
+                Une interface conçue pour une prise en main immédiate et une expérience utilisateur fluide
+              </p>
             </div>
 
             <div className="feature-card">
@@ -77,7 +80,9 @@ export default function Home() {
                 </svg>
               </div>
               <h3 className="feature-title">Sécurisé</h3>
-              <p className="feature-text">Vos données protégées avec les dernières technologies</p>
+              <p className="feature-text">
+                Vos données protégées avec les dernières technologies de cryptage et de sécurité
+              </p>
             </div>
 
             <div className="feature-card">
@@ -87,11 +92,13 @@ export default function Home() {
                 </svg>
               </div>
               <h3 className="feature-title">Performant</h3>
-              <p className="feature-text">Des résultats rapides pour booster votre productivité</p>
+              <p className="feature-text">
+                Des résultats rapides et une optimisation maximale pour booster votre productivité
+              </p>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      
 
       {/* Footer */}
       <footer className="footer">
@@ -99,4 +106,4 @@ export default function Home() {
       </footer>
     </div>
   );
-};
+}

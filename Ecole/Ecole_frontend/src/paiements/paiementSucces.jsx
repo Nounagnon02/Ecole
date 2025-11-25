@@ -3,7 +3,7 @@ import { useSearchParams, Link } from 'react-router-dom';
 import axios from 'axios';
 
 // Page de succès
-export const PaymentSuccess = () => {
+const PaymentSuccess = () => {
   const [searchParams] = useSearchParams();
   const bookingId = searchParams.get('booking_id');
   const [booking, setBooking] = useState(null);
@@ -88,6 +88,8 @@ export const PaymentSuccess = () => {
     </div>
   );
 };
+
+export default PaymentSuccess;
 
 // Page d'échec
 export const PaymentFailed = () => {

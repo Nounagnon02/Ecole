@@ -9,6 +9,7 @@ import api from '../api';
 import Messagerie from '../components/Messagerie';
 import NotificationBell from '../components/NotificationBell';
 import EmploiDuTemps from './EmploiDuTemps';
+import MarquagePresence from '../components/MarquagePresence';
 
 
 
@@ -1114,6 +1115,13 @@ const fetchGradeData = async () => {
             {sidebarOpen && <span className="sidebar-item-text">Emploi du temps</span>}
           </div>
           <div 
+            className={`sidebar-item ${activeTab === 'presence' ? 'active' : ''}`} 
+            onClick={() => setActiveTab('presence')}
+          >
+            <Users size={20} />
+            {sidebarOpen && <span className="sidebar-item-text">Marquage Présence</span>}
+          </div>
+          <div 
             className={`sidebar-item ${activeTab === 'messages' ? 'active' : ''}`} 
             onClick={() => setActiveTab('messages')}
           >
@@ -2095,11 +2103,15 @@ const fetchGradeData = async () => {
             <EmploiDuTemps />
           )}
 
+          {activeTab === 'presence' && (
+            <MarquagePresence />
+          )}
+
           {activeTab === 'messages' && (
             <Messagerie userId={localStorage.getItem('userId')} userName={localStorage.getItem('userName') || 'Directeur'} />
           )}
 
-          {(activeTab !== 'aperçu' && activeTab !== 'classes' && activeTab !== 'matieres' && activeTab !== 'LiaisonSeriesClass'  && activeTab !== 'LiaisonMatieresAvecCoefficientEtSerieClasses' && activeTab !== 'notes' && activeTab !== 'enseignantsauxclasses' && activeTab !== 'emploi' && activeTab !== 'messages') && (
+          {(activeTab !== 'aperçu' && activeTab !== 'classes' && activeTab !== 'matieres' && activeTab !== 'LiaisonSeriesClass'  && activeTab !== 'LiaisonMatieresAvecCoefficientEtSerieClasses' && activeTab !== 'notes' && activeTab !== 'enseignantsauxclasses' && activeTab !== 'emploi' && activeTab !== 'presence' && activeTab !== 'messages') && (
             <div className="coming-soon">
               <h3>Section {activeTab} en cours de développement</h3>
               <p>Cette fonctionnalité sera disponible prochainement</p>

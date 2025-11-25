@@ -2,7 +2,7 @@ import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import CustomPayment from './CustomPayment';
 
-const PaymentComponent = () => {
+const paiement = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { booking, transactionId } = location.state || {};
@@ -35,4 +35,4 @@ const PaymentComponent = () => {
   );
 };
 
-export default PaymentComponent;
+export default paiement;
