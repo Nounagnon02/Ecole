@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import './Mes_CSS/bulletin.css';
+import '../styles/GlobalStyles.css';
 
 const Bulletin = () => {
   const [bulletins, setBulletins] = useState([]);
@@ -26,14 +26,15 @@ const Bulletin = () => {
   }, [selectedSession, selectedClasse]);
 
   return (
-    <div className="bulletin-container">
-      <div className="bulletin-header">
-        <h2>Bulletins Scolaires</h2>
-        <div className="bulletin-filters">
-          <select 
-            value={selectedSession} 
+    <div className="container">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+        <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--primary)' }}>Bulletins Scolaires</h2>
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <select
+            value={selectedSession}
             onChange={(e) => setSelectedSession(e.target.value)}
-            className="bulletin-select"
+            className="form-select"
+            style={{ minWidth: '200px' }}
           >
             <option value="">Sélectionner une session</option>
             <option value="1">1er Trimestre</option>
@@ -41,10 +42,11 @@ const Bulletin = () => {
             <option value="3">3ème Trimestre</option>
           </select>
 
-          <select 
-            value={selectedClasse} 
+          <select
+            value={selectedClasse}
             onChange={(e) => setSelectedClasse(e.target.value)}
-            className="bulletin-select"
+            className="form-select"
+            style={{ minWidth: '200px' }}
           >
             <option value="">Sélectionner une classe</option>
             {/* Options des classes */}
@@ -53,22 +55,24 @@ const Bulletin = () => {
       </div>
 
       {loading ? (
-        <div className="bulletin-loading">Chargement...</div>
+        <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>Chargement...</div>
       ) : (
-        <div className="bulletin-list">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
           {bulletins.map((bulletin) => (
-            <div key={bulletin.id} className="bulletin-card">
-              <div className="bulletin-info">
-                <h3>{bulletin.eleve.nom}</h3>
-                <p>Moyenne générale: {bulletin.moyenne_generale}</p>
-              </div>
-              <div className="bulletin-actions">
-                <button className="bulletin-btn bulletin-btn-view">
-                  Voir le bulletin
-                </button>
-                <button className="bulletin-btn bulletin-btn-print">
-                  Imprimer
-                </button>
+            <div key={bulletin.id} className="card">
+              <div className="card-body">
+                <div style={{ marginBottom: '1rem' }}>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>{bulletin.eleve.nom}</h3>
+                  <p style={{ color: 'var(--text-muted)' }}>Moyenne générale: <span style={{ fontWeight: 'bold', color: 'var(--primary)' }}>{bulletin.moyenne_generale}</span></p>
+                </div>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button className="btn btn-primary" style={{ flex: 1 }}>
+                    Voir le bulletin
+                  </button>
+                  <button className="btn btn-secondary" style={{ flex: 1 }}>
+                    Imprimer
+                  </button>
+                </div>
               </div>
             </div>
           ))}

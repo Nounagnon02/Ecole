@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  BookOpen, Users, Calendar, TrendingUp, 
-  FileText, Award, Clock, Settings, 
-  Plus, Edit2, Eye, CheckCircle, MessageSquare
+import {
+  BookOpen, Users, Calendar, TrendingUp,
+  FileText, Award, Clock, Settings,
+  Plus, Edit2, Eye, CheckCircle, MessageSquare, LogOut
 } from 'lucide-react';
 import api from '../api';
 import Messagerie from '../components/Messagerie';
 import NotificationBell from '../components/NotificationBell';
-import '../styles/dashboard.css';
+import '../styles/GlobalStyles.css';
 
 const DashboardCenseur = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -17,7 +17,6 @@ const DashboardCenseur = () => {
   const [examens, setExamens] = useState([]);
   const [emploisTemps, setEmploisTemps] = useState([]);
   const [rapportsPedagogiques, setRapportsPedagogiques] = useState([]);
-  const [enseignants, setEnseignants] = useState([]);
 
   const [newConseil, setNewConseil] = useState({
     classe_id: '',
@@ -47,7 +46,7 @@ const DashboardCenseur = () => {
         api.get('/censeur/conseils'),
         api.get('/censeur/examens')
       ]);
-      
+
       setResultats(resultatsRes.data);
       setConseils(conseilsRes.data);
       setExamens(examensRes.data);
@@ -61,12 +60,7 @@ const DashboardCenseur = () => {
   const planifierConseil = async () => {
     try {
       await api.post('/conseils-classe', newConseil);
-      setNewConseil({
-        classe_id: '',
-        date_conseil: '',
-        trimestre: '',
-        observations: ''
-      });
+      setNewConseil({ classe_id: '', date_conseil: '', trimestre: '', observations: '' });
       fetchCenseurData();
     } catch (error) {
       console.error('Erreur:', error);
@@ -76,14 +70,7 @@ const DashboardCenseur = () => {
   const planifierExamen = async () => {
     try {
       await api.post('/examens', newExamen);
-      setNewExamen({
-        matiere_id: '',
-        classe_id: '',
-        date_examen: '',
-        heure_debut: '',
-        duree: '',
-        surveillant_id: ''
-      });
+      setNewExamen({ matiere_id: '', classe_id: '', date_examen: '', heure_debut: '', duree: '', surveillant_id: '' });
       fetchCenseurData();
     } catch (error) {
       console.error('Erreur:', error);
@@ -100,60 +87,68 @@ const DashboardCenseur = () => {
   };
 
   const renderOverview = () => (
-    <div className="overview-grid">
+    <div className="stats-grid">
       <div className="stat-card">
-        <Users className="stat-icon" />
-        <div>
-          <h3>Classes suivies</h3>
-          <p>{resultats.length}</p>
+        <div className="stat-icon" style={{ background: 'linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%)' }}>
+          <Users size={24} />
+        </div>
+        <div className="stat-content">
+          <h3>{resultats.length}</h3>
+          <p>Classes suivies</p>
         </div>
       </div>
       <div className="stat-card">
-        <Calendar className="stat-icon" />
-        <div>
-          <h3>Conseils planifiés</h3>
-          <p>{conseils.length}</p>
+        <div className="stat-icon" style={{ background: 'linear-gradient(135deg, var(--secondary-2) 0%, #1aa179 100%)' }}>
+          <Calendar size={24} />
+        </div>
+        <div className="stat-content">
+          <h3>{conseils.length}</h3>
+          <p>Conseils planifiés</p>
         </div>
       </div>
       <div className="stat-card">
-        <FileText className="stat-icon" />
-        <div>
-          <h3>Examens à venir</h3>
-          <p>{examens.filter(e => new Date(e.date_examen) > new Date()).length}</p>
+        <div className="stat-icon" style={{ background: 'linear-gradient(135deg, var(--secondary-3) 0%, #e8590c 100%)' }}>
+          <FileText size={24} />
+        </div>
+        <div className="stat-content">
+          <h3>{examens.filter(e => new Date(e.date_examen) > new Date()).length}</h3>
+          <p>Examens à venir</p>
         </div>
       </div>
       <div className="stat-card">
-        <TrendingUp className="stat-icon" />
-        <div>
-          <h3>Taux de réussite</h3>
-          <p>{resultats.taux_reussite || 0}%</p>
+        <div className="stat-icon" style={{ background: 'linear-gradient(135deg, var(--secondary-1) 0%, #553098 100%)' }}>
+          <TrendingUp size={24} />
+        </div>
+        <div className="stat-content">
+          <h3>{resultats.taux_reussite || 0}%</h3>
+          <p>Taux de réussite</p>
         </div>
       </div>
     </div>
   );
 
   const renderResultats = () => (
-    <div className="resultats-section">
-      <h3>Suivi des résultats scolaires</h3>
-      <div className="resultats-grid">
+    <div className="form-container">
+      <h2>Suivi des résultats scolaires</h2>
+      <div className="stats-grid">
         {resultats.map(resultat => (
-          <div key={resultat.id} className="resultat-card">
-            <h4>{resultat.classe_nom}</h4>
-            <div className="resultat-stats">
-              <div className="stat">
-                <span>Moyenne générale</span>
+          <div key={resultat.id} className="card">
+            <h4 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>{resultat.classe_nom}</h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>Moyenne générale:</span>
                 <strong>{resultat.moyenne_generale}</strong>
               </div>
-              <div className="stat">
-                <span>Taux de réussite</span>
-                <strong>{resultat.taux_reussite}%</strong>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>Taux de réussite:</span>
+                <strong className="text-success">{resultat.taux_reussite}%</strong>
               </div>
-              <div className="stat">
-                <span>Élèves en difficulté</span>
-                <strong>{resultat.eleves_difficulte}</strong>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>Élèves en difficulté:</span>
+                <strong className="text-error">{resultat.eleves_difficulte}</strong>
               </div>
             </div>
-            <button className="btn-details">
+            <button className="btn btn-primary" style={{ marginTop: '1rem', width: '100%' }}>
               <Eye size={16} /> Voir détails
             </button>
           </div>
@@ -163,48 +158,42 @@ const DashboardCenseur = () => {
   );
 
   const renderConseils = () => (
-    <div className="conseils-section">
-      <div className="form-section">
-        <h3>Planifier un conseil de classe</h3>
+    <div>
+      <div className="form-container" style={{ marginBottom: '2rem' }}>
+        <h2>Planifier un conseil de classe</h2>
         <div className="form-grid">
-          <select
-            value={newConseil.classe_id}
-            onChange={(e) => setNewConseil({...newConseil, classe_id: e.target.value})}
-          >
-            <option value="">Sélectionner une classe</option>
-          </select>
-
-          <input
-            type="date"
-            value={newConseil.date_conseil}
-            onChange={(e) => setNewConseil({...newConseil, date_conseil: e.target.value})}
-          />
-
-          <select
-            value={newConseil.trimestre}
-            onChange={(e) => setNewConseil({...newConseil, trimestre: e.target.value})}
-          >
-            <option value="">Sélectionner la période</option>
-            <option value="1er_trimestre">1er Trimestre</option>
-            <option value="2eme_trimestre">2ème Trimestre</option>
-            <option value="3eme_trimestre">3ème Trimestre</option>
-          </select>
-
-          <textarea
-            placeholder="Observations"
-            value={newConseil.observations}
-            onChange={(e) => setNewConseil({...newConseil, observations: e.target.value})}
-          />
-
-          <button onClick={planifierConseil} className="btn-primary">
-            <Plus size={16} /> Planifier
-          </button>
+          <div className="form-group">
+            <label>Classe</label>
+            <select className="form-select" value={newConseil.classe_id} onChange={(e) => setNewConseil({ ...newConseil, classe_id: e.target.value })}>
+              <option value="">Sélectionner une classe</option>
+            </select>
+          </div>
+          <div className="form-group">
+            <label>Date</label>
+            <input type="date" className="form-input" value={newConseil.date_conseil} onChange={(e) => setNewConseil({ ...newConseil, date_conseil: e.target.value })} />
+          </div>
+          <div className="form-group">
+            <label>Période</label>
+            <select className="form-select" value={newConseil.trimestre} onChange={(e) => setNewConseil({ ...newConseil, trimestre: e.target.value })}>
+              <option value="">Sélectionner la période</option>
+              <option value="1er_trimestre">1er Trimestre</option>
+              <option value="2eme_trimestre">2ème Trimestre</option>
+              <option value="3eme_trimestre">3ème Trimestre</option>
+            </select>
+          </div>
+          <div className="form-group">
+            <label>Observations</label>
+            <textarea className="form-input" placeholder="Observations" value={newConseil.observations} onChange={(e) => setNewConseil({ ...newConseil, observations: e.target.value })} />
+          </div>
         </div>
+        <button onClick={planifierConseil} className="btn btn-primary">
+          <Plus size={16} /> Planifier
+        </button>
       </div>
 
-      <div className="conseils-list">
-        <h3>Conseils programmés</h3>
-        <table>
+      <div className="form-container">
+        <h2>Conseils programmés</h2>
+        <table className="data-table">
           <thead>
             <tr>
               <th>Classe</th>
@@ -220,15 +209,9 @@ const DashboardCenseur = () => {
                 <td>{conseil.classe_nom}</td>
                 <td>{conseil.date_conseil}</td>
                 <td>{conseil.trimestre}</td>
+                <td><span className={`status ${conseil.statut}`}>{conseil.statut}</span></td>
                 <td>
-                  <span className={`status ${conseil.statut}`}>
-                    {conseil.statut}
-                  </span>
-                </td>
-                <td>
-                  <button className="btn-action">
-                    <Edit2 size={16} />
-                  </button>
+                  <button className="btn btn-icon"><Edit2 size={16} /></button>
                 </td>
               </tr>
             ))}
@@ -239,62 +222,52 @@ const DashboardCenseur = () => {
   );
 
   const renderExamens = () => (
-    <div className="examens-section">
-      <div className="form-section">
-        <h3>Organiser un examen</h3>
+    <div>
+      <div className="form-container" style={{ marginBottom: '2rem' }}>
+        <h2>Organiser un examen</h2>
         <div className="form-grid">
-          <select
-            value={newExamen.classe_id}
-            onChange={(e) => setNewExamen({...newExamen, classe_id: e.target.value})}
-          >
-            <option value="">Sélectionner une classe</option>
-          </select>
-
-          <select
-            value={newExamen.matiere_id}
-            onChange={(e) => setNewExamen({...newExamen, matiere_id: e.target.value})}
-          >
-            <option value="">Sélectionner une matière</option>
-          </select>
-
-          <input
-            type="date"
-            value={newExamen.date_examen}
-            onChange={(e) => setNewExamen({...newExamen, date_examen: e.target.value})}
-          />
-
-          <input
-            type="time"
-            value={newExamen.heure_debut}
-            onChange={(e) => setNewExamen({...newExamen, heure_debut: e.target.value})}
-          />
-
-          <input
-            type="number"
-            placeholder="Durée (minutes)"
-            value={newExamen.duree}
-            onChange={(e) => setNewExamen({...newExamen, duree: e.target.value})}
-          />
-
-          <select
-            value={newExamen.surveillant_id}
-            onChange={(e) => setNewExamen({...newExamen, surveillant_id: e.target.value})}
-          >
-            <option value="">Sélectionner un surveillant</option>
-          </select>
-
-          <button onClick={planifierExamen} className="btn-primary">
-            <Plus size={16} /> Programmer
-          </button>
+          <div className="form-group">
+            <label>Classe</label>
+            <select className="form-select" value={newExamen.classe_id} onChange={(e) => setNewExamen({ ...newExamen, classe_id: e.target.value })}>
+              <option value="">Sélectionner une classe</option>
+            </select>
+          </div>
+          <div className="form-group">
+            <label>Matière</label>
+            <select className="form-select" value={newExamen.matiere_id} onChange={(e) => setNewExamen({ ...newExamen, matiere_id: e.target.value })}>
+              <option value="">Sélectionner une matière</option>
+            </select>
+          </div>
+          <div className="form-group">
+            <label>Date</label>
+            <input type="date" className="form-input" value={newExamen.date_examen} onChange={(e) => setNewExamen({ ...newExamen, date_examen: e.target.value })} />
+          </div>
+          <div className="form-group">
+            <label>Heure Début</label>
+            <input type="time" className="form-input" value={newExamen.heure_debut} onChange={(e) => setNewExamen({ ...newExamen, heure_debut: e.target.value })} />
+          </div>
+          <div className="form-group">
+            <label>Durée (min)</label>
+            <input type="number" className="form-input" value={newExamen.duree} onChange={(e) => setNewExamen({ ...newExamen, duree: e.target.value })} />
+          </div>
+          <div className="form-group">
+            <label>Surveillant</label>
+            <select className="form-select" value={newExamen.surveillant_id} onChange={(e) => setNewExamen({ ...newExamen, surveillant_id: e.target.value })}>
+              <option value="">Sélectionner un surveillant</option>
+            </select>
+          </div>
         </div>
+        <button onClick={planifierExamen} className="btn btn-primary">
+          <Plus size={16} /> Programmer
+        </button>
       </div>
 
-      <div className="examens-list">
-        <h3>Examens programmés</h3>
-        <div className="examens-grid">
+      <div className="form-container">
+        <h2>Examens programmés</h2>
+        <div className="stats-grid">
           {examens.map(examen => (
-            <div key={examen.id} className="examen-card">
-              <h4>{examen.matiere_nom}</h4>
+            <div key={examen.id} className="card">
+              <h4 style={{ color: 'var(--primary)', marginBottom: '0.5rem' }}>{examen.matiere_nom}</h4>
               <p><strong>Classe:</strong> {examen.classe_nom}</p>
               <p><strong>Date:</strong> {examen.date_examen}</p>
               <p><strong>Heure:</strong> {examen.heure_debut}</p>
@@ -308,28 +281,21 @@ const DashboardCenseur = () => {
   );
 
   const renderEmploisTemps = () => (
-    <div className="emplois-temps-section">
-      <h3>Validation des emplois du temps</h3>
-      <div className="emplois-list">
+    <div className="form-container">
+      <h2>Validation des emplois du temps</h2>
+      <div className="stats-grid">
         {emploisTemps.map(emploi => (
-          <div key={emploi.id} className="emploi-card">
-            <div className="emploi-header">
+          <div key={emploi.id} className="card">
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
               <h4>{emploi.classe_nom}</h4>
-              <span className={`status ${emploi.statut}`}>
-                {emploi.statut}
-              </span>
+              <span className={`status ${emploi.statut}`}>{emploi.statut}</span>
             </div>
             <p><strong>Enseignant:</strong> {emploi.enseignant_nom}</p>
             <p><strong>Dernière modification:</strong> {emploi.date_modification}</p>
-            <div className="emploi-actions">
-              <button className="btn-view">
-                <Eye size={16} /> Voir
-              </button>
+            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
+              <button className="btn btn-primary"><Eye size={16} /> Voir</button>
               {emploi.statut === 'en_attente' && (
-                <button 
-                  onClick={() => validerEmploiTemps(emploi.id)}
-                  className="btn-validate"
-                >
+                <button onClick={() => validerEmploiTemps(emploi.id)} className="btn btn-success" style={{ background: 'var(--success)', color: 'white' }}>
                   <CheckCircle size={16} /> Valider
                 </button>
               )}
@@ -341,18 +307,19 @@ const DashboardCenseur = () => {
   );
 
   const renderRapports = () => (
-    <div className="rapports-section">
-      <h3>Rapports pédagogiques</h3>
-      <div className="rapports-grid">
+    <div className="form-container">
+      <h2>Rapports pédagogiques</h2>
+      <div className="stats-grid">
         {rapportsPedagogiques.map(rapport => (
-          <div key={rapport.id} className="rapport-card">
+          <div key={rapport.id} className="card">
             <h4>{rapport.titre}</h4>
             <p>{rapport.description}</p>
-            <div className="rapport-meta">
+            <div style={{ marginTop: '1rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
               <span>Période: {rapport.periode}</span>
+              <br />
               <span>Créé le: {rapport.date_creation}</span>
             </div>
-            <button className="btn-download">
+            <button className="btn btn-primary" style={{ marginTop: '1rem' }}>
               <FileText size={16} /> Télécharger
             </button>
           </div>
@@ -362,60 +329,38 @@ const DashboardCenseur = () => {
   );
 
   return (
-    <div className="dashboard-censeur">
+    <div className="app-dashboard">
       <div className="sidebar">
         <div className="sidebar-header">
           <h2>Espace Censeur</h2>
         </div>
         <nav className="sidebar-nav">
-          <button 
-            className={activeTab === 'overview' ? 'active' : ''}
-            onClick={() => setActiveTab('overview')}
-          >
-            <TrendingUp size={20} /> Aperçu
-          </button>
-          <button 
-            className={activeTab === 'resultats' ? 'active' : ''}
-            onClick={() => setActiveTab('resultats')}
-          >
-            <Award size={20} /> Résultats
-          </button>
-          <button 
-            className={activeTab === 'conseils' ? 'active' : ''}
-            onClick={() => setActiveTab('conseils')}
-          >
-            <Users size={20} /> Conseils de classe
-          </button>
-          <button 
-            className={activeTab === 'examens' ? 'active' : ''}
-            onClick={() => setActiveTab('examens')}
-          >
-            <FileText size={20} /> Examens
-          </button>
-          <button 
-            className={activeTab === 'emplois' ? 'active' : ''}
-            onClick={() => setActiveTab('emplois')}
-          >
-            <Calendar size={20} /> Emplois du temps
-          </button>
-          <button 
-            className={activeTab === 'rapports' ? 'active' : ''}
-            onClick={() => setActiveTab('rapports')}
-          >
-            <BookOpen size={20} /> Rapports
-          </button>
-          <button 
-            className={activeTab === 'messages' ? 'active' : ''}
-            onClick={() => setActiveTab('messages')}
-          >
-            <MessageSquare size={20} /> Messages
-          </button>
+          {[
+            { id: 'overview', icon: TrendingUp, label: 'Aperçu' },
+            { id: 'resultats', icon: Award, label: 'Résultats' },
+            { id: 'conseils', icon: Users, label: 'Conseils de classe' },
+            { id: 'examens', icon: FileText, label: 'Examens' },
+            { id: 'emplois', icon: Calendar, label: 'Emplois du temps' },
+            { id: 'rapports', icon: BookOpen, label: 'Rapports' },
+            { id: 'messages', icon: MessageSquare, label: 'Messages' }
+          ].map(item => (
+            <button 
+              key={item.id}
+              className={activeTab === item.id ? 'active' : ''}
+              onClick={() => setActiveTab(item.id)}
+            >
+              <item.icon size={20} /> {item.label}
+            </button>
+          ))}
         </nav>
       </div>
 
       <div className="main-content">
-        <header className="main-header">
-          <h1>Dashboard Censeur</h1>
+        <header className="page-header">
+          <div>
+            <h1>Tableau de Bord</h1>
+            <p style={{ color: 'var(--text-muted)' }}>Bienvenue dans votre espace de gestion</p>
+          </div>
           <div className="header-actions">
             <NotificationBell userId={localStorage.getItem('userId')} />
           </div>
