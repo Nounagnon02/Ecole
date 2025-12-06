@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import './Mes_CSS/notes.css';
+import '../styles/GlobalStyles.css';
 
 const Notes = () => {
   const [notes, setNotes] = useState([]);
@@ -41,15 +41,16 @@ const Notes = () => {
   if (error) return <div className="notes-error">{error}</div>;
 
   return (
-    <div className="notes-container">
-      <div className="notes-header">
-        <h2>Gestion des Notes</h2>
-        <div className="notes-filters">
+    <div className="container">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+        <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--primary)' }}>Gestion des Notes</h2>
+        <div style={{ display: 'flex', gap: '1rem' }}>
           <select
             name="classe_id"
             value={filters.classe_id}
             onChange={handleFilterChange}
-            className="notes-select"
+            className="form-select"
+            style={{ minWidth: '200px' }}
           >
             <option value="">Toutes les classes</option>
             {/* Options des classes */}
@@ -59,7 +60,8 @@ const Notes = () => {
             name="matiere_id"
             value={filters.matiere_id}
             onChange={handleFilterChange}
-            className="notes-select"
+            className="form-select"
+            style={{ minWidth: '200px' }}
           >
             <option value="">Toutes les matières</option>
             {/* Options des matières */}
@@ -69,7 +71,8 @@ const Notes = () => {
             name="periode"
             value={filters.periode}
             onChange={handleFilterChange}
-            className="notes-select"
+            className="form-select"
+            style={{ minWidth: '200px' }}
           >
             <option value="">Toutes les périodes</option>
             <option value="1">1er Trimestre</option>
@@ -79,8 +82,8 @@ const Notes = () => {
         </div>
       </div>
 
-      <div className="notes-table-container">
-        <table className="notes-table">
+      <div className="card">
+        <table className="data-table">
           <thead>
             <tr>
               <th>Élève</th>
@@ -97,9 +100,9 @@ const Notes = () => {
                 <td>{note.matiere?.nom}</td>
                 <td>{note.note}/{note.note_sur}</td>
                 <td>{new Date(note.date_evaluation).toLocaleDateString()}</td>
-                <td className="notes-actions">
-                  <button className="notes-btn notes-btn-edit">Modifier</button>
-                  <button className="notes-btn notes-btn-delete">Supprimer</button>
+                <td style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button className="btn btn-primary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.85rem' }}>Modifier</button>
+                  <button className="btn btn-danger" style={{ padding: '0.25rem 0.5rem', fontSize: '0.85rem' }}>Supprimer</button>
                 </td>
               </tr>
             ))}

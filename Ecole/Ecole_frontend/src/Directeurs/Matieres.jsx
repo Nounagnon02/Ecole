@@ -1,4 +1,4 @@
-import './Mes_CSS_directeur/Matiere.css';
+import '../styles/GlobalStyles.css';
 import axios from 'axios';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -6,7 +6,7 @@ import React from 'react';
 import { Edit2, Trash2, Save, X, Plus, Menu, Home, Users, Book, Calendar, User, Settings, LogOut, Bell } from 'lucide-react';
 
 
-export default function Matieres()  {
+export default function Matieres() {
   const [matieres, setMatieres] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [editValue, setEditValue] = useState('');
@@ -16,24 +16,24 @@ export default function Matieres()  {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState('matieres');
   const [message, setMessage] = useState('');
-  
+
 
   const [selectedMatiere, setSelectedMatiere] = useState(null);
   const [newMatiereName, setNewMatiereName] = useState('');
-  
+
   useEffect(() => {
-        fetchMatieres();
-    }, []);
+    fetchMatieres();
+  }, []);
   const fetchMatieres = async () => {
-      try {
-        setLoading(true);
-        const res = await axios.get('http://localhost:8000/api/matieres');
-        setMatieres(res.data);
-        setLoading(false);
-        } catch (err) {
-          console.error(err);
-        }
-    };
+    try {
+      setLoading(true);
+      const res = await axios.get('http://localhost:8000/api/matieres');
+      setMatieres(res.data);
+      setLoading(false);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
 
   const AjouterMatiere = async () => {
@@ -44,29 +44,29 @@ export default function Matieres()  {
 
     try {
       setLoading(true);
-      const res =await axios.post('http://localhost:8000/api/matieres/store', { nom: newMatiere },{
-            headers: {
-                'Content-Type': 'application/json'
-            }
-      })       
-      
+      const res = await axios.post('http://localhost:8000/api/matieres/store', { nom: newMatiere }, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+
       setMatieres([...matieres, res.data]);
       setNewMatiere('');
       setError('');
       setLoading(false);
     } catch (err) {
-      
+
       const errorMessage = err.response?.data?.message || "Erreur lors de l'ajout";
       const errorDetails = err.response?.data?.errors || err.response?.data?.error || err.message;
-            
+
       setMessage(`${errorMessage}: ${JSON.stringify(errorDetails)}`);
-            
+
       console.error('Erreur détaillée:', err.response?.data || err.message);
-      
+
       setLoading(false);
     }
   };
-    
+
 
   const handleEdit = (matiere) => {
     setEditingId(matiere.id);
@@ -81,14 +81,15 @@ export default function Matieres()  {
 
     try {
       setLoading(true);
-      
+
       await axios.put(`http://localhost:8000/api/matieres/update/${id}`, { nom: editValue }, {
         headers: {
-          'Content-Type': 'application/json'}
+          'Content-Type': 'application/json'
+        }
       });
       await fetchMatieres(); // Recharger les matières après la modification
-      
-      setMessage('Matière modifiée avec succès');      
+
+      setMessage('Matière modifiée avec succès');
       setEditingId(null);
       setEditValue('');
       setError('');
@@ -112,20 +113,20 @@ export default function Matieres()  {
 
     try {
       setLoading(true);
-      
-      await axios.delete(`http://localhost:8000/api/matieres/delete/${id}`);
-            fetchMatieres(); 
 
-      
+      await axios.delete(`http://localhost:8000/api/matieres/delete/${id}`);
+      fetchMatieres();
+
+
     } catch (err) {
       setError('Erreur lors de la suppression');
       setLoading(false);
     }
   };
 
-  
 
-  
+
+
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -152,15 +153,16 @@ export default function Matieres()  {
         )}
 
         {/* Formulaire d'ajout */}
-        <div className="add-form">
-          <h2 className="form-title">Ajouter une nouvelle matière</h2>
-          <div className="form-controls">
+        <div className="form-container" style={{ marginBottom: '2rem' }}>
+          <h2 style={{ marginBottom: '1.5rem', fontSize: '1.25rem', fontWeight: 'bold' }}>Ajouter une nouvelle matière</h2>
+          <div className="form-group" style={{ flexDirection: 'row', gap: '1rem' }}>
             <input
               type="text"
               value={newMatiere}
               onChange={(e) => setNewMatiere(e.target.value)}
               placeholder="Nom de la matière"
-              className="input-field"
+              className="form-input"
+              style={{ flex: 1 }}
               onKeyPress={(e) => e.key === 'Enter' && AjouterMatiere()}
             />
             <button
@@ -175,47 +177,45 @@ export default function Matieres()  {
         </div>
 
         {/* Liste des matières */}
-        <div className="matieres-list">
-          <div className="list-header">
-            <h2 className="list-title">Liste des Matières</h2>
-          </div>
-          
+        <div>
+          <h2 style={{ marginBottom: '1.5rem', fontSize: '1.5rem', fontWeight: 'bold' }}>Liste des Matières</h2>
+
           {loading && matieres.length === 0 ? (
-            <div className="empty-state">
+            <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
               Chargement des matières...
             </div>
           ) : matieres.length === 0 ? (
-            <div className="empty-state">
+            <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
               Aucune matière trouvée. Ajoutez-en une ci-dessus.
             </div>
           ) : (
-            <div className="matieres-items">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
               {matieres.map((matiere) => (
-                <div key={matiere.id} className="matiere-item">
-                  <div className="matiere-content">
+                <div key={matiere.id} className="card">
+                  <div className="card-body">
                     <div className="matiere-details">
                       {editingId === matiere.id ? (
-                        <div className="edit-form">
+                        <div className="form-grid">
                           <input
                             type="text"
                             value={editValue}
                             onChange={(e) => setEditValue(e.target.value)}
-                            className="edit-input"
+                            className="form-input"
                             onKeyPress={(e) => e.key === 'Enter' && Modification(matiere.id)}
                             autoFocus
                           />
-                          <div className="edit-actions">
+                          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
                             <button
                               onClick={() => Modification(matiere.id)}
                               disabled={loading}
-                              className="btn btn-success"
+                              className="btn btn-primary"
                               title="Sauvegarder"
                             >
                               <Save size={16} />
                             </button>
                             <button
                               onClick={handleCancel}
-                              className="btn btn-secondary"
+                              className="btn btn-danger"
                               title="Annuler"
                             >
                               <X size={16} />
@@ -225,27 +225,27 @@ export default function Matieres()  {
                       ) : (
                         <div className="matiere-display">
                           <div className="matiere-info">
-                            <h3 className="matiere-name">{matiere.nom}</h3>
-                            <p className="matiere-id">ID: {matiere.id}</p>
+                            <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>{matiere.nom}</h3>
+                            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>ID: {matiere.id}</p>
                           </div>
-                          <div className="matiere-actions">
+                          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
                             <button
                               onClick={() => handleEdit(matiere)}
                               disabled={loading || editingId !== null}
-                              className="btn btn-edit"
+                              className="btn btn-icon"
                               title="Modifier"
+                              style={{ color: 'var(--primary)' }}
                             >
                               <Edit2 size={16} />
-                              Modifier
                             </button>
                             <button
                               onClick={() => handleDelete(matiere.id)}
                               disabled={loading || editingId !== null}
-                              className="btn btn-danger"
+                              className="btn btn-icon"
                               title="Supprimer"
+                              style={{ color: 'var(--error)' }}
                             >
                               <Trash2 size={16} />
-                              Supprimer
                             </button>
                           </div>
                         </div>
@@ -277,61 +277,60 @@ export default function Matieres()  {
   };
 
   return (
-    <div className="app-container">
+    <div className="app-dashboard">
       {/* Sidebar */}
-      <div className={`sidebar ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
+      <div className="sidebar">
         <div className="sidebar-header">
-          {sidebarOpen && <h1 className="sidebar-title">EcoleGestion</h1>}
-          <button onClick={toggleSidebar} className="sidebar-toggle">
-            {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
+          <h1 className="sidebar-title">EcoleGestion</h1>
         </div>
         <nav className="sidebar-nav">
-          <div 
-            className={`nav-item ${activeTab === 'accueil' ? 'nav-item-active' : ''}`} 
+          <button
+            className={`sidebar-link ${activeTab === 'accueil' ? 'active' : ''}`}
             onClick={() => setActiveTab('accueil')}
           >
             <Home size={20} />
-            {sidebarOpen && <span className="nav-text">Accueil</span>}
-          </div>
-          <div 
-            className={`nav-item ${activeTab === 'eleves' ? 'nav-item-active' : ''}`} 
+            <span>Accueil</span>
+          </button>
+          <button
+            className={`sidebar-link ${activeTab === 'eleves' ? 'active' : ''}`}
             onClick={() => setActiveTab('eleves')}
           >
             <Users size={20} />
-            {sidebarOpen && <span className="nav-text">Élèves</span>}
-          </div>
-          <div 
-            className={`nav-item ${activeTab === 'matieres' ? 'nav-item-active' : ''}`} 
+            <span>Élèves</span>
+          </button>
+          <button
+            className={`sidebar-link ${activeTab === 'matieres' ? 'active' : ''}`}
             onClick={() => setActiveTab('matieres')}
           >
             <Book size={20} />
-            {sidebarOpen && <span className="nav-text">Matières</span>}
-          </div>
-          <div 
-            className={`nav-item ${activeTab === 'calendrier' ? 'nav-item-active' : ''}`} 
+            <span>Matières</span>
+          </button>
+          <button
+            className={`sidebar-link ${activeTab === 'calendrier' ? 'active' : ''}`}
             onClick={() => setActiveTab('calendrier')}
           >
             <Calendar size={20} />
-            {sidebarOpen && <span className="nav-text">Calendrier</span>}
-          </div>
-          <div 
-            className={`nav-item ${activeTab === 'personnel' ? 'nav-item-active' : ''}`} 
+            <span>Calendrier</span>
+          </button>
+          <button
+            className={`sidebar-link ${activeTab === 'personnel' ? 'active' : ''}`}
             onClick={() => setActiveTab('personnel')}
           >
             <User size={20} />
-            {sidebarOpen && <span className="nav-text">Personnel</span>}
-          </div>
-          <div 
-            className={`nav-item ${activeTab === 'parametres' ? 'nav-item-active' : ''}`} 
+            <span>Personnel</span>
+          </button>
+          <button
+            className={`sidebar-link ${activeTab === 'parametres' ? 'active' : ''}`}
             onClick={() => setActiveTab('parametres')}
           >
             <Settings size={20} />
-            {sidebarOpen && <span className="nav-text">Paramètres</span>}
-          </div>
-          <div className="nav-item nav-logout">
-            <LogOut size={20} />
-            {sidebarOpen && <span className="nav-text">Déconnexion</span>}
+            <span>Paramètres</span>
+          </button>
+          <div className="sidebar-footer">
+            <button className="sidebar-link">
+              <LogOut size={20} />
+              <span>Déconnexion</span>
+            </button>
           </div>
         </nav>
       </div>
@@ -339,29 +338,27 @@ export default function Matieres()  {
       {/* Main content */}
       <div className="main-content">
         {/* Header */}
-        <header className="main-header">
+        <header className="page-header">
           <div className="header-content">
-            <h2 className="page-title">
-              {activeTab === 'matieres' ? 'Gestion des Matières' : 
+            <h2 className="header-title">
+              {activeTab === 'matieres' ? 'Gestion des Matières' :
                 activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
             </h2>
             <div className="header-actions">
-              <div className="notification-wrapper">
-                <button className="notification-btn">
-                  <Bell size={20} />
-                  <span className="notification-badge">4</span>
-                </button>
-              </div>
-              <div className="user-info">
-                <img src="/api/placeholder/40/40" alt="Profile" className="user-avatar" />
-                {sidebarOpen && <span className="user-name">Administrateur</span>}
+              <button className="btn btn-icon">
+                <Bell size={20} />
+                <span className="notification-badge">4</span>
+              </button>
+              <div className="user-profile">
+                <div className="avatar-circle">A</div>
+                <span className="user-name">Administrateur</span>
               </div>
             </div>
           </div>
         </header>
 
         {/* Content area */}
-        <main className="content-area">
+        <main className="content-container">
           {renderContent()}
         </main>
       </div>
