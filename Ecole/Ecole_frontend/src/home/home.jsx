@@ -12,7 +12,7 @@ export default function Home() {
         <nav className="nav">
           <div className="logo">School Management</div>
           <div className="nav-buttons">
-            <button className="btn-student" onClick={() => navigate('/espace-etudiant')}>
+            <button className="btn-student" onClick={() => navigate('/connexionE')}>
               Espace étudiant
             </button>
             <button className="btn-login" onClick={() => navigate('/connexion')}>

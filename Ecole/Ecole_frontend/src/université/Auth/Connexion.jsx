@@ -2,10 +2,8 @@ import { useState, useEffect } from 'react';
 import './Mes_CSS/Connexion.css';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../AuthContext';
-import api from '../api'; 
-import { urlBase } from '../api';
-import EcoleManagement from '../components/EcoleManagement';
+import { useAuth } from '../../AuthContext';
+import api from '../../api';
 
 
 export function ConnexionU() {

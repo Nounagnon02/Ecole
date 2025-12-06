@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import './Mes_CSS_directeur/Classe.css';
+import '../styles/GlobalStyles.css';
 import axios from 'axios';
 import { Edit2, Trash2, Save, X, Plus, Menu, Home, Users, Book, Calendar, User, Settings, LogOut, Bell } from 'lucide-react';
 
-export  function Classe() {
+export function Classe() {
     const [classe, SetClasse] = useState({
         nom_classe: "",
         categorie_classe: "",
@@ -35,51 +35,51 @@ export  function Classe() {
                 'Content-Type': 'application/json'
             }
         })
-        .then(res => {
-            SetMessage('Classe ajoutée avec succès');
-            SetError(false);
-            SetClasse({
-                nom_classe: "",
-                categorie_classe: "",
+            .then(res => {
+                SetMessage('Classe ajoutée avec succès');
+                SetError(false);
+                SetClasse({
+                    nom_classe: "",
+                    categorie_classe: "",
+                });
+            })
+            .catch(err => {
+                const errorMessage = err.response?.data?.message || "Erreur lors de l'ajout";
+                const errorDetails = err.response?.data?.errors || err.response?.data?.error || err.message;
+                SetMessage(`${errorMessage}: ${JSON.stringify(errorDetails)}`);
+                SetError(true);
+                console.error('Erreur détaillée:', err.response?.data || err.message);
             });
-        })
-        .catch(err => {
-            const errorMessage = err.response?.data?.message || "Erreur lors de l'ajout";
-            const errorDetails = err.response?.data?.errors || err.response?.data?.error || err.message;
-            SetMessage(`${errorMessage}: ${JSON.stringify(errorDetails)}`);
-            SetError(true);
-            console.error('Erreur détaillée:', err.response?.data || err.message);
-        });
     };
 
     return (
-        <div className="container">
-            <form className="corps" onSubmit={HandleSubmit}>
-                <h2 className="H2">Enregistrement d'une classe</h2>
+        <div className="form-container">
+            <form onSubmit={HandleSubmit}>
+                <h2 style={{ marginBottom: '1.5rem', fontSize: '1.5rem', fontWeight: 'bold' }}>Enregistrement d'une classe</h2>
                 {message && (
-                    <div className={error ? 'error' : 'success'}>
+                    <div className={`message ${error ? 'error' : 'success'}`}>
                         {message}
                     </div>
                 )}
-                <div className="toust">
+                <div className="form-group">
                     <input
                         type="text"
-                        className="tous"
+                        className="form-input"
                         name="nom_classe"
                         value={classe.nom_classe}
                         onChange={HandleChange}
                         placeholder="Le Nom de la classe"
                     />
                 </div>
-                <div className="toust">
-                    <select name="categorie_classe" className='tous' value={classe.categorie_classe} onChange={HandleChange}>
+                <div className="form-group">
+                    <select name="categorie_classe" className='form-select' value={classe.categorie_classe} onChange={HandleChange}>
                         <option value="">Choisir une catégorie</option>
                         <option value="maternelle">Maternelle</option>
                         <option value="primaire">Primaire</option>
                         <option value="secondaire">Secondaire</option>
                     </select>
                 </div>
-                <button className="bi" type="submit">Enregistrer</button>
+                <button className="btn btn-primary" type="submit">Enregistrer</button>
             </form>
         </div>
     );
@@ -173,9 +173,9 @@ export default function Classes() {
             });
 
             // Mise à jour du state local
-            setClasses(classes.map(classe => 
-                classe.id === id 
-                    ? {...classe, nom_classe: editValue, categorie_classe: editCategorie}
+            setClasses(classes.map(classe =>
+                classe.id === id
+                    ? { ...classe, nom_classe: editValue, categorie_classe: editCategorie }
                     : classe
             ));
 
@@ -240,21 +240,23 @@ export default function Classes() {
                 )}
 
                 {/* Formulaire d'ajout */}
-                <div className="add-form">
-                    <h2 className="form-title">Ajouter une nouvelle classe</h2>
-                    <div className="form-controls">
+                <div className="form-container" style={{ marginBottom: '2rem' }}>
+                    <h2 style={{ marginBottom: '1.5rem', fontSize: '1.25rem', fontWeight: 'bold' }}>Ajouter une nouvelle classe</h2>
+                    <div className="form-group" style={{ flexDirection: 'row', gap: '1rem' }}>
                         <input
                             type="text"
                             value={newnom_classe}
                             onChange={(e) => setNewnom_classe(e.target.value)}
                             placeholder="Nom de la classe"
-                            className="input-field"
+                            className="form-input"
+                            style={{ flex: 1 }}
                             onKeyPress={(e) => e.key === 'Enter' && AjouterClasses()}
                         />
                         <select
                             value={newcategorie_classe}
                             onChange={(e) => setNewcategorie_classe(e.target.value)}
-                            className="input-field"
+                            className="form-select"
+                            style={{ flex: 1 }}
                             onKeyPress={(e) => e.key === 'Enter' && AjouterClasses()}
                         >
                             <option value="">Choisir une catégorie</option>
@@ -274,57 +276,55 @@ export default function Classes() {
                 </div>
 
                 {/* Liste des classes */}
-                <div className="matieres-list">
-                    <div className="list-header">
-                        <h2 className="list-title">Liste des Classes</h2>
-                    </div>
+                <div>
+                    <h2 style={{ marginBottom: '1.5rem', fontSize: '1.5rem', fontWeight: 'bold' }}>Liste des Classes</h2>
 
                     {loading && classes.length === 0 ? (
-                        <div className="empty-state">
+                        <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
                             Chargement des classes...
                         </div>
                     ) : classes.length === 0 ? (
-                        <div className="empty-state">
+                        <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
                             Aucune classe trouvée. Ajoutez-en une ci-dessus.
                         </div>
                     ) : (
-                        <div className="matieres-items">
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
                             {classes.map((classe) => (
-                                <div key={classe.id} className="matiere-item">
-                                    <div className="matiere-content">
+                                <div key={classe.id} className="card">
+                                    <div className="card-body">
                                         <div className="matiere-details">
                                             {editingId === classe.id ? (
-                                                <div className="edit-form">
+                                                <div className="form-grid">
                                                     <input
                                                         type="text"
                                                         value={editValue}
                                                         onChange={(e) => setEditValue(e.target.value)}
-                                                        className="edit-input"
+                                                        className="form-input"
                                                         onKeyPress={(e) => e.key === 'Enter' && Modification(classe.id)}
                                                         autoFocus
                                                     />
                                                     <select
                                                         value={editCategorie}
                                                         onChange={(e) => setEditCategorie(e.target.value)}
-                                                        className="edit-input"
+                                                        className="form-select"
                                                     >
                                                         <option value="">Choisir une catégorie</option>
                                                         <option value="maternelle">Maternelle</option>
                                                         <option value="primaire">Primaire</option>
                                                         <option value="secondaire">Secondaire</option>
                                                     </select>
-                                                    <div className="edit-actions">
+                                                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
                                                         <button
                                                             onClick={() => Modification(classe.id)}
                                                             disabled={loading}
-                                                            className="btn btn-success"
+                                                            className="btn btn-primary"
                                                             title="Sauvegarder"
                                                         >
                                                             <Save size={16} />
                                                         </button>
                                                         <button
                                                             onClick={handleCancel}
-                                                            className="btn btn-secondary"
+                                                            className="btn btn-danger"
                                                             title="Annuler"
                                                         >
                                                             <X size={16} />
@@ -334,28 +334,28 @@ export default function Classes() {
                                             ) : (
                                                 <div className="matiere-display">
                                                     <div className="matiere-info">
-                                                        <h3 className="matiere-name">{classe.nom_classe}</h3>
-                                                        <p className="matiere-categorie">Catégorie: {classe.categorie_classe}</p>
-                                                        <p className="matiere-id">ID: {classe.id}</p>
+                                                        <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>{classe.nom_classe}</h3>
+                                                        <p style={{ color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Catégorie: {classe.categorie_classe}</p>
+                                                        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>ID: {classe.id}</p>
                                                     </div>
-                                                    <div className="matiere-actions">
+                                                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
                                                         <button
                                                             onClick={() => handleEdit(classe)}
                                                             disabled={loading || editingId !== null}
-                                                            className="btn btn-edit"
+                                                            className="btn btn-icon"
                                                             title="Modifier"
+                                                            style={{ color: 'var(--primary)' }}
                                                         >
                                                             <Edit2 size={16} />
-                                                            Modifier
                                                         </button>
                                                         <button
                                                             onClick={() => handleDelete(classe.id)}
                                                             disabled={loading || editingId !== null}
-                                                            className="btn btn-danger"
+                                                            className="btn btn-icon"
                                                             title="Supprimer"
+                                                            style={{ color: 'var(--error)' }}
                                                         >
                                                             <Trash2 size={16} />
-                                                            Supprimer
                                                         </button>
                                                     </div>
                                                 </div>
@@ -372,61 +372,61 @@ export default function Classes() {
     };
 
     return (
-        <div className="app-container">
+    return (
+        <div className="app-dashboard">
             {/* Sidebar */}
-            <div className={`sidebar ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
+            <div className="sidebar">
                 <div className="sidebar-header">
-                    {sidebarOpen && <h1 className="sidebar-title">EcoleGestion</h1>}
-                    <button onClick={toggleSidebar} className="sidebar-toggle">
-                        {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
-                    </button>
+                    <h1 className="sidebar-title">EcoleGestion</h1>
                 </div>
                 <nav className="sidebar-nav">
-                    <div
-                        className={`nav-item ${activeTab === 'accueil' ? 'nav-item-active' : ''}`}
+                    <button
+                        className={`sidebar-link ${activeTab === 'accueil' ? 'active' : ''}`}
                         onClick={() => setActiveTab('accueil')}
                     >
                         <Home size={20} />
-                        {sidebarOpen && <span className="nav-text">Accueil</span>}
-                    </div>
-                    <div
-                        className={`nav-item ${activeTab === 'eleves' ? 'nav-item-active' : ''}`}
+                        <span>Accueil</span>
+                    </button>
+                    <button
+                        className={`sidebar-link ${activeTab === 'eleves' ? 'active' : ''}`}
                         onClick={() => setActiveTab('eleves')}
                     >
                         <Users size={20} />
-                        {sidebarOpen && <span className="nav-text">Élèves</span>}
-                    </div>
-                    <div
-                        className={`nav-item ${activeTab === 'matieres' ? 'nav-item-active' : ''}`}
+                        <span>Élèves</span>
+                    </button>
+                    <button
+                        className={`sidebar-link ${activeTab === 'matieres' ? 'active' : ''}`}
                         onClick={() => setActiveTab('matieres')}
                     >
                         <Book size={20} />
-                        {sidebarOpen && <span className="nav-text">Classes</span>}
-                    </div>
-                    <div
-                        className={`nav-item ${activeTab === 'calendrier' ? 'nav-item-active' : ''}`}
+                        <span>Classes</span>
+                    </button>
+                    <button
+                        className={`sidebar-link ${activeTab === 'calendrier' ? 'active' : ''}`}
                         onClick={() => setActiveTab('calendrier')}
                     >
                         <Calendar size={20} />
-                        {sidebarOpen && <span className="nav-text">Calendrier</span>}
-                    </div>
-                    <div
-                        className={`nav-item ${activeTab === 'personnel' ? 'nav-item-active' : ''}`}
+                        <span>Calendrier</span>
+                    </button>
+                    <button
+                        className={`sidebar-link ${activeTab === 'personnel' ? 'active' : ''}`}
                         onClick={() => setActiveTab('personnel')}
                     >
                         <User size={20} />
-                        {sidebarOpen && <span className="nav-text">Personnel</span>}
-                    </div>
-                    <div
-                        className={`nav-item ${activeTab === 'parametres' ? 'nav-item-active' : ''}`}
+                        <span>Personnel</span>
+                    </button>
+                    <button
+                        className={`sidebar-link ${activeTab === 'parametres' ? 'active' : ''}`}
                         onClick={() => setActiveTab('parametres')}
                     >
                         <Settings size={20} />
-                        {sidebarOpen && <span className="nav-text">Paramètres</span>}
-                    </div>
-                    <div className="nav-item nav-logout">
-                        <LogOut size={20} />
-                        {sidebarOpen && <span className="nav-text">Déconnexion</span>}
+                        <span>Paramètres</span>
+                    </button>
+                    <div className="sidebar-footer">
+                        <button className="sidebar-link">
+                            <LogOut size={20} />
+                            <span>Déconnexion</span>
+                        </button>
                     </div>
                 </nav>
             </div>
@@ -434,29 +434,27 @@ export default function Classes() {
             {/* Main content */}
             <div className="main-content">
                 {/* Header */}
-                <header className="main-header">
+                <header className="page-header">
                     <div className="header-content">
-                        <h2 className="page-title">
+                        <h2 className="header-title">
                             {activeTab === 'matieres' ? 'Gestion des Classes' :
                                 activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
                         </h2>
                         <div className="header-actions">
-                            <div className="notification-wrapper">
-                                <button className="notification-btn">
-                                    <Bell size={20} />
-                                    <span className="notification-badge">4</span>
-                                </button>
-                            </div>
-                            <div className="user-info">
-                                <img src="/api/placeholder/40/40" alt="Profile" className="user-avatar" />
-                                {sidebarOpen && <span className="user-name">Administrateur</span>}
+                            <button className="btn btn-icon">
+                                <Bell size={20} />
+                                <span className="notification-badge">4</span>
+                            </button>
+                            <div className="user-profile">
+                                <div className="avatar-circle">A</div>
+                                <span className="user-name">Administrateur</span>
                             </div>
                         </div>
                     </div>
                 </header>
 
                 {/* Content area */}
-                <main className="content-area">
+                <main className="content-container">
                     {renderContent()}
                 </main>
             </div>

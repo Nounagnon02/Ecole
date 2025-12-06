@@ -1,0 +1,55 @@
+/* UniversiteTheme.css */
+@import '../styles/Theme.css';
+
+/* 
+ * This file is now a proxy to the global theme.
+ * Specific Universite overrides can be added here if needed.
+ */
+
+/* Map univ- variables to global variables if needed for backward compatibility 
+   or just rely on the fact that we updated DashboardUniversite.css to use univ- variables 
+   which we should probably update to use global variables eventually.
+   
+   For now, let's re-declare the univ- variables mapping to global ones 
+   to ensure existing Universite code doesn't break.
+*/
+
+.universite-theme {
+    --primary: #0056b3;
+    --primary-light: #e6f0ff;
+    --primary-dark: #004494;
+}
+
+:root {
+    --univ-primary: var(--primary);
+    --univ-primary-light: var(--primary-light);
+    --univ-primary-dark: var(--primary-dark);
+
+    --univ-secondary-1: var(--secondary-1);
+    --univ-secondary-2: var(--secondary-2);
+    --univ-secondary-3: var(--secondary-3);
+    --univ-secondary-4: var(--secondary-4);
+
+    --univ-success: var(--success);
+    --univ-warning: var(--warning);
+    --univ-error: var(--error);
+    --univ-info: var(--info);
+
+    --univ-bg-light: var(--bg-light);
+    --univ-bg-white: var(--bg-white);
+    --univ-text-main: var(--text-main);
+    --univ-text-muted: var(--text-muted);
+    --univ-border: var(--border);
+    --univ-border-focus: var(--border-focus);
+
+    --univ-shadow-sm: var(--shadow-sm);
+    --univ-shadow-md: var(--shadow-md);
+    --univ-shadow-lg: var(--shadow-lg);
+
+    --univ-transition: var(--transition);
+}
+
+/* Re-export animations if needed locally or just use global classes */
+.univ-fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+}

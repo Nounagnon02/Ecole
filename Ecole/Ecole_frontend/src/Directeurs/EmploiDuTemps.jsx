@@ -58,69 +58,144 @@ const EmploiDuTemps = () => {
   };
 
   return (
-    <div style={{ padding: '20px' }}>
-      <h2>Gestion des Emplois du Temps</h2>
-      
-      <form onSubmit={handleSubmit} style={{ marginBottom: '20px', padding: '20px', border: '1px solid #ddd', borderRadius: '8px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px' }}>
-          <select value={form.classe_id} onChange={(e) => { setForm({...form, classe_id: e.target.value}); setSelectedClasse(e.target.value); loadEmplois(e.target.value); }} required>
-            <option value="">Sélectionner une classe</option>
-            {classes.map(c => <option key={c.id} value={c.id}>{c.nom_classe}</option>)}
-          </select>
-          
-          <select value={form.matiere_id} onChange={(e) => setForm({...form, matiere_id: e.target.value})} required>
-            <option value="">Sélectionner une matière</option>
-            {matieres.map(m => <option key={m.id} value={m.id}>{m.nom}</option>)}
-          </select>
-          
-          <select value={form.enseignant_id} onChange={(e) => setForm({...form, enseignant_id: e.target.value})} required>
-            <option value="">Sélectionner un enseignant</option>
-            {enseignants.map(e => <option key={e.id} value={e.id}>{e.nom} {e.prenom}</option>)}
-          </select>
-          
-          <select value={form.jour} onChange={(e) => setForm({...form, jour: e.target.value})} required>
-            <option value="Lundi">Lundi</option>
-            <option value="Mardi">Mardi</option>
-            <option value="Mercredi">Mercredi</option>
-            <option value="Jeudi">Jeudi</option>
-            <option value="Vendredi">Vendredi</option>
-            <option value="Samedi">Samedi</option>
-          </select>
-          
-          <input type="time" value={form.heure_debut} onChange={(e) => setForm({...form, heure_debut: e.target.value})} required />
-          <input type="time" value={form.heure_fin} onChange={(e) => setForm({...form, heure_fin: e.target.value})} required />
-          <input type="text" placeholder="Salle" value={form.salle} onChange={(e) => setForm({...form, salle: e.target.value})} />
-        </div>
-        <button type="submit" style={{ marginTop: '10px', padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Ajouter</button>
-      </form>
+    <div className="container">
+      <h2 style={{ marginBottom: '2rem', fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--primary)' }}>Gestion des Emplois du Temps</h2>
+
+      <div className="card">
+        <h3 style={{ marginBottom: '1.5rem', fontSize: '1.25rem', fontWeight: 'bold' }}>Ajouter un cours</h3>
+        <form onSubmit={handleSubmit}>
+          <div className="form-grid">
+            <div className="form-group">
+              <label>Classe</label>
+              <select
+                value={form.classe_id}
+                onChange={(e) => { setForm({ ...form, classe_id: e.target.value }); setSelectedClasse(e.target.value); loadEmplois(e.target.value); }}
+                required
+                className="form-select"
+              >
+                <option value="">Sélectionner une classe</option>
+                {classes.map(c => <option key={c.id} value={c.id}>{c.nom_classe}</option>)}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label>Matière</label>
+              <select
+                value={form.matiere_id}
+                onChange={(e) => setForm({ ...form, matiere_id: e.target.value })}
+                required
+                className="form-select"
+              >
+                <option value="">Sélectionner une matière</option>
+                {matieres.map(m => <option key={m.id} value={m.id}>{m.nom}</option>)}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label>Enseignant</label>
+              <select
+                value={form.enseignant_id}
+                onChange={(e) => setForm({ ...form, enseignant_id: e.target.value })}
+                required
+                className="form-select"
+              >
+                <option value="">Sélectionner un enseignant</option>
+                {enseignants.map(e => <option key={e.id} value={e.id}>{e.nom} {e.prenom}</option>)}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label>Jour</label>
+              <select
+                value={form.jour}
+                onChange={(e) => setForm({ ...form, jour: e.target.value })}
+                required
+                className="form-select"
+              >
+                <option value="Lundi">Lundi</option>
+                <option value="Mardi">Mardi</option>
+                <option value="Mercredi">Mercredi</option>
+                <option value="Jeudi">Jeudi</option>
+                <option value="Vendredi">Vendredi</option>
+                <option value="Samedi">Samedi</option>
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label>Heure de début</label>
+              <input
+                type="time"
+                value={form.heure_debut}
+                onChange={(e) => setForm({ ...form, heure_debut: e.target.value })}
+                required
+                className="form-input"
+              />
+            </div>
+            <div className="form-group">
+              <label>Heure de fin</label>
+              <input
+                type="time"
+                value={form.heure_fin}
+                onChange={(e) => setForm({ ...form, heure_fin: e.target.value })}
+                required
+                className="form-input"
+              />
+            </div>
+            <div className="form-group">
+              <label>Salle</label>
+              <input
+                type="text"
+                placeholder="Salle"
+                value={form.salle}
+                onChange={(e) => setForm({ ...form, salle: e.target.value })}
+                className="form-input"
+              />
+            </div>
+          </div>
+          <button type="submit" className="btn btn-primary" style={{ marginTop: '1.5rem' }}>Ajouter</button>
+        </form>
+      </div>
 
       {selectedClasse && (
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ background: '#f0f0f0' }}>
-              <th style={{ padding: '10px', border: '1px solid #ddd' }}>Jour</th>
-              <th style={{ padding: '10px', border: '1px solid #ddd' }}>Heure</th>
-              <th style={{ padding: '10px', border: '1px solid #ddd' }}>Matière</th>
-              <th style={{ padding: '10px', border: '1px solid #ddd' }}>Professeur</th>
-              <th style={{ padding: '10px', border: '1px solid #ddd' }}>Salle</th>
-              <th style={{ padding: '10px', border: '1px solid #ddd' }}>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {emplois.map(e => (
-              <tr key={e.id}>
-                <td style={{ padding: '10px', border: '1px solid #ddd' }}>{e.jour}</td>
-                <td style={{ padding: '10px', border: '1px solid #ddd' }}>{e.heure_debut} - {e.heure_fin}</td>
-                <td style={{ padding: '10px', border: '1px solid #ddd' }}>{e.matiere}</td>
-                <td style={{ padding: '10px', border: '1px solid #ddd' }}>{e.professeur}</td>
-                <td style={{ padding: '10px', border: '1px solid #ddd' }}>{e.salle}</td>
-                <td style={{ padding: '10px', border: '1px solid #ddd' }}>
-                  <button onClick={() => handleDelete(e.id)} style={{ background: '#f44336', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>Supprimer</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="card" style={{ marginTop: '2rem' }}>
+          <h3 style={{ marginBottom: '1.5rem', fontSize: '1.25rem', fontWeight: 'bold' }}>Emploi du temps de la classe</h3>
+          {emplois.length > 0 ? (
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Jour</th>
+                  <th>Heure</th>
+                  <th>Matière</th>
+                  <th>Professeur</th>
+                  <th>Salle</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {emplois.map(e => (
+                  <tr key={e.id}>
+                    <td>{e.jour}</td>
+                    <td>{e.heure_debut} - {e.heure_fin}</td>
+                    <td>{e.matiere}</td>
+                    <td>{e.professeur}</td>
+                    <td>{e.salle}</td>
+                    <td>
+                      <button
+                        onClick={() => handleDelete(e.id)}
+                        className="btn btn-danger"
+                        style={{ padding: '0.25rem 0.5rem', fontSize: '0.85rem' }}
+                      >
+                        Supprimer
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <p style={{ color: 'var(--text-muted)', fontStyle: 'italic', textAlign: 'center', padding: '1rem' }}>Aucun cours programmé pour cette classe.</p>
+          )}
+        </div>
       )}
     </div>
   );

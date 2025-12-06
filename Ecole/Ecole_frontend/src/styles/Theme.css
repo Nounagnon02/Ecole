@@ -1,0 +1,92 @@
+/* Theme.css */
+:root {
+    /* Primary Colors */
+    --primary: #2563EB;
+    /* Main Blue - Navigation, Menu, Focus */
+    --primary-light: #DBEAFE;
+    --primary-dark: #1E40AF;
+
+    /* Secondary Colors for Dashboards */
+    --secondary-1: #6f42c1;
+    /* Purple */
+    --secondary-2: #20c997;
+    /* Teal */
+    --secondary-3: #fd7e14;
+    /* Orange */
+    --secondary-4: #e83e8c;
+    /* Pink */
+
+    /* Status Colors */
+    --success: #198754;
+    /* Green */
+    --warning: #fd7e14;
+    /* Orange */
+    --error: #dc3545;
+    /* Red */
+    --info: #0dcaf0;
+    /* Cyan */
+
+    /* Neutrals */
+    --bg-light: #f8f9fa;
+    --bg-white: #ffffff;
+    --text-main: #212529;
+    --text-muted: #6c757d;
+    --border: #dee2e6;
+    /* Medium Gray */
+    --border-focus: #86b7fe;
+
+    /* Shadows */
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+
+    /* Transitions */
+    --transition: all 0.3s ease;
+}
+
+/* Global Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* Typography */
+.text-primary {
+    color: var(--primary);
+}
+
+.text-success {
+    color: var(--success);
+}
+
+.text-warning {
+    color: var(--warning);
+}
+
+.text-error {
+    color: var(--error);
+}
+
+/* Accessibility Helpers */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}

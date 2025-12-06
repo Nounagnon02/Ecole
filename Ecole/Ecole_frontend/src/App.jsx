@@ -17,6 +17,7 @@ import DashboardInfirmier from './Infirmier/DashboardInfirmier';
 import DashboardBibliothecaire from './Bibliothecaire/DashboardBibliothecaire';
 import DashboardSecretaire from './Secretaire/DashboardSecretaire';
 import EcoleManagement from './components/EcoleManagement';
+import UniversiteRoutes from './Universite/UniversiteRoutes';
 
 const UnauthorizedPage = () => (
   <div className="error-container">
@@ -100,6 +101,8 @@ function App() {
               <EcoleManagement />
             </ProtectedRoute>
           } />
+          
+          <Route path="/universite/*" element={<UniversiteRoutes />} />
           
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
