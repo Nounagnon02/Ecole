@@ -19,15 +19,18 @@ class DirecteurController extends Controller
 
     public function classes()
     {
-        return Classes::with(['eleves'])->get()->map(function ($classe) {
-            return [
-                'id' => $classe->id,
-                'nom' => $classe->nom_classe,
-                'niveau' => $classe->categorie_classe,
-                'eleves_count' => $classe->eleves->count(),
-                'enseignant_principal' => $classe->enseignants->first()
-            ];
-        });
+        return Classes::withCount('eleves')
+            ->with('enseignants')
+            ->get()
+            ->map(function ($classe) {
+                return [
+                    'id' => $classe->id,
+                    'nom' => $classe->nom_classe,
+                    'niveau' => $classe->categorie_classe,
+                    'eleves_count' => $classe->eleves_count,
+                    'enseignant_principal' => $classe->enseignants->first()
+                ];
+            });
     }
 
     public function enseignants()

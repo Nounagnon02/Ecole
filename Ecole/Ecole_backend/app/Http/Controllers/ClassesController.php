@@ -16,29 +16,19 @@ use Illuminate\Http\Request;
 class ClassesController extends Controller
 {
     //
-    public function store(Request $request)
+    public function store(\App\Http\Requests\StoreClasseRequest $request)
     {
         try {
-                $validated = $request->validate([
-                    'nom_classe' => 'required|string',
-                    'categorie_classe' => 'required|string',
-                    ]);
+            $validated = $request->validated();
 
-                $classe = Classes::create([
-                    'nom_classe' => $validated['nom_classe'],
-                    'categorie_classe' => $validated['categorie_classe']
+            $classe = Classes::create([
+                'nom_classe' => $validated['nom_classe'],
+                'categorie_classe' => $validated['categorie_classe']
+            ]);
 
-                ]);
+            event(new Registered($classe));
+            return response()->json($classe, 201);
 
-                event(new Registered($classe));
-                return response()->json($classe, 201);
-
-            }
-            catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'message' => 'Validation error',
-                'errors' => $e->errors()
-            ], 422);
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Erreur lors de l\'ajout',
