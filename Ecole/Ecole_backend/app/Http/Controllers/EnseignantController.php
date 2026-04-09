@@ -2,154 +2,104 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Enseignants;
-use App\Models\Enseignants_Martenel_Primaire;
-use App\Models\Classe;
+use App\Models\Enseignant;
+use App\Models\User;
+use App\Models\Classes;
 use App\Models\Note;
 use App\Models\EmploiDuTemps;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
-/**
- * Contrôleur unifié pour la gestion des enseignants (listes et fonctionnalités individuelles)
- */
 class EnseignantController extends Controller
 {
     /**
-     * Récupérer la liste des enseignants (Secondaire)
+     * Liste des enseignants (Admin)
      */
-    public function index(Request $request)
+    public function index()
     {
-        $query = Enseignants::query();
-
-        if ($request->has('with_matieres')) {
-            $query->with('matieres');
-        }
-
-        $enseignants = $query->get();
-
-        return response()->json($enseignants);
+        return response()->json(Enseignant::with('user')->get());
     }
 
     /**
-     * Récupérer la liste des enseignants (Maternelle/Primaire)
+     * Création d'un enseignant (Admin)
      */
-    public function getEnseignantsMP(Request $request)
+    public function store(Request $request)
     {
-        $query = Enseignants_Martenel_Primaire::query();
+        $validated = $request->validate([
+            'name' => 'required|string',
+            'prenom' => 'required|string',
+            'email' => 'required|email|unique:users,email',
+            'identifiant' => 'required|string|unique:users,identifiant',
+            'password' => 'required|string|min:6',
+            'ecole_id' => 'required|exists:ecoles,id',
+            'role' => 'required|in:enseignant,enseignantM,enseignantP',
+        ]);
 
-        if ($request->has('with_classes')) {
-            $query->with('classes');
-        }
-
-        $enseignants = $query->get();
-
-        return response()->json($enseignants);
-    }
-    
-    /**
-     * Effectifs des enseignants par niveau
-     */
-    public function getEffectifMaternelle() {
-        return response()->json(
-            Enseignants_Martenel_Primaire::where('role', 'enseignementM')->count()
-        );
-    }
-    
-    public function getEffectifPrimaire() {
-        return response()->json(
-            Enseignants_Martenel_Primaire::where('role', 'enseignementP')->count()
-        );
-    }
-    
-    public function getEffectifSecondaire() {
-        return response()->json(Enseignants::count());
-    }
-    /**
-     * Récupérer les classes d'un enseignant
-     */
-    public function getClasses($id)
-    {
         try {
-            $enseignant = Enseignants::with('classes.eleves')->findOrFail($id);
-            return response()->json([
-                'success' => true,
-                'data' => $enseignant->classes
-            ]);
+            return DB::transaction(function () use ($validated) {
+                $user = User::create([
+                    'name' => $validated['name'],
+                    'prenom' => $validated['prenom'],
+                    'email' => $validated['email'],
+                    'identifiant' => $validated['identifiant'],
+                    'password' => Hash::make($validated['password']),
+                    'role' => $validated['role'],
+                    'ecole_id' => $validated['ecole_id'],
+                ]);
+
+                $enseignant = Enseignant::create([
+                    'user_id' => $user->id,
+                ]);
+
+                return response()->json($enseignant->load('user'), 201);
+            });
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Enseignant non trouvé'
-            ], 404);
+            return response()->json(['message' => 'Erreur lors de la création', 'error' => $e->getMessage()], 500);
         }
     }
 
-    /**
-     * Récupérer l'emploi du temps d'un enseignant
-     */
-    public function getEmploiTemps($id)
+    public function show($id)
     {
-        try {
-            $emploiDuTemps = EmploiDuTemps::where('enseignant_id', $id)
-                ->with(['classe', 'matiere'])
-                ->orderBy('jour')
-                ->orderBy('heure_debut')
-                ->get();
-
-            return response()->json([
-                'success' => true,
-                'data' => $emploiDuTemps
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Erreur lors de la récupération de l\'emploi du temps'
-            ], 500);
+        $enseignant = Enseignant::with('user', 'matieres', 'classes')->find($id);
+        if (!$enseignant) {
+            return response()->json(['message' => 'Enseignant non trouvé'], 404);
         }
+        return response()->json($enseignant);
     }
 
     /**
-     * Récupérer les classes de l'enseignant connecté
+     * Espace Enseignant : Récupérer ses classes
      */
-    public function classes(Request $request)
+    public function classes()
     {
-        $user = $request->user();
-        
-        if (!$user || !$user->enseignant) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Utilisateur non authentifié ou n\'est pas un enseignant'
-            ], 401);
+        $user = Auth::user();
+        if (!$user->enseignant) {
+            return response()->json(['message' => 'Profil enseignant non trouvé'], 404);
         }
 
         return response()->json([
             'success' => true,
-            'data' => $user->enseignant->classes()->with('eleves')->get()
+            'data' => $user->enseignant->classes()->with('eleve.user')->get()
         ]);
     }
 
     /**
-     * Récupérer les notes saisies par l'enseignant connecté
+     * Espace Enseignant : Récupérer son emploi du temps
      */
-    public function notes(Request $request)
+    public function getEmploiTemps()
     {
-        $user = $request->user();
-        
-        if (!$user || !$user->enseignant) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Utilisateur non authentifié ou n\'est pas un enseignant'
-            ], 401);
+        $user = Auth::user();
+        if (!$user->enseignant) {
+            return response()->json(['message' => 'Profil enseignant non trouvé'], 404);
         }
 
-        $notes = Note::where('enseignant_id', $user->enseignant->id)
-            ->with(['eleve', 'matiere', 'classe'])
-            ->orderBy('created_at', 'desc')
-            ->take(50)
+        $emploi = EmploiDuTemps::where('enseignant_id', $user->enseignant->id)
+            ->with(['classe', 'matiere'])
+            ->orderBy('jour')
             ->get();
 
-        return response()->json([
-            'success' => true,
-            'data' => $notes
-        ]);
+        return response()->json(['success' => true, 'data' => $emploi]);
     }
 }

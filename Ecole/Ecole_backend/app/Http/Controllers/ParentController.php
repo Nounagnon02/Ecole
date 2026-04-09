@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{Message, RendezVous};
+use App\Models\{Message, RendezVous, UserParent, Eleve};
 use App\Services\BulletinService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class ParentController extends Controller
 {
@@ -15,48 +16,37 @@ class ParentController extends Controller
         $this->bulletinService = $bulletinService;
     }
 
+    /**
+     * Espace Parent : Liste de ses enfants
+     */
     public function enfants()
     {
-        $parent = auth()->user();
-        return $parent->eleves->map(function ($enfant) {
+        $user = Auth::user();
+        if (!$user->parent) {
+            return response()->json(['message' => 'Profil parent non trouvé'], 404);
+        }
+
+        return $user->parent->eleves()->with('user', 'classe')->get()->map(function ($enfant) {
             return [
                 'id' => $enfant->id,
-                'nom' => $enfant->nom,
-                'prenom' => $enfant->prenom,
-                'classe' => $enfant->classe,
+                'nom' => $enfant->user->name,
+                'prenom' => $enfant->user->prenom,
+                'classe' => $enfant->classe->nom_classe,
                 'matricule' => $enfant->numero_matricule,
-                'moyenne_generale' => $this->getMoyenneGenerale($enfant->id),
-                'absences_count' => $enfant->absences()->count()
             ];
         });
     }
 
-    public function bulletins()
-    {
-        $parent = auth()->user();
-        $bulletins = [];
-        
-        foreach ($parent->eleves as $enfant) {
-            foreach (['1er_trimestre', '2eme_trimestre', '3eme_trimestre'] as $periode) {
-                $bulletin = $this->getBulletinData($enfant->id, $periode);
-                if ($bulletin) {
-                    $bulletins[] = [
-                        'enfant_id' => $enfant->id,
-                        'enfant_nom' => $enfant->nom . ' ' . $enfant->prenom,
-                        'periode' => $periode,
-                        'moyenne_generale' => $bulletin['moyenne_generale'],
-                        'rang' => $bulletin['rang']
-                    ];
-                }
-            }
-        }
-        
-        return $bulletins;
-    }
-
+    /**
+     * Espace Parent : Consulter le bulletin d'un enfant
+     */
     public function bulletin($enfantId, $periode)
     {
-        $enfant = auth()->user()->eleves()->findOrFail($enfantId);
+        $user = Auth::user();
+        $parent = $user->parent;
+        
+        // Vérifier que c'est bien son enfant
+        $enfant = $parent->eleves()->findOrFail($enfantId);
         
         if ($enfant->classe->categorie_classe === 'secondaire') {
             return $this->bulletinService->bulletinSecondaire($enfantId, $periode);
@@ -67,34 +57,10 @@ class ParentController extends Controller
 
     public function messages()
     {
-        $parentId = auth()->id();
-        return Message::where('destinataire', $parentId)
-            ->orWhere('expediteur', $parentId)
+        $user = Auth::user();
+        return Message::where('destinataire_id', $user->id) // Adapté au nouveau schéma
+            ->orWhere('expediteur_id', $user->id)
             ->latest()
             ->get();
-    }
-
-    public function rendezVous()
-    {
-        $parentId = auth()->id();
-        return RendezVous::where('parent_id', $parentId)
-            ->with(['eleve', 'enseignant'])
-            ->latest()
-            ->get();
-    }
-
-    private function getMoyenneGenerale($eleveId)
-    {
-        // Logique de calcul de moyenne - à adapter selon votre système
-        return 15.5; // Exemple
-    }
-
-    private function getBulletinData($eleveId, $periode)
-    {
-        // Logique pour récupérer les données de bulletin
-        return [
-            'moyenne_generale' => 15.5,
-            'rang' => ['position' => 5, 'total_eleves' => 30]
-        ];
     }
 }

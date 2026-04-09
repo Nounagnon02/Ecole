@@ -4,13 +4,20 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Traits\BelongsToEcole;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Eleve extends Model
 {
-    use BelongsToEcole;
+    use HasFactory, BelongsToEcole;
+
     protected $fillable = [
-        'user_id', 'parent_id', 'classe_id', 'matricule', 
-        'date_naissance', 'lieu_naissance', 'sexe'
+        'user_id',
+        'numero_matricule',
+        'date_naissance',
+        'lieu_naissance',
+        'sexe',
+        'class_id',
+        'serie_id'
     ];
 
     public function user()
@@ -18,39 +25,33 @@ class Eleve extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function parent()
+    public function parents()
     {
-        return $this->belongsTo(User::class, 'parent_id');
+        return $this->belongsToMany(UserParent::class, 'eleves_parents', 'eleve_id', 'parent_id');
     }
 
     public function classe()
     {
-        return $this->belongsTo(Classes::class , 'class_id');
+        return $this->belongsTo(Classes::class, 'class_id');
     }
 
-/**
- * Return the notes of the eleve
- *
- * @return \Illuminate\Database\Eloquent\Relations\HasMany
- */
+    public function serie()
+    {
+        return $this->belongsTo(Series::class, 'serie_id');
+    }
+
     public function notes()
     {
-        return $this->hasMany(Notes::class);
+        return $this->hasMany(Notes::class, 'eleve_id');
     }
 
     public function absences()
     {
-        return $this->hasMany(Absence::class);
+        return $this->hasMany(Absence::class, 'eleve_id');
     }
 
-    public function paiements()
+    public function paiementEleve()
     {
-        return $this->hasMany(Paiement::class);
-    }
-
-    // ajout de la relation avec les ecoles
-
-    public function ecole() {
-        return $this->belongsTo(Ecole::class, 'ecole_id');
+        return $this->hasMany(PaiementEleve::class, 'eleve_id');
     }
 }

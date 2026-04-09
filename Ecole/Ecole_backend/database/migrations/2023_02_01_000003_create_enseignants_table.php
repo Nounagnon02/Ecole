@@ -8,25 +8,30 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
+     *
+     * @return void
      */
-    public function up(): void
+    public function up()
     {
-        Schema::create('enseignants_martenel_primaire', function (Blueprint $table) {
+        Schema::create('enseignants', function(Blueprint $table){
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->date('date_naissance')->nullable();
             $table->string('lieu_naissance')->nullable();
             $table->string('sexe')->nullable();
-            $table->foreignId('class_id')->constrained('classes');
+            $table->string('specialite')->nullable();
+            $table->string('grade')->nullable();
             $table->timestamps();
         });
     }
 
     /**
      * Reverse the migrations.
+     *
+     * @return void
      */
-    public function down(): void
+    public function down()
     {
-        Schema::dropIfExists('enseignants_martenel_primaire');
+        Schema::dropIfExists('enseignants');
     }
 };
