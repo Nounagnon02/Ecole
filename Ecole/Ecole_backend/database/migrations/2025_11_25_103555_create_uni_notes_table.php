@@ -8,10 +8,10 @@ return new class extends Migration
 {
 public function up(): void
     {
-        Schema::create('notes', function (Blueprint $table) {
+        Schema::create('uni_notes', function (Blueprint $table) {
             $table->id();
             $table->foreignId('etudiant_id')->constrained('etudiants')->onDelete('cascade');
-            $table->foreignId('matiere_id')->constrained('matieres')->onDelete('cascade');
+            $table->foreignId('matiere_id')->constrained('uni_matieres')->onDelete('cascade');
             $table->decimal('note', 5, 2);
             $table->enum('type', ['CC', 'TP', 'Examen']);
             $table->date('date_evaluation');
@@ -21,6 +21,6 @@ public function up(): void
 
     public function down(): void
     {
-        Schema::dropIfExists('notes');
+        Schema::dropIfExists('uni_notes');
     }
 };

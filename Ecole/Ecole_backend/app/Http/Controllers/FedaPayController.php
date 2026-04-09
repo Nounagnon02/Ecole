@@ -4,57 +4,58 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Services\FedaPayService;
+use App\Services\CommunicationService;
 use App\Models\TransactionPaiement;
+use App\Models\Eleve;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class FedaPayController extends Controller
 {
     protected $fedapayService;
+    protected $commService;
 
-    public function __construct(FedaPayService $fedapayService)
+    public function __construct(FedaPayService $fedapayService, CommunicationService $commService)
     {
         $this->fedapayService = $fedapayService;
+        $this->commService = $commService;
     }
 
     /**
      * Initialiser un paiement via FedaPay
-     * POST /api/fedapay/init/{paiement_eleve_id}
+     * POST /api/fedapay/init/{eleve_id}
      */
-    public function initier(Request $request, $paiement_eleve_id)
+    public function initier(Request $request, $eleve_id)
     {
         try {
-            // Ici, vous devriez récupérer les infos du PaiementEleve via ID
-            // Pour l'exemple, on mock ou on suppose que l'ID est passé et valide
-            $paiementEleve = \App\Models\PaiementEleve::with('eleve')->findOrFail($paiement_eleve_id);
-            
-            // Calcul du montant à payer (exemple: tranche ou solde)
-            // Simplification : on prend le montant envoyé ou un défaut
-            $amount = $request->input('amount', 5000); // Montant par défaut pour test
+            $eleve = Eleve::with('user')->findOrFail($eleve_id);
+            $amount = $request->input('amount');
+
+            if (!$amount || $amount <= 0) {
+                return response()->json(['success' => false, 'message' => 'Montant invalide'], 422);
+            }
 
             // Création de la transaction en base locale
             $tx = TransactionPaiement::create([
-                'id_paiement_eleve' => $paiementEleve->id,
+                'eleve_id' => $eleve->id,
                 'montant_paye' => $amount,
-                'date_paiement' => now(),
                 'statut' => 'EN_ATTENTE',
                 'methode_paiement' => 'FEDAPAY',
-                'recu_par' => 'Système FedaPay'
             ]);
 
             // Appel au service FedaPay
             $result = $this->fedapayService->createTransaction([
-                'description' => "Paiement Scolarité - " . $paiementEleve->eleve->nom,
+                'description' => "Paiement Scolarité - " . $eleve->user->name . " " . $eleve->user->prenom,
                 'amount' => $amount,
-                'customer_firstname' => $paiementEleve->eleve->prenom,
-                'customer_lastname' => $paiementEleve->eleve->nom,
-                'customer_email' => $paiementEleve->eleve->email ?? 'parent@ecole.pj',
-                'customer_phone' => $paiementEleve->eleve->telephone ?? '99999999'
+                'customer_firstname' => $eleve->user->prenom,
+                'customer_lastname' => $eleve->user->name,
+                'customer_email' => $eleve->user->email ?? 'contact@ecole.pj',
+                'customer_phone' => $eleve->user->telephone ?? '00000000'
             ]);
 
             // Mise à jour avec l'ID FedaPay
             $tx->update([
-                'cinetpay_transaction_id' => $result['transaction']->id, // On réutilise la colonne ou nouvelle colonne
-                'cinetpay_payment_url' => $result['payment_url']
+                'cinetpay_transaction_id' => $result['transaction']->id,
             ]);
 
             return response()->json([
@@ -63,81 +64,43 @@ class FedaPayController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('FedaPay Init Controller Error: ' . $e->getMessage());
+            Log::error('FedaPay Init Error: ' . $e->getMessage());
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
 
     /**
-     * Webhook ou Callback pour FedaPay
+     * Webhook pour FedaPay
      */
-    public function callback(Request $request)
+    public function webhook(Request $request)
     {
         $transactionId = $request->input('id');
-        // $signature = $request->header('X-FedaPay-Signature'); // Pour la vérification future
-
-        Log::info("FedaPay Callback: Transaction $transactionId");
-
+        
         try {
-            // 1. Vérifier la transaction auprès de FedaPay (Source de vérité)
             $transaction = $this->fedapayService->verifyTransaction($transactionId);
 
             if ($transaction && $transaction->status === 'approved') {
-                // 2. Retrouver notre transaction locale
-                $tx = TransactionPaiement::where('cinetpay_transaction_id', $transactionId)->first();
+                $tx = TransactionPaiement::where('cinetpay_transaction_id', $transactionId)
+                    ->with('eleve.user')
+                    ->first();
 
                 if ($tx && $tx->statut !== 'PAYE') {
-                    // 3. Mise à jour atomique
-                    \DB::transaction(function () use ($tx) {
-                        // A. Marquer la transaction comme PAYÉE
-                        $tx->update([
-                            'statut' => 'PAYE',
-                            'date_paiement' => now()
-                        ]);
-
-                        // B. Mettre à jour le solde de l'élève
-                        $this->updatePaiementEleve($tx);
+                    DB::transaction(function () use ($tx) {
+                        $tx->update(['statut' => 'PAYE', 'date_paiement' => now()]);
+                        
+                        // Envoi de la notification SMS au parent
+                        $this->commService->notifyPayment(
+                            $tx->eleve->user->telephone ?? '00000000',
+                            $tx->montant_paye,
+                            $tx->eleve->user->name
+                        );
                     });
-
-                    Log::info("Paiement validé et solde mis à jour pour Transaction $transactionId");
                 }
             }
+            return response()->json(['received' => true]);
         } catch (\Exception $e) {
-            Log::error("Erreur lors du traitement du Webhook FedaPay: " . $e->getMessage());
+            Log::error("Webhook Error: " . $e->getMessage());
             return response()->json(['error' => $e->getMessage()], 500);
-        }
-
-        return response()->json(['received' => true]);
-    }
-
-    /**
-     * Logique métier : Mise à jour du solde de l'élève
-     */
-    protected function updatePaiementEleve(TransactionPaiement $tx)
-    {
-        $paiementEleve = $tx->paiementEleve;
-
-        if ($paiementEleve) {
-            // Recalculer le montant total payé
-            $paiementEleve->montant_total_paye += $tx->montant_paye;
-            
-            // Recalculer le reste à payer (basé sur la contribution totale)
-             if ($paiementEleve->contribution) {
-                $paiementEleve->montant_restant = $paiementEleve->contribution->montant - $paiementEleve->montant_total_paye;
-            } else {
-                // Fallback si pas de relation contribution chargée ou existante
-                $paiementEleve->montant_restant -= $tx->montant_paye; 
-            }
-
-            // Mettre à jour le statut global
-            if ($paiementEleve->montant_restant <= 0) {
-                $paiementEleve->statut_global = 'TERMINE';
-                $paiementEleve->montant_restant = 0; // Eviter les négatifs
-            } else {
-                $paiementEleve->statut_global = 'EN_COURS';
-            }
-
-            $paiementEleve->save();
         }
     }
 }

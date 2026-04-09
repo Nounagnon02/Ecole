@@ -6,9 +6,9 @@ use App\Traits\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Matieres;
-use App\Models\Eleves;
+use App\Models\Eleve;
 use App\Models\Classes;
-use App\Models\Enseignants;
+use App\Models\Enseignant;
 
 class Notes extends Model
 {

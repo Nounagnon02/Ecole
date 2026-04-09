@@ -14,21 +14,21 @@ class User extends Authenticatable
 
     /**
      * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
      */
     protected $fillable = [
+        'identifiant',
         'name',
+        'prenom',
         'email',
+        'telephone',
         'password',
         'role',
-        'ecole_id'
+        'ecole_id',
+        'is_active'
     ];
 
     /**
      * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
      */
     protected $hidden = [
         'password',
@@ -37,10 +37,39 @@ class User extends Authenticatable
 
     /**
      * The attributes that should be cast.
-     *
-     * @var array<string, string>
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'is_active' => 'boolean',
     ];
+
+    // Profile relations
+    public function eleve()
+    {
+        return $this->hasOne(Eleve::class);
+    }
+
+    public function parent()
+    {
+        return $this->hasOne(UserParent::class);
+    }
+
+    public function enseignant()
+    {
+        return $this->hasOne(Enseignant::class);
+    }
+
+    // Helper for checking roles
+    public function hasRole(string|array $role): bool
+    {
+        if (is_array($role)) {
+            return in_array($this->role, $role);
+        }
+        return $this->role === $role;
+    }
+
+    public function isAdmin(): bool
+    {
+        return in_array($this->role, ['directeur', 'directeurM', 'directeurP', 'directeurS', 'super-admin']);
+    }
 }

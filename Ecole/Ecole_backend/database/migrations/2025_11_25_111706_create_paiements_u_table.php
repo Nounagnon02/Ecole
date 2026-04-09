@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('paiements', function (Blueprint $table) {
+        Schema::create('uni_paiements', function (Blueprint $table) {
             $table->id();
             $table->foreignId('etudiant_id')->constrained('etudiants')->onDelete('cascade');
             $table->decimal('montant', 10, 2);
@@ -20,6 +20,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('paiements');
+        Schema::dropIfExists('uni_paiements');
     }
 };

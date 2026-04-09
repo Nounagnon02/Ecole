@@ -17,8 +17,10 @@ use Illuminate\Support\Facades\Route;
 Route::post('/inscription', [AuthController::class, 'inscription']);
 Route::post('/connexion', [AuthController::class, 'connexion']);
 
-// Profil utilisateur
-Route::prefix('user')->group(function () {
+// Profil utilisateur (Protégé)
+Route::middleware('auth:sanctum')->prefix('user')->group(function () {
     Route::get('/profile', [AuthController::class, 'getProfile']);
-    Route::put('/profile', [AuthController::class, 'updateProfile']);
 });
+
+// Déconnexion
+Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);

@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Moyennes;
 use App\Models\Notes;
-use App\Models\Eleves;
+use App\Models\Eleve;
 use App\Models\Classes;
 use App\Models\Matieres;
 use App\Models\Series;
