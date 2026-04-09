@@ -4,7 +4,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Notes;
-use App\Models\Eleves;
+use App\Models\Eleve;
 use App\Models\Matieres;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -682,7 +682,7 @@ class BulletinController extends Controller
     private function calculateRankMatiere($eleveId, $matiereId, $classeId,$serieId, $periode)
     {
         try {
-            $eleves = \App\Models\Eleves::where('class_id', $classeId)->where('serie_id', $serieId)->get();
+            $eleves = \App\Models\Eleve::where('class_id', $classeId)->where('serie_id', $serieId)->get();
             $moyennes = [];
     
             foreach ($eleves as $eleve) {

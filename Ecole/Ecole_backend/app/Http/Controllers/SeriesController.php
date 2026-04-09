@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Classes;
-use App\Models\Eleves;
+use App\Models\Eleve;
 use App\Models\Matieres;
 use App\Models\Series;
 use Illuminate\Http\Request;

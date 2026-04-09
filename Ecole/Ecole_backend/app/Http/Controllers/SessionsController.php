@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Candidats;
-use App\Models\Eleves;
+use App\Models\Eleve;
 use App\Models\Sessions;
 use Illuminate\Contracts\Session\Session;
 use Illuminate\Http\Request;

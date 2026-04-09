@@ -13,18 +13,15 @@ return new class extends Migration
      */
     public function up()
     {
-        //
         Schema::create('parents', function(Blueprint $table){
-        $table->id();
-        $table->string('role');
-        $table->string('nom');
-        $table->string('prenom');
-        $table->string('email')->unique();
-        $table->string('numero_de_telephone')->unique();
-        $table->string('identifiant')->unique();
-        $table->string('password1');
-        $table->timestamps();
-    });
+            $table->id();
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->string('profession')->nullable();
+            $table->string('adresse')->nullable();
+            // Données redondantes avec 'users' mais conservées si nécessaire pour le métier
+            // ou supprimées pour la normalisation. Je les supprime ici pour forcer l'usage de 'users'.
+            $table->timestamps();
+        });
     }
 
     /**
@@ -34,7 +31,6 @@ return new class extends Migration
      */
     public function down()
     {
-        //
         Schema::dropIfExists('parents');
     }
 };

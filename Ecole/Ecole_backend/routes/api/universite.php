@@ -1,16 +1,6 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-
-/*
-|--------------------------------------------------------------------------
-| Routes Universitaires
-|--------------------------------------------------------------------------
-|
-| Toutes les routes pour le module universitaire.
-|
-*/
-
 use App\Http\Controllers\universite\{
     UniversiteController,
     FaculteController,
@@ -28,8 +18,13 @@ use App\Http\Controllers\universite\{
     DiplomeController
 };
 
+/*
+|--------------------------------------------------------------------------
+| Routes Universitaires - Protégées par Sanctum
+|--------------------------------------------------------------------------
+*/
 
-Route::prefix('universite')->group(function () {
+Route::middleware('auth:sanctum')->prefix('universite')->group(function () {
     // Universités
     Route::apiResource('universites', UniversiteController::class);
     
@@ -53,22 +48,4 @@ Route::prefix('universite')->group(function () {
     
     // Notes
     Route::apiResource('notes', UnivNoteController::class);
-    
-    // Inscriptions
-    Route::apiResource('inscriptions', InscriptionController::class);
-    
-    // Semestres
-    Route::apiResource('semestres', SemestreController::class);
-    
-    // Années académiques
-    Route::apiResource('annees-academiques', AnneeAcademiqueController::class);
-    
-    // Personnel
-    Route::apiResource('personnels', PersonnelController::class);
-    
-    // Paiements
-    Route::apiResource('paiements', UnivPaiementController::class);
-    
-    // Diplômes
-    Route::apiResource('diplomes', DiplomeController::class);
 });
