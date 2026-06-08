@@ -10,7 +10,7 @@ class InscriptionController extends Controller
 {
     public function index()
     {
-        $inscriptions = Inscription::with('etudiant', 'anneeAcademique')->get();
+        $inscriptions = Inscription::with('etudiant', 'anneeAcademique')->paginate(15);
         return response()->json($inscriptions);
     }
 

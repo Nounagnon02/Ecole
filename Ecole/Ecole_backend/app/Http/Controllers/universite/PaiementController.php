@@ -10,7 +10,7 @@ class PaiementController extends Controller
 {
     public function index()
     {
-        $paiements = Paiement::with('etudiant')->get();
+        $paiements = Paiement::with('etudiant')->paginate(15);
         return response()->json($paiements);
     }
 

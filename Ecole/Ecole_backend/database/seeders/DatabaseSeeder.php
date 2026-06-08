@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             BeninEducationSeeder::class,
             BulletinDataSeeder::class,
             CompleteDataSeeder::class,
+            UniversiteSeeder::class,
         ]);
     }
 }

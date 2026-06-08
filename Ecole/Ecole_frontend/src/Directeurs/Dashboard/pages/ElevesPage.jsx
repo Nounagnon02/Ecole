@@ -182,7 +182,8 @@ export default function ElevesPage({ eleves = [], classes = [], onRefresh }) {
                                             <button
                                                 className="btn btn-icon"
                                                 style={{ color: 'var(--primary)' }}
-                                                onClick={() => console.log('Edit', eleve.id)}
+                                                // TODO: [future] Remplacer par un formulaire d'édition modal (composant EditEleveModal)
+                                                onClick={() => {}}
                                             >
                                                 <Edit2 size={16} />
                                             </button>

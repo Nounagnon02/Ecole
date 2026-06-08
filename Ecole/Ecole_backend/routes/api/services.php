@@ -63,6 +63,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/initialize', [PaymentController::class, 'initializePayment']);
         Route::get('/history', [PaymentController::class, 'getPaymentHistory']);
         Route::get('/stats', [PaymentController::class, 'getPaymentStats'])->middleware('role:directeur,comptable');
+        Route::post('/mobile-money', [PaymentController::class, 'processMobileMoney']);
     });
 
     // ============ FEDAPAY ============

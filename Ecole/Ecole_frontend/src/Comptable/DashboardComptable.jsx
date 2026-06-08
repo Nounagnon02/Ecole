@@ -2,12 +2,21 @@ import React, { useState, useEffect } from 'react';
 import {
   DollarSign, CreditCard, FileText, TrendingUp,
   Users, Calendar, AlertCircle, CheckCircle,
-  Plus, Edit2, Trash2, Download, Send, MessageSquare, LogOut
+  Plus, Edit2, Trash2, Download, Send, MessageSquare
 } from 'lucide-react';
 import api from '../api';
 import Messagerie from '../components/Messagerie';
-import NotificationBell from '../components/NotificationBell';
+import DashboardLayout from '../components/DashboardLayout';
 import '../styles/GlobalStyles.css';
+
+const NAV_ITEMS = [
+  { id: 'overview', icon: TrendingUp, label: 'Aperçu' },
+  { id: 'paiements', icon: CreditCard, label: 'Paiements' },
+  { id: 'contributions', icon: DollarSign, label: 'Contributions' },
+  { id: 'bourses', icon: Users, label: 'Bourses' },
+  { id: 'rapports', icon: FileText, label: 'Rapports' },
+  { id: 'messages', icon: MessageSquare, label: 'Messages' },
+];
 
 const DashboardComptable = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -18,6 +27,7 @@ const DashboardComptable = () => {
   const [rapports, setRapports] = useState({});
   const [retards, setRetards] = useState([]);
   const [bourses, setBourses] = useState([]);
+  const [notification, setNotification] = useState({ show: false, message: '', type: 'error' });
 
   const [newContribution, setNewContribution] = useState({
     classe_id: '',
@@ -51,6 +61,7 @@ const DashboardComptable = () => {
       setRapports(rapportsRes.data);
     } catch (error) {
       console.error('Erreur:', error);
+      setNotification({ show: true, message: 'Erreur lors du chargement des donnees', type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -67,6 +78,7 @@ const DashboardComptable = () => {
       });
     } catch (error) {
       console.error('Erreur:', error);
+      setNotification({ show: true, message: 'Erreur lors de l\'ajout de la contribution', type: 'error' });
     }
   };
 
@@ -81,24 +93,27 @@ const DashboardComptable = () => {
       });
     } catch (error) {
       console.error('Erreur:', error);
+      setNotification({ show: true, message: 'Erreur lors de l\'ajout de la bourse', type: 'error' });
     }
   };
 
   const genererFacture = async (eleveId) => {
     try {
       const response = await api.post(`/factures/generer/${eleveId}`);
-      alert('Facture générée avec succès');
+      setNotification({ show: true, message: 'Facture generee avec succes', type: 'success' });
     } catch (error) {
       console.error('Erreur:', error);
+      setNotification({ show: true, message: 'Erreur lors de la generation de la facture', type: 'error' });
     }
   };
 
   const envoyerRelance = async (paiementId) => {
     try {
       await api.post(`/paiements/${paiementId}/relance`);
-      alert('Relance envoyée');
+      setNotification({ show: true, message: 'Relance envoyee', type: 'success' });
     } catch (error) {
       console.error('Erreur:', error);
+      setNotification({ show: true, message: 'Erreur lors de l\'envoi de la relance', type: 'error' });
     }
   };
 
@@ -323,72 +338,23 @@ const DashboardComptable = () => {
   );
 
   return (
-    <div className="app-dashboard">
-      <div className="sidebar">
-        <div className="sidebar-header">
-          <h2>Espace Comptable</h2>
-        </div>
-        <nav className="sidebar-nav">
-          <button
-            className={activeTab === 'overview' ? 'active' : ''}
-            onClick={() => setActiveTab('overview')}
-          >
-            <TrendingUp size={20} /> Aperçu
-          </button>
-          <button
-            className={activeTab === 'paiements' ? 'active' : ''}
-            onClick={() => setActiveTab('paiements')}
-          >
-            <CreditCard size={20} /> Paiements
-          </button>
-          <button
-            className={activeTab === 'contributions' ? 'active' : ''}
-            onClick={() => setActiveTab('contributions')}
-          >
-            <DollarSign size={20} /> Contributions
-          </button>
-          <button
-            className={activeTab === 'bourses' ? 'active' : ''}
-            onClick={() => setActiveTab('bourses')}
-          >
-            <Users size={20} /> Bourses
-          </button>
-          <button
-            className={activeTab === 'rapports' ? 'active' : ''}
-            onClick={() => setActiveTab('rapports')}
-          >
-            <FileText size={20} /> Rapports
-          </button>
-          <button
-            className={activeTab === 'messages' ? 'active' : ''}
-            onClick={() => setActiveTab('messages')}
-          >
-            <MessageSquare size={20} /> Messages
-          </button>
-        </nav>
-      </div>
-
-      <div className="main-content">
-        <header className="page-header">
-          <div>
-            <h1>Dashboard Comptable</h1>
-            <p style={{ color: 'var(--text-muted)' }}>Gestion financière et comptabilité</p>
-          </div>
-          <div className="header-actions">
-            <NotificationBell userId={localStorage.getItem('userId')} />
-          </div>
-        </header>
-
-        <main className="content-area">
-          {activeTab === 'overview' && renderOverview()}
-          {activeTab === 'paiements' && renderPaiements()}
-          {activeTab === 'contributions' && renderContributions()}
-          {activeTab === 'bourses' && renderBourses()}
-          {activeTab === 'rapports' && renderRapports()}
-          {activeTab === 'messages' && <Messagerie userId={localStorage.getItem('userId')} userName={localStorage.getItem('userName') || 'Comptable'} />}
-        </main>
-      </div>
-    </div>
+    <DashboardLayout
+      navItems={NAV_ITEMS}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      userRole="Comptable"
+      notification={notification}
+      onCloseNotification={() => setNotification({ show: false, message: '', type: 'error' })}
+      headerTitle="Dashboard Comptable"
+      headerSubtitle="Gestion financière et comptabilité"
+    >
+      {activeTab === 'overview' && renderOverview()}
+      {activeTab === 'paiements' && renderPaiements()}
+      {activeTab === 'contributions' && renderContributions()}
+      {activeTab === 'bourses' && renderBourses()}
+      {activeTab === 'rapports' && renderRapports()}
+      {activeTab === 'messages' && <Messagerie userId={localStorage.getItem('userId')} userName={localStorage.getItem('userName') || 'Comptable'} />}
+    </DashboardLayout>
   );
 };
 

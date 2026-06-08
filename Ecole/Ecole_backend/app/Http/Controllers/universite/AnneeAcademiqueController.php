@@ -10,7 +10,7 @@ class AnneeAcademiqueController extends Controller
 {
     public function index()
     {
-        $annees = AnneeAcademique::all();
+        $annees = AnneeAcademique::paginate(15);
         return response()->json($annees);
     }
 

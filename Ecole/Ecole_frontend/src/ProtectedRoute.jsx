@@ -6,7 +6,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
     const location = useLocation();
 
     if (!authData?.user) {
-        return <Navigate to="/dashboard-admin" state={{ from: location }} replace />;
+        return <Navigate to="/connexion" state={{ from: location }} replace />;
     }
 
     if (allowedRoles && !allowedRoles.includes(authData.user.role)) {

@@ -10,7 +10,7 @@ class NoteController extends Controller
 {
     public function index()
     {
-        $notes = Note::with('etudiant', 'matiere')->get();
+        $notes = Note::with('etudiant', 'matiere')->paginate(15);
         return response()->json($notes);
     }
 

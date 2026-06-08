@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 // Inscription et Connexion
-Route::post('/inscription', [AuthController::class, 'inscription']);
+Route::post('/inscription', [AuthController::class, 'inscription'])->middleware(['auth:sanctum', 'role:directeur,super-admin,admin']);
 Route::post('/connexion', [AuthController::class, 'connexion']);
 
 // Profil utilisateur (Protégé)

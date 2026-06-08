@@ -24,6 +24,9 @@ class User extends Authenticatable
         'password',
         'role',
         'ecole_id',
+    ];
+
+    protected $guarded = [
         'is_active'
     ];
 

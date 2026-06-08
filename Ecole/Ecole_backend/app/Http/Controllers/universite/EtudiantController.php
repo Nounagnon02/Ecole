@@ -10,7 +10,7 @@ class EtudiantController extends Controller
 {
     public function index()
     {
-        $etudiants = Etudiant::with('filiere')->get();
+        $etudiants = Etudiant::with('filiere')->paginate(15);
         return response()->json($etudiants);
     }
 

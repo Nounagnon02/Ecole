@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\{Eleve, Note};
+use App\Models\{Eleve, Notes};
 
 class BulletinService
 {
@@ -100,7 +100,7 @@ class BulletinService
     {
         if (!$note) return null;
         
-        $notes = Note::where('matiere_id', $note->matiere_id)
+        $notes = Notes::where('matiere_id', $note->matiere_id)
             ->where('periode', $note->periode)
             ->whereHas('eleve', fn($q) => $q->where('classe_id', $note->eleve->classe_id))
             ->orderBy('note', 'desc')
@@ -111,11 +111,29 @@ class BulletinService
 
     private function calculerRangGeneral($eleve, $periode, $moyenne)
     {
-        // Calculer moyennes de tous les élèves de la classe
-        $elevesClasse = Eleve::where('classe_id', $eleve->classe_id)->get();
-        $moyennes = $elevesClasse->map(fn($e) => $this->bulletinSecondaire($e->id, $periode)['moyenne_generale'])
-            ->sort()->reverse();
-            
-        return ['position' => $moyennes->search($moyenne) + 1, 'total_eleves' => $moyennes->count()];
+        // Calculer moyennes de tous les élèves de la classe en une seule passe (évite N+1)
+        $elevesClasse = Eleve::with(['notes.matiere'])->where('classe_id', $eleve->classe_id)->get();
+        $moyennes = $elevesClasse->map(function($e) use ($periode) {
+            $notes = $e->notes->where('periode', $periode);
+            $totalPoints = 0;
+            $totalCoeff = 0;
+            $notes->groupBy('matiere_id')->each(function($notesMatiere) use (&$totalPoints, &$totalCoeff, $e) {
+                $matiere = $notesMatiere->first()->matiere;
+                $devoir1 = $this->moyenneType($notesMatiere, 'Devoir1');
+                $devoir2 = $this->moyenneType($notesMatiere, 'Devoir2');
+                $interros = $this->moyenneType($notesMatiere, 'Interrogation');
+                $moyenneMatiere = collect([$devoir1, $devoir2, $interros])->filter()->avg() ?: 0;
+                $coeff = $this->getCoefficient($matiere->id, $e->classe_id);
+                $totalPoints += $moyenneMatiere * $coeff;
+                $totalCoeff += $coeff;
+            });
+            return $totalCoeff > 0 ? $totalPoints / $totalCoeff : 0;
+        })->sort()->reverse()->values();
+
+        $position = $moyennes->search(function($m) use ($moyenne) {
+            return abs($m - $moyenne) < 0.001;
+        });
+
+        return ['position' => $position !== false ? $position + 1 : 1, 'total_eleves' => $moyennes->count()];
     }
 }

@@ -1,13 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Heart, Users, AlertTriangle, Calendar, 
-  FileText, Plus, Edit2, Eye, Pill, 
+import {
+  Heart, Users, AlertTriangle, Calendar,
+  FileText, Plus, Edit2, Eye, Pill,
   Activity, Shield, Phone, Clock, MessageSquare
 } from 'lucide-react';
 import api from '../api';
 import Messagerie from '../components/Messagerie';
-import NotificationBell from '../components/NotificationBell';
+import DashboardLayout from '../components/DashboardLayout';
 import '../styles/dashboard.css';
+
+const NAV_ITEMS = [
+  { id: 'overview', icon: Heart, label: 'Aperçu' },
+  { id: 'dossiers', icon: FileText, label: 'Dossiers médicaux' },
+  { id: 'consultations', icon: Activity, label: 'Consultations' },
+  { id: 'traitements', icon: Pill, label: 'Traitements' },
+  { id: 'vaccinations', icon: Shield, label: 'Vaccinations' },
+  { id: 'statistiques', icon: Calendar, label: 'Statistiques' },
+  { id: 'messages', icon: MessageSquare, label: 'Messages' },
+];
 
 const DashboardInfirmier = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -45,6 +55,8 @@ const DashboardInfirmier = () => {
     lot_vaccin: ''
   });
 
+  const [notification, setNotification] = useState({ show: false, message: '', type: 'error' });
+
   useEffect(() => {
     fetchInfirmierData();
   }, []);
@@ -63,6 +75,7 @@ const DashboardInfirmier = () => {
       setStatistiques(statistiquesRes.data);
     } catch (error) {
       console.error('Erreur:', error);
+      setNotification({ show: true, message: 'Erreur lors du chargement des donnees', type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -82,6 +95,7 @@ const DashboardInfirmier = () => {
       fetchInfirmierData();
     } catch (error) {
       console.error('Erreur:', error);
+      setNotification({ show: true, message: 'Erreur lors de l\'ajout de la consultation', type: 'error' });
     }
   };
 
@@ -98,6 +112,7 @@ const DashboardInfirmier = () => {
       });
     } catch (error) {
       console.error('Erreur:', error);
+      setNotification({ show: true, message: 'Erreur lors de l\'ajout du traitement', type: 'error' });
     }
   };
 
@@ -113,6 +128,7 @@ const DashboardInfirmier = () => {
       });
     } catch (error) {
       console.error('Erreur:', error);
+      setNotification({ show: true, message: 'Erreur lors de l\'enregistrement du vaccin', type: 'error' });
     }
   };
 
@@ -123,9 +139,10 @@ const DashboardInfirmier = () => {
         type_urgence: typeUrgence,
         date_urgence: new Date().toISOString()
       });
-      alert('Urgence déclarée - Parents contactés');
+      setNotification({ show: true, message: 'Urgence declaree - Parents contactes', type: 'success' });
     } catch (error) {
       console.error('Erreur:', error);
+      setNotification({ show: true, message: 'Erreur lors du declenchement de l\'urgence', type: 'error' });
     }
   };
 
@@ -474,76 +491,25 @@ const DashboardInfirmier = () => {
   );
 
   return (
-    <div className="dashboard-infirmier">
-      <div className="sidebar">
-        <div className="sidebar-header">
-          <h2>Espace Infirmier</h2>
-        </div>
-        <nav className="sidebar-nav">
-          <button 
-            className={activeTab === 'overview' ? 'active' : ''}
-            onClick={() => setActiveTab('overview')}
-          >
-            <Heart size={20} /> Aperçu
-          </button>
-          <button 
-            className={activeTab === 'dossiers' ? 'active' : ''}
-            onClick={() => setActiveTab('dossiers')}
-          >
-            <FileText size={20} /> Dossiers médicaux
-          </button>
-          <button 
-            className={activeTab === 'consultations' ? 'active' : ''}
-            onClick={() => setActiveTab('consultations')}
-          >
-            <Activity size={20} /> Consultations
-          </button>
-          <button 
-            className={activeTab === 'traitements' ? 'active' : ''}
-            onClick={() => setActiveTab('traitements')}
-          >
-            <Pill size={20} /> Traitements
-          </button>
-          <button 
-            className={activeTab === 'vaccinations' ? 'active' : ''}
-            onClick={() => setActiveTab('vaccinations')}
-          >
-            <Shield size={20} /> Vaccinations
-          </button>
-          <button 
-            className={activeTab === 'statistiques' ? 'active' : ''}
-            onClick={() => setActiveTab('statistiques')}
-          >
-            <Calendar size={20} /> Statistiques
-          </button>
-          <button 
-            className={activeTab === 'messages' ? 'active' : ''}
-            onClick={() => setActiveTab('messages')}
-          >
-            <MessageSquare size={20} /> Messages
-          </button>
-        </nav>
-      </div>
-
-      <div className="main-content">
-        <header className="main-header">
-          <h1>Dashboard Infirmier</h1>
-          <div className="header-actions">
-            <NotificationBell userId={localStorage.getItem('userId')} />
-          </div>
-        </header>
-
-        <main className="content-area">
-          {activeTab === 'overview' && renderOverview()}
-          {activeTab === 'dossiers' && renderDossiersMedicaux()}
-          {activeTab === 'consultations' && renderConsultations()}
-          {activeTab === 'traitements' && renderTraitements()}
-          {activeTab === 'vaccinations' && renderVaccinations()}
-          {activeTab === 'statistiques' && renderStatistiques()}
-          {activeTab === 'messages' && <Messagerie userId={localStorage.getItem('userId')} userName={localStorage.getItem('userName') || 'Infirmier'} />}
-        </main>
-      </div>
-    </div>
+    <DashboardLayout
+      navItems={NAV_ITEMS}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      userRole="Infirmier"
+      notification={notification}
+      onCloseNotification={() => setNotification({ show: false, message: '', type: 'error' })}
+      headerTitle="Dashboard Infirmier"
+      wrapperClass="dashboard-infirmier"
+      headerVariant="main"
+    >
+      {activeTab === 'overview' && renderOverview()}
+      {activeTab === 'dossiers' && renderDossiersMedicaux()}
+      {activeTab === 'consultations' && renderConsultations()}
+      {activeTab === 'traitements' && renderTraitements()}
+      {activeTab === 'vaccinations' && renderVaccinations()}
+      {activeTab === 'statistiques' && renderStatistiques()}
+      {activeTab === 'messages' && <Messagerie userId={localStorage.getItem('userId')} userName={localStorage.getItem('userName') || 'Infirmier'} />}
+    </DashboardLayout>
   );
 };
 

@@ -10,7 +10,7 @@ class DepartementController extends Controller
 {
     public function index()
     {
-        $departements = Departement::with('faculte')->get();
+        $departements = Departement::with('faculte')->paginate(15);
         return response()->json($departements);
     }
 

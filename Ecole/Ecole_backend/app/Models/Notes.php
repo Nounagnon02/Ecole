@@ -36,7 +36,7 @@ class Notes extends Model
 
     public function eleve()
     {
-        return $this->belongsTo(Eleves::class,'eleve_id');
+        return $this->belongsTo(Eleve::class,'eleve_id');
     }
 
 

@@ -1,0 +1,75 @@
+name: Frontend CI (React CRA)
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'Ecole/Ecole_frontend/**'
+      - '.github/workflows/frontend.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'Ecole/Ecole_frontend/**'
+
+defaults:
+  run:
+    working-directory: Ecole/Ecole_frontend
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-22.04
+
+    strategy:
+      matrix:
+        node-version: [18, 20]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          cache-dependency-path: Ecole/Ecole_frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+        continue-on-error: true
+
+      - name: Run tests
+        run: npm test -- --watchAll=false --ci --coverage
+        env:
+          CI: true
+
+      - name: Build project
+        run: npm run build
+        env:
+          CI: false
+
+      # ------------------------------------------------------------------
+      # Uncomment and configure this section when you are ready to deploy.
+      #
+      # name: Deploy frontend to production
+      # needs: build-and-test
+      # runs-on: ubuntu-22.04
+      # if: github.ref == 'refs/heads/main'
+      #
+      # steps:
+      #   - name: Deploy via SSH
+      #     uses: appleboy/ssh-action@v1.0.3
+      #     with:
+      #       host: ${{ secrets.DEPLOY_HOST }}
+      #       username: ${{ secrets.DEPLOY_USER }}
+      #       key: ${{ secrets.DEPLOY_SSH_KEY }}
+      #       script: |
+      #         cd /path/to/your/frontend
+      #         git pull origin main
+      #         npm ci --only=production
+      #         npm run build
+      #         # Example: rsync build folder to web root
+      #         # rsync -avz --delete build/ /var/www/html/

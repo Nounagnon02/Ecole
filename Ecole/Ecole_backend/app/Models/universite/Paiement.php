@@ -10,6 +10,8 @@ class Paiement extends Model
 {
     use HasFactory, BelongsToEcole;
 
+    protected $table = 'uni_paiements';
+
     protected $fillable = [
         'etudiant_id',
         'montant',

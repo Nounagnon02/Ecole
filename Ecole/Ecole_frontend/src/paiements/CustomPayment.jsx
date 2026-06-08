@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import api from '../api';
 import paymentService from '../paymentService';
 import './CustomPayment.css';
 
@@ -12,15 +13,6 @@ const CustomPayment = ({ booking, transactionId: initialTransactionId, onPayment
   // Mobile Money
   const [phoneNumber, setPhoneNumber] = useState('');
   const [operator, setOperator] = useState('mtn');
-
-  // Carte bancaire
-  const [cardData, setCardData] = useState({
-    number: '',
-    expiry_month: '',
-    expiry_year: '',
-    cvv: '',
-    name: ''
-  });
 
   const [checkingStatus, setCheckingStatus] = useState(false);
 
@@ -36,7 +28,7 @@ const CustomPayment = ({ booking, transactionId: initialTransactionId, onPayment
     if (transactionId) {
       return transactionId;
     }
-    
+
     try {
       const response = await paymentService.createPayment({
         booking_id: booking.id,
@@ -49,7 +41,7 @@ const CustomPayment = ({ booking, transactionId: initialTransactionId, onPayment
 
       if (response.success) {
         setTransactionId(response.data.transaction_id);
-        return response.data.transaction_id;
+        return response.data;
       } else {
         throw new Error(response.message);
       }
@@ -65,22 +57,17 @@ const CustomPayment = ({ booking, transactionId: initialTransactionId, onPayment
     try {
       let txId = transactionId;
       if (!txId) {
-        txId = await createTransaction();
+        const data = await createTransaction();
+        txId = data.transaction_id;
       }
 
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/payment/mobile-money`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          transaction_id: String(txId),
-          phone_number: phoneNumber,
-          operator: operator
-        })
+      const response = await api.post('/payments/mobile-money', {
+        transaction_id: String(txId),
+        phone_number: phoneNumber,
+        operator: operator
       });
 
-      const data = await response.json();
+      const data = response.data;
 
       if (data.success) {
         setCheckingStatus(true);
@@ -100,35 +87,20 @@ const CustomPayment = ({ booking, transactionId: initialTransactionId, onPayment
     setError(null);
 
     try {
-      let txId = transactionId;
-      if (!txId) {
-        txId = await createTransaction();
-      }
-
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/payment/card`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          transaction_id: String(txId),
-          card_number: cardData.number,
-          expiry_month: cardData.expiry_month,
-          expiry_year: cardData.expiry_year,
-          cvv: cardData.cvv,
-          cardholder_name: cardData.name
-        })
+      const response = await paymentService.createPayment({
+        booking_id: booking.id,
+        amount: booking.total_amount,
+        currency: booking.currency || 'XOF',
+        customer_name: booking.customer_name,
+        customer_email: booking.customer_email,
+        customer_phone: booking.customer_phone
       });
 
-      const data = await response.json();
-
-      if (data.success) {
-        setSuccess(true);
-        if (onPaymentSuccess) {
-          onPaymentSuccess(booking);
-        }
+      if (response.success && response.data.checkout_url) {
+        // Redirection vers le checkout sécurisé FedaPay
+        window.location.href = response.data.checkout_url;
       } else {
-        setError(data.message || 'Erreur lors du paiement par carte');
+        setError('Erreur lors de l\'initialisation du paiement');
       }
     } catch (err) {
       setError(err.message || 'Erreur lors du paiement');
@@ -142,7 +114,7 @@ const CustomPayment = ({ booking, transactionId: initialTransactionId, onPayment
 
     try {
       const response = await paymentService.checkPaymentStatus(transactionId);
-      
+
       if (response.success) {
         if (response.data.status === 'approved') {
           setSuccess(true);
@@ -162,7 +134,7 @@ const CustomPayment = ({ booking, transactionId: initialTransactionId, onPayment
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     if (paymentMethod === 'mobile') {
       if (!phoneNumber) {
         setError('Veuillez saisir votre numéro de téléphone');
@@ -170,10 +142,6 @@ const CustomPayment = ({ booking, transactionId: initialTransactionId, onPayment
       }
       processMobileMoneyPayment();
     } else {
-      if (!cardData.number || !cardData.expiry_month || !cardData.expiry_year || !cardData.cvv || !cardData.name) {
-        setError('Veuillez remplir tous les champs de la carte');
-        return;
-      }
       processCardPayment();
     }
   };
@@ -246,70 +214,15 @@ const CustomPayment = ({ booking, transactionId: initialTransactionId, onPayment
               </div>
             </div>
           ) : (
-            <div className="card-form">
-              <div className="form-group">
-                <label>Nom du porteur</label>
-                <input
-                  type="text"
-                  value={cardData.name}
-                  onChange={(e) => setCardData({...cardData, name: e.target.value})}
-                  placeholder="Jean Dupont"
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>Numéro de carte</label>
-                <input
-                  type="text"
-                  value={cardData.number}
-                  onChange={(e) => setCardData({...cardData, number: e.target.value})}
-                  placeholder="1234 5678 9012 3456"
-                  maxLength="19"
-                  required
-                />
-              </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Mois</label>
-                  <select 
-                    value={cardData.expiry_month}
-                    onChange={(e) => setCardData({...cardData, expiry_month: e.target.value})}
-                    required
-                  >
-                    <option value="">MM</option>
-                    {Array.from({length: 12}, (_, i) => (
-                      <option key={i+1} value={String(i+1).padStart(2, '0')}>
-                        {String(i+1).padStart(2, '0')}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Année</label>
-                  <select 
-                    value={cardData.expiry_year}
-                    onChange={(e) => setCardData({...cardData, expiry_year: e.target.value})}
-                    required
-                  >
-                    <option value="">YYYY</option>
-                    {Array.from({length: 10}, (_, i) => (
-                      <option key={i} value={new Date().getFullYear() + i}>
-                        {new Date().getFullYear() + i}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>CVV</label>
-                  <input
-                    type="text"
-                    value={cardData.cvv}
-                    onChange={(e) => setCardData({...cardData, cvv: e.target.value})}
-                    placeholder="123"
-                    maxLength="4"
-                    required
-                  />
-                </div>
+            <div className="card-redirect">
+              <div className="redirect-info">
+                <p>🔒 Paiement sécurisé via FedaPay</p>
+                <p className="redirect-description">
+                  Vous serez redirigé vers une page de paiement sécurisée pour saisir vos informations bancaires.
+                </p>
+                <p className="redirect-description">
+                  Aucune donnée bancaire n'est collectée sur ce site.
+                </p>
               </div>
             </div>
           )}
