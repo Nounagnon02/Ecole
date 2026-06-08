@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../api';
 
 // Page de succès
 const PaymentSuccess = () => {
@@ -17,7 +17,7 @@ const PaymentSuccess = () => {
 
   const fetchBooking = async () => {
     try {
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/bookings/${bookingId}`);
+      const response = await api.get(`/bookings/${bookingId}`);
       setBooking(response.data);
     } catch (error) {
       console.error('Error fetching booking:', error);

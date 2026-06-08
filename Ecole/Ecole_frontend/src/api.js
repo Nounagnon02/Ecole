@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Base URL from environment or fallback to localhost
-export const urlBase =  'http://localhost:8000/api';
+export const urlBase = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
 // Axios instance with baseURL
 const api = axios.create({
