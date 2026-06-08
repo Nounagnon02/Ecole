@@ -2,12 +2,22 @@ import React, { useState, useEffect } from 'react';
 import {
   FileText, Users, Phone, Calendar,
   Mail, Plus, Edit2, Eye, Download,
-  Clock, CheckCircle, AlertCircle, Send, MessageSquare, LogOut
+  Clock, CheckCircle, AlertCircle, Send, MessageSquare
 } from 'lucide-react';
 import api from '../api';
 import Messagerie from '../components/Messagerie';
-import NotificationBell from '../components/NotificationBell';
+import DashboardLayout from '../components/DashboardLayout';
 import '../styles/GlobalStyles.css';
+
+const NAV_ITEMS = [
+  { id: 'overview', icon: FileText, label: 'Aperçu' },
+  { id: 'dossiers', icon: Users, label: 'Dossiers élèves' },
+  { id: 'rdv', icon: Calendar, label: 'Rendez-vous' },
+  { id: 'courriers', icon: Mail, label: 'Courriers' },
+  { id: 'certificats', icon: FileText, label: 'Certificats' },
+  { id: 'accueil', icon: Phone, label: 'Accueil' },
+  { id: 'messages', icon: MessageSquare, label: 'Messages' },
+];
 
 const DashboardSecretaire = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -51,6 +61,8 @@ const DashboardSecretaire = () => {
     date_demande: new Date().toISOString().split('T')[0]
   });
 
+  const [notification, setNotification] = useState({ show: false, message: '', type: 'error' });
+
   useEffect(() => {
     fetchSecretaireData();
   }, []);
@@ -71,6 +83,7 @@ const DashboardSecretaire = () => {
       setStatistiques(statistiquesRes.data);
     } catch (error) {
       console.error('Erreur:', error);
+      setNotification({ show: true, message: 'Erreur lors du chargement des donnees', type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -89,6 +102,7 @@ const DashboardSecretaire = () => {
       fetchSecretaireData();
     } catch (error) {
       console.error('Erreur:', error);
+      setNotification({ show: true, message: 'Erreur lors de la creation du dossier', type: 'error' });
     }
   };
 
@@ -106,6 +120,7 @@ const DashboardSecretaire = () => {
       fetchSecretaireData();
     } catch (error) {
       console.error('Erreur:', error);
+      setNotification({ show: true, message: 'Erreur lors de la planification du rendez-vous', type: 'error' });
     }
   };
 
@@ -122,6 +137,7 @@ const DashboardSecretaire = () => {
       fetchSecretaireData();
     } catch (error) {
       console.error('Erreur:', error);
+      setNotification({ show: true, message: 'Erreur lors de l\'enregistrement du courrier', type: 'error' });
     }
   };
 
@@ -134,9 +150,10 @@ const DashboardSecretaire = () => {
         motif: '',
         date_demande: new Date().toISOString().split('T')[0]
       });
-      alert('Certificat généré avec succès');
+      setNotification({ show: true, message: 'Certificat genere avec succes', type: 'success' });
     } catch (error) {
       console.error('Erreur:', error);
+      setNotification({ show: true, message: 'Erreur lors de la generation du certificat', type: 'error' });
     }
   };
 
@@ -148,9 +165,10 @@ const DashboardSecretaire = () => {
         heure_arrivee: new Date().toTimeString().split(' ')[0],
         date_visite: new Date().toISOString().split('T')[0]
       });
-      alert('Visiteur enregistré');
+      setNotification({ show: true, message: 'Visiteur enregistre', type: 'success' });
     } catch (error) {
       console.error('Erreur:', error);
+      setNotification({ show: true, message: 'Erreur lors de l\'enregistrement du visiteur', type: 'error' });
     }
   };
 
@@ -504,79 +522,24 @@ const DashboardSecretaire = () => {
   );
 
   return (
-    <div className="app-dashboard">
-      <div className="sidebar">
-        <div className="sidebar-header">
-          <h2>Espace Secrétaire</h2>
-        </div>
-        <nav className="sidebar-nav">
-          <button
-            className={activeTab === 'overview' ? 'active' : ''}
-            onClick={() => setActiveTab('overview')}
-          >
-            <FileText size={20} /> Aperçu
-          </button>
-          <button
-            className={activeTab === 'dossiers' ? 'active' : ''}
-            onClick={() => setActiveTab('dossiers')}
-          >
-            <Users size={20} /> Dossiers élèves
-          </button>
-          <button
-            className={activeTab === 'rdv' ? 'active' : ''}
-            onClick={() => setActiveTab('rdv')}
-          >
-            <Calendar size={20} /> Rendez-vous
-          </button>
-          <button
-            className={activeTab === 'courriers' ? 'active' : ''}
-            onClick={() => setActiveTab('courriers')}
-          >
-            <Mail size={20} /> Courriers
-          </button>
-          <button
-            className={activeTab === 'certificats' ? 'active' : ''}
-            onClick={() => setActiveTab('certificats')}
-          >
-            <FileText size={20} /> Certificats
-          </button>
-          <button
-            className={activeTab === 'accueil' ? 'active' : ''}
-            onClick={() => setActiveTab('accueil')}
-          >
-            <Phone size={20} /> Accueil
-          </button>
-          <button
-            className={activeTab === 'messages' ? 'active' : ''}
-            onClick={() => setActiveTab('messages')}
-          >
-            <MessageSquare size={20} /> Messages
-          </button>
-        </nav>
-      </div>
-
-      <div className="main-content">
-        <header className="page-header">
-          <div>
-            <h1>Dashboard Secrétaire</h1>
-            <p style={{ color: 'var(--text-muted)' }}>Bienvenue dans votre espace de gestion</p>
-          </div>
-          <div className="header-actions">
-            <NotificationBell userId={localStorage.getItem('userId')} />
-          </div>
-        </header>
-
-        <main className="content-area">
-          {activeTab === 'overview' && renderOverview()}
-          {activeTab === 'dossiers' && renderDossiers()}
-          {activeTab === 'rdv' && renderRendezVous()}
-          {activeTab === 'courriers' && renderCourriers()}
-          {activeTab === 'certificats' && renderCertificats()}
-          {activeTab === 'accueil' && renderAccueil()}
-          {activeTab === 'messages' && <Messagerie userId={localStorage.getItem('userId')} userName={localStorage.getItem('userName') || 'Secrétaire'} />}
-        </main>
-      </div>
-    </div>
+    <DashboardLayout
+      navItems={NAV_ITEMS}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      userRole="Secrétaire"
+      notification={notification}
+      onCloseNotification={() => setNotification({ show: false, message: '', type: 'error' })}
+      headerTitle="Dashboard Secrétaire"
+      headerSubtitle="Bienvenue dans votre espace de gestion"
+    >
+      {activeTab === 'overview' && renderOverview()}
+      {activeTab === 'dossiers' && renderDossiers()}
+      {activeTab === 'rdv' && renderRendezVous()}
+      {activeTab === 'courriers' && renderCourriers()}
+      {activeTab === 'certificats' && renderCertificats()}
+      {activeTab === 'accueil' && renderAccueil()}
+      {activeTab === 'messages' && <Messagerie userId={localStorage.getItem('userId')} userName={localStorage.getItem('userName') || 'Secrétaire'} />}
+    </DashboardLayout>
   );
 };
 

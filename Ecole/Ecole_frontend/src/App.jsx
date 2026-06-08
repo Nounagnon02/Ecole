@@ -82,7 +82,7 @@ const PaymentSuccess = React.lazy(() => import('./paiements/paiementSucces'));
 // Auth Ecoliers et Université
 const ConnexionEcolier = React.lazy(() => import('./Ecoliers/Connexion').then(module => ({ default: module.Connexion })));
 const InscriptionEcolier = React.lazy(() => import('./Ecoliers/Inscription').then(module => ({ default: module.InscriptionE })));
-const ConnexionUniversite = React.lazy(() => import('./université/Auth/Connexion').then(module => ({ default: module.ConnexionU })));
+const ConnexionUniversite = React.lazy(() => import('./Universite/Auth/Connexion').then(module => ({ default: module.ConnexionU })));
 
 // Page non autorisée
 const UnauthorizedPage = () => (
@@ -115,9 +115,17 @@ function App() {
             <Route path="/unauthorized" element={<UnauthorizedPage />} />
             <Route path="/dashboard" element={<RoleBasedRedirect />} />
 
-            {/* ============ PAIEMENTS ============ */}
-            <Route path="/paiement" element={<PaymentForm />} />
-            <Route path="/payment-success" element={<PaymentSuccess />} />
+            {/* ============ PAIEMENTS (Protégés) ============ */}
+            <Route path="/paiement" element={
+              <ProtectedRoute allowedRoles={['eleve', 'parent', 'comptable', 'directeur']}>
+                <PaymentForm />
+              </ProtectedRoute>
+            } />
+            <Route path="/payment-success" element={
+              <ProtectedRoute allowedRoles={['eleve', 'parent', 'comptable', 'directeur']}>
+                <PaymentSuccess />
+              </ProtectedRoute>
+            } />
 
             {/* ============ DASHBOARDS PAR RÔLE (Protégés) ============ */}
 
@@ -139,21 +147,21 @@ function App() {
                 <DashboardM />
               </ProtectedRoute>
             } />
-            <Route path="/ecole/maternelle" element={<DashboardM />} />
+            <Route path="/ecole/maternelle" element={<Navigate to="/dashboard-maternelle" replace />} />
 
             <Route path="/dashboard-primaire" element={
               <ProtectedRoute allowedRoles={['directeurP']}>
                 <DashboardP />
               </ProtectedRoute>
             } />
-            <Route path="/ecole/primaire" element={<DashboardP />} />
+            <Route path="/ecole/primaire" element={<Navigate to="/dashboard-primaire" replace />} />
 
             <Route path="/dashboard-secondaire" element={
               <ProtectedRoute allowedRoles={['directeurS']}>
                 <DashboardS />
               </ProtectedRoute>
             } />
-            <Route path="/ecole/secondaire" element={<DashboardS />} />
+            <Route path="/ecole/secondaire" element={<Navigate to="/dashboard-secondaire" replace />} />
 
             {/* Enseignants */}
             <Route path="/enseignant/dashboard" element={
@@ -176,9 +184,10 @@ function App() {
                 <DashboardEnseignantPrimaire />
               </ProtectedRoute>
             } />
-            <Route path="/ecole/enseignant/secondaire" element={<DashboardEnseignantSecondaire />} />
-            <Route path="/ecole/enseignant/primaire" element={<DashboardEnseignantPrimaire />} />
-            <Route path="/ecole/enseignant/maternelle" element={<DashboardEnseignantPrimaire />} />
+            <Route path="/ecole/enseignant" element={<Navigate to="/enseignant/dashboard" replace />} />
+            <Route path="/ecole/enseignant/secondaire" element={<Navigate to="/dashboard-enseignant" replace />} />
+            <Route path="/ecole/enseignant/primaire" element={<Navigate to="/dashboard-enseignementP" replace />} />
+            <Route path="/ecole/enseignant/maternelle" element={<Navigate to="/dashboard-enseignementM" replace />} />
 
             {/* Élèves */}
             <Route path="/eleve/dashboard" element={
@@ -186,11 +195,7 @@ function App() {
                 <DashboardEleve />
               </ProtectedRoute>
             } />
-            <Route path="/dashboard-eleve" element={
-              <ProtectedRoute allowedRoles={['eleve']}>
-                <DashboardEcolier />
-              </ProtectedRoute>
-            } />
+            <Route path="/dashboard-eleve" element={<Navigate to="/eleve/dashboard" replace />} />
 
             {/* Parents */}
             <Route path="/parent/dashboard" element={
@@ -198,11 +203,7 @@ function App() {
                 <DashboardParent />
               </ProtectedRoute>
             } />
-            <Route path="/dashboard-parent" element={
-              <ProtectedRoute allowedRoles={['parent']}>
-                <DashboardParent />
-              </ProtectedRoute>
-            } />
+            <Route path="/dashboard-parent" element={<Navigate to="/parent/dashboard" replace />} />
 
             {/* Personnel administratif */}
             <Route path="/comptable/dashboard" element={
@@ -210,72 +211,72 @@ function App() {
                 <DashboardComptable />
               </ProtectedRoute>
             } />
-            <Route path="/dashboard-comptable" element={
-              <ProtectedRoute allowedRoles={['comptable']}>
+            <Route path="/dashboard-comptable" element={<Navigate to="/comptable/dashboard" replace />} />
+            <Route path="/ecole/comptable" element={
+              <ProtectedRoute allowedRoles={['comptable', 'directeur']}>
                 <DashboardComptable />
               </ProtectedRoute>
             } />
-            <Route path="/ecole/comptable" element={<DashboardComptable />} />
 
             <Route path="/surveillant/dashboard" element={
               <ProtectedRoute requiredRole="surveillant">
                 <DashboardSurveillant />
               </ProtectedRoute>
             } />
-            <Route path="/dashboard-surveillant" element={
-              <ProtectedRoute allowedRoles={['surveillant']}>
+            <Route path="/dashboard-surveillant" element={<Navigate to="/surveillant/dashboard" replace />} />
+            <Route path="/ecole/surveillant" element={
+              <ProtectedRoute allowedRoles={['surveillant', 'directeur']}>
                 <DashboardSurveillant />
               </ProtectedRoute>
             } />
-            <Route path="/ecole/surveillant" element={<DashboardSurveillant />} />
 
             <Route path="/censeur/dashboard" element={
               <ProtectedRoute requiredRole="censeur">
                 <DashboardCenseur />
               </ProtectedRoute>
             } />
-            <Route path="/dashboard-censeur" element={
-              <ProtectedRoute allowedRoles={['censeur']}>
+            <Route path="/dashboard-censeur" element={<Navigate to="/censeur/dashboard" replace />} />
+            <Route path="/ecole/censeur" element={
+              <ProtectedRoute allowedRoles={['censeur', 'directeur']}>
                 <DashboardCenseur />
               </ProtectedRoute>
             } />
-            <Route path="/ecole/censeur" element={<DashboardCenseur />} />
 
             <Route path="/infirmier/dashboard" element={
               <ProtectedRoute requiredRole="infirmier">
                 <DashboardInfirmier />
               </ProtectedRoute>
             } />
-            <Route path="/dashboard-infirmier" element={
-              <ProtectedRoute allowedRoles={['infirmier']}>
+            <Route path="/dashboard-infirmier" element={<Navigate to="/infirmier/dashboard" replace />} />
+            <Route path="/ecole/infirmier" element={
+              <ProtectedRoute allowedRoles={['infirmier', 'directeur']}>
                 <DashboardInfirmier />
               </ProtectedRoute>
             } />
-            <Route path="/ecole/infirmier" element={<DashboardInfirmier />} />
 
             <Route path="/bibliothecaire/dashboard" element={
               <ProtectedRoute requiredRole="bibliothecaire">
                 <DashboardBibliothecaire />
               </ProtectedRoute>
             } />
-            <Route path="/dashboard-bibliothecaire" element={
-              <ProtectedRoute allowedRoles={['bibliothecaire']}>
+            <Route path="/dashboard-bibliothecaire" element={<Navigate to="/bibliothecaire/dashboard" replace />} />
+            <Route path="/ecole/bibliothecaire" element={
+              <ProtectedRoute allowedRoles={['bibliothecaire', 'directeur']}>
                 <DashboardBibliothecaire />
               </ProtectedRoute>
             } />
-            <Route path="/ecole/bibliothecaire" element={<DashboardBibliothecaire />} />
 
             <Route path="/secretaire/dashboard" element={
               <ProtectedRoute requiredRole="secretaire">
                 <DashboardSecretaire />
               </ProtectedRoute>
             } />
-            <Route path="/dashboard-secretaire" element={
-              <ProtectedRoute allowedRoles={['secretaire']}>
+            <Route path="/dashboard-secretaire" element={<Navigate to="/secretaire/dashboard" replace />} />
+            <Route path="/ecole/secretaire" element={
+              <ProtectedRoute allowedRoles={['secretaire', 'directeur']}>
                 <DashboardSecretaire />
               </ProtectedRoute>
             } />
-            <Route path="/ecole/secretaire" element={<DashboardSecretaire />} />
 
             {/* ============ ADMIN ============ */}
             <Route path="/admin/ecoles" element={
@@ -283,15 +284,35 @@ function App() {
                 <SuperAdminDashboard />
               </ProtectedRoute>
             } />
-            <Route path="/ecole/admin" element={<DashboardDirecteur />} />
+            <Route path="/ecole/admin" element={
+              <ProtectedRoute allowedRoles={['directeur', 'admin']}>
+                <DashboardDirecteur />
+              </ProtectedRoute>
+            } />
 
-            {/* ============ GESTION SCOLAIRE ============ */}
-            <Route path="/matieres" element={<Matieres />} />
-            <Route path="/exercices" element={<GestionExercices />} />
-            <Route path="/cahier-texte" element={<CahierTexte />} />
+            {/* ============ GESTION SCOLAIRE (Protégée) ============ */}
+            <Route path="/matieres" element={
+              <ProtectedRoute allowedRoles={['directeur', 'enseignement', 'enseignementP', 'enseignementM', 'directeurM', 'directeurP', 'directeurS']}>
+                <Matieres />
+              </ProtectedRoute>
+            } />
+            <Route path="/exercices" element={
+              <ProtectedRoute allowedRoles={['enseignement', 'enseignementP', 'enseignementM', 'directeur', 'directeurM', 'directeurP', 'directeurS']}>
+                <GestionExercices />
+              </ProtectedRoute>
+            } />
+            <Route path="/cahier-texte" element={
+              <ProtectedRoute allowedRoles={['enseignement', 'enseignementP', 'enseignementM', 'directeur', 'directeurM', 'directeurP', 'directeurS']}>
+                <CahierTexte />
+              </ProtectedRoute>
+            } />
 
-            {/* ============ UNIVERSITÉ ============ */}
-            <Route path="/universite/*" element={<UniversiteRoutes />} />
+            {/* ============ UNIVERSITÉ (Protégée) ============ */}
+            <Route path="/universite/*" element={
+              <ProtectedRoute allowedRoles={['recteur', 'doyen', 'professeur', 'etudiant', 'personnel', 'directeur', 'super-admin', 'admin']}>
+                <UniversiteRoutes />
+              </ProtectedRoute>
+            } />
 
             {/* ============ FALLBACK ============ */}
             <Route path="*" element={<Navigate to="/dashboard" replace />} />

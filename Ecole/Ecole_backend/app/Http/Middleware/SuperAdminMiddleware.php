@@ -10,7 +10,7 @@ class SuperAdminMiddleware
     public function handle(Request $request, Closure $next)
     {
         // Vérifier si l'utilisateur est super admin
-        if (!auth()->check() || auth()->user()->role !== 'super_admin') {
+        if (!auth()->check() || auth()->user()->role !== 'super-admin') {
             return response()->json(['message' => 'Accès refusé'], 403);
         }
 

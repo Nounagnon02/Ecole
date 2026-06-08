@@ -10,7 +10,7 @@ class EnseignantController extends Controller
 {
     public function index()
     {
-        $enseignants = Enseignant::with('departement')->get();
+        $enseignants = Enseignant::with('departement')->paginate(15);
         return response()->json($enseignants);
     }
 

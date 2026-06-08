@@ -100,8 +100,6 @@ export function ConnexionU() {
                     }
                 }
             );
-            console.log('Réponse du serveur:', response.data);
-
             if (response.data.token || response.data.role) {
                 // Préparer les données utilisateur
                 const userData = response.data.user || {

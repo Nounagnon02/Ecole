@@ -10,7 +10,7 @@ class PersonnelController extends Controller
 {
     public function index()
     {
-        $personnels = Personnel::with('universite')->get();
+        $personnels = Personnel::with('universite')->paginate(15);
         return response()->json($personnels);
     }
 

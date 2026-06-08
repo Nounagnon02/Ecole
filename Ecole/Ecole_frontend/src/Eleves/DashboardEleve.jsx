@@ -1,12 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  BookOpen, Calendar, MessageSquare, ClipboardList, 
+import {
+  BookOpen, Calendar, MessageSquare, ClipboardList,
   User, Bell, FileText, Clock, Award, Download
 } from 'lucide-react';
 import api from '../api';
 import Messagerie from '../components/Messagerie';
-import NotificationBell from '../components/NotificationBell';
+import DashboardLayout from '../components/DashboardLayout';
 import '../styles/dashboard.css';
+
+const NAV_ITEMS = [
+  { id: 'overview', icon: User, label: 'Aperçu' },
+  { id: 'bulletins', icon: Award, label: 'Bulletins' },
+  { id: 'devoirs', icon: ClipboardList, label: 'Devoirs' },
+  { id: 'emploi', icon: Calendar, label: 'Emploi du temps' },
+  { id: 'messages', icon: MessageSquare, label: 'Messages' },
+  { id: 'ressources', icon: FileText, label: 'Ressources' },
+  { id: 'profil', icon: User, label: 'Mon profil' },
+];
 
 const DashboardEleve = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -18,6 +28,7 @@ const DashboardEleve = () => {
   const [notes, setNotes] = useState([]);
   const [ressources, setRessources] = useState([]);
   const [profil, setProfil] = useState({});
+  const [notification, setNotification] = useState({ show: false, message: '', type: 'error' });
 
   useEffect(() => {
     fetchEleveData();
@@ -40,6 +51,7 @@ const DashboardEleve = () => {
       setMessages(messagesRes.data);
     } catch (error) {
       console.error('Erreur:', error);
+      setNotification({ show: true, message: 'Erreur lors du chargement des donnees', type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -196,77 +208,26 @@ const DashboardEleve = () => {
   );
 
   return (
-    <div className="dashboard-eleve">
-      <div className="sidebar">
-        <div className="sidebar-header">
-          <h2>Espace Élève</h2>
-        </div>
-        <nav className="sidebar-nav">
-          <button 
-            className={activeTab === 'overview' ? 'active' : ''}
-            onClick={() => setActiveTab('overview')}
-          >
-            <User size={20} /> Aperçu
-          </button>
-          <button 
-            className={activeTab === 'bulletins' ? 'active' : ''}
-            onClick={() => setActiveTab('bulletins')}
-          >
-            <Award size={20} /> Bulletins
-          </button>
-          <button 
-            className={activeTab === 'devoirs' ? 'active' : ''}
-            onClick={() => setActiveTab('devoirs')}
-          >
-            <ClipboardList size={20} /> Devoirs
-          </button>
-          <button 
-            className={activeTab === 'emploi' ? 'active' : ''}
-            onClick={() => setActiveTab('emploi')}
-          >
-            <Calendar size={20} /> Emploi du temps
-          </button>
-          <button 
-            className={activeTab === 'messages' ? 'active' : ''}
-            onClick={() => setActiveTab('messages')}
-          >
-            <MessageSquare size={20} /> Messages
-          </button>
-          <button 
-            className={activeTab === 'ressources' ? 'active' : ''}
-            onClick={() => setActiveTab('ressources')}
-          >
-            <FileText size={20} /> Ressources
-          </button>
-          <button 
-            className={activeTab === 'profil' ? 'active' : ''}
-            onClick={() => setActiveTab('profil')}
-          >
-            <User size={20} /> Mon profil
-          </button>
-        </nav>
-      </div>
-
-      <div className="main-content">
-        <header className="main-header">
-          <h1>Dashboard Élève</h1>
-          <div className="header-actions">
-            <NotificationBell userId={localStorage.getItem('userId')} />
-            <User size={20} />
-          </div>
-        </header>
-
-        <main className="content-area">
-          {activeTab === 'overview' && renderOverview()}
-          {activeTab === 'bulletins' && renderBulletins()}
-          {activeTab === 'devoirs' && renderDevoirs()}
-          {activeTab === 'emploi' && renderEmploiTemps()}
-          {activeTab === 'messages' && renderMessages()}
-          {activeTab === 'ressources' && renderRessources()}
-          {activeTab === 'profil' && renderProfil()}
-        </main>
-      </div>
-    </div>
+    <DashboardLayout
+      navItems={NAV_ITEMS}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      userRole="Élève"
+      notification={notification}
+      onCloseNotification={() => setNotification({ show: false, message: '', type: 'error' })}
+      headerTitle="Dashboard Élève"
+      wrapperClass="dashboard-eleve"
+      headerVariant="main"
+      headerExtra={<User size={20} />}
+    >
+      {activeTab === 'overview' && renderOverview()}
+      {activeTab === 'bulletins' && renderBulletins()}
+      {activeTab === 'devoirs' && renderDevoirs()}
+      {activeTab === 'emploi' && renderEmploiTemps()}
+      {activeTab === 'messages' && renderMessages()}
+      {activeTab === 'ressources' && renderRessources()}
+      {activeTab === 'profil' && renderProfil()}
+    </DashboardLayout>
   );
 };
 

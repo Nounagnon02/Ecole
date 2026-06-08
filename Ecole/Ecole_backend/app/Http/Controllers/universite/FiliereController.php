@@ -10,7 +10,7 @@ class FiliereController extends Controller
 {
     public function index()
     {
-        $filieres = Filiere::with('departement')->get();
+        $filieres = Filiere::with('departement')->paginate(15);
         return response()->json($filieres);
     }
 

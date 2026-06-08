@@ -8,7 +8,7 @@ import {
   ActivityIndicator 
 } from "react-native";
 import axios from "axios";
-import { NavigationProp, ParamListBase, useNavigation } from "@react-navigation/native";
+import { useRouter } from "expo-router";
 import { useAuth } from "./AuthContext";
 import { POINTS_TERMINAISON_AUTH } from "../constants/api";
 import { ReponseAuth, EleveCredentials } from "../types/auth";
@@ -25,7 +25,7 @@ export default function Index() {
   const [chargement, setChargement] = useState<boolean>(false);
   const [afficherMotDePasse, setAfficherMotDePasse] = useState<boolean>(false);
 
-  const navigation = useNavigation<NavigationProp<ParamListBase>>();
+  const router = useRouter();
   const { login } = useAuth(); // Changé de connexion à login pour correspondre au contexte
 
   const gererChangement = (nom: keyof EleveCredentials, valeur: string): void => {
@@ -72,7 +72,7 @@ export default function Index() {
             token: data.token 
           });
           setMessage("Connexion réussie !");
-          navigation.replace("(tabs)");  // Updated navigation path
+          router.replace("/(tabs)");  // Expo Router navigation
         }
       } catch (err: any) {
         setErreur(true);
@@ -130,14 +130,14 @@ export default function Index() {
       </TouchableOpacity>
 
       <TouchableOpacity
-        onPress={() => navigation.navigate("MotDePasseOublie")}
+        onPress={() => router.push("/MotDePasseOublie")}
         disabled={chargement}
       >
         <Text style={styles.link}>Mot de passe oublié ?</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
-        onPress={() => navigation.navigate("Inscription")}
+        onPress={() => router.push("/inscription")}
         disabled={chargement}
       >
         <Text style={styles.link}>Pas encore de compte ? S'inscrire</Text>

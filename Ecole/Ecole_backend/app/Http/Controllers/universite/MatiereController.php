@@ -10,7 +10,7 @@ class MatiereController extends Controller
 {
     public function index()
     {
-        $matieres = Matiere::with('enseignant', 'semestre', 'filiere')->get();
+        $matieres = Matiere::with('enseignant', 'semestre', 'filiere')->paginate(15);
         return response()->json($matieres);
     }
 

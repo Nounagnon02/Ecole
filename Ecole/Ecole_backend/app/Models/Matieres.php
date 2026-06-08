@@ -73,7 +73,7 @@ public function coefficientsParClasse()
     public function enseignants()
     {
         return $this->belongsToMany(
-            Enseignants::class,
+            Enseignant::class,
             'enseignant_matiere',
             'matiere_id',
             'enseignant_id'
