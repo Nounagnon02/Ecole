@@ -13,7 +13,7 @@ return new class extends Migration
             $table->string('code', 20);
             $table->string('intitule');
             $table->integer('credit')->nullable();
-            $table->foreignId('enseignant_id')->constrained('enseignants')->onDelete('cascade');
+            $table->foreignId('enseignant_id')->constrained('uni_enseignants')->onDelete('cascade');
             $table->foreignId('semestre_id')->constrained('semestres')->onDelete('cascade');
             $table->foreignId('filiere_id')->constrained('filieres')->onDelete('cascade');
             $table->timestamps();

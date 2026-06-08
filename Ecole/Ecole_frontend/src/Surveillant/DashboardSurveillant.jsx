@@ -2,12 +2,21 @@ import React, { useState, useEffect } from 'react';
 import {
   Clock, Users, AlertTriangle, CheckCircle,
   Calendar, FileText, Eye, Plus, Edit2,
-  Shield, UserCheck, UserX, Bell, MessageSquare, LogOut
+  Shield, UserCheck, UserX, Bell, MessageSquare
 } from 'lucide-react';
 import api from '../api';
 import Messagerie from '../components/Messagerie';
-import NotificationBell from '../components/NotificationBell';
+import DashboardLayout from '../components/DashboardLayout';
 import '../styles/GlobalStyles.css';
+
+const NAV_ITEMS = [
+  { id: 'overview', icon: Shield, label: 'Aperçu' },
+  { id: 'pointage', icon: UserCheck, label: 'Pointage' },
+  { id: 'incidents', icon: AlertTriangle, label: 'Incidents' },
+  { id: 'sanctions', icon: FileText, label: 'Sanctions' },
+  { id: 'planning', icon: Calendar, label: 'Planning' },
+  { id: 'messages', icon: MessageSquare, label: 'Messages' },
+];
 
 const DashboardSurveillant = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -35,6 +44,8 @@ const DashboardSurveillant = () => {
     description: ''
   });
 
+  const [notification, setNotification] = useState({ show: false, message: '', type: 'error' });
+
   useEffect(() => {
     fetchSurveillantData();
   }, []);
@@ -53,6 +64,7 @@ const DashboardSurveillant = () => {
       setIncidents(incidentsRes.data);
     } catch (error) {
       console.error('Erreur:', error);
+      setNotification({ show: true, message: 'Erreur lors du chargement des donnees', type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -68,6 +80,7 @@ const DashboardSurveillant = () => {
       fetchSurveillantData();
     } catch (error) {
       console.error('Erreur:', error);
+      setNotification({ show: true, message: 'Erreur lors du marquage du retard', type: 'error' });
     }
   };
 
@@ -81,6 +94,7 @@ const DashboardSurveillant = () => {
       fetchSurveillantData();
     } catch (error) {
       console.error('Erreur:', error);
+      setNotification({ show: true, message: 'Erreur lors du marquage de l\'absence', type: 'error' });
     }
   };
 
@@ -97,6 +111,7 @@ const DashboardSurveillant = () => {
       fetchSurveillantData();
     } catch (error) {
       console.error('Erreur:', error);
+      setNotification({ show: true, message: 'Erreur lors de l\'ajout de l\'incident', type: 'error' });
     }
   };
 
@@ -112,6 +127,7 @@ const DashboardSurveillant = () => {
       });
     } catch (error) {
       console.error('Erreur:', error);
+      setNotification({ show: true, message: 'Erreur lors de l\'application de la sanction', type: 'error' });
     }
   };
 
@@ -384,52 +400,23 @@ const DashboardSurveillant = () => {
   );
 
   return (
-    <div className="app-dashboard">
-      <div className="sidebar">
-        <div className="sidebar-header">
-          <h2>Espace Surveillant</h2>
-        </div>
-        <nav className="sidebar-nav">
-          {[
-            { id: 'overview', icon: Shield, label: 'Aperçu' },
-            { id: 'pointage', icon: UserCheck, label: 'Pointage' },
-            { id: 'incidents', icon: AlertTriangle, label: 'Incidents' },
-            { id: 'sanctions', icon: FileText, label: 'Sanctions' },
-            { id: 'planning', icon: Calendar, label: 'Planning' },
-            { id: 'messages', icon: MessageSquare, label: 'Messages' }
-          ].map(item => (
-            <button
-              key={item.id}
-              className={activeTab === item.id ? 'active' : ''}
-              onClick={() => setActiveTab(item.id)}
-            >
-              <item.icon size={20} /> {item.label}
-            </button>
-          ))}
-        </nav>
-      </div>
-
-      <div className="main-content">
-        <header className="page-header">
-          <div>
-            <h1>Tableau de Bord</h1>
-            <p style={{ color: 'var(--text-muted)' }}>Bienvenue dans votre espace de surveillance</p>
-          </div>
-          <div className="header-actions">
-            <NotificationBell userId={localStorage.getItem('userId')} />
-          </div>
-        </header>
-
-        <main className="content-area">
-          {activeTab === 'overview' && renderOverview()}
-          {activeTab === 'pointage' && renderRetardsAbsences()}
-          {activeTab === 'incidents' && renderIncidents()}
-          {activeTab === 'sanctions' && renderSanctions()}
-          {activeTab === 'planning' && renderPlanning()}
-          {activeTab === 'messages' && <Messagerie userId={localStorage.getItem('userId')} userName={localStorage.getItem('userName') || 'Surveillant'} />}
-        </main>
-      </div>
-    </div>
+    <DashboardLayout
+      navItems={NAV_ITEMS}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      userRole="Surveillant"
+      notification={notification}
+      onCloseNotification={() => setNotification({ show: false, message: '', type: 'error' })}
+      headerTitle="Tableau de Bord"
+      headerSubtitle="Bienvenue dans votre espace de surveillance"
+    >
+      {activeTab === 'overview' && renderOverview()}
+      {activeTab === 'pointage' && renderRetardsAbsences()}
+      {activeTab === 'incidents' && renderIncidents()}
+      {activeTab === 'sanctions' && renderSanctions()}
+      {activeTab === 'planning' && renderPlanning()}
+      {activeTab === 'messages' && <Messagerie userId={localStorage.getItem('userId')} userName={localStorage.getItem('userName') || 'Surveillant'} />}
+    </DashboardLayout>
   );
 };
 

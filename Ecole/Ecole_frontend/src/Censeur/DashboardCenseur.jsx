@@ -2,12 +2,22 @@ import React, { useState, useEffect } from 'react';
 import {
   BookOpen, Users, Calendar, TrendingUp,
   FileText, Award, Clock, Settings,
-  Plus, Edit2, Eye, CheckCircle, MessageSquare, LogOut
+  Plus, Edit2, Eye, CheckCircle, MessageSquare
 } from 'lucide-react';
 import api from '../api';
 import Messagerie from '../components/Messagerie';
-import NotificationBell from '../components/NotificationBell';
+import DashboardLayout from '../components/DashboardLayout';
 import '../styles/GlobalStyles.css';
+
+const NAV_ITEMS = [
+  { id: 'overview', icon: TrendingUp, label: 'Aperçu' },
+  { id: 'resultats', icon: Award, label: 'Résultats' },
+  { id: 'conseils', icon: Users, label: 'Conseils de classe' },
+  { id: 'examens', icon: FileText, label: 'Examens' },
+  { id: 'emplois', icon: Calendar, label: 'Emplois du temps' },
+  { id: 'rapports', icon: BookOpen, label: 'Rapports' },
+  { id: 'messages', icon: MessageSquare, label: 'Messages' },
+];
 
 const DashboardCenseur = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -34,6 +44,8 @@ const DashboardCenseur = () => {
     surveillant_id: ''
   });
 
+  const [notification, setNotification] = useState({ show: false, message: '', type: 'error' });
+
   useEffect(() => {
     fetchCenseurData();
   }, []);
@@ -52,6 +64,7 @@ const DashboardCenseur = () => {
       setExamens(examensRes.data);
     } catch (error) {
       console.error('Erreur:', error);
+      setNotification({ show: true, message: 'Erreur lors du chargement des donnees', type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -64,6 +77,7 @@ const DashboardCenseur = () => {
       fetchCenseurData();
     } catch (error) {
       console.error('Erreur:', error);
+      setNotification({ show: true, message: 'Erreur lors de la planification du conseil', type: 'error' });
     }
   };
 
@@ -74,15 +88,17 @@ const DashboardCenseur = () => {
       fetchCenseurData();
     } catch (error) {
       console.error('Erreur:', error);
+      setNotification({ show: true, message: 'Erreur lors de la planification de l\'examen', type: 'error' });
     }
   };
 
   const validerEmploiTemps = async (emploiId) => {
     try {
       await api.put(`/emplois-temps/${emploiId}/valider`);
-      alert('Emploi du temps validé');
+      setNotification({ show: true, message: 'Emploi du temps valide', type: 'success' });
     } catch (error) {
       console.error('Erreur:', error);
+      setNotification({ show: true, message: 'Erreur lors de la validation de l\'emploi du temps', type: 'error' });
     }
   };
 
@@ -329,54 +345,24 @@ const DashboardCenseur = () => {
   );
 
   return (
-    <div className="app-dashboard">
-      <div className="sidebar">
-        <div className="sidebar-header">
-          <h2>Espace Censeur</h2>
-        </div>
-        <nav className="sidebar-nav">
-          {[
-            { id: 'overview', icon: TrendingUp, label: 'Aperçu' },
-            { id: 'resultats', icon: Award, label: 'Résultats' },
-            { id: 'conseils', icon: Users, label: 'Conseils de classe' },
-            { id: 'examens', icon: FileText, label: 'Examens' },
-            { id: 'emplois', icon: Calendar, label: 'Emplois du temps' },
-            { id: 'rapports', icon: BookOpen, label: 'Rapports' },
-            { id: 'messages', icon: MessageSquare, label: 'Messages' }
-          ].map(item => (
-            <button 
-              key={item.id}
-              className={activeTab === item.id ? 'active' : ''}
-              onClick={() => setActiveTab(item.id)}
-            >
-              <item.icon size={20} /> {item.label}
-            </button>
-          ))}
-        </nav>
-      </div>
-
-      <div className="main-content">
-        <header className="page-header">
-          <div>
-            <h1>Tableau de Bord</h1>
-            <p style={{ color: 'var(--text-muted)' }}>Bienvenue dans votre espace de gestion</p>
-          </div>
-          <div className="header-actions">
-            <NotificationBell userId={localStorage.getItem('userId')} />
-          </div>
-        </header>
-
-        <main className="content-area">
-          {activeTab === 'overview' && renderOverview()}
-          {activeTab === 'resultats' && renderResultats()}
-          {activeTab === 'conseils' && renderConseils()}
-          {activeTab === 'examens' && renderExamens()}
-          {activeTab === 'emplois' && renderEmploisTemps()}
-          {activeTab === 'rapports' && renderRapports()}
-          {activeTab === 'messages' && <Messagerie userId={localStorage.getItem('userId')} userName={localStorage.getItem('userName') || 'Censeur'} />}
-        </main>
-      </div>
-    </div>
+    <DashboardLayout
+      navItems={NAV_ITEMS}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      userRole="Censeur"
+      notification={notification}
+      onCloseNotification={() => setNotification({ show: false, message: '', type: 'error' })}
+      headerTitle="Tableau de Bord"
+      headerSubtitle="Bienvenue dans votre espace de gestion"
+    >
+      {activeTab === 'overview' && renderOverview()}
+      {activeTab === 'resultats' && renderResultats()}
+      {activeTab === 'conseils' && renderConseils()}
+      {activeTab === 'examens' && renderExamens()}
+      {activeTab === 'emplois' && renderEmploisTemps()}
+      {activeTab === 'rapports' && renderRapports()}
+      {activeTab === 'messages' && <Messagerie userId={localStorage.getItem('userId')} userName={localStorage.getItem('userName') || 'Censeur'} />}
+    </DashboardLayout>
   );
 };
 

@@ -316,7 +316,7 @@ class PaymentController extends Controller
         $payload = $request->getContent();
         $expectedSignature = hash_hmac('sha256', $payload, config('services.fedapay.webhook_secret'));
 
-        if ($signature !== $expectedSignature) {
+        if (!hash_equals($expectedSignature, $signature)) {
             return response()->json(['error' => 'Invalid signature'], 401);
         }
 

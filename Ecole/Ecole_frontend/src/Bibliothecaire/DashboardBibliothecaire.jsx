@@ -1,13 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  BookOpen, Users, Calendar, Search, 
-  Plus, Edit2, Eye, Trash2, Clock, 
+import {
+  BookOpen, Users, Calendar, Search,
+  Plus, Edit2, Eye, Trash2, Clock,
   Award, TrendingUp, FileText, Download, MessageSquare
 } from 'lucide-react';
 import api from '../api';
 import Messagerie from '../components/Messagerie';
-import NotificationBell from '../components/NotificationBell';
+import DashboardLayout from '../components/DashboardLayout';
 import '../styles/dashboard.css';
+
+const NAV_ITEMS = [
+  { id: 'overview', icon: BookOpen, label: 'Aperçu' },
+  { id: 'catalogue', icon: FileText, label: 'Catalogue' },
+  { id: 'emprunts', icon: Users, label: 'Emprunts' },
+  { id: 'reservations', icon: Clock, label: 'Réservations' },
+  { id: 'animations', icon: Calendar, label: 'Animations' },
+  { id: 'statistiques', icon: TrendingUp, label: 'Statistiques' },
+  { id: 'messages', icon: MessageSquare, label: 'Messages' },
+];
 
 const DashboardBibliothecaire = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -44,6 +54,7 @@ const DashboardBibliothecaire = () => {
   });
 
   const [searchTerm, setSearchTerm] = useState('');
+  const [notification, setNotification] = useState({ show: false, message: '', type: 'error' });
 
   useEffect(() => {
     fetchBibliothequeData();
@@ -63,6 +74,7 @@ const DashboardBibliothecaire = () => {
       setStatistiques(statistiquesRes.data);
     } catch (error) {
       console.error('Erreur:', error);
+      setNotification({ show: true, message: 'Erreur lors du chargement des donnees', type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -83,6 +95,7 @@ const DashboardBibliothecaire = () => {
       fetchBibliothequeData();
     } catch (error) {
       console.error('Erreur:', error);
+      setNotification({ show: true, message: 'Erreur lors de l\'ajout du livre', type: 'error' });
     }
   };
 
@@ -98,6 +111,7 @@ const DashboardBibliothecaire = () => {
       fetchBibliothequeData();
     } catch (error) {
       console.error('Erreur:', error);
+      setNotification({ show: true, message: 'Erreur lors de l\'enregistrement de l\'emprunt', type: 'error' });
     }
   };
 
@@ -107,6 +121,7 @@ const DashboardBibliothecaire = () => {
       fetchBibliothequeData();
     } catch (error) {
       console.error('Erreur:', error);
+      setNotification({ show: true, message: 'Erreur lors du retour du livre', type: 'error' });
     }
   };
 
@@ -116,6 +131,7 @@ const DashboardBibliothecaire = () => {
       fetchBibliothequeData();
     } catch (error) {
       console.error('Erreur:', error);
+      setNotification({ show: true, message: 'Erreur lors de la prolongation de l\'emprunt', type: 'error' });
     }
   };
 
@@ -131,6 +147,7 @@ const DashboardBibliothecaire = () => {
       });
     } catch (error) {
       console.error('Erreur:', error);
+      setNotification({ show: true, message: 'Erreur lors de l\'ajout de l\'animation', type: 'error' });
     }
   };
 
@@ -496,76 +513,25 @@ const DashboardBibliothecaire = () => {
   );
 
   return (
-    <div className="dashboard-bibliothecaire">
-      <div className="sidebar">
-        <div className="sidebar-header">
-          <h2>Espace Bibliothécaire</h2>
-        </div>
-        <nav className="sidebar-nav">
-          <button 
-            className={activeTab === 'overview' ? 'active' : ''}
-            onClick={() => setActiveTab('overview')}
-          >
-            <BookOpen size={20} /> Aperçu
-          </button>
-          <button 
-            className={activeTab === 'catalogue' ? 'active' : ''}
-            onClick={() => setActiveTab('catalogue')}
-          >
-            <FileText size={20} /> Catalogue
-          </button>
-          <button 
-            className={activeTab === 'emprunts' ? 'active' : ''}
-            onClick={() => setActiveTab('emprunts')}
-          >
-            <Users size={20} /> Emprunts
-          </button>
-          <button 
-            className={activeTab === 'reservations' ? 'active' : ''}
-            onClick={() => setActiveTab('reservations')}
-          >
-            <Clock size={20} /> Réservations
-          </button>
-          <button 
-            className={activeTab === 'animations' ? 'active' : ''}
-            onClick={() => setActiveTab('animations')}
-          >
-            <Calendar size={20} /> Animations
-          </button>
-          <button 
-            className={activeTab === 'statistiques' ? 'active' : ''}
-            onClick={() => setActiveTab('statistiques')}
-          >
-            <TrendingUp size={20} /> Statistiques
-          </button>
-          <button 
-            className={activeTab === 'messages' ? 'active' : ''}
-            onClick={() => setActiveTab('messages')}
-          >
-            <MessageSquare size={20} /> Messages
-          </button>
-        </nav>
-      </div>
-
-      <div className="main-content">
-        <header className="main-header">
-          <h1>Dashboard Bibliothécaire</h1>
-          <div className="header-actions">
-            <NotificationBell userId={localStorage.getItem('userId')} />
-          </div>
-        </header>
-
-        <main className="content-area">
-          {activeTab === 'overview' && renderOverview()}
-          {activeTab === 'catalogue' && renderCatalogue()}
-          {activeTab === 'emprunts' && renderEmprunts()}
-          {activeTab === 'reservations' && renderReservations()}
-          {activeTab === 'animations' && renderAnimations()}
-          {activeTab === 'statistiques' && renderStatistiques()}
-          {activeTab === 'messages' && <Messagerie userId={localStorage.getItem('userId')} userName={localStorage.getItem('userName') || 'Bibliothécaire'} />}
-        </main>
-      </div>
-    </div>
+    <DashboardLayout
+      navItems={NAV_ITEMS}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      userRole="Bibliothécaire"
+      notification={notification}
+      onCloseNotification={() => setNotification({ show: false, message: '', type: 'error' })}
+      headerTitle="Dashboard Bibliothécaire"
+      wrapperClass="dashboard-bibliothecaire"
+      headerVariant="main"
+    >
+      {activeTab === 'overview' && renderOverview()}
+      {activeTab === 'catalogue' && renderCatalogue()}
+      {activeTab === 'emprunts' && renderEmprunts()}
+      {activeTab === 'reservations' && renderReservations()}
+      {activeTab === 'animations' && renderAnimations()}
+      {activeTab === 'statistiques' && renderStatistiques()}
+      {activeTab === 'messages' && <Messagerie userId={localStorage.getItem('userId')} userName={localStorage.getItem('userName') || 'Bibliothécaire'} />}
+    </DashboardLayout>
   );
 };
 

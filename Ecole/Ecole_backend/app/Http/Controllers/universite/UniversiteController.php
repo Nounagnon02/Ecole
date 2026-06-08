@@ -14,7 +14,7 @@ class UniversiteController extends Controller
 
     public function index()
     {
-        $universites = UniversiteModel::all();
+        $universites = UniversiteModel::paginate(15);
         return response()->json($universites);
     }
 

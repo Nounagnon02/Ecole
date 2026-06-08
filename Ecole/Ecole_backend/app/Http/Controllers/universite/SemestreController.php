@@ -10,7 +10,7 @@ class SemestreController extends Controller
 {
     public function index()
     {
-        $semestres = Semestre::with('anneeAcademique')->get();
+        $semestres = Semestre::with('anneeAcademique')->paginate(15);
         return response()->json($semestres);
     }
 

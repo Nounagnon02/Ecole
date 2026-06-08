@@ -26,7 +26,7 @@ export const AuthProvider = ({ children }) => {
 
   const validateToken = async () => {
     try {
-      const response = await api.get('/auth/me', {
+      const response = await api.get('/user/profile', {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -45,7 +45,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (credentials) => {
     try {
-      const response = await api.post('/auth/login', credentials);
+      const response = await api.post('/connexion', credentials);
       
       if (response.data.success) {
         const { token, user, ecole_id } = response.data;

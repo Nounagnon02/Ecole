@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\{Eleve, User, Classes, Series};
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class ImportService
@@ -48,7 +49,7 @@ class ImportService
                         'name' => $nom,
                         'prenom' => $prenom,
                         'identifiant' => $matricule,
-                        'password' => Hash::make('ecole123'), // Mot de passe par défaut
+                        'password' => Hash::make(Str::random(12)), // Mot de passe aléatoire généré
                         'role' => 'eleve',
                         'ecole_id' => $ecoleId
                     ]);

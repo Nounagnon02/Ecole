@@ -10,7 +10,7 @@ class DiplomeController extends Controller
 {
     public function index()
     {
-        $diplomes = Diplome::with('etudiant')->get();
+        $diplomes = Diplome::with('etudiant')->paginate(15);
         return response()->json($diplomes);
     }
 

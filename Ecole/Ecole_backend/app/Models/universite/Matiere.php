@@ -9,6 +9,8 @@ class Matiere extends Model
 {
     use HasFactory;
 
+    protected $table = 'uni_matieres';
+
     protected $fillable = [
         'code',
         'intitule',

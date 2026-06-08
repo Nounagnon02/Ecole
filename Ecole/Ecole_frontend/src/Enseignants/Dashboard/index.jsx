@@ -8,7 +8,17 @@ import CahierTextePage from './pages/CahierTextePage';
 import EmploiPage from './pages/EmploiPage';
 import Messagerie from '../../components/Messagerie';
 import NotificationBell from '../../components/NotificationBell';
+import DashboardLayout from '../../components/DashboardLayout';
 import '../../styles/GlobalStyles.css';
+
+const NAV_ITEMS = [
+    { id: 'overview', icon: Home, label: 'Aperçu' },
+    { id: 'classe', icon: Users, label: 'Mes Classes' },
+    { id: 'notes', icon: ClipboardList, label: 'Notes' },
+    { id: 'cahier', icon: BookOpen, label: 'Cahier de texte' },
+    { id: 'emploi', icon: Calendar, label: 'Emploi du temps' },
+    { id: 'messages', icon: MessageSquare, label: 'Messages' },
+];
 
 const DashboardEnseignant = () => {
     const {
@@ -32,8 +42,8 @@ const DashboardEnseignant = () => {
             case 'overview':
                 return <OverviewPage stats={{
                     classesCount: classes.length,
-                    elevesCount: classes.reduce((acc, c) => acc + (c.effectif || 0), 0), // Assuming effectif is present
-                    notesCount: '-', // Would need fetching
+                    elevesCount: classes.reduce((acc, c) => acc + (c.effectif || 0), 0),
+                    notesCount: '-',
                     devoirsCount: devoirs.length
                 }} />;
             case 'classe':
@@ -51,66 +61,62 @@ const DashboardEnseignant = () => {
         }
     };
 
-    return (
-        <div className="dashboard-container">
-            {/* Sidebar */}
-            <div className={`sidebar ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
-                <div className="sidebar-header">
-                    <h1 className="sidebar-title">{sidebarOpen ? 'Espace Prof' : 'EP'}</h1>
-                    <button onClick={() => setSidebarOpen(!sidebarOpen)} className="sidebar-toggle">
-                        {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
-                    </button>
-                </div>
-
-                <nav className="sidebar-nav">
-                    {[
-                        { id: 'overview', icon: Home, label: 'Aperçu' },
-                        { id: 'classe', icon: Users, label: 'Mes Classes' },
-                        { id: 'notes', icon: ClipboardList, label: 'Notes' },
-                        { id: 'cahier', icon: BookOpen, label: 'Cahier de texte' },
-                        { id: 'emploi', icon: Calendar, label: 'Emploi du temps' },
-                        { id: 'messages', icon: MessageSquare, label: 'Messages' }
-                    ].map(item => (
-                        <div
-                            key={item.id}
-                            className={`sidebar-item ${activeTab === item.id ? 'active' : ''}`}
-                            onClick={() => setActiveTab(item.id)}
-                        >
-                            <item.icon size={20} />
-                            {sidebarOpen && <span>{item.label}</span>}
-                        </div>
-                    ))}
-                </nav>
-
-                <div className="sidebar-footer">
-                    <div className="sidebar-item" onClick={() => window.location.href = '/logout'}>
-                        <LogOut size={20} /> {sidebarOpen && <span>Déconnexion</span>}
-                    </div>
-                </div>
+    const renderSidebar = () => (
+        <div className={`sidebar ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
+            <div className="sidebar-header">
+                <h1 className="sidebar-title">{sidebarOpen ? 'Espace Prof' : 'EP'}</h1>
+                <button onClick={() => setSidebarOpen(!sidebarOpen)} className="sidebar-toggle">
+                    {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
+                </button>
             </div>
-
-            {/* Main Content */}
-            <div className="main-content">
-                <header className="top-bar">
-                    <div className="page-title">
-                        {activeTab === 'overview' ? 'Tableau de Bord' :
-                            activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
+            <nav className="sidebar-nav">
+                {NAV_ITEMS.map(item => (
+                    <div
+                        key={item.id}
+                        className={`sidebar-item ${activeTab === item.id ? 'active' : ''}`}
+                        onClick={() => setActiveTab(item.id)}
+                    >
+                        <item.icon size={20} />
+                        {sidebarOpen && <span>{item.label}</span>}
                     </div>
-
-                    <div className="top-bar-actions">
-                        <NotificationBell />
-                        <div className="profile-menu">
-                            <div className="avatar">P</div>
-                            <span className="username">{enseignantData?.nom || 'Enseignant'}</span>
-                        </div>
-                    </div>
-                </header>
-
-                <main className="content-area">
-                    {renderContent()}
-                </main>
+                ))}
+            </nav>
+            <div className="sidebar-footer">
+                <div className="sidebar-item" onClick={() => window.location.href = '/logout'}>
+                    <LogOut size={20} /> {sidebarOpen && <span>Déconnexion</span>}
+                </div>
             </div>
         </div>
+    );
+
+    const renderHeader = () => (
+        <header className="top-bar">
+            <div className="page-title">
+                {activeTab === 'overview' ? 'Tableau de Bord' :
+                    activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
+            </div>
+            <div className="top-bar-actions">
+                <NotificationBell />
+                <div className="profile-menu">
+                    <div className="avatar">P</div>
+                    <span className="username">{enseignantData?.nom || 'Enseignant'}</span>
+                </div>
+            </div>
+        </header>
+    );
+
+    return (
+        <DashboardLayout
+            navItems={NAV_ITEMS}
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            userRole="Enseignant"
+            wrapperClass="dashboard-container"
+            renderSidebar={renderSidebar}
+            renderHeader={renderHeader}
+        >
+            {renderContent()}
+        </DashboardLayout>
     );
 };
 

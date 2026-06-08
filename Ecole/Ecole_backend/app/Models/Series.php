@@ -45,14 +45,12 @@ class Series extends Model
     return $this->matieres()
         ->wherePivot('classe_id', $classe_id)
         ->get()
-        ->wherePivot('classe_id', $this->classe_id)
         ->map(function ($matiere) {
             return [
                 'id' => $matiere->id,
                 'nom' => $matiere->nom,
                 'coefficient' => $matiere->pivot->coefficient
             ];
-        
         });
 }
 
@@ -84,7 +82,7 @@ public function calculMoyenneGenerale($eleve_id)
     // Autres relations existantes...
     public function eleves()
     {
-        return $this->hasMany(Eleves::class, 'serie_id');
+        return $this->hasMany(Eleve::class, 'serie_id');
     }
 
     
