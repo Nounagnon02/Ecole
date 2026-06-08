@@ -13,16 +13,35 @@ const RoleBasedRedirect = () => {
     }
 
     const roleRoutes = {
+      // Direction
       'directeur': '/directeur/dashboard',
+      'directeurM': '/maternelle/dashboard',
+      'directeurP': '/primaire/dashboard',
+      'directeurS': '/secondaire/dashboard',
+      // Enseignants
       'enseignant': '/enseignant/dashboard',
+      'enseignement': '/enseignant/secondaire',
+      'enseignementM': '/enseignant/maternelle',
+      'enseignementP': '/enseignant/primaire',
+      // Élèves et parents
       'eleve': '/eleve/dashboard',
       'parent': '/parent/dashboard',
+      // Personnel
       'comptable': '/comptable/dashboard',
       'surveillant': '/surveillant/dashboard',
       'censeur': '/censeur/dashboard',
       'infirmier': '/infirmier/dashboard',
       'bibliothecaire': '/bibliothecaire/dashboard',
-      'secretaire': '/secretaire/dashboard'
+      'secretaire': '/secretaire/dashboard',
+      // Université
+      'recteur': '/universite/dashboard',
+      'doyen': '/universite/dashboard',
+      'professeur': '/universite/dashboard',
+      'etudiant': '/universite/dashboard',
+      'personnel': '/universite/dashboard',
+      // Admin
+      'super-admin': '/admin/ecoles',
+      'admin': '/admin/dashboard'
     };
 
     const route = roleRoutes[user?.role];

@@ -121,11 +121,12 @@ function App() {
                 <PaymentForm />
               </ProtectedRoute>
             } />
-            <Route path="/payment-success" element={
+            <Route path="/paiement/succes" element={
               <ProtectedRoute allowedRoles={['eleve', 'parent', 'comptable', 'directeur']}>
                 <PaymentSuccess />
               </ProtectedRoute>
             } />
+            <Route path="/payment-success" element={<Navigate to="/paiement/succes" replace />} />
 
             {/* ============ DASHBOARDS PAR RÔLE (Protégés) ============ */}
 
@@ -135,33 +136,37 @@ function App() {
                 <DashboardDirecteur />
               </ProtectedRoute>
             } />
-            <Route path="/dashboard-admin" element={
+            <Route path="/admin/dashboard" element={
               <ProtectedRoute allowedRoles={['directeur', 'admin']}>
                 <DashboardDirecteur />
               </ProtectedRoute>
             } />
+            <Route path="/dashboard-admin" element={<Navigate to="/admin/dashboard" replace />} />
 
             {/* Directeurs par niveau */}
-            <Route path="/dashboard-maternelle" element={
+            <Route path="/maternelle/dashboard" element={
               <ProtectedRoute allowedRoles={['directeurM']}>
                 <DashboardM />
               </ProtectedRoute>
             } />
-            <Route path="/ecole/maternelle" element={<Navigate to="/dashboard-maternelle" replace />} />
+            <Route path="/dashboard-maternelle" element={<Navigate to="/maternelle/dashboard" replace />} />
+            <Route path="/ecole/maternelle" element={<Navigate to="/maternelle/dashboard" replace />} />
 
-            <Route path="/dashboard-primaire" element={
+            <Route path="/primaire/dashboard" element={
               <ProtectedRoute allowedRoles={['directeurP']}>
                 <DashboardP />
               </ProtectedRoute>
             } />
-            <Route path="/ecole/primaire" element={<Navigate to="/dashboard-primaire" replace />} />
+            <Route path="/dashboard-primaire" element={<Navigate to="/primaire/dashboard" replace />} />
+            <Route path="/ecole/primaire" element={<Navigate to="/primaire/dashboard" replace />} />
 
-            <Route path="/dashboard-secondaire" element={
+            <Route path="/secondaire/dashboard" element={
               <ProtectedRoute allowedRoles={['directeurS']}>
                 <DashboardS />
               </ProtectedRoute>
             } />
-            <Route path="/ecole/secondaire" element={<Navigate to="/dashboard-secondaire" replace />} />
+            <Route path="/dashboard-secondaire" element={<Navigate to="/secondaire/dashboard" replace />} />
+            <Route path="/ecole/secondaire" element={<Navigate to="/secondaire/dashboard" replace />} />
 
             {/* Enseignants */}
             <Route path="/enseignant/dashboard" element={
@@ -169,25 +174,28 @@ function App() {
                 <DashboardEnseignant />
               </ProtectedRoute>
             } />
-            <Route path="/dashboard-enseignant" element={
+            <Route path="/enseignant/secondaire" element={
               <ProtectedRoute allowedRoles={['enseignement']}>
                 <DashboardEnseignantSecondaire />
               </ProtectedRoute>
             } />
-            <Route path="/dashboard-enseignementM" element={
+            <Route path="/enseignant/maternelle" element={
               <ProtectedRoute allowedRoles={['enseignementM']}>
                 <DashboardEnseignantPrimaire />
               </ProtectedRoute>
             } />
-            <Route path="/dashboard-enseignementP" element={
+            <Route path="/enseignant/primaire" element={
               <ProtectedRoute allowedRoles={['enseignementP']}>
                 <DashboardEnseignantPrimaire />
               </ProtectedRoute>
             } />
+            <Route path="/dashboard-enseignant" element={<Navigate to="/enseignant/secondaire" replace />} />
+            <Route path="/dashboard-enseignementM" element={<Navigate to="/enseignant/maternelle" replace />} />
+            <Route path="/dashboard-enseignementP" element={<Navigate to="/enseignant/primaire" replace />} />
             <Route path="/ecole/enseignant" element={<Navigate to="/enseignant/dashboard" replace />} />
-            <Route path="/ecole/enseignant/secondaire" element={<Navigate to="/dashboard-enseignant" replace />} />
-            <Route path="/ecole/enseignant/primaire" element={<Navigate to="/dashboard-enseignementP" replace />} />
-            <Route path="/ecole/enseignant/maternelle" element={<Navigate to="/dashboard-enseignementM" replace />} />
+            <Route path="/ecole/enseignant/secondaire" element={<Navigate to="/enseignant/secondaire" replace />} />
+            <Route path="/ecole/enseignant/primaire" element={<Navigate to="/enseignant/primaire" replace />} />
+            <Route path="/ecole/enseignant/maternelle" element={<Navigate to="/enseignant/maternelle" replace />} />
 
             {/* Élèves */}
             <Route path="/eleve/dashboard" element={
