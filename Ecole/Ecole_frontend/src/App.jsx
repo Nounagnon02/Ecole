@@ -131,7 +131,7 @@ function App() {
 
             {/* Directeur général */}
             <Route path="/directeur/dashboard" element={
-              <ProtectedRoute requiredRole="directeur">
+              <ProtectedRoute allowedRoles={['directeur']}>
                 <DashboardDirecteur />
               </ProtectedRoute>
             } />
@@ -165,7 +165,7 @@ function App() {
 
             {/* Enseignants */}
             <Route path="/enseignant/dashboard" element={
-              <ProtectedRoute requiredRole="enseignant">
+              <ProtectedRoute allowedRoles={['enseignant']}>
                 <DashboardEnseignant />
               </ProtectedRoute>
             } />
@@ -191,7 +191,7 @@ function App() {
 
             {/* Élèves */}
             <Route path="/eleve/dashboard" element={
-              <ProtectedRoute requiredRole="eleve">
+              <ProtectedRoute allowedRoles={['eleve']}>
                 <DashboardEleve />
               </ProtectedRoute>
             } />
@@ -199,7 +199,7 @@ function App() {
 
             {/* Parents */}
             <Route path="/parent/dashboard" element={
-              <ProtectedRoute requiredRole="parent">
+              <ProtectedRoute allowedRoles={['parent']}>
                 <DashboardParent />
               </ProtectedRoute>
             } />
@@ -207,7 +207,7 @@ function App() {
 
             {/* Personnel administratif */}
             <Route path="/comptable/dashboard" element={
-              <ProtectedRoute requiredRole="comptable">
+              <ProtectedRoute allowedRoles={['comptable']}>
                 <DashboardComptable />
               </ProtectedRoute>
             } />
@@ -219,7 +219,7 @@ function App() {
             } />
 
             <Route path="/surveillant/dashboard" element={
-              <ProtectedRoute requiredRole="surveillant">
+              <ProtectedRoute allowedRoles={['surveillant']}>
                 <DashboardSurveillant />
               </ProtectedRoute>
             } />
@@ -231,7 +231,7 @@ function App() {
             } />
 
             <Route path="/censeur/dashboard" element={
-              <ProtectedRoute requiredRole="censeur">
+              <ProtectedRoute allowedRoles={['censeur']}>
                 <DashboardCenseur />
               </ProtectedRoute>
             } />
@@ -243,7 +243,7 @@ function App() {
             } />
 
             <Route path="/infirmier/dashboard" element={
-              <ProtectedRoute requiredRole="infirmier">
+              <ProtectedRoute allowedRoles={['infirmier']}>
                 <DashboardInfirmier />
               </ProtectedRoute>
             } />
@@ -255,7 +255,7 @@ function App() {
             } />
 
             <Route path="/bibliothecaire/dashboard" element={
-              <ProtectedRoute requiredRole="bibliothecaire">
+              <ProtectedRoute allowedRoles={['bibliothecaire']}>
                 <DashboardBibliothecaire />
               </ProtectedRoute>
             } />
@@ -267,7 +267,7 @@ function App() {
             } />
 
             <Route path="/secretaire/dashboard" element={
-              <ProtectedRoute requiredRole="secretaire">
+              <ProtectedRoute allowedRoles={['secretaire']}>
                 <DashboardSecretaire />
               </ProtectedRoute>
             } />
@@ -280,7 +280,7 @@ function App() {
 
             {/* ============ ADMIN ============ */}
             <Route path="/admin/ecoles" element={
-              <ProtectedRoute requiredRole="directeur">
+              <ProtectedRoute allowedRoles={['directeur']}>
                 <SuperAdminDashboard />
               </ProtectedRoute>
             } />
