@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthContext';
 import ProtectedRoute from './auth/ProtectedRoute';
 import RoleBasedRedirect from './auth/RoleBasedRedirect';
@@ -103,9 +103,8 @@ const UnauthorizedPage = () => (
 function App() {
   return (
     <AuthProvider>
-      <Router>
-        <Suspense fallback={<LoadingSpinner />}>
-          <Routes>
+      <Suspense fallback={<LoadingSpinner />}>
+        <Routes>
             {/* ============ ROUTES PUBLIQUES ============ */}
             <Route path="/" element={<Home />} />
             <Route path="/connexion" element={<LoginForm />} />
@@ -326,7 +325,6 @@ function App() {
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </Suspense>
-      </Router>
     </AuthProvider>
   );
 }
