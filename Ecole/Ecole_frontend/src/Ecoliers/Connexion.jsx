@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import './Mes_CSS/Connexion.css';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../AuthContext';
+import { useAuth } from '../auth/AuthContext';
 import api from '../api'; 
 import { urlBase } from '../api';
 import EcoleManagement from '../components/EcoleManagement';

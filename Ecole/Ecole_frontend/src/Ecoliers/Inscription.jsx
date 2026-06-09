@@ -3,17 +3,19 @@ import { useState, useEffect } from 'react';
 import './Mes_CSS/InscriptionE.css';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../AuthContext';
+import { useAuth } from '../auth/AuthContext';
 import * as XLSX from 'xlsx';
 import { pdfjs } from 'react-pdf';
-import * as pdfjsLib from 'pdfjs-dist/build/pdf';
-import 'pdfjs-dist/build/pdf.worker.entry'; 
-import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
+import * as pdfjsLib from 'pdfjs-dist';
+import 'react-pdf/dist/Page/AnnotationLayer.css';
 import api from '../api';
 import EcoleSelector from '../components/EcoleSelector';
 
 // Configuration du worker PDF.js
-pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.min.mjs',
+  import.meta.url
+).toString();
 export function InscriptionE() {
     const generateId = () => {
         const timestamp = Date.now().toString();
