@@ -16,6 +16,13 @@ export default defineConfig({
       src: '/src',
     },
   },
+  optimizeDeps: {
+    esbuild: {
+      loader: {
+        '.js': 'jsx',
+      },
+    },
+  },
   test: {
     globals: true,
     environment: 'jsdom',
