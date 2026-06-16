@@ -46,30 +46,46 @@ export const AuthProvider = ({ children }) => {
   const login = async (credentials) => {
     try {
       const response = await api.post('/connexion', credentials);
-      
-      if (response.data.success) {
-        const { token, user, ecole_id } = response.data;
-        
-        localStorage.setItem('token', token);
-        localStorage.setItem('user', JSON.stringify(user));
-        localStorage.setItem('userId', user.id);
-        localStorage.setItem('userRole', user.role);
-        
-        if (ecole_id) {
-          localStorage.setItem('ecole_id', ecole_id);
-        }
-        
-        setToken(token);
-        setUser(user);
-        
-        return { success: true, user };
-      } else {
-        return { success: false, message: response.data.message };
+      const data = response.data;
+
+      // Supporte les deux formats de réponse backend :
+      // 1) { token, role, user, redirect_to } (format principal)
+      // 2) { success: true, token, user, ecole_id } (format alternatif)
+      if (data.token || data.role) {
+        const userData = data.user || {
+          ecole_id: credentials.ecole_id,
+          identifiant: credentials.identifiant,
+          nom: 'Utilisateur',
+          prenom: '',
+          role: data.role,
+        };
+
+        if (data.token) localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(userData));
+        if (userData.id) localStorage.setItem('userId', userData.id);
+        localStorage.setItem('userRole', userData.role);
+
+        const ecoleId = userData.ecole_id || credentials.ecole_id;
+        if (ecoleId) localStorage.setItem('ecole_id', ecoleId);
+
+        setToken(data.token || null);
+        setUser(userData);
+
+        return {
+          success: true,
+          user: userData,
+          redirect_to: data.redirect_to,
+        };
       }
+
+      return {
+        success: false,
+        message: data.message || 'Réponse inattendue du serveur',
+      };
     } catch (error) {
-      return { 
-        success: false, 
-        message: error.response?.data?.message || 'Erreur de connexion' 
+      return {
+        success: false,
+        message: error.response?.data?.message || error.message || 'Erreur de connexion',
       };
     }
   };
