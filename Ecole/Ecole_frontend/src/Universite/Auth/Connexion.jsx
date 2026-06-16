@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import './Mes_CSS/Connexion.css';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext';
 import api from '../../api';
@@ -87,51 +86,19 @@ export function ConnexionU() {
         SetError(false);
         SetMessage('');
 
-        try {
-            // Stocker ecole_id avant la connexion
-            localStorage.setItem('ecole_id', eleve.ecole_id);
-            
-            const response = await axios.post(
-                'http://localhost:8000/api/connexion', 
-                eleve,
-                {
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                }
-            );
-            if (response.data.token || response.data.role) {
-                // Préparer les données utilisateur
-                const userData = response.data.user || {
-                    ecole_id: eleve.ecole_id,
-                    identifiant: eleve.identifiant,
-                    nom: response.data.user?.nom || 'Utilisateur',
-                    prenom: response.data.user?.prenom || 'Spécial',
-                    role: response.data.role
-                };
+        const result = await login(eleve);
 
-                // Utiliser la fonction login du contexte
-                login({
-                    user: userData,
-                    token: response.data.token || null
-                });
-
-                SetMessage('Connexion réussie ! Redirection...');
-
-                setTimeout(() => {
-                    const redirectPath = response.data.redirect_to || '/';
-                    navigate(redirectPath, { replace: true });
-                }, 1500);
-            } else {
-                throw new Error('Réponse inattendue du serveur');
-            }
-        } catch (err) {
-            console.error('Erreur de connexion:', err);
+        if (result.success) {
+            SetMessage('Connexion réussie ! Redirection...');
+            setTimeout(() => {
+                navigate(result.redirect_to || '/', { replace: true });
+            }, 1500);
+        } else {
             SetError(true);
-            SetMessage(err.response?.data?.message || 'Identifiants incorrects');
-        } finally {
-            setIsLoading(false);
+            SetMessage(result.message || 'Identifiants incorrects');
         }
+
+        setIsLoading(false);
     };
 
     const handleForgotPassword = () => {
