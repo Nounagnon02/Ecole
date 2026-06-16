@@ -1,9 +1,9 @@
 import '../styles/GlobalStyles.css';
-import axios from 'axios';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import React from 'react';
 import { Edit2, Trash2, Save, X, Plus, Menu, Home, Users, Book, Calendar, User, Settings, LogOut, Bell } from 'lucide-react';
+import api from '../api';
 
 
 export default function Matieres() {
@@ -27,7 +27,7 @@ export default function Matieres() {
   const fetchMatieres = async () => {
     try {
       setLoading(true);
-      const res = await axios.get('http://localhost:8000/api/matieres');
+      const res = await api.get('/matieres');
       setMatieres(res.data);
       setLoading(false);
     } catch (err) {
@@ -44,11 +44,7 @@ export default function Matieres() {
 
     try {
       setLoading(true);
-      const res = await axios.post('http://localhost:8000/api/matieres/store', { nom: newMatiere }, {
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      })
+      const res = await api.post('/matieres/store', { nom: newMatiere })
 
       setMatieres([...matieres, res.data]);
       setNewMatiere('');
@@ -82,11 +78,7 @@ export default function Matieres() {
     try {
       setLoading(true);
 
-      await axios.put(`http://localhost:8000/api/matieres/update/${id}`, { nom: editValue }, {
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
+      await api.put(`/matieres/update/${id}`, { nom: editValue });
       await fetchMatieres(); // Recharger les matières après la modification
 
       setMessage('Matière modifiée avec succès');
@@ -114,7 +106,7 @@ export default function Matieres() {
     try {
       setLoading(true);
 
-      await axios.delete(`http://localhost:8000/api/matieres/delete/${id}`);
+      await api.delete(`/matieres/delete/${id}`);
       fetchMatieres();
 
 
