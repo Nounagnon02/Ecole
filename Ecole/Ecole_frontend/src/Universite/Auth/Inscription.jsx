@@ -5,17 +5,15 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext';
 import * as XLSX from 'xlsx';
-import { pdfjs } from 'react-pdf';
-import * as pdfjsLib from 'pdfjs-dist';
-import 'react-pdf/dist/Page/AnnotationLayer.css';
 import api from '../api';
 import EcoleSelector from '../components/EcoleSelector';
 
-// Configuration du worker PDF.js
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+// Résolu au build par Vite — utilisé dans processPdfFile (lazy)
+const PDFJS_WORKER_SRC = new URL(
   'pdfjs-dist/build/pdf.worker.min.mjs',
   import.meta.url
 ).toString();
+
 export function InscriptionU() {
     const generateId = () => {
         const timestamp = Date.now().toString();
@@ -351,14 +349,20 @@ const findStudent = (students, nom, prenom) => {
 
 const processPdfFile = async () => {
     try {
+        // Lazy-load pdfjs-dist (~929 KB) — chargé uniquement lors de l'extraction des matricules
+        const pdfjsLib = await import('pdfjs-dist');
+        if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+          pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER_SRC;
+        }
+
         const pdfPath = '/matricules/Matricule.pdf';
-        
+
         // Vérifier si le fichier existe
         const response = await fetch(pdfPath);
         if (!response.ok) {
             throw new Error('Fichier PDF des matricules introuvable');
         }
-        
+
         const arrayBuffer = await response.arrayBuffer();
         const loadingTask = pdfjsLib.getDocument(arrayBuffer);
         const pdf = await loadingTask.promise;
