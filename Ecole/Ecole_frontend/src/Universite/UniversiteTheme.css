@@ -1,16 +1,16 @@
 /* UniversiteTheme.css */
 @import '../styles/Theme.css';
 
-/* 
+/*
  * This file is now a proxy to the global theme.
  * Specific Universite overrides can be added here if needed.
  */
 
-/* Map univ- variables to global variables if needed for backward compatibility 
-   or just rely on the fact that we updated DashboardUniversite.css to use univ- variables 
+/* Map univ- variables to global variables if needed for backward compatibility
+   or just rely on the fact that we updated DashboardUniversite.css to use univ- variables
    which we should probably update to use global variables eventually.
-   
-   For now, let's re-declare the univ- variables mapping to global ones 
+
+   For now, let's re-declare the univ- variables mapping to global ones
    to ensure existing Universite code doesn't break.
 */
 
