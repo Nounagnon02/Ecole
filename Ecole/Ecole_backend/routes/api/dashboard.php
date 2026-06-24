@@ -15,16 +15,33 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::prefix('dashboard')->group(function () {
-    // Dashboard Directeur - Endpoint consolidé avec cache
+    // ─── Directeur ───────────────────────────────────────────────────
     Route::get('/directeur/data', [DashboardController::class, 'getDashboardData']);
     Route::post('/directeur/invalidate-cache', [DashboardController::class, 'invalidateCache']);
     Route::get('/directeur', [DashboardController::class, 'directeur']);
-    
-    // Dashboard Enseignant
+
+    // ─── Enseignant ──────────────────────────────────────────────────
     Route::get('/enseignant', [DashboardController::class, 'enseignant']);
-    
-    // Dashboard Parent
-    Route::get('/parent/{parentId}', [DashboardController::class, 'parent']);
+
+    // ─── Élève ───────────────────────────────────────────────────────
+    Route::get('/eleve', [DashboardController::class, 'eleve']);
+
+    // ─── Parent ──────────────────────────────────────────────────────
+    Route::get('/parent/{parentId?}', [DashboardController::class, 'parent']);
+
+    // ─── Admin ───────────────────────────────────────────────────────
+    Route::get('/admin', [DashboardController::class, 'admin']);
+
+    // ─── Université ──────────────────────────────────────────────────
+    Route::get('/universite', [DashboardController::class, 'universite']);
+
+    // ─── Staff (6 rôles — R4) ────────────────────────────────────────
+    Route::get('/comptable', [DashboardController::class, 'comptable']);
+    Route::get('/surveillant', [DashboardController::class, 'surveillant']);
+    Route::get('/censeur', [DashboardController::class, 'censeur']);
+    Route::get('/infirmier', [DashboardController::class, 'infirmier']);
+    Route::get('/bibliothecaire', [DashboardController::class, 'bibliothecaire']);
+    Route::get('/secretaire', [DashboardController::class, 'secretaire']);
 });
 
 // Routes spécifiques Directeur

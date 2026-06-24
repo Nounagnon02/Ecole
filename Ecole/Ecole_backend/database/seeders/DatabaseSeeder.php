@@ -16,9 +16,11 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             BeninEducationSeeder::class,
-            BulletinDataSeeder::class,
-            CompleteDataSeeder::class,
-            UniversiteSeeder::class,
+            AdminUsersSeeder::class,
+            DemoDataSeeder::class,
+            // BulletinDataSeeder::class,  // @todo réécrire pour correspondre au schéma normalisé (users + FK)
+            // CompleteDataSeeder::class,  // @todo adapter au schéma des migrations actuelles
+            // UniversiteSeeder::class,   // @todo modèles manquants sous App\Models\Universite\
         ]);
     }
 }
