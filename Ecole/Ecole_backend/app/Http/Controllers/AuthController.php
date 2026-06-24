@@ -20,18 +20,18 @@ use Laravel\Sanctum\HasApiTokens;
 class AuthController extends Controller
 {
     /**
-     * Authentification unifiée.
+     * Authentification unifiée (session via Sanctum SPA).
      */
     public function connexion(Request $request)
     {
         $request->validate([
-            'identifiant' => 'required|string',
+            'email' => 'required|string',
             'password' => 'required|string',
         ]);
 
-        // Chercher par identifiant (matricule/identifiant) ou par email
-        $user = User::where('identifiant', $request->identifiant)
-                    ->orWhere('email', $request->identifiant)
+        // Chercher par email ou par identifiant
+        $user = User::where('email', $request->email)
+                    ->orWhere('identifiant', $request->email)
                     ->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
@@ -42,11 +42,11 @@ class AuthController extends Controller
             return response()->json(['message' => 'Votre compte est désactivé'], 403);
         }
 
-        $token = $user->createToken('api-token')->plainTextToken;
+        // Authentification par session (httpOnly cookie)
+        Auth::login($user);
 
         return response()->json([
             'user' => $user,
-            'token' => $token,
             'role' => $user->role,
             'ecole_id' => $user->ecole_id,
             'redirect_to' => $this->getRedirectRouteBasedOnRole($user->role)
@@ -144,9 +144,10 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
-        if ($request->user()) {
-            $request->user()->currentAccessToken()->delete();
-        }
+        Auth::guard('web')->logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
         return response()->json(['message' => 'Déconnecté avec succès'], 200);
     }
 

@@ -1,0 +1,12 @@
+# Playwright MCP — test artifacts
+.playwright-mcp/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

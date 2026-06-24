@@ -1,0 +1,233 @@
+/* ==========================================================================
+   DESIGN TOKENS — École SaaS Premium v3
+   Palette inspirée de Linear, Stripe, Notion, Vercel
+   Design : Glassmorphism, Soft UI, Depth System
+   ========================================================================== */
+
+@layer base {
+  :root {
+    /* ─── Neutral Palette (Stripe/Linear-inspired) ─────────────────────── */
+    --neutral-50:  #F7F7F8;
+    --neutral-100: #EEEEF0;
+    --neutral-200: #D9D9DE;
+    --neutral-300: #B8B8C1;
+    --neutral-400: #8B8B98;
+    --neutral-500: #6B6B7B;
+    --neutral-600: #52525C;
+    --neutral-700: #3E3E48;
+    --neutral-800: #2A2A33;
+    --neutral-900: #18181D;
+    --neutral-950: #0D0D12;
+
+    /* ─── Brand Palette — Indigo premium (Linear-inspired) ────────────── */
+    --brand-50:  #EEF2FF;
+    --brand-100: #E0E7FF;
+    --brand-200: #C7D2FE;
+    --brand-300: #A5B4FC;
+    --brand-400: #818CF8;
+    --brand-500: #6366F1;
+    --brand-600: #5457E5;
+    --brand-700: #4549D6;
+    --brand-800: #383BA8;
+    --brand-900: #2D307A;
+    --brand-950: #1E1B4B;
+
+    /* ─── Accent — Violet premium (Stripe-inspired) ──────────────────── */
+    --accent-50:  #F5F3FF;
+    --accent-100: #EDE9FE;
+    --accent-200: #DDD6FE;
+    --accent-300: #C4B5FD;
+    --accent-400: #A78BFA;
+    --accent-500: #8B5CF6;
+    --accent-600: #7C3AED;
+    --accent-700: #6D28D9;
+    --accent-800: #5B21B6;
+    --accent-900: #4C1D95;
+    --accent-950: #2E1065;
+
+    /* ─── Success / Error / Warning / Info ────────────────────────────── */
+    --success-50:  #ECFDF5;
+    --success-100: #D1FAE5;
+    --success-200: #A7F3D0;
+    --success-300: #6EE7B7;
+    --success-400: #34D399;
+    --success-500: #10B981;
+    --success-600: #059669;
+    --success-700: #047857;
+    --success-800: #065F46;
+    --success-900: #064E3B;
+
+    --error-50:    #FEF2F2;
+    --error-100:   #FEE2E2;
+    --error-200:   #FECACA;
+    --error-300:   #FCA5A5;
+    --error-400:   #F87171;
+    --error-500:   #EF4444;
+    --error-600:   #DC2626;
+    --error-700:   #B91C1C;
+    --error-800:   #991B1B;
+    --error-900:   #7F1D1D;
+
+    --warning-50:  #FFFBEB;
+    --warning-100: #FEF3C7;
+    --warning-200: #FDE68A;
+    --warning-300: #FCD34D;
+    --warning-400: #FBBF24;
+    --warning-500: #F59E0B;
+    --warning-600: #D97706;
+    --warning-700: #B45309;
+    --warning-800: #92400E;
+    --warning-900: #78350F;
+
+    --info-50:     #EFF6FF;
+    --info-100:    #DBEAFE;
+    --info-200:    #BFDBFE;
+    --info-300:    #93C5FD;
+    --info-400:    #60A5FA;
+    --info-500:    #3B82F6;
+    --info-600:    #2563EB;
+    --info-700:    #1D4ED8;
+    --info-800:    #1E40AF;
+    --info-900:    #1E3A8A;
+
+    /* ─── Role Colors ────────────────────────────────────────────────── */
+    --role-directeur:     #6366F1;
+    --role-enseignant:    #10B981;
+    --role-eleve:         #3B82F6;
+    --role-parent:        #8B5CF6;
+    --role-comptable:     #F59E0B;
+    --role-surveillant:   #EF4444;
+    --role-censeur:       #EC4899;
+    --role-infirmier:     #06B6D4;
+    --role-bibliothecaire:#84CC16;
+    --role-secretaire:    #F97316;
+    --role-admin:         #6B7280;
+
+    /* ─── Typography ────────────────────────────────────────────────── */
+    --font-sans:   'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont,
+                    'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --font-mono:   'JetBrains Mono', 'SF Mono', 'Fira Code', 'Fira Mono',
+                    'Roboto Mono', monospace;
+
+    --text-xs:     0.75rem;
+    --text-sm:     0.875rem;
+    --text-base:   1rem;
+    --text-lg:     1.125rem;
+    --text-xl:     1.25rem;
+    --text-2xl:    1.5rem;
+    --text-3xl:    1.875rem;
+    --text-4xl:    2.25rem;
+    --text-5xl:    3rem;
+    --text-6xl:    3.75rem;
+    --text-7xl:    4.5rem;
+
+    --leading-tight:    1.15;
+    --leading-normal:   1.5;
+    --leading-relaxed:  1.625;
+    --leading-display:  1.05;
+
+    --tracking-tight:   -0.025em;
+    --tracking-normal:  0em;
+    --tracking-wide:    0.025em;
+
+    --weight-normal:    400;
+    --weight-medium:    500;
+    --weight-semibold:  600;
+    --weight-bold:      700;
+    --weight-extrabold: 800;
+
+    /* ─── Glassmorphism ──────────────────────────────────────────────── */
+    --glass-bg:          rgba(255, 255, 255, 0.7);
+    --glass-border:      rgba(255, 255, 255, 0.2);
+    --glass-shadow:      0 8px 32px rgba(0, 0, 0, 0.06);
+    --glass-blur:        12px;
+
+    --glass-dark-bg:     rgba(13, 13, 18, 0.7);
+    --glass-dark-border: rgba(255, 255, 255, 0.06);
+    --glass-dark-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+
+    /* ─── Depth System ───────────────────────────────────────────────── */
+    --depth-0:   0 0 0 0 transparent;
+    --depth-1:   0 1px 2px rgba(0, 0, 0, 0.03), 0 1px 1px rgba(0, 0, 0, 0.02);
+    --depth-2:   0 2px 4px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.03);
+    --depth-3:   0 4px 8px rgba(0, 0, 0, 0.05), 0 2px 4px rgba(0, 0, 0, 0.04);
+    --depth-4:   0 8px 16px rgba(0, 0, 0, 0.06), 0 4px 8px rgba(0, 0, 0, 0.04);
+    --depth-5:   0 12px 24px rgba(0, 0, 0, 0.08), 0 6px 12px rgba(0, 0, 0, 0.05);
+    --depth-6:   0 20px 40px rgba(0, 0, 0, 0.10), 0 10px 20px rgba(0, 0, 0, 0.06);
+    --depth-7:   0 32px 64px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08);
+
+    /* ─── Glow Effects ───────────────────────────────────────────────── */
+    --glow-brand:  0 0 20px rgba(99, 102, 241, 0.15);
+    --glow-accent: 0 0 20px rgba(139, 92, 246, 0.15);
+    --glow-success: 0 0 20px rgba(16, 185, 129, 0.15);
+
+    /* ─── Border Radius ──────────────────────────────────────────────── */
+    --radius-none:  0px;
+    --radius-sm:    0.25rem;
+    --radius-md:    0.5rem;
+    --radius-lg:    0.75rem;
+    --radius-xl:    1rem;
+    --radius-2xl:   1.25rem;
+    --radius-3xl:   1.5rem;
+    --radius-full:  9999px;
+
+    /* ─── Sidebar ───────────────────────────────────────────────────── */
+    --sidebar-width:          280px;
+    --sidebar-collapsed:      68px;
+    --sidebar-bg:             var(--neutral-950);
+    --sidebar-bg-hover:       rgba(255, 255, 255, 0.04);
+    --sidebar-bg-active:      rgba(99, 102, 241, 0.12);
+    --sidebar-text:           var(--neutral-400);
+    --sidebar-text-active:    white;
+    --sidebar-border:         rgba(255, 255, 255, 0.06);
+
+    /* ─── Header ────────────────────────────────────────────────────── */
+    --header-height: 64px;
+
+    /* ─── Transitions ───────────────────────────────────────────────── */
+    --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-in-out:   cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-spring:   cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    --ease-bounce:   cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+    --duration-50:   50ms;
+    --duration-100:  100ms;
+    --duration-150:  150ms;
+    --duration-200:  200ms;
+    --duration-300:  300ms;
+    --duration-400:  400ms;
+    --duration-500:  500ms;
+    --duration-700:  700ms;
+    --duration-1000: 1000ms;
+  }
+
+  /* ─── Dark Mode ──────────────────────────────────────────────────────── */
+  .dark {
+    --neutral-50:  #0D0D12;
+    --neutral-100: #18181D;
+    --neutral-200: #2A2A33;
+    --neutral-300: #3E3E48;
+    --neutral-400: #52525C;
+    --neutral-500: #6B6B7B;
+    --neutral-600: #8B8B98;
+    --neutral-700: #B8B8C1;
+    --neutral-800: #D9D9DE;
+    --neutral-900: #EEEEF0;
+    --neutral-950: #F7F7F8;
+
+    --glass-bg:     var(--glass-dark-bg);
+    --glass-border: var(--glass-dark-border);
+    --glass-shadow: var(--glass-dark-shadow);
+
+    --depth-1: 0 1px 2px rgba(0, 0, 0, 0.2), 0 1px 1px rgba(0, 0, 0, 0.15);
+    --depth-2: 0 2px 4px rgba(0, 0, 0, 0.25), 0 1px 2px rgba(0, 0, 0, 0.2);
+    --depth-3: 0 4px 8px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.25);
+    --depth-4: 0 8px 16px rgba(0, 0, 0, 0.35), 0 4px 8px rgba(0, 0, 0, 0.3);
+    --depth-5: 0 12px 24px rgba(0, 0, 0, 0.4), 0 6px 12px rgba(0, 0, 0, 0.35);
+    --depth-6: 0 20px 40px rgba(0, 0, 0, 0.45), 0 10px 20px rgba(0, 0, 0, 0.4);
+    --depth-7: 0 32px 64px rgba(0, 0, 0, 0.5), 0 16px 32px rgba(0, 0, 0, 0.45);
+
+    --sidebar-bg: var(--neutral-950);
+    --sidebar-border: rgba(255, 255, 255, 0.04);
+  }
+}
