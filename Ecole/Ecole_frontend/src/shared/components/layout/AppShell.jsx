@@ -6,14 +6,18 @@
  *           loading skeleton avec shimmer, transitions fluides
  */
 
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Outlet } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import AIAssistant from './AIAssistant';
 import Breadcrumb from '@/shared/components/ui/Breadcrumb';
+import CommandPalette from '@/shared/components/ui/CommandPalette';
 import useUIStore from '@/shared/stores/ui-store';
+import useAuthStore from '@/shared/stores/auth-store';
+import useRealtimeStore from '@/shared/stores/realtime-store';
+import { startOfflineSync } from '@/shared/lib/offline-queue';
 import { cn } from '@/shared/lib/utils';
 
 /**
@@ -52,11 +56,27 @@ const pageTransition = {
 
 export default function AppShell({ children }) {
   const { sidebarCollapsed, globalLoading } = useUIStore();
+  const { user } = useAuthStore();
+  const { connect, listenForNotifications, listenForMessages } = useRealtimeStore();
 
   const marginLeft = useMemo(
     () => (sidebarCollapsed ? 'var(--sidebar-collapsed)' : 'var(--sidebar-width)'),
     [sidebarCollapsed]
   );
+
+  /* ─── Initialisation temps réel ──────────────────────────────────────── */
+  useEffect(() => {
+    if (!user?.id) return;
+    connect();
+    listenForNotifications(user.id);
+    listenForMessages(user.id);
+  }, [user?.id, connect, listenForNotifications, listenForMessages]);
+
+  /* ─── Offline sync ───────────────────────────────────────────────────── */
+  useEffect(() => {
+    const cleanup = startOfflineSync();
+    return cleanup;
+  }, []);
 
   return (
     <div className="relative min-h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100">
@@ -129,6 +149,9 @@ export default function AppShell({ children }) {
 
       {/* AI Assistant flottant */}
       <AIAssistant />
+
+      {/* ⌘K Command Palette */}
+      <CommandPalette />
     </div>
   );
 }

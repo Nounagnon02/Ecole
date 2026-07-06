@@ -20,6 +20,7 @@ import {
   Moon,
   Sun,
   Sparkles,
+  Command,
 } from 'lucide-react';
 import useAuthStore from '@/shared/stores/auth-store';
 import useUIStore from '@/shared/stores/ui-store';
@@ -40,16 +41,14 @@ export default function Header() {
     setSidebarCollapsed,
     toggleSidebar,
     toggleAIAssistant,
+    toggleCommandPalette,
     theme,
     setTheme,
   } = useUIStore();
   const navigate = useNavigate();
 
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
-  const searchInputRef = useRef(null);
   const userMenuRef = useRef(null);
   const notifRef = useRef(null);
 
@@ -70,17 +69,10 @@ export default function Header() {
   // Raccourcis clavier
   useEffect(() => {
     function handleKeyDown(e) {
-      // ⌘K / Ctrl+K → focus recherche
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
-        if (searchInputRef.current) searchInputRef.current.focus();
-        else setSearchOpen(true);
-      }
       // Escape → fermer les menus
       if (e.key === 'Escape') {
         setUserMenuOpen(false);
         setNotifOpen(false);
-        setSearchOpen(false);
       }
     }
     document.addEventListener('keydown', handleKeyDown);
@@ -91,15 +83,6 @@ export default function Header() {
     await logout();
     navigate('/connexion');
   }, [logout, navigate]);
-
-  const handleSearch = (e) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/recherche?q=${encodeURIComponent(searchQuery.trim())}`);
-      setSearchQuery('');
-      setSearchOpen(false);
-    }
-  };
 
   const notifications = [
     { id: '1', text: 'Nouvel élève inscrit en 6ème A', time: 'Il y a 5 min', unread: true },
@@ -148,34 +131,16 @@ export default function Header() {
 
       {/* Right section */}
       <div className="flex items-center gap-1.5">
-        {/* Search */}
-        <div className="relative hidden md:block">
-          <form onSubmit={handleSearch}>
-            <div className="relative group">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500 transition-colors group-focus-within:text-indigo-400" />
-              <input
-                ref={searchInputRef}
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Rechercher..."
-                className="h-9 w-56 rounded-lg border border-neutral-800 bg-neutral-900/50 pl-10 pr-16 text-sm text-white placeholder-neutral-500 outline-none transition-all duration-200 focus:w-72 focus:border-indigo-500/50 focus:bg-neutral-900 focus:ring-1 focus:ring-indigo-500/20 lg:w-64"
-              />
-              {/* ⌘K badge */}
-              <kbd className="pointer-events-none absolute right-3 top-1/2 hidden -translate-y-1/2 items-center gap-0.5 rounded border border-neutral-700 bg-neutral-800 px-1.5 py-0.5 text-[10px] font-medium text-neutral-400 lg:flex">
-                <span>⌘</span>K
-              </kbd>
-            </div>
-          </form>
-        </div>
-
-        {/* Mobile search toggle */}
+        {/* Command Palette trigger (⌘K) */}
         <button
-          onClick={() => setSearchOpen(!searchOpen)}
-          className="flex h-11 w-11 items-center justify-center rounded-lg text-neutral-400 transition-colors hover:bg-neutral-800 hover:text-white md:hidden"
-          aria-label="Rechercher"
+          onClick={toggleCommandPalette}
+          className="relative hidden h-9 w-56 items-center gap-3 rounded-lg border border-neutral-800 bg-neutral-900/50 px-3 text-sm text-neutral-500 transition-all duration-200 hover:border-indigo-500/50 hover:bg-neutral-900 hover:text-neutral-300 lg:flex lg:w-64"
         >
-          <Search className="h-5 w-5" />
+          <Search className="h-4 w-4 shrink-0" />
+          <span className="flex-1 text-left">Rechercher...</span>
+          <kbd className="flex items-center gap-0.5 rounded border border-neutral-700 bg-neutral-800 px-1.5 py-0.5 text-[10px] font-medium text-neutral-400">
+            <Command className="h-3 w-3" />K
+          </kbd>
         </button>
 
         {/* Separator */}
@@ -308,13 +273,13 @@ export default function Header() {
             className="group flex items-center gap-2 rounded-lg px-3 py-2 transition-colors hover:bg-neutral-800/50 min-h-11"
           >
             <div className="relative flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500/20 to-purple-600/20 text-xs font-semibold text-indigo-400 transition-transform group-hover:scale-105">
-              {user?.nom?.[0]?.toUpperCase() || 'U'}
+              {user?.name?.[0]?.toUpperCase() || 'U'}
               {/* Status en ligne */}
               <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full border-2 border-neutral-950 bg-emerald-500" />
             </div>
             <div className="hidden text-left lg:block">
               <p className="text-sm font-medium leading-tight text-white">
-                {user?.nom || 'Utilisateur'}
+                {user?.name || 'Utilisateur'}
               </p>
               <p className="text-xs leading-tight text-neutral-500">
                 {ROLE_LABELS[user?.role] || user?.role || '—'}
@@ -376,33 +341,14 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Mobile search bar (expandable) */}
-      <AnimatePresence>
-        {searchOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.2 }}
-            className="absolute left-0 right-0 top-16 border-b border-neutral-800 bg-neutral-950 px-4 py-3 shadow-lg md:hidden"
-          >
-            <form onSubmit={handleSearch}>
-              <div className="relative">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500" />
-                <input
-                  ref={searchInputRef}
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Rechercher..."
-                  autoFocus
-                  className="h-10 w-full rounded-lg border border-neutral-800 bg-neutral-900 pl-10 pr-4 text-sm text-white placeholder-neutral-500 outline-none transition-all focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20"
-                />
-              </div>
-            </form>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Mobile search trigger opens command palette */}
+      <button
+        onClick={toggleCommandPalette}
+        className="flex h-11 w-11 items-center justify-center rounded-lg text-neutral-400 transition-colors hover:bg-neutral-800 hover:text-white md:hidden"
+        aria-label="Rechercher"
+      >
+        <Search className="h-5 w-5" />
+      </button>
     </header>
   );
 }

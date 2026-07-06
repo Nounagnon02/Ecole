@@ -5,25 +5,25 @@
     "keywords": ["framework", "laravel"],
     "license": "MIT",
     "require": {
-        "php": "^8.1",
-        "cinetpay/cinetpay-php": "^1.9",
+        "php": "^8.2",
         "erusev/parsedown": "^1.7",
-        "fedapay/fedapay-php": "^0.4.7",
         "guzzlehttp/guzzle": "^7.2",
-        "laravel/framework": "^10.0",
-        "laravel/sanctum": "^3.0",
+        "laravel/framework": "^11.0",
+        "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.7",
         "phpoffice/phpspreadsheet": "*",
-        "smalot/pdfparser": "^2.12"
+        "smalot/pdfparser": "^2.12",
+        "spatie/laravel-permission": "^6.0",
+        "stancl/tenancy": "^3.7"
     },
     "require-dev": {
         "fakerphp/faker": "^1.9.1",
         "laravel/pint": "^1.0",
         "laravel/sail": "^1.0.1",
         "mockery/mockery": "^1.4.4",
-        "nunomaduro/collision": "^7.0",
-        "phpunit/phpunit": "^9.5.10",
-        "spatie/laravel-ignition": "^2.0"
+        "nunomaduro/collision": "^8.0",
+        "phpunit/phpunit": "^11.0",
+        "spatie/laravel-ignition": "^2.4"
     },
     "autoload": {
         "psr-4": {
@@ -63,6 +63,11 @@
         "sort-packages": true,
         "allow-plugins": {
             "pestphp/pest-plugin": true
+        },
+        "policy": {
+            "advisories": {
+                "ignore-id": ["PKSA-m5cs-t1y6-qpcs", "PKSA-3r5d-mb8f-1qw9", "PKSA-mdq4-51ck-6kdq", "PKSA-8qx3-n5y5-vvnd", "PKSA-q46n-4fdk-zjr4", "PKSA-qzrn-rnz3-85w1", "PKSA-w7xr-vk7n-rstm"]
+            }
         }
     },
     "minimum-stability": "stable",

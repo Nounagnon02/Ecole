@@ -9,11 +9,11 @@ class EcoleScope
 {
     public function handle(Request $request, Closure $next)
     {
-        // Priorité 1: Header X-Ecole-Id
-        if ($request->header('X-Ecole-Id')) {
+        // X-Ecole-Id header accepté seulement pour les utilisateurs authentifiés
+        if ($request->header('X-Ecole-Id') && auth()->check()) {
             session(['ecole_id' => $request->header('X-Ecole-Id')]);
         }
-        // Priorité 2: User authentifié
+        // Sinon, utiliser l'ecole_id de l'utilisateur connecté
         elseif (auth()->check() && auth()->user()->ecole_id) {
             session(['ecole_id' => auth()->user()->ecole_id]);
         }

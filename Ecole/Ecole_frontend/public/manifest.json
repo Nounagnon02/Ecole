@@ -1,25 +1,47 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "École",
+  "name": "École — Système de Gestion Scolaire",
+  "description": "Plateforme SaaS de gestion scolaire multi-tenant avec intelligence artificielle intégrée",
   "icons": [
-    {
-      "src": "favicon.ico",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
-    },
     {
       "src": "logo192.png",
       "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "192x192",
+      "purpose": "any maskable"
     },
     {
       "src": "logo512.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "512x512",
+      "purpose": "any maskable"
     }
   ],
-  "start_url": ".",
+  "start_url": "/",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "orientation": "portrait-primary",
+  "theme_color": "#4F46E5",
+  "background_color": "#FAFAFA",
+  "categories": ["education", "productivity"],
+  "lang": "fr-FR",
+  "scope": "/",
+  "shortcuts": [
+    {
+      "name": "Tableau de bord",
+      "short_name": "Dashboard",
+      "description": "Votre tableau de bord personnalisé",
+      "url": "/",
+      "icons": [
+        {
+          "src": "logo192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Messagerie",
+      "short_name": "Messages",
+      "description": "Messagerie interne",
+      "url": "/messagerie"
+    }
+  ]
 }

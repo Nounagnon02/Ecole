@@ -25,7 +25,8 @@ const initialState = {
  */
 function getBackendOrigin() {
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
-  return apiUrl.replace(/\/api$/, '');
+  // Supprime /api, /api/v1 ou trailing slash pour obtenir l'origine nue
+  return apiUrl.replace(/\/api(\/v1)?$/, '').replace(/\/$/, '');
 }
 
 const useAuthStore = create(

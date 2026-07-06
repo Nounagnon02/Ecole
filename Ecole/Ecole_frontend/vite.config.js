@@ -15,6 +15,34 @@ export default defineConfig({
   },
   build: {
     outDir: 'build',
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
+              return 'vendor-react';
+            }
+            if (id.includes('framer-motion') || id.includes('three') || id.includes('@react-three')) {
+              return 'vendor-animation';
+            }
+            if (id.includes('recharts') || id.includes('date-fns') || id.includes('xlsx') || id.includes('jspdf')) {
+              return 'vendor-data';
+            }
+            if (id.includes('@tanstack') || id.includes('zustand') || id.includes('axios')) {
+              return 'vendor-core';
+            }
+            if (id.includes('pdfjs-dist') || id.includes('react-pdf')) {
+              return 'vendor-pdf';
+            }
+            return 'vendor-other';
+          }
+        },
+      },
+    },
+    chunkSizeWarningLimit: 250,
+    cssCodeSplit: true,
+    minify: 'esbuild',
   },
   resolve: {
     alias: {

@@ -1,4 +1,4 @@
-name: Frontend CI (React CRA)
+name: Frontend CI (React + Vite)
 
 on:
   push:
@@ -16,60 +16,99 @@ defaults:
     working-directory: Ecole/Ecole_frontend
 
 jobs:
-  build-and-test:
+  lint:
     runs-on: ubuntu-22.04
-
     strategy:
       matrix:
-        node-version: [18, 20]
-
+        node-version: [20]
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
           cache-dependency-path: Ecole/Ecole_frontend/package-lock.json
-
       - name: Install dependencies
         run: npm ci
-
       - name: Run ESLint
         run: npm run lint
         continue-on-error: true
-
-      - name: Run tests
-        run: npm test -- --watchAll=false --ci --coverage
+      - name: Check build
+        run: npm run build -- --logLevel error
         env:
           CI: true
 
-      - name: Build project
-        run: npm run build
+  test:
+    runs-on: ubuntu-22.04
+    needs: lint
+    strategy:
+      matrix:
+        node-version: [20]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          cache-dependency-path: Ecole/Ecole_frontend/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Run Vitest
+        run: npx vitest run --coverage
         env:
-          CI: false
+          CI: true
 
-      # ------------------------------------------------------------------
-      # Uncomment and configure this section when you are ready to deploy.
-      #
-      # name: Deploy frontend to production
-      # needs: build-and-test
-      # runs-on: ubuntu-22.04
-      # if: github.ref == 'refs/heads/main'
-      #
-      # steps:
-      #   - name: Deploy via SSH
-      #     uses: appleboy/ssh-action@v1.0.3
-      #     with:
-      #       host: ${{ secrets.DEPLOY_HOST }}
-      #       username: ${{ secrets.DEPLOY_USER }}
-      #       key: ${{ secrets.DEPLOY_SSH_KEY }}
-      #       script: |
-      #         cd /path/to/your/frontend
-      #         git pull origin main
-      #         npm ci --only=production
-      #         npm run build
-      #         # Example: rsync build folder to web root
-      #         # rsync -avz --delete build/ /var/www/html/
+  e2e:
+    runs-on: ubuntu-22.04
+    needs: test
+    strategy:
+      matrix:
+        node-version: [20]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          cache-dependency-path: Ecole/Ecole_frontend/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Playwright
+        run: npx playwright install --with-deps chromium
+      - name: Start dev server
+        run: npx vite --port 3000 &
+        env:
+          CI: true
+      - name: Wait for server
+        run: npx wait-on http://localhost:3000
+      - name: Run Playwright tests
+        run: npx playwright test
+        env:
+          CI: true
+
+  deploy:
+    runs-on: ubuntu-22.04
+    needs: e2e
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Build
+        run: |
+          npm ci
+          npm run build
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            cd ${{ secrets.DEPLOY_PATH }}
+            git pull origin main
+            npm ci --only=production
+            npm run build
+            rsync -avz --delete build/ /var/www/html/

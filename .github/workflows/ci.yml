@@ -1,0 +1,32 @@
+name: Full CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    uses: ./.github/workflows/backend.yml
+    secrets: inherit
+
+  frontend:
+    uses: ./.github/workflows/frontend.yml
+    secrets: inherit
+
+  notify:
+    runs-on: ubuntu-22.04
+    needs: [backend, frontend]
+    if: always()
+    steps:
+      - name: Check status
+        run: |
+          echo "Backend: ${{ needs.backend.result }}"
+          echo "Frontend: ${{ needs.frontend.result }}"
+          if [ "${{ needs.backend.result }}" = "success" ] && [ "${{ needs.frontend.result }}" = "success" ]; then
+            echo "✅ All pipelines passed"
+          else
+            echo "❌ Some pipelines failed"
+            exit 1
+          fi

@@ -6,11 +6,13 @@
  */
 
 import axios from 'axios';
+import { useQuery as useReactQuery, useMutation as useReactMutation, useQueryClient } from '@tanstack/react-query';
 import useAuthStore from '@/shared/stores/auth-store';
+import { queueMutation, cacheGet, cacheSet, isOnline } from './db';
 
 /* ─── Axios instance ────────────────────────────────────────────────────── */
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api/v1',
+  baseURL: import.meta.env.VITE_API_URL || '/api',
   timeout: 15000,
   withCredentials: true,
   headers: {
@@ -19,11 +21,86 @@ const apiClient = axios.create({
   },
 });
 
-/* ─── Response interceptor — gestion des erreurs ───────────────────────── */
+/* ─── Request interceptor — offline queue + cache ──────────────────────── */
+apiClient.interceptors.request.use(async (config) => {
+  // Skip offline handling for queue replay itself
+  if (config.headers?.['X-Offline-Queue']) return config;
+
+  // GET requests: serve from cache when offline
+  if (config.method === 'get' && !navigator.onLine) {
+    const cached = await cacheGet(config.url);
+    if (cached !== null) {
+      // Return cached data as a pseudo-response
+      config._fromCache = true;
+      return {
+        ...config,
+        data: cached,
+        status: 200,
+        statusText: 'OK (cached)',
+        headers: { 'x-cached': 'true' },
+        adapter: () =>
+          Promise.resolve({
+            data: cached,
+            status: 200,
+            statusText: 'OK (cached)',
+            headers: { 'x-cached': 'true' },
+            config,
+          }),
+      };
+    }
+  }
+
+  // Mutations: queue when offline instead of failing
+  if (
+    !navigator.onLine &&
+    ['post', 'put', 'patch', 'delete'].includes(config.method)
+  ) {
+    await queueMutation(
+      config.method.toUpperCase(),
+      config.url,
+      config.data
+    );
+
+    // Return a mock success response so the caller doesn't break
+    config._queuedOffline = true;
+    return {
+      ...config,
+      data: { queued: true, message: 'Modification mise en file d\'attente hors-ligne' },
+      status: 202,
+      statusText: 'Accepted (offline)',
+      headers: { 'x-offline-queue': 'true' },
+      adapter: () =>
+        Promise.resolve({
+          data: { queued: true, message: 'Modification mise en file d\'attente hors-ligne' },
+          status: 202,
+          statusText: 'Accepted (offline)',
+          headers: { 'x-offline-queue': 'true' },
+          config,
+        }),
+    };
+  }
+
+  return config;
+});
+
+/* ─── Response interceptor — cache + erreurs ────────────────────────────── */
 apiClient.interceptors.response.use(
-  (response) => response,
+  async (response) => {
+    // Cache GET responses for offline use
+    if (response.config?.method === 'get' && response.status === 200) {
+      // Don't cache queued responses or cached responses
+      if (!response.config._queuedOffline && !response.config._fromCache) {
+        const ttl = response.headers['x-cache-ttl']
+          ? parseInt(response.headers['x-cache-ttl']) * 1000
+          : 5 * 60 * 1000;
+        await cacheSet(response.config.url, response.data, ttl).catch(() => {});
+      }
+    }
+    return response;
+  },
   async (error) => {
     const originalRequest = error.config;
+    if (!originalRequest) return Promise.reject(error);
 
     // 401 — Session expirée → déconnexion locale
     if (error.response?.status === 401 && !originalRequest._retry) {
@@ -36,6 +113,20 @@ apiClient.interceptors.response.use(
       const retryAfter = error.response.headers['retry-after'] || 2;
       await new Promise((resolve) => setTimeout(resolve, retryAfter * 1000));
       return apiClient(originalRequest);
+    }
+
+    // Network error + GET → try cache fallback
+    if (!error.response && originalRequest.method === 'get' && navigator.onLine === false) {
+      const cached = await cacheGet(originalRequest.url).catch(() => null);
+      if (cached !== null) {
+        return Promise.resolve({
+          data: cached,
+          status: 200,
+          statusText: 'OK (cached fallback)',
+          headers: { 'x-cached': 'true' },
+          config: originalRequest,
+        });
+      }
     }
 
     // Mapping d'erreurs API vers un format standard
@@ -63,7 +154,6 @@ export default apiClient;
  * Usage: const { data, isLoading, error } = useApiQuery('/users', { params: { page: 1 } })
  */
 export function useApiQuery(key, url, options = {}) {
-  const { useQuery: useReactQuery } = require('@tanstack/react-query');
   return useReactQuery({
     queryKey: Array.isArray(key) ? key : [key],
     queryFn: async () => {
@@ -82,7 +172,6 @@ export function useApiQuery(key, url, options = {}) {
  * Usage: const mutation = useApiMutation('/users', { method: 'POST' })
  */
 export function useApiMutation(url, options = {}) {
-  const { useMutation: useReactMutation, useQueryClient } = require('@tanstack/react-query');
   const queryClient = useQueryClient();
 
   return useReactMutation({
