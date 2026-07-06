@@ -1,4 +1,4 @@
-name: Backend CI (Laravel 9)
+name: Backend CI (Laravel 11)
 
 on:
   push:
@@ -15,85 +15,82 @@ defaults:
   run:
     working-directory: Ecole/Ecole_backend
 
+env:
+  APP_ENV: testing
+  DB_CONNECTION: sqlite
+  DB_DATABASE: ':memory:'
+  CACHE_DRIVER: array
+  QUEUE_CONNECTION: sync
+  SESSION_DRIVER: array
+  BROADCAST_DRIVER: log
+
 jobs:
-  lint-and-test:
+  lint:
     runs-on: ubuntu-22.04
-
-    services:
-      mysql:
-        image: mysql:8.0
-        env:
-          MYSQL_ALLOW_EMPTY_PASSWORD: yes
-          MYSQL_DATABASE: ecole_testing
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
         with:
-          php-version: 8.1
-          extensions: mbstring, dom, fileinfo, pdo, pdo_mysql, bcmath, ctype, json, xml, zip
+          php-version: 8.2
+          extensions: mbstring, dom, fileinfo, pdo, sqlite, bcmath, ctype, json, xml, zip
+          tools: composer:v2
+      - name: Install dependencies
+        run: composer install --no-progress --prefer-dist --optimize-autoloader
+      - name: PHP syntax check
+        run: find app routes config database tests -name '*.php' -exec php -l {} \; 2>&1 | (! grep -v "No syntax errors detected")
+      - name: Style check (Pint)
+        run: vendor/bin/pint --test || echo "Style issues found (non-blocking)"
+
+  test:
+    runs-on: ubuntu-22.04
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.2
+          extensions: mbstring, dom, fileinfo, pdo, sqlite, bcmath, ctype, json, xml, zip
           coverage: xdebug
           tools: composer:v2
-
-      - name: Get composer cache directory
+      - name: Get composer cache
         id: composer-cache
         run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
-
-      - name: Cache composer dependencies
-        uses: actions/cache@v4
+      - uses: actions/cache@v4
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
           restore-keys: ${{ runner.os }}-composer-
-
       - name: Install dependencies
         run: composer install --no-progress --prefer-dist --optimize-autoloader
-
-      - name: Prepare Laravel environment
+      - name: Prepare environment
         run: |
-          cp .env.example .env
+          cp .env.example .env 2>/dev/null || true
           php artisan key:generate --ansi
+      - name: Run Pest tests
+        run: vendor/bin/pest --verbose --coverage --min=60
+      - name: Run PHPUnit (fallback)
+        if: failure()
+        run: vendor/bin/phpunit --verbose
 
-      - name: Run PHP syntax check (lint)
-        run: find app routes config database tests -name '*.php' -exec php -l {} \; 2>&1 | (! grep -v "No syntax errors detected")
-
-      - name: Execute PHPUnit tests
-        run: php vendor/bin/phpunit --verbose
-        env:
-          DB_CONNECTION: sqlite
-          DB_DATABASE: ':memory:'
-
-      # ------------------------------------------------------------------
-      # Uncomment and configure this section when you are ready to deploy.
-      #
-      # name: Deploy to production
-      # needs: lint-and-test
-      # runs-on: ubuntu-22.04
-      # if: github.ref == 'refs/heads/main'
-      #
-      # steps:
-      #   - name: Deploy via SSH
-      #     uses: appleboy/ssh-action@v1.0.3
-      #     with:
-      #       host: ${{ secrets.DEPLOY_HOST }}
-      #       username: ${{ secrets.DEPLOY_USER }}
-      #       key: ${{ secrets.DEPLOY_SSH_KEY }}
-      #       script: |
-      #         cd /path/to/your/project
-      #         git pull origin main
-      #         composer install --no-dev --optimize-autoloader
-      #         php artisan migrate --force
-      #         php artisan config:cache
-      #         php artisan route:cache
-      #         php artisan view:cache
-      #         sudo systemctl reload php8.1-fpm
+  deploy:
+    runs-on: ubuntu-22.04
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            cd ${{ secrets.DEPLOY_PATH }}
+            git pull origin main
+            composer install --no-dev --optimize-autoloader
+            php artisan migrate --force
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+            php artisan queue:restart
+            sudo supervisorctl restart all || true

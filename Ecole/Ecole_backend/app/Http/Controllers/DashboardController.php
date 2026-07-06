@@ -91,21 +91,32 @@ class DashboardController extends Controller
         ]);
     }
 
-    public function parent(Request $request, $parentId = null)
+    public function parent(Request $request)
     {
-        $parent = User::findOrFail($parentId);
+        $user = $request->user();
+
+        if (!$user || $user->role !== 'parent') {
+            return response()->json(['message' => 'Non autorisé'], 403);
+        }
+
+        $parent = $user->parent;
+
+        if (!$parent) {
+            return response()->json(['success' => true, 'data' => ['parent' => $user, 'children' => []]]);
+        }
+
         $children = $parent->eleves()->with(['classe', 'notes.matiere'])->get();
 
         return response()->json([
             'success' => true,
             'data' => [
-                'parent' => $parent,
+                'parent' => $user,
                 'children' => $children->map(function($child) {
                     return [
                         'id' => $child->id,
-                        'name' => $child->user->prenom . ' ' . $child->user->nom,
-                        'class' => $child->classe->nom_classe,
-                        'matricule' => $child->matricule,
+                        'name' => $child->user->name ?? 'N/A',
+                        'class' => $child->classe->nom_classe ?? 'N/A',
+                        'matricule' => $child->numero_matricule ?? 'N/A',
                         'moyenne_generale' => $this->calculateAverage($child->notes)
                     ];
                 })

@@ -185,6 +185,10 @@ const ROLE_MENUS = {
     { icon: School, label: 'Tableau de bord', path: '/admin/dashboard' },
     { icon: Users, label: 'Utilisateurs', path: '/admin/utilisateurs' },
     { icon: BarChart3, label: 'Statistiques', path: '/admin/statistiques' },
+    { icon: BookMarked, label: 'Plans', path: '/admin/plans' },
+    { icon: DollarSign, label: 'Facturation', path: '/admin/billing' },
+    { icon: ClipboardList, label: 'Modules', path: '/admin/modules' },
+    { icon: Shield, label: 'White-Label', path: '/admin/white-label' },
     { icon: Settings, label: 'Configuration', path: '/admin/configuration' },
   ],
   [ROLES.ADMIN]: [
@@ -385,7 +389,7 @@ export default function Sidebar() {
         <div className="border-t border-neutral-800/60 px-4 py-3">
           <div className="flex items-center gap-3">
             <div className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500/20 to-purple-600/20 text-xs font-semibold text-indigo-400">
-              {user?.nom?.[0]?.toUpperCase() || 'U'}
+              {user?.name?.[0]?.toUpperCase() || 'U'}
               {/* Online status dot */}
               <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full border-2 border-neutral-950 bg-emerald-500" />
             </div>
@@ -398,7 +402,7 @@ export default function Sidebar() {
                   className="min-w-0 flex-1"
                 >
                   <p className="truncate text-sm font-medium text-white">
-                    {user?.nom || 'Utilisateur'}
+                    {user?.name || 'Utilisateur'}
                   </p>
                   <p className="truncate text-xs text-neutral-500">
                     {ROLE_LABELS[user?.role] || user?.role || '—'}

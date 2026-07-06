@@ -271,6 +271,28 @@ export const ROUTE_CONFIG = {
     roles: [ROLES.RECTEUR, ROLES.DOYEN, ROLES.PROFESSEUR, ROLES.ETUDIANT, ROLES.PERSONNEL],
   },
 
+  // ─── IA / EDUPILOT ───────────────────────────────────────────────────
+  directeurAiInsights: {
+    path: '/directeur/ai-insights',
+    component: lazy(() => import('@/app/features/ai/AiInsightsPage')),
+    roles: [ROLES.DIRECTEUR],
+  },
+  enseignantAiAssistant: {
+    path: '/enseignant/ai-assistant',
+    component: lazy(() => import('@/app/features/ai/AiInsightsPage')),
+    roles: [ROLES.ENSEIGNANT],
+  },
+  parentAiReport: {
+    path: '/parent/ai-report',
+    component: lazy(() => import('@/app/features/ai/AiInsightsPage')),
+    roles: [ROLES.PARENT],
+  },
+  eleveAiTutor: {
+    path: '/eleve/tutor',
+    component: lazy(() => import('@/app/features/ai/AiInsightsPage')),
+    roles: [ROLES.ELEVE],
+  },
+
   // ─── ADMIN ───────────────────────────────────────────────────────────
   adminEcoles: {
     path: '/admin/ecoles',
@@ -291,6 +313,26 @@ export const ROUTE_CONFIG = {
     path: '/admin/configuration',
     component: lazy(() => import('@/app/features/admin/ConfigurationPage')),
     roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
+  },
+  adminPlans: {
+    path: '/admin/plans',
+    component: lazy(() => import('@/app/features/admin/PlansPage')),
+    roles: [ROLES.SUPER_ADMIN],
+  },
+  adminBilling: {
+    path: '/admin/billing',
+    component: lazy(() => import('@/app/features/admin/BillingPage')),
+    roles: [ROLES.SUPER_ADMIN],
+  },
+  adminModules: {
+    path: '/admin/modules',
+    component: lazy(() => import('@/app/features/admin/ModulesPage')),
+    roles: [ROLES.SUPER_ADMIN],
+  },
+  adminWhiteLabel: {
+    path: '/admin/white-label',
+    component: lazy(() => import('@/app/features/admin/WhiteLabelPage')),
+    roles: [ROLES.SUPER_ADMIN],
   },
 };
 

@@ -1,0 +1,194 @@
+{
+  "app": {
+    "name": "École",
+    "tagline": "School Management System",
+    "version": "3.0"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "eleves": "Students",
+    "enseignants": "Teachers",
+    "parents": "Parents",
+    "classes": "Classes",
+    "matieres": "Subjects",
+    "emploi_du_temps": "Schedule",
+    "notes": "Grades",
+    "bulletins": "Report Cards",
+    "paiements": "Payments",
+    "messagerie": "Messages",
+    "bibliotheque": "Library",
+    "infirmerie": "Infirmary",
+    "transport": "Transport",
+    "parametres": "Settings",
+    "profil": "My Profile"
+  },
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "search": "Search",
+    "filter": "Filter",
+    "export": "Export",
+    "import": "Import",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "close": "Close",
+    "no_results": "No results found",
+    "no_data": "No data available",
+    "error": "An error occurred",
+    "success": "Operation successful",
+    "retry": "Retry",
+    "of": "of",
+    "total": "Total",
+    "actions": "Actions",
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "pending": "Pending",
+      "suspended": "Suspended",
+      "paid": "Paid",
+      "unpaid": "Unpaid"
+    }
+  },
+  "auth": {
+    "login": "Log in",
+    "logout": "Log out",
+    "email": "Email address",
+    "password": "Password",
+    "remember_me": "Remember me",
+    "forgot_password": "Forgot password?",
+    "no_account": "Don't have an account?",
+    "register": "Sign up",
+    "login_title": "Welcome back",
+    "login_subtitle": "Enter your credentials to access your account"
+  },
+  "eleve": {
+    "title": "Students",
+    "single": "Student",
+    "matricule": "ID",
+    "nom": "Last Name",
+    "prenom": "First Name",
+    "date_naissance": "Date of Birth",
+    "sexe": "Gender",
+    "classe": "Class",
+    "inscription": "Enrollment",
+    "reinscription": "Re-enrollment",
+    "transfert": "Transfer",
+    "bulletin": "Report Card",
+    "paiements": "Payments",
+    "assiduite": "Attendance"
+  },
+  "notes": {
+    "title": "Grades",
+    "single": "Grade",
+    "valeur": "Score",
+    "sur": "out of",
+    "moyenne": "Average",
+    "moyenne_classe": "Class average",
+    "rang": "Rank",
+    "appreciation": "Comment",
+    "coefficient": "Coefficient",
+    "import_mass": "Bulk import",
+    "saisie": "Grade entry",
+    "bulletin": {
+      "title": "Report Card",
+      "trimestre": "Term",
+      "semestre": "Semester",
+      "moyenne_generale": "Overall average",
+      "moyenne_classe": "Class average",
+      "rang_eleve": "Student's rank",
+      "total_coefficients": "Total coefficients",
+      "appreciation_generale": "General comment"
+    }
+  },
+  "paiements": {
+    "title": "Payments",
+    "single": "Payment",
+    "montant": "Amount",
+    "montant_formate": "XOF {montant}",
+    "reference": "Reference",
+    "date": "Payment date",
+    "mode": "Payment method",
+    "type": "Payment type",
+    "types": {
+      "frais_scolarite": "Tuition",
+      "inscription": "Registration",
+      "tenue": "Uniform",
+      "transport": "Transport",
+      "autre": "Other"
+    },
+    "modes": {
+      "espece": "Cash",
+      "cheque": "Check",
+      "virement": "Bank transfer",
+      "mobile_money": "Mobile Money",
+      "carte": "Bank card"
+    },
+    "statistiques": {
+      "title": "Payment statistics",
+      "total": "Total collected",
+      "par_mois": "Monthly revenue",
+      "par_methode": "By method",
+      "comparaison": "Year-over-year comparison"
+    }
+  },
+  "emploi_du_temps": {
+    "title": "Schedule",
+    "lundi": "Monday",
+    "mardi": "Tuesday",
+    "mercredi": "Wednesday",
+    "jeudi": "Thursday",
+    "vendredi": "Friday",
+    "samedi": "Saturday",
+    "heure_debut": "Start",
+    "heure_fin": "End",
+    "salle": "Room",
+    "professeur": "Teacher",
+    "matiere": "Subject",
+    "semaine": "Week",
+    "cette_semaine": "This week",
+    "semaine_prochaine": "Next week"
+  },
+  "messagerie": {
+    "title": "Messages",
+    "nouveau_message": "New message",
+    "sujet": "Subject",
+    "contenu": "Content",
+    "destinataires": "Recipients",
+    "envoyer": "Send",
+    "reception": "Inbox",
+    "envoyes": "Sent",
+    "brouillons": "Drafts",
+    "pieces_jointes": "Attachments"
+  },
+  "securite": {
+    "title": "Security",
+    "connected_as": "Logged in as",
+    "role": "Role",
+    "last_login": "Last login",
+    "change_password": "Change password",
+    "two_factor": "Two-factor authentication"
+  },
+  "error": {
+    "404": {
+      "title": "Page not found",
+      "description": "The page you are looking for does not exist or has been moved."
+    },
+    "403": {
+      "title": "Access denied",
+      "description": "You do not have permission to access this page."
+    },
+    "500": {
+      "title": "Server error",
+      "description": "An internal error occurred. Please try again later."
+    },
+    "maintenance": {
+      "title": "Under maintenance",
+      "description": "We are making improvements. The service will be back shortly."
+    }
+  }
+}
