@@ -23,6 +23,7 @@ import {
   School,
 } from 'lucide-react';
 import useUIStore from '@/shared/stores/ui-store';
+import apiClient from '@/shared/lib/api-client';
 import { cn } from '@/shared/lib/utils';
 
 const SUGGESTIONS = [
@@ -74,17 +75,31 @@ export default function AIAssistant() {
     setInput('');
     setIsLoading(true);
 
-    // Simulation de réponse IA (à connecter à l'API)
-    setTimeout(() => {
+    try {
+      const response = await apiClient.post('/v1/ia/chat', {
+        message: userMessage.content,
+        mode: 'general',
+      });
+      const data = response.data;
       setMessages((prev) => [
         ...prev,
         {
           role: 'assistant',
-          content: `Je comprends votre demande concernant "${userMessage.content}". Je travaille actuellement sur l'intégration de mon moteur d'analyse en temps réel. Pour l'instant, voici ce que je peux vous dire : cette fonctionnalité sera disponible très prochainement avec des capacités d'analyse avancées basées sur les données de votre établissement.`,
+          content: data.content || 'Je n\'ai pas pu traiter votre demande.',
         },
       ]);
+    } catch (error) {
+      // Fallback si l'API n'est pas disponible
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: 'Je suis momentanément déconnecté de mon moteur d\'IA. Mes réponses seront limitées jusqu\'au rétablissement de la connexion.',
+        },
+      ]);
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   const handleSuggestion = (label) => {

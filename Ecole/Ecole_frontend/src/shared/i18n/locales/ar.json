@@ -1,0 +1,194 @@
+{
+  "app": {
+    "name": "École",
+    "tagline": "نظام إدارة المدارس",
+    "version": "3.0"
+  },
+  "nav": {
+    "dashboard": "لوحة التحكم",
+    "eleves": "الطلاب",
+    "enseignants": "المعلمون",
+    "parents": "أولياء الأمور",
+    "classes": "الفصول",
+    "matieres": "المواد",
+    "emploi_du_temps": "الجدول الزمني",
+    "notes": "الدرجات",
+    "bulletins": "كشوف الدرجات",
+    "paiements": "المدفوعات",
+    "messagerie": "الرسائل",
+    "bibliotheque": "المكتبة",
+    "infirmerie": "العيادة",
+    "transport": "النقل",
+    "parametres": "الإعدادات",
+    "profil": "ملفي الشخصي"
+  },
+  "common": {
+    "loading": "جارٍ التحميل...",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "create": "إنشاء",
+    "search": "بحث",
+    "filter": "تصفية",
+    "export": "تصدير",
+    "import": "استيراد",
+    "confirm": "تأكيد",
+    "back": "رجوع",
+    "next": "التالي",
+    "close": "إغلاق",
+    "no_results": "لا توجد نتائج",
+    "no_data": "لا توجد بيانات",
+    "error": "حدث خطأ",
+    "success": "تمت العملية بنجاح",
+    "retry": "إعادة المحاولة",
+    "of": "من",
+    "total": "المجموع",
+    "actions": "إجراءات",
+    "status": {
+      "active": "نشط",
+      "inactive": "غير نشط",
+      "pending": "قيد الانتظار",
+      "suspended": "موقوف",
+      "paid": "مدفوع",
+      "unpaid": "غير مدفوع"
+    }
+  },
+  "auth": {
+    "login": "تسجيل الدخول",
+    "logout": "تسجيل الخروج",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "remember_me": "تذكرني",
+    "forgot_password": "نسيت كلمة المرور؟",
+    "no_account": "ليس لديك حساب؟",
+    "register": "إنشاء حساب",
+    "login_title": "مرحباً بعودتك",
+    "login_subtitle": "أدخل بيانات الدخول للوصول إلى حسابك"
+  },
+  "eleve": {
+    "title": "الطلاب",
+    "single": "طالب",
+    "matricule": "رقم التسجيل",
+    "nom": "الاسم العائلي",
+    "prenom": "الاسم الشخصي",
+    "date_naissance": "تاريخ الميلاد",
+    "sexe": "الجنس",
+    "classe": "الفصل",
+    "inscription": "تسجيل",
+    "reinscription": "إعادة تسجيل",
+    "transfert": "تحويل",
+    "bulletin": "كشف الدرجات",
+    "paiements": "المدفوعات",
+    "assiduite": "الحضور"
+  },
+  "notes": {
+    "title": "الدرجات",
+    "single": "درجة",
+    "valeur": "الدرجة",
+    "sur": "من",
+    "moyenne": "المعدل",
+    "moyenne_classe": "معدل الفصل",
+    "rang": "الترتيب",
+    "appreciation": "ملاحظة",
+    "coefficient": "المعامل",
+    "import_mass": "استيراد جماعي",
+    "saisie": "إدخال الدرجات",
+    "bulletin": {
+      "title": "كشف الدرجات",
+      "trimestre": "الثلاثي",
+      "semestre": "الفصل",
+      "moyenne_generale": "المعدل العام",
+      "moyenne_classe": "معدل الفصل",
+      "rang_eleve": "ترتيب الطالب",
+      "total_coefficients": "مجموع المعاملات",
+      "appreciation_generale": "الملاحظة العامة"
+    }
+  },
+  "paiements": {
+    "title": "المدفوعات",
+    "single": "دفعة",
+    "montant": "المبلغ",
+    "montant_formate": "{montant} فرنك أفريقي",
+    "reference": "المرجع",
+    "date": "تاريخ الدفع",
+    "mode": "طريقة الدفع",
+    "type": "نوع الدفع",
+    "types": {
+      "frais_scolarite": "الرسوم الدراسية",
+      "inscription": "رسوم التسجيل",
+      "tenue": "الزي المدرسي",
+      "transport": "النقل",
+      "autre": "أخرى"
+    },
+    "modes": {
+      "espece": "نقداً",
+      "cheque": "شيك",
+      "virement": "تحويل بنكي",
+      "mobile_money": "النقود المحمولة",
+      "carte": "بطاقة بنكية"
+    },
+    "statistiques": {
+      "title": "إحصائيات المدفوعات",
+      "total": "المجموع المحصل",
+      "par_mois": "الإيرادات الشهرية",
+      "par_methode": "حسب الطريقة",
+      "comparaison": "مقارنة مع السنة الماضية"
+    }
+  },
+  "emploi_du_temps": {
+    "title": "الجدول الزمني",
+    "lundi": "الاثنين",
+    "mardi": "الثلاثاء",
+    "mercredi": "الأربعاء",
+    "jeudi": "الخميس",
+    "vendredi": "الجمعة",
+    "samedi": "السبت",
+    "heure_debut": "البداية",
+    "heure_fin": "النهاية",
+    "salle": "القاعة",
+    "professeur": "الأستاذ",
+    "matiere": "المادة",
+    "semaine": "أسبوع",
+    "cette_semaine": "هذا الأسبوع",
+    "semaine_prochaine": "الأسبوع القادم"
+  },
+  "messagerie": {
+    "title": "الرسائل",
+    "nouveau_message": "رسالة جديدة",
+    "sujet": "الموضوع",
+    "contenu": "المحتوى",
+    "destinataires": "المستلمون",
+    "envoyer": "إرسال",
+    "reception": "صندوق الوارد",
+    "envoyes": "المرسلة",
+    "brouillons": "المسودات",
+    "pieces_jointes": "المرفقات"
+  },
+  "securite": {
+    "title": "الأمان",
+    "connected_as": "متصل باسم",
+    "role": "الدور",
+    "last_login": "آخر اتصال",
+    "change_password": "تغيير كلمة المرور",
+    "two_factor": "المصادقة الثنائية"
+  },
+  "error": {
+    "404": {
+      "title": "الصفحة غير موجودة",
+      "description": "الصفحة التي تبحث عنها غير موجودة أو تم نقلها."
+    },
+    "403": {
+      "title": "وصول ممنوع",
+      "description": "ليس لديك الصلاحية للوصول إلى هذه الصفحة."
+    },
+    "500": {
+      "title": "خطأ في الخادم",
+      "description": "حدث خطأ داخلي. يرجى المحاولة مرة أخرى لاحقاً."
+    },
+    "maintenance": {
+      "title": "الصيانة جارية",
+      "description": "نقوم بإجراء تحسينات. سيعود الخدمة قريباً."
+    }
+  }
+}

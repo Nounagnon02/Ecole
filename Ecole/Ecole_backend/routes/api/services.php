@@ -42,20 +42,20 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ============ TRANSPORT ============
     Route::prefix('transport')->group(function () {
-        Route::get('/vehicules', [TransportController::class, 'listVehicules']);
-        Route::get('/trajets', [TransportController::class, 'listTrajets']);
+        Route::get('/vehicules', [TransportController::class, 'listVehicules'])->middleware('role:directeur,surveillant');
+        Route::get('/trajets', [TransportController::class, 'listTrajets'])->middleware('role:directeur,surveillant');
         Route::get('/abonnements', [TransportController::class, 'indexAbonnements'])->middleware('role:directeur,comptable');
         Route::post('/abonner', [TransportController::class, 'storeAbonnement'])->middleware('role:directeur');
         Route::post('/payer/{id}', [TransportController::class, 'payerTransport'])->middleware('role:directeur,comptable');
     });
 
     // ============ CONTRIBUTIONS ============
-    Route::prefix('contributions')->group(function () {
+    Route::prefix('contributions')->middleware('role:directeur,comptable')->group(function () {
         Route::get('/', [ContributionsController::class, 'index']);
-        Route::post('/store', [ContributionsController::class, 'store'])->middleware('role:directeur');
+        Route::post('/store', [ContributionsController::class, 'store']);
         Route::get('/{id}', [ContributionsController::class, 'show']);
-        Route::put('/{id}', [ContributionsController::class, 'update'])->middleware('role:directeur');
-        Route::delete('/{id}', [ContributionsController::class, 'destroy'])->middleware('role:directeur');
+        Route::put('/{id}', [ContributionsController::class, 'update']);
+        Route::delete('/{id}', [ContributionsController::class, 'destroy']);
     });
 
     // ============ PAIEMENTS ============
@@ -89,7 +89,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ============ ÉVÉNEMENTS ============
     Route::prefix('evenements')->group(function () {
-        Route::get('/', [EvenementController::class, 'index']);
+        Route::get('/', [EvenementController::class, 'index'])->middleware('role:directeur,enseignant,surveillant,censeur');
         Route::post('/', [EvenementController::class, 'store'])->middleware('role:directeur');
         Route::delete('/{id}', [EvenementController::class, 'destroy'])->middleware('role:directeur');
     });
@@ -97,5 +97,5 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 // Routes Publiques ou Webhooks
-Route::post('/fedapay/webhook', [FedaPayController::class, 'webhook']);
-Route::get('/health', fn() => response()->json(['status' => 'UP']));
+Route::post('/fedapay/webhook', [FedaPayController::class, 'webhook'])->middleware('throttle:webhooks');
+Route::get('/health', fn() => response()->json(['status' => 'UP', 'timestamp' => now()->toIso8601String()]));
