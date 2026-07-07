@@ -24,30 +24,30 @@ class SurveillantController extends Controller
 
     public function storeAbsence(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'eleve_id' => 'required|exists:eleves,id',
             'date' => 'required|date',
             'type' => 'required|in:absence,retard',
             'motif' => 'nullable|string'
         ]);
 
-        return Absence::create($request->all());
+        return Absence::create($validated);
     }
 
     public function storeIncident(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'description' => 'required|string',
             'date' => 'required|date',
             'gravite' => 'required|in:faible,moyenne,grave'
         ]);
 
-        return Incident::create($request->all());
+        return Incident::create($validated);
     }
 
     public function storeSanction(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'eleve_id' => 'required|exists:eleves,id',
             'type_sanction' => 'required|string',
             'motif' => 'required|string',
@@ -55,6 +55,6 @@ class SurveillantController extends Controller
             'duree' => 'nullable|integer'
         ]);
 
-        return Sanction::create($request->all());
+        return Sanction::create($validated);
     }
 }

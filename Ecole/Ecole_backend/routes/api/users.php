@@ -54,7 +54,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // ============ IMPORTS DE DONNÉES ============
-    Route::prefix('imports')->middleware('role:directeur')->group(function () {
+    Route::prefix('imports')->middleware(['role:directeur', 'throttle:exports'])->group(function () {
         Route::post('/eleves', [ImportController::class, 'importEleves']);
     });
 

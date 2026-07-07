@@ -7,11 +7,11 @@ use Tests\TestCase;
 class AuthValidationTest extends TestCase
 {
     /**
-     * Test that the connexion endpoint validates required fields.
+     * Test that the login endpoint validates required fields.
      */
-    public function test_connexion_requires_identifiant()
+    public function test_login_requires_identifiant()
     {
-        $response = $this->postJson('/api/connexion', [
+        $response = $this->postJson('/api/auth/login', [
             'password' => 'password123',
         ]);
 
@@ -20,11 +20,11 @@ class AuthValidationTest extends TestCase
     }
 
     /**
-     * Test that the connexion endpoint validates required password.
+     * Test that the login endpoint validates required password.
      */
-    public function test_connexion_requires_password()
+    public function test_login_requires_password()
     {
-        $response = $this->postJson('/api/connexion', [
+        $response = $this->postJson('/api/auth/login', [
             'identifiant' => 'testuser',
         ]);
 
@@ -33,19 +33,18 @@ class AuthValidationTest extends TestCase
     }
 
     /**
-     * Test that the connexion endpoint returns 401 for invalid credentials.
+     * Test that the login endpoint returns 401 for invalid credentials.
      */
-    public function test_connexion_with_invalid_credentials()
+    public function test_login_with_invalid_credentials()
     {
-        $response = $this->postJson('/api/connexion', [
+        $response = $this->postJson('/api/auth/login', [
             'identifiant' => 'nonexistent_user',
             'password' => 'wrongpassword',
         ]);
 
-        // Should return 401 (unauthorized) for invalid credentials
         $this->assertTrue(
-            $response->status() === 401 || $response->status() === 422,
-            'Expected 401 or 422 for invalid credentials, got ' . $response->status()
+            $response->status() === 401,
+            'Expected 401 for invalid credentials, got ' . $response->status()
         );
     }
 
@@ -54,7 +53,7 @@ class AuthValidationTest extends TestCase
      */
     public function test_protected_endpoint_requires_auth()
     {
-        $response = $this->getJson('/api/user/profile');
+        $response = $this->getJson('/api/auth/me');
 
         $response->assertStatus(401);
     }
@@ -64,8 +63,18 @@ class AuthValidationTest extends TestCase
      */
     public function test_logout_requires_auth()
     {
-        $response = $this->postJson('/api/logout');
+        $response = $this->postJson('/api/auth/logout');
 
         $response->assertStatus(401);
+    }
+
+    /**
+     * Test that the API health endpoint is accessible without auth.
+     */
+    public function test_health_endpoint_public()
+    {
+        $response = $this->getJson('/api/health');
+
+        $response->assertStatus(200);
     }
 }

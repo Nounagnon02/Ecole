@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import api from '../api';
+import logger from '../shared/lib/logger';
 
 export const useApi = () => {
   const [loading, setLoading] = useState(false);
@@ -10,12 +11,12 @@ export const useApi = () => {
   }, []);
 
   const handleError = useCallback((err) => {
-    const errorMessage = err.response?.data?.message || 
-                        err.response?.data?.error || 
-                        err.message || 
+    const errorMessage = err.response?.data?.message ||
+                        err.response?.data?.error ||
+                        err.message ||
                         'Une erreur est survenue';
     setError(errorMessage);
-    console.error('Erreur API:', err);
+    logger.error('Erreur API:', err);
   }, []);
 
   const apiCall = useCallback(async (apiFunction, ...args) => {

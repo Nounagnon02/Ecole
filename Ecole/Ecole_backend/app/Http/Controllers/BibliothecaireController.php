@@ -36,7 +36,7 @@ class BibliothecaireController extends Controller
 
     public function storeLivre(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'titre' => 'required|string',
             'auteur' => 'required|string',
             'isbn' => 'required|string|unique:livres',
@@ -44,12 +44,12 @@ class BibliothecaireController extends Controller
             'annee_publication' => 'required|integer'
         ]);
 
-        return Livre::create($request->all());
+        return Livre::create($validated);
     }
 
     public function storeEmprunt(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'livre_id' => 'required|exists:livres,id',
             'eleve_id' => 'required|exists:eleves,id',
             'date_emprunt' => 'required|date',
@@ -59,7 +59,7 @@ class BibliothecaireController extends Controller
         // Marquer le livre comme non disponible
         Livre::find($request->livre_id)->update(['disponible' => false]);
 
-        return Emprunt::create($request->all());
+        return Emprunt::create($validated);
     }
 
     public function retournerLivre($empruntId)
@@ -75,14 +75,14 @@ class BibliothecaireController extends Controller
 
     public function storeReservation(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'livre_id' => 'required|exists:livres,id',
             'eleve_id' => 'required|exists:eleves,id',
             'date_reservation' => 'required|date',
             'date_limite' => 'required|date'
         ]);
 
-        return Reservation::create($request->all());
+        return Reservation::create($validated);
     }
 
     public function confirmerReservation($reservationId)

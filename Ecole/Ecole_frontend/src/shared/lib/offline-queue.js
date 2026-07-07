@@ -13,6 +13,7 @@ import {
   pendingMutationCount,
 } from './db';
 import useUIStore from '@/shared/stores/ui-store';
+import logger from './logger';
 
 /** Max retries per mutation before giving up */
 const MAX_RETRIES = 3;
@@ -99,12 +100,12 @@ export async function processQueue() {
  */
 export function startOfflineSync() {
   const handleOnline = () => {
-    console.info('[Offline] Browser is online — processing queue...');
+    logger.info('Browser is online — processing queue...');
     processQueue();
   };
 
   const handleOffline = () => {
-    console.info('[Offline] Browser is offline — mutations will be queued.');
+    logger.info('Browser is offline — mutations will be queued.');
     useUIStore.getState().addToast({
       type: 'warning',
       title: 'Mode hors-ligne',

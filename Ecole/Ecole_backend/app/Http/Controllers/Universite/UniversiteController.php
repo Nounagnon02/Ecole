@@ -20,7 +20,7 @@ class UniversiteController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'nom' => 'required|string|max:100',
             'sigle' => 'required|string|max:10',
             'adresse' => 'nullable|string',
@@ -29,7 +29,7 @@ class UniversiteController extends Controller
             'site_web' => 'nullable|string|max:100',
         ]);
 
-        $universite = UniversiteModel::create($request->all());
+        $universite = UniversiteModel::create($validated);
         return response()->json($universite, 201);
     }
 
@@ -40,7 +40,7 @@ class UniversiteController extends Controller
 
     public function update(Request $request, UniversiteModel $universite)
     {
-        $request->validate([
+        $validated = $request->validate([
             'nom' => 'sometimes|required|string|max:100',
             'sigle' => 'sometimes|required|string|max:10',
             'adresse' => 'nullable|string',
@@ -49,7 +49,7 @@ class UniversiteController extends Controller
             'site_web' => 'nullable|string|max:100',
         ]);
 
-        $universite->update($request->all());
+        $universite->update($validated);
         return response()->json($universite);
     }
 

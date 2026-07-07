@@ -16,12 +16,12 @@ class SemestreController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'libelle' => 'required|string|max:50',
             'annee_academique_id' => 'required|exists:annee_academiques,id'
         ]);
 
-        $semestre = Semestre::create($request->all());
+        $semestre = Semestre::create($validated);
         return response()->json($semestre, 201);
     }
 
@@ -32,12 +32,12 @@ class SemestreController extends Controller
 
     public function update(Request $request, Semestre $semestre)
     {
-        $request->validate([
+        $validated = $request->validate([
             'libelle' => 'sometimes|required|string|max:50',
             'annee_academique_id' => 'sometimes|required|exists:annee_academiques,id'
         ]);
 
-        $semestre->update($request->all());
+        $semestre->update($validated);
         return response()->json($semestre);
     }
 

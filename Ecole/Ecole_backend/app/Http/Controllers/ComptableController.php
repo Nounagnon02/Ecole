@@ -41,19 +41,19 @@ class ComptableController extends Controller
 
     public function storePaiement(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'eleve_id' => 'required|exists:eleves,id',
             'montant' => 'required|numeric',
             'type_paiement' => 'required|string',
             'date_paiement' => 'required|date'
         ]);
 
-        return Paiement::create($request->all());
+        return Paiement::create($validated);
     }
 
     public function storeBourse(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'eleve_id' => 'required|exists:eleves,id',
             'type_bourse' => 'required|string',
             'montant' => 'required|numeric',
@@ -61,6 +61,6 @@ class ComptableController extends Controller
             'periode' => 'required|string'
         ]);
 
-        return Bourse::create($request->all());
+        return Bourse::create($validated);
     }
 }
