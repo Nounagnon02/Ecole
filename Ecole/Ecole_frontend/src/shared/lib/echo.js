@@ -13,6 +13,7 @@
 
 import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
+import logger from './logger';
 
 /** @type {Echo|null} Singleton instance */
 let echoInstance = null;
@@ -30,7 +31,7 @@ export function getEcho() {
 
   const key = import.meta.env.VITE_PUSHER_APP_KEY;
   if (!key) {
-    console.warn('[Echo] Pusher key not configured — realtime disabled.');
+    logger.warn('Pusher key not configured — realtime disabled.');
     attempted = true;
     return null;
   }
@@ -57,16 +58,16 @@ export function getEcho() {
     });
 
     echoInstance.connector.pusher.connection.bind('connected', () => {
-      console.info('[Echo] Connected to Reverb.');
+      logger.info('Connected to Reverb.');
     });
 
     echoInstance.connector.pusher.connection.bind('error', (err) => {
-      console.warn('[Echo] Connection error:', err);
+      logger.warn('Connection error:', err);
     });
 
     return echoInstance;
   } catch (err) {
-    console.warn('[Echo] Setup failed — realtime unavailable:', err);
+    logger.warn('Setup failed — realtime unavailable:', err);
     attempted = true;
     return null;
   }

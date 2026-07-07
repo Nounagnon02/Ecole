@@ -56,7 +56,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('notes')->group(function () {
         Route::get('/eleve/{eleveId?}', [NotesController::class, 'index']);
         Route::post('/store', [NotesController::class, 'store'])->middleware('role:directeur,enseignant');
-        Route::post('/import', [NotesController::class, 'import'])->middleware('role:directeur,enseignant');
+        Route::post('/import', [NotesController::class, 'import'])->middleware(['role:directeur,enseignant', 'throttle:5,1']);
     });
 
     // ============ BULLETINS ============

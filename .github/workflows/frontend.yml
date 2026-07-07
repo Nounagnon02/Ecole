@@ -4,16 +4,16 @@ on:
   push:
     branches: [main, develop]
     paths:
-      - 'Ecole/Ecole_frontend/**'
+      - 'Ecole_frontend/**'
       - '.github/workflows/frontend.yml'
   pull_request:
     branches: [main]
     paths:
-      - 'Ecole/Ecole_frontend/**'
+      - 'Ecole_frontend/**'
 
 defaults:
   run:
-    working-directory: Ecole/Ecole_frontend
+    working-directory: Ecole_frontend
 
 jobs:
   lint:
@@ -27,7 +27,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
-          cache-dependency-path: Ecole/Ecole_frontend/package-lock.json
+          cache-dependency-path: Ecole_frontend/package-lock.json
       - name: Install dependencies
         run: npm ci
       - name: Run ESLint
@@ -50,7 +50,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
-          cache-dependency-path: Ecole/Ecole_frontend/package-lock.json
+          cache-dependency-path: Ecole_frontend/package-lock.json
       - name: Install dependencies
         run: npm ci
       - name: Run Vitest
@@ -70,7 +70,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
-          cache-dependency-path: Ecole/Ecole_frontend/package-lock.json
+          cache-dependency-path: Ecole_frontend/package-lock.json
       - name: Install dependencies
         run: npm ci
       - name: Install Playwright

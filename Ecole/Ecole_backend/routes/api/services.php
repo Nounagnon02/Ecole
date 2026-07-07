@@ -35,7 +35,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // ============ EXPORTS & REPORTING ============
-    Route::prefix('exports')->middleware('role:directeur,comptable')->group(function () {
+    Route::prefix('exports')->middleware(['role:directeur,comptable', 'throttle:exports'])->group(function () {
         Route::get('/eleves', [ExportController::class, 'exportEleves']);
         Route::get('/finances', [ExportController::class, 'exportFinances']);
     });
@@ -59,7 +59,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // ============ PAIEMENTS ============
-    Route::prefix('payments')->group(function () {
+    Route::prefix('payments')->middleware('throttle:paiements')->group(function () {
         Route::post('/initialize', [PaymentController::class, 'initializePayment']);
         Route::get('/history', [PaymentController::class, 'getPaymentHistory']);
         Route::get('/stats', [PaymentController::class, 'getPaymentStats'])->middleware('role:directeur,comptable');

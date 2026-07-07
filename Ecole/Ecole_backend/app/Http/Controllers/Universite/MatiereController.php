@@ -16,7 +16,7 @@ class MatiereController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'code' => 'required|string|unique:matieres',
             'intitule' => 'required|string|max:200',
             'credit' => 'required|integer|min:1',
@@ -25,7 +25,7 @@ class MatiereController extends Controller
             'filiere_id' => 'required|exists:filieres,id'
         ]);
 
-        $matiere = Matiere::create($request->all());
+        $matiere = Matiere::create($validated);
         return response()->json($matiere, 201);
     }
 
@@ -36,7 +36,7 @@ class MatiereController extends Controller
 
     public function update(Request $request, Matiere $matiere)
     {
-        $request->validate([
+        $validated = $request->validate([
             'code' => 'sometimes|required|string|unique:matieres,code,' . $matiere->id,
             'intitule' => 'sometimes|required|string|max:200',
             'credit' => 'sometimes|required|integer|min:1',
@@ -45,7 +45,7 @@ class MatiereController extends Controller
             'filiere_id' => 'sometimes|required|exists:filieres,id'
         ]);
 
-        $matiere->update($request->all());
+        $matiere->update($validated);
         return response()->json($matiere);
     }
 

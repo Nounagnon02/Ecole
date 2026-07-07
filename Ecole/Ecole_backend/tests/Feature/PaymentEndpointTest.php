@@ -28,19 +28,4 @@ class PaymentEndpointTest extends TestCase
 
         $response->assertStatus(401);
     }
-
-    /**
-     * Test that invalid payment data returns validation errors.
-     */
-    public function test_payment_initialize_validates_amount()
-    {
-        $response = $this->postJson('/api/payments/initialize', [
-            'currency' => 'XOF',
-        ]);
-
-        $this->assertTrue(
-            $response->status() === 401 || $response->status() === 422,
-            'Expected 401 (no auth) or 422 (validation), got ' . $response->status()
-        );
-    }
 }

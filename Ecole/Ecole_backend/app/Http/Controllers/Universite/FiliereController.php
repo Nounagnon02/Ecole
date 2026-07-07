@@ -16,13 +16,13 @@ class FiliereController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'nom' => 'required|string|max:100',
             'niveau' => 'required|string|max:50',
             'departement_id' => 'required|exists:departements,id'
         ]);
 
-        $filiere = Filiere::create($request->all());
+        $filiere = Filiere::create($validated);
         return response()->json($filiere, 201);
     }
 
@@ -33,13 +33,13 @@ class FiliereController extends Controller
 
     public function update(Request $request, Filiere $filiere)
     {
-        $request->validate([
+        $validated = $request->validate([
             'nom' => 'sometimes|required|string|max:100',
             'niveau' => 'sometimes|required|string|max:50',
             'departement_id' => 'sometimes|required|exists:departements,id'
         ]);
 
-        $filiere->update($request->all());
+        $filiere->update($validated);
         return response()->json($filiere);
     }
 

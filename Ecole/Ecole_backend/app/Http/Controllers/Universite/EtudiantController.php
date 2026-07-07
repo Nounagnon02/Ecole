@@ -16,7 +16,7 @@ class EtudiantController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'matricule' => 'required|string|unique:etudiants',
             'nom' => 'required|string|max:100',
             'prenom' => 'required|string|max:100',
@@ -30,7 +30,7 @@ class EtudiantController extends Controller
             'filiere_id' => 'required|exists:filieres,id'
         ]);
 
-        $etudiant = Etudiant::create($request->all());
+        $etudiant = Etudiant::create($validated);
         return response()->json($etudiant, 201);
     }
 
@@ -41,7 +41,7 @@ class EtudiantController extends Controller
 
     public function update(Request $request, Etudiant $etudiant)
     {
-        $request->validate([
+        $validated = $request->validate([
             'matricule' => 'sometimes|required|string|unique:etudiants,matricule,' . $etudiant->id,
             'nom' => 'sometimes|required|string|max:100',
             'prenom' => 'sometimes|required|string|max:100',
@@ -50,7 +50,7 @@ class EtudiantController extends Controller
             'filiere_id' => 'sometimes|required|exists:filieres,id'
         ]);
 
-        $etudiant->update($request->all());
+        $etudiant->update($validated);
         return response()->json($etudiant);
     }
 

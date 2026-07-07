@@ -97,7 +97,7 @@ class CenseurController extends Controller
      */
     public function storeConseilClasse(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'classe_id' => 'required|exists:classes,id',
             'date' => 'required|date',
             'trimestre' => 'required|string',
@@ -106,7 +106,7 @@ class CenseurController extends Controller
             'statut' => 'string|in:planifie,en_cours,termine'
         ]);
 
-        $conseil = ConseilClasse::create($request->all());
+        $conseil = ConseilClasse::create($validated);
 
         return response()->json([
             'message' => 'Conseil de classe créé avec succès',
@@ -121,7 +121,7 @@ class CenseurController extends Controller
     {
         $conseil = ConseilClasse::findOrFail($id);
 
-        $request->validate([
+        $validated = $request->validate([
             'classe_id' => 'sometimes|exists:classes,id',
             'date' => 'sometimes|date',
             'trimestre' => 'sometimes|string',
@@ -130,7 +130,7 @@ class CenseurController extends Controller
             'statut' => 'sometimes|string|in:planifie,en_cours,termine'
         ]);
 
-        $conseil->update($request->all());
+        $conseil->update($validated);
 
         return response()->json([
             'message' => 'Conseil de classe mis à jour avec succès',
@@ -156,7 +156,7 @@ class CenseurController extends Controller
      */
     public function storeExamen(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'nom' => 'required|string|max:255',
             'type' => 'required|string',
             'date_debut' => 'required|date',
@@ -166,7 +166,7 @@ class CenseurController extends Controller
             'statut' => 'string|in:planifie,en_cours,termine'
         ]);
 
-        $examen = Examen::create($request->all());
+        $examen = Examen::create($validated);
 
         return response()->json([
             'message' => 'Examen créé avec succès',
@@ -181,7 +181,7 @@ class CenseurController extends Controller
     {
         $examen = Examen::findOrFail($id);
 
-        $request->validate([
+        $validated = $request->validate([
             'nom' => 'sometimes|string|max:255',
             'type' => 'sometimes|string',
             'date_debut' => 'sometimes|date',
@@ -191,7 +191,7 @@ class CenseurController extends Controller
             'statut' => 'sometimes|string|in:planifie,en_cours,termine'
         ]);
 
-        $examen->update($request->all());
+        $examen->update($validated);
 
         return response()->json([
             'message' => 'Examen mis à jour avec succès',

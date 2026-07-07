@@ -16,13 +16,13 @@ class AnneeAcademiqueController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'libelle' => 'required|string|max:50',
             'date_debut' => 'required|date',
             'date_fin' => 'required|date|after:date_debut'
         ]);
 
-        $annee = AnneeAcademique::create($request->all());
+        $annee = AnneeAcademique::create($validated);
         return response()->json($annee, 201);
     }
 
@@ -33,13 +33,13 @@ class AnneeAcademiqueController extends Controller
 
     public function update(Request $request, AnneeAcademique $anneeAcademique)
     {
-        $request->validate([
+        $validated = $request->validate([
             'libelle' => 'sometimes|required|string|max:50',
             'date_debut' => 'sometimes|required|date',
             'date_fin' => 'sometimes|required|date|after:date_debut'
         ]);
 
-        $anneeAcademique->update($request->all());
+        $anneeAcademique->update($validated);
         return response()->json($anneeAcademique);
     }
 

@@ -44,18 +44,18 @@ class UniversityApiRouteTest extends TestCase
     }
 
     /**
-     * Test that POST to connexion has proper JSON Content-Type.
+     * Test that POST to login has proper JSON Content-Type.
      */
-    public function test_connexion_endpoint_accepts_json()
+    public function test_login_endpoint_accepts_json()
     {
-        $response = $this->postJson('/api/connexion', [
+        $response = $this->postJson('/api/auth/login', [
             'identifiant' => 'test',
             'password' => 'test',
         ]);
 
         // Should return 422 (validation) or 401 (wrong creds), not 415 (unsupported media type)
         $this->assertNotEquals(415, $response->status(),
-            'Connexion endpoint rejected JSON content type'
+            'Login endpoint rejected JSON content type'
         );
     }
 }

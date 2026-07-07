@@ -5,9 +5,11 @@
  * de la connectivité pour le reste de l'application.
  */
 
+import logger from './logger';
+
 export function registerSW() {
   if (!('serviceWorker' in navigator)) {
-    console.log('Service Worker non supporté');
+    logger.info('Service Worker non supporté');
     return;
   }
 
@@ -15,7 +17,7 @@ export function registerSW() {
     navigator.serviceWorker
       .register('/sw.js')
       .then((registration) => {
-        console.log('SW enregistré:', registration.scope);
+        logger.info('SW enregistré:', registration.scope);
 
         // Écouter les mises à jour
         registration.addEventListener('updatefound', () => {
@@ -29,7 +31,7 @@ export function registerSW() {
         });
       })
       .catch((error) => {
-        console.error('Erreur SW:', error);
+        logger.error('Erreur SW:', error);
       });
   });
 }

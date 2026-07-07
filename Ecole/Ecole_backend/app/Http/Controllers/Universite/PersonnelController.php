@@ -16,7 +16,7 @@ class PersonnelController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'nom' => 'required|string|max:100',
             'prenom' => 'required|string|max:100',
             'poste' => 'required|string|max:100',
@@ -25,7 +25,7 @@ class PersonnelController extends Controller
             'universite_id' => 'required|exists:universites,id'
         ]);
 
-        $personnel = Personnel::create($request->all());
+        $personnel = Personnel::create($validated);
         return response()->json($personnel, 201);
     }
 
@@ -36,14 +36,14 @@ class PersonnelController extends Controller
 
     public function update(Request $request, Personnel $personnel)
     {
-        $request->validate([
+        $validated = $request->validate([
             'nom' => 'sometimes|required|string|max:100',
             'prenom' => 'sometimes|required|string|max:100',
             'poste' => 'sometimes|required|string|max:100',
             'universite_id' => 'sometimes|required|exists:universites,id'
         ]);
 
-        $personnel->update($request->all());
+        $personnel->update($validated);
         return response()->json($personnel);
     }
 

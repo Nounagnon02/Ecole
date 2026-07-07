@@ -41,7 +41,7 @@ class EvenementController extends Controller
         }
 
         $event = Evenement::create([
-            ...$request->all(),
+            ...$validator->validated(),
             'created_by' => $request->user() ? $request->user()->id : null
         ]);
 
@@ -74,7 +74,14 @@ class EvenementController extends Controller
             return response()->json(['message' => 'Événement non trouvé'], 404);
         }
 
-        $event->update($request->all());
+        $validated = $request->validate([
+            'titre' => 'sometimes|string|max:255',
+            'date_debut' => 'sometimes|date',
+            'lieu' => 'nullable|string',
+            'description' => 'nullable|string'
+        ]);
+
+        $event->update($validated);
 
         return response()->json([
             'success' => true,

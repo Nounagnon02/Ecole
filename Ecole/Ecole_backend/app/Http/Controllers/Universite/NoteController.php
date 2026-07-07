@@ -16,7 +16,7 @@ class NoteController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'etudiant_id' => 'required|exists:etudiants,id',
             'matiere_id' => 'required|exists:matieres,id',
             'note' => 'required|numeric|min:0|max:20',
@@ -24,7 +24,7 @@ class NoteController extends Controller
             'date_evaluation' => 'required|date'
         ]);
 
-        $note = Note::create($request->all());
+        $note = Note::create($validated);
         return response()->json($note, 201);
     }
 
@@ -35,13 +35,13 @@ class NoteController extends Controller
 
     public function update(Request $request, Note $note)
     {
-        $request->validate([
+        $validated = $request->validate([
             'note' => 'sometimes|required|numeric|min:0|max:20',
             'type' => 'sometimes|required|in:CC,TP,Examen',
             'date_evaluation' => 'sometimes|required|date'
         ]);
 
-        $note->update($request->all());
+        $note->update($validated);
         return response()->json($note);
     }
 
