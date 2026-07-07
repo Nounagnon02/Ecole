@@ -5,7 +5,7 @@
  * Sizes    : sm | md | lg
  */
 
-import { forwardRef, useState } from 'react';
+import { forwardRef, useState, useId } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { cn } from '@/shared/lib/utils';
 
@@ -25,10 +25,15 @@ const Input = forwardRef(function Input(
     helperText,
     icon,
     variant = 'default',
+    id,
     ...props
   },
   ref
 ) {
+  const generatedId = useId();
+  const inputId = id || generatedId;
+  const errorId = `${inputId}-error`;
+  const helperId = `${inputId}-helper`;
   const [showPassword, setShowPassword] = useState(false);
   const isPassword = type === 'password';
   const inputType = isPassword ? (showPassword ? 'text' : 'password') : type;
@@ -52,7 +57,7 @@ const Input = forwardRef(function Input(
   return (
     <div className="space-y-1.5">
       {label && (
-        <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+        <label htmlFor={inputId} className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
           {label}
           {props.required && <span className="ml-0.5 text-red-500">*</span>}
         </label>
@@ -60,12 +65,15 @@ const Input = forwardRef(function Input(
       <div className="relative">
         {IconComponent && (
           <div className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400">
-            <IconComponent className="h-4 w-4" />
+            {typeof IconComponent === 'function' ? <IconComponent className="h-4 w-4" /> : IconComponent}
           </div>
         )}
         <input
           ref={ref}
+          id={inputId}
           type={inputType}
+          aria-invalid={error ? 'true' : undefined}
+          aria-describedby={error ? errorId : helperText ? helperId : undefined}
           className={cn(
             'w-full rounded-xl outline-none transition-all duration-150',
             'placeholder:text-neutral-400 dark:placeholder:text-neutral-500',
@@ -92,8 +100,16 @@ const Input = forwardRef(function Input(
           </button>
         )}
       </div>
-      {error && <p className="text-xs font-medium text-red-500">{error}</p>}
-      {helperText && !error && <p className="text-xs text-neutral-500 dark:text-neutral-400">{helperText}</p>}
+      {error && (
+        <p id={errorId} role="alert" className="text-xs font-medium text-red-500">
+          {error}
+        </p>
+      )}
+      {helperText && !error && (
+        <p id={helperId} className="text-xs text-neutral-500 dark:text-neutral-400">
+          {helperText}
+        </p>
+      )}
     </div>
   );
 });

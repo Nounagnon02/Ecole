@@ -196,8 +196,6 @@ return [
         App\Providers\RouteServiceProvider::class,
 
 
-        App\Providers\CinetPayServiceProvider::class,
-
     ],
 
     /*
