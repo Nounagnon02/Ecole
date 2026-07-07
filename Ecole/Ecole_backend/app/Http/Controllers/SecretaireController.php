@@ -44,26 +44,26 @@ class SecretaireController extends Controller
 
     public function storeRendezVous(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'motif' => 'required|string',
             'parent_id' => 'required|exists:parents,id',
             'date' => 'required|date',
             'heure' => 'required|string'
         ]);
 
-        return RendezVous::create($request->all());
+        return RendezVous::create($validated);
     }
 
     public function storeCertificat(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'type_certificat' => 'required|string',
             'eleve_id' => 'required|exists:eleves,id',
             'date_emission' => 'required|date'
         ]);
 
         $certificat = Certificat::create([
-            ...$request->all(),
+            ...$validated,
             'numero_certificat' => $this->generateNumeroCertificat()
         ]);
 

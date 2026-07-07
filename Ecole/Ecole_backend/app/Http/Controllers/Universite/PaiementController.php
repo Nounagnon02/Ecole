@@ -16,14 +16,14 @@ class PaiementController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'etudiant_id' => 'required|exists:etudiants,id',
             'montant' => 'required|numeric|min:0',
             'date_paiement' => 'required|date',
             'motif' => 'required|string|max:200'
         ]);
 
-        $paiement = Paiement::create($request->all());
+        $paiement = Paiement::create($validated);
         return response()->json($paiement, 201);
     }
 
@@ -34,13 +34,13 @@ class PaiementController extends Controller
 
     public function update(Request $request, Paiement $paiement)
     {
-        $request->validate([
+        $validated = $request->validate([
             'montant' => 'sometimes|required|numeric|min:0',
             'date_paiement' => 'sometimes|required|date',
             'motif' => 'sometimes|required|string|max:200'
         ]);
 
-        $paiement->update($request->all());
+        $paiement->update($validated);
         return response()->json($paiement);
     }
 

@@ -34,7 +34,7 @@ class InfirmierController extends Controller
 
     public function storeConsultation(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'eleve_id' => 'required|exists:eleves,id',
             'motif' => 'required|string',
             'diagnostic' => 'required|string',
@@ -42,28 +42,28 @@ class InfirmierController extends Controller
             'urgence' => 'boolean'
         ]);
 
-        return ConsultationMedicale::create($request->all());
+        return ConsultationMedicale::create($validated);
     }
 
     public function storeDossierMedical(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'eleve_id' => 'required|exists:eleves,id',
             'contact_urgence' => 'required|string'
         ]);
 
-        return DossierMedical::create($request->all());
+        return DossierMedical::create($validated);
     }
 
     public function storeVaccination(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'eleve_id' => 'required|exists:eleves,id',
             'nom_vaccin' => 'required|string',
             'date_vaccination' => 'required|date',
             'numero_lot' => 'required|string'
         ]);
 
-        return Vaccination::create($request->all());
+        return Vaccination::create($validated);
     }
 }

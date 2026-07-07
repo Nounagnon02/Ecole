@@ -16,12 +16,12 @@ class DepartementController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'nom' => 'required|string|max:100',
             'faculte_id' => 'required|exists:facultes,id'
         ]);
 
-        $departement = Departement::create($request->all());
+        $departement = Departement::create($validated);
         return response()->json($departement, 201);
     }
 
@@ -32,12 +32,12 @@ class DepartementController extends Controller
 
     public function update(Request $request, Departement $departement)
     {
-        $request->validate([
+        $validated = $request->validate([
             'nom' => 'sometimes|required|string|max:100',
             'faculte_id' => 'sometimes|required|exists:facultes,id'
         ]);
 
-        $departement->update($request->all());
+        $departement->update($validated);
         return response()->json($departement);
     }
 

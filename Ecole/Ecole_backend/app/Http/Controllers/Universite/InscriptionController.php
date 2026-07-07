@@ -16,7 +16,7 @@ class InscriptionController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'etudiant_id' => 'required|exists:etudiants,id',
             'annee_academique_id' => 'required|exists:annee_academiques,id',
             'date_inscription' => 'required|date',
@@ -24,7 +24,7 @@ class InscriptionController extends Controller
             'statut' => 'required|in:En cours,Validée,Annulée'
         ]);
 
-        $inscription = Inscription::create($request->all());
+        $inscription = Inscription::create($validated);
         return response()->json($inscription, 201);
     }
 
@@ -35,12 +35,12 @@ class InscriptionController extends Controller
 
     public function update(Request $request, Inscription $inscription)
     {
-        $request->validate([
+        $validated = $request->validate([
             'montant_frais' => 'sometimes|required|numeric|min:0',
             'statut' => 'sometimes|required|in:En cours,Validée,Annulée'
         ]);
 
-        $inscription->update($request->all());
+        $inscription->update($validated);
         return response()->json($inscription);
     }
 

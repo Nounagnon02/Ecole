@@ -37,7 +37,7 @@ class NoteController extends Controller
         }
 
         try {
-            $note = Note::create($request->all());
+            $note = Note::create($validator->validated());
             
             return response()->json([
                 'success' => true,

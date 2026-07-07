@@ -16,14 +16,14 @@ class DiplomeController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'etudiant_id' => 'required|exists:etudiants,id',
             'intitule' => 'required|string|max:200',
             'date_delivrance' => 'required|date',
             'mention' => 'nullable|in:Passable,Assez bien,Bien,Très bien,Excellent'
         ]);
 
-        $diplome = Diplome::create($request->all());
+        $diplome = Diplome::create($validated);
         return response()->json($diplome, 201);
     }
 
@@ -34,13 +34,13 @@ class DiplomeController extends Controller
 
     public function update(Request $request, Diplome $diplome)
     {
-        $request->validate([
+        $validated = $request->validate([
             'intitule' => 'sometimes|required|string|max:200',
             'date_delivrance' => 'sometimes|required|date',
             'mention' => 'nullable|in:Passable,Assez bien,Bien,Très bien,Excellent'
         ]);
 
-        $diplome->update($request->all());
+        $diplome->update($validated);
         return response()->json($diplome);
     }
 

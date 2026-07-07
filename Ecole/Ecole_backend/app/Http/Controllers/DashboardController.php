@@ -41,18 +41,8 @@ class DashboardController extends Controller
                     'total_eleves' => Eleve::count(),
                     'total_classes' => Classe::count(),
                     'total_enseignants' => User::where('role', 'enseignant')->count(),
-                    'evolution_effectifs' => [
-                        ['name' => 'Sept', 'students' => 320],
-                        ['name' => 'Oct', 'students' => 330],
-                        ['name' => 'Nov', 'students' => 340],
-                        ['name' => 'Déc', 'students' => 350]
-                    ],
-                    'repartition_notes' => [
-                        ['name' => 'Excellent', 'value' => 25],
-                        ['name' => 'Bien', 'value' => 35],
-                        ['name' => 'Moyen', 'value' => 25],
-                        ['name' => 'Insuffisant', 'value' => 15]
-                    ]
+                    'evolution_effectifs' => $this->computeMonthlyEnrollment(),
+                    'repartition_notes' => $this->computeGradeDistribution(),
                 ]
             ];
         });
@@ -472,7 +462,53 @@ class DashboardController extends Controller
     private function calculateAverage($notes)
     {
         if ($notes->isEmpty()) return null;
-        
+
         return $notes->avg('note');
+    }
+
+    private function computeMonthlyEnrollment(): array
+    {
+        // Tente de récupérer les inscriptions par mois depuis la base
+        try {
+            $eleves = \App\Models\Eleve::selectRaw('MONTH(created_at) as mois, COUNT(*) as total')
+                ->whereYear('created_at', now()->year)
+                ->groupBy('mois')
+                ->pluck('total', 'mois')
+                ->toArray();
+
+            $months = ['Sept', 'Oct', 'Nov', 'Déc', 'Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août'];
+
+            return array_map(function ($i) use ($eleves) {
+                return [
+                    'name' => $months[$i - 1] ?? "Mois $i",
+                    'students' => $eleves[$i] ?? 0,
+                ];
+            }, range(1, 12));
+        } catch (\Exception $e) {
+            return [
+                ['name' => 'Aucune', 'students' => 0],
+            ];
+        }
+    }
+
+    private function computeGradeDistribution(): array
+    {
+        try {
+            $excellent = \App\Models\Note::where('note', '>=', 16)->count();
+            $bien = \App\Models\Note::whereBetween('note', [14, 15.99])->count();
+            $moyen = \App\Models\Note::whereBetween('note', [10, 13.99])->count();
+            $insuffisant = \App\Models\Note::where('note', '<', 10)->count();
+
+            return [
+                ['name' => 'Excellent', 'value' => $excellent ?: 0],
+                ['name' => 'Bien', 'value' => $bien ?: 0],
+                ['name' => 'Moyen', 'value' => $moyen ?: 0],
+                ['name' => 'Insuffisant', 'value' => $insuffisant ?: 0],
+            ];
+        } catch (\Exception $e) {
+            return [
+                ['name' => 'Aucune donnée', 'value' => 0],
+            ];
+        }
     }
 }

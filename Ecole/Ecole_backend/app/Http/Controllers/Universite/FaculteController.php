@@ -16,13 +16,13 @@ class FaculteController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'nom' => 'required|string|max:100',
             'sigle' => 'required|string|max:10',
             'universite_id' => 'required|exists:universites,id'
         ]);
 
-        $faculte = Faculte::create($request->all());
+        $faculte = Faculte::create($validated);
         return response()->json($faculte, 201);
     }
 
@@ -33,13 +33,13 @@ class FaculteController extends Controller
 
     public function update(Request $request, Faculte $faculte)
     {
-        $request->validate([
+        $validated = $request->validate([
             'nom' => 'sometimes|required|string|max:100',
             'sigle' => 'sometimes|required|string|max:10',
             'universite_id' => 'sometimes|required|exists:universites,id'
         ]);
 
-        $faculte->update($request->all());
+        $faculte->update($validated);
         return response()->json($faculte);
     }
 
