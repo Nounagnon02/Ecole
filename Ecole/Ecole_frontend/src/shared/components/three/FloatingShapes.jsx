@@ -1,117 +1,94 @@
 /**
- * FloatingShapes — Formes 3D flottantes décoratives premium v3
+ * FloatingShapes — Formes flottantes décoratives (CSS-only, sans Three.js)
  *
- * Utilise React Three Fiber + Drei pour des formes animées en arrière-plan.
- * Léger : ne charge pas de textures, uniquement des géométries basiques.
+ * Version CSS : gradients animés + blur + transformation 3D CSS.
+ * Remplace l'ancienne version React Three Fiber pour réduire de ~800 KB le bundle.
  *
  * Props : count (défaut 3), variant (default | login | landing)
  */
 
-import { useRef, useMemo } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { Float, MeshDistortMaterial } from '@react-three/drei';
+import { useMemo } from 'react';
 import { cn } from '@/shared/lib/utils';
 
-/* ─── Pièce flottante individuelle ──────────────────────────────────── */
-function FloatingShape({ geometry, color, position, rotation, scale, speed, distort }) {
-  const meshRef = useRef(null);
-  const offset = useMemo(() => Math.random() * Math.PI * 2, []);
+/* ─── Palettes de couleurs ──────────────────────────────────────────── */
+const PALETTES = {
+  default: ['#6366f1', '#8b5cf6', '#06b6d4'],
+  login: ['#6366f1', '#a855f7', '#3b82f6'],
+  landing: ['#6366f1', '#8b5cf6', '#ec4899', '#06b6d4', '#f59e0b'],
+};
 
-  useFrame(({ clock }) => {
-    if (!meshRef.current) return;
-    const t = clock.getElapsedTime();
-    meshRef.current.rotation.x = rotation[0] + Math.sin(t * speed * 0.3 + offset) * 0.1;
-    meshRef.current.rotation.y = rotation[1] + Math.cos(t * speed * 0.5 + offset) * 0.1;
-    meshRef.current.rotation.z = rotation[2] + Math.sin(t * speed * 0.4 + offset) * 0.1;
-  });
+/* ─── Génération des keyframes CSS ──────────────────────────────────── */
+function blobKeyframes(index) {
+  return `@keyframes blob-float-${index} {
+    0%, 100% {
+      transform: translate(0, 0) scale(1) rotate(0deg);
+      border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+    }
+    25% {
+      transform: translate(${10 + index * 5}px, ${-(15 + index * 3)}px) scale(1.05) rotate(${5 + index * 3}deg);
+      border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
+    }
+    50% {
+      transform: translate(${-(5 + index * 4)}px, ${10 + index * 2}px) scale(0.95) rotate(${10 + index * 2}deg);
+      border-radius: 30% 60% 70% 40% / 50% 60% 30% 70%;
+    }
+    75% {
+      transform: translate(${-(10 + index * 3)}px, ${-(5 + index * 4)}px) scale(1.02) rotate(${3 + index * 4}deg);
+      border-radius: 70% 30% 50% 50% / 30% 70% 50% 60%;
+    }
+  }`;
+
+  return null;
+}
+
+/* ─── Blob individuel ───────────────────────────────────────────────── */
+function Blob({ color, index, total }) {
+  const size = 180 + (index * 40) % 160; // 180–340 px
+  const xPos = ((index / total) * 100 + 10) % 100;
+  const yPos = ((index * 37) / total * 100 + 5) % 100;
+  const delay = -(index * 2.5);
+  const duration = 18 + (index % 5) * 4; // 18–34 s
 
   return (
-    <Float speed={speed} rotationIntensity={0.2} floatIntensity={0.5}>
-      <mesh ref={meshRef} position={position} scale={scale} rotation={rotation}>
-        {geometry}
-        <MeshDistortMaterial
-          color={color}
-          opacity={0.15}
-          transparent
-          distort={distort || 0.1}
-          speed={speed * 0.5}
-          roughness={0.2}
-          metalness={0.8}
-        />
-      </mesh>
-    </Float>
+    <div
+      className="pointer-events-none absolute opacity-20 dark:opacity-15"
+      style={{
+        width: size,
+        height: size,
+        left: `${xPos}%`,
+        top: `${yPos}%`,
+        marginLeft: -size / 2,
+        marginTop: -size / 2,
+        background: `radial-gradient(circle at 30% 30%, ${color}, transparent)`,
+        animation: `blob-float-${index} ${duration}s ease-in-out ${delay}s infinite`,
+        filter: 'blur(40px)',
+        willChange: 'transform',
+      }}
+    />
   );
 }
 
-/* ─── Groupe de formes ───────────────────────────────────────────────── */
-function ShapesGroup({ colors, count = 3 }) {
-  const shapes = useMemo(() => {
-    const primitives = [
-      <icosahedronGeometry args={[1, 0]} />,
-      <octahedronGeometry args={[0.8, 0]} />,
-      <dodecahedronGeometry args={[0.9, 0]} />,
-      <torusKnotGeometry args={[0.6, 0.2, 64, 8]} />,
-      <torusGeometry args={[0.7, 0.25, 16, 32]} />,
-    ];
-
-    return Array.from({ length: count }, (_, i) => ({
-      id: i,
-      geometry: primitives[i % primitives.length],
-      color: colors[i % colors.length],
-      position: [
-        (Math.random() - 0.5) * 8,
-        (Math.random() - 0.5) * 6,
-        (Math.random() - 0.5) * 4 - 2,
-      ],
-      rotation: [
-        Math.random() * Math.PI,
-        Math.random() * Math.PI,
-        Math.random() * Math.PI,
-      ],
-      scale: 0.4 + Math.random() * 0.6,
-      speed: 0.2 + Math.random() * 0.4,
-      distort: 0.1 + Math.random() * 0.2,
-    }));
-  }, [count, colors]);
-
-  return shapes.map((s) => (
-    <FloatingShape
-      key={s.id}
-      geometry={s.geometry}
-      color={s.color}
-      position={s.position}
-      rotation={s.rotation}
-      scale={s.scale}
-      speed={s.speed}
-      distort={s.distort}
-    />
-  ));
-}
-
-/* ─── Conteneur Canvas ───────────────────────────────────────────────── */
+/* ─── Composant principal ───────────────────────────────────────────── */
 function FloatingShapes({ count = 3, variant = 'default', className }) {
-  const palettes = {
-    default: ['#6366f1', '#8b5cf6', '#06b6d4'],
-    login: ['#6366f1', '#a855f7', '#3b82f6'],
-    landing: ['#6366f1', '#8b5cf6', '#ec4899', '#06b6d4', '#f59e0b'],
-  };
+  const colors = PALETTES[variant] || PALETTES.default;
+  const blobCount = Math.min(count || 3, colors.length);
 
-  const colors = palettes[variant] || palettes.default;
+  // Génération d'une feuille de style avec les keyframes
+  const styleSheet = useMemo(() => {
+    const keyframes = Array.from({ length: blobCount }, (_, i) => blobKeyframes(i)).join('\n');
+    return keyframes;
+  }, [blobCount]);
 
   return (
-    <div className={cn('pointer-events-none fixed inset-0 -z-10', className)}>
-      <Canvas
-        camera={{ position: [0, 0, 6], fov: 50 }}
-        dpr={[1, 1.5]}
-        gl={{ alpha: true, antialias: false, powerPreference: 'low-power' }}
-        style={{ background: 'transparent' }}
-      >
-        <ambientLight intensity={0.5} />
-        <directionalLight position={[5, 5, 5]} intensity={0.8} />
-        <directionalLight position={[-5, -5, -5]} intensity={0.3} />
-        <ShapesGroup colors={colors} count={count} />
-      </Canvas>
-    </div>
+    <>
+      <style>{styleSheet}</style>
+      <div className={cn('pointer-events-none fixed inset-0 -z-10 overflow-hidden', className)}>
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/30 via-transparent to-sky-50/30 dark:from-indigo-950/20 dark:via-transparent dark:to-sky-950/20" />
+        {colors.slice(0, blobCount).map((color, i) => (
+          <Blob key={i} color={color} index={i} total={blobCount} />
+        ))}
+      </div>
+    </>
   );
 }
 

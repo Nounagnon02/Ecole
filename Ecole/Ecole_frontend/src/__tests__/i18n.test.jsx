@@ -2,7 +2,7 @@
  * i18n translation tests
  */
 import { describe, it, expect } from 'vitest';
-import { translate, getLocale, setLocale } from '@/shared/i18n';
+import { translate } from '@/shared/i18n';
 import fr from '@/shared/i18n/locales/fr.json';
 import en from '@/shared/i18n/locales/en.json';
 
@@ -13,14 +13,22 @@ describe('i18n translations', () => {
   });
 
   it('returns nested key from French locale', () => {
-    // If the translation exists, it should return the value
-    const result = translate('nav.dashboard');
-    // Either returns the translated string or the key
+    const result = translate('nav.dashboard', 'fr');
     expect(typeof result).toBe('string');
   });
 
   it('replaces variables in translations', () => {
-    const result = translate('welcome.user', { name: 'Jean' });
+    const result = translate('welcome.user', 'fr', { name: 'Jean' });
+    expect(typeof result).toBe('string');
+  });
+
+  it('returns translated content from French locale', () => {
+    const result = translate('auth.login', 'fr');
+    expect(result).not.toBe('auth.login');
+  });
+
+  it('supports English locale', () => {
+    const result = translate('nav.dashboard', 'en');
     expect(typeof result).toBe('string');
   });
 
@@ -36,13 +44,5 @@ describe('i18n translations', () => {
     expect(en.nav).toHaveProperty('dashboard');
     expect(en).toHaveProperty('auth');
     expect(en.auth).toHaveProperty('login');
-  });
-
-  it('can set and get locale', () => {
-    setLocale('en');
-    expect(getLocale()).toBe('en');
-
-    setLocale('fr');
-    expect(getLocale()).toBe('fr');
   });
 });

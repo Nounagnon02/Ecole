@@ -235,7 +235,7 @@ export default function LoginForm() {
             </motion.div>
           )}
 
-          <form onSubmit={handleSubmit} className="mt-8 space-y-5" noValidate>
+          <form onSubmit={handleSubmit} className="mt-8 space-y-5" noValidate aria-label="Formulaire de connexion">
             {/* School selector (searchable) */}
             <motion.div variants={itemVariants}>
               <Combobox
