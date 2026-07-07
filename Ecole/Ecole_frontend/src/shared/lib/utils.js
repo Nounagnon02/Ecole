@@ -22,6 +22,7 @@ export function formatCurrency(value) {
 }
 
 export function formatDate(date, options = {}) {
+  if (date === null || date === undefined) return '';
   return new Intl.DateTimeFormat('fr-FR', {
     day: 'numeric',
     month: 'long',
@@ -56,9 +57,9 @@ export function formatRelativeTime(date) {
 }
 
 export function getInitials(name) {
-  if (!name) return '?';
-  return name
-    .split(' ')
+  if (!name) return '';
+  const parts = name.trim().split(/\s+/);
+  return parts
     .map((n) => n[0])
     .join('')
     .toUpperCase()

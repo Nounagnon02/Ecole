@@ -2,53 +2,51 @@
 
 namespace App\Services;
 
-use FedaPay\FedaPay;
-use FedaPay\Transaction;
+use App\Services\Billing\PaymentProvider;
 use Illuminate\Support\Facades\Log;
 
 class FedaPayService
 {
+    protected PaymentProvider $provider;
+
     public function __construct()
     {
-        // Configuration initiale
-        // API Key et environnement (Sandbox ou Live) doivent être dans .env
-        FedaPay::setApiKey(config('services.fedapay.secret_key', env('FEDAPAY_SECRET_KEY')));
-        
-        // Définir l'environnement : 'sandbox' ou 'live'
-        $environment = config('services.fedapay.environment', env('FEDAPAY_ENVIRONMENT', 'sandbox'));
-        FedaPay::setEnvironment($environment);
+        $this->provider = PaymentProvider::factory('fedapay');
     }
 
     /**
      * Initialiser une transaction FedaPay
      * @param array $data Données de la transaction (amount, description, customer, etc.)
-     * @return Transaction
+     * @return array{transaction: object, payment_url: string}
      */
     public function createTransaction(array $data)
     {
         try {
-            $transaction = Transaction::create([
-                'description' => $data['description'],
+            $reference = 'TX_' . uniqid();
+
+            $result = $this->provider->initializePayment([
                 'amount' => $data['amount'],
-                'currency' => ['iso' => 'XOF'],
-                'callback_url' => route('api.fedapay.callback'), // URL de retour après paiement
-                'customer' => [
-                    'firstname' => $data['customer_firstname'],
-                    'lastname' => $data['customer_lastname'],
-                    'email' => $data['customer_email'],
-                    'phone_number' => [
-                        'number' => $data['customer_phone'],
-                        'country' => 'bj' // Bénin par défaut
-                    ]
-                ]
+                'currency' => 'XOF',
+                'description' => $data['description'] ?? 'Paiement école',
+                'reference' => $reference,
+                'callback_url' => route('api.fedapay.callback'),
+                'metadata' => [
+                    'customer_firstname' => $data['customer_firstname'] ?? '',
+                    'customer_lastname' => $data['customer_lastname'] ?? '',
+                    'customer_email' => $data['customer_email'] ?? '',
+                    'customer_phone' => $data['customer_phone'] ?? '',
+                ],
             ]);
 
-            // Générer le token pour le lien de paiement
-            $token = $transaction->generateToken();
-            
+            if (!$result['success']) {
+                throw new \Exception($result['error'] ?? 'Erreur FedaPay');
+            }
+
             return [
-                'transaction' => $transaction,
-                'payment_url' => $token->url
+                'transaction' => (object) [
+                    'id' => $result['transaction_id'],
+                ],
+                'payment_url' => $result['payment_url'],
             ];
 
         } catch (\Exception $e) {
@@ -59,13 +57,18 @@ class FedaPayService
 
     /**
      * Vérifier le statut d'une transaction
-     * @param int $transactionId ID FedaPay de la transaction
+     * @param int|string $transactionId ID FedaPay de la transaction
+     * @return object|null {id, status, ...} ou null si erreur
      */
     public function verifyTransaction($transactionId)
     {
         try {
-            $transaction = Transaction::retrieve($transactionId);
-            return $transaction;
+            $result = $this->provider->verifyPayment((string) $transactionId);
+
+            return (object) [
+                'id' => $transactionId,
+                'status' => $result['status'] === 'completed' ? 'approved' : $result['status'],
+            ];
         } catch (\Exception $e) {
             Log::error('FedaPay Verify Error: ' . $e->getMessage());
             return null;

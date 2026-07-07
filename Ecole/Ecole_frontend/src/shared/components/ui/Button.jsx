@@ -52,6 +52,7 @@ const Button = forwardRef(function Button(
       ref={ref}
       type={type}
       disabled={disabled || loading}
+      aria-busy={loading ? 'true' : undefined}
       className={cn(
         'inline-flex items-center justify-center font-medium transition-all duration-150',
         'focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:ring-offset-1 dark:focus:ring-offset-neutral-900',

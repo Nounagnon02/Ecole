@@ -8,7 +8,12 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [
+    react({
+      include: ['**/*.js', '**/*.jsx', '**/*.tsx'],
+    }),
+    tailwindcss(),
+  ],
   server: {
     port: 3000,
     open: true,
@@ -23,7 +28,7 @@ export default defineConfig({
             if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
               return 'vendor-react';
             }
-            if (id.includes('framer-motion') || id.includes('three') || id.includes('@react-three')) {
+            if (id.includes('framer-motion')) {
               return 'vendor-animation';
             }
             if (id.includes('recharts') || id.includes('date-fns') || id.includes('xlsx') || id.includes('jspdf')) {
@@ -62,5 +67,14 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: './src/setupTests.js',
     css: true,
+    include: ['src/**/*.{test,spec}.{js,jsx}'],
+    deps: {
+      inline: [/shared/],
+      esbuild: {
+        loader: {
+          '.js': 'jsx',
+        },
+      },
+    },
   },
 });
