@@ -1,9 +1,7 @@
 /**
- * AppShell — Layout applicatif premium v3
+ * AppShell — Layout applicatif Érudit
  *
- * Structure : Sidebar + Header + Contenu principal (+ AI Assistant flottant)
- * Premium : glassmorphism footer, micro-animations, background noise texture,
- *           loading skeleton avec shimmer, transitions fluides
+ * Structure : Sidebar + Header + Contenu principal
  */
 
 import { useEffect, useMemo } from 'react';
@@ -11,7 +9,6 @@ import { Outlet } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from './Sidebar';
 import Header from './Header';
-import AIAssistant from './AIAssistant';
 import Breadcrumb from '@/shared/components/ui/Breadcrumb';
 import CommandPalette from '@/shared/components/ui/CommandPalette';
 import useUIStore from '@/shared/stores/ui-store';
@@ -21,20 +18,16 @@ import { startOfflineSync } from '@/shared/lib/offline-queue';
 import { cn } from '@/shared/lib/utils';
 
 /**
- * LoadingSkeleton — Shimmer loading placeholder premium
+ * LoadingSkeleton — Placeholder de chargement
  */
 function LoadingSkeleton() {
   return (
     <div className="flex h-[60vh] items-center justify-center">
-      <div className="flex flex-col items-center gap-6">
-        {/* Animated logo */}
-        <div className="relative">
-          <div className="h-12 w-12 animate-spin rounded-2xl border-2 border-neutral-200 border-t-indigo-500 dark:border-neutral-800 dark:border-t-indigo-400" />
-          <div className="absolute inset-0 h-12 w-12 animate-pulse rounded-2xl bg-indigo-500/5" />
-        </div>
+      <div className="flex flex-col items-center gap-5">
+        <div className="h-10 w-10 animate-pulse rounded-xl bg-[var(--border-light)]" />
         <div className="flex flex-col items-center gap-2">
-          <div className="h-3 w-32 animate-pulse rounded-full bg-neutral-200 dark:bg-neutral-800" />
-          <div className="h-2 w-24 animate-pulse rounded-full bg-neutral-100 dark:bg-neutral-800/50" />
+          <div className="h-3 w-32 animate-pulse rounded-full bg-[var(--border-light)]" />
+          <div className="h-2 w-24 animate-pulse rounded-full bg-[var(--border-light)]" />
         </div>
       </div>
     </div>
@@ -43,15 +36,14 @@ function LoadingSkeleton() {
 
 /* ─── Animation variants ───────────────────────────────────────────────── */
 const pageVariants = {
-  initial: { opacity: 0, y: 12 },
+  initial: { opacity: 0, y: 8 },
   animate: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: -12 },
+  exit: { opacity: 0, y: -8 },
 };
 
 const pageTransition = {
-  type: 'spring',
-  stiffness: 300,
-  damping: 30,
+  duration: 0.2,
+  ease: [0.16, 1, 0.3, 1],
 };
 
 export default function AppShell({ children }) {
@@ -64,7 +56,6 @@ export default function AppShell({ children }) {
     [sidebarCollapsed]
   );
 
-  /* ─── Initialisation temps réel ──────────────────────────────────────── */
   useEffect(() => {
     if (!user?.id) return;
     connect();
@@ -72,17 +63,13 @@ export default function AppShell({ children }) {
     listenForMessages(user.id);
   }, [user?.id, connect, listenForNotifications, listenForMessages]);
 
-  /* ─── Offline sync ───────────────────────────────────────────────────── */
   useEffect(() => {
     const cleanup = startOfflineSync();
     return cleanup;
   }, []);
 
   return (
-    <div className="relative min-h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100">
-      {/* Subtle background texture (Linear-inspired) */}
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(99,102,241,0.03),transparent_50%)] dark:bg-[radial-gradient(ellipse_at_top_right,rgba(99,102,241,0.06),transparent_50%)]" />
-
+    <div className="relative min-h-screen bg-[var(--surface)] text-[var(--text-primary)]">
       {/* Sidebar */}
       <Sidebar />
 
@@ -125,30 +112,7 @@ export default function AppShell({ children }) {
             )}
           </AnimatePresence>
         </main>
-
-        {/* Premium Footer */}
-        <footer className="relative border-t border-neutral-200/80 bg-white/50 backdrop-blur-sm dark:border-neutral-800/80 dark:bg-neutral-950/50">
-          {/* Gradient accent line */}
-          <div className="absolute -top-px left-0 right-0 h-px bg-gradient-to-r from-transparent via-indigo-500/20 to-transparent" />
-
-          <div className="flex flex-col gap-2 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-2 text-xs text-neutral-500">
-              <span className="flex h-5 w-5 items-center justify-center rounded bg-indigo-500/10 text-[10px] font-bold text-indigo-500">
-                É
-              </span>
-              <span>&copy; {new Date().getFullYear()} École — Système de Gestion Scolaire</span>
-            </div>
-            <div className="flex items-center gap-4 text-xs text-neutral-500">
-              <span className="hidden sm:inline">Version 3.0</span>
-              <span className="hidden sm:block text-neutral-300 dark:text-neutral-700">·</span>
-              <span className="hidden sm:inline">Propulsé par l&apos;équipe École</span>
-            </div>
-          </div>
-        </footer>
       </div>
-
-      {/* AI Assistant flottant */}
-      <AIAssistant />
 
       {/* ⌘K Command Palette */}
       <CommandPalette />

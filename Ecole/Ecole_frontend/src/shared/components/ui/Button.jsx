@@ -1,36 +1,30 @@
 /**
- * Button — Système de boutons premium v3
+ * Button — Bouton Érudit
  *
- * Variants : primary | secondary | ghost | danger | outline | glass | gradient
- * Sizes    : sm | md | lg | xl
+ * Variants : primary (cinabre) | secondary (teal) | ghost | outline | danger
+ * Sizes    : sm | md | lg
  */
 
 import { forwardRef } from 'react';
-import { Loader2 } from 'lucide-react';
 import { cn } from '@/shared/lib/utils';
 
 const variants = {
   primary:
-    'bg-indigo-500 text-white hover:bg-indigo-600 active:bg-indigo-700 shadow-sm shadow-indigo-500/20 hover:shadow-md hover:shadow-indigo-500/30',
+    'bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)] active:bg-[var(--accent-active)] shadow-[var(--shadow-1)] hover:shadow-[var(--shadow-2)]',
   secondary:
-    'bg-neutral-100 text-neutral-900 hover:bg-neutral-200 active:bg-neutral-300 dark:bg-neutral-800 dark:text-neutral-100 dark:hover:bg-neutral-700 dark:active:bg-neutral-600',
+    'bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] active:bg-[var(--primary-active)]',
   ghost:
-    'text-neutral-600 hover:bg-neutral-100 active:bg-neutral-200 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:active:bg-neutral-700',
-  danger:
-    'bg-red-500 text-white hover:bg-red-600 active:bg-red-700 shadow-sm shadow-red-500/20',
+    'text-[var(--text-secondary)] hover:bg-[var(--surface-hover)] active:bg-[var(--surface-subtle)]',
   outline:
-    'border border-neutral-300 bg-transparent text-neutral-700 hover:bg-neutral-50 active:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800 dark:active:bg-neutral-700',
-  glass:
-    'border border-white/20 bg-white/70 text-neutral-800 backdrop-blur-xl hover:bg-white/90 active:bg-white/80 dark:border-white/10 dark:bg-neutral-900/70 dark:text-neutral-200 dark:hover:bg-neutral-900/90',
-  gradient:
-    'bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-sm shadow-indigo-500/30 hover:from-indigo-600 hover:to-purple-600 active:from-indigo-700 active:to-purple-700 hover:shadow-md hover:shadow-indigo-500/40',
+    'border border-[var(--border)] text-[var(--text-primary)] hover:bg-[var(--surface-hover)] active:bg-[var(--surface-subtle)]',
+  danger:
+    'bg-[var(--red)] text-white hover:bg-[var(--red-hover)]',
 };
 
 const sizes = {
-  sm: 'h-11 px-3 text-xs gap-1.5 rounded-xl',
-  md: 'h-11 px-4 text-sm gap-2 rounded-xl',
+  sm: 'h-8 px-3 text-xs gap-1.5 rounded-lg',
+  md: 'h-10 px-4 text-sm gap-2 rounded-lg',
   lg: 'h-12 px-6 text-base gap-2.5 rounded-xl',
-  xl: 'h-14 px-8 text-lg gap-3 rounded-2xl',
 };
 
 const Button = forwardRef(function Button(
@@ -55,7 +49,7 @@ const Button = forwardRef(function Button(
       aria-busy={loading ? 'true' : undefined}
       className={cn(
         'inline-flex items-center justify-center font-medium transition-all duration-150',
-        'focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:ring-offset-1 dark:focus:ring-offset-neutral-900',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-ring)]',
         'disabled:pointer-events-none disabled:opacity-50',
         'select-none',
         variants[variant],
@@ -65,7 +59,10 @@ const Button = forwardRef(function Button(
       {...props}
     >
       {loading ? (
-        <Loader2 className="h-4 w-4 animate-spin" />
+        <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+        </svg>
       ) : icon ? (
         <span className="shrink-0">{icon}</span>
       ) : null}

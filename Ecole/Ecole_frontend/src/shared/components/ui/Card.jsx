@@ -1,8 +1,8 @@
 /**
- * Card — Premium glassmorphism card with depth variants
+ * Card — Carte Érudit
  *
- * Variants : default | glass | elevated | outline | flat
- * Sub-components : Card.Header, Card.Body, Card.Footer, Card.Title, Card.Description
+ * Variants : default | elevated | outline | flat
+ * Sous-composants : Card.Header, Card.Body, Card.Footer, Card.Title, Card.Description
  */
 
 import { forwardRef } from 'react';
@@ -10,25 +10,22 @@ import { cn } from '@/shared/lib/utils';
 
 const variantStyles = {
   default:
-    'border border-neutral-200/80 bg-white shadow-[0_1px_3px_0_rgba(0,0,0,0.04)] dark:border-neutral-800 dark:bg-neutral-900 dark:shadow-[0_1px_3px_0_rgba(0,0,0,0.2)]',
-  glass:
-    'border border-white/20 bg-white/70 shadow-[0_8px_32px_rgba(0,0,0,0.06)] backdrop-blur-[12px] dark:border-white/[0.06] dark:bg-neutral-950/70 dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)]',
+    'border border-[var(--border)] bg-[var(--surface-raised)] shadow-[var(--shadow-1)]',
   elevated:
-    'border border-neutral-200/80 bg-white shadow-[0_4px_12px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04)] dark:border-neutral-800 dark:bg-neutral-900 dark:shadow-[0_4px_12px_rgba(0,0,0,0.3),0_1px_3px_rgba(0,0,0,0.2)]',
+    'border border-[var(--border-light)] bg-[var(--surface-raised)] shadow-[var(--shadow-3)]',
   outline:
-    'border-2 border-neutral-200 bg-transparent dark:border-neutral-700',
-  flat: 'bg-neutral-50 dark:bg-neutral-900',
+    'border border-[var(--border)] bg-transparent',
+  flat: 'bg-[var(--surface-subtle)]',
 };
 
-function Card({ children, className, variant = 'default', hover = false, glow = false, ...props }) {
+function Card({ children, className, variant = 'default', hover = false, ...props }) {
   return (
     <div
       className={cn(
-        'rounded-2xl transition-all duration-200',
+        'rounded-xl transition-all duration-200',
         variantStyles[variant] || variantStyles.default,
         hover &&
-          'cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(0,0,0,0.08)] dark:hover:shadow-[0_8px_25px_rgba(0,0,0,0.35)]',
-        glow && 'shadow-[0_0_20px_rgba(99,102,241,0.15)] dark:shadow-[0_0_20px_rgba(99,102,241,0.08)]',
+          'cursor-pointer hover:shadow-[var(--shadow-4)]',
         className
       )}
       {...props}
@@ -81,10 +78,7 @@ Card.Title = forwardRef(function CardTitle({ children, className, as: Component 
   return (
     <Component
       ref={ref}
-      className={cn(
-        'text-lg font-semibold tracking-tight text-neutral-900 dark:text-neutral-100',
-        className
-      )}
+      className={cn('font-fraunces text-lg font-semibold leading-tight text-[var(--text-primary)]', className)}
     >
       {children}
     </Component>
@@ -93,7 +87,7 @@ Card.Title = forwardRef(function CardTitle({ children, className, as: Component 
 
 Card.Description = forwardRef(function CardDescription({ children, className }, ref) {
   return (
-    <p ref={ref} className={cn('text-sm text-neutral-500 dark:text-neutral-400', className)}>
+    <p ref={ref} className={cn('text-sm text-[var(--text-secondary)]', className)}>
       {children}
     </p>
   );

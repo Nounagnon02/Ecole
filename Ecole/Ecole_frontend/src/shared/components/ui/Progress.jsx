@@ -1,7 +1,7 @@
 /**
  * Progress — Barre de progression premium v3
  *
- * Variants : default (indigo), success (emerald), warning (amber), danger (red)
+ * Variants : default (accent), success (emerald), warning (amber), danger (red)
  * Sizes : sm, md, lg
  * Options : showValue, animated, striped
  */
@@ -12,7 +12,7 @@ function Progress({ value = 0, max = 100, variant = 'default', size = 'md', show
   const percent = Math.min(Math.max((value / max) * 100, 0), 100);
 
   const variants = {
-    default: 'bg-indigo-500',
+    default: 'bg-[var(--accent)]',
     success: 'bg-emerald-500',
     warning: 'bg-amber-500',
     danger: 'bg-red-500',
@@ -41,7 +41,7 @@ function Progress({ value = 0, max = 100, variant = 'default', size = 'md', show
             'h-full rounded-full transition-all duration-500 ease-out-expo',
             variants[variant],
             animated && percent > 0 && 'animate-pulse-subtle',
-            variant === 'default' && 'bg-gradient-to-r from-indigo-500 to-indigo-400'
+            variant === 'default' && 'bg-[var(--accent)]'
           )}
           style={{ width: `${percent}%` }}
         >

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Central;
 
+use App\Models\AuditLog;
 use App\Models\SaaS\Tenant;
 use App\Models\SaaS\Subscription;
 use App\Models\SaaS\Plan;
@@ -65,6 +66,34 @@ class AnalyticsController extends Controller
             ->get();
 
         return response()->json($monthly);
+    }
+
+    public function auditLogs(Request $request)
+    {
+        $query = AuditLog::with('user')
+            ->orderBy('created_at', 'desc');
+
+        // Filtrer par événement
+        if ($request->event) {
+            $query->where('event', $request->event);
+        }
+
+        // Filtrer par type de modèle
+        if ($request->auditable_type) {
+            $query->where('auditable_type', 'like', '%' . $request->auditable_type);
+        }
+
+        // Filtre date
+        if ($request->from) {
+            $query->where('created_at', '>=', $request->from);
+        }
+        if ($request->to) {
+            $query->where('created_at', '<=', $request->to);
+        }
+
+        $logs = $query->paginate($request->per_page ?? 50);
+
+        return response()->json($logs);
     }
 
     public function schools()

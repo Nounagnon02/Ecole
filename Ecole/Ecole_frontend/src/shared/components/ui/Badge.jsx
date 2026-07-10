@@ -1,32 +1,39 @@
 /**
- * Badge — Indicateur de statut premium v3
+ * Badge — Indicateur de statut Érudit
  *
- * Variants : default | primary | success | warning | danger | info | accent | glass
+ * Variants : default | primary | success | warning | danger | info | accent
  * Sizes    : sm | md | lg
  */
 
 import { cn } from '@/shared/lib/utils';
 
 const variants = {
-  default: 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300',
-  primary: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300',
-  success: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
-  warning: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300',
-  danger: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300',
-  info: 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300',
-  accent: 'bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300',
-  glass: 'border border-white/20 bg-white/70 text-neutral-700 backdrop-blur-xl dark:border-white/10 dark:bg-neutral-900/70 dark:text-neutral-300',
+  default: 'bg-[var(--surface-subtle)] text-[var(--text-secondary)]',
+  primary: 'bg-[var(--primary-subtle)] text-[var(--primary)]',
+  success: 'bg-[var(--green-subtle)] text-[var(--green)]',
+  warning: 'bg-[var(--amber-subtle)] text-[var(--amber)]',
+  danger: 'bg-[var(--red-subtle)] text-[var(--red)]',
+  info: 'bg-[var(--blue-subtle)] text-[var(--blue)]',
+  accent: 'bg-[var(--accent-subtle)] text-[var(--accent)]',
+  // Hues complémentaires (alignés sur les StatsCard de dashboards)
+  emerald: 'bg-[var(--emerald-subtle)] text-[var(--emerald)]',
+  sky: 'bg-[var(--sky-subtle)] text-[var(--sky)]',
+  purple: 'bg-[var(--purple-subtle)] text-[var(--purple)]',
+  violet: 'bg-[var(--violet-subtle)] text-[var(--violet)]',
 };
 
 const dotColors = {
-  default: 'bg-neutral-400',
-  primary: 'bg-indigo-500',
-  success: 'bg-emerald-500',
-  warning: 'bg-amber-500',
-  danger: 'bg-red-500',
-  info: 'bg-sky-500',
-  accent: 'bg-purple-500',
-  glass: 'bg-neutral-500',
+  default: 'bg-[var(--text-tertiary)]',
+  primary: 'bg-[var(--primary)]',
+  success: 'bg-[var(--green)]',
+  warning: 'bg-[var(--amber)]',
+  danger: 'bg-[var(--red)]',
+  info: 'bg-[var(--blue)]',
+  accent: 'bg-[var(--accent)]',
+  emerald: 'bg-[var(--emerald)]',
+  sky: 'bg-[var(--sky)]',
+  purple: 'bg-[var(--purple)]',
+  violet: 'bg-[var(--violet)]',
 };
 
 const sizes = {

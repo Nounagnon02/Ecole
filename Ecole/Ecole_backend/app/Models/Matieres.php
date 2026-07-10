@@ -52,7 +52,7 @@ public function coefficientsParClasse()
     // Autres relations existantes...
     public function eleves()
     {
-        return $this->belongsToMany(Eleves::class, 'eleve_matiere');
+        return $this->belongsToMany(Eleve::class, 'eleve_matiere');
     }
 
 

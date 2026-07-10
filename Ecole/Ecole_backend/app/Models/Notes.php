@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use App\Traits\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,7 +13,7 @@ use App\Models\Enseignant;
 
 class Notes extends Model
 {
-    use HasFactory, BelongsToEcole;
+    use HasFactory, BelongsToEcole, Auditable;
 
     protected $fillable = [
         'eleve_id',
@@ -24,6 +25,7 @@ class Notes extends Model
         'date_evaluation',
         'periode',
         'observation',
+        'locked',
         'created_by',
         'ecole_id'
     ];
@@ -31,7 +33,8 @@ class Notes extends Model
     protected $casts = [
         'date_evaluation' => 'date',
         'note' => 'decimal:2',
-        'note_sur' => 'decimal:2'
+        'note_sur' => 'decimal:2',
+        'locked' => 'boolean'
     ];
 
     public function eleve()
@@ -52,7 +55,7 @@ class Notes extends Model
 
     /*public function enseignant()
     {
-        return $this->belongsTo(Enseignants::class);
+        return $this->belongsTo(Enseignant::class);
     }*/
 
 

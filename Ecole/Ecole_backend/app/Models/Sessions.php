@@ -9,14 +9,21 @@ use Illuminate\Database\Eloquent\Model;
 class Sessions extends Model
 {
     use HasFactory, BelongsToEcole;
-    protected $fillable=['nom','statut','date_debut','date_fin','ecole_id'];
-    
-    public function matieres(){
-        return $this->belongsToMany(Matieres::class,'sessions_matieres');
+
+    protected $table = 'sessions_academiques';
+
+    protected $fillable = ['nom', 'statut', 'date_debut', 'date_fin', 'ecole_id'];
+
+    public function matieres()
+    {
+        return $this->belongsToMany(Matieres::class, 'sessions_matieres');
     }
-    public function eleves(){
-        return $this->belongsToMany(eleves::class,'sessions_candidats');
+
+    public function eleves()
+    {
+        return $this->belongsToMany(Eleve::class, 'sessions_candidats');
     }
+
     public function notes()
     {
         return $this->hasMany(Notes::class);

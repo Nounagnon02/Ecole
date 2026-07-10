@@ -81,18 +81,18 @@ class BeninEducationSeeder extends Seeder
 
         // Matieres
         DB::table('matieres')->insert([
-            ['nom' => 'Mathématiques', 'created_at' => now(), 'updated_at' => now()],
-            ['nom' => 'Français', 'created_at' => now(), 'updated_at' => now()],
-            ['nom' => 'Anglais', 'created_at' => now(), 'updated_at' => now()],
-            ['nom' => 'SVT', 'created_at' => now(), 'updated_at' => now()],
+            ['nom' => 'Mathématiques', 'ecole_id' => $ecole, 'created_at' => now(), 'updated_at' => now()],
+            ['nom' => 'Français',       'ecole_id' => $ecole, 'created_at' => now(), 'updated_at' => now()],
+            ['nom' => 'Anglais',         'ecole_id' => $ecole, 'created_at' => now(), 'updated_at' => now()],
+            ['nom' => 'SVT',             'ecole_id' => $ecole, 'created_at' => now(), 'updated_at' => now()],
         ]);
 
         // Classes
         $classeId = DB::table('classes')->insertGetId([
-            'nom_classe' => '3ème', 
-            'categorie_classe' => 'Secondaire', 
+            'nom_classe' => '3ème',
+            'categorie_classe' => 'Secondaire',
             'ecole_id' => $ecole,
-            'created_at' => now(), 
+            'created_at' => now(),
             'updated_at' => now()
         ]);
 
@@ -118,6 +118,7 @@ class BeninEducationSeeder extends Seeder
                 'user_id' => $userId,
                 'numero_matricule' => $e['mat'],
                 'class_id' => $classeId,
+                'ecole_id' => $ecole,
                 'created_at' => now(),
                 'updated_at' => now()
             ]);

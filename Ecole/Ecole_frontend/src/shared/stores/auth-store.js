@@ -18,6 +18,9 @@ const initialState = {
   isAuthenticated: false,
   isLoading: true,
   sessionLastVerified: null,
+  pendingSchools: null, // [{ id, name }] quand le login necessite le choix de l'ecole
+  pendingToken: null,   // token temporaire pour finaliser le choix d'ecole
+  step: 'initial',      // 'initial' | 'pick-school'
 };
 
 /**
@@ -56,24 +59,63 @@ const useAuthStore = create(
       },
 
       /**
-       * Connexion — récupère d'abord le cookie CSRF Sanctum,
+       * Connexion — recupere d'abord le cookie CSRF Sanctum,
        * puis authentifie via session (httpOnly cookie).
+       * Si l'utilisateur est dans plusieurs ecoles, renvoie la liste
+       * pour selection apres le login.
        */
       login: async (credentials) => {
-        // Étape 1 : Récupérer le cookie CSRF pour Sanctum SPA
-        // (route hors du préfixe /api, on appelle l'origine directement)
+        // Etape 1 : Recuperer le cookie CSRF
         const origin = getBackendOrigin();
         await axios.get(`${origin}/sanctum/csrf-cookie`, {
           withCredentials: true,
         });
 
-        // Étape 2 : Authentification
+        // Etape 2 : Authentification sans ecole_id
         const { data } = await apiClient.post('/auth/login', credentials);
+
+        // Si plusieurs ecoles → l'utilisateur doit choisir
+        if (data.schools && Array.isArray(data.schools) && data.schools.length > 0) {
+          set({
+            pendingSchools: data.schools,
+            pendingToken: data.temp_token || data.token || null,
+            step: 'pick-school',
+            isLoading: false,
+          });
+          return { requiresSchool: true, schools: data.schools };
+        }
+
+        // Connexion directe
+        set({
+          user: data.user,
+          isAuthenticated: true,
+          isLoading: false,
+          step: 'initial',
+          pendingSchools: null,
+          pendingToken: null,
+        });
+
+        return data.user;
+      },
+
+      /**
+       * Finalise la connexion en choisissant l'ecole.
+       */
+      selectSchool: async (ecoleId) => {
+        const { pendingToken } = get();
+
+        const { data } = await apiClient.post('/auth/select-school', {
+          ecole_id: ecoleId,
+          token: pendingToken,
+        });
 
         set({
           user: data.user,
           isAuthenticated: true,
           isLoading: false,
+          step: 'initial',
+          pendingSchools: null,
+          pendingToken: null,
         });
 
         return data.user;

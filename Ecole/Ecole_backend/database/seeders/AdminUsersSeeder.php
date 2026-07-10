@@ -27,11 +27,14 @@ class AdminUsersSeeder extends Seeder
         foreach ($ecoles as $ecole) {
             foreach ($roles as $role => $password) {
                 User::create([
-                    'name' => ucfirst($role) . ' ' . $ecole->nom,
-                    'email' => $role . 'ecole' . $ecole->id . '@gmail.cj',
-                    'password' => Hash::make($password),
-                    'role' => $role,
-                    'ecole_id' => $ecole->id,
+                    'name'        => ucfirst($role) . ' ' . $ecole->nom,
+                    'prenom'      => ucfirst($role),
+                    'email'       => $role . 'ecole' . $ecole->id . '@gmail.cj',
+                    'identifiant' => $role . '_ecole' . $ecole->id,
+                    'password'    => Hash::make($password),
+                    'role'        => $role,
+                    'ecole_id'    => $ecole->id,
+                    'is_active'   => true,
                 ]);
             }
         }

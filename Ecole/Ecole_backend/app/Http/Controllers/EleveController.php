@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{Devoir, EmploiDuTemps, Eleve, User, Classes};
+use App\Models\{EmploiDuTemps, Eleve, User, Classes};
 use App\Services\BulletinService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 
 class EleveController extends Controller
@@ -42,6 +43,7 @@ class EleveController extends Controller
      */
     public function index()
     {
+        $this->authorize('viewAny', Eleve::class);
         $eleves = Eleve::with('user', 'classe', 'serie')->get();
         return response()->json($eleves);
     }
@@ -95,12 +97,14 @@ class EleveController extends Controller
         if (!$eleve) {
             return response()->json(['message' => 'Élève non trouvé'], 404);
         }
+        $this->authorize('view', $eleve);
         return response()->json($eleve);
     }
 
     public function update(Request $request, $id)
     {
         $eleve = Eleve::findOrFail($id);
+        $this->authorize('update', $eleve);
         $user = $eleve->user;
 
         $validated = $request->validate([
@@ -119,8 +123,9 @@ class EleveController extends Controller
     public function destroy($id)
     {
         $eleve = Eleve::findOrFail($id);
+        $this->authorize('delete', $eleve);
         $user = $eleve->user;
-        
+
         $eleve->delete();
         $user->delete();
 

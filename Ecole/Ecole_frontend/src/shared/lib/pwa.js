@@ -8,8 +8,8 @@
 import logger from './logger';
 
 export function registerSW() {
-  if (!('serviceWorker' in navigator)) {
-    logger.info('Service Worker non supporté');
+  if (!('serviceWorker' in navigator) || import.meta.env.DEV) {
+    logger.info('Service Worker non supporté ou désactivé en développement');
     return;
   }
 

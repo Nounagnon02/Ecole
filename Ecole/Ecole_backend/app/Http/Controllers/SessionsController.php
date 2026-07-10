@@ -80,7 +80,7 @@ class SessionsController extends Controller
     }
     public function addCandidat(Request $request, Sessions $session)
     {
-        $candidat = Eleves::findOrFail($request->candidat_id);
+        $candidat = Eleve::findOrFail($request->candidat_id);
         $session->candidats()->attach($candidat);
         return response()->json(['message' => 'Candidat ajouté à la session'], 200);
     }

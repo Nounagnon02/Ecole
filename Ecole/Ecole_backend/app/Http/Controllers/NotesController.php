@@ -19,10 +19,53 @@ use Illuminate\Support\Facades\Storage;
 
 class NotesController extends Controller
 {
+    /**
+     * Liste des notes — filtre optionnel par élève
+     */
+    public function index(Request $request)
+    {
+        $this->authorize('viewAny', Notes::class);
+
+        $eleveId = $request->route('eleveId') ?? $request->query('eleve_id');
+
+        if ($eleveId) {
+            $eleve = Eleve::find($eleveId);
+            if (!$eleve) {
+                return response()->json(['success' => false, 'message' => 'Élève non trouvé'], 404);
+            }
+            $this->authorize('view', $eleve); // IDOR: vérifie l'accès à l'élève
+        }
+
+        $query = Notes::with(['eleve.user', 'matiere', 'classe']);
+
+        if ($eleveId) {
+            $query->where('eleve_id', $eleveId);
+        }
+
+        if ($request->filled('periode')) {
+            $query->where('periode', $request->periode);
+        }
+
+        if ($request->filled('classe_id')) {
+            $query->where('classe_id', $request->classe_id);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $query->latest('date_evaluation')->get(),
+        ]);
+    }
+
     public function getNotesByEleves($eleveId)
     {
+        $eleve = Eleve::find($eleveId);
+        if (!$eleve) {
+            return response()->json(['success' => false, 'message' => 'Élève non trouvé'], 404);
+        }
+        $this->authorize('view', $eleve);
+
         $notes = Notes::with('eleve')
-            ->where('eleves_id', $eleveId)
+            ->where('eleve_id', $eleveId)
             ->get();
 
         return response()->json($notes);
@@ -30,6 +73,8 @@ class NotesController extends Controller
 
     public function getNotesBySession($sessionId)
     {
+        $this->authorize('viewAny', Notes::class);
+
         $notes = Notes::with('eleve')
             ->where('sessions_id', $sessionId)
             ->get();
@@ -107,6 +152,8 @@ class NotesController extends Controller
             ], 404);
         }
 
+        $this->authorize('view', $note);
+
         return response()->json([
             'success' => true,
             'note' => $note
@@ -116,6 +163,8 @@ class NotesController extends Controller
 
     public function store(Request $request)
         {
+            $this->authorize('create', Notes::class);
+
             // Validation des données
             $validator = Validator::make($request->all(), [
                 'eleve_id' => 'required|exists:eleves,id',
@@ -141,7 +190,7 @@ class NotesController extends Controller
                 DB::beginTransaction();
 
                 // Vérifier que l'élève appartient bien à la classe
-                $eleve = Eleves::find($request->eleve_id);
+                $eleve = Eleve::find($request->eleve_id);
                 if ($eleve->class_id != $request->classe_id) {
                     return response()->json([
                         'success' => false,
@@ -150,8 +199,9 @@ class NotesController extends Controller
                 }
 
                 // Vérifier que la matière existe pour la série de l'élève
-                $matiere = Matieres::find($request->matiere_id);
-                $serieHasMatiere = $eleve->serie->matieres()->where('matiere_id', $request->matiere_id)->exists();
+                $serieHasMatiere = $eleve->serie
+                    ? $eleve->serie->matieres()->where('matiere_id', $request->matiere_id)->exists()
+                    : true;
                 
                 if (!$serieHasMatiere) {
                     return response()->json([
@@ -204,6 +254,15 @@ class NotesController extends Controller
      */
     public function update(Request $request, $id)
     {
+        // Vérifier que la note n'est pas verrouillée
+        $note = Notes::find($id);
+        if ($note && $note->locked) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Impossible de modifier une note verrouillée'
+            ], 403);
+        }
+
         // Validation des données
         $validator = Validator::make($request->all(), [
             'eleve_id' => 'required|exists:eleves,id',
@@ -237,8 +296,10 @@ class NotesController extends Controller
                 ], 404);
             }
 
+            $this->authorize('update', $note);
+
             // Vérifier que l'élève appartient bien à la classe
-            $eleve = Eleves::find($request->eleve_id);
+            $eleve = Eleve::find($request->eleve_id);
             if ($eleve->class_id != $request->classe_id) {
                 return response()->json([
                     'success' => false,
@@ -247,8 +308,10 @@ class NotesController extends Controller
             }
 
             // Vérifier que la matière existe pour la série de l'élève
-            $serieHasMatiere = $eleve->serie->matieres()->where('matiere_id', $request->matiere_id)->exists();
-            
+            $serieHasMatiere = $eleve->serie
+                ? $eleve->serie->matieres()->where('matiere_id', $request->matiere_id)->exists()
+                : true;
+
             if (!$serieHasMatiere) {
                 return response()->json([
                     'success' => false,
@@ -299,101 +362,23 @@ class NotesController extends Controller
      */
     private function validateNoteByType(Request $request, $excludeNoteId = null)
     {
-        $eleveId = $request->eleve_id;
-        $matiereId = $request->matiere_id;
-        $typeEvaluation = $request->type_evaluation;
-        $periode = $request->periode;
+        $query = Notes::where('eleve_id', $request->eleve_id)
+                    ->where('matiere_id', $request->matiere_id)
+                    ->where('type_evaluation', $request->type_evaluation)
+                    ->where('periode', $request->periode);
 
-        $query = Notes::where('eleve_id', $eleveId)
-                    ->where('matiere_id', $matiereId)
-                    ->where('type_evaluation', $typeEvaluation)
-                    ->where('periode', $periode);
-
-        // Exclure la note actuelle lors de la mise à jour
         if ($excludeNoteId) {
             $query->where('id', '!=', $excludeNoteId);
         }
 
-        $existingNotesCount = $query->count();
+        $count = $query->count();
+        $limite = $request->type_evaluation === 'Interrogation' ? 4 : 1;
 
-        switch ($typeEvaluation) {
-            case 'Interrogation':
-                if ($existingNotesCount >= 4) {
-                    return [
-                        'success' => false,
-                        'message' => 'Un élève ne peut avoir plus de 4 notes d\'interrogation par matière et par période'
-                    ];
-                }
-                break;
-
-            case 'Devoir1':
-                if ($existingNotesCount >= 1) {
-                    return [
-                        'success' => false,
-                        'message' => "Un élève ne peut avoir qu'une seule note de {$typeEvaluation} par matière et par période"
-                    ];
-                }
-                break;
-            case '1ère evaluation':
-                if ($existingNotesCount >= 1) {
-                    return [
-                        'success' => false,
-                        'message' => "Un élève ne peut avoir qu'une seule note de {$typeEvaluation} par matière et par période"
-                    ];
-                }
-                break;
-            case '2ème evaluation':
-                if ($existingNotesCount >= 1) {
-                    return [
-                        'success' => false,
-                        'message' => "Un élève ne peut avoir qu'une seule note de {$typeEvaluation} par matière et par période"
-                    ];
-                }
-                break;
-
-            case '3ème evaluation':
-                if ($existingNotesCount >= 1) {
-                    return [
-                        'success' => false,
-                        'message' => "Un élève ne peut avoir qu'une seule note de {$typeEvaluation} par matière et par période"
-                    ];
-                }
-                break;
-            
-            case '4ème evaluation':
-                if ($existingNotesCount >= 1) {
-                    return [
-                        'success' => false,
-                        'message' => "Un élève ne peut avoir qu'une seule note de {$typeEvaluation} par matière et par période"
-                    ];
-                }
-                break;
-            
-            case '5ème evaluation':
-                if ($existingNotesCount >= 1) {
-                    return [
-                        'success' => false,
-                        'message' => "Un élève ne peut avoir qu'une seule note de {$typeEvaluation} par matière et par période"
-                    ];
-                }
-                break;
-            
-            case '6ème evaluation':
-                if ($existingNotesCount >= 1) {
-                    return [
-                        'success' => false,
-                        'message' => "Un élève ne peut avoir qu'une seule note de {$typeEvaluation} par matière et par période"
-                    ];
-                }
-                break;
-            case 'Devoir2':
-                if ($existingNotesCount >= 1) {
-                    return [
-                        'success' => false,
-                        'message' => "Un élève ne peut avoir qu'une seule note de {$typeEvaluation} par matière et par période"
-                    ];
-                }
-                break;
+        if ($count >= $limite) {
+            $label = $request->type_evaluation === 'Interrogation'
+                ? 'plus de 4 notes d\'interrogation'
+                : "plus d'une note de {$request->type_evaluation}";
+            return ['success' => false, 'message' => "Un élève ne peut avoir {$label} par matière et par période"];
         }
 
         return ['success' => true];
@@ -406,12 +391,22 @@ class NotesController extends Controller
     {
         try {
             $note = Notes::find($id);
-            
+
             if (!$note) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Note non trouvée'
                 ], 404);
+            }
+
+            $this->authorize('delete', $note);
+
+            // Empêcher la suppression d'une note verrouillée
+            if ($note->locked) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Impossible de supprimer une note verrouillée'
+                ], 403);
             }
 
             $note->delete();
@@ -429,6 +424,180 @@ class NotesController extends Controller
             ], 500);
         }
     }
+    /**
+     * Exporter les notes en XLSX
+     */
+    public function export(Request $request)
+    {
+        $this->authorize('viewAny', Notes::class);
+
+        $query = Notes::with(['eleve.user', 'matiere', 'classe']);
+
+        if ($request->filled('classe_id')) {
+            $query->where('classe_id', $request->classe_id);
+        }
+        if ($request->filled('periode')) {
+            $query->where('periode', $request->periode);
+        }
+        if ($request->filled('matiere_id')) {
+            $query->where('matiere_id', $request->matiere_id);
+        }
+
+        $notes = $query->orderBy('classe_id')->orderBy('eleve_id')->orderBy('date_evaluation')->get();
+
+        try {
+            $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
+
+            // En-têtes
+            $headers = ['N°', 'Élève', 'Classe', 'Matière', 'Note', 'Note sur', 'Type', 'Période', 'Date', 'Observation', 'Verrouillée'];
+            $col = 'A';
+            foreach ($headers as $header) {
+                $sheet->setCellValue($col . '1', $header);
+                $sheet->getStyle($col . '1')->getFont()->setBold(true);
+                $col++;
+            }
+
+            $row = 2;
+            foreach ($notes as $i => $n) {
+                $sheet->setCellValue('A' . $row, $i + 1);
+                $sheet->setCellValue('B' . $row, ($n->eleve->user->name ?? '') . ' ' . ($n->eleve->user->prenom ?? ''));
+                $sheet->setCellValue('C' . $row, $n->classe->nom_classe ?? '');
+                $sheet->setCellValue('D' . $row, $n->matiere->nom ?? '');
+                $sheet->setCellValue('E' . $row, (float) $n->note);
+                $sheet->setCellValue('F' . $row, (float) ($n->note_sur ?? 20));
+                $sheet->setCellValue('G' . $row, $n->type_evaluation);
+                $sheet->setCellValue('H' . $row, $n->periode);
+                $sheet->setCellValue('I' . $row, $n->date_evaluation?->format('d/m/Y'));
+                $sheet->setCellValue('J' . $row, $n->observation ?? '');
+                $sheet->setCellValue('K' . $row, $n->locked ? 'Oui' : 'Non');
+                $row++;
+            }
+
+            // Ajuster la largeur des colonnes
+            foreach (range('A', 'K') as $c) {
+                $sheet->getColumnDimension($c)->setAutoSize(true);
+            }
+
+            $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+            $filename = 'notes_export_' . now()->format('Ymd_His') . '.xlsx';
+            $tempPath = storage_path('app/temp/' . $filename);
+            if (!is_dir(storage_path('app/temp'))) {
+                mkdir(storage_path('app/temp'), 0755, true);
+            }
+            $writer->save($tempPath);
+
+            return response()->download($tempPath, $filename, [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            ])->deleteFileAfterSend(true);
+
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Export notes XLSX error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de l\'export: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Verrouiller une note (empêche modification)
+     */
+    public function lock($id)
+    {
+        try {
+            $note = Notes::findOrFail($id);
+            $this->authorize('update', $note);
+
+            $note->update(['locked' => true]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Note verrouillée'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Déverrouiller une note
+     */
+    public function unlock($id)
+    {
+        try {
+            $note = Notes::findOrFail($id);
+            $this->authorize('update', $note);
+
+            $note->update(['locked' => false]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Note déverrouillée'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Classement des élèves par moyenne pour une classe et période
+     */
+    public function classement($classeId, $periode)
+    {
+        $this->authorize('viewAny', Notes::class);
+
+        try {
+            $eleves = DB::table('notes')
+                ->select(
+                    'eleve_id',
+                    DB::raw('AVG(note) as moyenne'),
+                    DB::raw('COUNT(*) as total_notes')
+                )
+                ->where('classe_id', $classeId)
+                ->where('periode', $periode)
+                ->groupBy('eleve_id')
+                ->orderByDesc('moyenne')
+                ->get();
+
+            $elevesAvecInfos = $eleves->map(function ($item, $index) {
+                $eleve = \App\Models\Eleve::with('user')->find($item->eleve_id);
+                return [
+                    'rang' => $index + 1,
+                    'eleve_id' => $item->eleve_id,
+                    'nom' => $eleve?->user?->name ?? 'Inconnu',
+                    'prenom' => $eleve?->user?->prenom ?? '',
+                    'matricule' => $eleve?->numero_matricule ?? '',
+                    'moyenne' => round((float) $item->moyenne, 2),
+                    'total_notes' => $item->total_notes,
+                ];
+            });
+
+            $classe = \App\Models\Classes::find($classeId);
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'classe' => $classe?->nom_classe ?? 'Inconnue',
+                    'periode' => $periode,
+                    'effectif' => $elevesAvecInfos->count(),
+                    'classement' => $elevesAvecInfos,
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors du calcul du classement: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     /**
      * Importer des notes depuis un fichier JSON
      */
@@ -544,6 +713,12 @@ class NotesController extends Controller
      */
     public function getNotesEleve($eleveId, $periode = null)
     {
+        $eleve = Eleve::find($eleveId);
+        if (!$eleve) {
+            return response()->json(['success' => false, 'message' => 'Élève non trouvé'], 404);
+        }
+        $this->authorize('view', $eleve);
+
         try {
             $query = Notes::where('eleve_id', $eleveId)
                         ->with(['matiere', 'classe']);
@@ -577,7 +752,7 @@ class NotesController extends Controller
     public function getStatistiquesEleve($eleveId, $periode)
     {
         try {
-            $eleve = Eleves::with(['notes' => function($query) use ($periode) {
+            $eleve = Eleve::with(['notes' => function($query) use ($periode) {
                 $query->where('periode', $periode)->with('matiere');
             }])->find($eleveId);
 
@@ -587,6 +762,8 @@ class NotesController extends Controller
                     'message' => 'Élève non trouvé'
                 ], 404);
             }
+
+            $this->authorize('view', $eleve);
 
             $statistiques = [
                 'eleve' => $eleve->full_name,
@@ -621,6 +798,12 @@ class NotesController extends Controller
      */
     public function checkNotesRestantes($eleveId, $matiereId, $typeEvaluation, $periode)
     {
+        $eleve = Eleve::find($eleveId);
+        if (!$eleve) {
+            return response()->json(['success' => false, 'message' => 'Élève non trouvé'], 404);
+        }
+        $this->authorize('view', $eleve);
+
         try {
             $nombreExistant = Notes::where('eleve_id', $eleveId)
                                 ->where('matiere_id', $matiereId)
@@ -654,7 +837,7 @@ class NotesController extends Controller
     private function findEleve($identifier, $classeId)
     {
         // Recherche par nom complet, prénom, nom ou numéro
-        return Eleves::where('classe_id', $classeId)
+        return Eleve::where('classe_id', $classeId)
             ->where(function($query) use ($identifier) {
                 $query->where('nom', 'LIKE', "%{$identifier}%")
                     ->orWhere('prenom', 'LIKE', "%{$identifier}%")
@@ -680,7 +863,7 @@ class NotesController extends Controller
 
     public function getElevesByClasse($classeId)
     {
-        $eleves = Eleves::where('classe_id', $classeId)
+        $eleves = Eleve::where('classe_id', $classeId)
             ->select('id', 'nom', 'prenom', 'numero_eleve')
             ->orderBy('nom')
             ->orderBy('prenom')

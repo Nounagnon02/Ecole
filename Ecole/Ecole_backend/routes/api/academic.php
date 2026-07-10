@@ -57,6 +57,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/eleve/{eleveId?}', [NotesController::class, 'index']);
         Route::post('/store', [NotesController::class, 'store'])->middleware('role:directeur,enseignant');
         Route::post('/import', [NotesController::class, 'import'])->middleware(['role:directeur,enseignant', 'throttle:5,1']);
+        Route::get('/export', [NotesController::class, 'export'])->middleware('role:directeur,enseignant');
+        Route::post('/{id}/lock', [NotesController::class, 'lock'])->middleware('role:directeur,enseignant');
+        Route::post('/{id}/unlock', [NotesController::class, 'unlock'])->middleware('role:directeur,enseignant');
+        Route::get('/classement/{classeId}/{periode}', [NotesController::class, 'classement'])->middleware('role:directeur,enseignant');
     });
 
     // ============ BULLETINS ============
@@ -67,6 +71,15 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/', [CahierDeTexteController::class, 'index']);
         Route::post('/', [CahierDeTexteController::class, 'store'])->middleware('role:enseignant,directeur');
         Route::get('/classe/{classeId}', [CahierDeTexteController::class, 'getByClasse']);
+    });
+
+    // ============ EMPLOI DU TEMPS ============
+    Route::prefix('emploi-du-temps')->group(function () {
+        Route::get('/', [EmploiDuTempsController::class, 'index']);
+        Route::post('/store', [EmploiDuTempsController::class, 'store'])->middleware('role:directeur');
+        Route::put('/update/{id}', [EmploiDuTempsController::class, 'update'])->middleware('role:directeur');
+        Route::delete('/delete/{id}', [EmploiDuTempsController::class, 'destroy'])->middleware('role:directeur');
+        Route::get('/classe/{classeId}', [EmploiDuTempsController::class, 'getByClasse']);
     });
 
 });

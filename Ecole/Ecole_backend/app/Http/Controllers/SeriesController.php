@@ -251,7 +251,7 @@ public function Classe_avec_series()
     // Récupère les séries associées à un élève spécifique
     public function getSeriesByEleve($eleve_id)
     {
-        $eleve = Eleves::find($eleve_id);
+        $eleve = Eleve::find($eleve_id);
 
         if (!$eleve) {
             return response()->json(['message' => 'Élève non trouvé'], 404);
@@ -265,7 +265,7 @@ public function Classe_avec_series()
     // Récupère les séries associées à une classe spécifique
     public function getSeriesByClasse($classe_id)
     {
-        $eleves = Eleves::where('class_id', $classe_id)->get();
+        $eleves = Eleve::where('class_id', $classe_id)->get();
 
         if ($eleves->isEmpty()) {
             return response()->json(['message' => 'Aucun élève trouvé dans cette classe'], 404);

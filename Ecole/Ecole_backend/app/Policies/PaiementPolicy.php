@@ -3,7 +3,6 @@
 namespace App\Policies;
 
 use App\Models\User;
-use App\Models\Paiement;
 use App\Models\PaiementEleve;
 
 class PaiementPolicy

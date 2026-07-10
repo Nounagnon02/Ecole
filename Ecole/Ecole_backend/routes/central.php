@@ -56,6 +56,7 @@ Route::prefix('api/v1/admin')->middleware(['auth:sanctum', 'role:super-admin'])-
     Route::get('analytics/overview', 'App\Http\Controllers\Central\AnalyticsController@overview');
     Route::get('analytics/revenue', 'App\Http\Controllers\Central\AnalyticsController@revenue');
     Route::get('analytics/schools', 'App\Http\Controllers\Central\AnalyticsController@schools');
+    Route::get('analytics/audit-logs', 'App\Http\Controllers\Central\AnalyticsController@auditLogs');
 });
 
 /*

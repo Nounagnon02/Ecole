@@ -15,7 +15,7 @@ class EmploiDuTempsController extends Controller
             ->select('emplois_du_temps.*', 'classes.nom_classe', 'matieres.nom as nom_matiere');
 
         if ($request->has('classe_id')) {
-            $query->where('emplois_du_temps.classe_id', $request->class_id);
+            $query->where('emplois_du_temps.classe_id', $request->classe_id);
         }
 
         if ($request->has('enseignant_id')) {

@@ -25,6 +25,6 @@ class DossierMedical extends Model
 
     public function eleve()
     {
-        return $this->belongsTo(Eleves::class);
+        return $this->belongsTo(Eleve::class);
     }
 }

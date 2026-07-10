@@ -202,13 +202,13 @@ class AIController extends Controller
     {
         $elevesCount = \App\Models\Eleve::count();
         $enseignantsCount = \App\Models\User::where('role', 'like', '%enseignant%')->count();
-        $classesCount = \App\Models\Classe::count();
+        $classesCount = \App\Models\Classes::count();
 
-        $notesQuery = \App\Models\Note::query();
-        if ($periodeId) $notesQuery->where('periode_id', $periodeId);
-        $moyenneGenerale = round($notesQuery->avg('valeur') ?? 0, 2);
+        $notesQuery = \App\Models\Notes::query();
+        if ($periodeId) $notesQuery->where('periode', $periodeId);
+        $moyenneGenerale = round($notesQuery->avg('note') ?? 0, 2);
 
-        $paiementsTotal = \App\Models\Paiement::sum('montant');
+        $paiementsTotal = \App\Models\PaiementEleve::sum('montant');
 
         return [
             'periode' => $periodeId,

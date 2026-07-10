@@ -122,7 +122,8 @@ Réponds en JSON structuré.";
 Utilise la méthode socratique : pose des questions, donne des indices, félicite les progrès.
 Adapte ton langage au niveau de l'élève.";
 
-        $prompt = "Matière : {$subject}\nNiveau : {$level ?? 'non spécifié'}\nQuestion : {$question}";
+        $niveau = $level ?? 'non spécifié';
+        $prompt = "Matière : {$subject}\nNiveau : {$niveau}\nQuestion : {$question}";
 
         return $this->chat($systemPrompt, [
             ['role' => 'user', 'content' => $prompt],

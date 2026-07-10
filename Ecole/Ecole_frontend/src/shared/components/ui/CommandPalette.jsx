@@ -222,7 +222,7 @@ export default function CommandPalette() {
                         onClick={() => handleSelect(action)}
                         className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-neutral-700 transition-colors hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800"
                       >
-                        <span className="flex h-7 w-7 items-center justify-center rounded-md bg-indigo-50 text-indigo-600 dark:bg-indigo-950/30 dark:text-indigo-400">
+                        <span className="flex h-7 w-7 items-center justify-center rounded-md bg-[var(--accent-subtle)] text-[var(--accent)]">
                           <action.icon className="h-3.5 w-3.5" />
                         </span>
                         <span className="flex-1 text-left">{action.label}</span>

@@ -1,30 +1,24 @@
 /**
- * StatsCard — Carte de statistique premium v3 avec effet glassmorphique
+ * StatsCard — Carte de statistique Érudit
  *
- * Variants color : indigo | emerald | amber | red | sky | purple | neutral
+ * Variants color : accent | primary | green | amber | red | blue | neutral
  */
 
 import { cn } from '@/shared/lib/utils';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
 const iconColors = {
-  indigo: 'bg-indigo-100 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400',
-  emerald: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400',
-  amber: 'bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400',
-  red: 'bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400',
-  sky: 'bg-sky-100 text-sky-600 dark:bg-sky-500/20 dark:text-sky-400',
-  purple: 'bg-purple-100 text-purple-600 dark:bg-purple-500/20 dark:text-purple-400',
-  neutral: 'bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400',
-};
-
-const glowColors = {
-  indigo: 'shadow-[0_0_20px_rgba(99,102,241,0.12)]',
-  emerald: 'shadow-[0_0_20px_rgba(16,185,129,0.12)]',
-  amber: 'shadow-[0_0_20px_rgba(245,158,11,0.12)]',
-  red: 'shadow-[0_0_20px_rgba(239,68,68,0.12)]',
-  sky: 'shadow-[0_0_20px_rgba(59,130,246,0.12)]',
-  purple: 'shadow-[0_0_20px_rgba(139,92,246,0.12)]',
-  neutral: '',
+  accent: 'bg-[var(--accent-subtle)] text-[var(--accent)]',
+  primary: 'bg-[var(--primary-subtle)] text-[var(--primary)]',
+  green: 'bg-[var(--green-subtle)] text-[var(--green)]',
+  amber: 'bg-[var(--amber-subtle)] text-[var(--amber)]',
+  red: 'bg-[var(--red-subtle)] text-[var(--red)]',
+  blue: 'bg-[var(--blue-subtle)] text-[var(--blue)]',
+  emerald: 'bg-[var(--emerald-subtle)] text-[var(--emerald)]',
+  sky: 'bg-[var(--sky-subtle)] text-[var(--sky)]',
+  purple: 'bg-[var(--purple-subtle)] text-[var(--purple)]',
+  violet: 'bg-[var(--violet-subtle)] text-[var(--violet)]',
+  neutral: 'bg-[var(--surface-subtle)] text-[var(--text-secondary)]',
 };
 
 export default function StatsCard({
@@ -33,63 +27,46 @@ export default function StatsCard({
   icon: Icon,
   trend,
   trendLabel,
-  color = 'indigo',
-  variant = 'default',
+  color = 'accent',
   className,
   onClick,
 }) {
   const TrendIcon = trend > 0 ? TrendingUp : trend < 0 ? TrendingDown : Minus;
   const trendColor =
     trend > 0
-      ? 'text-emerald-500'
+      ? 'text-[var(--green)]'
       : trend < 0
-        ? 'text-red-500'
-        : 'text-neutral-400';
-
-  const cardVariants = {
-    default:
-      'border border-neutral-200/80 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900',
-    glass:
-      'border border-white/20 bg-white/70 backdrop-blur-[12px] shadow-[0_8px_32px_rgba(0,0,0,0.06)] dark:border-white/[0.06] dark:bg-neutral-950/70 dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)]',
-  };
+        ? 'text-[var(--red)]'
+        : 'text-[var(--text-tertiary)]';
 
   return (
     <div
       onClick={onClick}
       className={cn(
-        'group relative overflow-hidden rounded-2xl transition-all duration-300',
-        cardVariants[variant] || cardVariants.default,
-        glowColors[color],
-        onClick && 'cursor-pointer hover:-translate-y-0.5 hover:shadow-lg',
+        'group relative overflow-hidden rounded-xl border border-[var(--border-light)] bg-[var(--surface-raised)] shadow-[var(--shadow-1)] transition-all duration-200',
+        onClick && 'cursor-pointer hover:shadow-[var(--shadow-3)]',
         className
       )}
     >
-      {/* Background decoration circle */}
-      <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full opacity-[0.03] transition-all duration-500 group-hover:scale-[2] group-hover:opacity-[0.06]">
-        <div className={cn('h-full w-full rounded-full', `bg-${color}-500`)} />
-      </div>
-
       <div className="relative p-5 lg:p-6">
-        {/* Header row */}
         <div className="flex items-center justify-between">
-          <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">
+          <p className="text-sm font-medium text-[var(--text-secondary)]">
             {title}
           </p>
           {Icon && (
             <div
               className={cn(
-                'flex h-10 w-10 items-center justify-center rounded-xl transition-transform duration-200 group-hover:scale-110',
+                'flex h-9 w-9 items-center justify-center rounded-lg transition-transform duration-200',
                 iconColors[color]
               )}
             >
-              <Icon className="h-5 w-5" />
+              <Icon className="h-4.5 w-4.5" />
             </div>
           )}
         </div>
 
-        {/* Value row */}
-        <div className="mt-3 flex items-baseline gap-3">
-          <span className="text-3xl font-bold tracking-tight text-neutral-900 dark:text-white">
+        <div className="mt-2 flex items-baseline gap-3">
+          <span className="font-fraunces text-3xl font-bold leading-tight text-[var(--text-primary)] tabular-nums">
             {value}
           </span>
 
@@ -106,9 +83,8 @@ export default function StatsCard({
           )}
         </div>
 
-        {/* Trend label */}
         {trendLabel && (
-          <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+          <p className="mt-1 text-xs text-[var(--text-tertiary)]">
             {trendLabel}
           </p>
         )}
