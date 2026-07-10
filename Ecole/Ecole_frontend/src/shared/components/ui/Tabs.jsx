@@ -55,7 +55,7 @@ function TabsTrigger({ children, value, variant, className, disabled }) {
     underline: cn(
       'relative px-4 py-2.5 text-sm font-medium transition-colors',
       isActive
-        ? 'text-indigo-600 dark:text-indigo-400'
+        ? 'text-[var(--accent)]'
         : 'text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200',
       disabled && 'cursor-not-allowed opacity-50'
     ),
@@ -85,7 +85,7 @@ function TabsTrigger({ children, value, variant, className, disabled }) {
       {isActive && variant === 'underline' && (
         <motion.div
           layoutId="tab-indicator"
-          className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-500"
+          className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--accent)]"
           transition={{ type: 'spring', stiffness: 500, damping: 35 }}
         />
       )}

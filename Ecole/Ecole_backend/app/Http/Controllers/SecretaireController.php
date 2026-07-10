@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{Eleves, RendezVous, Certificat, Courrier, Visiteur};
+use App\Models\{Eleve, RendezVous, Certificat};
 use Illuminate\Http\Request;
 
 class SecretaireController extends Controller
 {
     public function dossiersEleves()
     {
-        return Eleves::with(['classe', 'parents'])->get()->map(function ($eleve) {
+        return Eleve::with(['classe', 'parents'])->get()->map(function ($eleve) {
             $parent = $eleve->parents->first();
             return [
                 'id' => $eleve->id,
@@ -80,14 +80,26 @@ class SecretaireController extends Controller
 
     private function isDossierComplet($eleveId)
     {
-        // Logique pour vérifier si le dossier est complet
-        return rand(0, 1) == 1; // Exemple aléatoire
+        $eleve = Eleve::with(['user', 'parents', 'classe'])->find($eleveId);
+        if (!$eleve) return false;
+
+        return $eleve->user_id
+            && $eleve->numero_matricule
+            && $eleve->parents()->exists();
     }
 
     private function getDossiersIncomplets()
     {
-        // Logique pour compter les dossiers incomplets
-        return 5; // Exemple
+        $total = Eleve::count();
+        $complets = 0;
+        Eleve::with('parents')->chunk(100, function ($eleves) use (&$complets) {
+            foreach ($eleves as $eleve) {
+                if ($eleve->numero_matricule && $eleve->parents()->exists()) {
+                    $complets++;
+                }
+            }
+        });
+        return $total - $complets;
     }
 
     private function generateNumeroCertificat()

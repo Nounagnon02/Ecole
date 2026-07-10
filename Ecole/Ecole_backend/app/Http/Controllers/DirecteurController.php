@@ -2,16 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{Classes, Eleves, Enseignants, Matieres};
-use Illuminate\Http\Request;
+use App\Models\{Classes, Eleve, Enseignant, Matieres};
 
 class DirecteurController extends Controller
 {
     public function stats()
     {
         return response()->json([
-            'total_eleves' => Eleves::count(),
-            'total_enseignants' => Enseignants::count(),
+            'total_eleves' => Eleve::count(),
+            'total_enseignants' => Enseignant::count(),
             'total_classes' => Classes::count(),
             'total_matieres' => Matieres::count(),
         ]);
@@ -35,13 +34,13 @@ class DirecteurController extends Controller
 
     public function enseignants()
     {
-        return Enseignants::with(['matieres'])->get()->map(function ($enseignant) {
+        return Enseignant::with(['user', 'matieres'])->get()->map(function ($enseignant) {
             return [
                 'id' => $enseignant->id,
-                'nom' => $enseignant->nom,
-                'prenom' => $enseignant->prenom,
-                'email' => $enseignant->email,
-                'telephone' => $enseignant->numero_de_telephone,
+                'nom' => $enseignant->user?->name,
+                'prenom' => $enseignant->user?->prenom,
+                'email' => $enseignant->user?->email,
+                'telephone' => $enseignant->user?->telephone,
                 'matieres' => $enseignant->matieres
             ];
         });

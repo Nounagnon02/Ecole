@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{User, Eleve, Classe, Note, Matiere};
+use App\Models\{User, Eleve, Classes, Notes, Matieres};
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
@@ -13,9 +13,9 @@ class DashboardController extends Controller
             'success' => true,
             'data' => [
                 'total_eleves' => Eleve::count(),
-                'total_classes' => Classe::count(),
-                'total_enseignants' => User::where('role', 'enseignant')->count(),
-                'classes' => Classe::with(['eleves', 'enseignants'])->get()
+                'total_classes' => Classes::count(),
+                'total_enseignants' => User::where('role', 'enseignant')->where('ecole_id', auth()->user()?->ecole_id)->count(),
+                'classes' => Classes::with(['eleves', 'enseignants'])->get()
             ]
         ]);
     }
@@ -26,21 +26,22 @@ class DashboardController extends Controller
      */
     public function getDashboardData()
     {
-        $data = \Illuminate\Support\Facades\Cache::remember('dashboard_directeur', 300, function () {
+        $ecoleId = auth()->user()?->ecole_id ?? 'global';
+        $data = \Illuminate\Support\Facades\Cache::remember('dashboard_directeur_' . $ecoleId, 300, function () {
             return [
-                'classes' => Classe::with('series')->get(),
-                'classes_effectif' => Classe::withCount('eleves')->get()->map(function ($c) {
+                'classes' => Classes::with('series')->get(),
+                'classes_effectif' => Classes::withCount('eleves')->get()->map(function ($c) {
                     $c->effectif = $c->eleves_count;
                     return $c;
                 }),
-                'eleves' => Eleve::all(),
-                'matieres' => Matiere::all(),
-                'matieres_series' => Matiere::with('series')->get(),
+                'eleves' => Eleve::select('id', 'user_id', 'class_id', 'numero_matricule', 'ecole_id')->get(),
+                'matieres' => Matieres::select('id', 'nom', 'coefficient', 'code', 'ecole_id')->get(),
+                'matieres_series' => Matieres::with('series')->get(),
                 'series' => \App\Models\Series::with('matieres')->get(),
                 'stats' => [
                     'total_eleves' => Eleve::count(),
-                    'total_classes' => Classe::count(),
-                    'total_enseignants' => User::where('role', 'enseignant')->count(),
+                    'total_classes' => Classes::count(),
+                    'total_enseignants' => User::where('role', 'enseignant')->where('ecole_id', auth()->user()?->ecole_id)->count(),
                     'evolution_effectifs' => $this->computeMonthlyEnrollment(),
                     'repartition_notes' => $this->computeGradeDistribution(),
                 ]
@@ -66,17 +67,25 @@ class DashboardController extends Controller
     public function enseignant(Request $request)
     {
         $enseignant = $request->user()->enseignant;
-        
+
+        // Récupérer les classes et matières de l'enseignant
+        $matiereIds = $enseignant->matieres()->pluck('matieres.id');
+        $classeIds = $enseignant->classes()->pluck('classes.id');
+
+        // Notes liées à l'enseignant via ses classes et matières
+        $notes = Notes::whereIn('classe_id', $classeIds)
+            ->whereIn('matiere_id', $matiereIds)
+            ->with(['eleve', 'matiere'])
+            ->latest()
+            ->take(10)
+            ->get();
+
         return response()->json([
             'success' => true,
             'data' => [
                 'classes' => $enseignant->classes()->with('eleves')->get(),
                 'matieres' => $enseignant->matieres,
-                'notes_recentes' => Note::where('enseignant_id', $enseignant->id)
-                    ->with(['eleve', 'matiere'])
-                    ->latest()
-                    ->take(10)
-                    ->get()
+                'notes_recentes' => $notes,
             ]
         ]);
     }
@@ -115,98 +124,166 @@ class DashboardController extends Controller
     }
 
     /**
-     * Dashboard Élève
+     * Dashboard Élève — données réelles
      */
-    public function eleve()
+    public function eleve(Request $request)
     {
-        $data = \Illuminate\Support\Facades\Cache::remember('dashboard_eleve', 300, function () {
-            return [
-                'stats' => [
-                    ['title' => 'Moyenne Générale', 'value' => '14.2/20', 'trend' => 0.8, 'trendLabel' => 'vs trimestre dernier'],
-                    ['title' => 'Notes ce Mois', 'value' => '12', 'trend' => 2, 'trendLabel' => 'vs mois dernier'],
-                    ['title' => 'Devoirs Rendus', 'value' => '95%', 'trend' => 5, 'trendLabel' => 'taux compliance'],
-                    ['title' => 'Absences', 'value' => '2', 'trend' => -1, 'trendLabel' => 'ce mois'],
-                ],
-                'matieres' => [
-                    ['name' => 'Mathématiques', 'note' => 15, 'coeff' => 4, 'appreciation' => 'Très bien'],
-                    ['name' => 'Français', 'note' => 13, 'coeff' => 3, 'appreciation' => 'Bien'],
-                    ['name' => 'Anglais', 'note' => 16, 'coeff' => 2, 'appreciation' => 'Excellent'],
-                    ['name' => 'Physique', 'note' => 12, 'coeff' => 3, 'appreciation' => 'Assez bien'],
-                    ['name' => 'SVT', 'note' => 14, 'coeff' => 2, 'appreciation' => 'Bien'],
-                ],
-                'emploi_du_temps' => [],
-            ];
-        });
+        $user = $request->user();
+        $eleve = $user->eleve;
 
-        return response()->json(['success' => true, 'data' => $data, 'cached' => true]);
+        if (!$eleve) {
+            return response()->json(['success' => false, 'message' => 'Profil élève non trouvé'], 404);
+        }
+
+        $notes = \App\Models\Notes::where('eleve_id', $eleve->id)
+            ->with('matiere')
+            ->get();
+
+        $moyenneGenerale = $notes->avg('note');
+        $absences = \App\Models\Absence::where('eleve_id', $eleve->id)
+            ->whereMonth('date', now()->month)
+            ->count();
+
+        $notesByMatiere = $notes->groupBy('matiere.nom')->map(function ($group, $nom) {
+            return [
+                'name' => $nom,
+                'note' => round($group->avg('note'), 2),
+                'coeff' => $group->first()->matiere->coefficient ?? 1,
+            ];
+        })->values();
+
+        $emploiDuTemps = \App\Models\EmploiDuTemps::where('classe_id', $eleve->class_id)
+            ->with(['matiere', 'enseignant.user'])
+            ->orderBy('jour')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'eleve' => [
+                    'id' => $eleve->id,
+                    'nom' => $user->name,
+                    'prenom' => $user->prenom,
+                    'classe' => $eleve->classe->nom_classe ?? null,
+                    'matricule' => $eleve->numero_matricule,
+                ],
+                'stats' => [
+                    'moyenne_generale' => $moyenneGenerale ? round($moyenneGenerale, 2) : null,
+                    'total_notes' => $notes->count(),
+                    'absences_mois' => $absences,
+                ],
+                'matieres' => $notesByMatiere,
+                'emploi_du_temps' => $emploiDuTemps,
+            ],
+        ]);
     }
 
     /**
-     * Dashboard Admin
+     * Dashboard Admin — données réelles
      */
     public function admin()
     {
-        $data = \Illuminate\Support\Facades\Cache::remember('dashboard_admin', 300, function () {
+        $ecoleId = auth()->user()?->ecole_id ?? 'global';
+        $data = \Illuminate\Support\Facades\Cache::remember('dashboard_admin_' . $ecoleId, 120, function () {
+            $totalEcoles = \App\Models\Ecole::count();
+            $totalUsers = User::count();
+            $activeUsers = User::where('is_active', true)->count();
+            $tauxActivite = $totalUsers > 0 ? round(($activeUsers / $totalUsers) * 100) : 0;
+
+            $repartitionRoles = User::selectRaw('role, COUNT(*) as total')
+                ->groupBy('role')
+                ->pluck('total', 'role')
+                ->map(fn($v, $k) => ['name' => ucfirst($k), 'value' => $v])
+                ->values();
+
             return [
                 'stats' => [
-                    ['title' => 'Total Écoles', 'value' => '3', 'trend' => 0, 'trendLabel' => 'établissements'],
-                    ['title' => 'Utilisateurs', 'value' => '1 284', 'trend' => 12, 'trendLabel' => 'ce trimestre'],
-                    ['title' => "Taux d'Activité", 'value' => '78%', 'trend' => 5, 'trendLabel' => 'en hausse'],
-                    ['title' => 'Signalements', 'value' => '5', 'trend' => -2, 'trendLabel' => 'cette semaine'],
+                    ['title' => 'Total Écoles', 'value' => (string) $totalEcoles, 'trend' => 0, 'trendLabel' => 'établissements'],
+                    ['title' => 'Utilisateurs', 'value' => number_format($totalUsers), 'trend' => 0, 'trendLabel' => 'inscrits'],
+                    ['title' => "Taux d'Activité", 'value' => "{$tauxActivite}%", 'trend' => 0, 'trendLabel' => 'actifs'],
                 ],
-                'repartition_roles' => [
-                    ['name' => 'Direction', 'value' => 8],
-                    ['name' => 'Enseignants', 'value' => 120],
-                    ['name' => 'Élèves', 'value' => 950],
-                    ['name' => 'Staff', 'value' => 45],
-                    ['name' => 'Parents', 'value' => 380],
-                ],
-                'activites_recentes' => [
-                    ['id' => 1, 'type' => 'connexion', 'message' => 'Nouvel utilisateur inscrit', 'temps' => 'Il y a 10 min'],
-                    ['id' => 2, 'type' => 'alerte', 'message' => 'Tentative de connexion suspecte', 'temps' => 'Il y a 1h'],
-                    ['id' => 3, 'type' => 'config', 'message' => 'Paramètres système mis à jour', 'temps' => 'Il y a 3h'],
-                    ['id' => 4, 'type' => 'info', 'message' => 'Sauvegarde hebdomadaire effectuée', 'temps' => 'Il y a 1j'],
-                ],
+                'repartition_roles' => $repartitionRoles,
             ];
         });
 
-        return response()->json(['success' => true, 'data' => $data, 'cached' => true]);
+        return response()->json(['success' => true, 'data' => $data]);
     }
 
     /**
-     * Dashboard Université
+     * Dashboard Université — données réelles depuis les tables universitaires
      */
     public function universite()
     {
-        $data = \Illuminate\Support\Facades\Cache::remember('dashboard_universite', 300, function () {
+        $ecoleId = auth()->user()?->ecole_id ?? 'global';
+        $data = \Illuminate\Support\Facades\Cache::remember('dashboard_universite_' . $ecoleId, 300, function () {
+            $facultesModel = \App\Models\Universite\Faculte::class;
+            $departementsModel = \App\Models\Universite\Departement::class;
+            $etudiantsModel = \App\Models\Universite\Etudiant::class;
+            $enseignantsModel = \App\Models\Universite\Enseignant::class;
+            $inscriptionsModel = \App\Models\Universite\Inscription::class;
+
+            $facultesCount = $facultesModel::count();
+            $departementsCount = $departementsModel::count();
+            $enseignantsCount = $enseignantsModel::count();
+            $etudiantsCount = $etudiantsModel::count();
+
+            $totalInscrits = $inscriptionsModel::count();
+
+            // Inscriptions par année académique
+            $anneeModel = \App\Models\Universite\AnneeAcademique::class;
+            $inscriptionsParAnnee = $anneeModel::withCount('inscriptions')
+                ->orderBy('date_debut', 'desc')
+                ->take(5)
+                ->get()
+                ->map(fn($a) => [
+                    'annee' => $a->libelle ?? $a->annee,
+                    'inscriptions' => $a->inscriptions_count,
+                    'diplomes' => $a->diplomes_count ?? null,
+                ]);
+
+            // Stats par faculté
+            $facultes = $facultesModel::withCount(['departements'])
+                ->get()
+                ->map(function ($f) use ($etudiantsModel) {
+                    $deptIds = $f->departements->pluck('id');
+                    $filiereIds = \App\Models\Universite\Filiere::whereIn('departement_id', $deptIds)->pluck('id');
+                    $etudiantsCount = $etudiantsModel::whereIn('filiere_id', $filiereIds)->count();
+                    return [
+                        'nom' => $f->nom,
+                        'etudiants' => $etudiantsCount,
+                        'enseignants' => $f->enseignants_count ?? 0,
+                        'departements' => $f->departements_count,
+                    ];
+                })->values();
+
+            // Activités récentes (dernières inscriptions)
+            $recentInscriptions = $inscriptionsModel::with('etudiant')
+                ->latest('date_inscription')
+                ->take(5)
+                ->get()
+                ->map(fn($i) => [
+                    'id' => $i->id,
+                    'type' => 'inscription',
+                    'message' => "Nouvel étudiant inscrit — {$i->etudiant?->prenom} {$i->etudiant?->nom}",
+                    'temps' => $i->date_inscription ? $i->date_inscription->diffForHumans() : null,
+                ]);
+
             return [
                 'stats' => [
-                    ['title' => 'Facultés', 'value' => '6', 'trend' => 0, 'trendLabel' => 'ce semestre'],
-                    ['title' => 'Départements', 'value' => '27', 'trend' => 3.8, 'trendLabel' => 'vs semestre précédent'],
-                    ['title' => 'Enseignants', 'value' => '235', 'trend' => 5.2, 'trendLabel' => 'vs année dernière'],
-                    ['title' => 'Étudiants', 'value' => '5 190', 'trend' => 8.1, 'trendLabel' => 'vs année dernière'],
+                    ['title' => 'Facultés', 'value' => (string) $facultesCount, 'trend' => 0, 'trendLabel' => 'ce semestre'],
+                    ['title' => 'Départements', 'value' => (string) $departementsCount, 'trend' => 0, 'trendLabel' => 'total'],
+                    ['title' => 'Enseignants', 'value' => number_format($enseignantsCount), 'trend' => 0, 'trendLabel' => 'en activité'],
+                    ['title' => 'Étudiants', 'value' => number_format($etudiantsCount), 'trend' => 0, 'trendLabel' => 'inscrits'],
                 ],
-                'inscriptions' => [
-                    ['annee' => '2021-22', 'inscriptions' => 4200, 'diplomes' => 3800],
-                    ['annee' => '2022-23', 'inscriptions' => 4550, 'diplomes' => 4100],
-                    ['annee' => '2023-24', 'inscriptions' => 4890, 'diplomes' => 4450],
-                    ['annee' => '2024-25', 'inscriptions' => 5100, 'diplomes' => 4680],
-                    ['annee' => '2025-26', 'inscriptions' => 5190, 'diplomes' => null],
-                ],
-                'facultes' => [
-                    ['nom' => 'Sciences', 'etudiants' => 1200, 'enseignants' => 45, 'departements' => 5],
-                    ['nom' => 'Lettres', 'etudiants' => 950, 'enseignants' => 38, 'departements' => 4],
-                    ['nom' => 'Droit', 'etudiants' => 780, 'enseignants' => 28, 'departements' => 3],
-                    ['nom' => 'SEG', 'etudiants' => 890, 'enseignants' => 32, 'departements' => 4],
-                    ['nom' => 'Médecine', 'etudiants' => 650, 'enseignants' => 52, 'departements' => 6],
-                    ['nom' => 'Ingénierie', 'etudiants' => 720, 'enseignants' => 40, 'departements' => 5],
-                ],
-                'activites' => [
-                    ['id' => 1, 'type' => 'inscription', 'message' => 'Nouvel étudiant inscrit — Koffi Mensah (FST)', 'temps' => 'Il y a 15 min'],
-                    ['id' => 2, 'type' => 'note', 'message' => "Notes du département de Droit publiées", 'temps' => 'Il y a 1h'],
-                    ['id' => 3, 'type' => 'evenement', 'message' => "Conseil d'université — 28 juin 2026", 'temps' => 'Il y a 3h'],
-                    ['id' => 4, 'type' => 'alerte', 'message' => 'Rappel: validation des inscriptions au 30 juin', 'temps' => 'Il y a 1j'],
-                ],
+                'inscriptions' => $inscriptionsParAnnee->isNotEmpty()
+                    ? $inscriptionsParAnnee
+                    : [['annee' => 'Aucune donnée', 'inscriptions' => 0, 'diplomes' => null]],
+                'facultes' => $facultes->isNotEmpty()
+                    ? $facultes
+                    : [['nom' => 'Aucune faculté', 'etudiants' => 0, 'enseignants' => 0, 'departements' => 0]],
+                'activites' => $recentInscriptions->isNotEmpty()
+                    ? $recentInscriptions
+                    : [['id' => 0, 'type' => 'info', 'message' => 'Aucune activité récente', 'temps' => null]],
             ];
         });
 
@@ -216,247 +293,270 @@ class DashboardController extends Controller
     // ─── STAFF DASHBOARDS (6 rôles — R4) ────────────────────────────
 
     /**
-     * Dashboard Comptable
+     * Dashboard Comptable — données réelles
      */
     public function comptable()
     {
-        $data = \Illuminate\Support\Facades\Cache::remember('dashboard_comptable', 300, function () {
+        $data = \Illuminate\Support\Facades\Cache::remember('dashboard_comptable_' . auth()->id(), 120, function () {
+            $moisActuel = now()->month;
+            $anneeActuelle = now()->year;
+
+            $revenusMois = \App\Models\PaiementEleve::whereMonth('date_paiement', $moisActuel)
+                ->whereYear('date_paiement', $anneeActuelle)
+                ->where('statut', 'paye')
+                ->sum('montant');
+
+            $enAttente = \App\Models\PaiementEleve::where('statut', 'en_attente')->count();
+
+            $totalPaiements = \App\Models\PaiementEleve::whereMonth('date_paiement', $moisActuel)->count();
+            $payes = \App\Models\PaiementEleve::whereMonth('date_paiement', $moisActuel)->where('statut', 'paye')->count();
+            $tauxRecouvrement = $totalPaiements > 0 ? round(($payes / $totalPaiements) * 100) : 0;
+
+            $donneesMensuelles = \App\Models\PaiementEleve::selectRaw('MONTH(date_paiement) as mois, SUM(montant) as revenus')
+                ->whereYear('date_paiement', $anneeActuelle)
+                ->where('statut', 'paye')
+                ->groupBy('mois')
+                ->orderBy('mois')
+                ->get()
+                ->map(fn($r) => ['mois' => $r->mois, 'revenus' => $r->revenus]);
+
+            $dernieresPaiements = \App\Models\PaiementEleve::with(['eleve.user', 'eleve.classe'])
+                ->latest('date_paiement')
+                ->take(10)
+                ->get()
+                ->map(fn($p) => [
+                    'id' => $p->id,
+                    'eleve' => $p->eleve?->user?->name . ' ' . $p->eleve?->user?->prenom,
+                    'classe' => $p->eleve?->classe?->nom_classe,
+                    'montant' => $p->montant,
+                    'statut' => $p->statut,
+                    'date' => $p->date_paiement,
+                ]);
+
             return [
                 'stats' => [
-                    ['title' => 'Revenus du Mois', 'value' => '12 450 000 F', 'trend' => 8.3, 'trendLabel' => 'vs mois dernier'],
-                    ['title' => 'Factures en Attente', 'value' => '34', 'trend' => -12, 'trendLabel' => 'vs mois dernier'],
-                    ['title' => 'Taux Recouvrement', 'value' => '87%', 'trend' => 3.2, 'trendLabel' => 'ce trimestre'],
-                    ['title' => 'Dépenses du Mois', 'value' => '4 320 000 F', 'trend' => 2.1, 'trendLabel' => 'vs mois dernier'],
+                    ['title' => 'Revenus du Mois', 'value' => number_format($revenusMois, 0, ',', ' ') . ' F', 'trend' => 0],
+                    ['title' => 'Factures en Attente', 'value' => (string) $enAttente, 'trend' => 0],
+                    ['title' => 'Taux Recouvrement', 'value' => "{$tauxRecouvrement}%", 'trend' => 0],
                 ],
-                'donnes_ca' => [
-                    ['mois' => 'Jan', 'revenus' => 11200, 'depenses' => 4200],
-                    ['mois' => 'Fév', 'revenus' => 10800, 'depenses' => 4100],
-                    ['mois' => 'Mar', 'revenus' => 12450, 'depenses' => 4320],
-                    ['mois' => 'Avr', 'revenus' => 11800, 'depenses' => 4050],
-                    ['mois' => 'Mai', 'revenus' => 13200, 'depenses' => 4500],
-                    ['mois' => 'Juin', 'revenus' => 12450, 'depenses' => 4320],
-                ],
-                'repartition' => [
-                    ['name' => 'Frais Scolaire', 'value' => 65],
-                    ['name' => 'Cantine', 'value' => 15],
-                    ['name' => 'Transport', 'value' => 12],
-                    ['name' => 'Activités', 'value' => 8],
-                ],
-                'factures' => [
-                    ['id' => 1, 'eleve' => 'Mensah Jean', 'classe' => '3e A', 'montant' => 45000, 'statut' => 'Payée', 'echeance' => '2026-06-15'],
-                    ['id' => 2, 'eleve' => 'Akakpo Ama', 'classe' => '5e B', 'montant' => 38000, 'statut' => 'En attente', 'echeance' => '2026-06-20'],
-                    ['id' => 3, 'eleve' => 'Koffi David', 'classe' => '6e A', 'montant' => 42000, 'statut' => 'Payée', 'echeance' => '2026-06-10'],
-                    ['id' => 4, 'eleve' => 'Dossa Emile', 'classe' => '4e C', 'montant' => 35000, 'statut' => 'En retard', 'echeance' => '2026-06-01'],
-                    ['id' => 5, 'eleve' => 'Amégnigban Rose', 'classe' => '2nde A', 'montant' => 55000, 'statut' => 'En attente', 'echeance' => '2026-06-25'],
-                ],
+                'donnes_ca' => $donneesMensuelles,
+                'factures' => $dernieresPaiements,
             ];
         });
 
-        return response()->json(['success' => true, 'data' => $data, 'cached' => true]);
+        return response()->json(['success' => true, 'data' => $data]);
     }
 
     /**
-     * Dashboard Surveillant
+     * Dashboard Surveillant — données réelles
      */
     public function surveillant()
     {
-        $data = \Illuminate\Support\Facades\Cache::remember('dashboard_surveillant', 300, function () {
+        $data = \Illuminate\Support\Facades\Cache::remember('dashboard_surveillant_' . auth()->id(), 60, function () {
+            $totalEleves = \App\Models\Eleve::count();
+            $absentsAujourdhui = \App\Models\Absence::whereDate('date', today())->count();
+            $presents = $totalEleves - $absentsAujourdhui;
+
+            $absencesParJour = \App\Models\Absence::selectRaw('DATE(date) as jour, COUNT(*) as absents')
+                ->whereBetween('date', [now()->startOfWeek(), now()->endOfWeek()])
+                ->groupBy('jour')
+                ->orderBy('jour')
+                ->get()
+                ->map(fn($r) => ['jour' => $r->jour, 'absents' => $r->absents, 'presents' => $totalEleves - $r->absents]);
+
+            $derniersRetards = \App\Models\Absence::with(['eleve.user', 'eleve.classe'])
+                ->where('type', 'retard')
+                ->latest('date')
+                ->take(10)
+                ->get()
+                ->map(fn($a) => [
+                    'id' => $a->id,
+                    'eleve' => $a->eleve?->user?->name,
+                    'classe' => $a->eleve?->classe?->nom_classe,
+                    'motif' => $a->motif,
+                    'date' => $a->date,
+                    'justifiee' => $a->justifiee,
+                ]);
+
             return [
                 'stats' => [
-                    ['title' => 'Total Élèves', 'value' => '1 284', 'trend' => 0, 'trendLabel' => 'effectif total'],
-                    ['title' => 'Présents', 'value' => '1 156', 'trend' => 2.3, 'trendLabel' => 'taux 90%'],
-                    ['title' => 'Absents', 'value' => '128', 'trend' => -5, 'trendLabel' => 'en baisse'],
-                    ['title' => 'Alertes', 'value' => '3', 'trend' => -1, 'trendLabel' => 'cette semaine'],
+                    ['title' => 'Total Élèves', 'value' => (string) $totalEleves],
+                    ['title' => 'Présents', 'value' => (string) $presents],
+                    ['title' => 'Absents', 'value' => (string) $absentsAujourdhui],
                 ],
-                'presences_semaine' => [
-                    ['jour' => 'Lun', 'presents' => 1150, 'absents' => 134, 'retard' => 45],
-                    ['jour' => 'Mar', 'presents' => 1170, 'absents' => 114, 'retard' => 38],
-                    ['jour' => 'Mer', 'presents' => 1156, 'absents' => 128, 'retard' => 42],
-                    ['jour' => 'Jeu', 'presents' => 1180, 'absents' => 104, 'retard' => 35],
-                    ['jour' => 'Ven', 'presents' => 1140, 'absents' => 144, 'retard' => 50],
-                    ['jour' => 'Sam', 'presents' => 800, 'absents' => 484, 'retard' => 20],
-                ],
-                'zones' => [
-                    ['name' => 'Bâtiment A', 'surveilles' => 320, 'incidents' => 2, 'statut' => 'Calme'],
-                    ['name' => 'Bâtiment B', 'surveilles' => 450, 'incidents' => 5, 'statut' => 'Surveillance'],
-                    ['name' => 'Cour', 'surveilles' => 280, 'incidents' => 1, 'statut' => 'Calme'],
-                    ['name' => 'Cantine', 'surveilles' => 400, 'incidents' => 3, 'statut' => 'Calme'],
-                ],
-                'retards' => [
-                    ['id' => 1, 'eleve' => 'Kodjo A.', 'classe' => '3e B', 'temps' => '25 min', 'motif' => 'Transport', 'recurrent' => true],
-                    ['id' => 2, 'eleve' => 'Sena K.', 'classe' => '5e A', 'temps' => '15 min', 'motif' => 'Réveil tardif', 'recurrent' => false],
-                    ['id' => 3, 'eleve' => 'Yawo D.', 'classe' => '4e B', 'temps' => '30 min', 'motif' => 'Non justifié', 'recurrent' => true],
-                    ['id' => 4, 'eleve' => 'Afia M.', 'classe' => '6e A', 'temps' => '10 min', 'motif' => 'Trafic', 'recurrent' => false],
-                    ['id' => 5, 'eleve' => 'Kossi E.', 'classe' => '2nde B', 'temps' => '45 min', 'motif' => 'Non justifié', 'recurrent' => true],
-                ],
+                'presences_semaine' => $absencesParJour,
+                'retards' => $derniersRetards,
             ];
         });
 
-        return response()->json(['success' => true, 'data' => $data, 'cached' => true]);
+        return response()->json(['success' => true, 'data' => $data]);
     }
 
     /**
-     * Dashboard Censeur
+     * Dashboard Censeur — données réelles
      */
     public function censeur()
     {
-        $data = \Illuminate\Support\Facades\Cache::remember('dashboard_censeur', 300, function () {
+        $data = \Illuminate\Support\Facades\Cache::remember('dashboard_censeur_' . auth()->id(), 120, function () {
+            $totalEleves = \App\Models\Eleve::count();
+            $sanctionsMois = \App\Models\Sanction::whereMonth('created_at', now()->month)->count();
+            $absencesNonJustifiees = \App\Models\Absence::where('justifiee', false)
+                ->whereMonth('date', now()->month)->count();
+
+            $evolutionMensuelle = \App\Models\Sanction::selectRaw('MONTH(created_at) as mois, COUNT(*) as sanctions')
+                ->whereYear('created_at', now()->year)
+                ->groupBy('mois')
+                ->orderBy('mois')
+                ->get()
+                ->map(fn($r) => ['mois' => $r->mois, 'sanctions' => $r->sanctions]);
+
+            $dernieresSanctions = \App\Models\Sanction::with(['eleve.user', 'eleve.classe'])
+                ->latest()
+                ->take(10)
+                ->get()
+                ->map(fn($s) => [
+                    'id' => $s->id,
+                    'eleve' => $s->eleve?->user?->name,
+                    'classe' => $s->eleve?->classe?->nom_classe,
+                    'motif' => $s->motif,
+                    'sanction' => $s->type_sanction ?? $s->description,
+                    'date' => $s->created_at->toDateString(),
+                    'statut' => $s->statut ?? 'En cours',
+                ]);
+
             return [
                 'stats' => [
-                    ['title' => 'Total Élèves', 'value' => '1 284', 'trend' => 0, 'trendLabel' => 'effectif total'],
-                    ['title' => 'Sanctions', 'value' => '18', 'trend' => -8, 'trendLabel' => 'en baisse'],
-                    ['title' => 'Abs. non justifiées', 'value' => '47', 'trend' => -12, 'trendLabel' => 'ce mois'],
-                    ['title' => 'Avertissements', 'value' => '12', 'trend' => -3, 'trendLabel' => 'ce trimestre'],
+                    ['title' => 'Total Élèves', 'value' => (string) $totalEleves],
+                    ['title' => 'Sanctions', 'value' => (string) $sanctionsMois],
+                    ['title' => 'Abs. non justifiées', 'value' => (string) $absencesNonJustifiees],
                 ],
-                'evolution' => [
-                    ['mois' => 'Jan', 'sanctions' => 22, 'avertissements' => 15],
-                    ['mois' => 'Fév', 'sanctions' => 28, 'avertissements' => 18],
-                    ['mois' => 'Mar', 'sanctions' => 20, 'avertissements' => 12],
-                    ['mois' => 'Avr', 'sanctions' => 18, 'avertissements' => 10],
-                    ['mois' => 'Mai', 'sanctions' => 15, 'avertissements' => 8],
-                    ['mois' => 'Juin', 'sanctions' => 12, 'avertissements' => 6],
-                ],
-                'types_sanctions' => [
-                    ['name' => 'Exclusion', 'value' => 15],
-                    ['name' => 'Retenue', 'value' => 35],
-                    ['name' => 'Avertissement', 'value' => 30],
-                    ['name' => "Travail d'Intérêt", 'value' => 20],
-                ],
-                'sanctions' => [
-                    ['id' => 1, 'eleve' => 'Adjeoda K.', 'classe' => '3e A', 'motif' => 'Violence', 'sanction' => 'Exclusion 3j', 'date' => '2026-06-15', 'statut' => 'Exécutée'],
-                    ['id' => 2, 'eleve' => 'Bocco E.', 'classe' => '5e B', 'motif' => 'Tricherie', 'sanction' => 'Avertissement', 'date' => '2026-06-14', 'statut' => 'En cours'],
-                    ['id' => 3, 'eleve' => 'Dossou Y.', 'classe' => '4e C', 'motif' => 'Absence répétée', 'sanction' => 'Retenue', 'date' => '2026-06-12', 'statut' => 'Exécutée'],
-                    ['id' => 4, 'eleve' => 'Gbadamassi M.', 'classe' => '2nde A', 'motif' => 'Insolence', 'sanction' => "Travail d'intérêt", 'date' => '2026-06-10', 'statut' => 'En cours'],
-                    ['id' => 5, 'eleve' => 'Hounkpatin R.', 'classe' => '6e A', 'motif' => 'Vol', 'sanction' => 'Exclusion 5j', 'date' => '2026-06-08', 'statut' => 'Exécutée'],
-                ],
+                'evolution' => $evolutionMensuelle,
+                'sanctions' => $dernieresSanctions,
             ];
         });
 
-        return response()->json(['success' => true, 'data' => $data, 'cached' => true]);
+        return response()->json(['success' => true, 'data' => $data]);
     }
 
     /**
-     * Dashboard Infirmier
+     * Dashboard Infirmier — données réelles
      */
     public function infirmier()
     {
-        $data = \Illuminate\Support\Facades\Cache::remember('dashboard_infirmier', 300, function () {
+        $data = \Illuminate\Support\Facades\Cache::remember('dashboard_infirmier_' . auth()->id(), 60, function () {
+            $visitesAujourdhui = \App\Models\ConsultationMedicale::whereDate('created_at', today())->count();
+            $visitesMois = \App\Models\ConsultationMedicale::whereMonth('created_at', now()->month)->count();
+            $enObservation = \App\Models\ConsultationMedicale::where('statut', 'observation')->count();
+
+            $dernieresVisites = \App\Models\ConsultationMedicale::with(['eleve.user', 'eleve.classe'])
+                ->latest()
+                ->take(10)
+                ->get()
+                ->map(fn($c) => [
+                    'id' => $c->id,
+                    'eleve' => $c->eleve?->user?->name,
+                    'classe' => $c->eleve?->classe?->nom_classe,
+                    'motif' => $c->motif,
+                    'soin' => $c->traitement,
+                    'statut' => $c->statut ?? 'Traité',
+                    'date' => $c->created_at->format('H:i'),
+                ]);
+
             return [
                 'stats' => [
-                    ['title' => 'Visites du Mois', 'value' => '89', 'trend' => 12, 'trendLabel' => 'vs mois dernier'],
-                    ['title' => 'En Cours', 'value' => '3', 'trend' => 1, 'trendLabel' => 'patients actuels'],
-                    ['title' => 'Cas Urgents', 'value' => '5', 'trend' => -2, 'trendLabel' => 'ce mois'],
-                    ['title' => 'Consultations', 'value' => '312', 'trend' => 8.5, 'trendLabel' => 'cette année'],
+                    ['title' => 'Visites du Mois', 'value' => (string) $visitesMois],
+                    ['title' => 'Aujourd\'hui', 'value' => (string) $visitesAujourdhui],
+                    ['title' => 'En Observation', 'value' => (string) $enObservation],
                 ],
-                'frequentation' => [
-                    ['mois' => 'Jan', 'visites' => 65, 'urgences' => 8],
-                    ['mois' => 'Fév', 'visites' => 72, 'urgences' => 6],
-                    ['mois' => 'Mar', 'visites' => 58, 'urgences' => 10],
-                    ['mois' => 'Avr', 'visites' => 80, 'urgences' => 7],
-                    ['mois' => 'Mai', 'visites' => 75, 'urgences' => 5],
-                    ['mois' => 'Juin', 'visites' => 89, 'urgences' => 5],
-                ],
-                'motifs' => [
-                    ['name' => 'Maux de tête', 'value' => 28],
-                    ['name' => 'Blessures légères', 'value' => 22],
-                    ['name' => 'Maux de ventre', 'value' => 18],
-                    ['name' => 'Fièvre', 'value' => 15],
-                    ['name' => 'Allergies', 'value' => 10],
-                    ['name' => 'Autres', 'value' => 7],
-                ],
-                'visites' => [
-                    ['id' => 1, 'eleve' => 'Mensah J.', 'classe' => '3e A', 'motif' => 'Maux de tête', 'soin' => 'Paracétamol', 'heure' => '08:30', 'statut' => 'Traité'],
-                    ['id' => 2, 'eleve' => 'Akakpo A.', 'classe' => '5e B', 'motif' => 'Blessure genou', 'soin' => 'Pansement', 'heure' => '09:15', 'statut' => 'Traité'],
-                    ['id' => 3, 'eleve' => 'Koffi D.', 'classe' => 'CE2', 'motif' => 'Fièvre', 'soin' => 'Repos', 'heure' => '10:00', 'statut' => 'Observation'],
-                    ['id' => 4, 'eleve' => 'Dossa E.', 'classe' => '4e C', 'motif' => 'Allergie', 'soin' => 'Antihistaminique', 'heure' => '11:30', 'statut' => 'Traité'],
-                    ['id' => 5, 'eleve' => 'Amégnigban R.', 'classe' => '2nde A', 'motif' => 'Maux de ventre', 'soin' => 'Antispasmodique', 'heure' => '14:00', 'statut' => 'En attente'],
-                ],
+                'visites' => $dernieresVisites,
             ];
         });
 
-        return response()->json(['success' => true, 'data' => $data, 'cached' => true]);
+        return response()->json(['success' => true, 'data' => $data]);
     }
 
     /**
-     * Dashboard Bibliothécaire
+     * Dashboard Bibliothécaire — données réelles
      */
     public function bibliothecaire()
     {
-        $data = \Illuminate\Support\Facades\Cache::remember('dashboard_bibliothecaire', 300, function () {
+        $data = \Illuminate\Support\Facades\Cache::remember('dashboard_bibliothecaire_' . auth()->id(), 120, function () {
+            $totalLivres = \App\Models\Livre::count();
+            $empruntsEnCours = \App\Models\Emprunt::where('statut', 'en_cours')->count();
+            $retards = \App\Models\Emprunt::where('statut', 'en_cours')
+                ->where('date_retour_prevue', '<', today())->count();
+
+            $derniersEmprunts = \App\Models\Emprunt::with(['eleve.user', 'eleve.classe', 'livre'])
+                ->latest()
+                ->take(10)
+                ->get()
+                ->map(fn($e) => [
+                    'id' => $e->id,
+                    'eleve' => $e->eleve?->user?->name,
+                    'classe' => $e->eleve?->classe?->nom_classe,
+                    'ouvrage' => $e->livre?->titre,
+                    'dateEmprunt' => $e->date_emprunt,
+                    'dateRetour' => $e->date_retour_prevue,
+                    'statut' => $e->statut,
+                ]);
+
             return [
                 'stats' => [
-                    ['title' => 'Total Ouvrages', 'value' => '3 240', 'trend' => 5.2, 'trendLabel' => 'nouveautés'],
-                    ['title' => 'Emprunts en Cours', 'value' => '142', 'trend' => 8, 'trendLabel' => 'ce mois'],
-                    ['title' => 'Retards', 'value' => '23', 'trend' => -5, 'trendLabel' => 'en baisse'],
-                    ['title' => 'Membres Actifs', 'value' => '456', 'trend' => 12, 'trendLabel' => 'ce semestre'],
+                    ['title' => 'Total Ouvrages', 'value' => (string) $totalLivres],
+                    ['title' => 'Emprunts en Cours', 'value' => (string) $empruntsEnCours],
+                    ['title' => 'Retards', 'value' => (string) $retards],
                 ],
-                'activite' => [
-                    ['mois' => 'Jan', 'emprunts' => 120, 'retours' => 95],
-                    ['mois' => 'Fév', 'emprunts' => 135, 'retours' => 110],
-                    ['mois' => 'Mar', 'emprunts' => 142, 'retours' => 115],
-                    ['mois' => 'Avr', 'emprunts' => 128, 'retours' => 120],
-                    ['mois' => 'Mai', 'emprunts' => 150, 'retours' => 130],
-                    ['mois' => 'Juin', 'emprunts' => 142, 'retours' => 125],
-                ],
-                'categories' => [
-                    ['name' => 'Scolaires', 'value' => 45],
-                    ['name' => 'Littérature', 'value' => 25],
-                    ['name' => 'Scientifiques', 'value' => 15],
-                    ['name' => 'BD/Mangas', 'value' => 10],
-                    ['name' => 'Dictionnaires', 'value' => 5],
-                ],
-                'emprunts' => [
-                    ['id' => 1, 'eleve' => 'Mensah J.', 'classe' => '3e A', 'ouvrage' => 'Maths 3e', 'dateEmprunt' => '2026-06-01', 'dateRetour' => '2026-06-15', 'statut' => 'En cours'],
-                    ['id' => 2, 'eleve' => 'Akakpo A.', 'classe' => '5e B', 'ouvrage' => 'Le Petit Prince', 'dateEmprunt' => '2026-05-20', 'dateRetour' => '2026-06-03', 'statut' => 'En retard'],
-                    ['id' => 3, 'eleve' => 'Koffi D.', 'classe' => '6e A', 'ouvrage' => 'Atlas Mondial', 'dateEmprunt' => '2026-06-05', 'dateRetour' => '2026-06-19', 'statut' => 'En cours'],
-                    ['id' => 4, 'eleve' => 'Dossa E.', 'classe' => '4e C', 'ouvrage' => 'Physique 4e', 'dateEmprunt' => '2026-06-10', 'dateRetour' => '2026-06-24', 'statut' => 'En cours'],
-                    ['id' => 5, 'eleve' => 'Amégnigban R.', 'classe' => '2nde A', 'ouvrage' => 'Bescherelle', 'dateEmprunt' => '2026-05-15', 'dateRetour' => '2026-05-29', 'statut' => 'En retard'],
-                ],
+                'emprunts' => $derniersEmprunts,
             ];
         });
 
-        return response()->json(['success' => true, 'data' => $data, 'cached' => true]);
+        return response()->json(['success' => true, 'data' => $data]);
     }
 
     /**
-     * Dashboard Secrétaire
+     * Dashboard Secrétaire — données réelles
      */
     public function secretaire()
     {
-        $data = \Illuminate\Support\Facades\Cache::remember('dashboard_secretaire', 300, function () {
+        $data = \Illuminate\Support\Facades\Cache::remember('dashboard_secretaire_' . auth()->id(), 120, function () {
+            $totalInscriptions = \App\Models\Eleve::count();
+            $nouveauxMois = \App\Models\Eleve::whereMonth('created_at', now()->month)->count();
+
+            $rendezVous = \App\Models\RendezVous::whereDate('date', today())
+                ->latest()
+                ->take(10)
+                ->get()
+                ->map(fn($r) => [
+                    'id' => $r->id,
+                    'visiteur' => $r->nom_visiteur,
+                    'motif' => $r->motif,
+                    'heure' => $r->heure,
+                    'statut' => $r->statut,
+                ]);
+
+            $dernieresInscriptions = \App\Models\Eleve::with(['user', 'classe'])
+                ->latest()
+                ->take(10)
+                ->get()
+                ->map(fn($e) => [
+                    'id' => $e->id,
+                    'nom' => $e->user?->name . ' ' . $e->user?->prenom,
+                    'classe' => $e->classe?->nom_classe,
+                    'date' => $e->created_at->toDateString(),
+                    'statut' => 'Complété',
+                ]);
+
             return [
                 'stats' => [
-                    ['title' => 'Total Inscriptions', 'value' => '1 284', 'trend' => 3.2, 'trendLabel' => 'cette année'],
-                    ['title' => 'Nouveaux', 'value' => '38', 'trend' => 8, 'trendLabel' => 'ce mois'],
-                    ['title' => 'Dossiers en Cours', 'value' => '7', 'trend' => -3, 'trendLabel' => 'en baisse'],
-                    ['title' => 'Documents Générés', 'value' => '156', 'trend' => 15, 'trendLabel' => 'ce mois'],
+                    ['title' => 'Total Inscriptions', 'value' => (string) $totalInscriptions],
+                    ['title' => 'Nouveaux ce Mois', 'value' => (string) $nouveauxMois],
                 ],
-                'flux_inscriptions' => [
-                    ['mois' => 'Jan', 'nouveaux' => 42, 'transferts' => 8],
-                    ['mois' => 'Fév', 'nouveaux' => 28, 'transferts' => 5],
-                    ['mois' => 'Mar', 'nouveaux' => 35, 'transferts' => 10],
-                    ['mois' => 'Avr', 'nouveaux' => 22, 'transferts' => 6],
-                    ['mois' => 'Mai', 'nouveaux' => 18, 'transferts' => 4],
-                    ['mois' => 'Juin', 'nouveaux' => 38, 'transferts' => 12],
-                ],
-                'rendez_vous' => [
-                    ['id' => 1, 'visiteur' => 'M. Akakpo', 'motif' => 'Inscription 6e A', 'heure' => '08:30', 'statut' => 'Confirmé'],
-                    ['id' => 2, 'visiteur' => 'Mme Hountondji', 'motif' => 'Réinscription 4e B', 'heure' => '09:30', 'statut' => 'Confirmé'],
-                    ['id' => 3, 'visiteur' => 'M. Dossa', 'motif' => 'Demande documents', 'heure' => '10:00', 'statut' => 'En attente'],
-                    ['id' => 4, 'visiteur' => 'Mme Koffi', 'motif' => 'Changement classe', 'heure' => '11:30', 'statut' => 'Confirmé'],
-                    ['id' => 5, 'visiteur' => 'M. Gbaguidi', 'motif' => 'Information bourse', 'heure' => '14:00', 'statut' => 'En attente'],
-                ],
-                'inscriptions' => [
-                    ['id' => 1, 'nom' => 'Mensah Jean', 'classe' => '3e A', 'type' => 'Nouveau', 'date' => '2026-06-15', 'statut' => 'Complété'],
-                    ['id' => 2, 'nom' => 'Akakpo Ama', 'classe' => '5e B', 'type' => 'Réinscription', 'date' => '2026-06-14', 'statut' => 'Complété'],
-                    ['id' => 3, 'nom' => 'Koffi David', 'classe' => '6e A', 'type' => 'Nouveau', 'date' => '2026-06-13', 'statut' => 'En attente'],
-                    ['id' => 4, 'nom' => 'Dossa Emile', 'classe' => '4e C', 'type' => 'Réinscription', 'date' => '2026-06-12', 'statut' => 'Complété'],
-                    ['id' => 5, 'nom' => 'Amégnigban Rose', 'classe' => '2nde A', 'type' => 'Nouveau', 'date' => '2026-06-11', 'statut' => 'En attente'],
-                ],
+                'rendez_vous' => $rendezVous,
+                'inscriptions' => $dernieresInscriptions,
             ];
         });
 
-        return response()->json(['success' => true, 'data' => $data, 'cached' => true]);
+        return response()->json(['success' => true, 'data' => $data]);
     }
 
     private function calculateAverage($notes)
@@ -478,7 +578,7 @@ class DashboardController extends Controller
 
             $months = ['Sept', 'Oct', 'Nov', 'Déc', 'Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août'];
 
-            return array_map(function ($i) use ($eleves) {
+            return array_map(function ($i) use ($months, $eleves) {
                 return [
                     'name' => $months[$i - 1] ?? "Mois $i",
                     'students' => $eleves[$i] ?? 0,
@@ -494,10 +594,10 @@ class DashboardController extends Controller
     private function computeGradeDistribution(): array
     {
         try {
-            $excellent = \App\Models\Note::where('note', '>=', 16)->count();
-            $bien = \App\Models\Note::whereBetween('note', [14, 15.99])->count();
-            $moyen = \App\Models\Note::whereBetween('note', [10, 13.99])->count();
-            $insuffisant = \App\Models\Note::where('note', '<', 10)->count();
+            $excellent = \App\Models\Notes::where('note', '>=', 16)->count();
+            $bien = \App\Models\Notes::whereBetween('note', [14, 15.99])->count();
+            $moyen = \App\Models\Notes::whereBetween('note', [10, 13.99])->count();
+            $insuffisant = \App\Models\Notes::where('note', '<', 10)->count();
 
             return [
                 ['name' => 'Excellent', 'value' => $excellent ?: 0],

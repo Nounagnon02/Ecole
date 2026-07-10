@@ -2,7 +2,7 @@
 
 namespace App\Events;
 
-use App\Models\Paiement;
+use App\Models\PaiementEleve;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
@@ -14,7 +14,7 @@ class PaiementConfirmed implements ShouldBroadcast
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public function __construct(
-        public Paiement $paiement,
+        public PaiementEleve $paiement,
     ) {}
 
     public function broadcastOn(): array

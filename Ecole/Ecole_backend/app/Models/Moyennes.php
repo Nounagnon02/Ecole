@@ -13,6 +13,6 @@ class Moyennes extends Model
     protected $fillable = ['eleves_id', 'ecole_id'];
 
     public function eleves(){
-        return $this->belongsTo(eleves::class,'eleves_id');
+        return $this->belongsTo(Eleve::class, 'eleves_id');
     }
 }

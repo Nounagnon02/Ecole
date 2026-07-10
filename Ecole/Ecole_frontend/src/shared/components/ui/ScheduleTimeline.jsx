@@ -34,12 +34,12 @@ const DAYS = [
 const HOURS = Array.from({ length: 12 }, (_, i) => i + 7); // 7h → 19h
 
 const COLORS = [
-  { bg: 'bg-indigo-100 dark:bg-indigo-950/40', border: 'border-l-indigo-500', text: 'text-indigo-700 dark:text-indigo-300' },
+  { bg: 'bg-blue-100 dark:bg-blue-950/40', border: 'border-l-blue-500', text: 'text-blue-700 dark:text-blue-300' },
   { bg: 'bg-emerald-100 dark:bg-emerald-950/40', border: 'border-l-emerald-500', text: 'text-emerald-700 dark:text-emerald-300' },
   { bg: 'bg-amber-100 dark:bg-amber-950/40', border: 'border-l-amber-500', text: 'text-amber-700 dark:text-amber-300' },
   { bg: 'bg-rose-100 dark:bg-rose-950/40', border: 'border-l-rose-500', text: 'text-rose-700 dark:text-rose-300' },
   { bg: 'bg-cyan-100 dark:bg-cyan-950/40', border: 'border-l-cyan-500', text: 'text-cyan-700 dark:text-cyan-300' },
-  { bg: 'bg-violet-100 dark:bg-violet-950/40', border: 'border-l-violet-500', text: 'text-violet-700 dark:text-violet-300' },
+  { bg: 'bg-neutral-100 dark:bg-neutral-800/60', border: 'border-l-neutral-500', text: 'text-neutral-700 dark:text-neutral-300' },
 ];
 
 /* ─── Composant ─────────────────────────────────────────────────── */

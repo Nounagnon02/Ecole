@@ -174,7 +174,7 @@ class BulletinController extends Controller
             $periode = $request->query('periode');
             $categorie_id = $request->query('categorie_id');
 
-            $query = Eleves::query();
+            $query = Eleve::query();
 
             if ($classe_id) {
                 $query->where('class_id', $classe_id);
@@ -246,7 +246,7 @@ class BulletinController extends Controller
             // Récupérer l'élève avec ses relations
             // Utiliser with pour charger les relations nécessaires
             Log::info("Chargement des données pour l'élève ID: $eleveId");
-            if (!Eleves::where('id', $eleveId)->exists()) {
+            if (!Eleve::where('id', $eleveId)->exists()) {
                 throw new \Exception("Élève avec ID $eleveId non trouvé");
             }
             Log::info("Élève trouvé, chargement des matières et coefficients");
@@ -254,7 +254,7 @@ class BulletinController extends Controller
             // Utiliser with pour charger les relations nécessaires
             Log::info("Chargement des matières pour l'élève ID: $eleveId");
             
-            $eleve = Eleves::with([
+            $eleve = Eleve::with([
                 'classe',
                 'serie.matieres' => function($query) {
                     $query->select([
@@ -461,7 +461,7 @@ class BulletinController extends Controller
     {
         try {
             // Récupérer tous les élèves de la classe
-            $eleves = Eleves::where('class_id', $classeId)->get();
+            $eleves = Eleve::where('class_id', $classeId)->get();
             
             $moyennes = [];
             
@@ -524,7 +524,7 @@ class BulletinController extends Controller
     // Calcul de la moyenne générale pour un élève
     private function calculerMoyenneGenerale($eleveId, $periode)
     {
-        $eleve = Eleves::with(['serie.matieres'])->find($eleveId);
+        $eleve = Eleve::with(['serie.matieres'])->find($eleveId);
         if (!$eleve) return 0;
 
         $matieres = $eleve->serie->matieres;
@@ -546,7 +546,7 @@ class BulletinController extends Controller
     {
         try {
             // Récupérer tous les élèves de la classe
-            $eleves = Eleves::where('class_id', $classeId)->get();
+            $eleves = Eleve::where('class_id', $classeId)->get();
             
             $moyennes = [];
             
@@ -590,7 +590,7 @@ class BulletinController extends Controller
     private function calculateRank($eleveId, $classeId,$serieId, $periode)
     {
         try {
-            $eleves = Eleves::where('class_id', $classeId)->where('serie_id',$serieId)->get();
+            $eleves = Eleve::where('class_id', $classeId)->where('serie_id',$serieId)->get();
             $moyennes = [];
             
             foreach ($eleves as $eleve) {
@@ -635,7 +635,7 @@ class BulletinController extends Controller
     {
         try {
             // Récupérer tous les élèves de la classe
-            $eleves = Eleves::where('class_id', $classeId)->get();
+            $eleves = Eleve::where('class_id', $classeId)->get();
             
             $moyennes = [];
             
@@ -730,7 +730,7 @@ class BulletinController extends Controller
                     ->get();
         
         // Récupérer les informations de l'élève
-        $eleve = Eleves::with(['classe', 'serie.matieres'])->find($eleveId);
+        $eleve = Eleve::with(['classe', 'serie.matieres'])->find($eleveId);
         
         return response()->json([
             'eleve' => $eleve,

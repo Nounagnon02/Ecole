@@ -62,7 +62,7 @@ Table.Head = forwardRef(function TableHead(
               width="8"
               height="4"
               viewBox="0 0 8 4"
-              className={cn('transition-colors', sortDir === 'asc' ? 'text-indigo-500' : 'text-neutral-300 dark:text-neutral-600')}
+              className={cn('transition-colors', sortDir === 'asc' ? 'text-[var(--accent)]' : 'text-neutral-300 dark:text-neutral-600')}
             >
               <path d="M4 0l4 4H0z" fill="currentColor" />
             </svg>
@@ -70,7 +70,7 @@ Table.Head = forwardRef(function TableHead(
               width="8"
               height="4"
               viewBox="0 0 8 4"
-              className={cn('transition-colors', sortDir === 'desc' ? 'text-indigo-500' : 'text-neutral-300 dark:text-neutral-600')}
+              className={cn('transition-colors', sortDir === 'desc' ? 'text-[var(--accent)]' : 'text-neutral-300 dark:text-neutral-600')}
             >
               <path d="M4 4L0 0h8z" fill="currentColor" />
             </svg>
@@ -112,9 +112,9 @@ Table.Row = forwardRef(function TableRow(
         'group',
         onClick && 'cursor-pointer',
         selected
-          ? 'bg-indigo-50/60 dark:bg-indigo-500/8'
+          ? 'bg-[var(--accent-subtle)]'
           : highlight
-            ? 'bg-indigo-50/40 dark:bg-indigo-500/5'
+            ? 'bg-[var(--accent-subtle)]/70'
             : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/40',
         className
       )}

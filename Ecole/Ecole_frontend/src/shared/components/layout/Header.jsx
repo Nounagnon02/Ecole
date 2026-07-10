@@ -1,9 +1,7 @@
 /**
- * Header — Barre supérieure premium v3
+ * Header — Barre supérieure Érudit
  *
- * Contient : bouton menu mobile/collapse, barre de recherche avec ⌘K,
- * notifications avec dot indicator, menu utilisateur déroulant,
- * thème toggle, AI Assistant trigger, micro-interactions.
+ * Navigation, recherche ⌘K, notifications, thème, menu utilisateur.
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react';
@@ -19,8 +17,6 @@ import {
   ChevronDown,
   Moon,
   Sun,
-  Sparkles,
-  Command,
 } from 'lucide-react';
 import useAuthStore from '@/shared/stores/auth-store';
 import useUIStore from '@/shared/stores/ui-store';
@@ -40,7 +36,6 @@ export default function Header() {
     sidebarCollapsed,
     setSidebarCollapsed,
     toggleSidebar,
-    toggleAIAssistant,
     toggleCommandPalette,
     theme,
     setTheme,
@@ -95,7 +90,7 @@ export default function Header() {
   return (
     <header
       className={cn(
-        'sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-neutral-800 bg-neutral-950/80 px-4 backdrop-blur-xl transition-all duration-300',
+        'sticky top-0 z-30 flex h-14 items-center gap-4 border-b border-[var(--border)] bg-[var(--surface)]/80 px-4 backdrop-blur-lg transition-all duration-300',
         'lg:px-6'
       )}
     >
@@ -104,8 +99,8 @@ export default function Header() {
         {/* Mobile menu toggle */}
         <button
           onClick={toggleSidebar}
-          className="flex h-11 w-11 items-center justify-center rounded-lg text-neutral-400 transition-colors hover:bg-neutral-800 hover:text-white lg:hidden"
-          aria-label="Menu"
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-[var(--text-tertiary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] md:hidden"
+          aria-label="Rechercher"
         >
           <Menu className="h-5 w-5" />
         </button>
@@ -114,8 +109,7 @@ export default function Header() {
         <button
           onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
           className={cn(
-            'hidden h-11 w-11 items-center justify-center rounded-lg text-neutral-400 transition-colors hover:bg-neutral-800 hover:text-white lg:flex',
-            'motion-safe:active:scale-95'
+            'hidden h-9 w-9 items-center justify-center rounded-lg text-[var(--text-tertiary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] lg:flex'
           )}
           aria-label={sidebarCollapsed ? 'Étendre' : 'Réduire'}
         >
@@ -123,7 +117,7 @@ export default function Header() {
         </button>
 
         {/* Page title placeholder */}
-        <h1 className="hidden text-sm font-semibold text-white sm:block" />
+        <h1 className="hidden text-sm font-medium text-[var(--text-secondary)] sm:block" />
       </div>
 
       {/* Spacer */}
@@ -134,22 +128,18 @@ export default function Header() {
         {/* Command Palette trigger (⌘K) */}
         <button
           onClick={toggleCommandPalette}
-          className="relative hidden h-9 w-56 items-center gap-3 rounded-lg border border-neutral-800 bg-neutral-900/50 px-3 text-sm text-neutral-500 transition-all duration-200 hover:border-indigo-500/50 hover:bg-neutral-900 hover:text-neutral-300 lg:flex lg:w-64"
+          className="relative hidden h-8 w-56 items-center gap-2 rounded-lg border border-[var(--border-light)] bg-[var(--surface-subtle)] px-3 text-sm text-[var(--text-tertiary)] transition-all duration-200 hover:border-[var(--border)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-secondary)] lg:flex lg:w-56"
         >
-          <Search className="h-4 w-4 shrink-0" />
+          <Search className="h-3.5 w-3.5 shrink-0" />
           <span className="flex-1 text-left">Rechercher...</span>
-          <kbd className="flex items-center gap-0.5 rounded border border-neutral-700 bg-neutral-800 px-1.5 py-0.5 text-[10px] font-medium text-neutral-400">
-            <Command className="h-3 w-3" />K
+          <kbd className="flex items-center gap-0.5 rounded border border-[var(--border)] bg-[var(--surface-subtle)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--text-tertiary)]">⌘K
           </kbd>
         </button>
 
-        {/* Separator */}
-        <div className="mx-1 hidden h-5 w-px bg-neutral-800 md:block" />
-
-        {/* Theme toggle with rotation animation */}
+{/* Theme toggle */}
         <button
           onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-          className="flex h-11 w-11 items-center justify-center rounded-lg text-neutral-400 transition-all hover:bg-neutral-800 hover:text-white motion-safe:active:scale-95"
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-[var(--text-tertiary)] transition-all hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
           aria-label="Changer le thème"
         >
           <AnimatePresence mode="wait">
@@ -177,36 +167,19 @@ export default function Header() {
           </AnimatePresence>
         </button>
 
-        {/* Separator */}
-        <div className="mx-1 hidden h-5 w-px bg-neutral-800 md:block" />
-
-        {/* AI Assistant trigger */}
-        <button
-          onClick={toggleAIAssistant}
-          className="group relative flex h-11 w-11 items-center justify-center rounded-lg text-indigo-400/80 transition-all hover:bg-indigo-500/10 hover:text-indigo-300 motion-safe:active:scale-95"
-          aria-label="Assistant IA"
-        >
-          <Sparkles className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
-          {/* Glow ring au hover */}
-          <span className="absolute inset-0 rounded-lg opacity-0 ring-1 ring-indigo-500/20 transition-opacity duration-200 group-hover:opacity-100" />
-        </button>
-
-        {/* Separator */}
-        <div className="mx-1 hidden h-5 w-px bg-neutral-800 md:block" />
-
-        {/* Notifications */}
+{/* Notifications */}
         <div className="relative" ref={notifRef}>
           <button
             onClick={() => setNotifOpen(!notifOpen)}
-            className="relative flex h-11 w-11 items-center justify-center rounded-lg text-neutral-400 transition-colors hover:bg-neutral-800 hover:text-white motion-safe:active:scale-95"
+            className="relative flex h-9 w-9 items-center justify-center rounded-lg text-[var(--text-tertiary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
             aria-label="Notifications"
           >
-            <Bell className="h-5 w-5" />
+            <Bell className="h-4 w-4" />
             {unreadCount > 0 && (
               <motion.span
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                className="absolute right-1.5 top-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white"
+                className="absolute right-1.5 top-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[var(--red)] px-1 text-[10px] font-bold text-white"
               >
                 {unreadCount}
               </motion.span>
@@ -220,11 +193,11 @@ export default function Header() {
                 initial="hidden"
                 animate="visible"
                 exit="exit"
-                className="absolute right-0 top-full mt-2 w-80 overflow-hidden rounded-xl border border-neutral-800 bg-neutral-950 shadow-2xl shadow-black/20"
+                className="absolute right-0 top-full mt-2 w-80 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface-raised)] shadow-[var(--shadow-4)]"
               >
-                <div className="flex items-center justify-between border-b border-neutral-800 px-4 py-3">
-                  <span className="text-sm font-semibold text-white">Notifications</span>
-                  <span className="text-xs text-indigo-400">{unreadCount} non lue(s)</span>
+                <div className="flex items-center justify-between border-b border-[var(--border-light)] px-4 py-3">
+                  <span className="text-sm font-semibold text-[var(--text-primary)]">Notifications</span>
+                  <span className="text-xs text-[var(--accent)]">{unreadCount} non lue(s)</span>
                 </div>
                 <div className="max-h-72 overflow-y-auto">
                   {notifications.map((notif, i) => (
@@ -233,31 +206,30 @@ export default function Header() {
                       initial={{ opacity: 0, x: -8 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: i * 0.03 }}
-                      className="flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-neutral-800/50"
+                      className="flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-[var(--surface-hover)]"
                     >
                       <div
                         className={cn(
                           'mt-1.5 h-2 w-2 shrink-0 rounded-full',
-                          notif.unread ? 'bg-indigo-500' : 'bg-neutral-600'
+                          notif.unread ? 'bg-[var(--accent)]' : 'bg-[var(--text-tertiary)]'
                         )}
                       />
                       <div className="min-w-0 flex-1">
                         <p
                           className={cn(
                             'text-sm',
-                            notif.unread ? 'font-medium text-white' : 'text-neutral-400'
+                            notif.unread ? 'font-medium text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'
                           )}
                         >
                           {notif.text}
                         </p>
-                        <p className="mt-0.5 text-xs text-neutral-500">{notif.time}</p>
+                        <p className="mt-0.5 text-xs text-[var(--text-tertiary)]">{notif.time}</p>
                       </div>
                     </motion.button>
                   ))}
                 </div>
-                {/* Voir toutes */}
-                <div className="border-t border-neutral-800 p-2">
-                  <button className="flex w-full items-center justify-center rounded-lg px-4 py-2.5 text-sm font-medium text-indigo-400 transition-colors hover:bg-indigo-500/10 min-h-11">
+                <div className="border-t border-[var(--border-light)] p-2">
+                  <button className="flex w-full items-center justify-center rounded-lg px-4 py-2 text-sm font-medium text-[var(--accent)] transition-colors hover:bg-[var(--accent-subtle)]">
                     Voir toutes les notifications
                   </button>
                 </div>
@@ -270,24 +242,22 @@ export default function Header() {
         <div className="relative" ref={userMenuRef}>
           <button
             onClick={() => setUserMenuOpen(!userMenuOpen)}
-            className="group flex items-center gap-2 rounded-lg px-3 py-2 transition-colors hover:bg-neutral-800/50 min-h-11"
+            className="group flex items-center gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-[var(--surface-hover)]"
           >
-            <div className="relative flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500/20 to-purple-600/20 text-xs font-semibold text-indigo-400 transition-transform group-hover:scale-105">
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--accent-subtle)] text-xs font-medium text-[var(--accent)]">
               {user?.name?.[0]?.toUpperCase() || 'U'}
-              {/* Status en ligne */}
-              <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full border-2 border-neutral-950 bg-emerald-500" />
             </div>
             <div className="hidden text-left lg:block">
-              <p className="text-sm font-medium leading-tight text-white">
+              <p className="text-sm font-medium leading-tight text-[var(--text-primary)]">
                 {user?.name || 'Utilisateur'}
               </p>
-              <p className="text-xs leading-tight text-neutral-500">
+              <p className="text-xs leading-tight text-[var(--text-tertiary)]">
                 {ROLE_LABELS[user?.role] || user?.role || '—'}
               </p>
             </div>
             <ChevronDown
               className={cn(
-                'hidden h-3.5 w-3.5 text-neutral-500 transition-transform duration-200 lg:block',
+                'hidden h-3 w-3 text-[var(--text-tertiary)] transition-transform duration-200 lg:block',
                 userMenuOpen && 'rotate-180'
               )}
             />
@@ -300,39 +270,37 @@ export default function Header() {
                 initial="hidden"
                 animate="visible"
                 exit="exit"
-                className="absolute right-0 top-full mt-2 w-56 overflow-hidden rounded-xl border border-neutral-800 bg-neutral-950 shadow-2xl shadow-black/20"
+                className="absolute right-0 top-full mt-2 w-56 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface-raised)] shadow-[var(--shadow-4)]"
               >
-                {/* En-tête utilisateur */}
-                <div className="border-b border-neutral-800 px-4 py-3">
-                  <p className="text-sm font-medium text-white">{user?.nom || 'Utilisateur'}</p>
-                  <p className="text-xs text-neutral-500">{user?.email || ''}</p>
+                <div className="border-b border-[var(--border-light)] px-4 py-3">
+                  <p className="text-sm font-medium text-[var(--text-primary)]">{user?.nom || 'Utilisateur'}</p>
+                  <p className="text-xs text-[var(--text-tertiary)]">{user?.email || ''}</p>
                 </div>
 
                 <div className="p-1">
                   <button
                     onClick={() => { setUserMenuOpen(false); navigate('/profil'); }}
-                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-neutral-400 transition-colors hover:bg-neutral-800 hover:text-white"
+                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
                   >
                     <User className="h-4 w-4" />
                     Mon profil
                   </button>
                   <button
                     onClick={() => { setUserMenuOpen(false); navigate('/parametres'); }}
-                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-neutral-400 transition-colors hover:bg-neutral-800 hover:text-white"
+                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
                   >
                     <Settings className="h-4 w-4" />
                     Paramètres
                   </button>
 
-                  <div className="my-1 border-t border-neutral-800" />
+                  <div className="my-1 border-t border-[var(--border-light)]" />
 
                   <button
                     onClick={handleLogout}
-                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-red-400 transition-colors hover:bg-red-500/10"
+                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-[var(--red)] transition-colors hover:bg-[var(--red-subtle)]"
                   >
                     <LogOut className="h-4 w-4" />
                     Déconnexion
-                    <span className="ml-auto text-[10px] text-neutral-600">⌘Q</span>
                   </button>
                 </div>
               </motion.div>
@@ -341,13 +309,13 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Mobile search trigger opens command palette */}
+      {/* Mobile search — visible uniquement < lg */}
       <button
         onClick={toggleCommandPalette}
-        className="flex h-11 w-11 items-center justify-center rounded-lg text-neutral-400 transition-colors hover:bg-neutral-800 hover:text-white md:hidden"
+        className="flex h-9 w-9 items-center justify-center rounded-lg text-[var(--text-tertiary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] lg:hidden"
         aria-label="Rechercher"
       >
-        <Search className="h-5 w-5" />
+        <Search className="h-4 w-4" />
       </button>
     </header>
   );

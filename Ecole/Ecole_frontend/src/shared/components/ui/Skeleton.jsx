@@ -1,20 +1,12 @@
 /**
- * Skeleton — Loading placeholder premium v3
+ * Skeleton — Placeholder de chargement Érudit
  *
- * Variants : text, avatar, card, table-row, custom shape
- * Animé avec shimmer gradient
- *
- * Compositions exportées :
- *   SkeletonPage    — page complète (header + sections)
- *   SkeletonCard    — carte avec contenu squelettique
- *   SkeletonTable   — ligne de tableau + header
- *   SkeletonStats   — grille de stats cards
- *   LoadingSpinner  — spinner centré full-page ou inline
+ * Variants : text, avatar, card, table-row, custom
+ * Animé avec pulse simple (opacité), sans shimmer
  */
 
 import { cn } from '@/shared/lib/utils';
 
-/* ─── Skeleton de base ──────────────────────────────────────────────────── */
 function Skeleton({ className, variant = 'text' }) {
   const variants = {
     text: 'h-4 w-full rounded',
@@ -34,13 +26,10 @@ function Skeleton({ className, variant = 'text' }) {
     <div
       aria-hidden="true"
       className={cn(
-        'animate-pulse bg-gradient-to-r from-neutral-200 via-neutral-100 to-neutral-200 bg-[length:200%_100%] dark:from-neutral-800 dark:via-neutral-700 dark:to-neutral-800',
+        'animate-pulse bg-[var(--border-light)] dark:bg-[var(--border)]',
         variants[variant] || variant,
         className
       )}
-      style={{
-        animation: 'shimmer 1.5s ease-in-out infinite',
-      }}
     />
   );
 }
@@ -48,15 +37,15 @@ function Skeleton({ className, variant = 'text' }) {
 /* ─── LoadingSpinner ────────────────────────────────────────────────────── */
 function LoadingSpinner({ message, variant = 'fullscreen', size = 'md' }) {
   const sizes = {
-    sm: 'h-6 w-6 border-2',
-    md: 'h-10 w-10 border-[3px]',
-    lg: 'h-14 w-14 border-4',
+    sm: 'h-5 w-5 border-2',
+    md: 'h-8 w-8 border-[3px]',
+    lg: 'h-12 w-12 border-[3px]',
   };
 
   const spinner = (
     <div
       className={cn(
-        'animate-spin rounded-full border-neutral-200 border-t-indigo-600 dark:border-neutral-800 dark:border-t-indigo-400',
+        'animate-spin rounded-full border-[var(--border)] border-t-[var(--accent)]',
         sizes[size]
       )}
     />
@@ -66,7 +55,7 @@ function LoadingSpinner({ message, variant = 'fullscreen', size = 'md' }) {
     return (
       <div className="flex items-center justify-center gap-3 py-8" role="status" aria-label="Chargement">
         {spinner}
-        {message && <span className="text-sm text-neutral-500 dark:text-neutral-400">{message}</span>}
+        {message && <span className="text-sm text-[var(--text-secondary)]">{message}</span>}
         <span className="sr-only">Chargement en cours…</span>
       </div>
     );
@@ -79,7 +68,7 @@ function LoadingSpinner({ message, variant = 'fullscreen', size = 'md' }) {
       aria-label="Chargement"
     >
       {spinner}
-      {message && <p className="text-sm text-neutral-500 dark:text-neutral-400">{message}</p>}
+      {message && <p className="text-sm text-[var(--text-secondary)]">{message}</p>}
       <span className="sr-only">Chargement en cours…</span>
     </div>
   );
@@ -87,20 +76,15 @@ function LoadingSpinner({ message, variant = 'fullscreen', size = 'md' }) {
 
 /* ─── Compositions squelettes ───────────────────────────────────────────── */
 
-/**
- * SkeletonPage — squelette de page complète (titre + sections)
- */
 function SkeletonPage({ sections = 2 }) {
   return (
     <div className="space-y-6 p-6" aria-label="Contenu en chargement">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <Skeleton variant="title" className="!h-8 !w-64" />
         <Skeleton variant="button" />
       </div>
-      {/* Sections */}
       {Array.from({ length: sections }, (_, i) => (
-        <div key={i} className="space-y-4 rounded-xl border border-neutral-200 p-6 dark:border-neutral-800">
+        <div key={i} className="space-y-4 rounded-xl border border-[var(--border-light)] p-6">
           <Skeleton variant="subtitle" className="!w-40" />
           <Skeleton variant="text" />
           <Skeleton variant="text" className="!w-5/6" />
@@ -111,12 +95,9 @@ function SkeletonPage({ sections = 2 }) {
   );
 }
 
-/**
- * SkeletonCard — carte squelette (titre + contenu)
- */
 function SkeletonCard({ rows = 3 }) {
   return (
-    <div className="rounded-xl border border-neutral-200 p-6 dark:border-neutral-800">
+    <div className="rounded-xl border border-[var(--border-light)] p-6">
       <Skeleton variant="subtitle" className="mb-4 !w-40" />
       <div className="space-y-3">
         {Array.from({ length: rows }, (_, i) => (
@@ -127,21 +108,16 @@ function SkeletonCard({ rows = 3 }) {
   );
 }
 
-/**
- * SkeletonTable — squelette de tableau (header + lignes)
- */
 function SkeletonTable({ rows = 5, cols = 4 }) {
   return (
     <div className="space-y-1" role="progressbar" aria-label="Tableau en chargement">
-      {/* Header */}
       <div className="flex gap-4 px-4 py-3">
         {Array.from({ length: cols }, (_, i) => (
           <Skeleton key={i} variant="text" className={i === 0 ? '!w-1/4' : '!w-1/6'} />
         ))}
       </div>
-      {/* Lignes */}
       {Array.from({ length: rows }, (_, i) => (
-        <div key={i} className="flex gap-4 border-t border-neutral-100 px-4 py-3 dark:border-neutral-800">
+        <div key={i} className="flex gap-4 border-t border-[var(--border-light)] px-4 py-3">
           {Array.from({ length: cols }, (_, j) => (
             <Skeleton key={j} variant="text" className={j === 0 ? '!w-1/4' : '!w-1/6'} />
           ))}
@@ -151,9 +127,6 @@ function SkeletonTable({ rows = 5, cols = 4 }) {
   );
 }
 
-/**
- * SkeletonStats — grille de cartes de statistiques
- */
 function SkeletonStats({ count = 4, cols = 4 }) {
   return (
     <div
@@ -164,7 +137,7 @@ function SkeletonStats({ count = 4, cols = 4 }) {
       })}
     >
       {Array.from({ length: count }, (_, i) => (
-        <div key={i} className="rounded-xl border border-neutral-200 p-5 dark:border-neutral-800">
+        <div key={i} className="rounded-xl border border-[var(--border-light)] p-5">
           <Skeleton variant="subtitle" className="!w-24" />
           <Skeleton variant="title" className="mt-2 !w-16" />
           <Skeleton variant="text" className="mt-1 !w-20" />

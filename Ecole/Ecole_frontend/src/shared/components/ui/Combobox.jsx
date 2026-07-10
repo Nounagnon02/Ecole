@@ -91,9 +91,9 @@ export default function Combobox({
   return (
     <div className={cn('relative', className)} ref={containerRef} onKeyDown={handleKeyDown}>
       {label && (
-        <label className="mb-1.5 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+        <label className="mb-1.5 block text-sm font-medium text-[var(--text-primary)]">
           {label}
-          {required && <span className="ml-0.5 text-red-500">*</span>}
+          {required && <span className="ml-0.5 text-[var(--red)]">*</span>}
         </label>
       )}
 
@@ -106,14 +106,14 @@ export default function Combobox({
         aria-haspopup="listbox"
         aria-label={label || placeholder}
         className={cn(
-          'flex h-11 w-full items-center justify-between rounded-xl border px-3.5 text-sm transition-all duration-150',
-          'focus:outline-none focus:ring-2 focus:ring-indigo-500/20',
+          'flex h-10 w-full items-center justify-between rounded-lg border px-3.5 text-sm transition-all duration-150',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-ring)]',
           'disabled:cursor-not-allowed disabled:opacity-50',
-          'bg-white dark:bg-neutral-900',
+          'bg-[var(--surface-raised)]',
           error
-            ? 'border-red-400 focus:border-red-500 dark:border-red-500'
-            : 'border-neutral-200 hover:border-neutral-300 dark:border-neutral-800 dark:hover:border-neutral-700',
-          value ? 'text-neutral-900 dark:text-white' : 'text-neutral-400'
+            ? 'border-[var(--red)]'
+            : 'border-[var(--border)] hover:border-[var(--border-heavy)]',
+          value ? 'text-[var(--text-primary)]' : 'text-[var(--text-tertiary)]'
         )}
       >
         <span className="truncate">
@@ -121,7 +121,7 @@ export default function Combobox({
         </span>
         <ChevronDown
           className={cn(
-            'ml-2 h-4 w-4 shrink-0 text-neutral-400 transition-transform duration-150',
+            'ml-2 h-4 w-4 shrink-0 text-[var(--text-tertiary)] transition-transform duration-150',
             isOpen && 'rotate-180'
           )}
         />
@@ -130,13 +130,13 @@ export default function Combobox({
       {/* Dropdown */}
       {isOpen && (
         <div
-          className="absolute z-50 mt-1.5 w-full overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-lg shadow-black/5 dark:border-neutral-800 dark:bg-neutral-900"
+          className="absolute z-50 mt-1.5 w-full overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface-raised)] shadow-[var(--shadow-4)]"
           role="listbox"
           ref={listRef}
         >
           {/* Search input */}
-          <div className="relative border-b border-neutral-100 p-2 dark:border-neutral-800">
-            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+          <div className="relative border-b border-[var(--border-light)] p-2">
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
             <input
               ref={inputRef}
               type="text"
@@ -144,14 +144,14 @@ export default function Combobox({
               onChange={(e) => setSearch(e.target.value)}
               placeholder={searchPlaceholder}
               aria-autocomplete="list"
-              className="w-full rounded-lg border border-neutral-200 bg-neutral-50 py-2 pl-8 pr-3 text-sm text-neutral-900 outline-none transition-colors placeholder:text-neutral-400 focus:border-indigo-400 focus:ring-1 focus:ring-indigo-500/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white dark:placeholder:text-neutral-500"
+              className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] py-2 pl-8 pr-3 text-sm text-[var(--text-primary)] outline-none transition-colors placeholder:text-[var(--text-tertiary)] focus-visible:ring-2 focus-visible:ring-[var(--accent-ring)]"
             />
           </div>
 
           {/* Options list */}
           <div className="max-h-48 overflow-y-auto p-1">
             {filteredOptions.length === 0 ? (
-              <p className="px-3 py-3 text-center text-sm text-neutral-400">{emptyText}</p>
+              <p className="px-3 py-3 text-center text-sm text-[var(--text-tertiary)]">{emptyText}</p>
             ) : (
               filteredOptions.map((opt) => (
                 <button
@@ -163,8 +163,8 @@ export default function Combobox({
                   className={cn(
                     'flex w-full items-center rounded-lg px-3 py-2.5 text-left text-sm transition-colors',
                     opt.value === value
-                      ? 'bg-indigo-50 font-medium text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400'
-                      : 'text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800'
+                      ? 'bg-[var(--accent-subtle)] font-medium text-[var(--accent)]'
+                      : 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover)]'
                   )}
                 >
                   {opt.label}
@@ -175,7 +175,7 @@ export default function Combobox({
         </div>
       )}
 
-      {error && <p className="mt-1.5 text-xs font-medium text-red-500">{error}</p>}
+      {error && <p className="mt-1.5 text-xs font-medium text-[var(--red)]">{error}</p>}
     </div>
   );
 }

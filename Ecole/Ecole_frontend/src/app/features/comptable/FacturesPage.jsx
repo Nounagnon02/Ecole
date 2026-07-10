@@ -1,79 +1,113 @@
 /**
  * FacturesPage — Gestion des factures
  *
- * Le comptable crée, suit et gère les factures de l'établissement.
+ * Le comptable crée, suit et gère les factures.
+ * Données dynamiques via API /comptable/paiements
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   FileText, Plus, Download, Eye, Send, Printer,
-  Search, Filter, AlertCircle, CheckCircle, Clock, XCircle,
+  Search, AlertCircle, CheckCircle, Clock, XCircle, Loader2,
 } from 'lucide-react';
-import { cn, formatCurrency, formatDate, formatNumber } from '@/shared/lib/utils';
+import { cn, formatCurrency, formatDate } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
-
-const FACTURES = Array.from({ length: 15 }, (_, i) => ({
-  id: i + 1,
-  numero: `FAC-${String(2025000 + i).slice(-6)}`,
-  client: ['Diallo Amadou', 'Touré Fatou', 'Koné Moussa', 'Cissé Inza', 'Traoré Kadiatou', 'Sow Mariam', 'Diop Souleymane', 'Ndiaye Fatma', 'Ba Ousmane', 'Sylla Aïcha', 'Faye Cheikh', 'Gueye Ndeye', 'Diallo Mariam', 'Touré Alpha', 'Koné Salif'][i],
-  motif: ['Frais scolarité T1', 'Cantine mensuelle', 'Uniforme complet', 'Frais inscription', 'Transport trimestre', 'Scolarité T2', 'Bibliothèque annuelle', 'Manuels scolaires', 'Frais examen', 'Stage intensif', 'Transport mensuel', 'Fournitures', 'Scolarité T3', 'Activités sportives', 'Voyage scolaire'][i],
-  montant: [150000, 25000, 35000, 75000, 30000, 150000, 5000, 45000, 10000, 20000, 30000, 12000, 150000, 35000, 50000][i],
-  statut: ['payee', 'en_attente', 'payee', 'impayee', 'payee', 'en_attente', 'payee', 'payee', 'impayee', 'payee', 'payee', 'en_attente', 'payee', 'impayee', 'payee'][i],
-  dateEmission: new Date(Date.now() - 86400000 * (i + 5)),
-  dateEcheance: new Date(Date.now() + 86400000 * (i * 3 - 5)),
-}));
+import { useApi } from '@/hooks/useApi';
 
 const getStatutVariant = (statut) => {
   switch (statut) {
+    case 'paye':
     case 'payee': return 'primary';
     case 'en_attente': return 'warning';
-    case 'impayee': return 'danger';
+    case 'impaye':
+    case 'echec': return 'danger';
     default: return 'outline';
-  }
-};
-
-const getStatutIcon = (statut) => {
-  switch (statut) {
-    case 'payee': return <CheckCircle className="h-3 w-3" />;
-    case 'en_attente': return <Clock className="h-3 w-3" />;
-    case 'impayee': return <XCircle className="h-3 w-3" />;
-    default: return null;
   }
 };
 
 const getStatutLabel = (statut) => {
   switch (statut) {
+    case 'paye':
     case 'payee': return 'Payée';
     case 'en_attente': return 'En attente';
-    case 'impayee': return 'Impayée';
-    default: return statut;
+    case 'impaye':
+    case 'echec': return 'Impayée';
+    default: return statut || '—';
   }
 };
 
 export default function FacturesPage() {
+  const { loading, error, get } = useApi();
+  const [factures, setFactures] = useState([]);
   const [search, setSearch] = useState('');
   const [filterStatut, setFilterStatut] = useState('');
 
-  const stats = useMemo(() => {
-    const total = FACTURES.reduce((s, f) => s + f.montant, 0);
-    const payees = FACTURES.filter((f) => f.statut === 'payee').reduce((s, f) => s + f.montant, 0);
-    const impayees = FACTURES.filter((f) => f.statut === 'impayee').reduce((s, f) => s + f.montant, 0);
-    return { total, payees, impayees, nombre: FACTURES.length };
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await get('/comptable/paiements');
+        const items = Array.isArray(res?.data?.data) ? res.data.data
+          : Array.isArray(res?.data) ? res.data
+          : Array.isArray(res) ? res
+          : [];
+        setFactures(items.map((p, i) => ({
+          ...p,
+          numero: p.reference || `FAC-${String(2025000 + (p.id || i)).slice(-6)}`,
+          client: p.eleve ? `${p.eleve.prenom || ''} ${p.eleve.nom || ''}`.trim() : 'N/A',
+          motif: p.type_paiement || 'Frais',
+          dateEmission: p.date_paiement || p.created_at,
+          dateEcheance: p.date_paiement || p.created_at,
+        })));
+      } catch (e) {
+        console.error('Erreur chargement factures:', e);
+      }
+    })();
   }, []);
 
+  const stats = useMemo(() => {
+    const total = factures.reduce((s, f) => s + Number(f.montant || 0), 0);
+    const payees = factures.filter((f) => f.statut === 'paye' || f.statut === 'payee').reduce((s, f) => s + Number(f.montant || 0), 0);
+    const impayees = factures.filter((f) => f.statut === 'impaye' || f.statut === 'echec').reduce((s, f) => s + Number(f.montant || 0), 0);
+    return { total, payees, impayees, nombre: factures.length };
+  }, [factures]);
+
   const filtered = useMemo(() =>
-    FACTURES.filter((f) => {
-      if (search && !f.client.toLowerCase().includes(search.toLowerCase()) && !f.numero.toLowerCase().includes(search.toLowerCase())) return false;
+    factures.filter((f) => {
+      const q = search.toLowerCase();
+      if (search && !f.client.toLowerCase().includes(q) && !f.numero.toLowerCase().includes(q)) return false;
       if (filterStatut && f.statut !== filterStatut) return false;
       return true;
     }),
-    [search, filterStatut]
+    [search, filterStatut, factures]
   );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
+        <AlertCircle className="h-8 w-8 mb-2 text-red-400" />
+        <p className="text-sm">{error}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-4 inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors"
+        >
+          Réessayer
+        </button>
+      </div>
+    );
+  }
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
@@ -84,7 +118,7 @@ export default function FacturesPage() {
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-4">
-        <StatsCard title="Total Facturé" value={formatCurrency(stats.total)} icon={FileText} color="indigo" />
+        <StatsCard title="Total Facturé" value={formatCurrency(stats.total)} icon={FileText} color="primary" />
         <StatsCard title="Payé" value={formatCurrency(stats.payees)} icon={CheckCircle} color="emerald" />
         <StatsCard title="Impayé" value={formatCurrency(stats.impayees)} icon={AlertCircle} color="red" />
         <StatsCard title="Taux Recouvrement" value={`${stats.total > 0 ? Math.round((stats.payees / stats.total) * 100) : 0}%`} icon={FileText} color="sky" />
@@ -106,12 +140,12 @@ export default function FacturesPage() {
             <select
               value={filterStatut}
               onChange={(e) => setFilterStatut(e.target.value)}
-              className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+              className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
             >
               <option value="">Tous les statuts</option>
-              <option value="payee">Payée</option>
+              <option value="paye">Payée</option>
               <option value="en_attente">En attente</option>
-              <option value="impayee">Impayée</option>
+              <option value="echec">Impayée</option>
             </select>
             <Button variant="outline" size="sm" icon={<Download />}>Exporter</Button>
             <Button size="sm" icon={<Plus />}>Nouvelle facture</Button>
@@ -125,12 +159,11 @@ export default function FacturesPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-neutral-200 dark:border-neutral-700 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                <th className="pb-3 pr-4">N° Facture</th>
+                <th className="pb-3 pr-4">N Facture</th>
                 <th className="pb-3 pr-4">Client</th>
                 <th className="pb-3 pr-4">Motif</th>
                 <th className="pb-3 pr-4">Montant</th>
-                <th className="pb-3 pr-4">Émission</th>
-                <th className="pb-3 pr-4">Échéance</th>
+                <th className="pb-3 pr-4">Date</th>
                 <th className="pb-3 pr-4">Statut</th>
                 <th className="pb-3 text-right">Actions</th>
               </tr>
@@ -138,7 +171,7 @@ export default function FacturesPage() {
             <tbody>
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="py-8 text-center text-sm text-neutral-500">
+                  <td colSpan={7} className="py-8 text-center text-sm text-neutral-500">
                     Aucune facture trouvée
                   </td>
                 </tr>
@@ -158,20 +191,12 @@ export default function FacturesPage() {
                     <span className="text-sm font-semibold text-neutral-900 dark:text-white">{formatCurrency(fac.montant)}</span>
                   </td>
                   <td className="py-3 pr-4">
-                    <span className="text-sm text-neutral-600 dark:text-neutral-400">{formatDate(fac.dateEmission)}</span>
-                  </td>
-                  <td className="py-3 pr-4">
-                    <span className={cn(
-                      'text-sm',
-                      fac.dateEcheance < new Date() && fac.statut !== 'payee'
-                        ? 'text-red-600 font-medium'
-                        : 'text-neutral-600 dark:text-neutral-400'
-                    )}>
-                      {formatDate(fac.dateEcheance)}
+                    <span className="text-sm text-neutral-600 dark:text-neutral-400">
+                      {fac.dateEmission ? formatDate(fac.dateEmission) : '—'}
                     </span>
                   </td>
                   <td className="py-3 pr-4">
-                    <Badge variant={getStatutVariant(fac.statut)} size="sm" icon={getStatutIcon(fac.statut)}>
+                    <Badge variant={getStatutVariant(fac.statut)} size="sm">
                       {getStatutLabel(fac.statut)}
                     </Badge>
                   </td>

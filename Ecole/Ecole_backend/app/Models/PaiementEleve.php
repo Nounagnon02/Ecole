@@ -2,25 +2,41 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use App\Traits\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\UserParent;
 
 class PaiementEleve extends Model
 {
-    use HasFactory, BelongsToEcole;
+    use HasFactory, BelongsToEcole, Auditable;
     
     protected $table = 'paiements';
     
     protected $fillable = [
-        "eleve_id",
-        "parents_id",
-        "contribution_id",
-        "montant_total",
-        "montant_paye",
-        "montant_restant",
-        "statut_global",
-        "ecole_id",
+        'eleve_id',
+        'parents_id',
+        'contribution_id',
+        'montant',
+        'montant_total',
+        'montant_paye',
+        'montant_restant',
+        'statut',
+        'statut_global',
+        'type_paiement',
+        'mode_paiement',
+        'date_paiement',
+        'reference',
+        'ecole_id',
+    ];
+
+    protected $casts = [
+        'date_paiement' => 'date',
+        'montant' => 'decimal:2',
+        'montant_total' => 'decimal:2',
+        'montant_paye' => 'decimal:2',
+        'montant_restant' => 'decimal:2',
     ];
 
     public function paiement()
@@ -35,12 +51,12 @@ class PaiementEleve extends Model
 
     public function eleve()
     {
-        return $this->belongsTo(Eleves::class, 'eleve_id');
+        return $this->belongsTo(Eleve::class, 'eleve_id');
     }
 
     public function parent()
     {
-        return $this->belongsTo(Parents::class, 'parents_id');
+        return $this->belongsTo(UserParent::class, 'parents_id');
     }
 
     public function contribution()

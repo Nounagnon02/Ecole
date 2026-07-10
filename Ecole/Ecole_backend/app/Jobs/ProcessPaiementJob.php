@@ -2,7 +2,7 @@
 
 namespace App\Jobs;
 
-use App\Models\Paiement;
+use App\Models\PaiementEleve;
 use App\Services\PaiementService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -24,7 +24,7 @@ class ProcessPaiementJob implements ShouldQueue
     public int $tries = 3;
 
     public function __construct(
-        public Paiement $paiement,
+        public PaiementEleve $paiement,
     ) {}
 
     public function handle(PaiementService $paiementService): void

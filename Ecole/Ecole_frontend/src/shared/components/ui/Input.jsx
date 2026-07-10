@@ -1,11 +1,11 @@
 /**
- * Input — Champ de texte premium v3
+ * Input — Champ de texte Érudit
  *
- * Variants : default | error | glass
+ * Variants : default | error
  * Sizes    : sm | md | lg
  */
 
-import { forwardRef, useState, useId } from 'react';
+import { forwardRef, useState, useId, isValidElement } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { cn } from '@/shared/lib/utils';
 
@@ -24,7 +24,6 @@ const Input = forwardRef(function Input(
     label,
     helperText,
     icon,
-    variant = 'default',
     id,
     ...props
   },
@@ -37,35 +36,23 @@ const Input = forwardRef(function Input(
   const [showPassword, setShowPassword] = useState(false);
   const isPassword = type === 'password';
   const inputType = isPassword ? (showPassword ? 'text' : 'password') : type;
-  const IconComponent = icon;
-
-  const variantStyles = {
-    default: cn(
-      'border bg-white text-neutral-900 dark:bg-neutral-900 dark:text-white',
-      error
-        ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20 dark:border-red-700'
-        : 'border-neutral-300 dark:border-neutral-700'
-    ),
-    glass: cn(
-      'border border-white/20 bg-white/70 text-neutral-900 backdrop-blur-xl dark:border-white/10 dark:bg-neutral-900/70 dark:text-white',
-      error
-        ? 'border-red-300/70 dark:border-red-700/70'
-        : 'border-neutral-200/70 dark:border-neutral-700/50'
-    ),
-  };
+  // Accept icon as React element (JSX) or component type (function/forwardRef)
+  const iconIsElement = isValidElement(icon);
+  // Capitalize so JSX renders it as a component rather than a DOM <icon> tag
+  const IconComponent = iconIsElement ? null : icon;
 
   return (
     <div className="space-y-1.5">
       {label && (
-        <label htmlFor={inputId} className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+        <label htmlFor={inputId} className="block text-sm font-medium text-[var(--text-primary)]">
           {label}
-          {props.required && <span className="ml-0.5 text-red-500">*</span>}
+          {props.required && <span className="ml-0.5 text-[var(--red)]">*</span>}
         </label>
       )}
       <div className="relative">
-        {IconComponent && (
-          <div className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400">
-            {typeof IconComponent === 'function' ? <IconComponent className="h-4 w-4" /> : IconComponent}
+        {icon && (
+          <div className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]">
+            {iconIsElement ? icon : <IconComponent className="h-4 w-4" />}
           </div>
         )}
         <input
@@ -75,12 +62,15 @@ const Input = forwardRef(function Input(
           aria-invalid={error ? 'true' : undefined}
           aria-describedby={error ? errorId : helperText ? helperId : undefined}
           className={cn(
-            'w-full rounded-xl outline-none transition-all duration-150',
-            'placeholder:text-neutral-400 dark:placeholder:text-neutral-500',
-            'focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20',
+            'w-full rounded-lg border outline-none transition-all duration-150',
+            'bg-[var(--surface-raised)] text-[var(--text-primary)]',
+            'placeholder:text-[var(--text-tertiary)]',
+            'focus-visible:border-[var(--accent)] focus-visible:ring-2 focus-visible:ring-[var(--accent-ring)]',
             'disabled:cursor-not-allowed disabled:opacity-50',
             'read-only:cursor-default read-only:opacity-80',
-            variantStyles[variant],
+            error
+              ? 'border-[var(--red)] focus-visible:border-[var(--red)] focus-visible:ring-[var(--red-subtle)]'
+              : 'border-[var(--border)] hover:border-[var(--border-heavy)]',
             icon && 'pl-10',
             isPassword && 'pr-10',
             sizes[size],
@@ -92,7 +82,7 @@ const Input = forwardRef(function Input(
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 transition-colors hover:text-neutral-600 dark:hover:text-neutral-300"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] transition-colors hover:text-[var(--text-primary)]"
             tabIndex={-1}
             aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
           >
@@ -101,12 +91,12 @@ const Input = forwardRef(function Input(
         )}
       </div>
       {error && (
-        <p id={errorId} role="alert" className="text-xs font-medium text-red-500">
+        <p id={errorId} role="alert" className="text-xs font-medium text-[var(--red)]">
           {error}
         </p>
       )}
       {helperText && !error && (
-        <p id={helperId} className="text-xs text-neutral-500 dark:text-neutral-400">
+        <p id={helperId} className="text-xs text-[var(--text-tertiary)]">
           {helperText}
         </p>
       )}
