@@ -41,7 +41,7 @@ class Contributions extends Model
 
     public function paiements()
     {
-        return $this->hasMany(PaiementEleve::class, 'id_contribution');
+        return $this->hasMany(PaiementEleve::class, 'contribution_id');
     }
     
 }

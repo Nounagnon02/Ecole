@@ -1,0 +1,111 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend-tests:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: yes
+          MYSQL_DATABASE: ecole_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    defaults:
+      run:
+        working-directory: Ecole/Ecole_backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, pdo, pdo_mysql, bcmath, json
+          coverage: xdebug
+
+      - name: Validate composer files
+        run: composer validate --strict
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress
+
+      - name: Copy environment
+        run: cp .env.example .env
+
+      - name: Generate app key
+        run: php artisan key:generate
+
+      - name: Run migrations
+        run: php artisan migrate --env=testing --force
+
+      - name: Run tests with coverage
+        run: php artisan test --env=testing --coverage-clover clover.xml
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          file: Ecole/Ecole_backend/clover.xml
+          flags: backend
+
+  frontend-tests:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: Ecole/Ecole_frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: Ecole/Ecole_frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint check
+        run: npx eslint src/ --max-warnings=50
+
+      - name: Run tests
+        run: npm test -- --watchAll=false
+
+      - name: Build
+        run: npm run build
+
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+
+      - name: Install PHP deps
+        run: composer install --prefer-dist --no-progress
+        working-directory: Ecole/Ecole_backend
+
+      - name: PHP syntax check
+        run: find app/ -name '*.php' -exec php -l {} \; > /dev/null
+        working-directory: Ecole/Ecole_backend

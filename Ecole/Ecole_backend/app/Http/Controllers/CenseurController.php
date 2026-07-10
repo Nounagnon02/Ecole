@@ -2,10 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{Classes, ConseilClasse, Examen, Notes, Eleves};
+use App\Models\{Classes, ConseilClasse, Examen, Notes, Eleve};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
 
 class CenseurController extends Controller
 {
@@ -19,7 +18,7 @@ class CenseurController extends Controller
             'taux_reussite' => $this->calculateTauxReussite(),
             'eleves_excellence' => $this->getElevesExcellence(),
             'eleves_difficulte' => $this->getElevesDifficulte(),
-            'total_eleves' => Eleves::count(),
+            'total_eleves' => Eleve::count(),
             'total_classes' => Classes::count()
         ];
 
@@ -365,7 +364,7 @@ class CenseurController extends Controller
      */
     private function getTauxReussiteClasse($classeId)
     {
-        $totalEleves = Eleves::where('class_id', $classeId)->count();
+        $totalEleves = Eleve::where('class_id', $classeId)->count();
         if ($totalEleves == 0) return 0;
 
         $admis = $this->getAdmis($classeId);
@@ -377,7 +376,7 @@ class CenseurController extends Controller
      */
     private function calculateTauxReussite()
     {
-        $totalEleves = Eleves::count();
+        $totalEleves = Eleve::count();
         if ($totalEleves == 0) return 0;
 
         $elevesAdmis = Notes::where('note', '>=', 10)

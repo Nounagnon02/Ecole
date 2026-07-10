@@ -22,16 +22,16 @@ class RendezVous extends Model
 
     public function parent()
     {
-        return $this->belongsTo(Parents::class);
+        return $this->belongsTo(UserParent::class);
     }
 
     public function eleve()
     {
-        return $this->belongsTo(Eleves::class);
+        return $this->belongsTo(Eleve::class);
     }
 
     public function enseignant()
     {
-        return $this->belongsTo(Enseignants::class);
+        return $this->belongsTo(Enseignant::class);
     }
 }

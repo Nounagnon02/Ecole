@@ -21,7 +21,7 @@ class Classes extends Model
 
     public function eleves()
     {
-        return $this->hasMany(Eleves::class, 'class_id');
+        return $this->hasMany(Eleve::class, 'class_id');
     }
 
     // Ajout de méthodes utiles
@@ -32,7 +32,7 @@ class Classes extends Model
     
     public function enseignants()
     {
-        return $this->belongsToMany(Enseignants::class)
+        return $this->belongsToMany(Enseignant::class, 'enseignant_matiere', 'classe_id', 'enseignant_id')
             ->withPivot('categorie_classe')
             ->withTimestamps();
     }
@@ -41,7 +41,7 @@ class Classes extends Model
     public function enseignantsMP()
     {
         return $this->belongsToMany(
-            Enseignants_Martenel_Primaire::class,
+            EnseignantsMaternellePrimaire::class,
             'enseignantmp_classe',    // nom de la table pivot
             'classe_id',              // clé locale sur la table pivot
             'enseignants_id'          // clé étrangère sur la table pivot

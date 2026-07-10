@@ -1,0 +1,15 @@
+/* ==========================================================================
+   Typographie — Érudit
+   Les @font-face sont servis par Google Fonts via le <link> dans index.html.
+   Ce fichier ne contient que les déclarations de famille pour les outils
+   qui en auraient besoin hors du flux normal.
+   ========================================================================== */
+
+/* Fraunces — variable font (opsz, wght, SOFT) pour les titres */
+/* Chargé via Google Fonts: Fraunces:opsz,wght,SOFT@9..144,300..900,0..100 */
+
+/* Inter — corps de texte */
+/* Chargé via Google Fonts: Inter:wght@400;500;600;700 */
+
+/* JetBrains Mono — données & code */
+/* Chargé via Google Fonts: JetBrains+Mono:wght@400;500;700 */

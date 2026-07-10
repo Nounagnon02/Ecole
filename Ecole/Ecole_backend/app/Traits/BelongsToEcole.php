@@ -10,14 +10,22 @@ trait BelongsToEcole
     protected static function bootBelongsToEcole()
     {
         static::addGlobalScope('ecole', function (Builder $builder) {
-            if ($ecoleId = auth()->user()->ecole_id ?? session('ecole_id')) {
-                $builder->where('ecole_id', $ecoleId);
+            if (static::class === \App\Models\User::class) {
+                return;
+            }
+            $ecoleId = auth()->user()?->ecole_id ?? session('ecole_id');
+            // Sécurité : si ecole_id est null, on bloque tout accès inter-écoles
+            if ($ecoleId) {
+                $builder->where($builder->getModel()->getTable().'.ecole_id', $ecoleId);
+            } else {
+                // Aucun résultat si l'utilisateur n'a pas d'école assignée
+                $builder->whereRaw('1 = 0');
             }
         });
 
         static::creating(function ($model) {
             if (!$model->ecole_id) {
-                $model->ecole_id = auth()->user()->ecole_id ?? session('ecole_id');
+                $model->ecole_id = auth()->user()?->ecole_id ?? session('ecole_id');
             }
         });
     }

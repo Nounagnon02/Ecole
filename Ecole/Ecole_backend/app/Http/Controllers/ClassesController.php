@@ -3,15 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Classes;
-use Illuminate\Auth\Events\Registered;
-use Illuminate\Support\Facades\Auth;
 use App\Models\Series;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Validation\ValidationException;
-
-use Illuminate\Http\Request;
 
 class ClassesController extends Controller
 {
@@ -280,8 +275,6 @@ public function getClassesWithEffectifS(){
     });
 
     return response()->json($classes);
-
-    Log::info($classes);
 }
 
 
@@ -552,7 +545,7 @@ public function updateSeries(Request $request, $id)
     //recuperer les classes du Maternelle avec les periodes et les types d'evaluation
     public function getClassesWithPeriodesAndTypesM(Request $request)
     {
-        $classes = Classes::where('categorie_classe', 'Matrnelle')
+        $classes = Classes::where('categorie_classe', 'Maternelle')
             ->with(['typeEvaluations'])
             ->get();
         if ($classes->isEmpty()) {

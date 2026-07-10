@@ -1,7 +1,5 @@
 /**
- * Switch — Toggle premium v3
- *
- * Props : checked, onCheckedChange, size (sm, md, lg), label, disabled
+ * Switch — Toggle Érudit
  */
 
 import { motion } from 'framer-motion';
@@ -32,11 +30,11 @@ function Switch({ checked, onCheckedChange, size = 'md', label, disabled, classN
         onClick={() => onCheckedChange?.(!checked)}
         className={cn(
           'relative inline-flex shrink-0 items-center rounded-full transition-colors duration-200',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-neutral-950',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface)]',
           sizeConfig.track,
           checked
-            ? 'bg-indigo-500'
-            : 'bg-neutral-200 dark:bg-neutral-700'
+            ? 'bg-[var(--accent)]'
+            : 'bg-[var(--border-heavy)]'
         )}
       >
         <motion.span
@@ -51,7 +49,7 @@ function Switch({ checked, onCheckedChange, size = 'md', label, disabled, classN
         />
       </button>
       {label && (
-        <span className="select-none text-sm font-medium text-neutral-700 dark:text-neutral-300">
+        <span className="select-none text-sm font-medium text-[var(--text-primary)]">
           {label}
         </span>
       )}

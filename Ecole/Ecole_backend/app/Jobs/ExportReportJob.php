@@ -79,14 +79,14 @@ class ExportReportJob implements ShouldQueue
 
     protected function exportNotes(): string
     {
-        $notes = \App\Models\Note::with(['eleve', 'matiere', 'periode'])
-            ->when($this->filters['periode_id'] ?? null, fn($q, $id) => $q->where('periode_id', $id))
-            ->when($this->filters['classe_id'] ?? null, fn($q, $id) => $q->whereHas('eleve', fn($q2) => $q2->where('classe_id', $id)))
+        $notes = \App\Models\Notes::with(['eleve.user', 'matiere'])
+            ->when($this->filters['periode'] ?? null, fn($q, $p) => $q->where('periode', $p))
+            ->when($this->filters['classe_id'] ?? null, fn($q, $id) => $q->where('classe_id', $id))
             ->get();
 
-        $csv = "Élève,Matriucle,Matière,Note,Période,Date\n";
+        $csv = "Élève,Matricule,Matière,Note,Période,Date\n";
         foreach ($notes as $note) {
-            $csv .= "{$note->eleve?->nom} {$note->eleve?->prenom},{$note->eleve?->matricule},{$note->matiere?->nom},{$note->valeur},{$note->periode?->nom},{$note->date}\n";
+            $csv .= "{$note->eleve?->user?->name} {$note->eleve?->user?->prenom},{$note->eleve?->numero_matricule},{$note->matiere?->nom},{$note->note},{$note->periode},{$note->date_evaluation}\n";
         }
 
         return $csv;
@@ -94,7 +94,7 @@ class ExportReportJob implements ShouldQueue
 
     protected function exportPaiements(): string
     {
-        $paiements = \App\Models\Paiement::with('eleve')
+        $paiements = \App\Models\PaiementEleve::with('eleve')
             ->when($this->filters['date_debut'] ?? null, fn($q, $d) => $q->whereDate('date_paiement', '>=', $d))
             ->when($this->filters['date_fin'] ?? null, fn($q, $d) => $q->whereDate('date_paiement', '<=', $d))
             ->get();

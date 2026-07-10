@@ -2,14 +2,15 @@
  * MessageriePage — Messagerie interne
  *
  * Système de messagerie interne pour tous les rôles.
+ * Données dynamiques via API /messagerie/conversations et /messagerie/messages
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import {
   Search, Send, Paperclip, MoreHorizontal, Archive,
   Trash2, Star, Inbox, MessageSquare, Users,
-  ChevronLeft, ChevronRight, Phone, Video,
+  ChevronLeft, ChevronRight, Phone, Video, Loader2, AlertCircle,
 } from 'lucide-react';
 import { cn, formatRelativeTime } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
@@ -17,47 +18,132 @@ import Badge from '@/shared/components/ui/Badge';
 import Avatar from '@/shared/components/ui/Avatar';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
-
-/* ─── Data ────────────────────────────────────────────────────────── */
-const CONVERSATIONS = Array.from({ length: 8 }, (_, i) => ({
-  id: i + 1,
-  name: ['M. Diallo', 'Mme Touré', 'M. Koné', 'Mme Cissé', 'Direction', 'Vie Scolaire', 'Comptabilité', 'Infirmerie'][i],
-  role: ['Professeur', 'Enseignante', 'Parent', 'Censeur', 'Administration', 'Surveillance', 'Comptable', 'Infirmier'][i],
-  lastMessage: [
-    'Bonjour, je confirme la réunion de demain à 10h.',
-    'Les notes du dernier devoir sont disponibles.',
-    'Mon enfant sera absent cette semaine.',
-    'Veuillez trouver ci-joint le rapport de discipline.',
-    'Réunion des parents le 15 mars 2026.',
-    'Les inscriptions aux activités sont ouvertes.',
-    'Rappel : échéance des frais de scolarité.',
-    'Les certificats médicaux sont à jour.',
-  ][i],
-  date: new Date(Date.now() - 3600000 * (i + 1)),
-  unread: i < 3 ? Math.floor(Math.random() * 3) + 1 : 0,
-  online: i < 2,
-  avatar: null,
-}));
-
-const MESSAGES = [
-  { id: 1, from: 'them', text: 'Bonjour, je confirme la réunion de demain à 10h dans la salle des professeurs.', time: new Date(Date.now() - 7200000) },
-  { id: 2, from: 'me', text: 'Parfait, je serai présent. Y a-t-il des points particuliers à préparer ?', time: new Date(Date.now() - 6500000) },
-  { id: 3, from: 'them', text: 'Oui, il faudrait préparer le rapport du premier trimestre pour chaque classe.', time: new Date(Date.now() - 6000000) },
-  { id: 4, from: 'them', text: 'Ainsi que les statistiques de présence.', time: new Date(Date.now() - 5900000) },
-  { id: 5, from: 'me', text: 'Je m\'en occupe. Je les aurai prêts pour demain matin.', time: new Date(Date.now() - 5000000) },
-  { id: 6, from: 'them', text: 'Merci beaucoup ! À demain.', time: new Date(Date.now() - 4000000) },
-];
+import { useApi } from '@/hooks/useApi';
 
 export default function MessageriePage() {
-  const [selectedConv, setSelectedConv] = useState(CONVERSATIONS[0]);
+  const { loading, error, get, post } = useApi();
+  const [conversations, setConversations] = useState([]);
+  const [selectedConv, setSelectedConv] = useState(null);
+  const [messages, setMessages] = useState([]);
   const [search, setSearch] = useState('');
   const [messageText, setMessageText] = useState('');
   const [filter, setFilter] = useState('inbox');
+  const [loadingConv, setLoadingConv] = useState(false);
+  const [loadingMsg, setLoadingMsg] = useState(false);
+
+  // Load conversations
+  const loadConversations = useCallback(async () => {
+    setLoadingConv(true);
+    try {
+      const res = await get('/messagerie/conversations');
+      const items = Array.isArray(res?.data?.data) ? res.data.data
+        : Array.isArray(res?.data) ? res.data
+        : Array.isArray(res) ? res
+        : [];
+      setConversations(items.map((c) => ({
+        ...c,
+        name: c.correspondant?.nom || c.correspondant?.prenom ? `${c.correspondant?.prenom || ''} ${c.correspondant?.nom || ''}`.trim() : c.name || c.sujet || 'Conversation',
+        role: c.correspondant?.role || c.role || 'Utilisateur',
+        lastMessage: c.dernier_message?.contenu || c.last_message || c.dernierMessage || '',
+        date: c.dernier_message?.created_at || c.updated_at || c.date || new Date().toISOString(),
+        unread: c.non_lus ?? c.unread_count ?? c.unread ?? 0,
+        online: c.correspondant?.online ?? c.online ?? false,
+        avatar: c.correspondant?.avatar ?? c.avatar ?? null,
+      })));
+      if (items.length > 0 && !selectedConv) {
+        setSelectedConv(items[0]);
+      }
+    } catch (e) {
+      console.error('Erreur chargement conversations:', e);
+    } finally {
+      setLoadingConv(false);
+    }
+  }, [get, selectedConv]);
+
+  useEffect(() => {
+    loadConversations();
+  }, [loadConversations]);
+
+  // Load messages for selected conversation
+  useEffect(() => {
+    if (!selectedConv) {
+      setMessages([]);
+      return;
+    }
+    setLoadingMsg(true);
+    (async () => {
+      try {
+        const res = await get(`/messagerie/conversations/${selectedConv.id}/messages`);
+        const items = Array.isArray(res?.data?.data) ? res.data.data
+          : Array.isArray(res?.data) ? res.data
+          : Array.isArray(res) ? res
+          : [];
+        setMessages(items.map((m) => ({
+          id: m.id,
+          from: m.expediteur_id === (m.user_id || 'current') ? 'me' : 'them',
+          text: m.contenu || m.texte || m.message || '',
+          time: m.created_at || m.date || new Date().toISOString(),
+        })));
+      } catch (e) {
+        console.error('Erreur chargement messages:', e);
+        setMessages([]);
+      } finally {
+        setLoadingMsg(false);
+      }
+    })();
+  }, [selectedConv, get]);
 
   const filtered = useMemo(() =>
-    CONVERSATIONS.filter((c) =>
-      c.name.toLowerCase().includes(search.toLowerCase())
-    ), [search]);
+    conversations.filter((c) =>
+      c.name?.toLowerCase().includes(search.toLowerCase()) ||
+      c.lastMessage?.toLowerCase().includes(search.toLowerCase())
+    ), [search, conversations]);
+
+  const sendMessage = async () => {
+    if (!messageText.trim() || !selectedConv) return;
+    const text = messageText.trim();
+    setMessageText('');
+    try {
+      const res = await post(`/messagerie/conversations/${selectedConv.id}/messages`, { contenu: text });
+      const newMsg = res?.data?.data || res?.data || res;
+      setMessages((prev) => [...prev, {
+        id: newMsg.id || Date.now(),
+        from: 'me',
+        text,
+        time: newMsg.created_at || new Date().toISOString(),
+      }]);
+      // Update conversation list
+      setConversations((prev) => prev.map((c) =>
+        c.id === selectedConv.id ? { ...c, lastMessage: text, date: new Date().toISOString(), unread: 0 } : c
+      ));
+    } catch (e) {
+      console.error('Erreur envoi message:', e);
+      setMessageText(text);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-[calc(100vh-12rem)]">
+        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[calc(100vh-12rem)] text-neutral-500">
+        <AlertCircle className="h-8 w-8 mb-2 text-red-400" />
+        <p className="text-sm">{error}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-4 inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors"
+        >
+          Réessayer
+        </button>
+      </div>
+    );
+  }
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
@@ -82,7 +168,7 @@ export default function MessageriePage() {
                   className={cn(
                     'flex-1 rounded-lg px-2 py-1 text-xs font-medium transition-colors',
                     filter === f
-                      ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400'
+                      ? 'bg-[var(--primary-subtle)] text-[var(--accent)] dark:bg-[var(--accent-subtle)]0/10 dark:text-[var(--accent)]'
                       : 'text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800'
                   )}
                 >
@@ -93,6 +179,17 @@ export default function MessageriePage() {
           </div>
 
           <div className="flex-1 overflow-y-auto">
+            {loadingConv && (
+              <div className="flex items-center justify-center p-8">
+                <Loader2 className="h-6 w-6 animate-spin text-neutral-400" />
+              </div>
+            )}
+            {filtered.length === 0 && !loadingConv && (
+              <div className="text-center py-8 text-neutral-500">
+                <MessageSquare className="mx-auto h-8 w-8 mb-2" />
+                <p className="text-sm">Aucune conversation</p>
+              </div>
+            )}
             {filtered.map((conv) => (
               <button
                 key={conv.id}
@@ -100,7 +197,7 @@ export default function MessageriePage() {
                 className={cn(
                   'w-full border-b border-neutral-100 p-3 text-left transition-colors dark:border-neutral-800',
                   selectedConv?.id === conv.id
-                    ? 'bg-indigo-50 dark:bg-indigo-500/5'
+                    ? 'bg-[var(--accent-subtle)] dark:bg-[var(--accent-subtle)]0/5'
                     : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/50'
                 )}
               >
@@ -120,7 +217,7 @@ export default function MessageriePage() {
                         {formatRelativeTime(conv.date)}
                       </span>
                     </div>
-                    <p className="text-xs text-neutral-500 truncate">{conv.lastMessage}</p>
+                    <p className="text-xs text-neutral-500 truncate">{conv.lastMessage || 'Aucun message'}</p>
                   </div>
                   {conv.unread > 0 && (
                     <Badge variant="primary" size="sm" className="shrink-0">{conv.unread}</Badge>
@@ -160,7 +257,18 @@ export default function MessageriePage() {
 
               {/* Messages */}
               <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                {MESSAGES.map((msg) => (
+                {loadingMsg && (
+                  <div className="flex items-center justify-center h-32">
+                    <Loader2 className="h-6 w-6 animate-spin text-neutral-400" />
+                  </div>
+                )}
+                {messages.length === 0 && !loadingMsg && (
+                  <div className="text-center py-8 text-neutral-400">
+                    <MessageSquare className="mx-auto h-12 w-12 mb-3" />
+                    <p className="text-sm">Aucun message pour cette conversation</p>
+                  </div>
+                )}
+                {messages.map((msg) => (
                   <div key={msg.id} className={cn(
                     'flex',
                     msg.from === 'me' ? 'justify-end' : 'justify-start'
@@ -168,13 +276,13 @@ export default function MessageriePage() {
                     <div className={cn(
                       'max-w-[70%] rounded-2xl px-4 py-2.5',
                       msg.from === 'me'
-                        ? 'bg-indigo-500 text-white rounded-br-md'
+                        ? 'bg-[var(--accent-subtle)]0 text-white rounded-br-md'
                         : 'bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100 rounded-bl-md'
                     )}>
                       <p className="text-sm leading-relaxed">{msg.text}</p>
                       <p className={cn(
                         'text-[10px] mt-1',
-                        msg.from === 'me' ? 'text-indigo-200' : 'text-neutral-400'
+                        msg.from === 'me' ? 'text-[var(--accent)]/60' : 'text-neutral-400'
                       )}>
                         {formatRelativeTime(msg.time)}
                       </p>
@@ -192,14 +300,14 @@ export default function MessageriePage() {
                     value={messageText}
                     onChange={(e) => setMessageText(e.target.value)}
                     placeholder="Écrivez votre message..."
-                    className="flex-1 rounded-xl border border-neutral-300 bg-white px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+                    className="flex-1 rounded-xl border border-neutral-300 bg-white px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && messageText.trim()) {
-                        setMessageText('');
+                        sendMessage();
                       }
                     }}
                   />
-                  <Button size="sm" icon={<Send />} disabled={!messageText.trim()}>
+                  <Button size="sm" icon={<Send />} disabled={!messageText.trim()} onClick={sendMessage}>
                     Envoyer
                   </Button>
                 </div>

@@ -7,7 +7,6 @@ use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvid
 use App\Models\Notes;
 use App\Models\Absence;
 use App\Models\Eleve;
-use App\Models\Paiement;
 use App\Models\PaiementEleve;
 use App\Policies\NotePolicy;
 use App\Policies\AbsencePolicy;

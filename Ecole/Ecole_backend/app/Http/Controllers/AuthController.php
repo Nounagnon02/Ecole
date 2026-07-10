@@ -2,20 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Eleve;
-use App\Models\Enseignant;
-use App\Models\UserParent;
 use App\Models\User;
-use App\Models\Classes;
-use App\Models\Series;
-use App\Models\Contributions;
-use App\Models\Paiement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Auth\Events\Registered;
-use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Support\Facades\DB;
 
 class AuthController extends Controller
 {
@@ -64,19 +55,13 @@ class AuthController extends Controller
             return response()->json(['message' => 'Non authentifié'], 401);
         }
 
-        // Charger les relations selon le rôle
-        $profile = null;
-        if ($user->role === 'eleve') {
-            $user->load(['eleve.classe', 'eleve.serie']);
-        } elseif ($user->role === 'parent') {
-            $user->load('parent.eleves');
-        } elseif (str_contains($user->role, 'enseignant')) {
-            $user->load(['enseignant.matieres', 'enseignant.classes']);
-        }
-
         return response()->json([
             'success' => true,
-            'user' => $user
+            'user' => $user->only([
+                'id', 'name', 'prenom', 'email', 'identifiant',
+                'role', 'ecole_id', 'telephone', 'is_active',
+                'email_verified_at', 'created_at', 'updated_at',
+            ]),
         ]);
     }
 
@@ -149,6 +134,39 @@ class AuthController extends Controller
         $request->session()->regenerateToken();
 
         return response()->json(['message' => 'Déconnecté avec succès'], 200);
+    }
+
+    /**
+     * Sélection d'école après login multi-écoles.
+     * Le frontend envoie ecole_id après que l'utilisateur a choisi.
+     * On ré-authentifie la session avec l'école choisie.
+     */
+    public function selectSchool(Request $request)
+    {
+        $request->validate([
+            'ecole_id' => 'required|exists:ecoles,id',
+        ]);
+
+        $user = Auth::user();
+
+        if (!$user) {
+            return response()->json(['message' => 'Non authentifié'], 401);
+        }
+
+        // Vérifier que l'utilisateur appartient bien à cette école
+        if ($user->ecole_id && $user->ecole_id != $request->ecole_id) {
+            return response()->json(['message' => 'Accès refusé à cet établissement'], 403);
+        }
+
+        // Mettre à jour l'école en session
+        session(['ecole_id' => $request->ecole_id]);
+
+        return response()->json([
+            'user' => $user,
+            'role' => $user->role,
+            'ecole_id' => $request->ecole_id,
+            'redirect_to' => $this->getRedirectRouteBasedOnRole($user->role),
+        ]);
     }
 
     protected function getRedirectRouteBasedOnRole($role)

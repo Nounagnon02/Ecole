@@ -78,7 +78,7 @@ function Pagination({ currentPage, totalPages, totalItems, onChange }) {
               className={cn(
                 'flex h-11 min-w-[2.75rem] items-center justify-center rounded-lg px-2 text-xs font-medium transition-all',
                 p === currentPage
-                  ? 'bg-indigo-600 text-white shadow-sm'
+                  ? 'bg-[var(--accent)] text-white shadow-sm'
                   : 'text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800'
               )}
             >
@@ -287,10 +287,10 @@ const DataTable = forwardRef(function DataTable(
     return (
       <span className="ml-1.5 inline-flex flex-col leading-none text-neutral-400">
         <ChevronUp
-          className={cn('h-3 w-3 -mb-0.5', active && dir === 'asc' && 'text-indigo-600 dark:text-indigo-400')}
+          className={cn('h-3 w-3 -mb-0.5', active && dir === 'asc' && 'text-[var(--accent)]')}
         />
         <ChevronDown
-          className={cn('h-3 w-3', active && dir === 'desc' && 'text-indigo-600 dark:text-indigo-400')}
+          className={cn('h-3 w-3', active && dir === 'desc' && 'text-[var(--accent)]')}
         />
       </span>
     );
@@ -319,7 +319,7 @@ const DataTable = forwardRef(function DataTable(
                 onChange={handleSearch}
                 placeholder="Rechercher…"
                 aria-label="Rechercher dans le tableau"
-                className="w-full rounded-lg border border-neutral-200 bg-white py-2 pl-9 pr-3 text-sm text-neutral-900 outline-none transition-colors placeholder:text-neutral-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:placeholder:text-neutral-500 dark:focus:border-indigo-600 dark:focus:ring-indigo-900/30"
+                className="w-full rounded-lg border border-neutral-200 bg-white py-2 pl-9 pr-3 text-sm text-neutral-900 outline-none transition-colors placeholder:text-neutral-400 focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent-subtle)] dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:placeholder:text-neutral-500 dark:focus:border-[var(--accent)] dark:focus:ring-[var(--accent-subtle)]"
               />
             </div>
           )}
@@ -343,7 +343,7 @@ const DataTable = forwardRef(function DataTable(
                     type="checkbox"
                     checked={allSelected}
                     onChange={toggleAll}
-                    className="h-4 w-4 rounded border-neutral-300 text-indigo-600 focus:ring-indigo-500 dark:border-neutral-600"
+                    className="h-4 w-4 rounded border-neutral-300 text-[var(--accent)] focus:ring-[var(--accent)] dark:border-neutral-600"
                   />
                 </th>
               )}
@@ -389,7 +389,7 @@ const DataTable = forwardRef(function DataTable(
                       'transition-colors',
                       onRowClick && 'cursor-pointer',
                       selected
-                        ? 'bg-indigo-50/60 dark:bg-indigo-950/20'
+                        ? 'bg-[var(--accent-subtle)]'
                         : 'hover:bg-neutral-50 dark:hover:bg-neutral-900/50'
                     )}
                   >
@@ -400,7 +400,7 @@ const DataTable = forwardRef(function DataTable(
                           checked={selected}
                           onChange={() => toggleOne(id)}
                           onClick={(e) => e.stopPropagation()}
-                          className="h-4 w-4 rounded border-neutral-300 text-indigo-600 focus:ring-indigo-500 dark:border-neutral-600"
+                          className="h-4 w-4 rounded border-neutral-300 text-[var(--accent)] focus:ring-[var(--accent)] dark:border-neutral-600"
                         />
                       </td>
                     )}
@@ -429,7 +429,7 @@ const DataTable = forwardRef(function DataTable(
                             <button
                               type="button"
                               onClick={(e) => { e.stopPropagation(); onEdit(item); }}
-                              className="flex h-11 w-11 items-center justify-center rounded-lg text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-indigo-600 dark:hover:bg-neutral-800 dark:hover:text-indigo-400"
+                              className="flex h-11 w-11 items-center justify-center rounded-lg text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-[var(--accent)] dark:hover:bg-neutral-800 dark:hover:text-[var(--accent)]"
                               aria-label={`Modifier ${resolveValue(item, columns[0]?.accessor || columns[0]?.key) || 'l\'élément'}`}
                               title="Modifier"
                             >

@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Enseignant;
 use App\Models\User;
 use App\Models\Classes;
-use App\Models\Note;
 use App\Models\EmploiDuTemps;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;

@@ -14,7 +14,7 @@ class BibliothecaireController extends Controller
 
     public function emprunts()
     {
-        return Emprunt::with(['livre', 'eleve.classe'])->latest()->get();
+        return Emprunt::with(['livre', 'eleve.classe', 'eleve.user'])->latest()->get();
     }
 
     public function reservations()
@@ -24,13 +24,18 @@ class BibliothecaireController extends Controller
 
     public function statistiques()
     {
+        $totalPenalites = Emprunt::whereNotNull('date_retour_prevue')
+            ->get(['id', 'date_retour_effective', 'date_retour_prevue'])
+            ->sum(fn($e) => $e->penalite);
+
         return [
             'total_livres' => Livre::count(),
             'emprunts_actifs' => Emprunt::whereNull('date_retour_effective')->count(),
             'reservations_attente' => Reservation::where('statut', 'en_attente')->count(),
             'retards' => Emprunt::whereNull('date_retour_effective')
                 ->where('date_retour_prevue', '<', now())
-                ->count()
+                ->count(),
+            'total_penalites' => $totalPenalites,
         ];
     }
 

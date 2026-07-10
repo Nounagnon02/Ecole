@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Models\Classe;
-use App\Models\Paiement;
+use App\Models\PaiementEleve;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -13,7 +13,7 @@ class PaiementService extends BaseService
 {
     protected function model(): string
     {
-        return Paiement::class;
+        return PaiementEleve::class;
     }
 
     protected function creationRules(): array
@@ -39,7 +39,7 @@ class PaiementService extends BaseService
      */
     public function totalCollecte(?int $ecoleId = null, ?string $dateDebut = null, ?string $dateFin = null): float
     {
-        $query = Paiement::query();
+        $query = PaiementEleve::query();
         if ($dateDebut) $query->whereDate('date_paiement', '>=', $dateDebut);
         if ($dateFin) $query->whereDate('date_paiement', '<=', $dateFin);
         return $query->sum('montant');
@@ -50,7 +50,7 @@ class PaiementService extends BaseService
      */
     public function statistiques(?int $anneeId = null): array
     {
-        $query = Paiement::query();
+        $query = PaiementEleve::query();
         if ($anneeId) {
             $query->whereHas('eleve.classe', fn($q) => $q->where('annee_scolaire_id', $anneeId));
         }

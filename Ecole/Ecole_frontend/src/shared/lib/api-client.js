@@ -21,10 +21,15 @@ const apiClient = axios.create({
   },
 });
 
-/* ─── Request interceptor — offline queue + cache ──────────────────────── */
+/* ─── Request interceptor — offline queue + cache + auth timeout ──────── */
 apiClient.interceptors.request.use(async (config) => {
   // Skip offline handling for queue replay itself
   if (config.headers?.['X-Offline-Queue']) return config;
+
+  // Auth routes: timeout plus court (8s au lieu de 15s)
+  if (config.url?.includes('/auth/')) {
+    config.timeout = 8000;
+  }
 
   // GET requests: serve from cache when offline
   if (config.method === 'get' && !navigator.onLine) {
@@ -51,8 +56,10 @@ apiClient.interceptors.request.use(async (config) => {
   }
 
   // Mutations: queue when offline instead of failing
+  // Skip auth routes — l'authentification hors-ligne n'a pas de sens
   if (
     !navigator.onLine &&
+    !config.url?.includes('/auth/') &&
     ['post', 'put', 'patch', 'delete'].includes(config.method)
   ) {
     await queueMutation(

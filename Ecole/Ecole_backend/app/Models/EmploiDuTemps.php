@@ -33,6 +33,6 @@ class EmploiDuTemps extends Model
 
     public function enseignant()
     {
-        return $this->belongsTo(Enseignants::class);
+        return $this->belongsTo(Enseignant::class);
     }
 }
