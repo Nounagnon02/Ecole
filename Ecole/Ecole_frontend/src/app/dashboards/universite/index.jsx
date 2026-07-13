@@ -6,6 +6,7 @@
  */
 
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Building2, Users, BookOpen, GraduationCap, Calendar,
@@ -20,15 +21,17 @@ import {
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { cn } from '@/shared/lib/utils';
+import { useDashboardStats } from '@/app/dashboards/hooks/useDashboardData';
 import StatsCard from '@/shared/components/ui/StatsCard';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Table from '@/shared/components/ui/Table';
 import Avatar from '@/shared/components/ui/Avatar';
+import { Skeleton } from '@/shared/components/ui/Skeleton';
 
 /* ─── Constantes ─────────────────────────────────────────────── */
-const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#06b6d4', '#8b5cf6', '#ef4444'];
+const COLORS = ['var(--accent)', 'var(--green)', 'var(--amber)', 'var(--blue)', 'var(--primary)', 'var(--red)'];
 
 const TABS = [
   { id: 'apercu', label: 'Aperçu', icon: Activity },
@@ -38,51 +41,29 @@ const TABS = [
   { id: 'planning', label: 'Planning', icon: Calendar },
 ];
 
-const STATS = [
-  { title: 'Facultés', value: '6', icon: Building2, trend: 0, trendLabel: 'ce semestre', color: 'indigo' },
-  { title: 'Départements', value: '27', icon: School, trend: 3.8, trendLabel: 'vs semestre précédent', color: 'sky' },
-  { title: 'Enseignants', value: '235', icon: Users, trend: 5.2, trendLabel: 'vs année dernière', color: 'emerald' },
-  { title: 'Étudiants', value: '5 190', icon: GraduationCap, trend: 8.1, trendLabel: 'vs année dernière', color: 'violet' },
-];
-
-const DONNEES_INSCRIPTIONS = [
-  { annee: '2021-22', inscriptions: 4200, diplomes: 3800 },
-  { annee: '2022-23', inscriptions: 4550, diplomes: 4100 },
-  { annee: '2023-24', inscriptions: 4890, diplomes: 4450 },
-  { annee: '2024-25', inscriptions: 5100, diplomes: 4680 },
-  { annee: '2025-26', inscriptions: 5190, diplomes: null },
-];
-
-const DONNEES_FACULTES = [
-  { nom: 'Sciences', etudiants: 1200, enseignants: 45, departements: 5 },
-  { nom: 'Lettres', etudiants: 950, enseignants: 38, departements: 4 },
-  { nom: 'Droit', etudiants: 780, enseignants: 28, departements: 3 },
-  { nom: 'SEG', etudiants: 890, enseignants: 32, departements: 4 },
-  { nom: 'Médecine', etudiants: 650, enseignants: 52, departements: 6 },
-  { nom: 'Ingénierie', etudiants: 720, enseignants: 40, departements: 5 },
-];
-
-const ACTIVITES_RECENTES = [
-  { id: 1, type: 'inscription', message: 'Nouvel étudiant inscrit — Koffi Mensah (FST)', temps: 'Il y a 15 min' },
-  { id: 2, type: 'note', message: 'Notes du département de Droit publiées', temps: 'Il y a 1h' },
-  { id: 3, type: 'evenement', message: 'Conseil d\'université — 28 juin 2026', temps: 'Il y a 3h' },
-  { id: 4, type: 'alerte', message: 'Rappel: validation des inscriptions au 30 juin', temps: 'Il y a 1j' },
-  { id: 5, type: 'cours', message: 'Emploi du temps mis à jour — FSI', temps: 'Il y a 2j' },
+const STATS_META = [
+  { title: 'Facultés', icon: Building2, color: 'primary' },
+  { title: 'Départements', icon: School, color: 'sky' },
+  { title: 'Enseignants', icon: Users, color: 'emerald' },
+  { title: 'Étudiants', icon: GraduationCap, color: 'violet' },
 ];
 
 /* ─── Sections ────────────────────────────────────────────────── */
 
-function ApercuSection() {
+function ApercuSection({ stats, inscriptions, facultes, activites, loading }) {
   return (
     <div className="space-y-6">
       {/* KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        {STATS.map((stat, i) => (
+        {loading
+          ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-28 rounded-2xl" />)
+          : stats.map((stat, i) => (
           <motion.div key={stat.title} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
             <StatsCard {...stat} className="h-full" />
           </motion.div>
         ))}
       </div>
+      {loading && <Skeleton className="h-[300px] rounded-2xl" />}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Inscriptions */}
@@ -93,16 +74,23 @@ function ApercuSection() {
           </Card.Header>
           <Card.Body>
             <div className="h-[260px]">
+              {inscriptions.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full text-[var(--text-tertiary)]">
+                  <BarChart3 className="h-10 w-10 mb-3 opacity-40" />
+                  <p className="text-sm">Aucune donnée d'inscription</p>
+                </div>
+              ) : (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={DONNEES_INSCRIPTIONS}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis dataKey="annee" tick={{ fontSize: 11 }} stroke="#9ca3af" />
-                  <YAxis tick={{ fontSize: 12 }} stroke="#9ca3af" />
-                  <ReTooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e5e7eb' }} />
-                  <Bar dataKey="inscriptions" name="Inscriptions" fill="#6366f1" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="diplomes" name="Diplômés" fill="#10b981" radius={[4, 4, 0, 0]} />
+                <BarChart data={inscriptions}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                  <XAxis dataKey="annee" tick={{ fontSize: 11 }} stroke="var(--text-tertiary)" />
+                  <YAxis tick={{ fontSize: 12 }} stroke="var(--text-tertiary)" />
+                  <ReTooltip contentStyle={{ borderRadius: '8px', border: '1px solid var(--border)' }} />
+                  <Bar dataKey="inscriptions" name="Inscriptions" fill="var(--accent)" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="diplomes" name="Diplômés" fill="var(--green)" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
+              )}
             </div>
           </Card.Body>
         </Card>
@@ -115,10 +103,16 @@ function ApercuSection() {
           </Card.Header>
           <Card.Body>
             <div className="h-[260px]">
+              {facultes.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full text-[var(--text-tertiary)]">
+                  <Building2 className="h-10 w-10 mb-3 opacity-40" />
+                  <p className="text-sm">Aucune donnée facultaire</p>
+                </div>
+              ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie data={DONNEES_FACULTES} dataKey="etudiants" nameKey="nom" cx="50%" cy="50%" outerRadius={90} label={({ nom, percent }) => `${nom} ${(percent * 100).toFixed(0)}%`}>
-                    {DONNEES_FACULTES.map((_, i) => (
+                  <Pie data={facultes} dataKey="etudiants" nameKey="nom" cx="50%" cy="50%" outerRadius={90} label={({ nom, percent }) => `${nom} ${(percent * 100).toFixed(0)}%`}>
+                    {facultes.map((_, i) => (
                       <Cell key={i} fill={COLORS[i % COLORS.length]} />
                     ))}
                   </Pie>
@@ -126,6 +120,7 @@ function ApercuSection() {
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>
+              )}
             </div>
           </Card.Body>
         </Card>
@@ -138,16 +133,22 @@ function ApercuSection() {
           <Card.Description>Derniers événements dans l'université</Card.Description>
         </Card.Header>
         <Card.Body>
+          {activites.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-10 text-[var(--text-tertiary)]">
+              <Activity className="h-10 w-10 mb-3 opacity-40" />
+              <p className="text-sm">Aucune activité récente</p>
+            </div>
+          ) : (
           <div className="space-y-1">
-            {ACTIVITES_RECENTES.map((a) => (
+            {activites.map((a) => (
               <div key={a.id} className="flex items-center gap-3 rounded-lg border border-neutral-100 bg-neutral-50/50 px-4 py-3 dark:border-neutral-800 dark:bg-neutral-900/30">
                 <div className={cn(
                   'flex h-8 w-8 items-center justify-center rounded-full',
-                  a.type === 'inscription' && 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400',
-                  a.type === 'note' && 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400',
-                  a.type === 'evenement' && 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400',
-                  a.type === 'alerte' && 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400',
-                  a.type === 'cours' && 'bg-sky-100 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400',
+                  a.type === 'inscription' && 'bg-[var(--emerald-subtle)] text-[var(--emerald)]',
+                  a.type === 'note' && 'bg-[var(--accent-subtle)] text-[var(--accent)]',
+                  a.type === 'evenement' && 'bg-[var(--amber-subtle)] text-[var(--amber)]',
+                  a.type === 'alerte' && 'bg-[var(--red-subtle)] text-[var(--red)]',
+                  a.type === 'cours' && 'bg-[var(--sky-subtle)] text-[var(--sky)]',
                 )}>
                   {a.type === 'inscription' && <UserCheck className="h-4 w-4" />}
                   {a.type === 'note' && <FileText className="h-4 w-4" />}
@@ -163,30 +164,37 @@ function ApercuSection() {
               </div>
             ))}
           </div>
+          )}
         </Card.Body>
       </Card>
     </div>
   );
 }
 
-function FacultesSection() {
+function FacultesSection({ facultes }) {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">Facultés & Départements</h2>
+          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Facultés & Départements</h2>
           <p className="text-sm text-neutral-500 mt-1">Gestion des facultés et départements</p>
         </div>
         <Button size="sm" icon={<Plus />}>Nouvelle Faculté</Button>
       </div>
 
+      {facultes.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 text-[var(--text-tertiary)]">
+          <Building2 className="h-12 w-12 mb-3 opacity-40" />
+          <p className="text-sm">Aucune faculté disponible</p>
+        </div>
+      ) : (
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {DONNEES_FACULTES.map((f) => (
+        {facultes.map((f) => (
           <Card key={f.nom}>
             <Card.Body>
               <div className="flex items-start justify-between mb-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-100 dark:bg-indigo-900/30">
-                  <Building2 className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--accent-subtle)]">
+                  <Building2 className="h-5 w-5 text-[var(--accent)]" />
                 </div>
                 <Badge variant="neutral" size="sm">{f.departements} dép.</Badge>
               </div>
@@ -199,21 +207,29 @@ function FacultesSection() {
           </Card>
         ))}
       </div>
+      )}
     </div>
   );
 }
 
-function EtudiantsSection() {
+function EtudiantsSection({ etudiantsData }) {
+  const data = etudiantsData || [];
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">Étudiants</h2>
+          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Étudiants</h2>
           <p className="text-sm text-neutral-500 mt-1">Gestion des inscriptions et dossiers étudiants</p>
         </div>
         <Button size="sm" icon={<Plus />}>Nouvel Étudiant</Button>
       </div>
 
+      {data.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 text-[var(--text-tertiary)]">
+          <Users className="h-12 w-12 mb-3 opacity-40" />
+          <p className="text-sm">Aucune donnée étudiante disponible</p>
+        </div>
+      ) : (
       <Card>
         <Card.Header>
           <Card.Title>Inscriptions du Semestre</Card.Title>
@@ -229,14 +245,7 @@ function EtudiantsSection() {
               <Table.Head>Évolution</Table.Head>
             </Table.Header>
             <Table.Body>
-              {[
-                { niveau: 'Licence 1', inscrits: 1350, h: 720, f: 630, evol: '+8%' },
-                { niveau: 'Licence 2', inscrits: 1180, h: 610, f: 570, evol: '+5%' },
-                { niveau: 'Licence 3', inscrits: 1050, h: 540, f: 510, evol: '+3%' },
-                { niveau: 'Master 1', inscrits: 820, h: 420, f: 400, evol: '+12%' },
-                { niveau: 'Master 2', inscrits: 540, h: 280, f: 260, evol: '+7%' },
-                { niveau: 'Doctorat', inscrits: 250, h: 140, f: 110, evol: '+2%' },
-              ].map((r) => (
+              {data.map((r) => (
                 <Table.Row key={r.niveau}>
                   <Table.Cell><span className="font-medium text-neutral-900 dark:text-white">{r.niveau}</span></Table.Cell>
                   <Table.Cell>{r.inscrits}</Table.Cell>
@@ -249,6 +258,7 @@ function EtudiantsSection() {
           </Table>
         </Card.Body>
       </Card>
+      )}
     </div>
   );
 }
@@ -258,7 +268,7 @@ function CoursSection() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">Cours & Programmes</h2>
+          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Cours & Programmes</h2>
           <p className="text-sm text-neutral-500 mt-1">Gestion des enseignements et programmes</p>
         </div>
         <Button size="sm" icon={<Plus />}>Nouveau Cours</Button>
@@ -280,7 +290,7 @@ function PlanningSection() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">Planning</h2>
+          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Planning</h2>
           <p className="text-sm text-neutral-500 mt-1">Emplois du temps et calendrier universitaire</p>
         </div>
         <Button size="sm" icon={<Plus />}>Nouvel Événement</Button>
@@ -299,16 +309,30 @@ function PlanningSection() {
 
 /* ─── Dashboard principal ──────────────────────────────────────── */
 export default function UniversiteDashboard() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('apercu');
+  const { data, loading } = useDashboardStats('universite');
+
+  const stats = data?.stats?.map((s, i) => ({ ...s, icon: STATS_META[i]?.icon, color: STATS_META[i]?.color })) || [];
+  const inscriptions = data?.inscriptions || [];
+  const facultes = data?.facultes || [];
+  const activites = data?.activites || [];
+
+  const handleTabClick = (tabId) => {
+    if (tabId === 'apercu') { setActiveTab(tabId); return; }
+    const routes = {
+      facultes: '/universite/facultes',
+      etudiants: '/universite/etudiants',
+      cours: '/universite/cours',
+      planning: '/universite/planning',
+    };
+    navigate(routes[tabId] || '/universite/dashboard');
+  };
 
   const renderSection = () => {
     switch (activeTab) {
-      case 'apercu': return <ApercuSection />;
-      case 'facultes': return <FacultesSection />;
-      case 'etudiants': return <EtudiantsSection />;
-      case 'cours': return <CoursSection />;
-      case 'planning': return <PlanningSection />;
-      default: return <ApercuSection />;
+      case 'apercu': return <ApercuSection stats={stats} inscriptions={inscriptions} facultes={facultes} activites={activites} loading={loading} />;
+      default: return <ApercuSection stats={stats} inscriptions={inscriptions} facultes={facultes} activites={activites} loading={loading} />;
     }
   };
 
@@ -340,11 +364,11 @@ export default function UniversiteDashboard() {
           {TABS.map((tab) => {
             const Icon = tab.icon;
             return (
-              <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+              <button key={tab.id} onClick={() => handleTabClick(tab.id)}
                 className={cn(
                   'flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-all whitespace-nowrap',
                   activeTab === tab.id
-                    ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                    ? 'border-[var(--accent)] text-[var(--accent)] dark:text-[var(--accent)]'
                     : 'border-transparent text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200'
                 )}
               >

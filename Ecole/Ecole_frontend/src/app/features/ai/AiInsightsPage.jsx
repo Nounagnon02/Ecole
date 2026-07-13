@@ -153,7 +153,7 @@ export default function AiInsightsPage() {
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/20">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--accent)] shadow-3">
             <Sparkles className="h-6 w-6 text-white" />
           </div>
           <div>
@@ -179,7 +179,7 @@ export default function AiInsightsPage() {
               className={cn(
                 'flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all',
                 activeTab === tab.key
-                  ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/30 dark:text-indigo-400'
+                  ? 'bg-[var(--accent-subtle)] text-[var(--accent)]'
                   : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'
               )}
             >
@@ -201,7 +201,7 @@ export default function AiInsightsPage() {
                   animate={{ opacity: 1, y: 0 }}
                   className="mb-6"
                 >
-                  <span className="inline-flex items-center gap-2 rounded-full bg-indigo-50 px-4 py-1.5 text-sm font-medium text-indigo-600 dark:bg-indigo-950/30 dark:text-indigo-400">
+                  <span className="inline-flex items-center gap-2 rounded-full bg-[var(--accent-subtle)] px-4 py-1.5 text-sm font-medium text-[var(--accent)]">
                     <Bot className="h-4 w-4" />
                     EduPilot IA
                   </span>
@@ -216,7 +216,7 @@ export default function AiInsightsPage() {
                       <button
                         key={s.label}
                         onClick={() => handleSuggestion(s.label)}
-                        className="flex items-center gap-3 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm text-neutral-600 transition-all hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:border-indigo-700 dark:hover:bg-indigo-950/20 dark:hover:text-indigo-400"
+                        className="flex items-center gap-3 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm text-neutral-600 transition-all hover:border-[var(--accent)]/30 hover:bg-[var(--accent-subtle)] hover:text-[var(--accent)] dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400"
                       >
                         <Icon className="h-4 w-4 shrink-0" />
                         <span>{s.label}</span>
@@ -235,21 +235,21 @@ export default function AiInsightsPage() {
                 className={cn('mb-4 flex gap-3', msg.role === 'user' ? 'justify-end' : 'justify-start')}
               >
                 {msg.role === 'assistant' && (
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500/20 to-purple-600/20">
-                    <Bot className="h-4 w-4 text-indigo-400" />
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent-subtle)]">
+                    <Bot className="h-4 w-4 text-[var(--accent)]" />
                   </div>
                 )}
                 <div className={cn(
                   'max-w-[75%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed',
                   msg.role === 'user'
-                    ? 'bg-indigo-500 text-white'
+                    ? 'bg-[var(--accent)] text-white'
                     : 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300'
                 )}>
                   {msg.content}
                 </div>
                 {msg.role === 'user' && (
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-500/20">
-                    <User className="h-4 w-4 text-indigo-400" />
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent-subtle)]">
+                    <User className="h-4 w-4 text-[var(--accent)]" />
                   </div>
                 )}
               </motion.div>
@@ -257,11 +257,11 @@ export default function AiInsightsPage() {
 
             {isLoading && (
               <div className="flex gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500/20 to-purple-600/20">
-                  <Bot className="h-4 w-4 text-indigo-400" />
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent-subtle)]">
+                  <Bot className="h-4 w-4 text-[var(--accent)]" />
                 </div>
                 <div className="flex items-center gap-2 rounded-2xl bg-neutral-100 px-4 py-3 dark:bg-neutral-800">
-                  <Loader2 className="h-4 w-4 animate-spin text-indigo-500" />
+                  <Loader2 className="h-4 w-4 animate-spin text-[var(--accent)]" />
                   <span className="text-sm text-neutral-500">Réflexion...</span>
                 </div>
               </div>
@@ -280,12 +280,12 @@ export default function AiInsightsPage() {
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Posez votre question..."
                 disabled={isLoading}
-                className="h-11 flex-1 rounded-xl border border-neutral-200 bg-neutral-50 px-4 text-sm text-neutral-900 outline-none transition-all focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400/20 disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
+                className="h-11 flex-1 rounded-xl border border-neutral-200 bg-neutral-50 px-4 text-sm text-neutral-900 outline-none transition-all focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]/20 disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
               />
               <button
                 type="submit"
                 disabled={!input.trim() || isLoading}
-                className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-500 text-white transition-all hover:bg-indigo-600 disabled:opacity-50"
+                className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--accent)] text-white transition-all hover:bg-[var(--accent-hover)] disabled:opacity-50"
               >
                 <Send className="h-4 w-4" />
               </button>
@@ -300,7 +300,7 @@ export default function AiInsightsPage() {
           <div className="rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900">
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <TrendingUp className="h-5 w-5 text-indigo-500" />
+                <TrendingUp className="h-5 w-5 text-[var(--accent)]" />
                 <h2 className="text-base font-semibold text-neutral-900 dark:text-neutral-100">
                   Analyse prédictive
                 </h2>
@@ -308,7 +308,7 @@ export default function AiInsightsPage() {
               <button
                 onClick={loadAnalysis}
                 disabled={isLoading}
-                className="inline-flex items-center gap-2 rounded-lg bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-600 transition-colors hover:bg-indigo-100 disabled:opacity-50 dark:bg-indigo-950/30 dark:text-indigo-400 dark:hover:bg-indigo-950/50"
+                className="inline-flex items-center gap-2 rounded-lg bg-[var(--accent-subtle)] px-4 py-2 text-sm font-medium text-[var(--accent)] transition-colors hover:bg-[var(--accent-subtle)] disabled:opacity-50"
               >
                 <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} />
                 Analyser
@@ -335,8 +335,8 @@ export default function AiInsightsPage() {
                 {analysisData.trends?.map((trend, i) => (
                   <div key={i} className="rounded-xl border border-neutral-100 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-800/50">
                     <div className="mb-2 flex items-center gap-2">
-                      <TrendingUp className="h-4 w-4 text-indigo-500" />
-                      <span className="text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+                      <TrendingUp className="h-4 w-4 text-[var(--accent)]" />
+                      <span className="text-xs font-semibold uppercase tracking-wider text-[var(--accent)]">
                         Tendance {i + 1}
                       </span>
                     </div>
@@ -364,8 +364,8 @@ export default function AiInsightsPage() {
               <p className="text-xs text-neutral-500">Alertes actives</p>
             </div>
             <div className="rounded-2xl border border-neutral-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900">
-              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-950/30">
-                <Lightbulb className="h-5 w-5 text-indigo-500" />
+              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--accent-subtle)]">
+                <Lightbulb className="h-5 w-5 text-[var(--accent)]" />
               </div>
               <p className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">—</p>
               <p className="text-xs text-neutral-500">Recommandations</p>

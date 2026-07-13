@@ -5,6 +5,7 @@
  */
 
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useDashboardStats } from '../hooks/useDashboardData';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -30,28 +31,11 @@ const TABS = [
   { id: 'dossiers', label: 'Dossiers', icon: FileText },
 ];
 
-const STATS = [
-  { title: 'Visites du Mois', value: '89', icon: Activity, trend: 12, trendLabel: 'vs mois dernier', color: 'indigo' },
-  { title: 'En Cours', value: '3', icon: Clock, trend: 0, trendLabel: 'patients actuellement', color: 'amber' },
-  { title: 'Cas Urgents', value: '5', icon: AlertTriangle, trend: -2, trendLabel: 'ce mois', color: 'red' },
-  { title: 'Consultations', value: '312', icon: Stethoscope, trend: 8.5, trendLabel: 'ce trimestre', color: 'emerald' },
-];
-
-const DONNEES_VISITES = [
-  { mois: 'Jan', visites: 72, urgences: 6 },
-  { mois: 'Fév', visites: 68, urgences: 4 },
-  { mois: 'Mar', visites: 85, urgences: 8 },
-  { mois: 'Avr', visites: 78, urgences: 5 },
-  { mois: 'Mai', visites: 92, urgences: 7 },
-  { mois: 'Juin', visites: 89, urgences: 5 },
-];
-
-const VISITES_RECENTES = [
-  { id: 1, eleve: 'Hounkpe Joël', classe: '5e A', motif: 'Maux de tête', soin: 'Paracétamol', heure: '08:30', statut: 'Traité' },
-  { id: 2, eleve: 'Dossou Yvette', classe: '4e C', motif: 'Chute cour', soin: 'Pansement', heure: '09:15', statut: 'Traité' },
-  { id: 3, eleve: 'Gbaguidi Félicien', classe: '3e B', motif: 'Fièvre', soin: 'En observation', heure: '10:00', statut: 'En cours' },
-  { id: 4, eleve: 'Ahyi Rosalie', classe: '6e A', motif: 'Allergie', soin: 'Antihistaminique', heure: '11:20', statut: 'Traité' },
-  { id: 5, eleve: 'Zannou Pascal', classe: '2nde A', motif: 'Douleur abdominale', soin: 'Repos', heure: '12:05', statut: 'En cours' },
+const STATS_META = [
+  { title: 'Visites du Mois', icon: Activity, color: 'primary' },
+  { title: 'En Cours', icon: Clock, color: 'amber' },
+  { title: 'Cas Urgents', icon: AlertTriangle, color: 'red' },
+  { title: 'Consultations', icon: Stethoscope, color: 'emerald' },
 ];
 
 function ApercuSection({ stats, frequentation, visites }) {
@@ -76,15 +60,15 @@ function ApercuSection({ stats, frequentation, visites }) {
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={frequentation}>
                   <defs>
-                    <linearGradient id="colorVisites" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} /><stop offset="95%" stopColor="#6366f1" stopOpacity={0} /></linearGradient>
-                    <linearGradient id="colorUrgences" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#ef4444" stopOpacity={0.3} /><stop offset="95%" stopColor="#ef4444" stopOpacity={0} /></linearGradient>
+                    <linearGradient id="colorVisites" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="var(--accent)" stopOpacity={0.3} /><stop offset="95%" stopColor="var(--accent)" stopOpacity={0} /></linearGradient>
+                    <linearGradient id="colorUrgences" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="var(--red)" stopOpacity={0.3} /><stop offset="95%" stopColor="var(--red)" stopOpacity={0} /></linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis dataKey="mois" tick={{ fontSize: 12 }} stroke="#9ca3af" />
-                  <YAxis tick={{ fontSize: 12 }} stroke="#9ca3af" />
-                  <ReTooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e5e7eb' }} />
-                  <Area type="monotone" dataKey="visites" name="Visites" stroke="#6366f1" fill="url(#colorVisites)" strokeWidth={2} />
-                  <Area type="monotone" dataKey="urgences" name="Urgences" stroke="#ef4444" fill="url(#colorUrgences)" strokeWidth={2} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                  <XAxis dataKey="mois" tick={{ fontSize: 12 }} stroke="var(--text-tertiary)" />
+                  <YAxis tick={{ fontSize: 12 }} stroke="var(--text-tertiary)" />
+                  <ReTooltip contentStyle={{ borderRadius: '8px', border: '1px solid var(--border)' }} />
+                  <Area type="monotone" dataKey="visites" name="Visites" stroke="var(--accent)" fill="url(#colorVisites)" strokeWidth={2} />
+                  <Area type="monotone" dataKey="urgences" name="Urgences" stroke="var(--red)" fill="url(#colorUrgences)" strokeWidth={2} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -99,11 +83,11 @@ function ApercuSection({ stats, frequentation, visites }) {
           <Card.Body>
             <div className="space-y-3">
               {[
-                { motif: 'Maux de tête', count: 28, color: 'bg-indigo-500' },
-                { motif: 'Douleurs abdominales', count: 19, color: 'bg-amber-500' },
-                { motif: 'Blessures légères', count: 15, color: 'bg-red-500' },
-                { motif: 'Fièvre', count: 12, color: 'bg-emerald-500' },
-                { motif: 'Réactions allergiques', count: 8, color: 'bg-purple-500' },
+                { motif: 'Maux de tête', count: 28, color: 'bg-[var(--accent)]' },
+                { motif: 'Douleurs abdominales', count: 19, color: 'bg-[var(--amber)]' },
+                { motif: 'Blessures légères', count: 15, color: 'bg-[var(--red)]' },
+                { motif: 'Fièvre', count: 12, color: 'bg-[var(--emerald)]' },
+                { motif: 'Réactions allergiques', count: 8, color: 'bg-[var(--purple)]' },
               ].map((item) => (
                 <div key={item.motif} className="flex items-center justify-between text-sm">
                   <span className="text-neutral-600 dark:text-neutral-400">{item.motif}</span>
@@ -163,7 +147,7 @@ function SoinsSection() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">Soins Infirmiers</h2>
+          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Soins Infirmiers</h2>
           <p className="text-sm text-neutral-500 mt-1">Enregistrement et suivi des soins</p>
         </div>
         <div className="flex gap-2">
@@ -187,7 +171,7 @@ function DossiersSection() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">Dossiers Médicaux</h2>
+          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Dossiers Médicaux</h2>
           <p className="text-sm text-neutral-500 mt-1">Fiches de santé et antécédents</p>
         </div>
         <Button variant="ghost" size="sm"><Thermometer className="h-4 w-4 mr-1" /> Carnet de Santé</Button>
@@ -204,18 +188,23 @@ function DossiersSection() {
 }
 
 export default function InfirmierDashboard() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('apercu');
   const { data, loading } = useDashboardStats('infirmier');
 
-  const stats = data?.stats?.map((s, i) => ({ ...s, icon: STATS[i]?.icon, color: STATS[i]?.color })) || STATS;
-  const frequentation = data?.frequentation || DONNEES_VISITES;
-  const visites = data?.visites || VISITES_RECENTES;
+  const stats = data?.stats?.map((s, i) => ({ ...s, icon: STATS_META[i]?.icon, color: STATS_META[i]?.color })) || [];
+  const frequentation = data?.frequentation || [];
+  const visites = data?.visites || [];
+
+  const handleTabClick = (tabId) => {
+    if (tabId === 'apercu') { setActiveTab(tabId); return; }
+    const routes = { soins: '/infirmier/soins', dossiers: '/infirmier/dossiers' };
+    navigate(routes[tabId] || '/infirmier/dashboard');
+  };
 
   const renderSection = () => {
     switch (activeTab) {
       case 'apercu': return <ApercuSection stats={stats} frequentation={frequentation} visites={visites} />;
-      case 'soins': return <SoinsSection />;
-      case 'dossiers': return <DossiersSection />;
       default: return <ApercuSection stats={stats} frequentation={frequentation} visites={visites} />;
     }
   };
@@ -241,11 +230,11 @@ export default function InfirmierDashboard() {
           {TABS.map((tab) => {
             const Icon = tab.icon;
             return (
-              <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+              <button key={tab.id} onClick={() => handleTabClick(tab.id)}
                 className={cn(
                   'flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-all whitespace-nowrap',
                   activeTab === tab.id
-                    ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                    ? 'border-[var(--accent)] text-[var(--accent)] dark:text-[var(--accent)]'
                     : 'border-transparent text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200'
                 )}
               >

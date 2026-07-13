@@ -101,4 +101,32 @@ class EnseignantController extends Controller
 
         return response()->json(['success' => true, 'data' => $emploi]);
     }
+
+    /**
+     * Espace Enseignant : Récupérer les notes saisies (via ses classes/matières)
+     * GET /enseignant/notes
+     */
+    public function notes()
+    {
+        $user = Auth::user();
+        if (!$user->enseignant) {
+            return response()->json(['message' => 'Profil enseignant non trouvé'], 404);
+        }
+
+        $enseignant = $user->enseignant;
+        $classeIds = $enseignant->classes()->pluck('classes.id');
+        $matiereIds = $enseignant->matieres()->pluck('matieres.id');
+
+        $notes = Notes::with(['eleve.user', 'matiere', 'classe'])
+            ->whereIn('classe_id', $classeIds)
+            ->whereIn('matiere_id', $matiereIds)
+            ->latest()
+            ->take(50)
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data'    => $notes,
+        ]);
+    }
 }

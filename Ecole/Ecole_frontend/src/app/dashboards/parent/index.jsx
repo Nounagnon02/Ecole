@@ -5,6 +5,7 @@
  */
 
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Users,
@@ -34,12 +35,14 @@ import {
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { cn } from '@/shared/lib/utils';
+import { useDashboardStats } from '@/app/dashboards/hooks/useDashboardData';
 import StatsCard from '@/shared/components/ui/StatsCard';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Avatar from '@/shared/components/ui/Avatar';
 import Button from '@/shared/components/ui/Button';
 import Table from '@/shared/components/ui/Table';
+import { Skeleton } from '@/shared/components/ui/Skeleton';
 
 // ─── Constantes ───────────────────────────────────────────────
 
@@ -51,42 +54,28 @@ const TABS = [
   { id: 'communications', label: 'Échanges', icon: MessageSquare },
 ];
 
-const ENFANTS = [
-  { id: 1, nom: 'Koffi Mensah', classe: '4ème A', moyenne: '15.2/20', rang: '5e/42' },
-  { id: 2, nom: 'Ama Mensah', classe: '6ème B', moyenne: '13.8/20', rang: '8e/38' },
-];
-
-const STATS_PARENT = [
-  { title: 'Enfants Scolarisés', value: '2', icon: Users, trend: 0, trendLabel: 'dans l\'établissement', color: 'indigo' },
-  { title: 'Moyenne Générale', value: '14.5/20', icon: TrendingUp, trend: 2.1, trendLabel: 'progression', color: 'emerald' },
-  { title: 'Assiduité', value: '95%', icon: CheckCircle2, trend: 1, trendLabel: 'vs trimestre dernier', color: 'sky' },
-  { title: 'Solde', value: '45 000 FCFA', icon: DollarSign, trend: -15, trendLabel: 'échéance dans 7j', color: 'amber' },
-];
-
-const EVOLUTION_NOTES = [
-  { mois: 'Jan', Koffi: 14, Ama: 13 },
-  { mois: 'Fév', Koffi: 15, Ama: 13.5 },
-  { mois: 'Mars', Koffi: 14.5, Ama: 14 },
-  { mois: 'Avr', Koffi: 16, Ama: 13 },
-  { mois: 'Mai', Koffi: 15.2, Ama: 13.8 },
-  { mois: 'Juin', Koffi: 15.5, Ama: 14 },
-];
-
-const COMMUNICATIONS = [
-  { id: 1, from: 'M. Koffi', role: 'Enseignant', sujet: 'Progression de votre enfant', date: '15/06', urgent: false },
-  { id: 2, from: 'Mme. Dossa', role: 'Comptable', sujet: 'Rappel échéance de paiement', date: '14/06', urgent: true },
-  { id: 3, from: 'M. Mensah', role: 'Surveillant', sujet: 'Comportement en étude', date: '12/06', urgent: false },
-  { id: 4, from: 'Directeur', role: 'Administration', sujet: 'Réunion parents-professeurs', date: '10/06', urgent: false },
+const STATS_META = [
+  { title: 'Enfants Scolarisés', icon: Users, color: 'primary' },
+  { title: 'Moyenne Générale', icon: TrendingUp, color: 'emerald' },
+  { title: 'Assiduité', icon: CheckCircle2, color: 'sky' },
+  { title: 'Solde', icon: DollarSign, color: 'amber' },
 ];
 
 // ─── Sections ─────────────────────────────────────────────────
 
-function ApercuSection() {
+function ApercuSection({ data, loading }) {
+  const safeStats = data?.stats?.map((s, i) => ({ ...s, icon: STATS_META[i]?.icon, color: STATS_META[i]?.color })) || [];
+  const safeEnfants = data?.enfants || [];
+  const safeEvolution = data?.evolution || [];
+  const safeCommunications = data?.communications || [];
+
   return (
     <div className="space-y-6">
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {STATS_PARENT.map((stat, i) => (
+        {loading
+          ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-28 rounded-2xl" />)
+          : safeStats.map((stat, i) => (
           <motion.div
             key={stat.title}
             initial={{ opacity: 0, y: 20 }}
@@ -109,11 +98,11 @@ function ApercuSection() {
               </div>
               <div className="flex items-center gap-4 text-xs">
                 <div className="flex items-center gap-1">
-                  <span className="h-2.5 w-2.5 rounded-full bg-indigo-500" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-[var(--accent)]" />
                   <span className="text-neutral-500">Koffi</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-[var(--emerald)]" />
                   <span className="text-neutral-500">Ama</span>
                 </div>
               </div>
@@ -121,28 +110,35 @@ function ApercuSection() {
           </Card.Header>
           <Card.Body>
             <div className="h-[250px]">
+              {safeEvolution.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full text-[var(--text-tertiary)]">
+                  <TrendingUp className="h-10 w-10 mb-3 opacity-40" />
+                  <p className="text-sm">Aucune donnée d'évolution disponible</p>
+                </div>
+              ) : (
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={EVOLUTION_NOTES}>
+                <AreaChart data={safeEvolution}>
                   <defs>
                     <linearGradient id="koffiGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.2} />
-                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                      <stop offset="5%" stopColor="var(--accent)" stopOpacity={0.2} />
+                      <stop offset="95%" stopColor="var(--accent)" stopOpacity={0} />
                     </linearGradient>
                     <linearGradient id="amaGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.2} />
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                      <stop offset="5%" stopColor="var(--green)" stopOpacity={0.2} />
+                      <stop offset="95%" stopColor="var(--green)" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis dataKey="mois" tick={{ fontSize: 12 }} stroke="#9ca3af" />
-                  <YAxis domain={[10, 18]} tick={{ fontSize: 12 }} stroke="#9ca3af" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                  <XAxis dataKey="mois" tick={{ fontSize: 12 }} stroke="var(--text-tertiary)" />
+                  <YAxis domain={[10, 18]} tick={{ fontSize: 12 }} stroke="var(--text-tertiary)" />
                   <ReTooltip
-                    contentStyle={{ borderRadius: '12px', border: '1px solid #e5e7eb' }}
+                    contentStyle={{ borderRadius: '8px', border: '1px solid var(--border)' }}
                   />
-                  <Area type="monotone" dataKey="Koffi" stroke="#6366f1" fill="url(#koffiGrad)" strokeWidth={2} />
-                  <Area type="monotone" dataKey="Ama" stroke="#10b981" fill="url(#amaGrad)" strokeWidth={2} />
+                  <Area type="monotone" dataKey="Koffi" stroke="var(--accent)" fill="url(#koffiGrad)" strokeWidth={2} />
+                  <Area type="monotone" dataKey="Ama" stroke="var(--green)" fill="url(#amaGrad)" strokeWidth={2} />
                 </AreaChart>
               </ResponsiveContainer>
+              )}
             </div>
           </Card.Body>
         </Card>
@@ -154,27 +150,34 @@ function ApercuSection() {
             <Card.Description>Vue rapide</Card.Description>
           </Card.Header>
           <Card.Body className="space-y-4">
-            {ENFANTS.map((enfant) => (
-              <div
-                key={enfant.id}
-                className="p-4 rounded-xl border border-neutral-100 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors cursor-pointer"
-              >
-                <div className="flex items-center gap-3">
-                  <Avatar name={enfant.nom} size="lg" />
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-neutral-900 dark:text-white">{enfant.nom}</p>
-                    <p className="text-xs text-neutral-500">{enfant.classe}</p>
-                  </div>
-                  <Badge variant="primary" size="sm">{enfant.moyenne}</Badge>
-                </div>
-                <div className="mt-3 flex items-center justify-between text-sm">
-                  <span className="text-neutral-500">Rang: <strong className="text-neutral-700 dark:text-neutral-300">{enfant.rang}</strong></span>
-                  <Button variant="ghost" size="sm">
-                    <Eye className="h-4 w-4" />
-                  </Button>
-                </div>
+            {safeEnfants.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-10 text-[var(--text-tertiary)]">
+                <Users className="h-10 w-10 mb-3 opacity-40" />
+                <p className="text-sm">Aucun enfant trouvé</p>
               </div>
-            ))}
+            ) : (
+              safeEnfants.map((enfant) => (
+                <div
+                  key={enfant.id}
+                  className="p-4 rounded-xl border border-neutral-100 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors cursor-pointer"
+                >
+                  <div className="flex items-center gap-3">
+                    <Avatar name={enfant.nom} size="lg" />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-neutral-900 dark:text-white">{enfant.nom}</p>
+                      <p className="text-xs text-neutral-500">{enfant.classe}</p>
+                    </div>
+                    <Badge variant="primary" size="sm">{enfant.moyenne}</Badge>
+                  </div>
+                  <div className="mt-3 flex items-center justify-between text-sm">
+                    <span className="text-neutral-500">Rang: <strong className="text-neutral-700 dark:text-neutral-300">{enfant.rang}</strong></span>
+                    <Button variant="ghost" size="sm">
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))
+            )}
           </Card.Body>
         </Card>
       </div>
@@ -187,12 +190,18 @@ function ApercuSection() {
               <Card.Title>Derniers Échanges</Card.Title>
               <Card.Description>Avec l'établissement</Card.Description>
             </div>
-            <Badge variant="danger" size="sm">{COMMUNICATIONS.filter(c => c.urgent).length} urgent</Badge>
+            <Badge variant="danger" size="sm">{safeCommunications.filter(c => c.urgent).length} urgent</Badge>
           </div>
         </Card.Header>
         <Card.Body className="p-0">
+          {safeCommunications.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-[var(--text-tertiary)]">
+              <MessageSquare className="h-10 w-10 mb-3 opacity-40" />
+              <p className="text-sm">Aucun échange récent</p>
+            </div>
+          ) : (
           <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
-            {COMMUNICATIONS.map((msg) => (
+            {safeCommunications.map((msg) => (
               <div
                 key={msg.id}
                 className={cn(
@@ -212,6 +221,7 @@ function ApercuSection() {
               </div>
             ))}
           </div>
+          )}
         </Card.Body>
         <Card.Footer>
           <Button variant="ghost" size="sm" className="w-full">
@@ -228,7 +238,7 @@ function NotesSection() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">Notes des Enfants</h2>
+          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Notes des Enfants</h2>
           <p className="text-sm text-neutral-500 mt-1">Suivi académique complet</p>
         </div>
       </div>
@@ -248,7 +258,7 @@ function EmploiSection() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">Emploi du Temps</h2>
+          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Emploi du Temps</h2>
           <p className="text-sm text-neutral-500 mt-1">Planning des enfants</p>
         </div>
       </div>
@@ -268,7 +278,7 @@ function PaiementsSection() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">Paiements</h2>
+          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Paiements</h2>
           <p className="text-sm text-neutral-500 mt-1">Frais de scolarité et factures</p>
         </div>
       </div>
@@ -288,7 +298,7 @@ function CommunicationsSection() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">Communications</h2>
+          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Communications</h2>
           <p className="text-sm text-neutral-500 mt-1">Messagerie avec l'établissement</p>
         </div>
       </div>
@@ -306,15 +316,24 @@ function CommunicationsSection() {
 // ─── Composant Principal ──────────────────────────────────────
 
 export default function ParentDashboard() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('apercu');
+  const { data, loading } = useDashboardStats('parent');
+
+  const handleTabClick = (tabId) => {
+    if (tabId === 'apercu') { setActiveTab(tabId); return; }
+    const routes = {
+      notes: '/notes',
+      emploi: '/emploi-du-temps',
+      paiements: '/paiements',
+      communications: '/communications',
+    };
+    navigate(routes[tabId] || '/parent/dashboard');
+  };
 
   const renderSection = () => {
     switch (activeTab) {
-      case 'apercu': return <ApercuSection />;
-      case 'notes': return <NotesSection />;
-      case 'emploi': return <EmploiSection />;
-      case 'paiements': return <PaiementsSection />;
-      case 'communications': return <CommunicationsSection />;
+      case 'apercu': return <ApercuSection data={data} loading={loading} />;
       default: return <ApercuSection />;
     }
   };
@@ -326,7 +345,7 @@ export default function ParentDashboard() {
           <motion.h1
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-2xl font-bold text-neutral-900 dark:text-white"
+            className="font-fraunces text-2xl font-bold text-neutral-900 dark:text-white"
           >
             Espace Parent
           </motion.h1>
@@ -343,11 +362,11 @@ export default function ParentDashboard() {
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => handleTabClick(tab.id)}
                 className={cn(
                   'flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-all whitespace-nowrap',
                   activeTab === tab.id
-                    ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                    ? 'border-[var(--accent)] text-[var(--accent)] dark:text-[var(--accent)]'
                     : 'border-transparent text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200'
                 )}
               >

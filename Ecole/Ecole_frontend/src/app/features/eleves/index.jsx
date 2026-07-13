@@ -2,25 +2,24 @@
  * GestionÉlèves — Page de gestion des élèves
  *
  * Fonctions : Liste, recherche, filtre par classe, ajout, édition
+ * Données dynamiques via GET /api/eleves (EleveController::index)
  */
 
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import {
   Search,
   Filter,
   UserPlus,
   Download,
-  MoreHorizontal,
   GraduationCap,
-  Mail,
-  Phone,
-  MapPin,
+  Users,
   Eye,
   Edit,
   Trash2,
-  ChevronDown,
-  Users,
+  RefreshCw,
+  AlertCircle,
 } from 'lucide-react';
 import { cn } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
@@ -29,29 +28,87 @@ import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import Avatar from '@/shared/components/ui/Avatar';
 import Table from '@/shared/components/ui/Table';
+import { api } from '@/shared/services/api';
 
-const CLASSES = ['Toutes', '6ème A', '6ème B', '5ème A', '5ème B', '4ème A', '4ème B', '3ème A', '3ème B', '2nde A', '2nde B', '1ère A', '1ère B', 'Tle A', 'Tle B'];
+/* ─── Helpers ───────────────────────────────────────────────────────────── */
 
-const ELEVES = [
-  { id: 1, nom: 'Jean Mensah', classe: '4ème A', matricule: 'EL-2024-001', sexe: 'M', age: 14, parent: 'M. Mensah', contact: '+226 70 12 34 56', status: 'Actif', moyenne: '15.2' },
-  { id: 2, nom: 'Ama Koffi', classe: '4ème A', matricule: 'EL-2024-002', sexe: 'F', age: 13, parent: 'M. Koffi', contact: '+226 70 23 45 67', status: 'Actif', moyenne: '14.8' },
-  { id: 3, nom: 'Koffi Dossa', classe: '4ème B', matricule: 'EL-2024-003', sexe: 'M', age: 14, parent: 'Mme. Dossa', contact: '+226 70 34 56 78', status: 'Actif', moyenne: '12.5' },
-  { id: 4, nom: 'Mwana Akakpo', classe: '3ème A', matricule: 'EL-2023-015', sexe: 'F', age: 15, parent: 'Famille Akakpo', contact: '+226 70 45 67 89', status: 'Actif', moyenne: '16.1' },
-  { id: 5, nom: 'David Amégnigban', classe: '3ème B', matricule: 'EL-2023-016', sexe: 'M', age: 15, parent: 'M. Amégnigban', contact: '+226 70 56 78 90', status: 'Inactif', moyenne: '9.8' },
-  { id: 6, nom: 'Sarah Koné', classe: '5ème A', matricule: 'EL-2024-004', sexe: 'F', age: 12, parent: 'M. Koné', contact: '+226 70 67 89 01', status: 'Actif', moyenne: '17.3' },
-  { id: 7, nom: 'Paul Bamba', classe: '2nde A', matricule: 'EL-2023-020', sexe: 'M', age: 16, parent: 'Mme. Bamba', contact: '+226 70 78 90 12', status: 'Actif', moyenne: '13.0' },
-  { id: 8, nom: 'Grace Ouattara', classe: 'Tle A', matricule: 'EL-2022-008', sexe: 'F', age: 18, parent: 'M. Ouattara', contact: '+226 70 89 01 23', status: 'Actif', moyenne: '14.2' },
-];
+function calcAge(dateNaissance) {
+  if (!dateNaissance) return '—';
+  const today = new Date();
+  const birth = new Date(dateNaissance);
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+  return age;
+}
+
+function getStudentName(eleve) {
+  const u = eleve.user;
+  if (!u) return '—';
+  return `${u.prenom || ''} ${u.name || ''}`.trim() || u.name || u.email || '—';
+}
+
+function getClasseName(eleve) {
+  const c = eleve.classe;
+  return c?.nom || c?.nom_classe || '—';
+}
+
+function getStatut(eleve) {
+  return eleve.user?.is_active === false ? 'Inactif' : 'Actif';
+}
+
+/* ─── Composant principal ──────────────────────────────────────────────── */
 
 export default function GestionÉlèves() {
   const [search, setSearch] = useState('');
   const [classeFilter, setClasseFilter] = useState('Toutes');
 
-  const filtered = ELEVES.filter(e =>
-    (classeFilter === 'Toutes' || e.classe === classeFilter) &&
-    (e.nom.toLowerCase().includes(search.toLowerCase()) ||
-     e.matricule.toLowerCase().includes(search.toLowerCase()))
+  const { data: eleves, isLoading, error, refetch } = useQuery({
+    queryKey: ['eleves'],
+    queryFn: async () => {
+      const response = await api.get('/eleves');
+      return response.data?.data || response.data;
+    },
+    staleTime: 60_000,
+    retry: 2,
+  });
+
+  /* Classes dynamiques depuis l'API */
+  const classes = eleves
+    ? ['Toutes', ...new Set(eleves.map(e => getClasseName(e)).filter(Boolean))]
+    : ['Toutes'];
+
+  const dataList = Array.isArray(eleves) ? eleves : [];
+
+  const filtered = dataList.filter(e =>
+    (classeFilter === 'Toutes' || getClasseName(e) === classeFilter) &&
+    (getStudentName(e).toLowerCase().includes(search.toLowerCase()) ||
+     (e.numero_matricule || '').toLowerCase().includes(search.toLowerCase()))
   );
+
+  /* Stats */
+  const actifs = dataList.filter(e => getStatut(e) === 'Actif').length;
+  const total = dataList.length;
+
+  /* États */
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <AlertCircle className="h-12 w-12 text-red-400 mb-4" />
+          <h2 className="text-lg font-semibold text-neutral-900 dark:text-white mb-2">
+            Erreur de chargement
+          </h2>
+          <p className="text-sm text-neutral-500 mb-4 max-w-md">
+            Impossible de charger la liste des élèves. Vérifiez votre connexion et réessayez.
+          </p>
+          <Button onClick={() => refetch()}>
+            <RefreshCw className="h-4 w-4 mr-2" /> Réessayer
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -66,10 +123,13 @@ export default function GestionÉlèves() {
             Gestion des Élèves
           </motion.h1>
           <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
-            {ELEVES.filter(e => e.status === 'Actif').length} élèves actifs · {ELEVES.length} total
+            {isLoading ? 'Chargement…' : `${actifs} élèves actifs · ${total} total`}
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={() => refetch()} disabled={isLoading}>
+            <RefreshCw className={cn('h-4 w-4 mr-1', isLoading && 'animate-spin')} /> Actualiser
+          </Button>
           <Button variant="ghost" size="sm">
             <Download className="h-4 w-4 mr-1" /> Exporter
           </Button>
@@ -82,10 +142,10 @@ export default function GestionÉlèves() {
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
-          { label: 'Total Élèves', value: '1 284', icon: Users, color: 'text-indigo-600 bg-indigo-50 dark:bg-indigo-500/10' },
-          { label: 'Actifs', value: '1 247', icon: GraduationCap, color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10' },
-          { label: 'Moyenne Générale', value: '13.8/20', icon: GraduationCap, color: 'text-sky-600 bg-sky-50 dark:bg-sky-500/10' },
-          { label: 'Taux de Réussite', value: '87%', icon: GraduationCap, color: 'text-purple-600 bg-purple-50 dark:bg-purple-500/10' },
+          { label: 'Total Élèves', value: isLoading ? '…' : total.toLocaleString(), icon: Users, color: 'text-[var(--accent)] bg-[var(--accent-subtle)] dark:bg-[var(--accent-subtle)]0/10' },
+          { label: 'Actifs', value: isLoading ? '…' : actifs.toLocaleString(), icon: GraduationCap, color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10' },
+          { label: 'Moyenne Générale', value: '—', icon: GraduationCap, color: 'text-sky-600 bg-sky-50 dark:bg-sky-500/10' },
+          { label: 'Taux de Réussite', value: '—', icon: GraduationCap, color: 'text-purple-600 bg-purple-50 dark:bg-purple-500/10' },
         ].map((stat, i) => (
           <motion.div
             key={stat.label}
@@ -123,9 +183,9 @@ export default function GestionÉlèves() {
               <select
                 value={classeFilter}
                 onChange={e => setClasseFilter(e.target.value)}
-                className="h-10 px-4 pr-10 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-sm text-neutral-700 dark:text-neutral-300 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                className="h-10 px-4 pr-10 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-sm text-neutral-700 dark:text-neutral-300 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)]"
               >
-                {CLASSES.map(c => (
+                {classes.map(c => (
                   <option key={c} value={c}>{c === 'Toutes' ? 'Toutes les classes' : c}</option>
                 ))}
               </select>
@@ -149,40 +209,53 @@ export default function GestionÉlèves() {
               <Table.Head className="text-right">Actions</Table.Head>
             </Table.Header>
             <Table.Body>
-              {filtered.map((eleve) => (
+              {isLoading && Array.from({ length: 5 }).map((_, i) => (
+                <Table.Row key={i}>
+                  {Array.from({ length: 7 }).map((__, j) => (
+                    <Table.Cell key={j}><div className="h-5 w-full bg-neutral-200 animate-pulse dark:bg-neutral-700 rounded" /></Table.Cell>
+                  ))}
+                </Table.Row>
+              ))}
+              {!isLoading && filtered.length === 0 && (
+                <Table.Row>
+                  <td colSpan={7} className="p-8 text-center text-sm text-neutral-500">
+                    {search || classeFilter !== 'Toutes'
+                      ? 'Aucun élève ne correspond à votre recherche.'
+                      : 'Aucun élève inscrit.'}
+                  </td>
+                </Table.Row>
+              )}
+              {!isLoading && filtered.map((eleve) => (
                 <Table.Row key={eleve.id}>
                   <Table.Cell>
                     <div className="flex items-center gap-3">
-                      <Avatar name={eleve.nom} size="sm" />
+                      <Avatar name={getStudentName(eleve)} size="sm" />
                       <div>
-                        <span className="font-medium text-neutral-900 dark:text-white">{eleve.nom}</span>
-                        <span className="text-xs text-neutral-400 ml-2">{eleve.age} ans · {eleve.sexe}</span>
+                        <span className="font-medium text-neutral-900 dark:text-white">
+                          {getStudentName(eleve)}
+                        </span>
+                        <span className="text-xs text-neutral-400 ml-2">
+                          {eleve.date_naissance ? `${calcAge(eleve.date_naissance)} ans` : '—'} · {eleve.sexe || '—'}
+                        </span>
                       </div>
                     </div>
                   </Table.Cell>
                   <Table.Cell>
-                    <Badge variant="info" size="sm">{eleve.classe}</Badge>
+                    <Badge variant="info" size="sm">{getClasseName(eleve)}</Badge>
                   </Table.Cell>
-                  <Table.Cell className="text-neutral-400 text-xs font-mono">{eleve.matricule}</Table.Cell>
+                  <Table.Cell className="text-neutral-400 text-xs font-mono">{eleve.numero_matricule || '—'}</Table.Cell>
                   <Table.Cell>
                     <div className="text-sm">
-                      <p className="text-neutral-700 dark:text-neutral-300">{eleve.parent}</p>
-                      <p className="text-xs text-neutral-400">{eleve.contact}</p>
+                      <p className="text-neutral-700 dark:text-neutral-300">{eleve.parents?.length ? eleve.parents[0]?.user?.name || '—' : '—'}</p>
+                      <p className="text-xs text-neutral-400">{eleve.user?.email || ''}</p>
                     </div>
                   </Table.Cell>
                   <Table.Cell>
-                    <span className={cn(
-                      'font-semibold text-sm',
-                      parseFloat(eleve.moyenne) >= 14 ? 'text-emerald-600 dark:text-emerald-400'
-                        : parseFloat(eleve.moyenne) >= 10 ? 'text-amber-600 dark:text-amber-400'
-                          : 'text-red-600 dark:text-red-400'
-                    )}>
-                      {eleve.moyenne}/20
-                    </span>
+                    <span className="text-neutral-400 text-sm">—</span>
                   </Table.Cell>
                   <Table.Cell>
-                    <Badge variant={eleve.status === 'Actif' ? 'success' : 'danger'} size="sm">
-                      {eleve.status}
+                    <Badge variant={getStatut(eleve) === 'Actif' ? 'success' : 'danger'} size="sm">
+                      {getStatut(eleve)}
                     </Badge>
                   </Table.Cell>
                   <Table.Cell className="text-right">
@@ -205,7 +278,7 @@ export default function GestionÉlèves() {
         </Card.Body>
         <Card.Footer>
           <div className="flex items-center justify-between text-sm text-neutral-500">
-            <span>{filtered.length} élèves sur {ELEVES.length}</span>
+            <span>{total > 0 ? `${filtered.length} élèves sur ${total}` : ''}</span>
             <div className="flex items-center gap-2">
               <button className="px-3 py-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 disabled:opacity-50" disabled>Précédent</button>
               <span className="font-medium text-neutral-700 dark:text-neutral-300">1</span>

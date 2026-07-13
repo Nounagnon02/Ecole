@@ -62,7 +62,7 @@ export default function ParametresPage() {
                 onClick={() => setActiveSection(section.id)}
                 className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
                   activeSection === section.id
-                    ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400'
+                    ? 'bg-[var(--accent-subtle)] text-[var(--accent)] dark:bg-[var(--accent-subtle)]0/10 dark:text-[var(--accent)]'
                     : 'text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800'
                 }`}
               >
@@ -148,7 +148,7 @@ function NotificationsSection() {
             </div>
             <label className="relative inline-flex cursor-pointer items-center">
               <input type="checkbox" defaultChecked={item.enabled} className="peer sr-only" />
-              <div className="h-6 w-11 rounded-full bg-neutral-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all peer-checked:bg-indigo-500 peer-checked:after:translate-x-full dark:bg-neutral-700" />
+              <div className="h-6 w-11 rounded-full bg-neutral-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all peer-checked:bg-[var(--accent-subtle)]0 peer-checked:after:translate-x-full dark:bg-neutral-700" />
             </label>
           </div>
         ))}
@@ -227,7 +227,7 @@ function ApparenceSection() {
           ].map((theme) => (
             <button
               key={theme.id}
-              className="flex flex-col items-center gap-2 rounded-xl border-2 border-neutral-200 p-4 hover:border-indigo-300 transition-all dark:border-neutral-700 dark:hover:border-indigo-500"
+              className="flex flex-col items-center gap-2 rounded-xl border-2 border-neutral-200 p-4 hover:border-[var(--accent)]/30 transition-all dark:border-neutral-700 dark:hover:border-[var(--accent)]"
             >
               <theme.icon className="h-6 w-6 text-neutral-600 dark:text-neutral-400" />
               <span className="text-sm font-medium text-neutral-900 dark:text-white">{theme.label}</span>
@@ -240,12 +240,12 @@ function ApparenceSection() {
       <Card>
         <Card.Header title="Police" />
         <div className="flex items-center gap-4">
-          <select className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300">
+          <select className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300">
             <option>Inter (par défaut)</option>
             <option>Plus Jakarta Sans</option>
             <option>Roboto</option>
           </select>
-          <select className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300">
+          <select className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300">
             <option>Normale</option>
             <option>Grande</option>
             <option>Très grande</option>
@@ -267,7 +267,7 @@ function PreferencesSection() {
             <p className="text-sm font-medium text-neutral-900 dark:text-white">Langue</p>
             <p className="text-xs text-neutral-500">Langue de l'interface</p>
           </div>
-          <select className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300">
+          <select className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300">
             <option>Français</option>
             <option>English</option>
           </select>
@@ -277,7 +277,7 @@ function PreferencesSection() {
             <p className="text-sm font-medium text-neutral-900 dark:text-white">Fuseau horaire</p>
             <p className="text-xs text-neutral-500">UTC+0 (Abidjan, GMT)</p>
           </div>
-          <select className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300">
+          <select className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300">
             <option>UTC+0 (Abidjan)</option>
             <option>UTC+1 (Paris)</option>
           </select>
@@ -287,7 +287,7 @@ function PreferencesSection() {
             <p className="text-sm font-medium text-neutral-900 dark:text-white">Format de date</p>
             <p className="text-xs text-neutral-500">JJ/MM/AAAA</p>
           </div>
-          <select className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300">
+          <select className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300">
             <option>JJ/MM/AAAA</option>
             <option>MM/JJ/AAAA</option>
             <option>AAAA-MM-JJ</option>
@@ -298,7 +298,7 @@ function PreferencesSection() {
             <p className="text-sm font-medium text-neutral-900 dark:text-white">Devise</p>
             <p className="text-xs text-neutral-500">Format d'affichage des montants</p>
           </div>
-          <select className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300">
+          <select className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300">
             <option>XOF (CFA)</option>
             <option>EUR (€)</option>
             <option>USD ($)</option>

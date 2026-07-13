@@ -1,54 +1,88 @@
 /**
- * DepartementsPage — Gestion des départements
+ * DepartementsPage — Gestion des départements universitaires
  *
- * Module université : gestion des départements par faculté.
+ * Module université : départements rattachés aux facultés.
+ * Données dynamiques via API /api/universite/departements
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
-  BookOpen, Plus, Search, Filter, Users, Building2,
-  Calendar, User, GraduationCap,
+  BookOpen, Plus, Search, Users, Building2,
+  User, GraduationCap, Mail, Phone, Loader2, AlertCircle,
 } from 'lucide-react';
-import { cn } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
-import Avatar from '@/shared/components/ui/Avatar';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
-
-const DEPARTEMENTS = [
-  { id: 1, nom: 'Mathématiques', code: 'MATH', faculte: 'Faculté des Sciences', chef: 'Pr. Diallo Amadou', enseignants: 12, etudiants: 320, cours: 15 },
-  { id: 2, nom: 'Physique', code: 'PHY', faculte: 'Faculté des Sciences', chef: 'Pr. Touré Fatou', enseignants: 10, etudiants: 280, cours: 12 },
-  { id: 3, nom: 'Lettres Modernes', code: 'LM', faculte: 'Faculté des Lettres', chef: 'Pr. Koné Moussa', enseignants: 14, etudiants: 350, cours: 18 },
-  { id: 4, nom: 'Anglais', code: 'ANG', faculte: 'Faculté des Lettres', chef: 'Pr. Cissé Inza', enseignants: 8, etudiants: 200, cours: 10 },
-  { id: 5, nom: 'Droit Privé', code: 'DP', faculte: 'Faculté de Droit', chef: 'Pr. Traoré Kadiatou', enseignants: 10, etudiants: 400, cours: 14 },
-  { id: 6, nom: 'Droit Public', code: 'DPU', faculte: 'Faculté de Droit', chef: 'Pr. Sow Mariam', enseignants: 8, etudiants: 380, cours: 11 },
-  { id: 7, nom: 'Économie', code: 'ECO', faculte: 'Faculté des Sciences Économiques', chef: 'Pr. Diop Souleymane', enseignants: 12, etudiants: 450, cours: 16 },
-  { id: 8, nom: 'Gestion', code: 'GES', faculte: 'Faculté des Sciences Économiques', chef: 'Pr. Ndiaye Fatma', enseignants: 10, etudiants: 440, cours: 14 },
-];
-
-const FACULTES = [...new Set(DEPARTEMENTS.map((d) => d.faculte))];
+import { useApi } from '@/hooks/useApi';
 
 export default function DepartementsPage() {
+  const { loading, error, get } = useApi();
+  const [departements, setDepartements] = useState([]);
   const [search, setSearch] = useState('');
   const [filterFaculte, setFilterFaculte] = useState('');
 
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await get('/universite/departements');
+        const items = Array.isArray(res?.data?.data) ? res.data.data
+          : Array.isArray(res?.data) ? res.data
+          : Array.isArray(res) ? res
+          : [];
+        setDepartements(items.map((d) => ({
+          ...d,
+          chef: d.chef || d.responsable || '—',
+          code: d.code || d.sigle || '—',
+          enseignants: d.enseignants_count ?? d.enseignants ?? 0,
+          etudiants: d.etudiants_count ?? d.etudiants ?? 0,
+          cours: d.cours_count ?? d.cours ?? 0,
+          faculte_nom: d.faculte?.nom || d.faculte_nom || '—',
+        })));
+      } catch (e) {
+        console.error('Erreur chargement départements:', e);
+      }
+    })();
+  }, []);
+
+  const facultes = useMemo(() =>
+    [...new Set(departements.map((d) => d.faculte_nom).filter(Boolean))],
+    [departements]
+  );
+
   const stats = useMemo(() => ({
-    total: DEPARTEMENTS.length,
-    enseignants: DEPARTEMENTS.reduce((s, d) => s + d.enseignants, 0),
-    etudiants: DEPARTEMENTS.reduce((s, d) => s + d.etudiants, 0),
-  }), []);
+    total: departements.length,
+    enseignants: departements.reduce((s, d) => s + Number(d.enseignants), 0),
+    etudiants: departements.reduce((s, d) => s + Number(d.etudiants), 0),
+  }), [departements]);
 
   const filtered = useMemo(() =>
-    DEPARTEMENTS.filter((d) => {
-      if (search && !d.nom.toLowerCase().includes(search.toLowerCase())) return false;
-      if (filterFaculte && d.faculte !== filterFaculte) return false;
+    departements.filter((d) => {
+      if (search && !d.nom?.toLowerCase().includes(search.toLowerCase()) && !d.code?.toLowerCase().includes(search.toLowerCase())) return false;
+      if (filterFaculte && d.faculte_nom !== filterFaculte) return false;
       return true;
     }),
-    [search, filterFaculte]
+    [search, filterFaculte, departements]
   );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
+        <AlertCircle className="h-8 w-8 mb-2 text-red-400" />
+        <p className="text-sm">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
@@ -61,7 +95,7 @@ export default function DepartementsPage() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <StatsCard title="Départements" value={String(stats.total)} icon={BookOpen} color="indigo" />
+        <StatsCard title="Départements" value={String(stats.total)} icon={BookOpen} color="primary" />
         <StatsCard title="Enseignants" value={String(stats.enseignants)} icon={Users} color="emerald" />
         <StatsCard title="Étudiants" value={String(stats.etudiants)} icon={GraduationCap} color="amber" />
       </div>
@@ -80,10 +114,10 @@ export default function DepartementsPage() {
           <select
             value={filterFaculte}
             onChange={(e) => setFilterFaculte(e.target.value)}
-            className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+            className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
           >
             <option value="">Toutes facultés</option>
-            {FACULTES.map((f) => <option key={f} value={f}>{f}</option>)}
+            {facultes.map((f) => <option key={f} value={f}>{f}</option>)}
           </select>
         </div>
       </Card>
@@ -107,7 +141,7 @@ export default function DepartementsPage() {
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-sm font-semibold text-neutral-900 dark:text-white">{d.nom}</span>
                   <Badge variant="primary" size="sm">{d.code}</Badge>
-                  <Badge variant="outline" size="sm">{d.faculte}</Badge>
+                  <Badge variant="outline" size="sm">{d.faculte_nom}</Badge>
                 </div>
                 <div className="mt-1 flex items-center gap-3 text-xs text-neutral-500">
                   <span className="flex items-center gap-1"><User className="h-3 w-3" /> Chef : {d.chef}</span>
@@ -117,6 +151,12 @@ export default function DepartementsPage() {
                   <span className="text-neutral-600 dark:text-neutral-400"><strong>{d.etudiants}</strong> étudiants</span>
                   <span className="text-neutral-600 dark:text-neutral-400"><strong>{d.cours}</strong> cours</span>
                 </div>
+                {(d.email || d.telephone) && (
+                  <div className="mt-2 space-y-1 text-xs text-neutral-500">
+                    {d.email && <span className="flex items-center gap-1"><Mail className="h-3 w-3" /> {d.email}</span>}
+                    {d.telephone && <span className="flex items-center gap-1"><Phone className="h-3 w-3" /> {d.telephone}</span>}
+                  </div>
+                )}
               </div>
               <Button variant="ghost" size="sm">Gérer</Button>
             </div>

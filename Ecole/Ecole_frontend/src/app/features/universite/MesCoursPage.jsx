@@ -2,13 +2,14 @@
  * MesCoursPage — Mes cours (vue enseignant université)
  *
  * Module université : liste des cours assignés au professeur connecté.
+ * Données dynamiques via API /api/universite/mes-cours
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   BookOpen, Search, Filter, Clock, Users, Calendar, GraduationCap,
-  FileText, Download, Eye, Video, MapPin,
+  FileText, Download, Eye, Video, MapPin, Loader2, AlertCircle,
 } from 'lucide-react';
 import { cn, formatDate } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
@@ -16,31 +17,64 @@ import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
-
-const MES_COURS = [
-  { id: 1, intitule: 'Algèbre Linéaire', code: 'ALG201', niveau: 'L2', horaire: 'Lun 08h-10h', salle: 'Amphi A', etudiants: 45, progression: 65, prochainCours: '2026-06-20', statut: 'en_cours' },
-  { id: 2, intitule: 'Analyse Numérique', code: 'AN301', niveau: 'L3', horaire: 'Mar 10h-12h', salle: 'Salle 201', etudiants: 28, progression: 42, prochainCours: '2026-06-21', statut: 'en_cours' },
-  { id: 3, intitule: 'Statistiques', code: 'STAT201', niveau: 'L2', horaire: 'Mer 14h-16h', salle: 'Amphi B', etudiants: 38, progression: 30, prochainCours: '2026-06-22', statut: 'en_cours' },
-  { id: 4, intitule: 'Mathématiques Financières', code: 'MATH301', niveau: 'L3', horaire: 'Jeu 08h-10h', salle: 'Salle 105', etudiants: 22, progression: 100, prochainCours: null, statut: 'termine' },
-];
+import { useApi } from '@/hooks/useApi';
 
 export default function MesCoursPage() {
+  const { loading, error, get } = useApi();
+  const [cours, setCours] = useState([]);
   const [search, setSearch] = useState('');
 
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await get('/universite/mes-cours');
+        const items = Array.isArray(res?.data?.data) ? res.data.data
+          : Array.isArray(res?.data) ? res.data
+          : Array.isArray(res) ? res
+          : [];
+        setCours(items.map(c => ({
+          ...c,
+          progression: c.progression || c.avancement || 0,
+          prochainCours: c.prochain_cours || c.prochainCours || null,
+          statut: c.statut || 'en_cours',
+        })));
+      } catch (e) {
+        console.error('Erreur chargement mes cours:', e);
+      }
+    })();
+  }, [get]);
+
   const stats = useMemo(() => ({
-    total: MES_COURS.length,
-    enCours: MES_COURS.filter((c) => c.statut === 'en_cours').length,
-    termines: MES_COURS.filter((c) => c.statut === 'termine').length,
-    totalEtudiants: MES_COURS.reduce((s, c) => s + c.etudiants, 0),
-  }), []);
+    total: cours.length,
+    enCours: cours.filter((c) => c.statut === 'en_cours').length,
+    termines: cours.filter((c) => c.statut === 'termine' || c.statut === 'terminé').length,
+    totalEtudiants: cours.reduce((s, c) => s + Number(c.etudiants || 0), 0),
+  }), [cours]);
 
   const filtered = useMemo(() =>
-    MES_COURS.filter((c) => {
-      if (search && !c.intitule.toLowerCase().includes(search.toLowerCase()) && !c.code.toLowerCase().includes(search.toLowerCase())) return false;
+    cours.filter((c) => {
+      if (search && !c.intitule?.toLowerCase().includes(search.toLowerCase()) && !c.code?.toLowerCase().includes(search.toLowerCase())) return false;
       return true;
     }),
-    [search]
+    [search, cours]
   );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
+        <AlertCircle className="h-8 w-8 mb-2 text-red-400" />
+        <p className="text-sm">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
@@ -52,7 +86,7 @@ export default function MesCoursPage() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-4">
-        <StatsCard title="Total" value={String(stats.total)} icon={BookOpen} color="indigo" />
+        <StatsCard title="Total" value={String(stats.total)} icon={BookOpen} color="primary" />
         <StatsCard title="En cours" value={String(stats.enCours)} icon={Clock} color="emerald" />
         <StatsCard title="Terminés" value={String(stats.termines)} icon={GraduationCap} color="sky" />
         <StatsCard title="Étudiants" value={String(stats.totalEtudiants)} icon={Users} color="amber" />
@@ -84,16 +118,16 @@ export default function MesCoursPage() {
             <div className="flex items-start gap-4">
               <div className={cn(
                 'h-12 w-12 rounded-xl flex items-center justify-center shrink-0',
-                c.statut === 'termine' ? 'bg-neutral-100 dark:bg-neutral-800' : 'bg-indigo-100 dark:bg-indigo-900/20'
+                c.statut === 'termine' || c.statut === 'terminé' ? 'bg-neutral-100 dark:bg-neutral-800' : 'bg-[var(--primary-subtle)] bg-[var(--primary-subtle)]'
               )}>
-                <BookOpen className={cn('h-6 w-6', c.statut === 'termine' ? 'text-neutral-400' : 'text-indigo-500')} />
+                <BookOpen className={cn('h-6 w-6', c.statut === 'termine' || c.statut === 'terminé' ? 'text-neutral-400' : 'text-[var(--accent)]')} />
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-sm font-semibold text-neutral-900 dark:text-white">{c.intitule}</span>
                   <Badge variant="outline" size="sm">{c.code}</Badge>
-                  <Badge variant={c.statut === 'termine' ? 'outline' : 'primary'} size="sm">
-                    {c.statut === 'termine' ? 'Terminé' : 'En cours'}
+                  <Badge variant={c.statut === 'termine' || c.statut === 'terminé' ? 'outline' : 'primary'} size="sm">
+                    {c.statut === 'termine' || c.statut === 'terminé' ? 'Terminé' : 'En cours'}
                   </Badge>
                 </div>
                 <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-neutral-500">
@@ -115,7 +149,7 @@ export default function MesCoursPage() {
                     <div
                       className={cn(
                         'h-full rounded-full transition-all',
-                        c.progression === 100 ? 'bg-emerald-500' : 'bg-indigo-500'
+                        c.progression === 100 ? 'bg-emerald-500' : 'bg-[var(--accent-subtle)]0'
                       )}
                       style={{ width: `${c.progression}%` }}
                     />

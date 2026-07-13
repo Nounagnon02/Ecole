@@ -15,6 +15,7 @@
 | - users.php     : Enseignants, parents, personnel
 | - services.php  : Paiements, messagerie, contributions
 | - universite.php: Module universitaire
+| - admin.php     : Super admin — utilisateurs, configuration, logs
 |
 */
 
@@ -25,3 +26,4 @@ require __DIR__.'/api/academic.php';
 require __DIR__.'/api/users.php';
 require __DIR__.'/api/services.php';
 require __DIR__.'/api/universite.php';
+require __DIR__.'/api/admin.php';

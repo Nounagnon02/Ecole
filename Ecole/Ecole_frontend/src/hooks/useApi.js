@@ -91,41 +91,29 @@ export const useCrud = (baseUrl) => {
   }, [baseUrl, get]);
 
   const create = useCallback(async (newData) => {
-    try {
-      const response = await post(baseUrl, newData);
-      setData(prev => [...prev, response.data]);
-      return response.data;
-    } catch (err) {
-      throw err;
-    }
+    const response = await post(baseUrl, newData);
+    setData(prev => [...prev, response.data]);
+    return response.data;
   }, [baseUrl, post]);
 
   const update = useCallback(async (id, updatedData) => {
-    try {
-      const response = await put(`${baseUrl}/${id}`, updatedData);
-      setData(prev => prev.map(item => 
-        item.id === id ? response.data : item
-      ));
-      if (item && item.id === id) {
-        setItem(response.data);
-      }
-      return response.data;
-    } catch (err) {
-      throw err;
+    const response = await put(`${baseUrl}/${id}`, updatedData);
+    setData(prev => prev.map(item =>
+      item.id === id ? response.data : item
+    ));
+    if (item && item.id === id) {
+      setItem(response.data);
     }
+    return response.data;
   }, [baseUrl, put, item]);
 
   const remove = useCallback(async (id) => {
-    try {
-      await del(`${baseUrl}/${id}`);
-      setData(prev => prev.filter(item => item.id !== id));
-      if (item && item.id === id) {
-        setItem(null);
-      }
-      return true;
-    } catch (err) {
-      throw err;
+    await del(`${baseUrl}/${id}`);
+    setData(prev => prev.filter(item => item.id !== id));
+    if (item && item.id === id) {
+      setItem(null);
     }
+    return true;
   }, [baseUrl, del, item]);
 
   return {
