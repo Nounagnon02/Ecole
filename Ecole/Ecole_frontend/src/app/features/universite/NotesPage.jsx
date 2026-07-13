@@ -2,13 +2,14 @@
  * NotesPage — Gestion des notes universitaires
  *
  * Module université : saisie et consultation des notes.
+ * Données dynamiques via API /api/universite/notes
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   GraduationCap, Search, Filter, Plus, Download, Clock, CheckCircle,
-  AlertCircle, TrendingUp, Eye, FileText,
+  AlertCircle, TrendingUp, Eye, FileText, Loader2,
 } from 'lucide-react';
 import { cn, formatDate } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
@@ -17,50 +18,83 @@ import Avatar from '@/shared/components/ui/Avatar';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
-
-const NOTES = Array.from({ length: 12 }, (_, i) => ({
-  id: i + 1,
-  etudiant: ['Diallo Amadou', 'Touré Fatou', 'Koné Moussa', 'Cissé Inza', 'Traoré Kadiatou', 'Sow Mariam', 'Diop Souleymane', 'Ndiaye Fatma', 'Ba Ousmane', 'Sylla Aïcha', 'Faye Cheikh', 'Gueye Ndeye'][i],
-  matricule: `ETU${String(2024000 + i).slice(-6)}`,
-  cours: ['Algèbre Linéaire', 'Algèbre Linéaire', 'Mécanique Quantique', 'Mécanique Quantique', 'Littérature Comparée', 'Littérature Comparée', 'Droit des Contrats', 'Droit des Contrats', 'Microéconomie', 'Microéconomie', 'Analyse Numérique', 'Analyse Numérique'][i],
-  note: [14, 12, 16, 8, 15, 10, 13, 17, 11, 9, 15, 6][i],
-  sur: [20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20][i],
-  coefficient: [2, 2, 3, 3, 2, 2, 2, 2, 3, 3, 2, 2][i],
-  semestre: 'S1',
-  date: new Date(Date.now() - 86400000 * (5 + i * 2)),
-  statut: ['validee', 'validee', 'validee', 'en_attente', 'validee', 'validee', 'validee', 'validee', 'en_attente', 'validee', 'validee', 'en_attente'][i],
-}));
-
-const getNoteColor = (note, sur) => {
-  const pct = (note / sur) * 100;
-  if (pct >= 70) return 'text-emerald-600';
-  if (pct >= 50) return 'text-amber-600';
-  return 'text-red-600';
-};
+import { useApi } from '@/hooks/useApi';
 
 export default function NotesPage() {
+  const { loading, error, get } = useApi();
+  const [notes, setNotes] = useState([]);
   const [search, setSearch] = useState('');
   const [filterStatut, setFilterStatut] = useState('');
 
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await get('/universite/notes');
+        const items = Array.isArray(res?.data?.data) ? res.data.data
+          : Array.isArray(res?.data) ? res.data
+          : Array.isArray(res) ? res
+          : [];
+        setNotes(items.map((n) => ({
+          ...n,
+          etudiant: n.etudiant?.nom || n.etudiant?.prenom ? `${n.etudiant?.prenom || ''} ${n.etudiant?.nom || ''}`.trim() : n.etudiant_nom || 'Étudiant',
+          matricule: n.etudiant?.matricule || n.matricule || '—',
+          cours: n.cours?.intitule || n.cours?.nom || n.cours_nom || 'Cours',
+          note: n.note || n.valeur || 0,
+          sur: n.sur || n.note_sur || 20,
+          coefficient: n.coefficient || n.coef || 1,
+          semestre: n.semestre || 'S1',
+          date: n.date || n.created_at || null,
+          statut: n.statut || 'validee',
+        })));
+      } catch (e) {
+        console.error('Erreur chargement notes:', e);
+      }
+    })();
+  }, [get]);
+
+  const getNoteColor = (note, sur) => {
+    const pct = (note / sur) * 100;
+    if (pct >= 70) return 'text-emerald-600';
+    if (pct >= 50) return 'text-amber-600';
+    return 'text-red-600';
+  };
+
   const stats = useMemo(() => {
-    const validees = NOTES.filter((n) => n.statut === 'validee');
+    const validees = notes.filter((n) => n.statut === 'validee');
     const moyenne = validees.length > 0 ? validees.reduce((s, n) => s + (n.note / n.sur) * 100, 0) / validees.length : 0;
     return {
-      total: NOTES.length,
+      total: notes.length,
       validees: validees.length,
-      enAttente: NOTES.filter((n) => n.statut === 'en_attente').length,
+      enAttente: notes.filter((n) => n.statut === 'en_attente').length,
       moyenne: moyenne.toFixed(1),
     };
-  }, []);
+  }, [notes]);
 
   const filtered = useMemo(() =>
-    NOTES.filter((n) => {
-      if (search && !n.etudiant.toLowerCase().includes(search.toLowerCase()) && !n.cours.toLowerCase().includes(search.toLowerCase())) return false;
+    notes.filter((n) => {
+      if (search && !n.etudiant?.toLowerCase().includes(search.toLowerCase()) && !n.cours?.toLowerCase().includes(search.toLowerCase())) return false;
       if (filterStatut && n.statut !== filterStatut) return false;
       return true;
     }),
-    [search, filterStatut]
+    [search, filterStatut, notes]
   );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
+        <AlertCircle className="h-8 w-8 mb-2 text-red-400" />
+        <p className="text-sm">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
@@ -76,7 +110,7 @@ export default function NotesPage() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-4">
-        <StatsCard title="Total Notes" value={String(stats.total)} icon={GraduationCap} color="indigo" />
+        <StatsCard title="Total Notes" value={String(stats.total)} icon={GraduationCap} color="primary" />
         <StatsCard title="Validées" value={String(stats.validees)} icon={CheckCircle} color="emerald" />
         <StatsCard title="En attente" value={String(stats.enAttente)} icon={Clock} color="amber" />
         <StatsCard title="Moyenne" value={`${stats.moyenne}%`} icon={TrendingUp} color="sky" />
@@ -96,7 +130,7 @@ export default function NotesPage() {
           <select
             value={filterStatut}
             onChange={(e) => setFilterStatut(e.target.value)}
-            className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+            className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
           >
             <option value="">Tous les statuts</option>
             <option value="validee">Validée</option>
@@ -147,7 +181,7 @@ export default function NotesPage() {
                   </td>
                   <td className="py-3 pr-4 text-sm text-neutral-600 dark:text-neutral-400">x{n.coefficient}</td>
                   <td className="py-3 pr-4"><Badge variant="outline" size="sm">{n.semestre}</Badge></td>
-                  <td className="py-3 pr-4 text-sm text-neutral-600 dark:text-neutral-400">{formatDate(n.date)}</td>
+                  <td className="py-3 pr-4 text-sm text-neutral-600 dark:text-neutral-400">{n.date ? formatDate(n.date) : '—'}</td>
                   <td className="py-3 pr-4">
                     <Badge variant={n.statut === 'validee' ? 'primary' : 'warning'} size="sm">
                       {n.statut === 'validee' ? 'Validée' : 'En attente'}

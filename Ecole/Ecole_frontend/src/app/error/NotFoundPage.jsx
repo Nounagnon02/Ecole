@@ -33,7 +33,7 @@ export default function NotFoundPage() {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
           <Link
             to="/"
-            className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-500"
+            className="inline-flex items-center gap-2 rounded-lg bg-[var(--accent)] px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[var(--accent-hover)]"
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
@@ -42,7 +42,7 @@ export default function NotFoundPage() {
           </Link>
           <button
             onClick={() => window.history.back()}
-            className="inline-flex items-center gap-2 rounded-xl border border-neutral-200 bg-white px-6 py-2.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
+            className="inline-flex items-center gap-2 rounded-lg border border-[var(--border)] bg-white px-6 py-2.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-[var(--border)] dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
           >
             Page précédente
           </button>

@@ -1,38 +1,79 @@
-import React, { useState, useEffect } from 'react';
-import { View, ScrollView, StyleSheet, Alert } from 'react-native';
-import { Card, Title, Text, Button, FAB, Searchbar, Chip, TextInput, Modal, Portal } from 'react-native-paper';
+/**
+ * ============================================================================
+ * BibliothecaireDashboard — Érudit v4 (React Native)
+ *
+ * Refonte complète du dashboard Bibliothécaire.
+ * Zéro react-native-paper. 100% composants Érudit + useTheme().
+ * Couleur de rôle : olivine (#7A8A5A)
+ *
+ * Tabs : Catalogue | Emprunts | Réservations | Profil
+ * ============================================================================
+ */
+
+import { EruditText, EruditRow, EruditMenuItem } from '../components/EruditUtilities';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, ScrollView, RefreshControl, Alert } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
+import { useTheme, useRoleTheme } from '../theme';
+import { eruditTabOptions, useEruditTabBarStyle, useEruditTabColors } from '../components/EruditTabs';
+import EruditCard from '../components/EruditCard';
+import EruditButton from '../components/EruditButton';
+import EruditBadge from '../components/EruditBadge';
+import EruditStatsCard from '../components/EruditStatsCard';
+import EruditSearchBar from '../components/EruditSearchBar';
+import EruditInput from '../components/EruditInput';
+import EruditModal from '../components/EruditModal';
+import EruditFAB from '../components/EruditFAB';
+import EruditDashboardHeader from '../components/EruditDashboardHeader';
+import EruditSkeleton from '../components/EruditSkeleton';
+import EruditEmptyState from '../components/EruditEmptyState';
 
 const Tab = createBottomTabNavigator();
+const ROLE = 'bibliothecaire';
 
-const CatalogueScreen = () => {
+/* ═══════════════════════════════════════════════════════════════════════════
+   Onglet 1 — Catalogue
+   ══════════════════════════════════════════════════════════════════════════ */
+
+function CatalogueScreen() {
+  const { colors, spacing } = useTheme();
   const [livres, setLivres] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [titre, setTitre] = useState('');
   const [auteur, setAuteur] = useState('');
+  const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    fetchLivres();
-  }, []);
-
-  const fetchLivres = async () => {
+  const fetchLivres = useCallback(async () => {
     try {
       const response = await api.get('/bibliothecaire/livres');
-      setLivres(response.data);
+      setLivres(response.data || []);
     } catch (error) {
       console.error('Error fetching livres:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
     }
-  };
+  }, []);
+
+  useEffect(() => { fetchLivres(); }, [fetchLivres]);
+  const onRefresh = useCallback(() => { setRefreshing(true); fetchLivres(); }, [fetchLivres]);
+
+  const filtered = livres.filter(l =>
+    (l.titre || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (l.auteur || '').toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const ajouterLivre = async () => {
+    if (!titre.trim() || !auteur.trim()) return;
+    setSaving(true);
     try {
-      await api.post('/livres', {
-        titre,
-        auteur,
+      await api.post('/bibliothecaire/livres', {
+        titre, auteur,
         isbn: Math.random().toString().substr(2, 13),
         disponible: true,
       });
@@ -43,104 +84,119 @@ const CatalogueScreen = () => {
       Alert.alert('Succès', 'Livre ajouté au catalogue');
     } catch (error) {
       Alert.alert('Erreur', 'Erreur lors de l\'ajout du livre');
+    } finally {
+      setSaving(false);
     }
   };
 
-  const filteredLivres = livres.filter(livre =>
-    livre.titre.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    livre.auteur.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  if (loading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.surface, padding: spacing.lg, gap: spacing.md }}>
+        <EruditSearchBar placeholder="Rechercher un livre..." value="" onChangeText={() => {}} />
+        {[1, 2, 3].map(i => <EruditSkeleton key={i} variant="rect" width="100%" height={130} borderRadius={16} />)}
+      </View>
+    );
+  }
 
   return (
-    <View style={styles.container}>
-      <Searchbar
-        placeholder="Rechercher un livre"
-        onChangeText={setSearchQuery}
-        value={searchQuery}
-        style={styles.searchbar}
-      />
-      <ScrollView>
-        {filteredLivres.map(livre => (
-          <Card key={livre.id} style={styles.card}>
-            <Card.Content>
-              <Title>{livre.titre}</Title>
-              <Text>Auteur: {livre.auteur}</Text>
-              <Text>ISBN: {livre.isbn}</Text>
-              <Text>Catégorie: {livre.categorie}</Text>
-              <Text>Année: {livre.annee_publication}</Text>
-              <Text>Exemplaires: {livre.nombre_exemplaires}</Text>
-              <Chip 
-                style={[
-                  styles.chip,
-                  { backgroundColor: livre.disponible ? '#4CAF50' : '#f44336' }
-                ]}
-              >
-                {livre.disponible ? 'Disponible' : 'Emprunté'}
-              </Chip>
-            </Card.Content>
-            <Card.Actions>
-              <Button mode="outlined">Modifier</Button>
-              <Button mode="contained">Emprunter</Button>
-            </Card.Actions>
-          </Card>
-        ))}
+    <View style={{ flex: 1, backgroundColor: colors.surface }}>
+      <View style={{ padding: spacing.lg, paddingBottom: 0 }}>
+        <EruditSearchBar
+          placeholder="Rechercher un livre..."
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+      </View>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ padding: spacing.lg, gap: spacing.md, paddingBottom: 100 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
+      >
+        {filtered.length === 0 ? (
+          <EruditEmptyState
+            icon="📚"
+            title="Aucun livre trouvé"
+            description={searchQuery ? 'Essayez un autre titre ou auteur.' : 'Ajoutez votre premier livre au catalogue.'}
+            actionLabel="Ajouter un livre"
+            onAction={() => setModalVisible(true)}
+          />
+        ) : (
+          filtered.map(livre => (
+            <EruditCard key={livre.id} variant="default">
+              <EruditCard.Header>
+                <EruditCard.Title>{livre.titre}</EruditCard.Title>
+                <EruditBadge
+                  variant={livre.disponible ? 'success' : 'danger'}
+                  size="sm"
+                  dot
+                >
+                  {livre.disponible ? 'Disponible' : 'Emprunté'}
+                </EruditBadge>
+              </EruditCard.Header>
+              <EruditCard.Body>
+                <EruditRow label="Auteur" value={livre.auteur || '—'} />
+                <EruditRow label="ISBN" value={livre.isbn || '—'} />
+                <EruditRow label="Catégorie" value={livre.categorie || '—'} />
+                <EruditRow label="Année" value={`${livre.annee_publication || '—'}`} />
+                <EruditRow label="Exemplaires" value={`${livre.nombre_exemplaires || 0}`} />
+              </EruditCard.Body>
+              <EruditCard.Footer>
+                <EruditButton variant="outline" size="sm">Modifier</EruditButton>
+                <EruditButton variant="primary" size="sm">Emprunter</EruditButton>
+              </EruditCard.Footer>
+            </EruditCard>
+          ))
+        )}
       </ScrollView>
-      
-      <FAB
-        style={styles.fab}
-        icon="plus"
-        onPress={() => setModalVisible(true)}
-      />
 
-      <Portal>
-        <Modal visible={modalVisible} onDismiss={() => setModalVisible(false)}>
-          <Card style={styles.modal}>
-            <Card.Content>
-              <Title>Nouveau livre</Title>
-              <TextInput
-                label="Titre"
-                value={titre}
-                onChangeText={setTitre}
-                mode="outlined"
-                style={styles.input}
-              />
-              <TextInput
-                label="Auteur"
-                value={auteur}
-                onChangeText={setAuteur}
-                mode="outlined"
-                style={styles.input}
-              />
-              <Button mode="contained" onPress={ajouterLivre}>
-                Ajouter
-              </Button>
-            </Card.Content>
-          </Card>
-        </Modal>
-      </Portal>
+      <EruditFAB icon="📚" color="bibliothecaire" onPress={() => setModalVisible(true)} />
+
+      <EruditModal visible={modalVisible} onDismiss={() => setModalVisible(false)}>
+        <EruditModal.Header>
+          <EruditModal.Title>Nouveau livre</EruditModal.Title>
+        </EruditModal.Header>
+        <EruditModal.Body>
+          <EruditInput label="Titre" value={titre} onChangeText={setTitre} placeholder="Titre du livre" />
+          <View style={{ height: spacing.md }} />
+          <EruditInput label="Auteur" value={auteur} onChangeText={setAuteur} placeholder="Nom de l'auteur" />
+        </EruditModal.Body>
+        <EruditModal.Footer>
+          <EruditButton variant="ghost" onPress={() => setModalVisible(false)}>Annuler</EruditButton>
+          <EruditButton variant="primary" onPress={ajouterLivre} loading={saving}>Ajouter</EruditButton>
+        </EruditModal.Footer>
+      </EruditModal>
     </View>
   );
-};
+}
 
-const EmpruntsScreen = () => {
+/* ═══════════════════════════════════════════════════════════════════════════
+   Onglet 2 — Emprunts
+   ══════════════════════════════════════════════════════════════════════════ */
+
+function EmpruntsScreen() {
+  const { colors, spacing } = useTheme();
   const [emprunts, setEmprunts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    fetchEmprunts();
-  }, []);
-
-  const fetchEmprunts = async () => {
+  const fetchEmprunts = useCallback(async () => {
     try {
       const response = await api.get('/bibliothecaire/emprunts');
-      setEmprunts(response.data);
+      setEmprunts(response.data || []);
     } catch (error) {
       console.error('Error fetching emprunts:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
     }
-  };
+  }, []);
+
+  useEffect(() => { fetchEmprunts(); }, [fetchEmprunts]);
+  const onRefresh = useCallback(() => { setRefreshing(true); fetchEmprunts(); }, [fetchEmprunts]);
 
   const retournerLivre = async (empruntId) => {
     try {
-      await api.put(`/emprunts/${empruntId}/retour`);
+      await api.put(`/bibliothecaire/emprunts/${empruntId}/retour`);
       fetchEmprunts();
       Alert.alert('Succès', 'Livre retourné');
     } catch (error) {
@@ -148,67 +204,105 @@ const EmpruntsScreen = () => {
     }
   };
 
+  const getEmpruntVariant = (emprunt) => {
+    if (emprunt.date_retour_effective) return 'success';
+    const estEnRetard = new Date(emprunt.date_retour_prevue) < new Date();
+    return estEnRetard ? 'danger' : 'warning';
+  };
+
+  const getEmpruntLabel = (emprunt) => {
+    if (emprunt.date_retour_effective)
+      return `Retourné le ${new Date(emprunt.date_retour_effective).toLocaleDateString('fr-FR')}`;
+    const estEnRetard = new Date(emprunt.date_retour_prevue) < new Date();
+    return estEnRetard ? 'En retard' : 'En cours';
+  };
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.surface, padding: spacing.lg, gap: spacing.md }}>
+        {[1, 2, 3].map(i => <EruditSkeleton key={i} variant="rect" width="100%" height={140} borderRadius={16} />)}
+      </View>
+    );
+  }
+
   return (
-    <ScrollView style={styles.container}>
-      {emprunts.map(emprunt => (
-        <Card key={emprunt.id} style={styles.card}>
-          <Card.Content>
-            <Title>{emprunt.livre.titre}</Title>
-            <Text>Emprunté par: {emprunt.eleve.nom} {emprunt.eleve.prenom}</Text>
-            <Text>Classe: {emprunt.eleve.classe.nom}</Text>
-            <Text>Date emprunt: {new Date(emprunt.date_emprunt).toLocaleDateString()}</Text>
-            <Text>Date retour prévue: {new Date(emprunt.date_retour_prevue).toLocaleDateString()}</Text>
-            
-            {emprunt.date_retour_effective ? (
-              <Chip style={[styles.chip, { backgroundColor: '#4CAF50' }]}>
-                Retourné le {new Date(emprunt.date_retour_effective).toLocaleDateString()}
-              </Chip>
-            ) : (
-              <Chip 
-                style={[
-                  styles.chip,
-                  { 
-                    backgroundColor: new Date(emprunt.date_retour_prevue) < new Date() ? '#f44336' : '#FF9800'
-                  }
-                ]}
-              >
-                {new Date(emprunt.date_retour_prevue) < new Date() ? 'En retard' : 'En cours'}
-              </Chip>
-            )}
-          </Card.Content>
-          {!emprunt.date_retour_effective && (
-            <Card.Actions>
-              <Button mode="outlined">Prolonger</Button>
-              <Button mode="contained" onPress={() => retournerLivre(emprunt.id)}>
-                Retourner
-              </Button>
-            </Card.Actions>
-          )}
-        </Card>
-      ))}
-    </ScrollView>
+    <View style={{ flex: 1, backgroundColor: colors.surface }}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ padding: spacing.lg, gap: spacing.md, paddingBottom: 100 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
+      >
+        {emprunts.length === 0 ? (
+          <EruditEmptyState
+            icon="📖"
+            title="Aucun emprunt"
+            description="La liste des emprunts est vide pour le moment."
+          />
+        ) : (
+          emprunts.map(emprunt => (
+            <EruditCard key={emprunt.id} variant="default">
+              <EruditCard.Header>
+                <EruditCard.Title>{emprunt.livre?.titre || 'Sans titre'}</EruditCard.Title>
+                <EruditBadge variant={getEmpruntVariant(emprunt)} size="sm" dot>
+                  {getEmpruntLabel(emprunt)}
+                </EruditBadge>
+              </EruditCard.Header>
+              <EruditCard.Body>
+                <EruditRow label="Emprunté par" value={`${emprunt.eleve?.nom || ''} ${emprunt.eleve?.prenom || ''}`} />
+                <EruditRow label="Classe" value={emprunt.eleve?.classe?.nom || '—'} />
+                <EruditRow
+                  label="Date emprunt"
+                  value={emprunt.date_emprunt ? new Date(emprunt.date_emprunt).toLocaleDateString('fr-FR') : '—'}
+                />
+                <EruditRow
+                  label="Retour prévu"
+                  value={emprunt.date_retour_prevue ? new Date(emprunt.date_retour_prevue).toLocaleDateString('fr-FR') : '—'}
+                />
+              </EruditCard.Body>
+              {!emprunt.date_retour_effective ? (
+                <EruditCard.Footer>
+                  <EruditButton variant="outline" size="sm">Prolonger</EruditButton>
+                  <EruditButton variant="primary" size="sm" onPress={() => retournerLivre(emprunt.id)}>
+                    Retourner
+                  </EruditButton>
+                </EruditCard.Footer>
+              ) : null}
+            </EruditCard>
+          ))
+        )}
+      </ScrollView>
+    </View>
   );
-};
+}
 
-const ReservationsScreen = () => {
+/* ═══════════════════════════════════════════════════════════════════════════
+   Onglet 3 — Réservations
+   ══════════════════════════════════════════════════════════════════════════ */
+
+function ReservationsScreen() {
+  const { colors, spacing } = useTheme();
   const [reservations, setReservations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    fetchReservations();
-  }, []);
-
-  const fetchReservations = async () => {
+  const fetchReservations = useCallback(async () => {
     try {
       const response = await api.get('/bibliothecaire/reservations');
-      setReservations(response.data);
+      setReservations(response.data || []);
     } catch (error) {
       console.error('Error fetching reservations:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
     }
-  };
+  }, []);
+
+  useEffect(() => { fetchReservations(); }, [fetchReservations]);
+  const onRefresh = useCallback(() => { setRefreshing(true); fetchReservations(); }, [fetchReservations]);
 
   const confirmerReservation = async (reservationId) => {
     try {
-      await api.put(`/reservations/${reservationId}/confirmer`);
+      await api.put(`/bibliothecaire/reservations/${reservationId}/confirmer`);
       fetchReservations();
       Alert.alert('Succès', 'Réservation confirmée');
     } catch (error) {
@@ -216,210 +310,199 @@ const ReservationsScreen = () => {
     }
   };
 
-  return (
-    <ScrollView style={styles.container}>
-      {reservations.map(reservation => (
-        <Card key={reservation.id} style={styles.card}>
-          <Card.Content>
-            <Title>{reservation.livre.titre}</Title>
-            <Text>Réservé par: {reservation.eleve.nom} {reservation.eleve.prenom}</Text>
-            <Text>Classe: {reservation.eleve.classe.nom}</Text>
-            <Text>Date réservation: {new Date(reservation.date_reservation).toLocaleDateString()}</Text>
-            <Text>Date limite: {new Date(reservation.date_limite).toLocaleDateString()}</Text>
-            <Chip 
-              style={[
-                styles.chip,
-                { 
-                  backgroundColor: 
-                    reservation.statut === 'confirmée' ? '#4CAF50' :
-                    reservation.statut === 'expirée' ? '#f44336' : '#FF9800'
-                }
-              ]}
-            >
-              {reservation.statut}
-            </Chip>
-          </Card.Content>
-          {reservation.statut === 'en_attente' && (
-            <Card.Actions>
-              <Button mode="outlined">Annuler</Button>
-              <Button mode="contained" onPress={() => confirmerReservation(reservation.id)}>
-                Confirmer
-              </Button>
-            </Card.Actions>
-          )}
-        </Card>
-      ))}
-    </ScrollView>
-  );
-};
+  const statutVariant = (s) =>
+    s === 'confirmée' ? 'success' : s === 'expirée' ? 'danger' : 'warning';
 
-const ProfilScreen = () => {
+  if (loading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.surface, padding: spacing.lg, gap: spacing.md }}>
+        {[1, 2, 3].map(i => <EruditSkeleton key={i} variant="rect" width="100%" height={130} borderRadius={16} />)}
+      </View>
+    );
+  }
+
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.surface }}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ padding: spacing.lg, gap: spacing.md, paddingBottom: 100 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
+      >
+        {reservations.length === 0 ? (
+          <EruditEmptyState
+            icon="🔖"
+            title="Aucune réservation"
+            description="Les réservations des élèves apparaîtront ici."
+          />
+        ) : (
+          reservations.map(reservation => (
+            <EruditCard key={reservation.id} variant="default">
+              <EruditCard.Header>
+                <EruditCard.Title>{reservation.livre?.titre || 'Sans titre'}</EruditCard.Title>
+                <EruditBadge variant={statutVariant(reservation.statut)} size="sm" dot>
+                  {reservation.statut || '—'}
+                </EruditBadge>
+              </EruditCard.Header>
+              <EruditCard.Body>
+                <EruditRow label="Réservé par" value={`${reservation.eleve?.nom || ''} ${reservation.eleve?.prenom || ''}`} />
+                <EruditRow label="Classe" value={reservation.eleve?.classe?.nom || '—'} />
+                <EruditRow
+                  label="Date réservation"
+                  value={reservation.date_reservation ? new Date(reservation.date_reservation).toLocaleDateString('fr-FR') : '—'}
+                />
+                <EruditRow
+                  label="Date limite"
+                  value={reservation.date_limite ? new Date(reservation.date_limite).toLocaleDateString('fr-FR') : '—'}
+                />
+              </EruditCard.Body>
+              {reservation.statut === 'en_attente' ? (
+                <EruditCard.Footer>
+                  <EruditButton variant="outline" size="sm">Annuler</EruditButton>
+                  <EruditButton variant="primary" size="sm" onPress={() => confirmerReservation(reservation.id)}>
+                    Confirmer
+                  </EruditButton>
+                </EruditCard.Footer>
+              ) : null}
+            </EruditCard>
+          ))
+        )}
+      </ScrollView>
+    </View>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Onglet 4 — Profil
+   ══════════════════════════════════════════════════════════════════════════ */
+
+function ProfilScreen() {
+  const { colors, spacing } = useTheme();
   const { user, logout } = useAuth();
   const [stats, setStats] = useState({});
 
   useEffect(() => {
-    fetchStats();
+    api.get('/bibliothecaire/statistiques')
+      .then(res => setStats(res.data || {}))
+      .catch(() => {});
   }, []);
 
-  const fetchStats = async () => {
-    try {
-      const response = await api.get('/bibliothecaire/statistiques');
-      setStats(response.data);
-    } catch (error) {
-      console.error('Error fetching stats:', error);
-    }
-  };
+  const statCards = [
+    { title: 'Livres au catalogue', value: stats.total_livres ?? 0, color: 'bibliothecaire', icon: '📚' },
+    { title: 'Emprunts actifs', value: stats.emprunts_actifs ?? 0, color: 'blue', icon: '📖' },
+    { title: 'Réservations', value: stats.reservations_attente ?? 0, color: 'amber', icon: '🔖' },
+    { title: 'Retards', value: stats.retards ?? 0, color: 'red', icon: '⏰' },
+  ];
+
+  const actions = [
+    { icon: '📊', label: 'Rapport mensuel', onPress: () => {} },
+    { icon: '📋', label: 'Inventaire', onPress: () => {} },
+    { icon: '🔔', label: 'Relances retards', onPress: () => {} },
+  ];
 
   return (
-    <ScrollView style={styles.container}>
-      <Card style={styles.card}>
-        <Card.Content>
-          <Title>Mon Profil</Title>
-          <Text>Nom: {user?.nom} {user?.prenom}</Text>
-          <Text>Email: {user?.email}</Text>
-          <Text>Téléphone: {user?.telephone}</Text>
-          <Text>Poste: Bibliothécaire</Text>
-        </Card.Content>
-      </Card>
-      
-      <Card style={styles.card}>
-        <Card.Content>
-          <Title>Statistiques de la Bibliothèque</Title>
-          <View style={styles.statsGrid}>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{stats.total_livres || 0}</Text>
-              <Text style={styles.statLabel}>Livres au catalogue</Text>
+    <ScrollView style={{ flex: 1, backgroundColor: colors.surface }}>
+      <EruditDashboardHeader user={user} role={ROLE} />
+
+      <View style={{ padding: spacing.lg, gap: spacing.md }}>
+        {/* Profil */}
+        <EruditCard variant="default">
+          <EruditCard.Header>
+            <EruditCard.Title>Mon Profil</EruditCard.Title>
+          </EruditCard.Header>
+          <EruditCard.Body>
+            <EruditRow label="Nom" value={`${user?.nom || ''} ${user?.prenom || ''}`.trim()} />
+            <EruditRow label="Email" value={user?.email || '—'} />
+            <EruditRow label="Téléphone" value={user?.telephone || '—'} />
+            <EruditRow label="Poste" value="Bibliothécaire" />
+          </EruditCard.Body>
+        </EruditCard>
+
+        {/* Statistiques */}
+        <EruditCard variant="default">
+          <EruditCard.Header>
+            <EruditCard.Title>Statistiques</EruditCard.Title>
+          </EruditCard.Header>
+          <EruditCard.Body>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md }}>
+              {statCards.map((card, i) => (
+                <View key={i} style={{ width: '46%', flexGrow: 1, minWidth: 120 }}>
+                  <EruditStatsCard
+                    title={card.title}
+                    value={card.value}
+                    color={card.color}
+                    icon={() => (
+                      <View style={{
+                        width: 36, height: 36, borderRadius: 10,
+                        backgroundColor: colors[`${card.color}Subtle`] || colors.surfaceSubtle,
+                        alignItems: 'center', justifyContent: 'center',
+                      }}>
+                        <EruditText style={{ fontSize: 18 }}>{card.icon}</EruditText>
+                      </View>
+                    )}
+                  />
+                </View>
+              ))}
             </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{stats.emprunts_actifs || 0}</Text>
-              <Text style={styles.statLabel}>Emprunts actifs</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{stats.reservations_attente || 0}</Text>
-              <Text style={styles.statLabel}>Réservations</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{stats.retards || 0}</Text>
-              <Text style={styles.statLabel}>Retards</Text>
-            </View>
-          </View>
-        </Card.Content>
-      </Card>
-      
-      <Card style={styles.card}>
-        <Card.Content>
-          <Title>Actions Rapides</Title>
-          <Button mode="outlined" style={styles.actionButton}>
-            Rapport mensuel
-          </Button>
-          <Button mode="outlined" style={styles.actionButton}>
-            Inventaire
-          </Button>
-          <Button mode="outlined" style={styles.actionButton}>
-            Relances retards
-          </Button>
-        </Card.Content>
-      </Card>
-      
-      <Button
-        mode="contained"
-        onPress={logout}
-        style={[styles.button, { backgroundColor: '#f44336' }]}
-        icon="logout"
-      >
-        Déconnexion
-      </Button>
+          </EruditCard.Body>
+        </EruditCard>
+
+        {/* Actions */}
+        <EruditCard variant="default">
+          <EruditCard.Header>
+            <EruditCard.Title>Actions Rapides</EruditCard.Title>
+          </EruditCard.Header>
+          <EruditCard.Body>
+            {actions.map((item, i) => (
+              <EruditMenuItem key={i} {...item} />
+            ))}
+          </EruditCard.Body>
+        </EruditCard>
+
+        {/* Déconnexion */}
+        <EruditButton variant="danger" size="lg" onPress={logout} fullWidth icon="🚪">
+          Déconnexion
+        </EruditButton>
+      </View>
     </ScrollView>
   );
-};
+}
 
-const BibliothecaireDashboard = () => {
+/* ═══════════════════════════════════════════════════════════════════════════
+   Petits utilitaires internes
+   ══════════════════════════════════════════════════════════════════════════ */
+
+
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Tab Navigator — Point d'entrée du dashboard
+   ══════════════════════════════════════════════════════════════════════════ */
+
+export default function BibliothecaireDashboard() {
+  const { user } = useAuth();
+  const tabColors = useEruditTabColors(ROLE);
+  const tabBarStyle = useEruditTabBarStyle();
+
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused, color, size }) => {
-          let iconName;
-          switch (route.name) {
-            case 'Catalogue': iconName = 'library-books'; break;
-            case 'Emprunts': iconName = 'book'; break;
-            case 'Reservations': iconName = 'bookmark'; break;
-            case 'Profil': iconName = 'person'; break;
-          }
-          return <Icon name={iconName} size={size} color={color} />;
-        },
-        tabBarActiveTintColor: '#607D8B',
-        tabBarInactiveTintColor: 'gray',
-      })}
+      screenOptions={{
+        ...eruditTabOptions({ role: ROLE, labels: {
+          Catalogue: 'Catalogue',
+          Emprunts: 'Emprunts',
+          Reservations: 'Réservations',
+          Profil: 'Profil',
+        }}),
+        tabBarActiveTintColor: tabColors.activeTintColor,
+        tabBarInactiveTintColor: tabColors.inactiveTintColor,
+        tabBarStyle,
+        headerShown: false,
+        lazy: true,
+      }}
     >
-      <Tab.Screen name="Catalogue" component={CatalogueScreen} options={{ title: 'Catalogue' }} />
-      <Tab.Screen name="Emprunts" component={EmpruntsScreen} options={{ title: 'Emprunts' }} />
-      <Tab.Screen name="Reservations" component={ReservationsScreen} options={{ title: 'Réservations' }} />
-      <Tab.Screen name="Profil" component={ProfilScreen} options={{ title: 'Profil' }} />
+      <Tab.Screen name="Catalogue" component={CatalogueScreen} />
+      <Tab.Screen name="Emprunts" component={EmpruntsScreen} />
+      <Tab.Screen name="Reservations" component={ReservationsScreen} />
+      <Tab.Screen name="Profil" component={ProfilScreen} />
     </Tab.Navigator>
   );
-};
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-    padding: 10,
-  },
-  card: {
-    marginBottom: 10,
-  },
-  searchbar: {
-    marginBottom: 10,
-  },
-  chip: {
-    marginTop: 10,
-    alignSelf: 'flex-start',
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginTop: 15,
-  },
-  statItem: {
-    width: '48%',
-    alignItems: 'center',
-    padding: 15,
-    backgroundColor: '#eceff1',
-    borderRadius: 8,
-    marginBottom: 10,
-  },
-  statNumber: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#607D8B',
-  },
-  statLabel: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: 5,
-    textAlign: 'center',
-  },
-  fab: {
-    position: 'absolute',
-    margin: 16,
-    right: 0,
-    bottom: 0,
-    backgroundColor: '#607D8B',
-  },
-  modal: {
-    margin: 20,
-  },
-  input: {
-    marginBottom: 15,
-  },
-  actionButton: {
-    marginBottom: 10,
-  },
-  button: {
-    marginTop: 20,
-    paddingVertical: 8,
-  },
-});
-
-export default BibliothecaireDashboard;
+}

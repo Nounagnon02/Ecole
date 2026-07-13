@@ -190,19 +190,50 @@ class DashboardController extends Controller
             $activeUsers = User::where('is_active', true)->count();
             $tauxActivite = $totalUsers > 0 ? round(($activeUsers / $totalUsers) * 100) : 0;
 
+            $nouveautesSemaine = User::where('created_at', '>=', now()->subWeek())->count();
+            $plansActifs = class_exists(\App\Models\SaaS\Plan::class) ? \App\Models\SaaS\Plan::where('is_active', true)->count() : 0;
+            $modulesActifs = class_exists(\App\Models\SaaS\Module::class) ? \App\Models\SaaS\Module::where('is_active', true)->count() : 0;
+
+            $revenus = 0;
+            if (class_exists(\App\Models\Universite\Paiement::class)) {
+                $revenus = \App\Models\Universite\Paiement::whereMonth('created_at', now()->month)
+                    ->whereYear('created_at', now()->year)
+                    ->sum('montant');
+            }
+
             $repartitionRoles = User::selectRaw('role, COUNT(*) as total')
                 ->groupBy('role')
                 ->pluck('total', 'role')
                 ->map(fn($v, $k) => ['name' => ucfirst($k), 'value' => $v])
                 ->values();
 
+            $activitesRecentes = collect();
+            if (class_exists(\App\Models\AuditLog::class)) {
+                $activitesRecentes = \App\Models\AuditLog::with('user')->latest()->take(10)->get()->map(function ($log) {
+                    return [
+                        'id'          => $log->id,
+                        'type'        => $log->event ?? 'action',
+                        'description' => $log->description ?? ($log->event . ' par ' . ($log->user->name ?? 'inconnu')),
+                        'date'        => $log->created_at?->toISOString(),
+                    ];
+                });
+            }
+
             return [
                 'stats' => [
-                    ['title' => 'Total Écoles', 'value' => (string) $totalEcoles, 'trend' => 0, 'trendLabel' => 'établissements'],
+                    ['title' => 'Total Ecoles', 'value' => (string) $totalEcoles, 'trend' => 0, 'trendLabel' => 'etablissements'],
                     ['title' => 'Utilisateurs', 'value' => number_format($totalUsers), 'trend' => 0, 'trendLabel' => 'inscrits'],
-                    ['title' => "Taux d'Activité", 'value' => "{$tauxActivite}%", 'trend' => 0, 'trendLabel' => 'actifs'],
+                    ['title' => "Taux d'Activite", 'value' => "{$tauxActivite}%", 'trend' => 0, 'trendLabel' => 'actifs'],
                 ],
                 'repartition_roles' => $repartitionRoles,
+                'ecoles'            => $totalEcoles,
+                'utilisateurs'      => $totalUsers,
+                'taux_activite'     => $tauxActivite,
+                'plans_actifs'      => $plansActifs,
+                'modules_actifs'    => $modulesActifs,
+                'revenus'           => $revenus,
+                'nouveautes_semaine' => $nouveautesSemaine,
+                'activites_recentes' => $activitesRecentes,
             ];
         });
 

@@ -2,14 +2,15 @@
  * CoursPage — Mes cours pour les élèves
  *
  * L'élève consulte ses cours, devoirs et ressources pédagogiques.
+ * Données dynamiques via API /eleve/cours
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   BookOpen, FileText, Clock, Download, Eye,
   Play, ChevronRight, Search, Filter, Calendar,
-  CheckCircle, AlertCircle,
+  CheckCircle, AlertCircle, Loader2,
 } from 'lucide-react';
 import { cn, formatDate, formatRelativeTime } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
@@ -17,119 +18,91 @@ import Badge from '@/shared/components/ui/Badge';
 import Avatar from '@/shared/components/ui/Avatar';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
-
-const COURS = [
-  {
-    id: 1,
-    matiere: 'Mathématiques',
-    prof: 'M. Diallo',
-    chapitre: 'Équations du second degré',
-    date: new Date(Date.now() - 86400000 * 1),
-    duree: '2h',
-    type: 'cours',
-    status: 'termine',
-    resume: 'Résolution des équations ax² + bx + c = 0 avec discriminant.',
-    ressources: ['Cours PDF', 'Exercices corrigés', 'Vidéo explicative'],
-  },
-  {
-    id: 2,
-    matiere: 'Français',
-    prof: 'Mme Touré',
-    chapitre: 'Le roman africain',
-    date: new Date(Date.now() - 86400000 * 2),
-    duree: '1h30',
-    type: 'cours',
-    status: 'termine',
-    resume: 'Analyse des thèmes principaux du roman africain contemporain.',
-    ressources: ['Texte étudié', 'Analyse'],
-  },
-  {
-    id: 3,
-    matiere: 'Anglais',
-    prof: 'M. Koné',
-    chapitre: 'Past Perfect Tense',
-    date: new Date(Date.now() + 86400000 * 1),
-    duree: '1h',
-    type: 'cours',
-    status: 'prevue',
-    resume: 'Usage du past perfect en anglais.',
-    ressources: [],
-  },
-  {
-    id: 4,
-    matiere: 'Physique',
-    prof: 'Mme Cissé',
-    chapitre: 'Devoir sur les lentilles',
-    date: new Date(Date.now() - 86400000 * 3),
-    duree: '2h',
-    type: 'devoir',
-    status: 'rendu',
-    note: 14,
-    resume: 'Devoir sur les lentilles convergentes et divergentes.',
-    ressources: ['Sujet', 'Correction'],
-  },
-  {
-    id: 5,
-    matiere: 'Histoire',
-    prof: 'M. Traoré',
-    chapitre: 'Exposé: indépendances africaines',
-    date: new Date(Date.now() + 86400000 * 3),
-    duree: '1h',
-    type: 'devoir',
-    status: 'a_rendre',
-    resume: 'Préparer un exposé sur les indépendances africaines.',
-    ressources: [],
-  },
-  {
-    id: 6,
-    matiere: 'SVT',
-    prof: 'Mme Sow',
-    chapitre: 'TP classification du vivant',
-    date: new Date(Date.now() - 86400000 * 0.5),
-    duree: '3h',
-    type: 'tp',
-    status: 'termine',
-    resume: 'Travaux pratiques sur la classification des êtres vivants.',
-    ressources: ['Protocole TP', 'Fiche de résultats'],
-  },
-];
-
-const MATIERES = [...new Set(COURS.map((c) => c.matiere))];
+import { useApi } from '@/hooks/useApi';
 
 export default function CoursPage() {
+  const { loading, error, get } = useApi();
+  const [cours, setCours] = useState([]);
   const [search, setSearch] = useState('');
   const [filterMatiere, setFilterMatiere] = useState('');
   const [filterType, setFilterType] = useState('');
 
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await get('/eleve/cours');
+        const items = Array.isArray(res?.data?.data) ? res.data.data
+          : Array.isArray(res?.data) ? res.data
+          : Array.isArray(res) ? res
+          : [];
+        setCours(items.map(c => ({
+          ...c,
+          type: c.type || 'cours',
+          status: c.status || c.statut || 'prevue',
+          duree: c.duree || '—',
+          resume: c.resume || c.description || '',
+          ressources: c.ressources || c.documents || [],
+        })));
+      } catch (e) {
+        console.error('Erreur chargement cours:', e);
+      }
+    })();
+  }, [get]);
+
+  const matieres = useMemo(() => [...new Set(cours.map((c) => c.matiere?.nom || c.matiere).filter(Boolean))], [cours]);
+
   const filtered = useMemo(() =>
-    COURS.filter((c) => {
-      if (search && !c.chapitre.toLowerCase().includes(search.toLowerCase()) && !c.matiere.toLowerCase().includes(search.toLowerCase())) return false;
-      if (filterMatiere && c.matiere !== filterMatiere) return false;
+    cours.filter((c) => {
+      if (search && !c.chapitre?.toLowerCase().includes(search.toLowerCase()) && !(c.matiere?.nom || c.matiere || '').toLowerCase().includes(search.toLowerCase())) return false;
+      if (filterMatiere && (c.matiere?.nom || c.matiere) !== filterMatiere) return false;
       if (filterType && c.type !== filterType) return false;
       return true;
     }),
-    [search, filterMatiere, filterType]
+    [search, filterMatiere, filterType, cours]
   );
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case 'termine': return <CheckCircle className="h-4 w-4 text-emerald-500" />;
-      case 'prevue': return <Calendar className="h-4 w-4 text-indigo-500" />;
+      case 'termine':
+      case 'terminé': return <CheckCircle className="h-4 w-4 text-emerald-500" />;
+      case 'prevue':
+      case 'a_venir': return <Calendar className="h-4 w-4 text-[var(--accent)]" />;
       case 'rendu': return <FileText className="h-4 w-4 text-sky-500" />;
-      case 'a_rendre': return <AlertCircle className="h-4 w-4 text-amber-500" />;
+      case 'a_rendre':
+      case 'en_retard': return <AlertCircle className="h-4 w-4 text-amber-500" />;
       default: return null;
     }
   };
 
   const getStatusLabel = (status) => {
     switch (status) {
-      case 'termine': return 'Terminé';
-      case 'prevue': return 'À venir';
+      case 'termine':
+      case 'terminé': return 'Terminé';
+      case 'prevue':
+      case 'a_venir': return 'À venir';
       case 'rendu': return 'Rendu';
-      case 'a_rendre': return 'À rendre';
+      case 'a_rendre':
+      case 'en_retard': return 'À rendre';
       default: return status;
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
+        <AlertCircle className="h-8 w-8 mb-2 text-red-400" />
+        <p className="text-sm">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
@@ -153,15 +126,15 @@ export default function CoursPage() {
           <select
             value={filterMatiere}
             onChange={(e) => setFilterMatiere(e.target.value)}
-            className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+            className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
           >
             <option value="">Toutes les matières</option>
-            {MATIERES.map((m) => <option key={m} value={m}>{m}</option>)}
+            {matieres.map((m) => <option key={m} value={m}>{m}</option>)}
           </select>
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+            className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
           >
             <option value="">Tous les types</option>
             <option value="cours">Cours</option>
@@ -181,9 +154,9 @@ export default function CoursPage() {
             </div>
           </Card>
         )}
-        {filtered.map((cours) => (
+        {filtered.map((c) => (
           <motion.div
-            key={cours.id}
+            key={c.id}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
           >
@@ -192,45 +165,45 @@ export default function CoursPage() {
                 {/* Icône matière */}
                 <div className={cn(
                   'h-12 w-12 rounded-xl flex items-center justify-center shrink-0',
-                  cours.type === 'cours' ? 'bg-indigo-100 dark:bg-indigo-900/20' :
-                  cours.type === 'devoir' ? 'bg-amber-100 dark:bg-amber-900/20' :
+                  c.type === 'cours' ? 'bg-[var(--primary-subtle)] bg-[var(--primary-subtle)]' :
+                  c.type === 'devoir' ? 'bg-amber-100 dark:bg-amber-900/20' :
                   'bg-emerald-100 dark:bg-emerald-900/20'
                 )}>
-                  {cours.type === 'cours' ? <BookOpen className="h-6 w-6 text-indigo-500" /> :
-                   cours.type === 'devoir' ? <FileText className="h-6 w-6 text-amber-500" /> :
+                  {c.type === 'cours' ? <BookOpen className="h-6 w-6 text-[var(--accent)]" /> :
+                   c.type === 'devoir' ? <FileText className="h-6 w-6 text-amber-500" /> :
                    <Play className="h-6 w-6 text-emerald-500" />}
                 </div>
 
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <Badge variant="primary" size="sm">{cours.matiere}</Badge>
+                    <Badge variant="primary" size="sm">{c.matiere?.nom || c.matiere || 'Matière'}</Badge>
                     <span className="text-xs text-neutral-500 capitalize">
-                      {cours.type === 'tp' ? 'TP' : cours.type}
+                      {c.type === 'tp' ? 'TP' : c.type}
                     </span>
                     <div className="flex items-center gap-1 text-xs text-neutral-400">
                       <Clock className="h-3 w-3" />
-                      {cours.duree}
+                      {c.duree}
                     </div>
                   </div>
                   <h3 className="mt-1 text-base font-semibold text-neutral-900 dark:text-white">
-                    {cours.chapitre}
+                    {c.chapitre || c.intitule || c.titre || 'Cours'}
                   </h3>
-                  <p className="mt-1 text-sm text-neutral-500">{cours.resume}</p>
+                  <p className="mt-1 text-sm text-neutral-500">{c.resume}</p>
 
                   <div className="mt-3 flex items-center gap-4">
                     <span className="text-xs text-neutral-500 flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
-                      {cours.date > new Date() ? 'Prévu le ' : 'Le '}
-                      {formatDate(cours.date)}
+                      {c.date > new Date() ? 'Prévu le ' : 'Le '}
+                      {formatDate(c.date)}
                     </span>
-                    <span className="text-xs text-neutral-500">{cours.prof}</span>
+                    <span className="text-xs text-neutral-500">{c.prof || c.enseignant || '—'}</span>
                   </div>
 
                   {/* Ressources */}
-                  {cours.ressources.length > 0 && (
+                  {c.ressources?.length > 0 && (
                     <div className="mt-3 flex flex-wrap gap-2">
-                      {cours.ressources.map((r) => (
-                        <button key={r} className="inline-flex items-center gap-1 rounded-lg bg-neutral-100 dark:bg-neutral-800 px-2.5 py-1 text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-900/20 dark:hover:text-indigo-400 transition-colors">
+                      {c.ressources.map((r) => (
+                        <button key={r} className="inline-flex items-center gap-1 rounded-lg bg-neutral-100 dark:bg-neutral-800 px-2.5 py-1 text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:bg-[var(--accent-subtle)] hover:text-[var(--accent)] hover:bg-[var(--accent-subtle)] dark:hover:text-[var(--accent)] transition-colors">
                           <Download className="h-3 w-3" />
                           {r}
                         </button>
@@ -242,18 +215,18 @@ export default function CoursPage() {
                 {/* Status */}
                 <div className="flex flex-col items-end gap-2 shrink-0">
                   <div className="flex items-center gap-1.5 text-xs font-medium">
-                    {getStatusIcon(cours.status)}
+                    {getStatusIcon(c.status)}
                     <span className={cn(
-                      cours.status === 'termine' && 'text-emerald-600',
-                      cours.status === 'prevue' && 'text-indigo-600',
-                      cours.status === 'rendu' && 'text-sky-600',
-                      cours.status === 'a_rendre' && 'text-amber-600',
+                      c.status === 'termine' && 'text-emerald-600',
+                      c.status === 'prevue' && 'text-[var(--accent)]',
+                      c.status === 'rendu' && 'text-sky-600',
+                      c.status === 'a_rendre' && 'text-amber-600',
                     )}>
-                      {getStatusLabel(cours.status)}
+                      {getStatusLabel(c.status)}
                     </span>
                   </div>
-                  {cours.note && (
-                    <span className="text-lg font-bold text-indigo-600">{cours.note}/20</span>
+                  {c.note && (
+                    <span className="text-lg font-bold text-[var(--accent)]">{c.note}/20</span>
                   )}
                   <Button variant="ghost" size="sm" icon={<Eye />}>
                     Voir

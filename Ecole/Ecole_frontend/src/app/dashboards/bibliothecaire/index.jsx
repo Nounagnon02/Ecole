@@ -5,6 +5,7 @@
  */
 
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useDashboardStats } from '../hooks/useDashboardData';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -30,39 +31,14 @@ const TABS = [
   { id: 'emprunts', label: 'Emprunts', icon: Bookmark },
 ];
 
-const STATS = [
-  { title: 'Total Ouvrages', value: '3 240', icon: BookOpen, trend: 5.2, trendLabel: 'nouveautés', color: 'indigo' },
-  { title: 'Emprunts en Cours', value: '142', icon: Bookmark, trend: 8, trendLabel: 'ce mois', color: 'emerald' },
-  { title: 'Retards', value: '23', icon: Clock, trend: -15, trendLabel: 'vs mois dernier', color: 'red' },
-  { title: 'Membres Actifs', value: '456', icon: Users, trend: 3.1, trendLabel: 'ce trimestre', color: 'sky' },
+const STATS_META = [
+  { title: 'Total Ouvrages', icon: BookOpen, color: 'primary' },
+  { title: 'Emprunts en Cours', icon: Bookmark, color: 'emerald' },
+  { title: 'Retards', icon: Clock, color: 'red' },
+  { title: 'Membres Actifs', icon: Users, color: 'sky' },
 ];
 
-const DONNEES_EMPRUNTS = [
-  { mois: 'Jan', emprunts: 185, retours: 170 },
-  { mois: 'Fév', emprunts: 168, retours: 155 },
-  { mois: 'Mar', emprunts: 210, retours: 195 },
-  { mois: 'Avr', emprunts: 195, retours: 188 },
-  { mois: 'Mai', emprunts: 225, retours: 210 },
-  { mois: 'Juin', emprunts: 198, retours: 190 },
-];
-
-const CATEGORIES = [
-  { name: 'Scolaire', value: 45 },
-  { name: 'Littérature', value: 20 },
-  { name: 'Sciences', value: 18 },
-  { name: 'BD & Magazines', value: 12 },
-  { name: 'Divers', value: 5 },
-];
-
-const CAT_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
-
-const EMPRUNTS_RECENTS = [
-  { id: 1, eleve: 'Hountondji Marcel', classe: '4e A', ouvrage: 'Mathématiques 4e', dateEmprunt: '2026-06-10', dateRetour: '2026-06-24', statut: 'En cours' },
-  { id: 2, eleve: 'Kouassi Béatrice', classe: '5e B', ouvrage: 'Le Petit Prince', dateEmprunt: '2026-06-08', dateRetour: '2026-06-22', statut: 'En retard' },
-  { id: 3, eleve: 'Adjanohoun Félix', classe: '3e C', ouvrage: 'Physique 3e', dateEmprunt: '2026-06-12', dateRetour: '2026-06-26', statut: 'En cours' },
-  { id: 4, eleve: 'Tossou Grâce', classe: '6e A', ouvrage: 'Français 6e', dateEmprunt: '2026-06-05', dateRetour: '2026-06-19', statut: 'Retourné' },
-  { id: 5, eleve: 'Loko Emmanuel', classe: '2nde B', ouvrage: 'SVT 2nde', dateEmprunt: '2026-06-03', dateRetour: '2026-06-17', statut: 'Retard' },
-];
+const CAT_COLORS = ['var(--accent)', 'var(--green)', 'var(--amber)', 'var(--red)', 'var(--primary)'];
 
 function ApercuSection({ stats, activite, categories, emprunts }) {
   return (
@@ -85,12 +61,12 @@ function ApercuSection({ stats, activite, categories, emprunts }) {
             <div className="h-[260px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={activite}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis dataKey="mois" tick={{ fontSize: 12 }} stroke="#9ca3af" />
-                  <YAxis tick={{ fontSize: 12 }} stroke="#9ca3af" />
-                  <ReTooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e5e7eb' }} />
-                  <Bar dataKey="emprunts" name="Emprunts" fill="#6366f1" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="retours" name="Retours" fill="#10b981" radius={[4, 4, 0, 0]} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                  <XAxis dataKey="mois" tick={{ fontSize: 12 }} stroke="var(--text-tertiary)" />
+                  <YAxis tick={{ fontSize: 12 }} stroke="var(--text-tertiary)" />
+                  <ReTooltip contentStyle={{ borderRadius: '8px', border: '1px solid var(--border)' }} />
+                  <Bar dataKey="emprunts" name="Emprunts" fill="var(--accent)" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="retours" name="Retours" fill="var(--green)" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -111,7 +87,7 @@ function ApercuSection({ stats, activite, categories, emprunts }) {
                       <Cell key={i} fill={CAT_COLORS[i]} />
                     ))}
                   </Pie>
-                  <ReTooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e5e7eb' }} />
+                  <ReTooltip contentStyle={{ borderRadius: '8px', border: '1px solid var(--border)' }} />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -177,7 +153,7 @@ function CatalogueSection() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">Catalogue</h2>
+          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Catalogue</h2>
           <p className="text-sm text-neutral-500 mt-1">Gestion des ouvrages de la bibliothèque</p>
         </div>
         <div className="flex gap-2">
@@ -201,7 +177,7 @@ function EmpruntsSection() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">Emprunts</h2>
+          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Emprunts</h2>
           <p className="text-sm text-neutral-500 mt-1">Suivi des prêts et retours</p>
         </div>
         <Button variant="ghost" size="sm"><Bookmark className="h-4 w-4 mr-1" /> Historique</Button>
@@ -218,19 +194,24 @@ function EmpruntsSection() {
 }
 
 export default function BibliothecaireDashboard() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('apercu');
   const { data, loading } = useDashboardStats('bibliothecaire');
 
-  const stats = data?.stats?.map((s, i) => ({ ...s, icon: STATS[i]?.icon, color: STATS[i]?.color })) || STATS;
-  const activite = data?.activite || DONNEES_EMPRUNTS;
-  const categories = data?.categories || CATEGORIES;
-  const emprunts = data?.emprunts || EMPRUNTS_RECENTS;
+  const stats = data?.stats?.map((s, i) => ({ ...s, icon: STATS_META[i]?.icon, color: STATS_META[i]?.color })) || [];
+  const activite = data?.activite || [];
+  const categories = data?.categories || [];
+  const emprunts = data?.emprunts || [];
+
+  const handleTabClick = (tabId) => {
+    if (tabId === 'apercu') { setActiveTab(tabId); return; }
+    const routes = { catalogue: '/bibliothecaire/catalogue', emprunts: '/bibliothecaire/emprunts' };
+    navigate(routes[tabId] || '/bibliothecaire/dashboard');
+  };
 
   const renderSection = () => {
     switch (activeTab) {
       case 'apercu': return <ApercuSection stats={stats} activite={activite} categories={categories} emprunts={emprunts} />;
-      case 'catalogue': return <CatalogueSection />;
-      case 'emprunts': return <EmpruntsSection />;
       default: return <ApercuSection stats={stats} activite={activite} categories={categories} emprunts={emprunts} />;
     }
   };
@@ -256,11 +237,11 @@ export default function BibliothecaireDashboard() {
           {TABS.map((tab) => {
             const Icon = tab.icon;
             return (
-              <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+              <button key={tab.id} onClick={() => handleTabClick(tab.id)}
                 className={cn(
                   'flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-all whitespace-nowrap',
                   activeTab === tab.id
-                    ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                    ? 'border-[var(--accent)] text-[var(--accent)] dark:text-[var(--accent)]'
                     : 'border-transparent text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200'
                 )}
               >

@@ -52,7 +52,7 @@ const CRENEAUX = ['08:00', '09:00', '10:15', '11:15', '14:00', '15:00', '16:00']
 const JOURS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
 
 const TYPE_COLORS = {
-  'Cours': 'bg-indigo-100 dark:bg-indigo-500/15 border-indigo-300 dark:border-indigo-500/30 text-indigo-700 dark:text-indigo-300',
+  'Cours': 'bg-[var(--primary-subtle)] border-[var(--accent)]/30 dark:border-[var(--accent)]/30 text-[var(--accent)] dark:text-[var(--accent)]',
   'TD': 'bg-emerald-100 dark:bg-emerald-500/15 border-emerald-300 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-300',
   'TP': 'bg-amber-100 dark:bg-amber-500/15 border-amber-300 dark:border-amber-500/30 text-amber-700 dark:text-amber-300',
   'Sport': 'bg-sky-100 dark:bg-sky-500/15 border-sky-300 dark:border-sky-500/30 text-sky-700 dark:text-sky-300',
@@ -83,7 +83,7 @@ export default function EmploiDuTemps() {
         </motion.div>
         <div className="flex items-center gap-2">
           <select value={selectedClasse} onChange={e => setSelectedClasse(e.target.value)}
-            className="h-10 px-4 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-sm appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
+            className="h-10 px-4 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-sm appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)]">
             {CLASSES.map(c => <option key={c}>{c}</option>)}
           </select>
           <Button variant="ghost" size="sm"><Download className="h-4 w-4 mr-1" /> Exporter</Button>

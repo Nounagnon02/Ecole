@@ -32,6 +32,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/delete/{id}', [EnseignantController::class, 'destroy'])->middleware('role:directeur');
     });
 
+    // ============ ENSEIGNANT DASHBOARD ============
+    Route::prefix('enseignant')->middleware('role:enseignant,directeur')->group(function () {
+        Route::get('/classes', [EnseignantController::class, 'classes']);
+        Route::get('/notes', [EnseignantController::class, 'notes']);
+    });
+
     // ============ PARENTS ============
     Route::prefix('parents')->group(function () {
         Route::get('/', [ParentsController::class, 'index']);
@@ -40,11 +46,22 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/{id}/eleves', [ParentsController::class, 'getElevesByParent']);
     });
 
+    // ============ PARENT DASHBOARD ============
+    Route::prefix('parent')->middleware('role:parent')->group(function () {
+        Route::get('/enfants', [ParentController::class, 'enfants']);
+        Route::get('/bulletins', [ParentController::class, 'bulletins']);
+        Route::get('/bulletin/{enfantId}/{periode}', [ParentController::class, 'bulletinDetail']);
+        Route::get('/messages', [ParentController::class, 'messages']);
+        Route::get('/rendez-vous', [ParentController::class, 'rendezVous']);
+    });
+
     // ============ COMPTABLE ============
     Route::prefix('comptable')->middleware('role:directeur,comptable')->group(function () {
         Route::get('/paiements', [ComptableController::class, 'paiements']);
         Route::get('/finances', [ComptableController::class, 'finances']);
+        Route::get('/bourses', [ComptableController::class, 'bourses']);
         Route::post('/paiements', [ComptableController::class, 'storePaiement']);
+        Route::post('/bourses', [ComptableController::class, 'storeBourse']);
         Route::get('/paiements/{id}/recu', [ComptableController::class, 'recu']);
         Route::get('/echeancier/{eleveId}', [ComptableController::class, 'echeancier']);
     });

@@ -56,14 +56,14 @@ export default function ForbiddenPage() {
         <div className="flex flex-wrap items-center justify-center gap-3">
           <Link
             to="/"
-            className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-6 py-2.5 text-sm font-medium text-white transition-all hover:bg-indigo-500 motion-safe:active:scale-95"
+            className="inline-flex items-center gap-2 rounded-lg bg-[var(--accent)] px-6 py-2.5 text-sm font-medium text-white transition-all hover:bg-[var(--accent-hover)] motion-safe:active:scale-95"
           >
             Retour à l'accueil
           </Link>
           <button
             type="button"
             onClick={() => window.history.back()}
-            className="inline-flex items-center gap-2 rounded-xl border border-neutral-300 bg-white px-6 py-2.5 text-sm font-medium text-neutral-700 transition-all hover:bg-neutral-50 motion-safe:active:scale-95 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
+            className="inline-flex items-center gap-2 rounded-lg border border-[var(--border)] bg-white px-6 py-2.5 text-sm font-medium text-neutral-700 transition-all hover:bg-neutral-50 motion-safe:active:scale-95 dark:border-[var(--border)] dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
           >
             Page précédente
           </button>
@@ -99,7 +99,7 @@ export function ForbiddenError() {
       </p>
       <Link
         to="/"
-        className="mt-2 rounded-xl bg-indigo-600 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-500"
+        className="mt-2 rounded-lg bg-[var(--accent)] px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[var(--accent-hover)]"
       >
         Retour à l'accueil
       </Link>

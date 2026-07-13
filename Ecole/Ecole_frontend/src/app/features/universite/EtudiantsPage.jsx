@@ -1,57 +1,90 @@
 /**
- * EtudiantsPage — Gestion des étudiants
+ * EtudiantsPage — Gestion des étudiants universitaires
  *
- * Module université : gestion des inscriptions et profils étudiants.
+ * Module université : inscriptions et profils étudiants.
+ * Données dynamiques via API /api/universite/etudiants
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
-  GraduationCap, Plus, Search, Filter, Mail, Phone, Calendar,
-  MapPin, BookOpen, User, Eye,
+  GraduationCap, Plus, Search, Mail, User, BookOpen,
+  Eye, Loader2, AlertCircle,
 } from 'lucide-react';
-import { cn, formatDate } from '@/shared/lib/utils';
+import { cn } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
-import Avatar from '@/shared/components/ui/Avatar';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
-
-const ETUDIANTS = Array.from({ length: 12 }, (_, i) => ({
-  id: i + 1,
-  nom: ['Diallo Amadou', 'Touré Fatou', 'Koné Moussa', 'Cissé Inza', 'Traoré Kadiatou', 'Sow Mariam', 'Diop Souleymane', 'Ndiaye Fatma', 'Ba Ousmane', 'Sylla Aïcha', 'Faye Cheikh', 'Gueye Ndeye'][i],
-  matricule: `ETU${String(2024000 + i).slice(-6)}`,
-  niveau: ['L1', 'L2', 'L3', 'M1', 'M2', 'L1', 'L2', 'L3', 'M1', 'M2', 'L1', 'L2'][i],
-  filiere: ['Mathématiques', 'Physique', 'Lettres Modernes', 'Anglais', 'Droit Privé', 'Économie', 'Gestion', 'Mathématiques', 'Physique', 'Lettres Modernes', 'Anglais', 'Économie'][i],
-  faculte: ['FST', 'FST', 'FLSH', 'FLSH', 'FD', 'FSEG', 'FSEG', 'FST', 'FST', 'FLSH', 'FLSH', 'FSEG'][i],
-  email: ['amadou.diallo@univ.edu', 'fatou.toure@univ.edu', 'moussa.kone@univ.edu', 'inza.cisse@univ.edu', 'kadiatou.traore@univ.edu', 'mariam.sow@univ.edu', 'souleymane.diop@univ.edu', 'fatma.ndiaye@univ.edu', 'ousmane.ba@univ.edu', 'aicha.sylla@univ.edu', 'cheikh.faye@univ.edu', 'ndeye.gueye@univ.edu'][i],
-  telephone: ['+225 01 02 03 04 01', '+225 01 02 03 04 02', '+225 01 02 03 04 03', '+225 01 02 03 04 04', '+225 01 02 03 04 05', '+225 01 02 03 04 06', '+225 01 02 03 04 07', '+225 01 02 03 04 08', '+225 01 02 03 04 09', '+225 01 02 03 04 10', '+225 01 02 03 04 11', '+225 01 02 03 04 12'][i],
-  dateInscription: new Date(Date.now() - 86400000 * (30 + i * 10)),
-  statut: ['actif', 'actif', 'actif', 'actif', 'actif', 'actif', 'actif', 'suspendu', 'actif', 'actif', 'actif', 'suspendu'][i],
-}));
-
-const NIVEAUX = ['Tous', 'L1', 'L2', 'L3', 'M1', 'M2'];
+import { useApi } from '@/hooks/useApi';
 
 export default function EtudiantsPage() {
+  const { loading, error, get } = useApi();
+  const [etudiants, setEtudiants] = useState([]);
   const [search, setSearch] = useState('');
   const [filterNiveau, setFilterNiveau] = useState('');
 
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await get('/universite/etudiants');
+        const items = Array.isArray(res?.data?.data) ? res.data.data
+          : Array.isArray(res?.data) ? res.data
+          : Array.isArray(res) ? res
+          : [];
+        setEtudiants(items.map((e) => ({
+          ...e,
+          matricule: e.matricule || e.ine || '—',
+          niveau: e.niveau || e.annee || '—',
+          filiere: e.filiere?.nom || e.filiere_nom || e.filiere || '—',
+          faculte: e.faculte?.sigle || e.faculte_sigle || e.faculte?.nom || '—',
+          dateInscription: e.date_inscription || e.created_at || null,
+          statut: e.statut || 'actif',
+        })));
+      } catch (e) {
+        console.error('Erreur chargement étudiants:', e);
+      }
+    })();
+  }, []);
+
+  const niveaux = useMemo(() =>
+    ['Tous', ...new Set(etudiants.map((e) => e.niveau).filter(Boolean))],
+    [etudiants]
+  );
+
   const stats = useMemo(() => ({
-    total: ETUDIANTS.length,
-    actifs: ETUDIANTS.filter((e) => e.statut === 'actif').length,
-    suspendus: ETUDIANTS.filter((e) => e.statut === 'suspendu').length,
-    niveaux: new Set(ETUDIANTS.map((e) => e.niveau)).size,
-  }), []);
+    total: etudiants.length,
+    actifs: etudiants.filter((e) => e.statut === 'actif').length,
+    suspendus: etudiants.filter((e) => e.statut === 'suspendu' || e.statut === 'inactif').length,
+    niveaux: new Set(etudiants.map((e) => e.niveau)).size,
+  }), [etudiants]);
 
   const filtered = useMemo(() =>
-    ETUDIANTS.filter((e) => {
-      if (search && !e.nom.toLowerCase().includes(search.toLowerCase()) && !e.matricule.toLowerCase().includes(search.toLowerCase())) return false;
+    etudiants.filter((e) => {
+      if (search && !e.nom?.toLowerCase().includes(search.toLowerCase()) && !e.matricule?.toLowerCase().includes(search.toLowerCase())) return false;
       if (filterNiveau && e.niveau !== filterNiveau) return false;
       return true;
     }),
-    [search, filterNiveau]
+    [search, filterNiveau, etudiants]
   );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
+        <AlertCircle className="h-8 w-8 mb-2 text-red-400" />
+        <p className="text-sm">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
@@ -64,7 +97,7 @@ export default function EtudiantsPage() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-4">
-        <StatsCard title="Total" value={String(stats.total)} icon={GraduationCap} color="indigo" />
+        <StatsCard title="Total" value={String(stats.total)} icon={GraduationCap} color="primary" />
         <StatsCard title="Actifs" value={String(stats.actifs)} icon={User} color="emerald" />
         <StatsCard title="Suspendus" value={String(stats.suspendus)} icon={User} color="red" />
         <StatsCard title="Niveaux" value={String(stats.niveaux)} icon={BookOpen} color="sky" />
@@ -82,14 +115,14 @@ export default function EtudiantsPage() {
             />
           </div>
           <div className="flex gap-2 flex-wrap">
-            {NIVEAUX.map((n) => (
+            {niveaux.map((n) => (
               <button
                 key={n}
                 onClick={() => setFilterNiveau(n === 'Tous' ? '' : n)}
                 className={cn(
                   'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
                   filterNiveau === (n === 'Tous' ? '' : n)
-                    ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-400'
+                    ? 'bg-[var(--primary-subtle)] text-[var(--accent)] dark:text-[var(--accent)]'
                     : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700'
                 )}
               >
@@ -129,7 +162,9 @@ export default function EtudiantsPage() {
                 <tr key={e.id} className="border-b border-neutral-100 dark:border-neutral-800">
                   <td className="py-3 pr-4">
                     <div className="flex items-center gap-3">
-                      <Avatar name={e.nom} size="sm" />
+                      <div className="h-8 w-8 rounded-full bg-[var(--primary-subtle)] flex items-center justify-center text-xs font-bold text-[var(--accent)]">
+                        {e.nom?.charAt(0) || '?'}
+                      </div>
                       <span className="text-sm font-medium text-neutral-900 dark:text-white">{e.nom}</span>
                     </div>
                   </td>
@@ -139,10 +174,12 @@ export default function EtudiantsPage() {
                   <td className="py-3 pr-4"><Badge variant="primary" size="sm">{e.faculte}</Badge></td>
                   <td className="py-3 pr-4">
                     <div className="flex flex-col text-xs text-neutral-500">
-                      <span className="flex items-center gap-1"><Mail className="h-3 w-3" /> {e.email}</span>
+                      {e.email && <span className="flex items-center gap-1"><Mail className="h-3 w-3" /> {e.email}</span>}
                     </div>
                   </td>
-                  <td className="py-3 pr-4 text-sm text-neutral-600 dark:text-neutral-400">{formatDate(e.dateInscription)}</td>
+                  <td className="py-3 pr-4 text-sm text-neutral-600 dark:text-neutral-400">
+                    {e.dateInscription ? new Date(e.dateInscription).toLocaleDateString('fr-FR') : '—'}
+                  </td>
                   <td className="py-3 pr-4">
                     <Badge variant={e.statut === 'actif' ? 'primary' : 'danger'} size="sm">
                       {e.statut === 'actif' ? 'Actif' : 'Suspendu'}

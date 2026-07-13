@@ -2,13 +2,14 @@
  * FacultesPage — Gestion des facultés
  *
  * Module université : gestion des facultés et départements associés.
+ * Données dynamiques via API /api/universite/facultes
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   Building2, Plus, Search, Users, BookOpen, Calendar,
-  MapPin, Phone, Mail, Globe,
+  MapPin, Phone, Mail, Globe, Loader2, AlertCircle,
 } from 'lucide-react';
 import { cn } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
@@ -16,33 +17,66 @@ import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
-
-const FACULTES = [
-  { id: 1, nom: 'Faculté des Sciences', code: 'FST', doyen: 'Pr. Koné Mamadou', departements: 5, enseignants: 45, etudiants: 1200, email: 'fst@univ.edu', tel: '+225 01 23 45 67 01' },
-  { id: 2, nom: 'Faculté des Lettres', code: 'FLSH', doyen: 'Pr. Touré Aminata', departements: 4, enseignants: 38, etudiants: 950, email: 'flsh@univ.edu', tel: '+225 01 23 45 67 02' },
-  { id: 3, nom: 'Faculté de Droit', code: 'FD', doyen: 'Pr. Diop Ousmane', departements: 3, enseignants: 28, etudiants: 780, email: 'fd@univ.edu', tel: '+225 01 23 45 67 03' },
-  { id: 4, nom: 'Faculté des Sciences Économiques', code: 'FSEG', doyen: 'Pr. Ndiaye Fatou', departements: 4, enseignants: 32, etudiants: 890, email: 'fseg@univ.edu', tel: '+225 01 23 45 67 04' },
-  { id: 5, nom: 'Faculté de Médecine', code: 'FM', doyen: 'Pr. Gueye Amadou', departements: 6, enseignants: 52, etudiants: 650, email: 'fm@univ.edu', tel: '+225 01 23 45 67 05' },
-  { id: 6, nom: 'Faculté des Sciences de l\'Ingénieur', code: 'FSI', doyen: 'Pr. Sylla Mariam', departements: 5, enseignants: 40, etudiants: 720, email: 'fsi@univ.edu', tel: '+225 01 23 45 67 06' },
-];
+import { useApi } from '@/hooks/useApi';
 
 export default function FacultesPage() {
+  const { loading, error, get } = useApi();
+  const [facultes, setFacultes] = useState([]);
   const [search, setSearch] = useState('');
 
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await get('/universite/facultes');
+        const items = Array.isArray(res?.data?.data) ? res.data.data
+          : Array.isArray(res?.data) ? res.data
+          : Array.isArray(res) ? res
+          : [];
+        setFacultes(items.map((f) => ({
+          ...f,
+          doyen: f.doyen || f.chef || '—',
+          code: f.sigle || f.code || '—',
+          departements: f.departements_count ?? f.departements ?? 0,
+          enseignants: f.enseignants_count ?? f.enseignants ?? 0,
+          etudiants: f.etudiants_count ?? f.etudiants ?? 0,
+        })));
+      } catch (e) {
+        console.error('Erreur chargement facultés:', e);
+      }
+    })();
+  }, []);
+
   const stats = useMemo(() => ({
-    total: FACULTES.length,
-    departements: FACULTES.reduce((s, f) => s + f.departements, 0),
-    enseignants: FACULTES.reduce((s, f) => s + f.enseignants, 0),
-    etudiants: FACULTES.reduce((s, f) => s + f.etudiants, 0),
-  }), []);
+    total: facultes.length,
+    departements: facultes.reduce((s, f) => s + Number(f.departements), 0),
+    enseignants: facultes.reduce((s, f) => s + Number(f.enseignants), 0),
+    etudiants: facultes.reduce((s, f) => s + Number(f.etudiants), 0),
+  }), [facultes]);
 
   const filtered = useMemo(() =>
-    FACULTES.filter((f) => {
-      if (search && !f.nom.toLowerCase().includes(search.toLowerCase()) && !f.code.toLowerCase().includes(search.toLowerCase())) return false;
+    facultes.filter((f) => {
+      if (search && !f.nom?.toLowerCase().includes(search.toLowerCase()) && !f.code?.toLowerCase().includes(search.toLowerCase())) return false;
       return true;
     }),
-    [search]
+    [search, facultes]
   );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
+        <AlertCircle className="h-8 w-8 mb-2 text-red-400" />
+        <p className="text-sm">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
@@ -55,7 +89,7 @@ export default function FacultesPage() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-4">
-        <StatsCard title="Facultés" value={String(stats.total)} icon={Building2} color="indigo" />
+        <StatsCard title="Facultés" value={String(stats.total)} icon={Building2} color="primary" />
         <StatsCard title="Départements" value={String(stats.departements)} icon={BookOpen} color="sky" />
         <StatsCard title="Enseignants" value={String(stats.enseignants)} icon={Users} color="emerald" />
         <StatsCard title="Étudiants" value={String(stats.etudiants)} icon={Users} color="amber" />
@@ -87,8 +121,8 @@ export default function FacultesPage() {
         {filtered.map((f) => (
           <Card key={f.id} hover>
             <div className="flex items-start justify-between mb-3">
-              <div className="h-10 w-10 rounded-xl bg-indigo-100 dark:bg-indigo-900/20 flex items-center justify-center">
-                <Building2 className="h-5 w-5 text-indigo-500" />
+              <div className="h-10 w-10 rounded-xl bg-[var(--primary-subtle)] flex items-center justify-center">
+                <Building2 className="h-5 w-5 text-[var(--accent)]" />
               </div>
               <Badge variant="primary" size="sm">{f.code}</Badge>
             </div>
@@ -111,8 +145,8 @@ export default function FacultesPage() {
             </div>
 
             <div className="space-y-1 text-xs text-neutral-500">
-              <span className="flex items-center gap-1"><Mail className="h-3 w-3" /> {f.email}</span>
-              <span className="flex items-center gap-1"><Phone className="h-3 w-3" /> {f.tel}</span>
+              {f.email && <span className="flex items-center gap-1"><Mail className="h-3 w-3" /> {f.email}</span>}
+              {f.telephone && <span className="flex items-center gap-1"><Phone className="h-3 w-3" /> {f.telephone}</span>}
             </div>
           </Card>
         ))}

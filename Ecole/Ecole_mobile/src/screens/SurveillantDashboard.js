@@ -1,33 +1,64 @@
-import React, { useState, useEffect } from 'react';
-import { View, ScrollView, StyleSheet, Alert } from 'react-native';
-import { Card, Title, Text, Button, FAB, Chip, TextInput, Modal, Portal } from 'react-native-paper';
+/**
+ * ============================================================================
+ * SurveillantDashboard — Érudit v4 (React Native)
+ *
+ * Refonte complète du dashboard Surveillant.
+ * Zéro react-native-paper. 100% composants Érudit + useTheme().
+ * Couleur de rôle : red (#BA4A4A)
+ *
+ * Tabs : Absences | Incidents | Sanctions | Profil
+ * ============================================================================
+ */
+
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, ScrollView, RefreshControl, Alert } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import { EruditText, EruditRow, EruditMenuItem } from '../components/EruditUtilities';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
+import { useTheme, useRoleTheme } from '../theme';
+import { eruditTabOptions, useEruditTabBarStyle, useEruditTabColors } from '../components/EruditTabs';
+import EruditCard from '../components/EruditCard';
+import EruditButton from '../components/EruditButton';
+import EruditBadge from '../components/EruditBadge';
+import EruditInput from '../components/EruditInput';
+import EruditModal from '../components/EruditModal';
+import EruditFAB from '../components/EruditFAB';
+import EruditDashboardHeader from '../components/EruditDashboardHeader';
+import EruditSkeleton from '../components/EruditSkeleton';
+import EruditEmptyState from '../components/EruditEmptyState';
 
 const Tab = createBottomTabNavigator();
+const ROLE = 'surveillant';
 
-const AbsencesScreen = () => {
+/* ═══════════════════════════════════════════════════════════════════════════
+   Onglet 1 — Absences
+   ══════════════════════════════════════════════════════════════════════════ */
+
+function AbsencesScreen() {
+  const { colors, spacing } = useTheme();
   const [absences, setAbsences] = useState([]);
-  const [modalVisible, setModalVisible] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    fetchAbsences();
-  }, []);
-
-  const fetchAbsences = async () => {
+  const fetchAbsences = useCallback(async () => {
     try {
       const response = await api.get('/surveillant/absences');
-      setAbsences(response.data);
+      setAbsences(response.data || []);
     } catch (error) {
       console.error('Error fetching absences:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
     }
-  };
+  }, []);
+
+  useEffect(() => { fetchAbsences(); }, [fetchAbsences]);
+  const onRefresh = useCallback(() => { setRefreshing(true); fetchAbsences(); }, [fetchAbsences]);
 
   const marquerAbsence = async (eleveId) => {
     try {
-      await api.post('/absences', {
+      await api.post('/surveillant/absences', {
         eleve_id: eleveId,
         date: new Date().toISOString().split('T')[0],
         type: 'absence',
@@ -39,63 +70,95 @@ const AbsencesScreen = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.surface, padding: spacing.lg, gap: spacing.md }}>
+        {[1, 2, 3].map(i => <EruditSkeleton key={i} variant="rect" width="100%" height={120} borderRadius={16} />)}
+      </View>
+    );
+  }
+
   return (
-    <View style={styles.container}>
-      <ScrollView>
-        {absences.map(absence => (
-          <Card key={absence.id} style={styles.card}>
-            <Card.Content>
-              <Title>{absence.eleve.nom} {absence.eleve.prenom}</Title>
-              <Text>Classe: {absence.eleve.classe.nom}</Text>
-              <Text>Date: {new Date(absence.date).toLocaleDateString()}</Text>
-              <Text>Type: {absence.type}</Text>
-              <Chip 
-                style={[
-                  styles.chip,
-                  { backgroundColor: absence.justifiee ? '#4CAF50' : '#f44336' }
-                ]}
-              >
-                {absence.justifiee ? 'Justifiée' : 'Non justifiée'}
-              </Chip>
-            </Card.Content>
-            <Card.Actions>
-              <Button mode="outlined" onPress={() => {}}>
-                Justifier
-              </Button>
-            </Card.Actions>
-          </Card>
-        ))}
+    <View style={{ flex: 1, backgroundColor: colors.surface }}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ padding: spacing.lg, gap: spacing.md, paddingBottom: 100 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
+      >
+        {absences.length === 0 ? (
+          <EruditEmptyState
+            icon="📉"
+            title="Aucune absence"
+            description="Aucune absence enregistrée pour le moment."
+            actionLabel="Marquer une absence"
+            onAction={() => {}}
+          />
+        ) : (
+          absences.map(absence => (
+            <EruditCard key={absence.id} variant="default">
+              <EruditCard.Header>
+                <EruditCard.Title>{absence.eleve?.nom} {absence.eleve?.prenom}</EruditCard.Title>
+                <EruditBadge
+                  variant={absence.justifiee ? 'success' : 'danger'}
+                  size="sm"
+                  dot
+                >
+                  {absence.justifiee ? 'Justifiée' : 'Non justifiée'}
+                </EruditBadge>
+              </EruditCard.Header>
+              <EruditCard.Body>
+                <EruditRow label="Classe" value={absence.eleve?.classe?.nom || '—'} />
+                <EruditRow
+                  label="Date"
+                  value={absence.date ? new Date(absence.date).toLocaleDateString('fr-FR') : '—'}
+                />
+                <EruditRow label="Type" value={absence.type || '—'} />
+              </EruditCard.Body>
+              <EruditCard.Footer>
+                <EruditButton variant="outline" size="sm" onPress={() => {}}>Justifier</EruditButton>
+              </EruditCard.Footer>
+            </EruditCard>
+          ))
+        )}
       </ScrollView>
-      <FAB
-        style={styles.fab}
-        icon="plus"
-        onPress={() => setModalVisible(true)}
-      />
+      <EruditFAB icon="📉" color="red" onPress={() => {}} />
     </View>
   );
-};
+}
 
-const IncidentsScreen = () => {
+/* ═══════════════════════════════════════════════════════════════════════════
+   Onglet 2 — Incidents
+   ══════════════════════════════════════════════════════════════════════════ */
+
+function IncidentsScreen() {
+  const { colors, spacing } = useTheme();
   const [incidents, setIncidents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [description, setDescription] = useState('');
+  const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    fetchIncidents();
-  }, []);
-
-  const fetchIncidents = async () => {
+  const fetchIncidents = useCallback(async () => {
     try {
       const response = await api.get('/surveillant/incidents');
-      setIncidents(response.data);
+      setIncidents(response.data || []);
     } catch (error) {
       console.error('Error fetching incidents:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
     }
-  };
+  }, []);
+
+  useEffect(() => { fetchIncidents(); }, [fetchIncidents]);
+  const onRefresh = useCallback(() => { setRefreshing(true); fetchIncidents(); }, [fetchIncidents]);
 
   const ajouterIncident = async () => {
+    if (!description.trim()) return;
+    setSaving(true);
     try {
-      await api.post('/incidents', {
+      await api.post('/surveillant/incidents', {
         description,
         date: new Date().toISOString(),
         gravite: 'moyenne',
@@ -106,217 +169,283 @@ const IncidentsScreen = () => {
       Alert.alert('Succès', 'Incident enregistré');
     } catch (error) {
       Alert.alert('Erreur', 'Erreur lors de l\'enregistrement');
+    } finally {
+      setSaving(false);
     }
   };
 
-  return (
-    <View style={styles.container}>
-      <ScrollView>
-        {incidents.map(incident => (
-          <Card key={incident.id} style={styles.card}>
-            <Card.Content>
-              <Title>Incident #{incident.id}</Title>
-              <Text>Description: {incident.description}</Text>
-              <Text>Date: {new Date(incident.date).toLocaleDateString()}</Text>
-              <Text>Élèves impliqués: {incident.eleves?.map(e => e.nom).join(', ')}</Text>
-              <Chip 
-                style={[
-                  styles.chip,
-                  { 
-                    backgroundColor: 
-                      incident.gravite === 'faible' ? '#4CAF50' :
-                      incident.gravite === 'moyenne' ? '#FF9800' : '#f44336'
-                  }
-                ]}
-              >
-                {incident.gravite}
-              </Chip>
-            </Card.Content>
-            <Card.Actions>
-              <Button mode="outlined">Traiter</Button>
-            </Card.Actions>
-          </Card>
-        ))}
-      </ScrollView>
-      
-      <FAB
-        style={styles.fab}
-        icon="plus"
-        onPress={() => setModalVisible(true)}
-      />
+  const graviteVariant = (g) =>
+    g === 'faible' ? 'success' : g === 'moyenne' ? 'warning' : 'danger';
 
-      <Portal>
-        <Modal visible={modalVisible} onDismiss={() => setModalVisible(false)}>
-          <Card style={styles.modal}>
-            <Card.Content>
-              <Title>Nouvel incident</Title>
-              <TextInput
-                label="Description"
-                value={description}
-                onChangeText={setDescription}
-                mode="outlined"
-                multiline
-                numberOfLines={4}
-                style={styles.input}
-              />
-              <Button mode="contained" onPress={ajouterIncident}>
-                Enregistrer
-              </Button>
-            </Card.Content>
-          </Card>
-        </Modal>
-      </Portal>
+  if (loading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.surface, padding: spacing.lg, gap: spacing.md }}>
+        {[1, 2, 3].map(i => <EruditSkeleton key={i} variant="rect" width="100%" height={130} borderRadius={16} />)}
+      </View>
+    );
+  }
+
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.surface }}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ padding: spacing.lg, gap: spacing.md, paddingBottom: 100 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
+      >
+        {incidents.length === 0 ? (
+          <EruditEmptyState
+            icon="⚠️"
+            title="Aucun incident"
+            description="Tous les élèves sont sages aujourd'hui."
+            actionLabel="Nouvel incident"
+            onAction={() => setModalVisible(true)}
+          />
+        ) : (
+          incidents.map(incident => (
+            <EruditCard key={incident.id} variant="default">
+              <EruditCard.Header>
+                <EruditCard.Title>Incident #{incident.id}</EruditCard.Title>
+                <EruditBadge variant={graviteVariant(incident.gravite)} size="sm" dot>
+                  {incident.gravite || '—'}
+                </EruditBadge>
+              </EruditCard.Header>
+              <EruditCard.Body>
+                <EruditText style={{ fontSize: 13, color: colors.textSecondary, marginBottom: spacing.sm }}>
+                  {incident.description || 'Aucune description'}
+                </EruditText>
+                <EruditRow
+                  label="Date"
+                  value={incident.date ? new Date(incident.date).toLocaleDateString('fr-FR') : '—'}
+                />
+                <EruditRow
+                  label="Élèves impliqués"
+                  value={incident.eleves?.map(e => e.nom).join(', ') || '—'}
+                />
+              </EruditCard.Body>
+              <EruditCard.Footer>
+                <EruditButton variant="outline" size="sm">Traiter</EruditButton>
+              </EruditCard.Footer>
+            </EruditCard>
+          ))
+        )}
+      </ScrollView>
+
+      <EruditFAB icon="⚠️" color="red" onPress={() => setModalVisible(true)} />
+
+      {/* Modal nouvel incident */}
+      <EruditModal visible={modalVisible} onDismiss={() => setModalVisible(false)}>
+        <EruditModal.Header>
+          <EruditModal.Title>Nouvel incident</EruditModal.Title>
+        </EruditModal.Header>
+        <EruditModal.Body>
+          <EruditInput
+            label="Description"
+            value={description}
+            onChangeText={setDescription}
+            placeholder="Décrivez l'incident..."
+            multiline
+            numberOfLines={4}
+          />
+        </EruditModal.Body>
+        <EruditModal.Footer>
+          <EruditButton variant="ghost" onPress={() => setModalVisible(false)}>Annuler</EruditButton>
+          <EruditButton variant="primary" onPress={ajouterIncident} loading={saving}>Enregistrer</EruditButton>
+        </EruditModal.Footer>
+      </EruditModal>
     </View>
   );
-};
+}
 
-const SanctionsScreen = () => {
+/* ═══════════════════════════════════════════════════════════════════════════
+   Onglet 3 — Sanctions
+   ══════════════════════════════════════════════════════════════════════════ */
+
+function SanctionsScreen() {
+  const { colors, spacing } = useTheme();
   const [sanctions, setSanctions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    fetchSanctions();
-  }, []);
-
-  const fetchSanctions = async () => {
+  const fetchSanctions = useCallback(async () => {
     try {
       const response = await api.get('/surveillant/sanctions');
-      setSanctions(response.data);
+      setSanctions(response.data || []);
     } catch (error) {
       console.error('Error fetching sanctions:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
     }
-  };
+  }, []);
+
+  useEffect(() => { fetchSanctions(); }, [fetchSanctions]);
+  const onRefresh = useCallback(() => { setRefreshing(true); fetchSanctions(); }, [fetchSanctions]);
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.surface, padding: spacing.lg, gap: spacing.md }}>
+        {[1, 2, 3].map(i => <EruditSkeleton key={i} variant="rect" width="100%" height={140} borderRadius={16} />)}
+      </View>
+    );
+  }
 
   return (
-    <View style={styles.container}>
-      <ScrollView>
-        {sanctions.map(sanction => (
-          <Card key={sanction.id} style={styles.card}>
-            <Card.Content>
-              <Title>{sanction.eleve.nom} {sanction.eleve.prenom}</Title>
-              <Text>Classe: {sanction.eleve.classe.nom}</Text>
-              <Text>Type: {sanction.type_sanction}</Text>
-              <Text>Motif: {sanction.motif}</Text>
-              <Text>Date: {new Date(sanction.date).toLocaleDateString()}</Text>
-              <Text>Durée: {sanction.duree} jours</Text>
-              <Chip 
-                style={[
-                  styles.chip,
-                  { backgroundColor: sanction.statut === 'active' ? '#f44336' : '#4CAF50' }
-                ]}
-              >
-                {sanction.statut}
-              </Chip>
-            </Card.Content>
-            <Card.Actions>
-              <Button mode="outlined">Modifier</Button>
-              <Button mode="contained">Lever</Button>
-            </Card.Actions>
-          </Card>
-        ))}
+    <View style={{ flex: 1, backgroundColor: colors.surface }}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ padding: spacing.lg, gap: spacing.md, paddingBottom: 100 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
+      >
+        {sanctions.length === 0 ? (
+          <EruditEmptyState
+            icon="⚖️"
+            title="Aucune sanction"
+            description="Aucune sanction en cours."
+            actionLabel="Nouvelle sanction"
+            onAction={() => {}}
+          />
+        ) : (
+          sanctions.map(sanction => (
+            <EruditCard key={sanction.id} variant="default">
+              <EruditCard.Header>
+                <EruditCard.Title>{sanction.eleve?.nom} {sanction.eleve?.prenom}</EruditCard.Title>
+                <EruditBadge
+                  variant={sanction.statut === 'active' ? 'danger' : 'success'}
+                  size="sm"
+                  dot
+                >
+                  {sanction.statut || 'Inconnue'}
+                </EruditBadge>
+              </EruditCard.Header>
+              <EruditCard.Body>
+                <EruditRow label="Classe" value={sanction.eleve?.classe?.nom || '—'} />
+                <EruditRow label="Type" value={sanction.type_sanction || '—'} />
+                <EruditRow label="Motif" value={sanction.motif || '—'} />
+                <EruditRow
+                  label="Date"
+                  value={sanction.date ? new Date(sanction.date).toLocaleDateString('fr-FR') : '—'}
+                />
+                <EruditRow label="Durée" value={`${sanction.duree || 0} jours`} />
+              </EruditCard.Body>
+              <EruditCard.Footer>
+                <EruditButton variant="outline" size="sm">Modifier</EruditButton>
+                <EruditButton variant="primary" size="sm">Lever</EruditButton>
+              </EruditCard.Footer>
+            </EruditCard>
+          ))
+        )}
       </ScrollView>
-      <FAB
-        style={styles.fab}
-        icon="plus"
-        onPress={() => {}}
-      />
+      <EruditFAB icon="⚖️" color="red" onPress={() => {}} />
     </View>
   );
-};
+}
 
-const ProfilScreen = () => {
+/* ═══════════════════════════════════════════════════════════════════════════
+   Onglet 4 — Profil
+   ══════════════════════════════════════════════════════════════════════════ */
+
+function ProfilScreen() {
+  const { colors, spacing } = useTheme();
   const { user, logout } = useAuth();
 
+  const planning = [
+    { jour: 'Lundi', creneau: '8h-12h', lieu: 'Cour principale' },
+    { jour: 'Mardi', creneau: '14h-18h', lieu: 'Bâtiment A' },
+    { jour: 'Mercredi', creneau: '8h-12h', lieu: 'Cantine' },
+    { jour: 'Jeudi', creneau: '14h-18h', lieu: 'Cour principale' },
+    { jour: 'Vendredi', creneau: '8h-12h', lieu: 'Bâtiment B' },
+  ];
+
   return (
-    <ScrollView style={styles.container}>
-      <Card style={styles.card}>
-        <Card.Content>
-          <Title>Mon Profil</Title>
-          <Text>Nom: {user?.nom} {user?.prenom}</Text>
-          <Text>Email: {user?.email}</Text>
-          <Text>Téléphone: {user?.telephone}</Text>
-          <Text>Poste: Surveillant</Text>
-        </Card.Content>
-      </Card>
-      
-      <Card style={styles.card}>
-        <Card.Content>
-          <Title>Planning de surveillance</Title>
-          <Text>Lundi: 8h-12h - Cour principale</Text>
-          <Text>Mardi: 14h-18h - Bâtiment A</Text>
-          <Text>Mercredi: 8h-12h - Cantine</Text>
-          <Text>Jeudi: 14h-18h - Cour principale</Text>
-          <Text>Vendredi: 8h-12h - Bâtiment B</Text>
-        </Card.Content>
-      </Card>
-      
-      <Button
-        mode="contained"
-        onPress={logout}
-        style={[styles.button, { backgroundColor: '#f44336' }]}
-        icon="logout"
-      >
-        Déconnexion
-      </Button>
+    <ScrollView style={{ flex: 1, backgroundColor: colors.surface }}>
+      <EruditDashboardHeader user={user} role={ROLE} />
+
+      <View style={{ padding: spacing.lg, gap: spacing.md }}>
+        {/* Profil */}
+        <EruditCard variant="default">
+          <EruditCard.Header>
+            <EruditCard.Title>Mon Profil</EruditCard.Title>
+          </EruditCard.Header>
+          <EruditCard.Body>
+            <EruditRow label="Nom" value={`${user?.nom || ''} ${user?.prenom || ''}`.trim()} />
+            <EruditRow label="Email" value={user?.email || '—'} />
+            <EruditRow label="Téléphone" value={user?.telephone || '—'} />
+            <EruditRow label="Poste" value="Surveillant" />
+          </EruditCard.Body>
+        </EruditCard>
+
+        {/* Planning de surveillance */}
+        <EruditCard variant="default">
+          <EruditCard.Header>
+            <EruditCard.Title>Planning de surveillance</EruditCard.Title>
+          </EruditCard.Header>
+          <EruditCard.Body>
+            {planning.map((p, i) => (
+              <View
+                key={i}
+                style={{
+                  flexDirection: 'row', alignItems: 'center', gap: spacing.md,
+                  paddingVertical: spacing.sm,
+                  borderBottomWidth: i < planning.length - 1 ? 1 : 0,
+                  borderBottomColor: colors.border,
+                }}
+              >
+                <View style={{
+                  width: 8, height: 8, borderRadius: 4, backgroundColor: colors.red,
+                }} />
+                <EruditText style={{ flex: 1, fontSize: 13, color: colors.textPrimary }}>
+                  {p.jour} — {p.creneau}
+                </EruditText>
+                <EruditText style={{ fontSize: 12, color: colors.textSecondary }}>{p.lieu}</EruditText>
+              </View>
+            ))}
+          </EruditCard.Body>
+        </EruditCard>
+
+        {/* Déconnexion */}
+        <EruditButton variant="danger" size="lg" onPress={logout} fullWidth icon="🚪">
+          Déconnexion
+        </EruditButton>
+      </View>
     </ScrollView>
   );
-};
+}
 
-const SurveillantDashboard = () => {
+/* ═══════════════════════════════════════════════════════════════════════════
+   Petits utilitaires internes
+   ══════════════════════════════════════════════════════════════════════════ */
+
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Tab Navigator — Point d'entrée du dashboard
+   ══════════════════════════════════════════════════════════════════════════ */
+
+export default function SurveillantDashboard() {
+  const { user } = useAuth();
+  const tabColors = useEruditTabColors(ROLE);
+  const tabBarStyle = useEruditTabBarStyle();
+
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused, color, size }) => {
-          let iconName;
-          switch (route.name) {
-            case 'Absences': iconName = 'event-busy'; break;
-            case 'Incidents': iconName = 'warning'; break;
-            case 'Sanctions': iconName = 'gavel'; break;
-            case 'Profil': iconName = 'person'; break;
-          }
-          return <Icon name={iconName} size={size} color={color} />;
-        },
-        tabBarActiveTintColor: '#795548',
-        tabBarInactiveTintColor: 'gray',
-      })}
+      screenOptions={{
+        ...eruditTabOptions({ role: ROLE, labels: {
+          Absences: 'Absences',
+          Incidents: 'Incidents',
+          Sanctions: 'Sanctions',
+          Profil: 'Profil',
+        }}),
+        tabBarActiveTintColor: tabColors.activeTintColor,
+        tabBarInactiveTintColor: tabColors.inactiveTintColor,
+        tabBarStyle,
+        headerShown: false,
+        lazy: true,
+      }}
     >
-      <Tab.Screen name="Absences" component={AbsencesScreen} options={{ title: 'Absences' }} />
-      <Tab.Screen name="Incidents" component={IncidentsScreen} options={{ title: 'Incidents' }} />
-      <Tab.Screen name="Sanctions" component={SanctionsScreen} options={{ title: 'Sanctions' }} />
-      <Tab.Screen name="Profil" component={ProfilScreen} options={{ title: 'Profil' }} />
+      <Tab.Screen name="Absences" component={AbsencesScreen} />
+      <Tab.Screen name="Incidents" component={IncidentsScreen} />
+      <Tab.Screen name="Sanctions" component={SanctionsScreen} />
+      <Tab.Screen name="Profil" component={ProfilScreen} />
     </Tab.Navigator>
   );
-};
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-    padding: 10,
-  },
-  card: {
-    marginBottom: 10,
-  },
-  chip: {
-    marginTop: 10,
-    alignSelf: 'flex-start',
-  },
-  fab: {
-    position: 'absolute',
-    margin: 16,
-    right: 0,
-    bottom: 0,
-    backgroundColor: '#795548',
-  },
-  modal: {
-    margin: 20,
-  },
-  input: {
-    marginBottom: 15,
-  },
-  button: {
-    marginTop: 20,
-    paddingVertical: 8,
-  },
-});
-
-export default SurveillantDashboard;
+}

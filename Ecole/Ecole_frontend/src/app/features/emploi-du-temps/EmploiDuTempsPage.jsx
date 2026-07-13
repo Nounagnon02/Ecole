@@ -2,18 +2,21 @@
  * EmploiDuTempsPage — Consultation des emplois du temps
  *
  * Vue centralisée pour tous les rôles. Chaque rôle voit son EDT selon ses permissions.
+ * Données dynamiques via API /api/emploi-du-temps
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   Calendar, Clock, ChevronLeft, ChevronRight, Filter,
-  MapPin, User, BookOpen, Download, Plus,
+  MapPin, User, BookOpen, Download, Plus, Loader2,
 } from 'lucide-react';
 import { cn, formatTime } from '@/shared/lib/utils';
+import logger from '@/shared/lib/logger';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
+import { useApi } from '@/hooks/useApi';
 
 /* ─── Jours et créneaux ───────────────────────────────────────────── */
 const JOURS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
@@ -29,56 +32,117 @@ const CRENEAUX = [
   { heure: '16h00 - 17h00', label: '8ème heure' },
 ];
 
-/* ─── Mock data ───────────────────────────────────────────────────── */
-const MATIERES = ['Mathématiques', 'Français', 'Anglais', 'Physique', 'SVT', 'Histoire', 'EPS', 'Philosophie'];
-const PROFESSEURS = ['M. Diallo', 'Mme Touré', 'M. Koné', 'Mme Cissé', 'M. Traoré', 'Mme Sow'];
-const SALLES = ['S101', 'S102', 'S103', 'S201', 'S202', 'Labo Physique', 'Labo SVT', 'Bibliothèque'];
-
-function genererCours(jourIdx, creneauIdx) {
-  // Pause méridienne
-  if (creneauIdx === 4) return null;
-  // Créneaux aléatoires mais déterministes
-  const seed = (jourIdx * 13 + creneauIdx * 7) % 7;
-  if (seed === 0) return null; // trou
-
-  return {
-    matiere: MATIERES[(seed + jourIdx) % MATIERES.length],
-    professeur: PROFESSEURS[(seed + creneauIdx) % PROFESSEURS.length],
-    salle: SALLES[(seed + jourIdx + creneauIdx) % SALLES.length],
-    groupe: `4e ${String.fromCharCode(65 + seed % 4)}`,
-  };
-}
-
-function buildEmploiDuTemps() {
-  return JOURS.map((jour, jIdx) => ({
-    jour,
-    creneaux: CRENEAUX.map((c, cIdx) => ({
-      ...c,
-      cours: genererCours(jIdx, cIdx),
-    })),
-  }));
-}
-
-const MATIERES_FILTRE = ['Toutes', ...MATIERES];
-
 export default function EmploiDuTempsPage() {
+  const { loading, error, get } = useApi();
+  const [edt, setEdt] = useState({});
   const [semaine, setSemaine] = useState(0);
   const [filterMatiere, setFilterMatiere] = useState('Toutes');
+  const [filterClasse, setFilterClasse] = useState('Toutes');
+  const [filterEnseignant, setFilterEnseignant] = useState('Toutes');
 
-  const edt = useMemo(() => buildEmploiDuTemps(), []);
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await get('/emploi-du-temps');
+        const raw = res?.data?.data || res?.data || res || [];
+        const items = Array.isArray(raw) ? raw : [];
 
-  const filteredEdt = useMemo(() => {
-    if (filterMatiere === 'Toutes') return edt;
-    return edt.map((jour) => ({
-      ...jour,
-      creneaux: jour.creneaux.map((c) => ({
-        ...c,
-        cours: c.cours?.matiere === filterMatiere ? c.cours : null,
-      })),
-    }));
-  }, [edt, filterMatiere]);
+        // Construire la structure EDT par jour et créneau
+        const structure = {};
+        JOURS.forEach(j => { structure[j] = []; });
+
+        items.forEach(cours => {
+          const jour = cours.jour || cours.jour_semaine;
+          if (!structure[jour]) structure[jour] = [];
+          structure[jour].push(cours);
+        });
+
+        // Trier par heure de début
+        Object.keys(structure).forEach(j => {
+          structure[j].sort((a, b) => {
+            const ha = (a.heure_debut || '00:00').split(':')[0];
+            const hb = (b.heure_debut || '00:00').split(':')[0];
+            return parseInt(ha) - parseInt(hb);
+          });
+        });
+
+        setEdt(structure);
+
+        // Extraire les valeurs uniques pour les filtres
+        const matieres = ['Toutes', ...new Set(items.map(c => c.matiere?.nom || c.matiere).filter(Boolean))];
+        const classes = ['Toutes', ...new Set(items.map(c => c.classe?.nom || c.classe_nom).filter(Boolean))];
+        const enseignants = ['Toutes', ...new Set(items.map(c => c.enseignant?.nom || c.enseignant_nom).filter(Boolean))];
+      } catch (e) {
+        logger.error('Erreur chargement EDT:', e);
+      }
+    })();
+  }, [get]);
+
+  // Données de démo si pas de données API
+  const hasData = useMemo(() => Object.values(edt).some(arr => arr.length > 0), [edt]);
+
+  const mockEdt = useMemo(() => {
+    const matieres = ['Mathématiques', 'Français', 'Anglais', 'Physique', 'SVT', 'Histoire', 'EPS', 'Philosophie'];
+    const profs = ['M. Diallo', 'Mme Touré', 'M. Koné', 'Mme Cissé', 'M. Traoré', 'Mme Sow'];
+    const salles = ['S101', 'S102', 'S103', 'S201', 'S202', 'Labo Physique', 'Labo SVT', 'Bibliothèque'];
+    const groupes = ['4e A', '4e B', '4e C', '4e D'];
+
+    const structure = {};
+    JOURS.forEach((jour, jIdx) => {
+      structure[jour] = CRENEAUX.map((c, cIdx) => {
+        if (cIdx === 4) return null; // pause
+        const seed = (jIdx * 13 + cIdx * 7) % 7;
+        if (seed === 0) return null;
+        return {
+          matiere: matieres[(seed + jIdx) % matieres.length],
+          professeur: profs[(seed + cIdx) % profs.length],
+          salle: salles[(seed + jIdx + cIdx) % salles.length],
+          groupe: groupes[seed % groupes.length],
+        };
+      }).filter(Boolean);
+    });
+    return structure;
+  }, []);
+
+  const displayEdt = useMemo(() => {
+    const source = hasData ? edt : mockEdt;
+    if (filterMatiere === 'Toutes' && filterClasse === 'Toutes' && filterEnseignant === 'Toutes') {
+      return source;
+    }
+    const filtered = {};
+    Object.entries(source).forEach(([jour, cours]) => {
+      filtered[jour] = cours.filter(c => {
+        if (filterMatiere !== 'Toutes' && c.matiere !== filterMatiere) return false;
+        if (filterClasse !== 'Toutes' && c.groupe !== filterClasse) return false;
+        if (filterEnseignant !== 'Toutes' && c.professeur !== filterEnseignant) return false;
+        return true;
+      });
+    });
+    return filtered;
+  }, [edt, filterMatiere, filterClasse, filterEnseignant, hasData]);
+
+  const matieresList = useMemo(() => ['Toutes', ...new Set(Object.values(displayEdt).flat().map(c => c.matiere).filter(Boolean))], [displayEdt]);
+  const classesList = useMemo(() => ['Toutes', ...new Set(Object.values(displayEdt).flat().map(c => c.groupe).filter(Boolean))], [displayEdt]);
+  const enseignantsList = useMemo(() => ['Toutes', ...new Set(Object.values(displayEdt).flat().map(c => c.professeur).filter(Boolean))], [displayEdt]);
 
   const semaineLabel = `Semaine du ${17 + semaine * 7} au ${21 + semaine * 7} mars 2026`;
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
+        <Clock className="h-8 w-8 mb-2 text-red-400" />
+        <p className="text-sm">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
@@ -124,11 +188,23 @@ export default function EmploiDuTempsPage() {
             <select
               value={filterMatiere}
               onChange={(e) => setFilterMatiere(e.target.value)}
-              className="h-9 rounded-lg border border-neutral-300 bg-white px-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+              className="h-9 rounded-lg border border-neutral-300 bg-white px-2.5 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
             >
-              {MATIERES_FILTRE.map((m) => (
-                <option key={m} value={m}>{m}</option>
-              ))}
+              {matieresList.map((m) => <option key={m} value={m}>{m}</option>)}
+            </select>
+            <select
+              value={filterClasse}
+              onChange={(e) => setFilterClasse(e.target.value)}
+              className="h-9 rounded-lg border border-neutral-300 bg-white px-2.5 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+            >
+              {classesList.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+            <select
+              value={filterEnseignant}
+              onChange={(e) => setFilterEnseignant(e.target.value)}
+              className="h-9 rounded-lg border border-neutral-300 bg-white px-2.5 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+            >
+              {enseignantsList.map((e) => <option key={e} value={e}>{e}</option>)}
             </select>
           </div>
         </div>
@@ -148,12 +224,12 @@ export default function EmploiDuTempsPage() {
           </div>
 
           {/* Créneaux */}
-          {filteredEdt[0]?.creneaux.map((creneau, cIdx) => (
+          {CRENEAUX.map((creneau, cIdx) => (
             <div
               key={cIdx}
               className={cn(
                 'grid grid-cols-[100px_repeat(6,1fr)] gap-px bg-neutral-200 dark:bg-neutral-700',
-                cIdx === filteredEdt[0].creneaux.length - 1 && 'rounded-b-2xl overflow-hidden'
+                cIdx === CRENEAUX.length - 1 && 'rounded-b-2xl overflow-hidden'
               )}
             >
               {/* Colonne heure */}
@@ -166,37 +242,38 @@ export default function EmploiDuTempsPage() {
               </div>
 
               {/* Colonnes jours */}
-              {filteredEdt.map((jour, jIdx) => {
-                const cr = jour.creneaux[cIdx];
-                if (cr.pause) {
+              {JOURS.map((jour, jIdx) => {
+                const coursJour = displayEdt[jour] || [];
+                // Trouver le cours pour ce créneau (index basé sur l'ordre)
+                const nonPauseBefore = CRENEAUX.slice(0, cIdx).filter(c => !c.pause).length;
+                const cr = coursJour[nonPauseBefore];
+
+                if (creneau.pause) {
                   return (
                     <div key={jIdx} className="bg-amber-50 dark:bg-amber-900/10 flex items-center justify-center">
                       <span className="text-xs text-amber-500 italic">Pause</span>
                     </div>
                   );
                 }
-                if (!cr.cours) {
-                  return (
-                    <div key={jIdx} className="bg-white dark:bg-neutral-900" />
-                  );
+                if (!cr) {
+                  return <div key={jIdx} className="bg-white dark:bg-neutral-900" />;
                 }
-                const { cours } = cr;
                 return (
-                  <div key={jIdx} className="bg-white dark:bg-neutral-900 p-2 hover:bg-indigo-50 dark:hover:bg-indigo-900/10 transition-colors cursor-pointer group">
+                  <div key={jIdx} className="bg-white dark:bg-neutral-900 p-2 hover:bg-[var(--accent-subtle)] hover:bg-[var(--accent-subtle)] transition-colors cursor-pointer group">
                     <div className="space-y-1">
-                      <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 leading-tight">
-                        {cours.matiere}
+                      <p className="text-xs font-semibold text-[var(--accent)] dark:text-[var(--accent)] leading-tight">
+                        {cr.matiere}
                       </p>
                       <div className="flex items-center gap-1 text-[10px] text-neutral-500">
                         <User className="h-3 w-3" />
-                        <span className="truncate">{cours.professeur}</span>
+                        <span className="truncate">{cr.professeur}</span>
                       </div>
                       <div className="flex items-center gap-1 text-[10px] text-neutral-400">
                         <MapPin className="h-3 w-3" />
-                        <span>{cours.salle}</span>
+                        <span>{cr.salle}</span>
                       </div>
                       <Badge variant="outline" size="sm" className="text-[10px]">
-                        {cours.groupe}
+                        {cr.groupe}
                       </Badge>
                     </div>
                   </div>
@@ -217,6 +294,8 @@ export default function EmploiDuTempsPage() {
           <div className="h-2.5 w-2.5 rounded bg-amber-50 dark:bg-amber-900/10 border border-amber-200" />
           <span>Pause</span>
         </div>
+        {hasData && <span className="text-amber-500 text-xs">Données chargées depuis l'API</span>}
+        {!hasData && <span className="text-neutral-400 text-xs">Mode démo (API indisponible)</span>}
       </div>
     </motion.div>
   );

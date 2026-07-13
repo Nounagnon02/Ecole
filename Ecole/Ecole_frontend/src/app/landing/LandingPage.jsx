@@ -26,8 +26,6 @@ import {
   ChevronRight,
   Sparkles,
 } from 'lucide-react';
-import { ParticlesField } from '@/shared/components/three';
-
 /* ─── Animation variants ─────────────────────────────────────────────── */
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -52,7 +50,7 @@ const FEATURES = [
     icon: Users,
     title: 'Gestion des élèves',
     desc: 'Suivi complet des inscriptions, dossiers, absences et performances individuelles.',
-    color: 'indigo',
+    color: 'primary',
   },
   {
     icon: BookOpen,
@@ -130,7 +128,7 @@ function Navbar() {
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--accent)]">
             <GraduationCap className="h-5 w-5 text-white" />
           </div>
           <span className="text-lg font-bold text-neutral-900 dark:text-neutral-100">École</span>
@@ -156,7 +154,7 @@ function Navbar() {
             </Link>
             <a
               href="#features"
-              className="rounded-xl bg-indigo-600 px-5 py-2 text-sm font-medium text-white shadow-lg shadow-indigo-200 transition-colors hover:bg-indigo-500 dark:shadow-indigo-900/30"
+              className="rounded-lg bg-[var(--accent)] px-5 py-2 text-sm font-medium text-white shadow-2 transition-colors hover:bg-[var(--accent-hover)] "
             >
               Commencer
             </a>
@@ -212,12 +210,12 @@ function HeroSection() {
   return (
     <section className="relative flex min-h-[90vh] items-center overflow-hidden pt-16">
       {/* 3D Particles background */}
-      <ParticlesField count={40} color="#6366f1" speed={0.15} />
+
 
       {/* Background decoration */}
-      <div className="pointer-events-none absolute -right-40 -top-40 h-[500px] w-[500px] rounded-full bg-indigo-50/70 blur-3xl dark:bg-indigo-950/20" />
+      <div className="pointer-events-none absolute -right-40 -top-40 h-[500px] w-[500px] rounded-full bg-[var(--accent-subtle)]/30 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-40 -left-40 h-[400px] w-[400px] rounded-full bg-sky-50/70 blur-3xl dark:bg-sky-950/20" />
-      <div className="pointer-events-none absolute left-1/2 top-1/3 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-indigo-50/30 blur-3xl dark:bg-indigo-950/10" />
+      <div className="pointer-events-none absolute left-1/2 top-1/3 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--accent-subtle)]/20 blur-3xl" />
 
       <div className="mx-auto w-full max-w-7xl px-6 py-20">
         <div className="grid items-center gap-12 lg:grid-cols-2">
@@ -228,14 +226,14 @@ function HeroSection() {
             variants={stagger}
             className="relative z-10"
           >
-            <motion.div variants={fadeUp} className="mb-6 inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-4 py-1.5 text-xs font-medium text-indigo-700 dark:border-indigo-800/50 dark:bg-indigo-950/30 dark:text-indigo-300">
-              <span className="flex h-2 w-2 rounded-full bg-indigo-500" />
+            <motion.div variants={fadeUp} className="mb-6 inline-flex items-center gap-2 rounded-full border border-[var(--accent)]/30 bg-[var(--accent-subtle)] px-4 py-1.5 text-xs font-medium text-[var(--accent)] dark:border-[var(--accent)]/20">
+              <span className="flex h-2 w-2 rounded-full bg-[var(--accent)]" />
               Nouvelle version disponible
             </motion.div>
 
             <motion.h1 variants={fadeUp} className="text-4xl font-bold leading-tight tracking-tight text-neutral-900 sm:text-5xl lg:text-6xl dark:text-neutral-100">
               Gérez votre{' '}
-              <span className="bg-gradient-to-r from-indigo-600 to-sky-500 bg-clip-text text-transparent">
+              <span className="bg-[var(--accent)] bg-clip-text text-transparent">
                 établissement scolaire
               </span>{' '}
               en toute simplicité
@@ -249,7 +247,7 @@ function HeroSection() {
             <motion.div variants={fadeUp} className="mt-8 flex flex-wrap items-center gap-4">
               <a
                 href="#features"
-                className="flex items-center gap-2 rounded-xl bg-indigo-600 px-7 py-3 text-sm font-semibold text-white shadow-xl shadow-indigo-200 transition-all hover:bg-indigo-500 active:scale-[0.98] dark:shadow-indigo-900/30"
+                className="flex items-center gap-2 rounded-lg bg-[var(--accent)] px-7 py-3 text-sm font-semibold text-white shadow-3 transition-all hover:bg-[var(--accent-hover)] active:scale-[0.98] "
               >
                 Découvrir la plateforme
                 <ArrowRight className="h-4 w-4" />
@@ -286,12 +284,12 @@ function HeroSection() {
             className="relative hidden lg:block"
           >
             <div className="rounded-2xl border border-neutral-200 bg-white p-2 shadow-2xl shadow-neutral-200/50 dark:border-neutral-800 dark:bg-neutral-900 dark:shadow-neutral-950/30">
-              <div className="rounded-xl bg-gradient-to-br from-indigo-50 to-white p-8 dark:from-indigo-950/20 dark:to-neutral-900">
+              <div className="rounded-xl bg-[var(--accent-subtle)] p-8">
                 {/* Mock dashboard preview */}
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="h-4 w-32 rounded-full bg-neutral-200 dark:bg-neutral-700" />
-                    <div className="h-4 w-20 rounded-full bg-indigo-100 dark:bg-indigo-900/30" />
+                    <div className="h-4 w-20 rounded-full bg-[var(--border-light)]" />
                   </div>
                   <div className="grid grid-cols-3 gap-3">
                     {[60, 40, 50].map((w, i) => (
@@ -303,7 +301,7 @@ function HeroSection() {
                   </div>
                   <div className="h-32 rounded-xl bg-neutral-100 p-4 dark:bg-neutral-800">
                     <div className="flex gap-4">
-                      <div className="h-6 flex-1 rounded-full bg-indigo-100 dark:bg-indigo-900/30" />
+                      <div className="h-6 flex-1 rounded-full bg-[var(--border-light)]" />
                       <div className="h-6 w-16 rounded-full bg-neutral-300 dark:bg-neutral-600" />
                     </div>
                     <div className="mt-3 space-y-2">
@@ -341,7 +339,7 @@ function FeaturesSection() {
           variants={stagger}
           className="text-center"
         >
-          <motion.div variants={fadeUp} className="mb-4 inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-4 py-1.5 text-xs font-medium text-indigo-700 dark:border-indigo-800/50 dark:bg-indigo-950/30 dark:text-indigo-300">
+          <motion.div variants={fadeUp} className="mb-4 inline-flex items-center gap-2 rounded-full border border-[var(--accent)]/30 bg-[var(--accent-subtle)] px-4 py-1.5 text-xs font-medium text-[var(--accent)] dark:border-[var(--accent)]/20">
             Fonctionnalités
           </motion.div>
           <motion.h2 variants={fadeUp} className="text-3xl font-bold text-neutral-900 sm:text-4xl dark:text-neutral-100">
@@ -364,7 +362,7 @@ function FeaturesSection() {
               key={feature.title}
               variants={fadeUp}
               custom={i}
-              className="group rounded-2xl border border-neutral-200 bg-white p-6 transition-all hover:border-indigo-200 hover:shadow-lg hover:shadow-indigo-50 dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-indigo-800 dark:hover:shadow-indigo-950/20"
+              className="group rounded-2xl border border-[var(--border)] bg-white p-6 transition-all hover:border-[var(--accent)]/30 hover:shadow-3 dark:border-neutral-800 dark:bg-neutral-900"
             >
               <div className={`mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-${feature.color}-50 text-${feature.color}-600 dark:bg-${feature.color}-950/30 dark:text-${feature.color}-400`}>
                 <feature.icon className="h-5 w-5" />
@@ -397,7 +395,7 @@ function StatsSection() {
               variants={fadeUp}
               className="rounded-2xl border border-neutral-200 bg-white p-8 text-center dark:border-neutral-800 dark:bg-neutral-900"
             >
-              <p className="text-4xl font-bold text-indigo-600 dark:text-indigo-400">{stat.value}</p>
+              <p className="text-4xl font-bold text-[var(--accent)] dark:text-[var(--accent)]">{stat.value}</p>
               <p className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">{stat.label}</p>
             </motion.div>
           ))}
@@ -480,7 +478,7 @@ function CTASection() {
           <motion.div variants={fadeUp} className="mt-8 flex flex-wrap justify-center gap-4">
             <Link
               to="/connexion"
-              className="flex items-center gap-2 rounded-xl bg-indigo-600 px-8 py-3 text-sm font-semibold text-white shadow-xl shadow-indigo-200 transition-all hover:bg-indigo-500 active:scale-[0.98] dark:shadow-indigo-900/30"
+              className="flex items-center gap-2 rounded-lg bg-[var(--accent)] px-8 py-3 text-sm font-semibold text-white shadow-3 transition-all hover:bg-[var(--accent-hover)] active:scale-[0.98] "
             >
               Commencer maintenant
               <ArrowRight className="h-4 w-4" />
@@ -499,7 +497,7 @@ function FooterSection() {
       <div className="mx-auto max-w-7xl px-6">
         <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--accent)]">
               <GraduationCap className="h-4 w-4 text-white" />
             </div>
             <span className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">École</span>
@@ -524,7 +522,7 @@ export default function LandingPage() {
       {/* Skip to content — visible on focus for keyboard users */}
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-xl focus:bg-indigo-600 focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-white focus:shadow-lg focus:outline-none"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-[var(--accent)] focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-white focus:shadow-3 focus:outline-none"
       >
         Aller au contenu principal
       </a>

@@ -10,7 +10,8 @@ use App\Http\Controllers\{
     typeEvaluationController,
     periodesController,
     EmploiDuTempsController,
-    CahierDeTexteController
+    CahierDeTexteController,
+    DevoirController
 };
 use Illuminate\Support\Facades\Route;
 
@@ -80,6 +81,17 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/update/{id}', [EmploiDuTempsController::class, 'update'])->middleware('role:directeur');
         Route::delete('/delete/{id}', [EmploiDuTempsController::class, 'destroy'])->middleware('role:directeur');
         Route::get('/classe/{classeId}', [EmploiDuTempsController::class, 'getByClasse']);
+    });
+
+    // ============ DEVOIRS ============
+    Route::prefix('devoirs')->group(function () {
+        Route::get('/enseignant', [DevoirController::class, 'indexEnseignant'])->middleware('role:directeur,enseignant');
+        Route::get('/eleve', [DevoirController::class, 'indexEleve'])->middleware('role:eleve,parent');
+        Route::post('/', [DevoirController::class, 'store'])->middleware('role:directeur,enseignant');
+        Route::get('/{id}', [DevoirController::class, 'show'])->middleware('role:directeur,enseignant,eleve,parent');
+        Route::post('/{id}/soumettre', [DevoirController::class, 'soumettre'])->middleware('role:eleve');
+        Route::post('/{id}/noter/{eleveId}', [DevoirController::class, 'noter'])->middleware('role:directeur,enseignant');
+        Route::delete('/{id}', [DevoirController::class, 'destroy'])->middleware('role:directeur,enseignant');
     });
 
 });
