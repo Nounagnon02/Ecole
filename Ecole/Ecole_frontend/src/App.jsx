@@ -8,13 +8,15 @@
  */
 
 import { useEffect, Suspense, lazy as reactLazy } from 'react';
-import { Routes, Route, Navigate, ScrollRestoration } from 'react-router-dom';
+import { Routes, Route, Navigate, Link, ScrollRestoration } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { Toaster } from 'sonner';
 import useAuthStore from '@/shared/stores/auth-store';
 import AppShell from '@/shared/components/layout/AppShell';
 import ProtectedRoute from '@/shared/components/auth/ProtectedRoute';
 import LoginForm from '@/shared/components/auth/LoginForm';
+import ForgotPassword from '@/app/features/auth/ForgotPassword';
+import ResetPassword from '@/app/features/auth/ResetPassword';
 import ErrorBoundary from '@/shared/components/ui/ErrorBoundary';
 import { LoadingSpinner } from '@/shared/components/ui/Skeleton';
 import NotFoundPage from '@/app/error/NotFoundPage';
@@ -28,25 +30,24 @@ import {
 /* ─── Page non autorisée ─────────────────────────────────────────────── */
 function UnauthorizedPage() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-neutral-50 px-6 text-center dark:bg-neutral-950">
-      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-red-50 text-red-600 dark:bg-red-950/30 dark:text-red-400">
-        <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[var(--surface)] px-6 text-center">
+      <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-[var(--red-subtle)] text-[var(--red)]">
+        <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
         </svg>
       </div>
-      <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
+      <h1 className="font-fraunces text-2xl font-semibold text-[var(--text-primary)]">
         Accès non autorisé
       </h1>
-      <p className="max-w-sm text-sm text-neutral-500">
-        Vous n'avez pas les permissions nécessaires pour accéder à cette page.
-        Contactez votre administrateur si vous pensez qu'il s'agit d'une erreur.
+      <p className="max-w-sm text-sm text-[var(--text-secondary)]">
+        Vous n&apos;avez pas les permissions nécessaires pour accéder à cette page.
       </p>
-      <a
-        href="/connexion"
-        className="mt-2 rounded-xl bg-indigo-600 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-500"
+      <Link
+        to="/connexion"
+        className="mt-2 rounded-lg bg-[var(--accent)] px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[var(--accent-hover)]"
       >
         Retour à la connexion
-      </a>
+      </Link>
     </div>
   );
 }
@@ -123,11 +124,10 @@ function App() {
         position="top-right"
         aria-live="polite"
         toastOptions={{
-          className: '!rounded-xl !border !border-neutral-200 !bg-white !shadow-lg !text-sm !font-medium !text-neutral-900 dark:!border-neutral-800 dark:!bg-neutral-900 dark:!text-neutral-100 !shadow-xl',
+          className: '!rounded-lg !border !border-[var(--border)] !bg-[var(--surface-raised)] !shadow-[var(--shadow-3)] !text-sm !font-medium !text-[var(--text-primary)]',
           duration: 4000,
-          success: { className: '!border-emerald-200 !bg-emerald-50 !text-emerald-900 dark:!border-emerald-900/50 dark:!bg-emerald-950/30 dark:!text-emerald-300' },
-          error: { className: '!border-red-200 !bg-red-50 !text-red-900 dark:!border-red-900/50 dark:!bg-red-950/30 dark:!text-red-300' },
-          loading: { className: '!border-indigo-200 !bg-indigo-50 !text-indigo-900 dark:!border-indigo-900/50 dark:!bg-indigo-950/30 dark:!text-indigo-300' },
+          success: { className: '!border-[var(--green-light)] !bg-[var(--green-subtle)] !text-[var(--green)]' },
+          error: { className: '!border-[var(--red-light)] !bg-[var(--red-subtle)] !text-[var(--red)]' },
         }}
         closeButton
         richColors={false}
@@ -136,6 +136,10 @@ function App() {
       <Routes>
         {/* ─── Route publique — connexion ──────────────────────────────── */}
         <Route path="/connexion" element={<LoginForm />} />
+
+        {/* ─── Routes publiques — mot de passe oublié ──────────────────── */}
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         {/* ─── Route publique — landing / redirect auth ────────────────── */}
         <Route path="/" element={<AuthRedirect />} />

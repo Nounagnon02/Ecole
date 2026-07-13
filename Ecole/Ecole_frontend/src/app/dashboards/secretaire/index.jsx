@@ -6,6 +6,7 @@
  */
 
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useDashboardStats } from '../hooks/useDashboardData';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -32,36 +33,11 @@ const TABS = [
   { id: 'documents', label: 'Documents', icon: FileText },
 ];
 
-const STATS = [
-  { title: 'Inscriptions', value: '1 284', icon: Users, trend: 2.1, trendLabel: 'ce trimestre', color: 'indigo' },
-  { title: 'Nouveaux ce Mois', value: '38', icon: UserPlus, trend: 12, trendLabel: 'vs mois dernier', color: 'emerald' },
-  { title: 'Dossiers en Cours', value: '7', icon: ClipboardList, trend: -3, trendLabel: 'en attente', color: 'amber' },
-  { title: 'Documents Générés', value: '156', icon: FileText, trend: 8.5, trendLabel: 'ce mois', color: 'sky' },
-];
-
-const DONNEES_INSCRIPTIONS = [
-  { mois: 'Jan', nouveaux: 42, transferts: 8 },
-  { mois: 'Fév', nouveaux: 28, transferts: 5 },
-  { mois: 'Mar', nouveaux: 35, transferts: 10 },
-  { mois: 'Avr', nouveaux: 22, transferts: 6 },
-  { mois: 'Mai', nouveaux: 18, transferts: 4 },
-  { mois: 'Juin', nouveaux: 38, transferts: 12 },
-];
-
-const RENDEZ_VOUS = [
-  { id: 1, visiteur: 'M. Akakpo', motif: 'Inscription 6e A', heure: '08:30', statut: 'Confirmé' },
-  { id: 2, visiteur: 'Mme Hountondji', motif: 'Réinscription 4e B', heure: '09:30', statut: 'Confirmé' },
-  { id: 3, visiteur: 'M. Dossa', motif: 'Demande documents', heure: '10:00', statut: 'En attente' },
-  { id: 4, visiteur: 'Mme Koffi', motif: 'Changement classe', heure: '11:30', statut: 'Confirmé' },
-  { id: 5, visiteur: 'M. Gbaguidi', motif: 'Information bourse', heure: '14:00', statut: 'En attente' },
-];
-
-const INSCRIPTIONS_RECENTES = [
-  { id: 1, nom: 'Adjanohoun Koffi', classe: '6e A', type: 'Nouveau', date: '2026-06-23', statut: 'Complété' },
-  { id: 2, nom: 'Tossou Amen', classe: '5e B', type: 'Réinscription', date: '2026-06-23', statut: 'Complété' },
-  { id: 3, nom: 'Hountondji Ella', classe: '4e C', type: 'Transfert', date: '2026-06-22', statut: 'En cours' },
-  { id: 4, nom: 'Zannou David', classe: '3e A', type: 'Nouveau', date: '2026-06-22', statut: 'Complété' },
-  { id: 5, nom: 'Dagba Ruth', classe: '2nde B', type: 'Réinscription', date: '2026-06-21', statut: 'En cours' },
+const STATS_META = [
+  { title: 'Inscriptions', icon: Users, color: 'primary' },
+  { title: 'Nouveaux ce Mois', icon: UserPlus, color: 'emerald' },
+  { title: 'Dossiers en Cours', icon: ClipboardList, color: 'amber' },
+  { title: 'Documents Générés', icon: FileText, color: 'sky' },
 ];
 
 function ApercuSection({ stats, fluxInscriptions, rendezVous, inscriptions }) {
@@ -86,15 +62,15 @@ function ApercuSection({ stats, fluxInscriptions, rendezVous, inscriptions }) {
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={fluxInscriptions}>
                   <defs>
-                    <linearGradient id="colorNouveaux" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} /><stop offset="95%" stopColor="#6366f1" stopOpacity={0} /></linearGradient>
-                    <linearGradient id="colorTransferts" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3} /><stop offset="95%" stopColor="#f59e0b" stopOpacity={0} /></linearGradient>
+                    <linearGradient id="colorNouveaux" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="var(--accent)" stopOpacity={0.3} /><stop offset="95%" stopColor="var(--accent)" stopOpacity={0} /></linearGradient>
+                    <linearGradient id="colorTransferts" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="var(--amber)" stopOpacity={0.3} /><stop offset="95%" stopColor="var(--amber)" stopOpacity={0} /></linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis dataKey="mois" tick={{ fontSize: 12 }} stroke="#9ca3af" />
-                  <YAxis tick={{ fontSize: 12 }} stroke="#9ca3af" />
-                  <ReTooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e5e7eb' }} />
-                  <Area type="monotone" dataKey="nouveaux" name="Nouveaux" stroke="#6366f1" fill="url(#colorNouveaux)" strokeWidth={2} />
-                  <Area type="monotone" dataKey="transferts" name="Transferts" stroke="#f59e0b" fill="url(#colorTransferts)" strokeWidth={2} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                  <XAxis dataKey="mois" tick={{ fontSize: 12 }} stroke="var(--text-tertiary)" />
+                  <YAxis tick={{ fontSize: 12 }} stroke="var(--text-tertiary)" />
+                  <ReTooltip contentStyle={{ borderRadius: '8px', border: '1px solid var(--border)' }} />
+                  <Area type="monotone" dataKey="nouveaux" name="Nouveaux" stroke="var(--accent)" fill="url(#colorNouveaux)" strokeWidth={2} />
+                  <Area type="monotone" dataKey="transferts" name="Transferts" stroke="var(--amber)" fill="url(#colorTransferts)" strokeWidth={2} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -110,7 +86,7 @@ function ApercuSection({ stats, fluxInscriptions, rendezVous, inscriptions }) {
             <div className="space-y-3">
               {rendezVous.map((rv) => (
                 <div key={rv.id} className="flex items-start gap-3 rounded-lg border border-neutral-100 bg-neutral-50 p-3 dark:border-neutral-800 dark:bg-neutral-900/50">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-xs font-semibold text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent-subtle)] text-xs font-semibold text-[var(--accent)]">
                     {rv.heure.split(':')[0]}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -166,7 +142,7 @@ function InscriptionsSection() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">Inscriptions</h2>
+          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Inscriptions</h2>
           <p className="text-sm text-neutral-500 mt-1">Gestion des inscriptions et réinscriptions</p>
         </div>
         <div className="flex gap-2">
@@ -190,7 +166,7 @@ function PlanningSection() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">Planning</h2>
+          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Planning</h2>
           <p className="text-sm text-neutral-500 mt-1">Agenda et planification</p>
         </div>
         <Button variant="ghost" size="sm"><Printer className="h-4 w-4 mr-1" /> Imprimer</Button>
@@ -211,7 +187,7 @@ function DocumentsSection() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">Documents</h2>
+          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Documents</h2>
           <p className="text-sm text-neutral-500 mt-1">Génération et gestion des documents</p>
         </div>
         <div className="flex gap-2">
@@ -231,20 +207,31 @@ function DocumentsSection() {
 }
 
 export default function SecretaireDashboard() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('apercu');
   const { data, loading } = useDashboardStats('secretaire');
 
-  const stats = data?.stats?.map((s, i) => ({ ...s, icon: STATS[i]?.icon, color: STATS[i]?.color })) || STATS;
-  const fluxInscriptions = data?.flux_inscriptions || DONNEES_INSCRIPTIONS;
-  const rendezVous = data?.rendez_vous || RENDEZ_VOUS;
-  const inscriptions = data?.inscriptions || INSCRIPTIONS_RECENTES;
+  const stats = data?.stats?.map((s, i) => ({ ...s, icon: STATS_META[i]?.icon, color: STATS_META[i]?.color })) || [];
+  const fluxInscriptions = data?.flux_inscriptions || [];
+  const rendezVous = data?.rendez_vous || [];
+  const inscriptions = data?.inscriptions || [];
+
+  const handleTabClick = (tabId) => {
+    if (tabId === 'apercu') {
+      setActiveTab(tabId);
+      return;
+    }
+    const routes = {
+      inscriptions: '/secretaire/inscriptions',
+      planning: '/secretaire/planning',
+      documents: '/secretaire/documents',
+    };
+    navigate(routes[tabId] || '/secretaire/dashboard');
+  };
 
   const renderSection = () => {
     switch (activeTab) {
       case 'apercu': return <ApercuSection stats={stats} fluxInscriptions={fluxInscriptions} rendezVous={rendezVous} inscriptions={inscriptions} />;
-      case 'inscriptions': return <InscriptionsSection />;
-      case 'planning': return <PlanningSection />;
-      case 'documents': return <DocumentsSection />;
       default: return <ApercuSection stats={stats} fluxInscriptions={fluxInscriptions} rendezVous={rendezVous} inscriptions={inscriptions} />;
     }
   };
@@ -270,11 +257,11 @@ export default function SecretaireDashboard() {
           {TABS.map((tab) => {
             const Icon = tab.icon;
             return (
-              <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+              <button key={tab.id} onClick={() => handleTabClick(tab.id)}
                 className={cn(
                   'flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-all whitespace-nowrap',
                   activeTab === tab.id
-                    ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                    ? 'border-[var(--accent)] text-[var(--accent)] dark:text-[var(--accent)]'
                     : 'border-transparent text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200'
                 )}
               >

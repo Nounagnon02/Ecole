@@ -2,34 +2,82 @@
  * ModulesPage — Marketplace de modules (Super Admin)
  *
  * Gestion des modules disponibles et activation par tenant.
+ * Données dynamiques via API /api/v1/admin/modules
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Puzzle, CheckCircle2, XCircle, ToggleLeft, ToggleRight,
   BookOpen, DollarSign, MessageSquare, Calendar, Zap,
-  BarChart3, Globe, Smartphone, Shield,
+  BarChart3, Globe, Smartphone, Shield, Loader2, AlertCircle,
 } from 'lucide-react';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
+import { useApi } from '@/hooks/useApi';
 
-const MODULES = [
-  { id: 1, slug: 'core', name: 'Cœur', description: 'Gestion des utilisateurs, rôles, permissions', is_core: true, is_active: true, icon: Shield, color: 'indigo', tenants: 23 },
-  { id: 2, slug: 'academique', name: 'Académique', description: 'Notes, bulletins, résultats, périodes', is_core: true, is_active: true, icon: BookOpen, color: 'emerald', tenants: 23 },
-  { id: 3, slug: 'paiements', name: 'Paiements', description: 'Frais scolaires, transactions, reçus', is_core: false, is_active: true, icon: DollarSign, color: 'amber', tenants: 18 },
-  { id: 4, slug: 'emploidutemps', name: 'Emploi du temps', description: 'Planification des cours et salles', is_core: false, is_active: true, icon: Calendar, color: 'sky', tenants: 15 },
-  { id: 5, slug: 'messagerie', name: 'Messagerie', description: 'Communication interne et notifications', is_core: true, is_active: true, icon: MessageSquare, color: 'purple', tenants: 23 },
-  { id: 6, slug: 'ia', name: 'EduPilot IA', description: 'Assistant IA, analyses prédictives, tutorat', is_core: false, is_active: true, icon: Zap, color: 'rose', tenants: 5 },
-  { id: 7, slug: 'api', name: 'API Publique', description: 'Accès API REST pour intégrations tierces', is_core: false, is_active: true, icon: Globe, color: 'cyan', tenants: 3 },
-  { id: 8, slug: 'mobile', name: 'Application Mobile', description: 'Accès mobile pour parents et élèves', is_core: false, is_active: false, icon: Smartphone, color: 'neutral', tenants: 0 },
-  { id: 9, slug: 'bibliotheque', name: 'Bibliothèque', description: 'Gestion de la bibliothèque et prêts', is_core: false, is_active: true, icon: BookOpen, color: 'teal', tenants: 8 },
-  { id: 10, slug: 'infirmerie', name: 'Infirmerie', description: 'Suivi médical et fiches de soin', is_core: false, is_active: true, icon: BarChart3, color: 'red', tenants: 6 },
-];
+const MODULE_ICONS = {
+  core: Shield,
+  academique: BookOpen,
+  paiements: DollarSign,
+  emploidutemps: Calendar,
+  messagerie: MessageSquare,
+  ia: Zap,
+  api: Globe,
+  mobile: Smartphone,
+  bibliotheque: BookOpen,
+  infirmerie: BarChart3,
+};
+
+const MODULE_COLORS = {
+  core: 'primary',
+  academique: 'emerald',
+  paiements: 'amber',
+  emploidutemps: 'sky',
+  messagerie: 'purple',
+  ia: 'rose',
+  api: 'cyan',
+  mobile: 'neutral',
+  bibliotheque: 'teal',
+  infirmerie: 'red',
+};
 
 export default function ModulesPage() {
-  const [modules] = useState(MODULES);
+  const { loading, error, get } = useApi();
+  const [modules, setModules] = useState([]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await get('/api/v1/admin/modules');
+        const items = Array.isArray(res?.data?.data) ? res.data.data
+          : Array.isArray(res?.data) ? res.data
+          : Array.isArray(res) ? res
+          : [];
+        setModules(items);
+      } catch (e) {
+        console.error('Erreur chargement modules:', e);
+      }
+    })();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
+        <AlertCircle className="h-8 w-8 mb-2 text-red-400" />
+        <p className="text-sm">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -38,14 +86,23 @@ export default function ModulesPage() {
           <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Modules</h1>
           <p className="text-sm text-neutral-500 mt-1">Marketplace de fonctionnalités</p>
         </div>
-        <Button>
-          <Puzzle className="h-4 w-4 mr-2" /> Nouveau module
-        </Button>
+        <Button icon={<Puzzle className="h-4 w-4" />}>Nouveau module</Button>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {modules.length === 0 && (
+          <div className="sm:col-span-2 lg:col-span-3">
+            <Card>
+              <div className="text-center py-8 text-neutral-500">
+                <Puzzle className="mx-auto h-8 w-8 mb-2" />
+                <p className="text-sm">Aucun module disponible</p>
+              </div>
+            </Card>
+          </div>
+        )}
         {modules.map((mod, i) => {
-          const Icon = mod.icon;
+          const Icon = MODULE_ICONS[mod.slug] || Puzzle;
+          const color = MODULE_COLORS[mod.slug] || 'neutral';
           return (
             <motion.div
               key={mod.id}
@@ -56,8 +113,8 @@ export default function ModulesPage() {
               <Card>
                 <Card.Body className="p-5">
                   <div className="flex items-start gap-4">
-                    <div className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-${mod.color}-50 dark:bg-${mod.color}-950/30`}>
-                      <Icon className={`h-6 w-6 text-${mod.color}-500`} />
+                    <div className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-${color}-50 dark:bg-${color}-950/30`}>
+                      <Icon className={`h-6 w-6 text-${color}-500`} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
@@ -68,7 +125,7 @@ export default function ModulesPage() {
                       </div>
                       <p className="text-xs text-neutral-500 mb-3">{mod.description}</p>
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-neutral-400">{mod.tenants} tenant(s)</span>
+                        <span className="text-xs text-neutral-400">{mod.tenants_count ?? mod.tenants ?? 0} tenant(s)</span>
                         <button className={`inline-flex items-center gap-1 text-xs font-medium ${mod.is_active ? 'text-emerald-600' : 'text-neutral-400'}`}>
                           {mod.is_active ? <ToggleRight className="h-4 w-4" /> : <ToggleLeft className="h-4 w-4" />}
                           {mod.is_active ? 'Activé' : 'Désactivé'}

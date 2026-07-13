@@ -108,7 +108,7 @@ export default function Communications() {
               className={cn(
                 'w-full text-left p-3 rounded-xl transition-colors',
                 selectedMsg?.id === msg.id
-                  ? 'bg-indigo-50 dark:bg-indigo-500/10'
+                  ? 'bg-[var(--accent-subtle)] dark:bg-[var(--accent-subtle)]0/10'
                   : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/50',
                 !msg.lu && 'bg-neutral-50/80 dark:bg-neutral-800/30'
               )}
@@ -175,7 +175,7 @@ export default function Communications() {
                   <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">Pièces jointes</p>
                   <div className="flex items-center gap-3">
                     <div className="flex items-center gap-2 p-2 rounded-lg bg-neutral-50 dark:bg-neutral-800">
-                      <FileText className="h-4 w-4 text-indigo-500" />
+                      <FileText className="h-4 w-4 text-[var(--accent)]" />
                       <span className="text-xs text-neutral-600 dark:text-neutral-400">Calendrier_Examens.pdf</span>
                       <Download className="h-3 w-3 text-neutral-400 cursor-pointer" />
                     </div>
@@ -256,7 +256,7 @@ export default function Communications() {
               <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                 className={cn(
                   'flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-all whitespace-nowrap',
-                  activeTab === tab.id ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-neutral-500 hover:text-neutral-700'
+                  activeTab === tab.id ? 'border-[var(--accent)] text-[var(--accent)] dark:text-[var(--accent)]' : 'border-transparent text-neutral-500 hover:text-neutral-700'
                 )}>
                 <Icon className="h-4 w-4" /> {tab.label}
               </button>

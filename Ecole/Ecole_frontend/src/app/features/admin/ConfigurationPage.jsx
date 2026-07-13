@@ -81,7 +81,7 @@ const CONFIG_SECTIONS = [
 ];
 
 const SECTION_COLORS = {
-  general: 'bg-indigo-100 dark:bg-indigo-900/20 text-indigo-500',
+  general: 'bg-[var(--primary-subtle)] text-[var(--primary)]',
   scolarite: 'bg-emerald-100 dark:bg-emerald-900/20 text-emerald-500',
   notifications: 'bg-amber-100 dark:bg-amber-900/20 text-amber-500',
   securite: 'bg-red-100 dark:bg-red-900/20 text-red-500',
@@ -114,7 +114,7 @@ export default function ConfigurationPage() {
                   className={cn(
                     'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-left',
                     activeSection === section.id
-                      ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-400'
+                      ? 'bg-[var(--primary-subtle)] text-[var(--primary)]'
                       : 'text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800'
                   )}
                 >
@@ -125,7 +125,7 @@ export default function ConfigurationPage() {
                     <p className="text-sm">{section.titre}</p>
                     <p className="text-[10px] text-neutral-400 truncate">{section.description}</p>
                   </div>
-                  <ChevronRight className={cn('h-4 w-4 transition-colors', activeSection === section.id ? 'text-indigo-500' : 'text-neutral-300 dark:text-neutral-600')} />
+                  <ChevronRight className={cn('h-4 w-4 transition-colors', activeSection === section.id ? 'text-[var(--primary)]' : 'text-neutral-300 dark:text-neutral-600')} />
                 </button>
               );
             })}
@@ -158,7 +158,7 @@ export default function ConfigurationPage() {
                         {field.type === 'toggle' ? (
                           <button className={cn(
                             'relative h-6 w-11 rounded-full transition-colors',
-                            field.enabled ? 'bg-indigo-500' : 'bg-neutral-300 dark:bg-neutral-700'
+                            field.enabled ? 'bg-[var(--accent)]' : 'bg-neutral-300 dark:bg-neutral-700'
                           )}>
                             <span className={cn(
                               'absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform',

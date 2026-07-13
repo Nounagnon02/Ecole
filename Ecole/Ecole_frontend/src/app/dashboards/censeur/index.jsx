@@ -5,6 +5,7 @@
  */
 
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useDashboardStats } from '../hooks/useDashboardData';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -30,38 +31,14 @@ const TABS = [
   { id: 'absences', label: 'Absences', icon: CalendarX },
 ];
 
-const STATS = [
-  { title: 'Total Élèves', value: '1 284', icon: Users, trend: 2.1, trendLabel: 'ce trimestre', color: 'indigo' },
-  { title: 'Sanctions du Mois', value: '18', icon: Gavel, trend: -8, trendLabel: 'vs mois dernier', color: 'amber' },
-  { title: 'Absences Non Justifiées', value: '47', icon: CalendarX, trend: 5.3, trendLabel: 'ce mois', color: 'red' },
-  { title: 'Avertissements', value: '12', icon: AlertTriangle, trend: -15, trendLabel: 'vs mois dernier', color: 'sky' },
+const STATS_META = [
+  { title: 'Total Élèves', icon: Users, color: 'primary' },
+  { title: 'Sanctions du Mois', icon: Gavel, color: 'amber' },
+  { title: 'Absences Non Justifiées', icon: CalendarX, color: 'red' },
+  { title: 'Avertissements', icon: AlertTriangle, color: 'sky' },
 ];
 
-const DONNEES_DISCIPLINE = [
-  { mois: 'Jan', sanctions: 22, avertissements: 15 },
-  { mois: 'Fév', sanctions: 18, avertissements: 12 },
-  { mois: 'Mar', sanctions: 25, avertissements: 18 },
-  { mois: 'Avr', sanctions: 15, avertissements: 10 },
-  { mois: 'Mai', sanctions: 20, avertissements: 14 },
-  { mois: 'Juin', sanctions: 18, avertissements: 12 },
-];
-
-const TYPES_SANCTIONS = [
-  { name: 'Avertissement', value: 40 },
-  { name: 'Exclusion Temporaire', value: 25 },
-  { name: 'Heures de Retenue', value: 20 },
-  { name: 'Convocation Parents', value: 15 },
-];
-
-const SANCTIONS_COLORS = ['#6366f1', '#ef4444', '#f59e0b', '#10b981'];
-
-const SANCTIONS_RECENTES = [
-  { id: 1, eleve: 'Agossou Kévin', classe: '4e B', motif: 'Retards répétés', sanction: 'Avertissement', date: '2026-06-20', statut: 'Notifié' },
-  { id: 2, eleve: 'Hounkpe Judicaël', classe: '3e A', motif: 'Bagare', sanction: 'Exclusion 3j', date: '2026-06-19', statut: 'En cours' },
-  { id: 3, eleve: 'Tossa Bénédicte', classe: '5e C', motif: 'Devoir non rendu', sanction: 'Heures retenue', date: '2026-06-18', statut: 'Exécuté' },
-  { id: 4, eleve: 'Gandonou Pacôme', classe: '2nde B', motif: 'Absence injustifiée', sanction: 'Convocation parents', date: '2026-06-17', statut: 'En cours' },
-  { id: 5, eleve: 'Hountondji Abigaël', classe: '6e A', motif: 'Comportement', sanction: 'Avertissement', date: '2026-06-16', statut: 'Notifié' },
-];
+const SANCTIONS_COLORS = ['var(--accent)', 'var(--red)', 'var(--amber)', 'var(--green)'];
 
 function ApercuSection({ stats, evolution, types_sanctions, sanctions }) {
   return (
@@ -84,12 +61,12 @@ function ApercuSection({ stats, evolution, types_sanctions, sanctions }) {
             <div className="h-[260px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={evolution}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis dataKey="mois" tick={{ fontSize: 12 }} stroke="#9ca3af" />
-                  <YAxis tick={{ fontSize: 12 }} stroke="#9ca3af" />
-                  <ReTooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e5e7eb' }} />
-                  <Bar dataKey="sanctions" name="Sanctions" fill="#f59e0b" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="avertissements" name="Avertissements" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                  <XAxis dataKey="mois" tick={{ fontSize: 12 }} stroke="var(--text-tertiary)" />
+                  <YAxis tick={{ fontSize: 12 }} stroke="var(--text-tertiary)" />
+                  <ReTooltip contentStyle={{ borderRadius: '8px', border: '1px solid var(--border)' }} />
+                  <Bar dataKey="sanctions" name="Sanctions" fill="var(--amber)" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="avertissements" name="Avertissements" fill="var(--accent)" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -110,7 +87,7 @@ function ApercuSection({ stats, evolution, types_sanctions, sanctions }) {
                       <Cell key={i} fill={SANCTIONS_COLORS[i]} />
                     ))}
                   </Pie>
-                  <ReTooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e5e7eb' }} />
+                  <ReTooltip contentStyle={{ borderRadius: '8px', border: '1px solid var(--border)' }} />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -174,7 +151,7 @@ function DisciplineSection() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">Gestion Disciplinaire</h2>
+          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Gestion Disciplinaire</h2>
           <p className="text-sm text-neutral-500 mt-1">Sanctions, suivis et convocations</p>
         </div>
         <div className="flex gap-2">
@@ -198,7 +175,7 @@ function AbsencesSection() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">Absences</h2>
+          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Absences</h2>
           <p className="text-sm text-neutral-500 mt-1">Suivi et justification des absences</p>
         </div>
         <Button variant="ghost" size="sm">Export</Button>
@@ -215,19 +192,24 @@ function AbsencesSection() {
 }
 
 export default function CenseurDashboard() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('apercu');
   const { data, loading } = useDashboardStats('censeur');
 
-  const stats = data?.stats?.map((s, i) => ({ ...s, icon: STATS[i]?.icon, color: STATS[i]?.color })) || STATS;
-  const evolution = data?.evolution || DONNEES_DISCIPLINE;
-  const types_sanctions = data?.types_sanctions || TYPES_SANCTIONS;
-  const sanctions = data?.sanctions || SANCTIONS_RECENTES;
+  const stats = data?.stats?.map((s, i) => ({ ...s, icon: STATS_META[i]?.icon, color: STATS_META[i]?.color })) || [];
+  const evolution = data?.evolution || [];
+  const types_sanctions = data?.types_sanctions || [];
+  const sanctions = data?.sanctions || [];
+
+  const handleTabClick = (tabId) => {
+    if (tabId === 'apercu') { setActiveTab(tabId); return; }
+    const routes = { discipline: '/censeur/discipline', absences: '/censeur/absences' };
+    navigate(routes[tabId] || '/censeur/dashboard');
+  };
 
   const renderSection = () => {
     switch (activeTab) {
       case 'apercu': return <ApercuSection stats={stats} evolution={evolution} types_sanctions={types_sanctions} sanctions={sanctions} />;
-      case 'discipline': return <DisciplineSection />;
-      case 'absences': return <AbsencesSection />;
       default: return <ApercuSection stats={stats} evolution={evolution} types_sanctions={types_sanctions} sanctions={sanctions} />;
     }
   };
@@ -253,11 +235,11 @@ export default function CenseurDashboard() {
           {TABS.map((tab) => {
             const Icon = tab.icon;
             return (
-              <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+              <button key={tab.id} onClick={() => handleTabClick(tab.id)}
                 className={cn(
                   'flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-all whitespace-nowrap',
                   activeTab === tab.id
-                    ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                    ? 'border-[var(--accent)] text-[var(--accent)] dark:text-[var(--accent)]'
                     : 'border-transparent text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200'
                 )}
               >
