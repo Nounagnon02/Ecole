@@ -16,6 +16,7 @@
 | - services.php  : Paiements, messagerie, contributions
 | - universite.php: Module universitaire
 | - admin.php     : Super admin — utilisateurs, configuration, logs
+| - ia.php        : Assistant IA EduPilot (/api/v1/ia/*)
 |
 */
 
@@ -34,3 +35,4 @@ require __DIR__.'/api/users.php';
 require __DIR__.'/api/services.php';
 require __DIR__.'/api/universite.php';
 require __DIR__.'/api/admin.php';
+require __DIR__.'/api/ia.php';

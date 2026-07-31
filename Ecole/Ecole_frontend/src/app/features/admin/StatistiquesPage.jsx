@@ -34,7 +34,7 @@ export default function StatistiquesPage() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await get('/api/v1/admin/analytics/overview');
+        const res = await get('/v1/admin/analytics/overview');
         setStats(res?.data || res);
       } catch (e) {
         console.error('Erreur chargement statistiques:', e);
