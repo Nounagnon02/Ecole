@@ -96,6 +96,37 @@ Route::middleware('auth:sanctum')->group(function () {
 
 });
 
-// Routes Publiques ou Webhooks
-Route::post('/fedapay/webhook', [FedaPayController::class, 'webhook'])->middleware('throttle:webhooks');
-Route::get('/health', fn() => response()->json(['status' => 'UP', 'timestamp' => now()->toIso8601String()]));
+/*
+|--------------------------------------------------------------------------
+| Routes Publiques, Callbacks et Webhooks
+|--------------------------------------------------------------------------
+|
+| Ces routes DOIVENT être nommées : le code appelle route('payment.callback')
+| et route('api.fedapay.callback') pour construire les URL de retour envoyées
+| au provider. Sans elles, `route()` levait une RouteNotFoundException et
+| l'initialisation de paiement échouait systématiquement en 500 (audit F7).
+|
+*/
+
+// Retour navigateur après paiement (le provider y redirige l'utilisateur)
+Route::get('/payments/callback', [PaymentController::class, 'callback'])
+    ->name('payment.callback');
+
+Route::get('/fedapay/callback', [FedaPayController::class, 'callback'])
+    ->name('api.fedapay.callback');
+
+// Webhooks serveur-à-serveur (signature vérifiée dans le contrôleur)
+Route::post('/payments/webhook', [PaymentController::class, 'webhook'])
+    ->middleware('throttle:webhooks')
+    ->name('payment.webhook');
+
+Route::post('/fedapay/webhook', [FedaPayController::class, 'webhook'])
+    ->middleware('throttle:webhooks')
+    ->name('api.fedapay.webhook');
+
+// Sonde de santé. Exposée aussi sous /api/v1/ (déclaré dans routes/api.php),
+// les sondes d'infrastructure et les tests ciblant cette version.
+Route::get('/health', fn() => response()->json([
+    'status' => 'UP',
+    'timestamp' => now()->toIso8601String(),
+]))->name('health');

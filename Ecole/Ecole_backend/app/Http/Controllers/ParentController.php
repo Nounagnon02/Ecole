@@ -80,13 +80,19 @@ class ParentController extends Controller
             return response()->json(['success' => true, 'data' => []]);
         }
 
-        $enfants = $parent->eleves()->with(['user', 'classe'])->get();
+        $enfants = $parent->eleves()->with(['user:id,name,prenom', 'classe'])->get();
+
+        // Une seule requête pour les notes de tous les enfants, au lieu d'une
+        // par enfant dans la boucle (cf. audit P4).
+        $notesParEleve = Notes::whereIn('eleve_id', $enfants->pluck('id'))
+            ->with('matiere:id,nom')
+            ->get()
+            ->groupBy('eleve_id');
+
         $bulletins = [];
 
         foreach ($enfants as $eleve) {
-            $notes = Notes::where('eleve_id', $eleve->id)
-                ->with('matiere')
-                ->get();
+            $notes = $notesParEleve->get($eleve->id) ?? collect();
 
             $moyenneGenerale = $notes->avg('note');
             $periodes = $notes->pluck('periode')->unique()->filter();

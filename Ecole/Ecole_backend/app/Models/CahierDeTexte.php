@@ -2,13 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class CahierDeTexte extends Model
 {
-    use HasFactory;
-
+    use HasFactory, BelongsToEcole;
     protected $fillable = [
         'classe_id',
         'matiere_id',
@@ -16,7 +16,8 @@ class CahierDeTexte extends Model
         'date',
         'titre_lecon',
         'contenu',
-        'devoirs_donnes'
+        'devoirs_donnes',
+        'ecole_id',
     ];
 
     protected $casts = [

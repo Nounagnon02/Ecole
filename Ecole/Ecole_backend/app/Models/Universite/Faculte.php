@@ -2,24 +2,27 @@
 
 namespace App\Models\Universite;
 
+use App\Traits\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Personnel extends Model
+class Faculte extends Model
 {
-    use HasFactory;
-
+    use HasFactory, BelongsToEcole;
     protected $fillable = [
         'nom',
-        'prenom',
-        'poste',
-        'telephone',
-        'email',
-        'universite_id'
+        'sigle',
+        'universite_id',
+        'ecole_id',
     ];
 
     public function universite()
     {
         return $this->belongsTo(Universite::class);
+    }
+
+    public function departements()
+    {
+        return $this->hasMany(Departement::class);
     }
 }

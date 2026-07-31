@@ -2,13 +2,13 @@
 
 namespace App\Models\Universite;
 
+use App\Traits\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Matiere extends Model
 {
-    use HasFactory;
-
+    use HasFactory, BelongsToEcole;
     protected $table = 'uni_matieres';
 
     protected $fillable = [
@@ -17,7 +17,8 @@ class Matiere extends Model
         'credit',
         'enseignant_id',
         'semestre_id',
-        'filiere_id'
+        'filiere_id',
+        'ecole_id',
     ];
 
     public function enseignant()

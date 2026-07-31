@@ -2,19 +2,20 @@
 
 namespace App\Models\Universite;
 
+use App\Traits\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Inscription extends Model
 {
-    use HasFactory;
-
+    use HasFactory, BelongsToEcole;
     protected $fillable = [
         'etudiant_id',
         'annee_academique_id',
         'date_inscription',
         'montant_frais',
-        'statut'
+        'statut',
+        'ecole_id',
     ];
 
     public function etudiant()

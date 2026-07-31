@@ -50,7 +50,9 @@ class typeEvaluationController extends Controller
     public function attachMultiple(Request $request)
     {
         // Log incoming request for debugging
-        Log::info('Received attachMultiple request:', $request->all());
+        // `$request->all()` journalisait la charge utile brute, susceptible de
+        // contenir des données personnelles voire des identifiants (audit S21).
+        Log::debug('attachMultiple', ['keys' => array_keys($request->all())]);
 
         try {
             $validated = $request->validate([
@@ -104,13 +106,13 @@ class typeEvaluationController extends Controller
                 } catch (\Exception $e) {
                     Log::error('Error creating liaison:', [
                         'liaison' => $liaison,
-                        'error' => $e->getMessage()
+                        'error' => $this->messageErreur($e)
                     ]);
 
                     $errors[] = [
                         'index' => $index,
                         'liaison' => $liaison,
-                        'message' => 'Erreur lors de la création: ' . $e->getMessage()
+                        'message' => $this->messageErreur($e, 'Erreur lors de la création')
                     ];
                 }
             }
@@ -145,7 +147,7 @@ class typeEvaluationController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Une erreur inattendue est survenue',
-                'error' => $e->getMessage()
+                'error' => $this->messageErreur($e)
             ], 500);
         }
     }
@@ -153,7 +155,7 @@ class typeEvaluationController extends Controller
 
     /*public function attachMultiple(Request $request)
     {
-        Log::info('Received request:', $request->all());
+        Log::debug('typeEvaluation request', ['keys' => array_keys($request->all())]);
 
         $validated = $request->validate([
             'liaisons' => 'required|array',
@@ -194,7 +196,7 @@ class typeEvaluationController extends Controller
             } catch (\Exception $e) {
                 $errors[] = [
                     'liaison' => $liaison,
-                    'message' => $e->getMessage()
+                    'message' => $this->messageErreur($e)
                 ];
             }
         }
@@ -202,7 +204,7 @@ class typeEvaluationController extends Controller
             return response()->json(['message' => 'Liaisons created successfully']);
         } catch (\Exception $e) {
             Log::error('Error creating liaisons:', ['error' => $e->getMessage()]);
-            return response()->json(['message' => $e->getMessage()], 400);
+            return response()->json(['message' => $this->messageErreur($e)], 400);
         }
     }*/
 

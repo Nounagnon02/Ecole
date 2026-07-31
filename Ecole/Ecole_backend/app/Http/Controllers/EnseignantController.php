@@ -55,7 +55,7 @@ class EnseignantController extends Controller
                 return response()->json($enseignant->load('user'), 201);
             });
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Erreur lors de la création', 'error' => $e->getMessage()], 500);
+            return response()->json(['message' => 'Erreur lors de la création', 'error' => $this->messageErreur($e)], 500);
         }
     }
 

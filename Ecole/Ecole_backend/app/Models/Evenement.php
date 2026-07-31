@@ -2,13 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Evenement extends Model
 {
-    use HasFactory;
-
+    use HasFactory, BelongsToEcole;
     protected $fillable = [
         'titre',
         'description',
@@ -16,7 +16,8 @@ class Evenement extends Model
         'date_fin',
         'lieu',
         'type', // e.g., 'academique', 'culturel', 'administratif'
-        'created_by'
+        'created_by',
+        'ecole_id',
     ];
 
     protected $casts = [

@@ -12,11 +12,63 @@ use App\Services\Billing\PaymentProvider;
 
 class PaymentController extends Controller
 {
+    /** Rôles autorisés à gérer les paiements de toute l'école. */
+    private const ROLES_GESTION = ['directeur', 'comptable', 'secretaire', 'super-admin'];
+
     protected PaymentProvider $provider;
 
     public function __construct()
     {
         $this->provider = PaymentProvider::factory('fedapay');
+    }
+
+    /**
+     * L'utilisateur courant peut-il agir sur les paiements de cet élève ?
+     * Gestionnaires : oui. Parent : uniquement ses enfants. Élève : lui-même.
+     */
+    private function peutAccederEleve(Eleve $eleve): bool
+    {
+        $user = auth()->user();
+
+        if (!$user) {
+            return false;
+        }
+
+        if (in_array($user->role, self::ROLES_GESTION, true)) {
+            return true;
+        }
+
+        if ($user->role === 'parent') {
+            return $user->parent?->eleves()->where('eleves.id', $eleve->id)->exists() ?? false;
+        }
+
+        if ($user->role === 'eleve') {
+            return $user->eleve?->id === $eleve->id;
+        }
+
+        return false;
+    }
+
+    /**
+     * Résout un paiement en refusant l'accès s'il n'appartient pas au périmètre
+     * de l'utilisateur. Le global scope BelongsToEcole assure déjà l'isolation
+     * inter-écoles ; on ajoute ici l'isolation intra-école (cf. audit S3/S9).
+     */
+    private function paiementAutorise(int $paymentId): Payment
+    {
+        $payment = Payment::with('eleve')->findOrFail($paymentId);
+
+        if (!$payment->eleve || !$this->peutAccederEleve($payment->eleve)) {
+            abort(403, 'Accès refusé à ce paiement');
+        }
+
+        return $payment;
+    }
+
+    /** École de l'utilisateur courant — jamais celle passée dans la requête. */
+    private function ecoleCourante(): ?int
+    {
+        return auth()->user()?->ecole_id ?? session('ecole_id');
     }
 
     /**
@@ -35,6 +87,11 @@ class PaymentController extends Controller
         DB::beginTransaction();
         try {
             $eleve = Eleve::findOrFail($request->eleve_id);
+
+            if (!$this->peutAccederEleve($eleve)) {
+                DB::rollBack();
+                return response()->json(['success' => false, 'message' => 'Accès refusé à cet élève'], 403);
+            }
 
             // Créer l'enregistrement de paiement
             $payment = Payment::create([
@@ -85,7 +142,7 @@ class PaymentController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Payment initialization error', ['error' => $e->getMessage()]);
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => 'Erreur lors de l\'initialisation du paiement'], 500);
         }
     }
 
@@ -101,35 +158,54 @@ class PaymentController extends Controller
         ]);
 
         try {
-            $payment = Payment::findOrFail($request->payment_id);
+            $payment = $this->paiementAutorise((int) $request->payment_id);
 
-            // Vérifier le statut via le provider
-            if ($payment->transaction_id) {
-                $verification = $this->provider->verifyPayment($payment->transaction_id);
-                if ($verification['success'] || $verification['status'] === 'completed') {
-                    $payment->update([
-                        'status' => 'completed',
-                        'paid_at' => now(),
-                        'payment_method' => 'mobile_money',
-                    ]);
-                    $this->recordHistory($payment, 'completed', 'Paiement Mobile Money réussi');
-                    return response()->json(['success' => true, 'message' => 'Paiement confirmé']);
-                }
+            if ($payment->status === 'completed') {
+                return response()->json(['success' => true, 'message' => 'Paiement déjà confirmé']);
             }
 
-            // Fallback : marquer comme complété (à adapter selon le flux réel)
-            $payment->update([
-                'status' => 'completed',
-                'paid_at' => now(),
-                'payment_method' => 'mobile_money',
-            ]);
-            $this->recordHistory($payment, 'completed', 'Paiement Mobile Money réussi');
+            // Un paiement ne passe à « completed » QUE sur confirmation du
+            // provider. Sans transaction ou sans confirmation, il reste
+            // « pending » : le webhook signé tranchera (cf. audit S3).
+            if (!$payment->transaction_id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Aucune transaction associée à ce paiement',
+                ], 422);
+            }
 
-            return response()->json(['success' => true, 'message' => 'Vérifiez votre téléphone']);
+            $verification = $this->provider->verifyPayment($payment->transaction_id);
 
+            if ($verification['status'] === 'completed') {
+                $payment->update([
+                    'status'         => 'completed',
+                    'paid_at'        => now(),
+                    'payment_method' => 'mobile_money',
+                ]);
+                $this->recordHistory($payment, 'completed', 'Paiement Mobile Money confirmé par le provider');
+
+                return response()->json(['success' => true, 'message' => 'Paiement confirmé']);
+            }
+
+            if ($verification['status'] === 'failed') {
+                $payment->update(['status' => 'failed']);
+                $this->recordHistory($payment, 'failed', 'Paiement Mobile Money refusé');
+
+                return response()->json(['success' => false, 'message' => 'Paiement refusé'], 402);
+            }
+
+            // Toujours en attente côté provider — le client doit valider sur son téléphone.
+            return response()->json([
+                'success' => false,
+                'status'  => 'pending',
+                'message' => 'Validez le paiement sur votre téléphone',
+            ], 202);
+
+        } catch (\Illuminate\Auth\Access\AuthorizationException|\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            throw $e;
         } catch (\Exception $e) {
             Log::error('Mobile Money error', ['error' => $e->getMessage()]);
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => 'Erreur lors du traitement du paiement'], 500);
         }
     }
 
@@ -138,9 +214,22 @@ class PaymentController extends Controller
      */
     public function getPaymentHistory(Request $request)
     {
-        $query = Payment::with(['eleve', 'ecole'])
+        $user = auth()->user();
+
+        $query = Payment::with(['eleve.user:id,name,prenom', 'ecole:id,nom'])
+            // Restriction de périmètre : un parent ne voit que ses enfants,
+            // un élève que lui-même. `ecole_id` de la requête est ignoré —
+            // l'isolation inter-écoles vient du global scope (cf. audit S9/S10).
+            ->when($user?->role === 'parent', function ($q) use ($user) {
+                $ids = $user->parent?->eleves()->pluck('eleves.id') ?? collect();
+                $q->whereIn('eleve_id', $ids);
+            })
+            ->when($user?->role === 'eleve', fn($q) => $q->where('eleve_id', $user->eleve?->id))
+            ->when(
+                $user && !in_array($user->role, array_merge(self::ROLES_GESTION, ['parent', 'eleve']), true),
+                fn($q) => $q->whereRaw('1 = 0')
+            )
             ->when($request->eleve_id, fn($q) => $q->where('eleve_id', $request->eleve_id))
-            ->when($request->ecole_id, fn($q) => $q->where('ecole_id', $request->ecole_id))
             ->when($request->status, fn($q) => $q->where('status', $request->status))
             ->when($request->type, fn($q) => $q->where('type', $request->type))
             ->when($request->date_from, fn($q) => $q->whereDate('created_at', '>=', $request->date_from))
@@ -156,7 +245,9 @@ class PaymentController extends Controller
      */
     public function getPaymentStats(Request $request)
     {
-        $ecoleId = $request->ecole_id ?? session('ecole_id');
+        // École déduite de la session utilisateur — jamais de la requête,
+        // sinon un directeur lit les finances d'un autre établissement (S10).
+        $ecoleId = $this->ecoleCourante();
 
         $stats = [
             'total_collected' => Payment::where('ecole_id', $ecoleId)->where('status', 'completed')->sum('amount'),
@@ -191,7 +282,7 @@ class PaymentController extends Controller
         ]);
 
         try {
-            $payment = Payment::findOrFail($request->payment_id);
+            $payment = $this->paiementAutorise((int) $request->payment_id);
 
             if ($payment->status !== 'completed') {
                 return response()->json(['success' => false, 'message' => 'Seuls les paiements complétés peuvent être remboursés'], 400);
@@ -202,8 +293,11 @@ class PaymentController extends Controller
 
             return response()->json(['success' => true, 'message' => 'Demande de remboursement enregistrée']);
 
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            throw $e;
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            Log::error('Refund request error', ['error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'Erreur lors de la demande de remboursement'], 500);
         }
     }
 
@@ -216,6 +310,12 @@ class PaymentController extends Controller
 
         DB::beginTransaction();
         try {
+            // Le décaissement effectif est réservé aux gestionnaires.
+            if (!in_array(auth()->user()?->role, ['directeur', 'comptable', 'super-admin'], true)) {
+                DB::rollBack();
+                return response()->json(['success' => false, 'message' => 'Accès refusé'], 403);
+            }
+
             $payment = Payment::findOrFail($request->payment_id);
 
             if ($payment->refund_status !== 'requested') {
@@ -240,7 +340,8 @@ class PaymentController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            Log::error('Refund processing error', ['error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'Erreur lors du remboursement'], 500);
         }
     }
 
@@ -249,8 +350,11 @@ class PaymentController extends Controller
      */
     public function exportPayments(Request $request)
     {
+        if (!in_array(auth()->user()?->role, self::ROLES_GESTION, true)) {
+            return response()->json(['success' => false, 'message' => 'Accès refusé'], 403);
+        }
+
         $payments = Payment::with(['eleve', 'ecole'])
-            ->when($request->ecole_id, fn($q) => $q->where('ecole_id', $request->ecole_id))
             ->when($request->date_from, fn($q) => $q->whereDate('created_at', '>=', $request->date_from))
             ->when($request->date_to, fn($q) => $q->whereDate('created_at', '<=', $request->date_to))
             ->get();
@@ -270,7 +374,9 @@ class PaymentController extends Controller
      */
     public function checkStatus(Request $request)
     {
-        $payment = Payment::findOrFail($request->payment_id);
+        $request->validate(['payment_id' => 'required|exists:payments,id']);
+
+        $payment = $this->paiementAutorise((int) $request->payment_id);
 
         // Vérifier le statut via le provider si une transaction existe
         if ($payment->transaction_id) {
@@ -297,7 +403,7 @@ class PaymentController extends Controller
         try {
             $payment = Payment::where('transaction_id', $transactionId)->first();
             if (!$payment) {
-                return redirect(env('FRONTEND_URL') . '/payment/error');
+                return redirect(config('app.frontend_url') . '/payment/error');
             }
 
             $result = $this->provider->verifyPayment($transactionId);
@@ -305,14 +411,14 @@ class PaymentController extends Controller
             if ($result['success']) {
                 $payment->update(['status' => 'completed', 'paid_at' => now()]);
                 $this->recordHistory($payment, 'completed', 'Paiement approuvé');
-                return redirect(env('FRONTEND_URL') . '/payment/success?id=' . $payment->id);
+                return redirect(config('app.frontend_url') . '/payment/success?id=' . $payment->id);
             }
 
-            return redirect(env('FRONTEND_URL') . '/payment/failed?id=' . $payment->id);
+            return redirect(config('app.frontend_url') . '/payment/failed?id=' . $payment->id);
 
         } catch (\Exception $e) {
             Log::error('Callback error', ['error' => $e->getMessage()]);
-            return redirect(env('FRONTEND_URL') . '/payment/error');
+            return redirect(config('app.frontend_url') . '/payment/error');
         }
     }
 

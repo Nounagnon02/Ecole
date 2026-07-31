@@ -19,6 +19,11 @@
     </coverage>
     <php>
         <env name="APP_ENV" value="testing"/>
+        <!-- Clé de test explicite : sans elle, les tests touchant au
+             chiffrement ou aux sessions échouaient sur « Unsupported cipher
+             or incorrect key length » (l'APP_KEY de .env.testing faisait
+             31 octets au lieu de 32). Valeur publique, jamais en production. -->
+        <env name="APP_KEY" value="base64:MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY="/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="CACHE_DRIVER" value="array"/>
         <env name="DB_CONNECTION" value="sqlite"/>

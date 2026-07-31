@@ -26,6 +26,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // ============ MATIÈRES ============
     Route::prefix('matieres')->group(function () {
         Route::get('/', [MatieresController::class, 'index']);
+        // (lecture ouverte : le référentiel matières est nécessaire à tous les rôles)
         Route::post('/store', [MatieresController::class, 'store'])->middleware('role:directeur,admin');
         Route::post('/update/{id}', [MatieresController::class, 'update'])->middleware('role:directeur,admin');
         Route::delete('/delete/{id}', [MatieresController::class, 'destroy'])->middleware('role:directeur,admin');
@@ -34,18 +35,21 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // ============ CLASSES ============
+    // La composition des classes n'est pas une donnée publique de l'école :
+    // sans ces filtres, un élève listait tous les effectifs (cf. audit S15).
     Route::prefix('classes')->group(function () {
         Route::get('/', [ClassesController::class, 'index']);
         Route::post('/store', [ClassesController::class, 'store'])->middleware('role:directeur');
         Route::get('/{id}', [ClassesController::class, 'show']);
-        Route::get('/{id}/eleves', [ClassesController::class, 'getEleves']);
+        Route::get('/{id}/eleves', [ClassesController::class, 'getEleves'])
+            ->middleware('role:directeur,enseignant,censeur,surveillant,secretaire,infirmier');
     });
 
     // ============ ÉLÈVES ============
     Route::prefix('eleves')->group(function () {
         Route::get('/', [EleveController::class, 'index'])->middleware('role:directeur,enseignant');
         Route::post('/store', [EleveController::class, 'store'])->middleware('role:directeur');
-        Route::get('/{id}', [EleveController::class, 'show']);
+        Route::get('/{id}', [EleveController::class, 'show']); // ElevePolicy::view appliquée dans le contrôleur
         Route::put('/update/{id}', [EleveController::class, 'update'])->middleware('role:directeur');
         
         // Espace Elève
@@ -69,18 +73,22 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ============ CAHIER DE TEXTE ============
     Route::prefix('cahier-texte')->group(function () {
-        Route::get('/', [CahierDeTexteController::class, 'index']);
+        Route::get('/', [CahierDeTexteController::class, 'index'])
+            ->middleware('role:directeur,enseignant,censeur,eleve,parent');
         Route::post('/', [CahierDeTexteController::class, 'store'])->middleware('role:enseignant,directeur');
-        Route::get('/classe/{classeId}', [CahierDeTexteController::class, 'getByClasse']);
+        Route::get('/classe/{classeId}', [CahierDeTexteController::class, 'getByClasse'])
+            ->middleware('role:directeur,enseignant,censeur,eleve,parent');
     });
 
     // ============ EMPLOI DU TEMPS ============
     Route::prefix('emploi-du-temps')->group(function () {
-        Route::get('/', [EmploiDuTempsController::class, 'index']);
+        Route::get('/', [EmploiDuTempsController::class, 'index'])
+            ->middleware('role:directeur,enseignant,censeur,surveillant,secretaire,eleve,parent');
         Route::post('/store', [EmploiDuTempsController::class, 'store'])->middleware('role:directeur');
         Route::put('/update/{id}', [EmploiDuTempsController::class, 'update'])->middleware('role:directeur');
         Route::delete('/delete/{id}', [EmploiDuTempsController::class, 'destroy'])->middleware('role:directeur');
-        Route::get('/classe/{classeId}', [EmploiDuTempsController::class, 'getByClasse']);
+        Route::get('/classe/{classeId}', [EmploiDuTempsController::class, 'getByClasse'])
+            ->middleware('role:directeur,enseignant,censeur,surveillant,secretaire,eleve,parent');
     });
 
     // ============ DEVOIRS ============
@@ -90,6 +98,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/', [DevoirController::class, 'store'])->middleware('role:directeur,enseignant');
         Route::get('/{id}', [DevoirController::class, 'show'])->middleware('role:directeur,enseignant,eleve,parent');
         Route::post('/{id}/soumettre', [DevoirController::class, 'soumettre'])->middleware('role:eleve');
+        Route::get('/{id}/copie/{eleveId}', [DevoirController::class, 'telechargerCopie'])->middleware('role:directeur,enseignant,censeur,eleve');
         Route::post('/{id}/noter/{eleveId}', [DevoirController::class, 'noter'])->middleware('role:directeur,enseignant');
         Route::delete('/{id}', [DevoirController::class, 'destroy'])->middleware('role:directeur,enseignant');
     });

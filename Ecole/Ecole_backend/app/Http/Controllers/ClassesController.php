@@ -21,13 +21,16 @@ class ClassesController extends Controller
                 'categorie_classe' => $validated['categorie_classe']
             ]);
 
-            event(new Registered($classe));
+            // `event(new Registered($classe))` a été retiré : la classe n'était
+            // pas importée (Error fatale non rattrapée par catch(\Exception) →
+            // 500 systématique), et Registered est un événement d'inscription
+            // d'utilisateur, sans rapport avec la création d'une classe (F4).
             return response()->json($classe, 201);
 
         } catch (\Exception $e) {
+            Log::error('Erreur création classe', ['error' => $e->getMessage()]);
             return response()->json([
                 'message' => 'Erreur lors de l\'ajout',
-                'error' => $e->getMessage()
             ], 500);
         }
     }
@@ -52,10 +55,9 @@ class ClassesController extends Controller
         return response()->json($effectif);
     }
 
-    public function series():  \Illuminate\Database\Eloquent\Relations\BelongsToMany
-    {
-        return $this->belongsToMany(Series::class, 'classe_series', 'classe_id', 'serie_id');
-    }
+    // NOTE: une méthode de relation Eloquent (`$this->belongsToMany(...)`)
+    // avait été copiée ici depuis le modèle Classes. Dans un contrôleur elle
+    // lève une Error. Elle vit désormais uniquement dans App\Models\Classes.
 
 
 public function attachMatieres(Request $request, $id)
@@ -82,7 +84,7 @@ public function attachMatieres(Request $request, $id)
     } catch (\Exception $e) {
         return response()->json([
             'message' => 'Erreur lors de l\'attachement des matières',
-            'error' => $e->getMessage()
+            'error' => $this->messageErreur($e)
         ], 500);
     }
 }
@@ -295,7 +297,7 @@ public function getMatieres($id)
     } catch (\Exception $e) {
         return response()->json([
             'message' => 'Erreur lors de la récupération des matières',
-            'error' => $e->getMessage()
+            'error' => $this->messageErreur($e)
         ], 404);
     }
 }

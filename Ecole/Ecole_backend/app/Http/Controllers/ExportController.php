@@ -22,25 +22,48 @@ class ExportController extends Controller
     public function exportEleves(Request $request)
     {
         $classeId = $request->query('classe_id');
-        $query = Eleve::with('user', 'classe');
-        
+        $query = Eleve::with('user:id,name,prenom,email,telephone', 'classe:id,nom_classe');
+
         if ($classeId) {
             $query->where('class_id', $classeId);
         }
 
-        $eleves = $query->get();
-        $url = $this->exportService->exportEleves($eleves->toArray());
+        // Traitement par lots : `->get()` chargeait tout l'effectif en mémoire
+        // d'un coup, ce qui sature le process sur les gros établissements (P3).
+        $lignes = [];
+        $query->chunk(500, function ($lot) use (&$lignes) {
+            foreach ($lot as $eleve) {
+                $lignes[] = $eleve->toArray();
+            }
+        });
+
+        $url = $this->exportService->exportEleves($lignes);
 
         return response()->json(['success' => true, 'download_url' => $url]);
     }
 
     /**
-     * Exporter le rapport financier global
+     * Exporter le rapport financier — bornable par période.
      */
-    public function exportFinances()
+    public function exportFinances(Request $request)
     {
-        $paiements = PaiementEleve::with('eleve.user')->get();
-        $url = $this->exportService->exportFinances($paiements->toArray());
+        $request->validate([
+            'date_from' => 'nullable|date',
+            'date_to'   => 'nullable|date|after_or_equal:date_from',
+        ]);
+
+        $query = PaiementEleve::with('eleve.user:id,name,prenom')
+            ->when($request->date_from, fn($q) => $q->whereDate('date_paiement', '>=', $request->date_from))
+            ->when($request->date_to, fn($q) => $q->whereDate('date_paiement', '<=', $request->date_to));
+
+        $lignes = [];
+        $query->chunk(500, function ($lot) use (&$lignes) {
+            foreach ($lot as $paiement) {
+                $lignes[] = $paiement->toArray();
+            }
+        });
+
+        $url = $this->exportService->exportFinances($lignes);
 
         return response()->json(['success' => true, 'download_url' => $url]);
     }

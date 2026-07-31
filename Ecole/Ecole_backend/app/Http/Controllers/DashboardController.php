@@ -4,9 +4,22 @@ namespace App\Http\Controllers;
 
 use App\Models\{User, Eleve, Classes, Notes, Matieres};
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class DashboardController extends Controller
 {
+    /** Rôles habilités à consulter le référentiel consolidé de l'école. */
+    private const ROLES_REFERENTIEL = [
+        'directeur', 'directeurM', 'directeurP', 'directeurS',
+        'censeur', 'secretaire', 'super-admin',
+    ];
+
+    /** Clé de cache du référentiel, par école. */
+    private function cleCacheReferentiel(): string
+    {
+        return 'dashboard_directeur_' . (auth()->user()?->ecole_id ?? 'global');
+    }
+
     public function directeur()
     {
         return response()->json([
@@ -15,7 +28,9 @@ class DashboardController extends Controller
                 'total_eleves' => Eleve::count(),
                 'total_classes' => Classes::count(),
                 'total_enseignants' => User::where('role', 'enseignant')->where('ecole_id', auth()->user()?->ecole_id)->count(),
-                'classes' => Classes::with(['eleves', 'enseignants'])->get()
+                // Compteurs plutôt que collections complètes : `with(['eleves',
+                // 'enseignants'])` chargeait tout l'effectif de l'école (P3).
+                'classes' => Classes::withCount(['eleves', 'enseignants'])->get(),
             ]
         ]);
     }
@@ -26,8 +41,14 @@ class DashboardController extends Controller
      */
     public function getDashboardData()
     {
-        $ecoleId = auth()->user()?->ecole_id ?? 'global';
-        $data = \Illuminate\Support\Facades\Cache::remember('dashboard_directeur_' . $ecoleId, 300, function () {
+        // Cet endpoint expose le référentiel complet de l'école (élèves,
+        // classes, matières). Il n'avait aucun contrôle de rôle : un élève ou
+        // un parent pouvait le lire intégralement (cf. audit S8).
+        if (!in_array(auth()->user()?->role, self::ROLES_REFERENTIEL, true)) {
+            return response()->json(['success' => false, 'message' => 'Accès refusé'], 403);
+        }
+
+        $data = Cache::remember($this->cleCacheReferentiel(), 300, function () {
             return [
                 'classes' => Classes::with('series')->get(),
                 'classes_effectif' => Classes::withCount('eleves')->get()->map(function ($c) {
@@ -60,7 +81,11 @@ class DashboardController extends Controller
      */
     public function invalidateCache()
     {
-        \Illuminate\Support\Facades\Cache::forget('dashboard_directeur');
+        // La clé doit être la même que celle utilisée en écriture : le
+        // `forget('dashboard_directeur')` d'origine ne supprimait rien, et le
+        // dashboard restait figé 5 minutes après chaque saisie (cf. audit P2).
+        Cache::forget($this->cleCacheReferentiel());
+
         return response()->json(['success' => true, 'message' => 'Cache invalidé']);
     }
 
@@ -104,7 +129,9 @@ class DashboardController extends Controller
             return response()->json(['success' => true, 'data' => ['parent' => $user, 'children' => []]]);
         }
 
-        $children = $parent->eleves()->with(['classe', 'notes.matiere'])->get();
+        // `user` doit être préchargé : il est lu dans le map ci-dessous, ce qui
+        // déclenchait une requête par enfant (cf. audit P4).
+        $children = $parent->eleves()->with(['user:id,name,prenom', 'classe', 'notes.matiere'])->get();
 
         return response()->json([
             'success' => true,

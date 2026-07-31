@@ -17,8 +17,35 @@ class SecurityHeaders
     {
         $response = $next($request);
 
-        // Content Security Policy — autorise les ressources du même domaine
-        $response->headers->set('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:; frame-ancestors 'none';");
+        // Content Security Policy — ressources du même domaine.
+        //
+        // `script-src` n'accepte plus 'unsafe-inline' ni 'unsafe-eval' en
+        // production : ces deux directives annulaient l'essentiel de la
+        // protection XSS apportée par la CSP (cf. audit S22). Le build Vite ne
+        // produit pas de script inline, donc 'self' suffit. Elles restent
+        // tolérées hors production pour le HMR de Vite.
+        $scriptSrc = app()->environment('production')
+            ? "'self'"
+            : "'self' 'unsafe-inline' 'unsafe-eval'";
+
+        $connectSrc = app()->environment('production')
+            ? "'self'"
+            : "'self' https: ws: wss:";
+
+        $response->headers->set('Content-Security-Policy', implode(' ', [
+            "default-src 'self';",
+            "script-src {$scriptSrc};",
+            // 'unsafe-inline' conservé sur les styles : Tailwind et les
+            // styles calculés en ligne des composants en dépendent.
+            "style-src 'self' 'unsafe-inline';",
+            "img-src 'self' data: https:;",
+            "font-src 'self' data:;",
+            "connect-src {$connectSrc};",
+            "object-src 'none';",
+            "base-uri 'self';",
+            "form-action 'self';",
+            "frame-ancestors 'none';",
+        ]));
 
         // HTTP Strict Transport Security (actif uniquement en production)
         if (app()->environment('production')) {

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Utilisateur;
+use App\Models\Universite\Utilisateur;
 use Illuminate\Http\Request;
 
 class UtilisateurController extends Controller
@@ -41,7 +41,7 @@ class UtilisateurController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  \App\Models\Utilisateur  $utilisateur
+     * @param  \App\Models\Universite\Utilisateur  $utilisateur
      * @return \Illuminate\Http\Response
      */
     public function show(Utilisateur $utilisateur)
@@ -52,7 +52,7 @@ class UtilisateurController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  \App\Models\Utilisateur  $utilisateur
+     * @param  \App\Models\Universite\Utilisateur  $utilisateur
      * @return \Illuminate\Http\Response
      */
     public function edit(Utilisateur $utilisateur)
@@ -64,7 +64,7 @@ class UtilisateurController extends Controller
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Utilisateur  $utilisateur
+     * @param  \App\Models\Universite\Utilisateur  $utilisateur
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, Utilisateur $utilisateur)
@@ -75,7 +75,7 @@ class UtilisateurController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Models\Utilisateur  $utilisateur
+     * @param  \App\Models\Universite\Utilisateur  $utilisateur
      * @return \Illuminate\Http\Response
      */
     public function destroy(Utilisateur $utilisateur)

@@ -50,8 +50,13 @@ class BulletinService
             $devoir2 = $this->moyenneType($notesMatiere, 'Devoir2');
             $interrogations = $this->moyenneType($notesMatiere, 'Interrogation');
             
-            // Moyenne matière = (Devoir1 + Devoir2 + Moy_Interros) / 3
-            $moyenne = collect([$devoir1, $devoir2, $interrogations])->filter()->avg() ?: 0;
+            // Moyenne des seules évaluations présentes.
+            // `filter()` sans callback écartait aussi les notes à 0 — un élève
+            // ayant réellement 0 à un devoir le voyait ignoré, ce qui gonflait
+            // sa moyenne. On ne filtre donc que les valeurs nulles.
+            $moyenne = collect([$devoir1, $devoir2, $interrogations])
+                ->filter(fn($v) => $v !== null)
+                ->avg() ?? 0;
             
             $coefficient = $this->getCoefficient($matiere->id, $eleve->classe_id);
             

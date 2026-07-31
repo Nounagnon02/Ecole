@@ -8,7 +8,7 @@ use App\Models\Eleve;
 use App\Models\Notes;
 use App\Models\Absence;
 use App\Models\PaiementEleve;
-use App\Models\Classe;
+use App\Models\Classes;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class UserModelTest extends TestCase
@@ -63,10 +63,10 @@ class UserModelTest extends TestCase
     /** @test */
     public function eleve_belongs_to_classe()
     {
-        $classe = Classe::factory()->create();
+        $classe = Classes::factory()->create();
         $eleve = Eleve::factory()->create(['classe_id' => $classe->id]);
 
-        $this->assertInstanceOf(Classe::class, $eleve->classe);
+        $this->assertInstanceOf(Classes::class, $eleve->classe);
         $this->assertEquals($classe->id, $eleve->classe->id);
     }
 

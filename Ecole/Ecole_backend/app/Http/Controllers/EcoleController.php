@@ -10,16 +10,50 @@ use Illuminate\Support\Str;
 
 class EcoleController extends Controller
 {
+    /**
+     * `Ecole` est la racine du tenant : elle échappe par nature au global scope
+     * BelongsToEcole. L'isolation doit donc être explicite ici, sinon un
+     * directeur liste et modifie toutes les écoles clientes (cf. audit S5).
+     */
+    private function estSuperAdmin(): bool
+    {
+        return auth()->user()?->role === 'super-admin';
+    }
+
+    /** Refuse l'accès si l'école visée n'est pas celle de l'utilisateur. */
+    private function verifierPerimetre(Ecole $ecole): void
+    {
+        if ($this->estSuperAdmin()) {
+            return;
+        }
+
+        if (auth()->user()?->ecole_id !== $ecole->id) {
+            abort(403, 'Accès refusé à cet établissement');
+        }
+    }
+
     public function index()
     {
+        // Un directeur ne voit que son école ; le super-admin voit la plateforme.
+        $query = Ecole::query();
+
+        if (!$this->estSuperAdmin()) {
+            $query->where('id', auth()->user()?->ecole_id);
+        }
+
         return response()->json([
             'success' => true,
-            'data' => Ecole::all()
+            'data' => $query->paginate(50),
         ]);
     }
 
     public function store(Request $request)
     {
+        // Créer un établissement relève de la plateforme, pas d'un directeur.
+        if (!$this->estSuperAdmin()) {
+            return response()->json(['success' => false, 'message' => 'Accès refusé'], 403);
+        }
+
         $validated = $request->validate([
             'nom' => 'required|string|max:255',
             'email' => 'required|email|unique:ecoles',
@@ -52,14 +86,20 @@ class EcoleController extends Controller
 
     public function show(Ecole $ecole)
     {
+        $this->verifierPerimetre($ecole);
+
+        // On renvoie des compteurs, pas les collections complètes : le `load`
+        // précédent dumpait tous les utilisateurs et élèves d'un coup (P3).
         return response()->json([
             'success' => true,
-            'data' => $ecole->load(['users', 'eleves', 'enseignants', 'classes'])
+            'data' => $ecole->loadCount(['users', 'eleves', 'enseignants', 'classes']),
         ]);
     }
 
     public function update(Request $request, Ecole $ecole)
     {
+        $this->verifierPerimetre($ecole);
+
         $validated = $request->validate([
             'nom' => 'string|max:255',
             'email' => 'email|unique:ecoles,email,' . $ecole->id,
@@ -86,6 +126,12 @@ class EcoleController extends Controller
 
     public function destroy(Ecole $ecole)
     {
+        // Suppression réservée à la plateforme : `ecole_id` est en
+        // cascadeOnDelete, une suppression détruit toutes les données liées.
+        if (!$this->estSuperAdmin()) {
+            return response()->json(['success' => false, 'message' => 'Accès refusé'], 403);
+        }
+
         // Vérifier s'il y a des données liées
         $hasData = $ecole->eleves()->exists() || 
                    $ecole->enseignants()->exists() || 
@@ -109,6 +155,8 @@ class EcoleController extends Controller
     // Statistiques d'une école
     public function stats(Ecole $ecole)
     {
+        $this->verifierPerimetre($ecole);
+
         return response()->json([
             'success' => true,
             'data' => [

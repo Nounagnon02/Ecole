@@ -15,7 +15,11 @@ class Kernel extends HttpKernel
      */
     protected $middleware = [
         \App\Http\Middleware\TrustProxies::class,
-        \App\Http\Middleware\CorsMiddleware::class,
+        // CORS géré par le middleware natif, qui applique la whitelist de
+        // config/cors.php. Ne jamais le remplacer par un middleware qui
+        // réfléchit l'en-tête Origin : combiné à supports_credentials, cela
+        // ouvre l'API à n'importe quel site tiers (cf. audit S2).
+        \Illuminate\Http\Middleware\HandleCors::class,
         \App\Http\Middleware\PreventRequestsDuringMaintenance::class,
         \Illuminate\Foundation\Http\Middleware\ValidatePostSize::class,
         \App\Http\Middleware\TrimStrings::class,

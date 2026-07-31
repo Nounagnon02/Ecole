@@ -25,8 +25,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ============ ENSEIGNANTS ============
     Route::prefix('enseignants')->group(function () {
-        Route::get('/', [EnseignantController::class, 'index']);
-        Route::get('/{id}', [EnseignantController::class, 'show']);
+        Route::get('/', [EnseignantController::class, 'index'])
+            ->middleware('role:directeur,censeur,secretaire,enseignant');
+        Route::get('/{id}', [EnseignantController::class, 'show'])
+            ->middleware('role:directeur,censeur,secretaire,enseignant');
         Route::post('/store', [EnseignantController::class, 'store'])->middleware('role:directeur');
         Route::put('/update/{id}', [EnseignantController::class, 'update'])->middleware('role:directeur');
         Route::delete('/delete/{id}', [EnseignantController::class, 'destroy'])->middleware('role:directeur');
@@ -39,7 +41,8 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // ============ PARENTS ============
-    Route::prefix('parents')->group(function () {
+    // `{id}/eleves` révèle la filiation : réservé au personnel (cf. audit S15).
+    Route::prefix('parents')->middleware('role:directeur,secretaire,censeur')->group(function () {
         Route::get('/', [ParentsController::class, 'index']);
         Route::post('/', [ParentsController::class, 'store'])->middleware('role:directeur');
         Route::get('/{id}', [ParentsController::class, 'show']);

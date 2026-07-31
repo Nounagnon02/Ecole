@@ -79,7 +79,7 @@ public function Classe_avec_series()
         } catch (\Exception $e) {
             return response()->json([
                 'message' => "Erreur lors de la création de la série",
-                'error' => $e->getMessage()
+                'error' => $this->messageErreur($e)
             ], 500);
         }
     }
@@ -420,7 +420,7 @@ public function Classe_avec_series()
             return response()->json([
                 'success' => false,
                 'message' => 'Erreur lors de la synchronisation',
-                'error' => $e->getMessage()
+                'error' => $this->messageErreur($e)
             ], 500);
         }
     }

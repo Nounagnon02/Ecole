@@ -1,0 +1,140 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
+
+/**
+ * Rattache au tenant les tables oubliées par 2025_11_01_041712_ecole_add_id.
+ *
+ * Sans colonne `ecole_id`, ces tables ne peuvent pas être filtrées par le
+ * global scope BelongsToEcole : elles formaient un espace de données global
+ * partagé par tous les établissements. Le module universitaire entier était
+ * concerné — un recteur lisait les étudiants, notes et diplômes des autres
+ * universités (cf. audit S6).
+ */
+return new class extends Migration
+{
+    /** Tables métier généralistes. */
+    private array $tables = [
+        'cahier_de_textes',
+        'evenements',
+        'payment_histories',
+        'vehicules',
+        'trajets_transport',
+        'abonnements_transport',
+        'coefficient_matieres',
+        'fiches_paie',
+        'depenses',
+        'exercices',
+    ];
+
+    /** Tables du module universitaire. */
+    private array $tablesUniversite = [
+        'universites',
+        'facultes',
+        'departements',
+        'filieres',
+        'etudiants',
+        'inscriptions',
+        'semestres',
+        'diplomes',
+        'annee_academiques',
+        'uni_enseignants',
+        'uni_matieres',
+        'uni_notes',
+        'uni_paiements',
+        'personnels',
+        'utilisateurs',
+    ];
+
+    public function up(): void
+    {
+        $ajoutees = [];
+
+        foreach ([...$this->tables, ...$this->tablesUniversite] as $table) {
+            if (!Schema::hasTable($table) || Schema::hasColumn($table, 'ecole_id')) {
+                continue;
+            }
+
+            Schema::table($table, function (Blueprint $blueprint) use ($table) {
+                // Nullable : la colonne est ajoutée sur des tables qui
+                // contiennent peut-être déjà des données.
+                $blueprint->foreignId('ecole_id')
+                    ->nullable()
+                    ->after('id')
+                    ->constrained('ecoles')
+                    ->cascadeOnDelete();
+
+                $blueprint->index('ecole_id', $table . '_ecole_id_index');
+            });
+
+            $ajoutees[] = $table;
+        }
+
+        $this->backfill($ajoutees);
+    }
+
+    /**
+     * Rattache les lignes existantes à un établissement.
+     *
+     * Indispensable : le global scope BelongsToEcole filtre sur `ecole_id = X`,
+     * et NULL ne satisfait jamais cette comparaison. Sans backfill, les données
+     * déjà en base deviendraient invisibles dès l'ajout de la colonne.
+     *
+     * Le rattachement n'est automatisable que s'il n'existe qu'un seul
+     * établissement — sinon l'affectation est un choix métier.
+     */
+    private function backfill(array $tables): void
+    {
+        if (empty($tables) || !Schema::hasTable('ecoles')) {
+            return;
+        }
+
+        $ecoles = DB::table('ecoles')->pluck('id');
+
+        if ($ecoles->count() !== 1) {
+            $restantes = [];
+
+            foreach ($tables as $table) {
+                $n = DB::table($table)->whereNull('ecole_id')->count();
+                if ($n > 0) {
+                    $restantes[$table] = $n;
+                }
+            }
+
+            if (!empty($restantes)) {
+                Log::warning(
+                    'Migration ecole_id : lignes non rattachées, à affecter manuellement '
+                    . '(elles restent invisibles derrière le scope tenant).',
+                    ['ecoles' => $ecoles->count(), 'tables' => $restantes]
+                );
+            }
+
+            return;
+        }
+
+        $ecoleId = $ecoles->first();
+
+        foreach ($tables as $table) {
+            DB::table($table)->whereNull('ecole_id')->update(['ecole_id' => $ecoleId]);
+        }
+    }
+
+    public function down(): void
+    {
+        foreach ([...$this->tables, ...$this->tablesUniversite] as $table) {
+            if (!Schema::hasTable($table) || !Schema::hasColumn($table, 'ecole_id')) {
+                continue;
+            }
+
+            Schema::table($table, function (Blueprint $blueprint) use ($table) {
+                $blueprint->dropForeign([$table . '_ecole_id_foreign']);
+                $blueprint->dropIndex($table . '_ecole_id_index');
+                $blueprint->dropColumn('ecole_id');
+            });
+        }
+    }
+};

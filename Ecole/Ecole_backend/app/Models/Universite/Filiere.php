@@ -2,28 +2,28 @@
 
 namespace App\Models\Universite;
 
+use App\Traits\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Enseignant extends Model
+class Filiere extends Model
 {
-    use HasFactory;
-
-    protected $table = 'uni_enseignants';
-
+    use HasFactory, BelongsToEcole;
     protected $fillable = [
         'nom',
-        'prenom',
-        'grade',
-        'specialite',
-        'telephone',
-        'email',
-        'departement_id'
+        'niveau',
+        'departement_id',
+        'ecole_id',
     ];
 
     public function departement()
     {
         return $this->belongsTo(Departement::class);
+    }
+
+    public function etudiants()
+    {
+        return $this->hasMany(Etudiant::class);
     }
 
     public function matieres()
