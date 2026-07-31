@@ -2,13 +2,13 @@
 
 namespace App\Models\Universite;
 
+use App\Traits\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Note extends Model
 {
-    use HasFactory;
-
+    use HasFactory, BelongsToEcole;
     protected $table = 'uni_notes';
 
     protected $fillable = [
@@ -16,7 +16,8 @@ class Note extends Model
         'matiere_id',
         'note',
         'type',
-        'date_evaluation'
+        'date_evaluation',
+        'ecole_id',
     ];
 
     public function etudiant()

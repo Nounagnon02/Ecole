@@ -16,7 +16,8 @@ class Enseignant extends Model
         'grade',
         'date_naissance',
         'lieu_naissance',
-        'sexe'
+        'sexe',
+        'ecole_id',
     ];
 
     public function user()

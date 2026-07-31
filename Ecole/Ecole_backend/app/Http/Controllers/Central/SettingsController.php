@@ -100,7 +100,9 @@ class SettingsController extends Controller
     public function uploadLogo(Request $request, Tenant $tenant)
     {
         $validated = $request->validate([
-            'logo' => 'required|image|mimes:png,jpg,svg|max:2048',
+            // SVG retiré : un SVG peut embarquer du <script> et devient un XSS
+            // stocké une fois servi depuis l'origine de l'app (cf. audit S7).
+            'logo' => 'required|image|mimes:png,jpg,jpeg,webp|max:2048',
         ]);
 
         $path = $request->file('logo')->storePublicly(
@@ -123,7 +125,7 @@ class SettingsController extends Controller
     public function uploadFavicon(Request $request, Tenant $tenant)
     {
         $validated = $request->validate([
-            'favicon' => 'required|image|mimes:png,ico,svg|max:1024',
+            'favicon' => 'required|image|mimes:png,ico|max:1024',
         ]);
 
         $path = $request->file('favicon')->storePublicly(

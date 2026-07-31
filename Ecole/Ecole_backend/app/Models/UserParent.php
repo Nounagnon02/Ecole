@@ -15,7 +15,8 @@ class UserParent extends Model
     protected $fillable = [
         'user_id',
         'profession',
-        'adresse'
+        'adresse',
+        'ecole_id',
     ];
 
     public function user()

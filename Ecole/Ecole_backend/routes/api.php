@@ -19,6 +19,13 @@
 |
 */
 
+// Sonde de santé également disponible sous /api/v1/health, pour les clients
+// et sondes d'infrastructure qui ciblent l'API versionnée.
+Illuminate\Support\Facades\Route::get('/v1/health', fn() => response()->json([
+    'status' => 'UP',
+    'timestamp' => now()->toIso8601String(),
+]))->name('health.v1');
+
 // Charger les routes modulaires
 require __DIR__.'/api/auth.php';
 require __DIR__.'/api/dashboard.php';

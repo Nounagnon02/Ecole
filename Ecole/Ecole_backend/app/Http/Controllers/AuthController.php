@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Eleve;
+use App\Models\Enseignant;
 use App\Models\User;
+use App\Models\UserParent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -11,13 +14,22 @@ use Illuminate\Support\Facades\DB;
 class AuthController extends Controller
 {
     /**
-     * Authentification unifiée (session via Sanctum SPA).
+     * Authentification unifiée.
+     *
+     * Deux modes de sortie selon le client :
+     *  - SPA web / desktop : session Sanctum sur cookie httpOnly ;
+     *  - mobile & clients non-stateful : token Sanctum porté en Bearer.
+     *
+     * Le second mode n'existait pas — `createToken()` n'était appelé nulle
+     * part —, si bien que l'application mobile n'obtenait jamais de token et
+     * recevait 401 sur toutes les routes protégées (cf. audit F2).
      */
     public function connexion(Request $request)
     {
         $request->validate([
             'email' => 'required|string',
             'password' => 'required|string',
+            'device_name' => 'nullable|string|max:255',
         ]);
 
         // Chercher par email ou par identifiant
@@ -33,15 +45,47 @@ class AuthController extends Controller
             return response()->json(['message' => 'Votre compte est désactivé'], 403);
         }
 
-        // Authentification par session (httpOnly cookie)
-        Auth::login($user);
+        $payload = [
+            'user'        => $user,
+            'role'        => $user->role,
+            'ecole_id'    => $user->ecole_id,
+            'redirect_to' => $this->getRedirectRouteBasedOnRole($user->role),
+        ];
 
-        return response()->json([
-            'user' => $user,
-            'role' => $user->role,
-            'ecole_id' => $user->ecole_id,
-            'redirect_to' => $this->getRedirectRouteBasedOnRole($user->role)
-        ]);
+        // Client stateful (SPA sur domaine déclaré dans sanctum.stateful) :
+        // session sur cookie httpOnly, aucun token exposé au JavaScript.
+        if ($this->estClientStateful($request)) {
+            Auth::login($user);
+            $request->session()?->regenerate();
+
+            // Compte plateforme sans école propre : le front affiche le
+            // sélecteur d'établissement (écran déjà présent dans LoginForm,
+            // mais que le backend n'alimentait jamais — cf. audit F5).
+            if (!$user->ecole_id && $user->role === 'super-admin') {
+                $payload['schools'] = \App\Models\Ecole::where('status', 'active')
+                    ->orderBy('nom')
+                    ->get(['id', 'nom as name']);
+                $payload['requires_school'] = true;
+            }
+
+            return response()->json($payload);
+        }
+
+        // Client mobile / natif : token Bearer.
+        $device = $request->input('device_name', 'mobile');
+        $payload['token'] = $user->createToken($device)->plainTextToken;
+        $payload['token_type'] = 'Bearer';
+
+        return response()->json($payload);
+    }
+
+    /**
+     * La requête vient-elle d'un front first-party gérant les cookies ?
+     * Sanctum considère « stateful » les origines listées dans sanctum.stateful.
+     */
+    private function estClientStateful(Request $request): bool
+    {
+        return \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::fromFrontend($request);
     }
 
     /**
@@ -123,23 +167,37 @@ class AuthController extends Controller
 
         } catch (\Exception $e) {
             \DB::rollBack();
-            return response()->json(['message' => 'Erreur lors de l\'inscription', 'error' => $e->getMessage()], 500);
+            return response()->json(['message' => 'Erreur lors de l\'inscription', 'error' => $this->messageErreur($e)], 500);
         }
     }
 
     public function logout(Request $request)
     {
-        Auth::guard('web')->logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+        $user = $request->user();
+
+        // Client mobile : révoquer le token porteur utilisé pour cet appel.
+        // Sans cela, le token restait valide jusqu'à son expiration (24 h).
+        $token = $user?->currentAccessToken();
+        if ($token && method_exists($token, 'delete')) {
+            $token->delete();
+        }
+
+        // Client SPA : détruire la session.
+        if ($request->hasSession()) {
+            Auth::guard('web')->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+        }
 
         return response()->json(['message' => 'Déconnecté avec succès'], 200);
     }
 
     /**
      * Sélection d'école après login multi-écoles.
-     * Le frontend envoie ecole_id après que l'utilisateur a choisi.
-     * On ré-authentifie la session avec l'école choisie.
+     *
+     * Seul un compte plateforme (sans `ecole_id` propre) a un choix à faire.
+     * Auparavant, un utilisateur dont `ecole_id` était null pouvait désigner
+     * n'importe quel établissement (cf. audit F5).
      */
     public function selectSchool(Request $request)
     {
@@ -153,13 +211,18 @@ class AuthController extends Controller
             return response()->json(['message' => 'Non authentifié'], 401);
         }
 
-        // Vérifier que l'utilisateur appartient bien à cette école
-        if ($user->ecole_id && $user->ecole_id != $request->ecole_id) {
-            return response()->json(['message' => 'Accès refusé à cet établissement'], 403);
+        if ($user->ecole_id) {
+            // Compte rattaché : la seule école acceptable est la sienne.
+            if ((int) $user->ecole_id !== (int) $request->ecole_id) {
+                return response()->json(['message' => 'Accès refusé à cet établissement'], 403);
+            }
+        } elseif ($user->role !== 'super-admin') {
+            // Compte sans école et non plateforme : rien à choisir.
+            return response()->json(['message' => 'Aucun établissement associé à ce compte'], 403);
         }
 
         // Mettre à jour l'école en session
-        session(['ecole_id' => $request->ecole_id]);
+        session(['ecole_id' => (int) $request->ecole_id]);
 
         return response()->json([
             'user' => $user,

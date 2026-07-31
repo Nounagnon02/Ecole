@@ -18,7 +18,8 @@ class Eleve extends Model
         'lieu_naissance',
         'sexe',
         'class_id',
-        'serie_id'
+        'serie_id',
+        'ecole_id',
     ];
 
     public function user()

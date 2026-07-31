@@ -2,18 +2,19 @@
 
 namespace App\Models\Universite;
 
+use App\Traits\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class AnneeAcademique extends Model
 {
-    use HasFactory;
-
+    use HasFactory, BelongsToEcole;
     protected $table = 'annee_academiques';
     protected $fillable = [
         'libelle',
         'date_debut',
-        'date_fin'
+        'date_fin',
+        'ecole_id',
     ];
 
     public function inscriptions()

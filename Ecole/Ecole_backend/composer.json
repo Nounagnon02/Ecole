@@ -62,12 +62,21 @@
         "optimize-autoloader": true,
         "preferred-install": "dist",
         "sort-packages": true,
+        "platform": {
+            "php": "8.2.0"
+        },
         "allow-plugins": {
             "pestphp/pest-plugin": true
         },
-        "policy": {
-            "advisories": {
-                "ignore-id": ["PKSA-m5cs-t1y6-qpcs", "PKSA-3r5d-mb8f-1qw9", "PKSA-mdq4-51ck-6kdq", "PKSA-8qx3-n5y5-vvnd", "PKSA-q46n-4fdk-zjr4", "PKSA-qzrn-rnz3-85w1", "PKSA-w7xr-vk7n-rstm"]
+        "audit": {
+            "ignore": {
+                "PKSA-m5cs-t1y6-qpcs": "Advisory Laravel 11 — à lever par une montée en Laravel 12",
+                "PKSA-3r5d-mb8f-1qw9": "Advisory Laravel 11 — à lever par une montée en Laravel 12",
+                "PKSA-mdq4-51ck-6kdq": "Advisory Laravel 11 — à lever par une montée en Laravel 12",
+                "PKSA-8qx3-n5y5-vvnd": "Advisory Laravel 11 — à lever par une montée en Laravel 12",
+                "PKSA-q46n-4fdk-zjr4": "Advisory Laravel 11 — à lever par une montée en Laravel 12",
+                "PKSA-qzrn-rnz3-85w1": "Advisory Laravel 11 — à lever par une montée en Laravel 12",
+                "PKSA-w7xr-vk7n-rstm": "Advisory Laravel 11 — à lever par une montée en Laravel 12"
             }
         }
     },

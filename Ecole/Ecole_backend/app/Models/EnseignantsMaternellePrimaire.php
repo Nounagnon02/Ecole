@@ -18,6 +18,7 @@ class EnseignantsMaternellePrimaire extends Model
         'lieu_naissance',
         'sexe',
         'class_id',
+        'ecole_id',
     ];
 
     public function user()

@@ -6,17 +6,15 @@ use App\Traits\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Paiement extends Model
+class Diplome extends Model
 {
     use HasFactory, BelongsToEcole;
-
-    protected $table = 'uni_paiements';
-
     protected $fillable = [
         'etudiant_id',
-        'montant',
-        'date_paiement',
-        'motif'
+        'intitule',
+        'date_delivrance',
+        'mention',
+        'ecole_id',
     ];
 
     public function etudiant()

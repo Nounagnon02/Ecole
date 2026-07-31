@@ -21,12 +21,16 @@ class CheckRole
             return response()->json(['message' => 'Unauthenticated'], 401);
         }
 
-        if (!in_array($request->user()->role, $roles)) {
-            // Optionnel: Autoriser les admins à tout voir
-            if ($request->user()->isAdmin()) {
-                return $next($request);
-            }
-            
+        $role = $request->user()->role;
+
+        // Le super-admin plateforme est le seul rôle transverse. `directeur` ne
+        // l'est PAS : sinon il contournerait role:comptable, role:infirmier,
+        // role:super-admin, etc. (cf. audit S1).
+        if ($role === 'super-admin') {
+            return $next($request);
+        }
+
+        if (!in_array($role, $roles, true)) {
             return response()->json(['message' => 'Unauthorized - Role required: ' . implode(', ', $roles)], 403);
         }
 

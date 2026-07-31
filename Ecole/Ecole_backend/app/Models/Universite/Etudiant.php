@@ -2,13 +2,13 @@
 
 namespace App\Models\Universite;
 
+use App\Traits\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Etudiant extends Model
 {
-    use HasFactory;
-
+    use HasFactory, BelongsToEcole;
     protected $fillable = [
         'matricule',
         'nom',
@@ -20,7 +20,8 @@ class Etudiant extends Model
         'email',
         'adresse',
         'annee_entree',
-        'filiere_id'
+        'filiere_id',
+        'ecole_id',
     ];
 
     public function filiere()

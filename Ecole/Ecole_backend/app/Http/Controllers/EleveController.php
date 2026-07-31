@@ -44,7 +44,13 @@ class EleveController extends Controller
     public function index()
     {
         $this->authorize('viewAny', Eleve::class);
-        $eleves = Eleve::with('user', 'classe', 'serie')->get();
+
+        // Paginé : la liste complète des élèves d'un établissement peut peser
+        // plusieurs milliers de lignes avec leurs relations (cf. audit P3).
+        $eleves = Eleve::with('user:id,name,prenom,email', 'classe:id,nom_classe', 'serie:id,nom')
+            ->orderBy('id')
+            ->paginate((int) request()->input('per_page', 50));
+
         return response()->json($eleves);
     }
 
@@ -87,7 +93,7 @@ class EleveController extends Controller
                 return response()->json($eleve->load('user'), 201);
             });
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Erreur lors de la création', 'error' => $e->getMessage()], 500);
+            return response()->json(['message' => 'Erreur lors de la création', 'error' => $this->messageErreur($e)], 500);
         }
     }
 
@@ -107,15 +113,21 @@ class EleveController extends Controller
         $this->authorize('update', $eleve);
         $user = $eleve->user;
 
+        // `email` et `numero_matricule` étaient écrits sans figurer dans le
+        // validate() : format libre et doublons possibles, alors que la
+        // création impose `unique:` sur les deux (cf. audit F6).
         $validated = $request->validate([
-            'name' => 'sometimes|string',
-            'prenom' => 'sometimes|string',
-            'class_id' => 'sometimes|exists:classes,id',
-            'serie_id' => 'sometimes|nullable|exists:series,id',
+            'name'             => 'sometimes|string|max:255',
+            'prenom'           => 'sometimes|string|max:255',
+            'email'            => 'sometimes|nullable|email|unique:users,email,' . $user->id,
+            'class_id'         => 'sometimes|exists:classes,id',
+            'serie_id'         => 'sometimes|nullable|exists:series,id',
+            'numero_matricule' => 'sometimes|string|max:50|unique:eleves,numero_matricule,' . $eleve->id,
         ]);
 
-        $user->update($request->only(['name', 'prenom', 'email']));
-        $eleve->update($request->only(['class_id', 'serie_id', 'numero_matricule']));
+        // On n'écrit que les champs effectivement validés et présents.
+        $user->update(array_intersect_key($validated, array_flip(['name', 'prenom', 'email'])));
+        $eleve->update(array_intersect_key($validated, array_flip(['class_id', 'serie_id', 'numero_matricule'])));
 
         return response()->json($eleve->load('user'));
     }

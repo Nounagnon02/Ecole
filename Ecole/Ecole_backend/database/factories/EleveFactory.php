@@ -2,25 +2,36 @@
 
 namespace Database\Factories;
 
-use App\Models\Classe;
+use App\Models\Classes;
+use App\Models\Ecole;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
+/**
+ * Factory du modèle App\Models\Eleve.
+ *
+ * Les colonnes de `eleves` sont : user_id, numero_matricule, date_naissance,
+ * lieu_naissance, sexe, class_id, serie_id, ecole_id. La version précédente
+ * écrivait `nom`, `prenom` et `classe_id`, qui n'existent pas sur cette table
+ * (l'identité vit sur `users`, et la clé est `class_id`).
+ */
 class EleveFactory extends Factory
 {
     protected $model = \App\Models\Eleve::class;
 
     public function definition()
     {
+        $ecole = Ecole::factory();
+
         return [
-            'nom' => fake()->lastName(),
-            'prenom' => fake()->firstName(),
-            'numero_matricule' => 'MAT-' . fake()->unique()->randomNumber(6),
-            'classe_id' => Classe::factory(),
-            'user_id' => User::factory(),
-            'date_naissance' => fake()->date(),
-            'lieu_naissance' => fake()->city(),
-            'sexe' => fake()->randomElement(['M', 'F']),
+            'user_id'          => User::factory()->state(['role' => 'eleve', 'ecole_id' => $ecole]),
+            'numero_matricule' => 'MAT-' . fake()->unique()->numerify('######'),
+            'date_naissance'   => fake()->date(),
+            'lieu_naissance'   => fake()->city(),
+            'sexe'             => fake()->randomElement(['M', 'F']),
+            'class_id'         => Classes::factory()->state(['ecole_id' => $ecole]),
+            'serie_id'         => null,
+            'ecole_id'         => $ecole,
         ];
     }
 }

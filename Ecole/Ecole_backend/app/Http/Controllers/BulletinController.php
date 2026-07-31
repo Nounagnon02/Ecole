@@ -42,72 +42,51 @@ class BulletinController extends Controller
                 'periode' => $periode
             ])->get()->groupBy('type_evaluation');
 
-            // Add debug logging
-            Log::debug("Notes for eleve $eleveId, matiere $matiereId:", [
-                'notes' => $notes->toArray(),
-                'count' => $notes->count()
-            ]);
+            // ── Cas Secondaire : Devoir1 / Devoir2 / Interrogations ──────────
+            //
+            // La moyenne se fait sur les évaluations RÉELLEMENT présentes.
+            // L'ancien code divisait par 3 en dur (la variable `$nb` était
+            // calculée puis ignorée) : un élève noté seulement sur Devoir1 à
+            // 15/20 obtenait 5/20 (cf. audit F3).
+            $composantes = [];
 
-        // Cas Secondaire (Devoirs/Interrogations)
-                if (
-                    ($notes->has('Devoir1') && $notes->get('Devoir1')->count() > 0) ||
-                    ($notes->has('Devoir2') && $notes->get('Devoir2')->count() > 0) ||
-                    ($notes->has('Interrogation') && $notes->get('Interrogation')->count() > 0)
-                ) {
-                    $noteDevoir1 = ($notes->has('Devoir1') && $notes->get('Devoir1')->count() > 0)
-                        ? $notes->get('Devoir1')->first()->note : 0;
-                    $noteDevoir2 = ($notes->has('Devoir2') && $notes->get('Devoir2')->count() > 0)
-                        ? $notes->get('Devoir2')->first()->note : 0;
-                    $moyenneInterros = ($notes->has('Interrogation') && $notes->get('Interrogation')->count() > 0)
-                        ? $notes->get('Interrogation')->avg('note') : 0;
-
-                    // Calcul de la moyenne (évite la division par zéro)
-                    $nb = 0;
-                    if ($notes->has('Devoir1') && $notes->get('Devoir1')->count() > 0) $nb++;
-                    if ($notes->has('Devoir2') && $notes->get('Devoir2')->count() > 0) $nb++;
-                    if ($notes->has('Interrogation') && $notes->get('Interrogation')->count() > 0) $nb++;
-                    $nb = $nb > 0 ? $nb : 1;
-
-                    $moyenne = ($noteDevoir1 + $noteDevoir2 + $moyenneInterros) / 3;
-                    return round($moyenne, 2);
-                }else{
-                    $noteDevoir1 =  0;
-                    $noteDevoir2 = 0;
-                    $moyenneInterros = 0;
-
-                    // Calcul de la moyenne (évite la division par zéro)
-                    
-
-                    $moyenne = 0;
-                    return round($moyenne, 2);
+            foreach (['Devoir1', 'Devoir2'] as $type) {
+                if ($notes->has($type) && $notes->get($type)->count() > 0) {
+                    $composantes[] = (float) $notes->get($type)->first()->note;
                 }
+            }
 
-                // Cas Maternelle/Primaire (évaluations)
-                $evalTypes = [
-                    '1ère evaluation', '2ème evaluation', '3ème evaluation',
-                    '4ème evaluation', '5ème evaluation', '6ème evaluation'
-                ];
+            if ($notes->has('Interrogation') && $notes->get('Interrogation')->count() > 0) {
+                $composantes[] = (float) $notes->get('Interrogation')->avg('note');
+            }
 
-                // Si toutes les évaluations sont présentes
-                $allEvalPresent = true;
-                $evalSums = 0;
-                $evalCount = 0;
-                foreach ($evalTypes as $type) {
-                    if ($notes->has($type) && $notes->get($type)->count() > 0) {
-                        $evalSums += $notes->get($type)->avg('note');
-                        $evalCount++;
-                    } else {
-                        $allEvalPresent = false;
-                    }
+            if (!empty($composantes)) {
+                return round(array_sum($composantes) / count($composantes), 2);
+            }
+
+            // ── Cas Maternelle/Primaire : évaluations numérotées ─────────────
+            //
+            // Ce bloc était inaccessible : les deux branches du if/else
+            // précédent retournaient, donc les moyennes maternelle/primaire
+            // valaient toujours 0 (cf. audit F3).
+            $evalTypes = [
+                '1ère evaluation', '2ème evaluation', '3ème evaluation',
+                '4ème evaluation', '5ème evaluation', '6ème evaluation',
+            ];
+
+            $evalMoyennes = [];
+            foreach ($evalTypes as $type) {
+                if ($notes->has($type) && $notes->get($type)->count() > 0) {
+                    $evalMoyennes[] = (float) $notes->get($type)->avg('note');
                 }
-                if ($evalCount > 0) {
-                    $moyenneTotale = $evalSums / $evalCount;
-                    Log::info("Moyenne évaluations calculée pour élève $eleveId, matière $matiereId: $moyenneTotale");
-                    return round($moyenneTotale, 2);
-                }
+            }
 
-                // Si aucun cas ne correspond, retourne 0
-                return 0;
+            if (!empty($evalMoyennes)) {
+                return round(array_sum($evalMoyennes) / count($evalMoyennes), 2);
+            }
+
+            // Aucune note pour cette matière sur cette période.
+            return 0;
         } catch (\Exception $e) {
             Log::error('Erreur calcul moyenne matière: ' . $e->getMessage());
             return 0;
@@ -166,7 +145,7 @@ class BulletinController extends Controller
     public function GenerateFile(Request $request)
     {
         try {
-            Log::info('GenerateFile request received', $request->all());
+            Log::debug('GenerateFile', ['keys' => array_keys($request->all())]);
 
             $classe_id = $request->query('classe_id');
             $serie_id = $request->query('serie_id');
@@ -189,11 +168,9 @@ class BulletinController extends Controller
                 });
             }
 
-            Log::info('Executing query: ' . $query->toSql(), $query->getBindings());
 
             $eleves = $query->get();
             
-            Log::info('Found ' . $eleves->count() . ' eleves.');
 
             $data = [];
             foreach ($eleves as $eleve) {
@@ -449,7 +426,7 @@ class BulletinController extends Controller
             Log::error("Erreur génération bulletin: " . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Erreur lors de la génération du bulletin: ' . $e->getMessage()
+                'message' => $this->messageErreur($e, 'Erreur lors de la génération du bulletin')
             ], 500);
         }
     }

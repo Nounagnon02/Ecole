@@ -42,9 +42,17 @@ Route::middleware([
             Route::apiResource('notes', 'App\Http\Controllers\NotesController');
 
             // Services
-            Route::apiResource('messages', 'App\Http\Controllers\MessageController');
-            Route::apiResource('paiements', 'App\Http\Controllers\PaiementController');
-            Route::apiResource('notifications', 'App\Http\Controllers\NotificationController');
+            //
+            // `->only()` explicite : ces contrôleurs n'implémentent pas les
+            // sept verbes d'un apiResource. Sans restriction, les routes
+            // étaient déclarées puis échouaient en 500 à l'appel. Et
+            // `PaiementController` n'existe pas du tout — la ressource
+            // 'paiements' pointait dans le vide (les paiements passent par
+            // PaymentController / FedaPayController, cf. routes/api/services.php).
+            Route::apiResource('messages', 'App\Http\Controllers\MessageController')
+                ->only(['index', 'store']);
+            Route::apiResource('notifications', 'App\Http\Controllers\NotificationController')
+                ->only(['index', 'store']);
 
             // IA / EduPilot
             Route::prefix('ia')->middleware('throttle:ia')->group(function () {

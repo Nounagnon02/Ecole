@@ -10,6 +10,7 @@ import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import axios from 'axios';
 import apiClient from '@/shared/lib/api-client';
+import { cacheClear } from '@/shared/lib/db';
 
 export const SESSION_CHECK_INTERVAL = 5 * 60 * 1000; // 5 min entre vérifications
 
@@ -131,6 +132,11 @@ const useAuthStore = create(
           // Même si la requête échoue, on déconnecte le client
         }
 
+        // Le cache offline contient les réponses GET : notes, paiements,
+        // dossiers médicaux. Il survivait à la déconnexion et restait lisible
+        // par l'utilisateur suivant sur un poste partagé (cf. audit S17).
+        await cacheClear().catch(() => {});
+
         set({ ...initialState, isLoading: false });
       },
 
@@ -138,6 +144,7 @@ const useAuthStore = create(
        * Nettoie la session locale (après 401 par exemple).
        */
       clearSession: () => {
+        cacheClear().catch(() => {});
         set({ ...initialState, isLoading: false });
       },
 

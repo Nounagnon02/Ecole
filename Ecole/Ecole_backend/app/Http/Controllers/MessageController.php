@@ -2,156 +2,206 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Message;
+use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
+/**
+ * MessageController — Messagerie interne
+ *
+ * Règle non négociable : l'identité de l'utilisateur vient TOUJOURS de
+ * `auth()->id()`, jamais d'un champ de la requête. Le contrôleur passe par le
+ * modèle Message (et non par DB::table) pour bénéficier du global scope
+ * BelongsToEcole, qui assure l'isolation inter-établissements (cf. audit S4).
+ */
 class MessageController extends Controller
 {
+    /** Identifiant de l'utilisateur courant, au format stocké en base (string). */
+    private function moi(): string
+    {
+        return (string) auth()->id();
+    }
+
+    /**
+     * Résout les noms d'affichage pour un lot d'identifiants, en une requête.
+     *
+     * @param  iterable<string>  $ids
+     * @return array<string, string>
+     */
+    private function nomsParId(iterable $ids): array
+    {
+        $ids = collect($ids)->filter()->unique()->values();
+
+        if ($ids->isEmpty()) {
+            return [];
+        }
+
+        return User::whereIn('id', $ids)
+            ->where('ecole_id', auth()->user()?->ecole_id)
+            ->get(['id', 'name', 'prenom'])
+            ->mapWithKeys(fn($u) => [(string) $u->id => trim($u->prenom . ' ' . $u->name)])
+            ->all();
+    }
+
+    /**
+     * Messages reçus par l'utilisateur connecté.
+     */
     public function index(Request $request)
     {
-        $userId = $request->user_id;
-        
-        $messages = DB::table('messages')
-            ->where('messages.destinataire', $userId)
-            ->leftJoin('enseignants as e', 'messages.expediteur', '=', DB::raw('CAST(e.id AS CHAR)'))
-            ->leftJoin('enseignants_martenel_primaire as emp', 'messages.expediteur', '=', DB::raw('CAST(emp.id AS CHAR)'))
-            ->select(
-                'messages.*',
-                DB::raw('COALESCE(CONCAT(e.nom, " ", e.prenom), CONCAT(emp.nom, " ", emp.prenom), messages.expediteur) as expediteur_nom')
-            )
-            ->orderBy('messages.created_at', 'desc')
-            ->get();
+        $messages = Message::where('destinataire', $this->moi())
+            ->orderByDesc('created_at')
+            ->paginate((int) $request->input('per_page', 30));
+
+        $noms = $this->nomsParId($messages->pluck('expediteur'));
+        $messages->getCollection()->transform(function ($m) use ($noms) {
+            $m->expediteur_nom = $noms[$m->expediteur] ?? 'Utilisateur ' . $m->expediteur;
+            return $m;
+        });
 
         return response()->json(['success' => true, 'data' => $messages]);
     }
 
+    /**
+     * Messages envoyés par l'utilisateur connecté.
+     */
     public function sent(Request $request)
     {
-        $userId = $request->user_id;
-        
-        $messages = DB::table('messages')
-            ->where('messages.expediteur', $userId)
-            ->leftJoin('enseignants as e', 'messages.destinataire', '=', DB::raw('CAST(e.id AS CHAR)'))
-            ->leftJoin('enseignants_martenel_primaire as emp', 'messages.destinataire', '=', DB::raw('CAST(emp.id AS CHAR)'))
-            ->select(
-                'messages.*',
-                DB::raw('COALESCE(CONCAT(e.nom, " ", e.prenom), CONCAT(emp.nom, " ", emp.prenom), messages.destinataire) as destinataire_nom')
-            )
-            ->orderBy('messages.created_at', 'desc')
-            ->get();
+        $messages = Message::where('expediteur', $this->moi())
+            ->orderByDesc('created_at')
+            ->paginate((int) $request->input('per_page', 30));
+
+        $noms = $this->nomsParId($messages->pluck('destinataire'));
+        $messages->getCollection()->transform(function ($m) use ($noms) {
+            $m->destinataire_nom = $noms[$m->destinataire] ?? 'Utilisateur ' . $m->destinataire;
+            return $m;
+        });
 
         return response()->json(['success' => true, 'data' => $messages]);
     }
 
+    /**
+     * Envoi d'un message. L'expéditeur n'est jamais fourni par le client.
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'expediteur' => 'required|string',
             'destinataire' => 'required|string',
-            'sujet' => 'required|string',
-            'contenu' => 'required|string'
+            'sujet'        => 'required|string|max:255',
+            'contenu'      => 'required|string|max:10000',
         ]);
 
-        $id = DB::table('messages')->insertGetId(array_merge($validated, [
-            'lu' => false,
-            'created_at' => now(),
-            'updated_at' => now()
-        ]));
+        // Le destinataire doit exister et appartenir à la même école.
+        $destinataire = User::where('id', $validated['destinataire'])
+            ->where('ecole_id', auth()->user()?->ecole_id)
+            ->first();
 
-        return response()->json(['success' => true, 'data' => ['id' => $id]], 201);
+        if (!$destinataire) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Destinataire introuvable dans votre établissement',
+            ], 422);
+        }
+
+        $message = Message::create([
+            'expediteur'   => $this->moi(),
+            'destinataire' => (string) $destinataire->id,
+            'sujet'        => $validated['sujet'],
+            'contenu'      => $validated['contenu'],
+            'lu'           => false,
+        ]);
+
+        return response()->json(['success' => true, 'data' => ['id' => $message->id]], 201);
     }
 
+    /**
+     * Marque un message comme lu — seul son destinataire le peut.
+     */
     public function markAsRead($id)
     {
-        DB::table('messages')->where('id', $id)->update(['lu' => true, 'updated_at' => now()]);
+        $message = Message::findOrFail($id);
+
+        if ($message->destinataire !== $this->moi()) {
+            return response()->json(['success' => false, 'message' => 'Accès refusé'], 403);
+        }
+
+        $message->update(['lu' => true]);
+
         return response()->json(['success' => true]);
     }
 
-    public function unreadCount(Request $request)
+    /**
+     * Nombre de messages non lus de l'utilisateur connecté.
+     */
+    public function unreadCount()
     {
-        $userId = $request->user_id;
-        $count = DB::table('messages')
-            ->where('destinataire', $userId)
+        $count = Message::where('destinataire', $this->moi())
             ->where('lu', false)
             ->count();
 
         return response()->json(['success' => true, 'count' => $count]);
     }
 
-    public function getUsers(Request $request)
+    /**
+     * Contacts joignables — utilisateurs actifs de la même école.
+     */
+    public function getUsers()
     {
-        $currentUserId = $request->user_id;
-        $users = [];
-
-        // Récupérer les enseignants
-        $enseignants = DB::table('enseignants')
-            ->select('id', DB::raw("CONCAT(nom, ' ', prenom) as name"), 'email', DB::raw("'enseignant' as role"))
-            ->get();
-        $users = array_merge($users, $enseignants->toArray());
-
-        // Récupérer les enseignants maternelle/primaire
-        $enseignantsMP = DB::table('enseignants_martenel_primaire')
-            ->select('id', DB::raw("CONCAT(nom, ' ', prenom) as name"), 'email', 'role')
-            ->get();
-        $users = array_merge($users, $enseignantsMP->toArray());
-
-        // Ajouter l'administration
-        $users[] = (object)['id' => 0, 'name' => 'Administration', 'email' => 'admin@ecole.bj', 'role' => 'administration'];
-        $users[] = (object)['id' => -1, 'name' => 'Directeur', 'email' => 'directeur@ecole.bj', 'role' => 'directeur'];
+        $users = User::where('ecole_id', auth()->user()?->ecole_id)
+            ->where('is_active', true)
+            ->where('id', '!=', auth()->id())
+            ->orderBy('name')
+            ->get(['id', 'name', 'prenom', 'role'])
+            ->map(fn($u) => [
+                'id'   => $u->id,
+                'name' => trim($u->prenom . ' ' . $u->name),
+                'role' => $u->role,
+            ]);
 
         return response()->json(['success' => true, 'data' => $users]);
     }
 
-    public function getConversations(Request $request)
+    /**
+     * Liste des conversations de l'utilisateur connecté.
+     */
+    public function getConversations()
     {
-        $userId = $request->user_id;
-        
-        $conversations = DB::select("
-            SELECT 
-                CASE 
-                    WHEN expediteur = ? THEN destinataire 
-                    ELSE expediteur 
-                END as contact_id,
-                MAX(created_at) as derniere_date,
-                COUNT(CASE WHEN destinataire = ? AND lu = 0 THEN 1 END) as non_lus
-            FROM messages
-            WHERE expediteur = ? OR destinataire = ?
-            GROUP BY contact_id
-            ORDER BY derniere_date DESC
-        ", [$userId, $userId, $userId, $userId]);
+        $moi = $this->moi();
 
-        foreach ($conversations as $conv) {
-            $user = DB::table('enseignants')
-                ->where('id', $conv->contact_id)
-                ->select(DB::raw("CONCAT(nom, ' ', prenom) as name"))
-                ->first();
-            
-            if (!$user) {
-                $user = DB::table('enseignants_martenel_primaire')
-                    ->where('id', $conv->contact_id)
-                    ->select(DB::raw("CONCAT(nom, ' ', prenom) as name"))
-                    ->first();
-            }
-            
-            $conv->contact_nom = $user ? $user->name : 'Utilisateur ' . $conv->contact_id;
-        }
+        $conversations = Message::query()
+            ->selectRaw('CASE WHEN expediteur = ? THEN destinataire ELSE expediteur END as contact_id', [$moi])
+            ->selectRaw('MAX(created_at) as derniere_date')
+            ->selectRaw('SUM(CASE WHEN destinataire = ? AND lu = 0 THEN 1 ELSE 0 END) as non_lus', [$moi])
+            ->where(fn($q) => $q->where('expediteur', $moi)->orWhere('destinataire', $moi))
+            ->groupBy('contact_id')
+            ->orderByDesc('derniere_date')
+            ->get();
+
+        // Un seul aller-retour pour tous les noms, au lieu d'une requête par
+        // conversation comme précédemment (cf. audit P4).
+        $noms = $this->nomsParId($conversations->pluck('contact_id'));
+
+        $conversations->transform(function ($c) use ($noms) {
+            $c->contact_nom = $noms[(string) $c->contact_id] ?? 'Utilisateur ' . $c->contact_id;
+            return $c;
+        });
 
         return response()->json(['success' => true, 'data' => $conversations]);
     }
 
+    /**
+     * Fil de discussion avec un contact donné.
+     */
     public function getConversation(Request $request, $contactId)
     {
-        $userId = $request->user_id;
-        
-        $messages = DB::table('messages')
-            ->where(function($q) use ($userId, $contactId) {
-                $q->where('expediteur', $userId)->where('destinataire', $contactId);
-            })
-            ->orWhere(function($q) use ($userId, $contactId) {
-                $q->where('expediteur', $contactId)->where('destinataire', $userId);
-            })
-            ->orderBy('created_at', 'asc')
-            ->get();
+        $moi = $this->moi();
+        $contactId = (string) $contactId;
+
+        $messages = Message::where(function ($q) use ($moi, $contactId) {
+            $q->where(fn($sub) => $sub->where('expediteur', $moi)->where('destinataire', $contactId))
+              ->orWhere(fn($sub) => $sub->where('expediteur', $contactId)->where('destinataire', $moi));
+        })
+            ->orderBy('created_at')
+            ->paginate((int) $request->input('per_page', 50));
 
         return response()->json(['success' => true, 'data' => $messages]);
     }

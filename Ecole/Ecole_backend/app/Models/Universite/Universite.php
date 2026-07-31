@@ -2,20 +2,21 @@
 
 namespace App\Models\Universite;
 
+use App\Traits\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Universite extends Model
 {
-    use HasFactory;
-
+    use HasFactory, BelongsToEcole;
     protected $fillable = [
         'nom',
         'sigle',
         'adresse',
         'telephone',
         'email',
-        'site_web'
+        'site_web',
+        'ecole_id',
     ];
 
     public function facultes()
