@@ -40,8 +40,8 @@ export default function BillingPage() {
     (async () => {
       try {
         const [invoicesRes, revenusRes] = await Promise.allSettled([
-          get('/api/v1/admin/billing/invoices'),
-          get('/api/v1/admin/billing/revenus-mensuels'),
+          get('/v1/admin/billing/invoices'),
+          get('/v1/admin/analytics/revenue'),
         ]);
 
         const invoicesData = invoicesRes.status === 'fulfilled'

@@ -109,7 +109,7 @@ export default function AiInsightsPage() {
           : role === ROLES.PARENT ? 'conseiller'
             : 'general';
 
-      const response = await apiClient.post('/api/v1/ia/chat', {
+      const response = await apiClient.post('/v1/ia/chat', {
         message: userMsg.content,
         mode,
       });
@@ -139,7 +139,7 @@ export default function AiInsightsPage() {
   const loadAnalysis = async () => {
     setIsLoading(true);
     try {
-      const response = await apiClient.get('/api/v1/ia/predictive');
+      const response = await apiClient.get('/v1/ia/predictive');
       setAnalysisData(response.data.data);
     } catch {
       setAnalysisData({ error: true });

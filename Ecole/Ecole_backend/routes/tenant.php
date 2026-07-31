@@ -54,15 +54,9 @@ Route::middleware([
             Route::apiResource('notifications', 'App\Http\Controllers\NotificationController')
                 ->only(['index', 'store']);
 
-            // IA / EduPilot
-            Route::prefix('ia')->middleware('throttle:ia')->group(function () {
-                Route::post('/chat', 'App\Http\Controllers\Api\AIController@chat');
-                Route::get('/predictive', 'App\Http\Controllers\Api\AIController@predictiveAnalysis');
-                Route::post('/lesson-plan', 'App\Http\Controllers\Api\AIController@lessonPlan');
-                Route::post('/tutor', 'App\Http\Controllers\Api\AIController@tutor');
-                Route::post('/parent-assistant', 'App\Http\Controllers\Api\AIController@parentAssistant');
-                Route::post('/analyze-results', 'App\Http\Controllers\Api\AIController@analyzeResults');
-            });
+            // IA / EduPilot : déclarées dans routes/api/ia.php, sur la surface
+            // principale. Les redéclarer ici créerait des URI en double, la
+            // dernière enregistrée masquant la précédente.
         });
     });
 });

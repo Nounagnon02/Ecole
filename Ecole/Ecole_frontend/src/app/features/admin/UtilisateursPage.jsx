@@ -49,7 +49,7 @@ export default function UtilisateursPage() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await get('/api/v1/admin/tenants');
+        const res = await get('/v1/admin/tenants');
         const items = Array.isArray(res?.data?.data) ? res.data.data
           : Array.isArray(res?.data) ? res.data
           : Array.isArray(res) ? res

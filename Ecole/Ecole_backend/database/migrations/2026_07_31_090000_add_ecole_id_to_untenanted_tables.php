@@ -59,17 +59,29 @@ return new class extends Migration
                 continue;
             }
 
-            Schema::table($table, function (Blueprint $blueprint) use ($table) {
+            // Trois opérations séparées : SQLite reconstruit la table pour
+            // ajouter une contrainte de clé étrangère, et mélanger l'ajout de
+            // colonne, la contrainte et l'index dans un même Blueprint rend le
+            // résultat dépendant du driver.
+            Schema::table($table, function (Blueprint $blueprint) {
                 // Nullable : la colonne est ajoutée sur des tables qui
                 // contiennent peut-être déjà des données.
-                $blueprint->foreignId('ecole_id')
-                    ->nullable()
-                    ->after('id')
-                    ->constrained('ecoles')
-                    ->cascadeOnDelete();
+                $blueprint->foreignId('ecole_id')->nullable();
+            });
 
+            Schema::table($table, function (Blueprint $blueprint) use ($table) {
                 $blueprint->index('ecole_id', $table . '_ecole_id_index');
             });
+
+            // La contrainte n'est posée que là où l'ALTER la supporte
+            // proprement ; sur SQLite (tests) la colonne et l'index suffisent.
+            if (Schema::getConnection()->getDriverName() !== 'sqlite') {
+                Schema::table($table, function (Blueprint $blueprint) {
+                    $blueprint->foreign('ecole_id')
+                        ->references('id')->on('ecoles')
+                        ->cascadeOnDelete();
+                });
+            }
 
             $ajoutees[] = $table;
         }
@@ -130,9 +142,18 @@ return new class extends Migration
                 continue;
             }
 
+            // La contrainte n'existe que sur les drivers où up() l'a posée.
+            if (Schema::getConnection()->getDriverName() !== 'sqlite') {
+                Schema::table($table, function (Blueprint $blueprint) use ($table) {
+                    $blueprint->dropForeign($table . '_ecole_id_foreign');
+                });
+            }
+
             Schema::table($table, function (Blueprint $blueprint) use ($table) {
-                $blueprint->dropForeign([$table . '_ecole_id_foreign']);
                 $blueprint->dropIndex($table . '_ecole_id_index');
+            });
+
+            Schema::table($table, function (Blueprint $blueprint) {
                 $blueprint->dropColumn('ecole_id');
             });
         }

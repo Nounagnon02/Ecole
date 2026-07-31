@@ -12,6 +12,7 @@ import {
   Loader2, AlertCircle, RefreshCw, ChevronDown, KeyRound,
 } from 'lucide-react';
 import { cn } from '@/shared/lib/utils';
+import { unwrapList } from '@/shared/lib/unwrap';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
@@ -123,7 +124,8 @@ export default function EcolesPage() {
     setError(null);
     try {
       const res = await api.get('/ecoles');
-      setEcoles(res.data?.data ?? []);
+      // `/ecoles` est paginé : res.data.data est le paginateur, pas le tableau.
+      setEcoles(unwrapList(res.data));
     } catch (err) {
       setError(err.response?.data?.message || 'Erreur de chargement');
     } finally {
