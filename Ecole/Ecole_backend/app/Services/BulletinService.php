@@ -107,7 +107,7 @@ class BulletinService
         
         $notes = Notes::where('matiere_id', $note->matiere_id)
             ->where('periode', $note->periode)
-            ->whereHas('eleve', fn($q) => $q->where('classe_id', $note->eleve->classe_id))
+            ->whereHas('eleve', fn($q) => $q->where('class_id', $note->eleve->class_id))
             ->orderBy('note', 'desc')
             ->pluck('note');
             
@@ -117,7 +117,7 @@ class BulletinService
     private function calculerRangGeneral($eleve, $periode, $moyenne)
     {
         // Calculer moyennes de tous les élèves de la classe en une seule passe (évite N+1)
-        $elevesClasse = Eleve::with(['notes.matiere'])->where('classe_id', $eleve->classe_id)->get();
+        $elevesClasse = Eleve::with(['notes.matiere'])->where('class_id', $eleve->class_id)->get();
         $moyennes = $elevesClasse->map(function($e) use ($periode) {
             $notes = $e->notes->where('periode', $periode);
             $totalPoints = 0;

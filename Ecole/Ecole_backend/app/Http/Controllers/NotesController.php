@@ -837,13 +837,18 @@ class NotesController extends Controller
     private function findEleve($identifier, $classeId)
     {
         // Recherche par nom complet, prénom, nom ou numéro
-        return Eleve::where('classe_id', $classeId)
-            ->where(function($query) use ($identifier) {
-                $query->where('nom', 'LIKE', "%{$identifier}%")
-                    ->orWhere('prenom', 'LIKE', "%{$identifier}%")
-                    ->orWhere('numero_eleve', $identifier)
-                    ->orWhereRaw("CONCAT(prenom, ' ', nom) LIKE ?", ["%{$identifier}%"])
-                    ->orWhereRaw("CONCAT(nom, ' ', prenom) LIKE ?", ["%{$identifier}%"]);
+        // Colonnes réelles : la clé de classe est `class_id`, le numéro
+        // `numero_matricule`, et nom/prénom vivent sur `users` — d'où la
+        // recherche via la relation plutôt que sur `eleves`.
+        return Eleve::where('class_id', $classeId)
+            ->where(function ($query) use ($identifier) {
+                $query->where('numero_matricule', $identifier)
+                    ->orWhereHas('user', function ($u) use ($identifier) {
+                        $u->where('name', 'LIKE', "%{$identifier}%")
+                            ->orWhere('prenom', 'LIKE', "%{$identifier}%")
+                            ->orWhereRaw("CONCAT(prenom, ' ', name) LIKE ?", ["%{$identifier}%"])
+                            ->orWhereRaw("CONCAT(name, ' ', prenom) LIKE ?", ["%{$identifier}%"]);
+                    });
             })
             ->first();
     }
@@ -863,12 +868,18 @@ class NotesController extends Controller
 
     public function getElevesByClasse($classeId)
     {
-        $eleves = Eleve::where('classe_id', $classeId)
-            ->select('id', 'nom', 'prenom', 'numero_eleve')
-            ->orderBy('nom')
-            ->orderBy('prenom')
-            ->get();
-        
+        $eleves = Eleve::with('user:id,name,prenom')
+            ->where('class_id', $classeId)
+            ->get(['id', 'user_id', 'numero_matricule'])
+            ->map(fn($e) => [
+                'id' => $e->id,
+                'nom' => $e->user->name ?? '',
+                'prenom' => $e->user->prenom ?? '',
+                'numero_matricule' => $e->numero_matricule,
+            ])
+            ->sortBy([['nom', 'asc'], ['prenom', 'asc']])
+            ->values();
+
         return response()->json($eleves);
     }
 // Filtrer les notes selon les critères

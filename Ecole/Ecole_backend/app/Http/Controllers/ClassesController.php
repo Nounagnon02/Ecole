@@ -570,10 +570,18 @@ public function updateSeries(Request $request, $id)
 
     public function getEleves($id)
     {
-        $eleves = DB::table('eleves')
-            ->where('classe_id', $id)
-            ->select('id', 'nom', 'prenom', 'matricule')
-            ->get();
+        // `DB::table` contournait le scope BelongsToEcole, et les colonnes
+        // visées n'existent pas : la clé est `class_id`, le matricule
+        // `numero_matricule`, et nom/prénom vivent sur `users`.
+        $eleves = \App\Models\Eleve::with('user:id,name,prenom')
+            ->where('class_id', $id)
+            ->get(['id', 'user_id', 'numero_matricule'])
+            ->map(fn($e) => [
+                'id' => $e->id,
+                'nom' => $e->user->name ?? '',
+                'prenom' => $e->user->prenom ?? '',
+                'matricule' => $e->numero_matricule,
+            ]);
 
         return response()->json(['success' => true, 'data' => $eleves]);
     }

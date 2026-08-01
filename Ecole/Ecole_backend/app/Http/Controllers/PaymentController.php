@@ -86,7 +86,7 @@ class PaymentController extends Controller
 
         DB::beginTransaction();
         try {
-            $eleve = Eleve::findOrFail($request->eleve_id);
+            $eleve = Eleve::with('user:id,name,prenom')->findOrFail($request->eleve_id);
 
             if (!$this->peutAccederEleve($eleve)) {
                 DB::rollBack();
@@ -115,8 +115,9 @@ class PaymentController extends Controller
                 'metadata' => [
                     'payment_id' => $payment->id,
                     'eleve_id' => $eleve->id,
-                    'eleve_nom' => $eleve->nom,
-                    'eleve_prenom' => $eleve->prenom,
+                    // Identité portée par `users`, pas par `eleves`.
+                    'eleve_nom' => $eleve->user->name ?? '',
+                    'eleve_prenom' => $eleve->user->prenom ?? '',
                 ],
             ]);
 
@@ -216,19 +217,24 @@ class PaymentController extends Controller
     {
         $user = auth()->user();
 
-        $query = Payment::with(['eleve.user:id,name,prenom', 'ecole:id,nom'])
-            // Restriction de périmètre : un parent ne voit que ses enfants,
-            // un élève que lui-même. `ecole_id` de la requête est ignoré —
-            // l'isolation inter-écoles vient du global scope (cf. audit S9/S10).
-            ->when($user?->role === 'parent', function ($q) use ($user) {
-                $ids = $user->parent?->eleves()->pluck('eleves.id') ?? collect();
-                $q->whereIn('eleve_id', $ids);
-            })
-            ->when($user?->role === 'eleve', fn($q) => $q->where('eleve_id', $user->eleve?->id))
-            ->when(
-                $user && !in_array($user->role, array_merge(self::ROLES_GESTION, ['parent', 'eleve']), true),
-                fn($q) => $q->whereRaw('1 = 0')
-            )
+        $query = Payment::with(['eleve.user:id,name,prenom', 'ecole:id,nom']);
+
+        // Restriction de périmètre en liste blanche : tout cas non prévu
+        // (utilisateur absent, rôle inattendu, élève sans profil) ne renvoie
+        // rien, plutôt que de laisser passer faute de filtre.
+        // `ecole_id` de la requête est ignoré — l'isolation inter-écoles vient
+        // du global scope (cf. audit S9/S10).
+        if (in_array($user?->role, self::ROLES_GESTION, true)) {
+            // Périmètre de l'école, déjà borné par BelongsToEcole.
+        } elseif ($user?->role === 'parent' && $user->parent) {
+            $query->whereIn('eleve_id', $user->parent->eleves()->pluck('eleves.id'));
+        } elseif ($user?->role === 'eleve' && $user->eleve) {
+            $query->where('eleve_id', $user->eleve->id);
+        } else {
+            $query->whereRaw('1 = 0');
+        }
+
+        $paiements = $query
             ->when($request->eleve_id, fn($q) => $q->where('eleve_id', $request->eleve_id))
             ->when($request->status, fn($q) => $q->where('status', $request->status))
             ->when($request->type, fn($q) => $q->where('type', $request->type))
@@ -237,7 +243,7 @@ class PaymentController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
-        return response()->json(['success' => true, 'data' => $query]);
+        return response()->json(['success' => true, 'data' => $paiements]);
     }
 
     /**

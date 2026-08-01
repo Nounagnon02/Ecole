@@ -27,11 +27,35 @@ class BulletinController extends Controller
             return 0; // Retourne 0 si aucune interrogation trouvée
         }
 
-        $somme = $interrogations->sum('note');
-        return round($somme / $interrogations->count(), 2);
+        // Ramené sur 20 comme partout ailleurs : la moyenne brute traitait
+        // un 8/10 comme un 8/20.
+        return round($this->ramenerSur20($interrogations), 2);
     }
 
     
+
+    /**
+     * Moyenne d'un lot de notes, ramenée sur 20.
+     *
+     * `note_sur` est saisissable par l'enseignant (défaut 20) : une note de
+     * 8/10 doit compter pour 16/20, pas 8/20. BulletinService normalisait déjà
+     * ainsi ; ce contrôleur ne le faisait pas, et les deux chemins de calcul
+     * donnaient donc des moyennes différentes pour le même élève.
+     *
+     * @param  \Illuminate\Support\Collection  $notes
+     */
+    private function ramenerSur20($notes): float
+    {
+        $valeurs = $notes
+            ->map(function ($n) {
+                $bareme = (float) ($n->note_sur ?: 20);
+
+                return $bareme > 0 ? ((float) $n->note / $bareme) * 20 : 0.0;
+            })
+            ->filter(fn($v) => $v !== null);
+
+        return $valeurs->isEmpty() ? 0.0 : (float) $valeurs->avg();
+    }
 
     private function calculerMoyenneMatiere($eleveId, $matiereId, $periode)
     {
@@ -51,13 +75,13 @@ class BulletinController extends Controller
             $composantes = [];
 
             foreach (['Devoir1', 'Devoir2'] as $type) {
-                if ($notes->has($type) && $notes->get($type)->count() > 0) {
-                    $composantes[] = (float) $notes->get($type)->first()->note;
+                if ($notes->has($type)) {
+                    $composantes[] = $this->ramenerSur20($notes->get($type)->take(1));
                 }
             }
 
-            if ($notes->has('Interrogation') && $notes->get('Interrogation')->count() > 0) {
-                $composantes[] = (float) $notes->get('Interrogation')->avg('note');
+            if ($notes->has('Interrogation')) {
+                $composantes[] = $this->ramenerSur20($notes->get('Interrogation'));
             }
 
             if (!empty($composantes)) {
@@ -76,8 +100,8 @@ class BulletinController extends Controller
 
             $evalMoyennes = [];
             foreach ($evalTypes as $type) {
-                if ($notes->has($type) && $notes->get($type)->count() > 0) {
-                    $evalMoyennes[] = (float) $notes->get($type)->avg('note');
+                if ($notes->has($type)) {
+                    $evalMoyennes[] = $this->ramenerSur20($notes->get($type));
                 }
             }
 
@@ -107,11 +131,13 @@ class BulletinController extends Controller
     // Méthode utilitaire pour formater les données de l'élève
     private function formatEleveData($eleve, $categorie)
     {
+        // `eleves` ne porte pas de colonne nom/prenom — l'identité est sur
+        // la relation `user`. Ces deux champs renvoyaient null.
         $data = [
-            'nom' => $eleve->nom,
-            'prenom' => $eleve->prenom,
+            'nom' => $eleve->user->name ?? '',
+            'prenom' => $eleve->user->prenom ?? '',
             'matricule' => $eleve->numero_matricule,
-            'classe' => $eleve->classe->nom_classe,
+            'classe' => $eleve->classe->nom_classe ?? '',
         ];
 
         if ($categorie !== 'Maternelle' && $categorie !== 'Primaire') {
@@ -128,16 +154,18 @@ class BulletinController extends Controller
 
     public function getNotesDevoirs($eleveId, $matiereId, $periode)
     {
+        // `'Devoir1' || 'Devoir2'` s'évaluait en booléen `true` : la requête
+        // filtrait donc sur `type_evaluation = 1` et ne renvoyait jamais de
+        // devoir. Il faut un whereIn.
         $notes = Notes::where([
             'eleve_id' => $eleveId,
             'matiere_id' => $matiereId,
             'periode' => $periode,
-            'type_evaluation' => 'Devoir1' || 'Devoir2'
-        ])->get();
-        if ($notes->isEmpty()) {
-            return 0; // Retourne 0 si aucune note trouvée
-        }
-        return $notes;
+        ])
+            ->whereIn('type_evaluation', ['Devoir1', 'Devoir2'])
+            ->get();
+
+        return $notes->isEmpty() ? 0 : $notes;
     }
 
     //Recuper les moyennes d'interrogation , de devoir de tous les eleves
@@ -153,7 +181,7 @@ class BulletinController extends Controller
             $periode = $request->query('periode');
             $categorie_id = $request->query('categorie_id');
 
-            $query = Eleve::query();
+            $query = Eleve::with('user:id,name,prenom');
 
             if ($classe_id) {
                 $query->where('class_id', $classe_id);
@@ -178,8 +206,8 @@ class BulletinController extends Controller
                 $moyenneDevoirs = $this->getNotesDevoirs($eleve->id, $matiere_id, $periode);
                 $data[] = [
                     'eleve_id' => $eleve->id,
-                    'nom' => $eleve->nom,
-                    'prenom' => $eleve->prenom,
+                    'nom' => $eleve->user->name ?? '',
+                    'prenom' => $eleve->user->prenom ?? '',
                     'numero_matricule' => $eleve->numero_matricule,
                     'moyenne_interrogations' => $moyenneInterrogations,
                     'Devoirs' => $moyenneDevoirs,
@@ -232,6 +260,7 @@ class BulletinController extends Controller
             Log::info("Chargement des matières pour l'élève ID: $eleveId");
             
             $eleve = Eleve::with([
+                'user:id,name,prenom',
                 'classe',
                 'serie.matieres' => function($query) {
                     $query->select([
@@ -403,11 +432,12 @@ class BulletinController extends Controller
                 'success' => true,
                 'data' => [
                     'eleve' => [
-                        'nom' => $eleve->nom,
-                        'prenom' => $eleve->prenom,
+                        'nom' => $eleve->user->name ?? '',
+                        'prenom' => $eleve->user->prenom ?? '',
                         'matricule' => $eleve->numero_matricule,
-                        'classe' => $eleve->classe->nom_classe,
-                        'serie' => $eleve->serie->nom,
+                        'classe' => $eleve->classe->nom_classe ?? '',
+                        // Null-safe : maternelle et primaire n'ont pas de série.
+                        'serie' => $eleve->serie->nom ?? null,
                         'categorie' => $categorie // Add category to response
                     ],
                     'rang' => $rangGeneral,
