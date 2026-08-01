@@ -48,7 +48,7 @@ class DevoirController extends Controller
         }
 
         $devoirs = Devoir::with(['classe', 'matiere', 'enseignant'])
-            ->where('classe_id', $eleve->classe_id)
+            ->where('classe_id', $eleve->class_id)
             ->where('publie', true)
             ->orderBy('date_limite', 'asc')
             ->get()
@@ -100,8 +100,10 @@ class DevoirController extends Controller
 
         // Associer automatiquement à tous les élèves de la classe
         if ($devoir->publie) {
+            // whereHas('eleve') filtre la table `eleves`, dont la clé de
+            // classe est `class_id`.
             $eleves = User::whereHas('eleve', function ($q) use ($devoir) {
-                $q->where('classe_id', $devoir->classe_id);
+                $q->where('class_id', $devoir->classe_id);
             })->pluck('id');
 
             $devoir->eleves()->syncWithoutDetaching($eleves);

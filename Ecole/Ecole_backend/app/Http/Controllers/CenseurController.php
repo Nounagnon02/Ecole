@@ -293,17 +293,24 @@ class CenseurController extends Controller
      */
     public function rapportClasse($classeId)
     {
-        $classe = Classes::with(['eleves.note'])->findOrFail($classeId);
+        // La relation s'appelle `notes` (pluriel) : `eleves.note` levait
+        // « Call to undefined relationship ». Et l'identité de l'élève est sur
+        // `user`, pas sur `eleves`.
+        $classe = Classes::with(['eleves.notes', 'eleves.user:id,name,prenom'])
+            ->findOrFail($classeId);
 
         $elevesStats = $classe->eleves->map(function ($eleve) {
-            $notes = $eleve->note;
+            $notes = $eleve->notes;
+
             return [
                 'id' => $eleve->id,
-                'nom' => $eleve->nom,
-                'prenom' => $eleve->prenom,
-                'moyenne' => round($notes->avg('note'), 2) ?? 0,
+                'nom' => $eleve->user->name ?? '',
+                'prenom' => $eleve->user->prenom ?? '',
+                'moyenne' => $notes->isEmpty() ? 0 : round($notes->avg('note'), 2),
                 'total_notes' => $notes->count(),
-                'derniere_note' => $notes->latest('date_evaluation')->first()?->note ?? 0
+                // `latest()` est une méthode de query builder, pas de
+                // Collection : sur une relation préchargée elle lèverait.
+                'derniere_note' => $notes->sortByDesc('date_evaluation')->first()?->note ?? 0,
             ];
         });
 

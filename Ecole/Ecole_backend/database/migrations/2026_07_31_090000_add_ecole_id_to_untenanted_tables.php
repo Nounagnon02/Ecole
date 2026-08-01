@@ -105,7 +105,14 @@ return new class extends Migration
             return;
         }
 
-        $ecoles = DB::table('ecoles')->pluck('id');
+        // `ecoles` porte SoftDeletes : une école supprimée ne doit pas compter,
+        // sinon le cas courant (un seul établissement actif) serait bloqué.
+        $ecoles = DB::table('ecoles')
+            ->when(
+                Schema::hasColumn('ecoles', 'deleted_at'),
+                fn($q) => $q->whereNull('deleted_at')
+            )
+            ->pluck('id');
 
         if ($ecoles->count() !== 1) {
             $restantes = [];
@@ -118,11 +125,27 @@ return new class extends Migration
             }
 
             if (!empty($restantes)) {
-                Log::warning(
-                    'Migration ecole_id : lignes non rattachées, à affecter manuellement '
-                    . '(elles restent invisibles derrière le scope tenant).',
-                    ['ecoles' => $ecoles->count(), 'tables' => $restantes]
+                $message = sprintf(
+                    'Migration ecole_id : %d ligne(s) non rattachée(s) sur %d table(s) — '
+                    . '%d école(s) active(s) trouvée(s), le rattachement est un choix métier. '
+                    . 'Ces lignes restent invisibles derrière le scope tenant jusqu\'à '
+                    . 'affectation manuelle de leur ecole_id.',
+                    array_sum($restantes),
+                    count($restantes),
+                    $ecoles->count()
                 );
+
+                Log::warning($message, ['tables' => $restantes]);
+
+                // Un avertissement en log passe inaperçu pendant une migration
+                // interactive : on le remonte aussi sur la sortie console.
+                if (app()->runningInConsole()) {
+                    fwrite(STDERR, PHP_EOL . '  ⚠  ' . $message . PHP_EOL);
+                    foreach ($restantes as $table => $n) {
+                        fwrite(STDERR, sprintf('     - %s : %d ligne(s)%s', $table, $n, PHP_EOL));
+                    }
+                    fwrite(STDERR, PHP_EOL);
+                }
             }
 
             return;
