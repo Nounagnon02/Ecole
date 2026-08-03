@@ -55,6 +55,8 @@ Route::middleware('auth:sanctum')->group(function () {
         // Espace Elève
         Route::get('/me/bulletin/{periode}', [EleveController::class, 'bulletin'])->middleware('role:eleve');
         Route::get('/me/emploi-du-temps', [EleveController::class, 'emploiDuTemps'])->middleware('role:eleve');
+        // Les « cours » d'un élève = le cahier de texte de sa classe.
+        Route::get('/me/cours', [EleveController::class, 'cours'])->middleware('role:eleve');
     });
 
     // ============ NOTES ============
@@ -66,6 +68,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/{id}/lock', [NotesController::class, 'lock'])->middleware('role:directeur,enseignant');
         Route::post('/{id}/unlock', [NotesController::class, 'unlock'])->middleware('role:directeur,enseignant');
         Route::get('/classement/{classeId}/{periode}', [NotesController::class, 'classement'])->middleware('role:directeur,enseignant');
+        // Agrégats appelés par le tableau de bord des notes, jusqu'ici absents.
+        // Le périmètre est restreint dans le contrôleur selon le rôle.
+        Route::get('/stats', [NotesController::class, 'stats']);
+        Route::get('/moyennes-par-matiere', [NotesController::class, 'moyennesParMatiere']);
     });
 
     // ============ PÉRIODES ============

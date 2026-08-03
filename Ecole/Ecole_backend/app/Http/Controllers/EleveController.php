@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{EmploiDuTemps, Eleve, User, Classes};
+use App\Models\{CahierDeTexte, EmploiDuTemps, Eleve, User, Classes};
 use App\Services\BulletinService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -144,5 +144,43 @@ class EleveController extends Controller
         return response()->json(['message' => 'Élève supprimé']);
     }
 
-    // ... autres méthodes (getElevesByClasse, etc.) peuvent être adaptées similairement
+    /**
+     * Lessons delivered to the signed-in student's class.
+     *
+     * The frontend called `GET /eleve/cours`, which never existed. There is no
+     * "cours" table: what a student sees as their coursework is the lesson book
+     * (cahier de texte) for their class — lesson title, content and homework
+     * set, per subject and date.
+     *
+     * GET /eleves/me/cours
+     */
+    public function cours(Request $request)
+    {
+        $eleve = Auth::user()?->eleve;
+
+        if (!$eleve) {
+            return response()->json(['success' => false, 'message' => 'Profil élève non trouvé'], 404);
+        }
+
+        // `enseignants` ne porte pas de nom : l'identité est sur `users`,
+        // atteinte via la relation enseignant.user.
+        $lessons = CahierDeTexte::with(['matiere:id,nom', 'enseignant.user:id,name,prenom'])
+            ->where('classe_id', $eleve->class_id)
+            ->when($request->filled('matiere_id'), fn($q) => $q->where('matiere_id', $request->matiere_id))
+            ->orderByDesc('date')
+            ->paginate((int) $request->input('per_page', 50));
+
+        $lessons->getCollection()->transform(fn($l) => [
+            'id'       => $l->id,
+            'titre'    => $l->titre_lecon,
+            'resume'   => $l->contenu,
+            'devoirs'  => $l->devoirs_donnes,
+            'date'     => $l->date,
+            'matiere'  => ['id' => $l->matiere_id, 'nom' => $l->matiere->nom ?? '—'],
+            'enseignant' => trim(($l->enseignant->user->prenom ?? '') . ' ' . ($l->enseignant->user->name ?? '')),
+            'type'     => 'cours',
+        ]);
+
+        return response()->json(['success' => true, 'data' => $lessons]);
+    }
 }

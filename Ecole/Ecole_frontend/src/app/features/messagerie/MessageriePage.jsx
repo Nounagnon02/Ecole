@@ -2,7 +2,8 @@
  * MessageriePage — Messagerie interne
  *
  * Système de messagerie interne pour tous les rôles.
- * Données dynamiques via API /messagerie/conversations et /messagerie/messages
+ * Données dynamiques via /messages/conversations, /messages/conversation/:id
+ * et POST /messages.
  */
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -19,9 +20,14 @@ import Avatar from '@/shared/components/ui/Avatar';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import { useApi } from '@/hooks/useApi';
+import useAuthStore from '@/shared/stores/auth-store';
+import { unwrapList } from '@/shared/lib/unwrap';
 
 export default function MessageriePage() {
   const { loading, error, get, post } = useApi();
+  // Nécessaire pour distinguer les messages envoyés de ceux reçus : l'API
+  // renvoie l'identifiant de l'auteur dans `expediteur`.
+  const currentUserId = useAuthStore((s) => s.user?.id);
   const [conversations, setConversations] = useState([]);
   const [selectedConv, setSelectedConv] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -35,20 +41,20 @@ export default function MessageriePage() {
   const loadConversations = useCallback(async () => {
     setLoadingConv(true);
     try {
-      const res = await get('/messagerie/conversations');
-      const items = Array.isArray(res?.data?.data) ? res.data.data
-        : Array.isArray(res?.data) ? res.data
-        : Array.isArray(res) ? res
-        : [];
+      // L'API est /messages/conversations : elle renvoie contact_id,
+      // contact_nom, derniere_date et non_lus. `/messagerie/*` n'a jamais existé.
+      const res = await get('/messages/conversations');
+      const items = unwrapList(res?.data ?? res);
       setConversations(items.map((c) => ({
         ...c,
-        name: c.correspondant?.nom || c.correspondant?.prenom ? `${c.correspondant?.prenom || ''} ${c.correspondant?.nom || ''}`.trim() : c.name || c.sujet || 'Conversation',
-        role: c.correspondant?.role || c.role || 'Utilisateur',
-        lastMessage: c.dernier_message?.contenu || c.last_message || c.dernierMessage || '',
-        date: c.dernier_message?.created_at || c.updated_at || c.date || new Date().toISOString(),
-        unread: c.non_lus ?? c.unread_count ?? c.unread ?? 0,
-        online: c.correspondant?.online ?? c.online ?? false,
-        avatar: c.correspondant?.avatar ?? c.avatar ?? null,
+        id: c.contact_id,
+        name: c.contact_nom || 'Conversation',
+        role: c.role || 'Utilisateur',
+        lastMessage: c.dernier_message || '',
+        date: c.derniere_date || new Date().toISOString(),
+        unread: Number(c.non_lus ?? 0),
+        online: false,
+        avatar: null,
       })));
       if (items.length > 0 && !selectedConv) {
         setSelectedConv(items[0]);
@@ -73,16 +79,14 @@ export default function MessageriePage() {
     setLoadingMsg(true);
     (async () => {
       try {
-        const res = await get(`/messagerie/conversations/${selectedConv.id}/messages`);
-        const items = Array.isArray(res?.data?.data) ? res.data.data
-          : Array.isArray(res?.data) ? res.data
-          : Array.isArray(res) ? res
-          : [];
+        const res = await get(`/messages/conversation/${selectedConv.id}`);
+        const items = unwrapList(res?.data ?? res);
+        // `expediteur` est l'identifiant de l'auteur, stocké en chaîne.
         setMessages(items.map((m) => ({
           id: m.id,
-          from: m.expediteur_id === (m.user_id || 'current') ? 'me' : 'them',
-          text: m.contenu || m.texte || m.message || '',
-          time: m.created_at || m.date || new Date().toISOString(),
+          from: String(m.expediteur) === String(currentUserId) ? 'me' : 'them',
+          text: m.contenu || '',
+          time: m.created_at || new Date().toISOString(),
         })));
       } catch (e) {
         console.error('Erreur chargement messages:', e);
@@ -91,7 +95,7 @@ export default function MessageriePage() {
         setLoadingMsg(false);
       }
     })();
-  }, [selectedConv, get]);
+  }, [selectedConv, get, currentUserId]);
 
   const filtered = useMemo(() =>
     conversations.filter((c) =>
@@ -104,7 +108,10 @@ export default function MessageriePage() {
     const text = messageText.trim();
     setMessageText('');
     try {
-      const res = await post(`/messagerie/conversations/${selectedConv.id}/messages`, { contenu: text });
+      const res = await post('/messages', {
+        destinataire: String(selectedConv.id),
+        contenu: text,
+      });
       const newMsg = res?.data?.data || res?.data || res;
       setMessages((prev) => [...prev, {
         id: newMsg.id || Date.now(),

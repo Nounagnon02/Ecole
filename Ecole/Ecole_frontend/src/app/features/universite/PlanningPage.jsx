@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { cn, formatDate } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
+import FeatureUnavailable from '@/shared/components/ui/FeatureUnavailable';
 import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
@@ -30,7 +31,20 @@ const TYPE_CONFIG = {
   evenement: { label: 'Événement', color: 'text-pink-500 bg-pink-100 dark:bg-pink-900/20', icon: CalendarDays },
 };
 
+// Passera à `true` quand l'API sera construite ; le reste de la page
+// est déjà écrit et n'attend que la donnée.
+const API_AVAILABLE = false;
+
 export default function PlanningPage() {
+  if (!API_AVAILABLE) {
+    return (
+      <FeatureUnavailable
+        title="Planning universitaire"
+        reason="Le module universitaire n'a pas de modèle d'emploi du temps (l'équivalent scolaire est EmploiDuTemps)."
+      />
+    );
+  }
+
   const { loading, error, get } = useApi();
   const [evenements, setEvenements] = useState([]);
   const [search, setSearch] = useState('');
@@ -39,6 +53,9 @@ export default function PlanningPage() {
   useEffect(() => {
     (async () => {
       try {
+        // L'endpoint n'existe pas encore (cf. ECARTS_FRONT_BACK.md) :
+        // on ne le sollicite pas, la page affiche un état explicite.
+        if (!API_AVAILABLE) return;
         const res = await get('/universite/planning');
         const items = Array.isArray(res?.data?.data) ? res.data.data
           : Array.isArray(res?.data) ? res.data

@@ -58,9 +58,11 @@ class ExportService
 
         $row = 2;
         foreach ($paiements as $p) {
-            $sheet->setCellValue('A' . $row, $p->created_at->format('d/m/Y'));
-            $sheet->setCellValue('B' . $row, $p->eleve->user->name . ' ' . $p->eleve->user->prenom);
-            $sheet->setCellValue('C' . $row, $p->montant_total_paye);
+            // `montant_total_paye` n'existe pas : la colonne est `montant_paye`.
+            // L'export écrivait donc une cellule vide pour chaque paiement.
+            $sheet->setCellValue('A' . $row, $p->created_at?->format('d/m/Y'));
+            $sheet->setCellValue('B' . $row, trim(($p->eleve->user->name ?? '') . ' ' . ($p->eleve->user->prenom ?? '')));
+            $sheet->setCellValue('C' . $row, (float) $p->montant_paye);
             $sheet->setCellValue('D' . $row, $p->statut_global);
             $row++;
         }

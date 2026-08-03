@@ -78,6 +78,13 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/conversation/{contactId}', [MessageController::class, 'getConversation']);
         Route::post('/', [MessageController::class, 'store']);
         Route::put('/{id}/read', [MessageController::class, 'markAsRead']);
+
+        // Ces trois méthodes existaient dans le contrôleur sans être exposées :
+        // la page Messagerie appelait /messagerie/conversations, qui n'a jamais
+        // existé, faute de route pour getConversations.
+        Route::get('/conversations', [MessageController::class, 'getConversations']);
+        Route::get('/unread-count', [MessageController::class, 'unreadCount']);
+        Route::get('/contacts', [MessageController::class, 'getUsers']);
     });
 
     // ============ NOTIFICATIONS ============

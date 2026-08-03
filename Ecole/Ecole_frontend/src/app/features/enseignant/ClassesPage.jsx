@@ -48,7 +48,7 @@ export default function ClassesPage() {
     if (!selectedClasse) return;
     (async () => {
       try {
-        const res = await get(`/enseignant/classes/${selectedClasse.id}/eleves`);
+        const res = await get(`/classes/${selectedClasse.id}/eleves`);
         const items = Array.isArray(res?.data?.data) ? res.data.data
           : Array.isArray(res?.data) ? res.data
           : Array.isArray(res) ? res

@@ -1041,5 +1041,114 @@ public function repartitionNotes()
     return response()->json($data);
 }
 
-}
 
+    /**
+     * Headline grade statistics for the caller's scope.
+     *
+     * The frontend called `GET /notes/stats`, which did not exist, so the
+     * grades dashboard rendered empty tiles.
+     *
+     * A student sees their own figures, a parent their children's, and staff
+     * the whole school. The tenant scope bounds everything to one school.
+     */
+    public function stats(Request $request)
+    {
+        $this->authorize('viewAny', Notes::class);
+
+        $query = Notes::query()
+            ->when($request->filled('periode'), fn($q) => $q->where('periode', $request->periode))
+            ->when($request->filled('classe_id'), fn($q) => $q->where('classe_id', $request->classe_id));
+
+        $this->restrictToCallerScope($query);
+
+        // Ramené sur 20 : `note_sur` est saisissable, un 8/10 vaut 16/20.
+        $notes = $query->get(['note', 'note_sur']);
+        $normalized = $notes->map(function ($n) {
+            $scale = (float) ($n->note_sur ?: 20);
+
+            return $scale > 0 ? ((float) $n->note / $scale) * 20 : 0.0;
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'total_notes' => $normalized->count(),
+                'moyenne'     => $normalized->isEmpty() ? 0 : round($normalized->avg(), 2),
+                'note_min'    => $normalized->isEmpty() ? 0 : round($normalized->min(), 2),
+                'note_max'    => $normalized->isEmpty() ? 0 : round($normalized->max(), 2),
+                'repartition' => [
+                    'insuffisant' => $normalized->filter(fn($v) => $v < 10)->count(),
+                    'passable'    => $normalized->filter(fn($v) => $v >= 10 && $v < 12)->count(),
+                    'bien'        => $normalized->filter(fn($v) => $v >= 12 && $v < 16)->count(),
+                    'tres_bien'   => $normalized->filter(fn($v) => $v >= 16)->count(),
+                ],
+            ],
+        ]);
+    }
+
+    /**
+     * Per-subject averages for the caller's scope.
+     *
+     * GET /notes/moyennes-par-matiere
+     */
+    public function moyennesParMatiere(Request $request)
+    {
+        $this->authorize('viewAny', Notes::class);
+
+        $query = Notes::with('matiere:id,nom')
+            ->when($request->filled('periode'), fn($q) => $q->where('periode', $request->periode))
+            ->when($request->filled('classe_id'), fn($q) => $q->where('classe_id', $request->classe_id));
+
+        $this->restrictToCallerScope($query);
+
+        $rows = $query->get()
+            ->groupBy('matiere_id')
+            ->map(function ($group) {
+                $normalized = $group->map(function ($n) {
+                    $scale = (float) ($n->note_sur ?: 20);
+
+                    return $scale > 0 ? ((float) $n->note / $scale) * 20 : 0.0;
+                });
+
+                return [
+                    'matiere_id' => $group->first()->matiere_id,
+                    'matiere'    => $group->first()->matiere->nom ?? '—',
+                    'moyenne'    => round($normalized->avg(), 2),
+                    'nb_notes'   => $group->count(),
+                ];
+            })
+            ->sortByDesc('moyenne')
+            ->values();
+
+        return response()->json(['success' => true, 'data' => $rows]);
+    }
+
+    /**
+     * Narrow a grades query to what the caller is allowed to read.
+     *
+     * Whitelist, so an unexpected role gets nothing rather than everything.
+     */
+    private function restrictToCallerScope($query): void
+    {
+        $user = auth()->user();
+        $staff = ['directeur', 'directeurM', 'directeurP', 'directeurS', 'enseignant', 'censeur', 'secretaire', 'super-admin'];
+
+        if (in_array($user?->role, $staff, true)) {
+            return; // périmètre de l'école, déjà borné par le scope tenant
+        }
+
+        if ($user?->role === 'eleve' && $user->eleve) {
+            $query->where('eleve_id', $user->eleve->id);
+
+            return;
+        }
+
+        if ($user?->role === 'parent' && $user->parent) {
+            $query->whereIn('eleve_id', $user->parent->eleves()->pluck('eleves.id'));
+
+            return;
+        }
+
+        $query->whereRaw('1 = 0');
+    }
+}

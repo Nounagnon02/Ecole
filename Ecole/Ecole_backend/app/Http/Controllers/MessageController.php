@@ -84,9 +84,13 @@ class MessageController extends Controller
      */
     public function store(Request $request)
     {
+        // `sujet` est facultatif : l'interface de messagerie est un fil de
+        // discussion, sans champ objet. La colonne est NOT NULL, on retombe
+        // donc sur une valeur par défaut plutôt que d'imposer le champ au
+        // client. Les envois « courrier » (avec objet) restent possibles.
         $validated = $request->validate([
             'destinataire' => 'required|string',
-            'sujet'        => 'required|string|max:255',
+            'sujet'        => 'nullable|string|max:255',
             'contenu'      => 'required|string|max:10000',
         ]);
 
@@ -105,7 +109,7 @@ class MessageController extends Controller
         $message = Message::create([
             'expediteur'   => $this->currentUserId(),
             'destinataire' => (string) $destinataire->id,
-            'sujet'        => $validated['sujet'],
+            'sujet'        => $validated['sujet'] ?? '(sans objet)',
             'contenu'      => $validated['contenu'],
             'lu'           => false,
         ]);

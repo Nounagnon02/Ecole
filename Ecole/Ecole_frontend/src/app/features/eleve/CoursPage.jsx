@@ -30,7 +30,7 @@ export default function CoursPage() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await get('/eleve/cours');
+        const res = await get('/eleves/me/cours');
         const items = Array.isArray(res?.data?.data) ? res.data.data
           : Array.isArray(res?.data) ? res.data
           : Array.isArray(res) ? res

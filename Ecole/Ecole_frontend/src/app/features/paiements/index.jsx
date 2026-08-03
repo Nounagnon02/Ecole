@@ -60,11 +60,11 @@ export default function GestionPaiements() {
       setIsLoading(true);
       try {
         const [paiementsRes, elevesRes, periodesRes, typesRes, revenusRes] = await Promise.allSettled([
-          get('/paiements'),
+          get('/comptable/paiements'),
           get('/eleves'),
           get('/periodes'),
-          get('/types-frais'),
-          get('/paiements/revenus-mensuels'),
+          get('/contributions'),
+          get('/comptable/finances'),
         ]);
 
         const paiementsData = paiementsRes.status === 'fulfilled'

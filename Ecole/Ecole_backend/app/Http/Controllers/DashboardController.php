@@ -366,10 +366,10 @@ class DashboardController extends Controller
                 ->where('statut', 'paye')
                 ->sum('montant');
 
-            $enAttente = \App\Models\PaiementEleve::where('statut', 'en_attente')->count();
+            $enAttente = \App\Models\PaiementEleve::where('statut_global', \App\Models\PaiementEleve::PENDING)->count();
 
             $totalPaiements = \App\Models\PaiementEleve::whereMonth('date_paiement', $moisActuel)->count();
-            $payes = \App\Models\PaiementEleve::whereMonth('date_paiement', $moisActuel)->where('statut', 'paye')->count();
+            $payes = \App\Models\PaiementEleve::whereMonth('date_paiement', $moisActuel)->where('statut_global', \App\Models\PaiementEleve::PAID)->count();
             $tauxRecouvrement = $totalPaiements > 0 ? round(($payes / $totalPaiements) * 100) : 0;
 
             $donneesMensuelles = \App\Models\PaiementEleve::selectRaw('MONTH(date_paiement) as mois, SUM(montant) as revenus')

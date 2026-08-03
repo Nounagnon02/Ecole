@@ -16,15 +16,17 @@ class ComptableController extends Controller
     public function finances()
     {
         $stats = [
-            'total_recettes' => PaiementEleve::where('statut', 'paye')->sum('montant'),
+            // La colonne est `statut_global` : `where('statut', …)` levait
+            // « Unknown column » et cet endpoint échouait en 500.
+            'total_recettes' => PaiementEleve::where('statut_global', PaiementEleve::PAID)->sum('montant'),
             'total_depenses' => 0, // À implémenter selon votre logique
-            'paiements_en_attente' => PaiementEleve::where('statut', 'en_attente')->count(),
+            'paiements_en_attente' => PaiementEleve::where('statut_global', PaiementEleve::PENDING)->count(),
             'bourses_accordees' => Bourse::where('statut', 'active')->count()
         ];
 
         $revenusMensuels = PaiementEleve::selectRaw('MONTH(date_paiement) as mois, SUM(montant) as total')
             ->whereYear('date_paiement', now()->year)
-            ->where('statut', 'paye')
+            ->where('statut_global', PaiementEleve::PAID)
             ->groupBy('mois')
             ->orderBy('mois')
             ->pluck('total', 'mois');
@@ -148,7 +150,7 @@ class ComptableController extends Controller
             ->get();
 
         $total_du = (float) $paiements->sum('montant');
-        $total_paye = (float) $paiements->whereIn('statut', ['paye', 'payé'])->sum('montant');
+        $total_paye = (float) $paiements->where('statut_global', PaiementEleve::PAID)->sum('montant');
 
         return response()->json([
             'success' => true,
@@ -164,13 +166,14 @@ class ComptableController extends Controller
                     'total_paye' => $total_paye,
                     'solde' => $total_du - $total_paye,
                     'nb_echeances' => $paiements->count(),
-                    'nb_payees' => $paiements->whereIn('statut', ['paye', 'payé'])->count(),
+                    'nb_payees' => $paiements->where('statut_global', PaiementEleve::PAID)->count(),
                 ],
                 'echeances' => $paiements->map(function ($p) {
                     return [
                         'id' => $p->id,
                         'reference' => $p->reference ?? 'PAY-' . $p->id,
-                        'type' => $p->type_paiement,
+                        // `type_paiement` n'existe pas sur cette table.
+                        'type' => $p->mode_paiement,
                         'montant' => (float) $p->montant,
                         'date' => $p->date_paiement?->format('d/m/Y'),
                         'statut' => $p->statut,
