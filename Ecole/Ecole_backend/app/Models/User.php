@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Roles;
 use App\Traits\Auditable;
 use App\Traits\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -68,17 +69,29 @@ class User extends Authenticatable
         return $this->hasOne(Enseignant::class);
     }
 
-    // Helper for checking roles
+    /**
+     * Does this account satisfy a role gate?
+     *
+     * Family-aware, like the `role:` middleware: asking for `directeur` also
+     * accepts a cycle head. Strict comparison — a loose `in_array` on role
+     * strings is a footgun waiting for the first integer that reaches it.
+     */
     public function hasRole(string|array $role): bool
     {
-        if (is_array($role)) {
-            return in_array($this->role, $role);
-        }
-        return $this->role === $role;
+        return Roles::satisfies($this->role, is_array($role) ? $role : [$role]);
     }
 
+    /** Head of school, or platform super-admin. */
     public function isAdmin(): bool
     {
-        return in_array($this->role, ['directeur', 'directeurM', 'directeurP', 'directeurS', 'super-admin']);
+        return Roles::isDirector($this->role) || $this->role === Roles::SUPER_ADMIN;
+    }
+
+    /**
+     * The cycle this account is confined to, or null when it spans the school.
+     */
+    public function cycle(): ?string
+    {
+        return Roles::cycleOf($this->role);
     }
 }

@@ -16,6 +16,8 @@ use Illuminate\Database\QueryException;
 use Smalot\PdfParser\Parser as PdfParser;
 use \Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use App\Support\Roles;
+use App\Support\Cycles;
 
 class NotesController extends Controller
 {
@@ -554,32 +556,51 @@ class NotesController extends Controller
         $this->authorize('viewAny', Notes::class);
 
         try {
-            $eleves = DB::table('notes')
-                ->select(
-                    'eleve_id',
-                    DB::raw('AVG(note) as moyenne'),
-                    DB::raw('COUNT(*) as total_notes')
-                )
+            // `Notes::query()`, pas `DB::table('notes')` : la seconde forme
+            // contourne le scope `BelongsToEcole`, donc il suffisait de passer
+            // l'identifiant de classe d'un autre établissement pour obtenir son
+            // classement nominatif.
+            $marks = Notes::query()
                 ->where('classe_id', $classeId)
                 ->where('periode', $periode)
-                ->groupBy('eleve_id')
-                ->orderByDesc('moyenne')
-                ->get();
+                ->get(['eleve_id', 'note', 'note_sur']);
 
-            $elevesAvecInfos = $eleves->map(function ($item, $index) {
-                $eleve = \App\Models\Eleve::with('user')->find($item->eleve_id);
+            // Moyenne ramenée sur 20 : `AVG(note)` mélangeait des notes de
+            // barèmes différents, un 8/10 pesant comme un 8/20.
+            $averages = $marks
+                ->groupBy('eleve_id')
+                ->map(fn($pupilMarks) => $pupilMarks->avg(function ($mark) {
+                    $scale = (float) ($mark->note_sur ?: 20);
+
+                    return $scale > 0 ? ((float) $mark->note / $scale) * 20 : 0.0;
+                }))
+                ->sortDesc();
+
+            // Les élèves à égalité partagent leur rang, et le suivant est décalé
+            // d'autant. `$index + 1` attribuait 1, 2, 3 à trois moyennes
+            // identiques — et contredisait le rang calculé par BulletinService
+            // pour les mêmes élèves.
+            $eleves = Eleve::with('user:id,name,prenom')
+                ->whereIn('id', $averages->keys())
+                ->get()
+                ->keyBy('id');
+
+            $elevesAvecInfos = $averages->map(function ($moyenne, $eleveId) use ($averages, $eleves, $marks) {
+                $eleve = $eleves->get($eleveId);
+                $ahead = $averages->filter(fn($other) => $other > $moyenne + 0.001)->count();
+
                 return [
-                    'rang' => $index + 1,
-                    'eleve_id' => $item->eleve_id,
+                    'rang' => $ahead + 1,
+                    'eleve_id' => $eleveId,
                     'nom' => $eleve?->user?->name ?? 'Inconnu',
                     'prenom' => $eleve?->user?->prenom ?? '',
                     'matricule' => $eleve?->numero_matricule ?? '',
-                    'moyenne' => round((float) $item->moyenne, 2),
-                    'total_notes' => $item->total_notes,
+                    'moyenne' => round((float) $moyenne, 2),
+                    'total_notes' => $marks->where('eleve_id', $eleveId)->count(),
                 ];
-            });
+            })->values();
 
-            $classe = \App\Models\Classes::find($classeId);
+            $classe = Classes::find($classeId);
 
             return response()->json([
                 'success' => true,
@@ -646,8 +667,11 @@ class NotesController extends Controller
             foreach ($notesData as $noteData) {
                 try {
                     // Rechercher l'élève par matricule
-                    $eleve = DB::table('eleves')
-                        ->where('numero_matricule', $noteData['matricule'])
+                    // `Eleve::where(...)`, pas `DB::table('eleves')` : hors du
+                    // scope tenant, deux établissements ayant le même numéro de
+                    // matricule voyaient l'import rattacher la note à l'élève de
+                    // l'autre école.
+                    $eleve = Eleve::where('numero_matricule', $noteData['matricule'])
                         ->where('class_id', $request->classe_id)
                         ->first();
 
@@ -976,70 +1000,95 @@ private function filterNotesByCategorie(Request $request, $categorie)
 // Pour la maternelle
 public function filterMaternelle(Request $request)
 {
-    return $this->filterNotesByCategorie($request, 'maternelle');
+    return $this->filterNotesByCategorie($request, Cycles::KINDERGARTEN);
 }
 
 // Pour le primaire
 public function filterPrimaire(Request $request)
 {
-    return $this->filterNotesByCategorie($request, 'primaire');
+    return $this->filterNotesByCategorie($request, Cycles::PRIMARY);
 }
 
 // Pour le secondaire
 public function filterSecondaire(Request $request)
 {
-    return $this->filterNotesByCategorie($request, 'secondaire');
+    return $this->filterNotesByCategorie($request, Cycles::SECONDARY);
 }
 
-public function repartitionNotesMaternelle()
-{
-    // Regroupe les notes du secondaire par tranche
-    $data = [
-        ['name' => '0-5', 'value' => DB::table('notes')->join('classes', 'notes.classe_id', '=', 'classes.id')->where('categorie_classe','maternelle')->where('note', '>=', 0)->where('note', '<=', 5)->count()],
-        ['name' => '6-10', 'value' => DB::table('notes')->join('classes', 'notes.classe_id', '=', 'classes.id')->where('categorie_classe','maternelle')->where('note', '>=', 6)->where('note', '<=', 10)->count()],
-        ['name' => '11-15', 'value' => DB::table('notes')->join('classes', 'notes.classe_id', '=', 'classes.id')->where('categorie_classe','maternelle')->where('note', '>=', 11)->where('note', '<=', 15)->count()],
-        ['name' => '16-20', 'value' => DB::table('notes')->join('classes', 'notes.classe_id', '=', 'classes.id')->where('categorie_classe','maternelle')->where('note', '>=', 16)->where('note', '<=', 20)->count()],
-    ];
+/**
+     * Mark distribution by band, for a cycle or for the whole school.
+     *
+     * Rewritten from four near-identical methods that between them issued 16
+     * `DB::table('notes')` queries. Three defects, all in the same few lines:
+     *
+     *   - `DB::table()` sidesteps the `BelongsToEcole` global scope, so every
+     *     count aggregated the marks of *every* school on the platform into one
+     *     establishment's chart;
+     *   - the bands ignored `note_sur`, so a 5/10 — half marks — was counted in
+     *     the 0-5 band alongside a 5/20;
+     *   - the bands were `0-5`, `6-10`, `11-15`, `16-20` on a `decimal(5,2)`
+     *     column, so a 5.5 belonged to none of them and vanished from the
+     *     chart. They are contiguous now, each half-open except the last.
+     *
+     * Four counts became one pass over one query.
+     */
+    private function markDistribution(?string $cycle = null): array
+    {
+        $query = Notes::query();
 
-    return response()->json($data);
-}
-public function repartitionNotesPrimaire()
-{
-    // Regroupe les notes du secondaire par tranche
-    $data = [
-        ['name' => '0-5', 'value' => DB::table('notes')->join('classes', 'notes.classe_id', '=', 'classes.id')->where('categorie_classe','primaire')->where('note', '>=', 0)->where('note', '<=', 5)->count()],
-        ['name' => '6-10', 'value' => DB::table('notes')->join('classes', 'notes.classe_id', '=', 'classes.id')->where('categorie_classe','primaire')->where('note', '>=', 6)->where('note', '<=', 10)->count()],
-        ['name' => '11-15', 'value' => DB::table('notes')->join('classes', 'notes.classe_id', '=', 'classes.id')->where('categorie_classe','primaire')->where('note', '>=', 11)->where('note', '<=', 15)->count()],
-        ['name' => '16-20', 'value' => DB::table('notes')->join('classes', 'notes.classe_id', '=', 'classes.id')->where('categorie_classe','primaire')->where('note', '>=', 16)->where('note', '<=', 20)->count()],
-    ];
+        if ($cycle !== null) {
+            $query->whereHas('classe', fn($q) => $q->where('categorie_classe', $cycle));
+        }
 
-    return response()->json($data);
-}
-public function repartitionNotesSecondaire()
-{
-    // Regroupe les notes du secondaire par tranche
-    $data = [
-        ['name' => '0-5', 'value' => DB::table('notes')->join('classes', 'notes.classe_id', '=', 'classes.id')->where('categorie_classe','secondaire')->where('note', '>=', 0)->where('note', '<=', 5)->count()],
-        ['name' => '6-10', 'value' => DB::table('notes')->join('classes', 'notes.classe_id', '=', 'classes.id')->where('categorie_classe','secondaire')->where('note', '>=', 6)->where('note', '<=', 10)->count()],
-        ['name' => '11-15', 'value' => DB::table('notes')->join('classes', 'notes.classe_id', '=', 'classes.id')->where('categorie_classe','secondaire')->where('note', '>=', 11)->where('note', '<=', 15)->count()],
-        ['name' => '16-20', 'value' => DB::table('notes')->join('classes', 'notes.classe_id', '=', 'classes.id')->where('categorie_classe','secondaire')->where('note', '>=', 16)->where('note', '<=', 20)->count()],
-    ];
+        $this->restrictToCallerScope($query);
 
-    return response()->json($data);
-}
+        $bands = [
+            ['name' => '0-5',   'from' => 0.0,  'to' => 5.0],
+            ['name' => '5-10',  'from' => 5.0,  'to' => 10.0],
+            ['name' => '10-15', 'from' => 10.0, 'to' => 15.0],
+            ['name' => '15-20', 'from' => 15.0, 'to' => 20.0],
+        ];
 
-public function repartitionNotes()
-{
-    // Regroupe les notes du secondaire par tranche
-    $data = [
-        ['name' => '0-5', 'value' => DB::table('notes')->join('classes', 'notes.classe_id', '=', 'classes.id')->where('note', '>=', 0)->where('note', '<=', 5)->count()],
-        ['name' => '6-10', 'value' => DB::table('notes')->join('classes', 'notes.classe_id', '=', 'classes.id')->where('note', '>=', 6)->where('note', '<=', 10)->count()],
-        ['name' => '11-15', 'value' => DB::table('notes')->join('classes', 'notes.classe_id', '=', 'classes.id')->where('note', '>=', 11)->where('note', '<=', 15)->count()],
-        ['name' => '16-20', 'value' => DB::table('notes')->join('classes', 'notes.classe_id', '=', 'classes.id')->where('note', '>=', 16)->where('note', '<=', 20)->count()],
-    ];
+        $counts = array_fill(0, count($bands), 0);
 
-    return response()->json($data);
-}
+        foreach ($query->get(['note', 'note_sur']) as $mark) {
+            $scale = (float) ($mark->note_sur ?: 20);
+            $onTwenty = $scale > 0 ? ((float) $mark->note / $scale) * 20 : 0.0;
+
+            foreach ($bands as $i => $band) {
+                $isLast = $i === count($bands) - 1;
+
+                if ($onTwenty >= $band['from'] && ($isLast ? $onTwenty <= $band['to'] : $onTwenty < $band['to'])) {
+                    $counts[$i]++;
+                    break;
+                }
+            }
+        }
+
+        return collect($bands)
+            ->map(fn($band, $i) => ['name' => $band['name'], 'value' => $counts[$i]])
+            ->all();
+    }
+
+    public function repartitionNotesMaternelle()
+    {
+        return response()->json($this->markDistribution(Cycles::KINDERGARTEN));
+    }
+
+    public function repartitionNotesPrimaire()
+    {
+        return response()->json($this->markDistribution(Cycles::PRIMARY));
+    }
+
+    public function repartitionNotesSecondaire()
+    {
+        return response()->json($this->markDistribution(Cycles::SECONDARY));
+    }
+
+    public function repartitionNotes()
+    {
+        return response()->json($this->markDistribution());
+    }
 
 
     /**
@@ -1131,7 +1180,9 @@ public function repartitionNotes()
     private function restrictToCallerScope($query): void
     {
         $user = auth()->user();
-        $staff = ['directeur', 'directeurM', 'directeurP', 'directeurS', 'enseignant', 'censeur', 'secretaire', 'super-admin'];
+        $staff = Roles::expand([
+            Roles::DIRECTOR, Roles::TEACHER, 'censeur', 'secretaire', Roles::SUPER_ADMIN,
+        ]);
 
         if (in_array($user?->role, $staff, true)) {
             return; // périmètre de l'école, déjà borné par le scope tenant

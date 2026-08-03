@@ -10,6 +10,10 @@ use Illuminate\Support\Str;
 
 class EcoleController extends Controller
 {
+    /** Values of `ecoles.status`. A school is deactivated, never deleted. */
+    public const STATUS_ACTIVE   = 'active';
+    public const STATUS_INACTIVE = 'inactive';
+
     /**
      * `Ecole` est la racine du tenant : elle échappe par nature au global scope
      * BelongsToEcole. L'isolation doit donc être explicite ici, sinon un
@@ -124,31 +128,68 @@ class EcoleController extends Controller
         ]);
     }
 
+    /**
+     * A school is never deleted — only deactivated.
+     *
+     * Product rule: an establishment holds pupil records, marks, report cards
+     * and payment history that must remain auditable. Deletion is therefore not
+     * offered at all; DELETE on this resource deactivates instead, and the
+     * `ecole_id` foreign keys are RESTRICT so that a stray delete elsewhere
+     * fails loudly rather than erasing an establishment.
+     */
     public function destroy(Ecole $ecole)
     {
-        // Suppression réservée à la plateforme : `ecole_id` est en
-        // cascadeOnDelete, une suppression détruit toutes les données liées.
         if (!$this->isSuperAdmin()) {
             return response()->json(['success' => false, 'message' => 'Accès refusé'], 403);
         }
 
-        // Vérifier s'il y a des données liées
-        $hasData = $ecole->eleves()->exists() || 
-                   $ecole->enseignants()->exists() || 
-                   $ecole->classes()->exists();
+        return $this->deactivate($ecole);
+    }
 
-        if ($hasData) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Impossible de supprimer : des données sont liées à cette école'
-            ], 422);
+    /**
+     * Deactivate a school: its users can no longer sign in, its data is kept.
+     * POST /api/ecoles/{ecole}/deactivate
+     */
+    public function deactivate(Ecole $ecole)
+    {
+        if (!$this->isSuperAdmin()) {
+            return response()->json(['success' => false, 'message' => 'Accès refusé'], 403);
         }
 
-        $ecole->delete();
-        
+        if ($ecole->status === self::STATUS_INACTIVE) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Cet établissement est déjà désactivé',
+                'data'    => $ecole,
+            ]);
+        }
+
+        $ecole->update(['status' => self::STATUS_INACTIVE]);
+
         return response()->json([
             'success' => true,
-            'message' => 'École supprimée avec succès'
+            'message' => 'Établissement désactivé. Ses données sont conservées et '
+                . 'ses utilisateurs ne peuvent plus se connecter.',
+            'data'    => $ecole->fresh(),
+        ]);
+    }
+
+    /**
+     * Reactivate a school.
+     * POST /api/ecoles/{ecole}/activate
+     */
+    public function activate(Ecole $ecole)
+    {
+        if (!$this->isSuperAdmin()) {
+            return response()->json(['success' => false, 'message' => 'Accès refusé'], 403);
+        }
+
+        $ecole->update(['status' => self::STATUS_ACTIVE]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Établissement réactivé',
+            'data'    => $ecole->fresh(),
         ]);
     }
 

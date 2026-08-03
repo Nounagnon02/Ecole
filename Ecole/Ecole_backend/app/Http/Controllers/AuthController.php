@@ -53,6 +53,14 @@ class AuthController extends Controller
             return response()->json(['message' => 'Votre compte est désactivé'], 403);
         }
 
+        // Un établissement désactivé doit bloquer ses utilisateurs. Sans ce
+        // contrôle, `ecoles.status` n'était lu nulle part à la connexion : la
+        // désactivation était purement décorative et tout le monde continuait
+        // à travailler normalement.
+        if ($message = $this->schoolAccessDenied($user)) {
+            return response()->json(['message' => $message], 403);
+        }
+
         $payload = [
             'user'        => $user,
             'role'        => $user->role,
@@ -85,6 +93,34 @@ class AuthController extends Controller
         $payload['token_type'] = 'Bearer';
 
         return response()->json($payload);
+    }
+
+    /**
+     * Reason to refuse sign-in because of the user's school, or null.
+     *
+     * A platform super-admin has no school of their own and is never blocked
+     * here — otherwise a suspended establishment would lock out the very
+     * account needed to reactivate it.
+     */
+    private function schoolAccessDenied(User $user): ?string
+    {
+        if ($user->role === 'super-admin' || !$user->ecole_id) {
+            return null;
+        }
+
+        // withTrashed: a soft-deleted school must not silently behave like an
+        // active one just because the row is hidden from ordinary queries.
+        $school = \App\Models\Ecole::withTrashed()->find($user->ecole_id);
+
+        if (!$school || $school->trashed()) {
+            return "Cet établissement n'est plus accessible. Contactez l'administrateur.";
+        }
+
+        if ($school->status !== 'active') {
+            return 'Cet établissement est désactivé. Contactez l\'administrateur.';
+        }
+
+        return null;
     }
 
     /**

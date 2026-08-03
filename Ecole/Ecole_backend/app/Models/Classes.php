@@ -3,6 +3,7 @@
 
 namespace App\Models;
 
+use App\Support\Cycles;
 use App\Traits\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -18,6 +19,20 @@ class Classes extends Model
         'categorie_classe',
         'ecole_id'
     ];
+
+    /**
+     * Store the cycle in one casing, whatever the caller sent.
+     *
+     * The column held both `Secondaire` and `secondaire` depending on which code
+     * path wrote it, and every reader had to hope the database collation was
+     * forgiving. Normalising on write means it only ever holds the canonical
+     * form. An unrecognised value is left untouched so validation, not a silent
+     * mutator, is what rejects it.
+     */
+    public function setCategorieClasseAttribute($value): void
+    {
+        $this->attributes['categorie_classe'] = Cycles::normalise($value) ?? $value;
+    }
 
     public function eleves()
     {

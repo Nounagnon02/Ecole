@@ -25,6 +25,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ============ ÉCOLES ============
     Route::post('ecoles/provision', [EcoleController::class, 'provision'])->middleware('role:super-admin');
+
+    // Une école se désactive, elle ne se supprime jamais : ses dossiers élèves,
+    // notes et historiques de paiement doivent rester auditables. DELETE sur la
+    // ressource désactive (cf. EcoleController::destroy).
+    Route::post('ecoles/{ecole}/deactivate', [EcoleController::class, 'deactivate'])->middleware('role:super-admin');
+    Route::post('ecoles/{ecole}/activate', [EcoleController::class, 'activate'])->middleware('role:super-admin');
     Route::apiResource('ecoles', EcoleController::class)->middleware('role:directeur,super-admin');
 
     // ============ PERSONNEL & RH ============
