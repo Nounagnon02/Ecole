@@ -47,7 +47,7 @@ class SecurityHeaders
             "frame-ancestors 'none';",
         ]));
 
-        // HTTP Strict Transport Security (actif uniquement en production)
+        // HTTP Strict Transport Security (active uniquement en production)
         if (app()->environment('production')) {
             $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
         }

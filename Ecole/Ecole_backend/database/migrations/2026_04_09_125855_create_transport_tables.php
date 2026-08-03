@@ -40,7 +40,7 @@ return new class extends Migration
             $table->foreignId('vehicule_id')->nullable()->constrained('vehicules')->onDelete('set null');
             $table->date('date_debut');
             $table->date('date_fin')->nullable();
-            $table->enum('statut', ['actif', 'suspendu', 'termine'])->default('actif');
+            $table->enum('statut', ['active', 'suspended', 'termine'])->default('active');
             $table->decimal('montant_paye', 12, 2)->default(0); // Gestion séparée des frais
             $table->timestamps();
         });

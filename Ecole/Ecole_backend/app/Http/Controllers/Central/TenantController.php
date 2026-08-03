@@ -63,7 +63,7 @@ class TenantController extends Controller
     {
         $tenant->update(['status' => 'suspended']);
 
-        return response()->json(['message' => 'Établissement suspendu']);
+        return response()->json(['message' => 'Établissement suspended']);
     }
 
     public function activate(Tenant $tenant)

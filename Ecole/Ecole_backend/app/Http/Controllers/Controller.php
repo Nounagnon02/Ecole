@@ -18,7 +18,7 @@ class Controller extends BaseController
      * colonnes) n'est révélé qu'en mode debug. En production, le client reçoit
      * un libellé neutre et le détail part dans les logs (cf. audit S20).
      */
-    protected function messageErreur(\Throwable $e, string $repli = 'Une erreur est survenue'): string
+    protected function clientErrorMessage(\Throwable $e, string $repli = 'Une erreur est survenue'): string
     {
         \Illuminate\Support\Facades\Log::error($repli, [
             'exception' => get_class($e),

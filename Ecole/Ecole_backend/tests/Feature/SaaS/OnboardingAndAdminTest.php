@@ -3,6 +3,7 @@
 use App\Models\SaaS\Tenant;
 use App\Models\SaaS\Plan;
 use App\Models\SaaS\Module;
+use App\Models\User;
 
 /* ─── Onboarding ───────────────────────────────────────────────────────── */
 
@@ -38,8 +39,9 @@ test('onboarding school step creates tenant', function () {
 });
 
 test('slug availability check works', function () {
-    // Note: factory test structure — requires Tenant model factory
-    // $tenant = Tenant::factory()->create(['slug' => 'taken-slug']);
+    // La création du tenant était commentée faute de TenantFactory ; elle
+    // existe désormais, donc le cas « slug déjà pris » est réellement testé.
+    Tenant::factory()->create(['slug' => 'taken-slug']);
 
     $response = $this->getJson('/api/v1/onboarding/check-slug?slug=taken-slug');
     $response->assertStatus(200)
@@ -73,32 +75,45 @@ test('analytics overview returns required fields', function () {
 /* ─── Module toggling ──────────────────────────────────────────────────── */
 
 test('can toggle module for tenant', function () {
+    // Ces routes exigent role:super-admin. Sans authentification le test
+    // recevait 401, le `if` ne s'exécutait jamais et aucune assertion n'était
+    // évaluée : le test passait en ne vérifiant rien.
+    $this->actingAs(User::factory()->create(['role' => 'super-admin']));
+
     $tenant = Tenant::factory()->create();
     $module = Module::factory()->create();
 
-    $response = $this->postJson("/api/v1/admin/modules/{$module->id}/toggle", [
+    $this->postJson("/api/v1/admin/modules/{$module->id}/toggle", [
         'tenant_id' => $tenant->id,
         'enabled' => true,
-    ]);
+    ])->assertStatus(200)->assertJsonPath('enabled', true);
 
-    if ($response->status() === 200) {
-        expect($response['enabled'])->toBeTrue();
-        expect($tenant->fresh()->hasModule($module->slug))->toBeTrue();
-    }
+    expect($tenant->fresh()->hasModule($module->slug))->toBeTrue();
+
+    // Et le retrait doit fonctionner aussi.
+    $this->postJson("/api/v1/admin/modules/{$module->id}/toggle", [
+        'tenant_id' => $tenant->id,
+        'enabled' => false,
+    ])->assertStatus(200)->assertJsonPath('enabled', false);
+
+    expect($tenant->fresh()->hasModule($module->slug))->toBeFalse();
 });
 
 /* ─── White-label settings ─────────────────────────────────────────────── */
 
 test('tenant settings can be updated', function () {
+    $this->actingAs(User::factory()->create(['role' => 'super-admin']));
+
     $tenant = Tenant::factory()->create();
 
-    $response = $this->patchJson("/api/v1/admin/tenants/{$tenant->id}/settings", [
+    $this->patchJson("/api/v1/admin/tenants/{$tenant->id}/settings", [
         'primary_color' => '#FF0000',
         'brand_name' => 'Custom Brand',
         'locale' => 'fr',
-    ]);
+    ])->assertStatus(200);
 
-    if ($response->status() === 200) {
-        expect($tenant->fresh()->getSetting('primary_color'))->toEqual('#FF0000');
-    }
+    $fresh = $tenant->fresh();
+    expect($fresh->getSetting('primary_color'))->toEqual('#FF0000');
+    expect($fresh->getSetting('brand_name'))->toEqual('Custom Brand');
+    expect($fresh->getSetting('locale'))->toEqual('fr');
 });

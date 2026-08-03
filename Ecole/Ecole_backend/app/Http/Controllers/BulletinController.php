@@ -29,7 +29,7 @@ class BulletinController extends Controller
 
         // Ramené sur 20 comme partout ailleurs : la moyenne brute traitait
         // un 8/10 comme un 8/20.
-        return round($this->ramenerSur20($interrogations), 2);
+        return round($this->normalizeToTwenty($interrogations), 2);
     }
 
     
@@ -44,7 +44,7 @@ class BulletinController extends Controller
      *
      * @param  \Illuminate\Support\Collection  $notes
      */
-    private function ramenerSur20($notes): float
+    private function normalizeToTwenty($notes): float
     {
         $valeurs = $notes
             ->map(function ($n) {
@@ -76,12 +76,12 @@ class BulletinController extends Controller
 
             foreach (['Devoir1', 'Devoir2'] as $type) {
                 if ($notes->has($type)) {
-                    $composantes[] = $this->ramenerSur20($notes->get($type)->take(1));
+                    $composantes[] = $this->normalizeToTwenty($notes->get($type)->take(1));
                 }
             }
 
             if ($notes->has('Interrogation')) {
-                $composantes[] = $this->ramenerSur20($notes->get('Interrogation'));
+                $composantes[] = $this->normalizeToTwenty($notes->get('Interrogation'));
             }
 
             if (!empty($composantes)) {
@@ -101,7 +101,7 @@ class BulletinController extends Controller
             $evalMoyennes = [];
             foreach ($evalTypes as $type) {
                 if ($notes->has($type)) {
-                    $evalMoyennes[] = $this->ramenerSur20($notes->get($type));
+                    $evalMoyennes[] = $this->normalizeToTwenty($notes->get($type));
                 }
             }
 
@@ -456,7 +456,7 @@ class BulletinController extends Controller
             Log::error("Erreur génération bulletin: " . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => $this->messageErreur($e, 'Erreur lors de la génération du bulletin')
+                'message' => $this->clientErrorMessage($e, 'Erreur lors de la génération du bulletin')
             ], 500);
         }
     }

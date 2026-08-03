@@ -13,7 +13,7 @@ use App\Services\Billing\PaymentProvider;
 class PaymentController extends Controller
 {
     /** Rôles autorisés à gérer les paiements de toute l'école. */
-    private const ROLES_GESTION = ['directeur', 'comptable', 'secretaire', 'super-admin'];
+    private const MANAGER_ROLES = ['directeur', 'comptable', 'secretaire', 'super-admin'];
 
     protected PaymentProvider $provider;
 
@@ -26,7 +26,7 @@ class PaymentController extends Controller
      * L'utilisateur courant peut-il agir sur les paiements de cet élève ?
      * Gestionnaires : oui. Parent : uniquement ses enfants. Élève : lui-même.
      */
-    private function peutAccederEleve(Eleve $eleve): bool
+    private function canAccessStudent(Eleve $eleve): bool
     {
         $user = auth()->user();
 
@@ -34,7 +34,7 @@ class PaymentController extends Controller
             return false;
         }
 
-        if (in_array($user->role, self::ROLES_GESTION, true)) {
+        if (in_array($user->role, self::MANAGER_ROLES, true)) {
             return true;
         }
 
@@ -54,11 +54,11 @@ class PaymentController extends Controller
      * de l'utilisateur. Le global scope BelongsToEcole assure déjà l'isolation
      * inter-écoles ; on ajoute ici l'isolation intra-école (cf. audit S3/S9).
      */
-    private function paiementAutorise(int $paymentId): Payment
+    private function authorizedPayment(int $paymentId): Payment
     {
         $payment = Payment::with('eleve')->findOrFail($paymentId);
 
-        if (!$payment->eleve || !$this->peutAccederEleve($payment->eleve)) {
+        if (!$payment->eleve || !$this->canAccessStudent($payment->eleve)) {
             abort(403, 'Accès refusé à ce paiement');
         }
 
@@ -66,7 +66,7 @@ class PaymentController extends Controller
     }
 
     /** École de l'utilisateur courant — jamais celle passée dans la requête. */
-    private function ecoleCourante(): ?int
+    private function currentSchoolId(): ?int
     {
         return auth()->user()?->ecole_id ?? session('ecole_id');
     }
@@ -88,7 +88,7 @@ class PaymentController extends Controller
         try {
             $eleve = Eleve::with('user:id,name,prenom')->findOrFail($request->eleve_id);
 
-            if (!$this->peutAccederEleve($eleve)) {
+            if (!$this->canAccessStudent($eleve)) {
                 DB::rollBack();
                 return response()->json(['success' => false, 'message' => 'Accès refusé à cet élève'], 403);
             }
@@ -159,7 +159,7 @@ class PaymentController extends Controller
         ]);
 
         try {
-            $payment = $this->paiementAutorise((int) $request->payment_id);
+            $payment = $this->authorizedPayment((int) $request->payment_id);
 
             if ($payment->status === 'completed') {
                 return response()->json(['success' => true, 'message' => 'Paiement déjà confirmé']);
@@ -224,7 +224,7 @@ class PaymentController extends Controller
         // rien, plutôt que de laisser passer faute de filtre.
         // `ecole_id` de la requête est ignoré — l'isolation inter-écoles vient
         // du global scope (cf. audit S9/S10).
-        if (in_array($user?->role, self::ROLES_GESTION, true)) {
+        if (in_array($user?->role, self::MANAGER_ROLES, true)) {
             // Périmètre de l'école, déjà borné par BelongsToEcole.
         } elseif ($user?->role === 'parent' && $user->parent) {
             $query->whereIn('eleve_id', $user->parent->eleves()->pluck('eleves.id'));
@@ -253,7 +253,7 @@ class PaymentController extends Controller
     {
         // École déduite de la session utilisateur — jamais de la requête,
         // sinon un directeur lit les finances d'un autre établissement (S10).
-        $ecoleId = $this->ecoleCourante();
+        $ecoleId = $this->currentSchoolId();
 
         $stats = [
             'total_collected' => Payment::where('ecole_id', $ecoleId)->where('status', 'completed')->sum('amount'),
@@ -288,7 +288,7 @@ class PaymentController extends Controller
         ]);
 
         try {
-            $payment = $this->paiementAutorise((int) $request->payment_id);
+            $payment = $this->authorizedPayment((int) $request->payment_id);
 
             if ($payment->status !== 'completed') {
                 return response()->json(['success' => false, 'message' => 'Seuls les paiements complétés peuvent être remboursés'], 400);
@@ -356,7 +356,7 @@ class PaymentController extends Controller
      */
     public function exportPayments(Request $request)
     {
-        if (!in_array(auth()->user()?->role, self::ROLES_GESTION, true)) {
+        if (!in_array(auth()->user()?->role, self::MANAGER_ROLES, true)) {
             return response()->json(['success' => false, 'message' => 'Accès refusé'], 403);
         }
 
@@ -382,7 +382,7 @@ class PaymentController extends Controller
     {
         $request->validate(['payment_id' => 'required|exists:payments,id']);
 
-        $payment = $this->paiementAutorise((int) $request->payment_id);
+        $payment = $this->authorizedPayment((int) $request->payment_id);
 
         // Vérifier le statut via le provider si une transaction existe
         if ($payment->transaction_id) {

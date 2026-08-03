@@ -24,7 +24,7 @@ class FedaPayController extends Controller
     /**
      * L'utilisateur courant peut-il ouvrir un paiement pour cet élève ?
      */
-    private function peutPayerPour(Eleve $eleve): bool
+    private function canPayFor(Eleve $eleve): bool
     {
         $user = auth()->user();
 
@@ -62,7 +62,7 @@ class FedaPayController extends Controller
 
             // Sans ce contrôle, tout compte authentifié pouvait ouvrir une
             // transaction au nom de n'importe quel élève (cf. audit S12).
-            if (!$this->peutPayerPour($eleve)) {
+            if (!$this->canPayFor($eleve)) {
                 return response()->json(['success' => false, 'message' => 'Accès refusé à cet élève'], 403);
             }
 
@@ -115,7 +115,7 @@ class FedaPayController extends Controller
             return redirect($frontend . '/payment/error');
         }
 
-        $this->synchroniserTransaction((string) $transactionId);
+        $this->syncTransaction((string) $transactionId);
 
         $tx = TransactionPaiement::where('cinetpay_transaction_id', $transactionId)->first();
 
@@ -152,7 +152,7 @@ class FedaPayController extends Controller
         $transactionId = $request->input('id');
 
         try {
-            $this->synchroniserTransaction((string) $transactionId);
+            $this->syncTransaction((string) $transactionId);
 
             return response()->json(['received' => true]);
         } catch (\Exception $e) {
@@ -166,7 +166,7 @@ class FedaPayController extends Controller
      * Interroge FedaPay et applique le statut réel à la transaction locale.
      * Partagé par le webhook et le retour navigateur.
      */
-    private function synchroniserTransaction(string $transactionId): void
+    private function syncTransaction(string $transactionId): void
     {
         $transaction = $this->fedapayService->verifyTransaction($transactionId);
 

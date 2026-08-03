@@ -31,7 +31,7 @@ class PlanFactory extends Factory
         ];
     }
 
-    public function inactif(): static
+    public function inactive(): static
     {
         return $this->state(fn() => ['is_active' => false]);
     }

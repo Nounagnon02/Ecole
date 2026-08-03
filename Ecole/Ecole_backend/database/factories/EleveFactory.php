@@ -45,7 +45,7 @@ class EleveFactory extends Factory
      * les requêtes échouent en « No query results » — un faux négatif
      * difficile à diagnostiquer.
      */
-    public function pourEcole(\App\Models\Ecole $ecole): static
+    public function forSchool(\App\Models\Ecole $ecole): static
     {
         return $this->state(fn() => [
             'ecole_id' => $ecole->id,

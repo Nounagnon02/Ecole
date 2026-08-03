@@ -216,7 +216,7 @@ class DevoirController extends Controller
      * Les copies sont stockées sur le disque privé : elles ne sont accessibles
      * que par cette route, qui vérifie le demandeur (cf. audit S7).
      */
-    public function telechargerCopie(Request $request, $id, $eleveId)
+    public function downloadSubmission(Request $request, $id, $eleveId)
     {
         $devoir = Devoir::findOrFail($id);
         $user = $request->user();

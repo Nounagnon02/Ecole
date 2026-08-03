@@ -24,7 +24,7 @@ class InvoiceFactory extends Factory
         ];
     }
 
-    public function payee(): static
+    public function paid(): static
     {
         return $this->state(fn() => [
             'status'         => 'paid',

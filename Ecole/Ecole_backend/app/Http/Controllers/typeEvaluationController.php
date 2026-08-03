@@ -106,13 +106,13 @@ class typeEvaluationController extends Controller
                 } catch (\Exception $e) {
                     Log::error('Error creating liaison:', [
                         'liaison' => $liaison,
-                        'error' => $this->messageErreur($e)
+                        'error' => $this->clientErrorMessage($e)
                     ]);
 
                     $errors[] = [
                         'index' => $index,
                         'liaison' => $liaison,
-                        'message' => $this->messageErreur($e, 'Erreur lors de la création')
+                        'message' => $this->clientErrorMessage($e, 'Erreur lors de la création')
                     ];
                 }
             }
@@ -147,7 +147,7 @@ class typeEvaluationController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Une erreur inattendue est survenue',
-                'error' => $this->messageErreur($e)
+                'error' => $this->clientErrorMessage($e)
             ], 500);
         }
     }
@@ -196,7 +196,7 @@ class typeEvaluationController extends Controller
             } catch (\Exception $e) {
                 $errors[] = [
                     'liaison' => $liaison,
-                    'message' => $this->messageErreur($e)
+                    'message' => $this->clientErrorMessage($e)
                 ];
             }
         }
@@ -204,7 +204,7 @@ class typeEvaluationController extends Controller
             return response()->json(['message' => 'Liaisons created successfully']);
         } catch (\Exception $e) {
             Log::error('Error creating liaisons:', ['error' => $e->getMessage()]);
-            return response()->json(['message' => $this->messageErreur($e)], 400);
+            return response()->json(['message' => $this->clientErrorMessage($e)], 400);
         }
     }*/
 

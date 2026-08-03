@@ -25,12 +25,12 @@ class TenantFactory extends Factory
         ];
     }
 
-    public function actif(): static
+    public function active(): static
     {
         return $this->state(fn() => ['status' => 'active']);
     }
 
-    public function suspendu(): static
+    public function suspended(): static
     {
         return $this->state(fn() => ['status' => 'suspended']);
     }

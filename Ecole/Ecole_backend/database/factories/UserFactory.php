@@ -40,7 +40,7 @@ class UserFactory extends Factory
      * `is_active` est dans $guarded : il ne passe pas par le mass-assignment
      * de la factory et doit être posé après création.
      */
-    public function inactif()
+    public function inactive()
     {
         return $this->afterCreating(function (\App\Models\User $user) {
             $user->forceFill(['is_active' => false])->save();

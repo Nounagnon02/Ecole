@@ -20,7 +20,7 @@ class UserModelTest extends TestCase
     {
         $user = new User();
 
-        $this->assertContains('nom', $user->getFillable());
+        $this->assertContains('name', $user->getFillable());
         $this->assertContains('email', $user->getFillable());
         $this->assertContains('password', $user->getFillable());
         $this->assertContains('role', $user->getFillable());
@@ -63,8 +63,12 @@ class UserModelTest extends TestCase
     /** @test */
     public function eleve_belongs_to_classe()
     {
-        $classe = Classes::factory()->create();
-        $eleve = Eleve::factory()->create(['classe_id' => $classe->id]);
+        // Le scope tenant a besoin d'un utilisateur authentifié, sans quoi
+        // toute requête renvoie un ensemble vide (cf. actingInSchool).
+        $school = $this->actingInSchool();
+        $classe = Classes::factory()->create(['ecole_id' => $school->id]);
+        // La colonne est `class_id`, pas `classe_id`.
+        $eleve = Eleve::factory()->forSchool($school)->create(['class_id' => $classe->id]);
 
         $this->assertInstanceOf(Classes::class, $eleve->classe);
         $this->assertEquals($classe->id, $eleve->classe->id);
@@ -73,8 +77,12 @@ class UserModelTest extends TestCase
     /** @test */
     public function note_belongs_to_eleve()
     {
-        $eleve = Eleve::factory()->create();
-        $note = Notes::factory()->create(['eleve_id' => $eleve->id]);
+        $school = $this->actingInSchool();
+        $eleve = Eleve::factory()->forSchool($school)->create();
+        $note = Notes::factory()->create([
+            'eleve_id' => $eleve->id,
+            'ecole_id' => $school->id,
+        ]);
 
         $this->assertInstanceOf(Eleve::class, $note->eleve);
         $this->assertEquals($eleve->id, $note->eleve->id);
@@ -83,8 +91,12 @@ class UserModelTest extends TestCase
     /** @test */
     public function absence_belongs_to_eleve()
     {
-        $eleve = Eleve::factory()->create();
-        $absence = Absence::factory()->create(['eleve_id' => $eleve->id]);
+        $school = $this->actingInSchool();
+        $eleve = Eleve::factory()->forSchool($school)->create();
+        $absence = Absence::factory()->create([
+            'eleve_id' => $eleve->id,
+            'ecole_id' => $school->id,
+        ]);
 
         $this->assertInstanceOf(Eleve::class, $absence->eleve);
         $this->assertEquals($eleve->id, $absence->eleve->id);

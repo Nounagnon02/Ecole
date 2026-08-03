@@ -24,12 +24,12 @@ class SubscriptionFactory extends Factory
         ];
     }
 
-    public function actif(): static
+    public function active(): static
     {
         return $this->state(fn() => ['status' => 'active', 'trial_ends_at' => null]);
     }
 
-    public function annule(): static
+    public function canceled(): static
     {
         return $this->state(fn() => ['status' => 'canceled', 'canceled_at' => now()]);
     }

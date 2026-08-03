@@ -244,7 +244,7 @@ class NotesController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Erreur lors de l\'enregistrement de la note',
-                    'error' => $this->messageErreur($e)
+                    'error' => $this->clientErrorMessage($e)
                 ], 500);
             }
         }
@@ -352,7 +352,7 @@ class NotesController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Erreur lors de la mise à jour de la note',
-                'error' => $this->messageErreur($e)
+                'error' => $this->clientErrorMessage($e)
             ], 500);
         }
     }
@@ -420,7 +420,7 @@ class NotesController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Erreur lors de la suppression de la note',
-                'error' => $this->messageErreur($e)
+                'error' => $this->clientErrorMessage($e)
             ], 500);
         }
     }
@@ -495,7 +495,7 @@ class NotesController extends Controller
             \Illuminate\Support\Facades\Log::error('Export notes XLSX error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => $this->messageErreur($e, 'Erreur lors de l\'export')
+                'message' => $this->clientErrorMessage($e, 'Erreur lors de l\'export')
             ], 500);
         }
     }
@@ -518,7 +518,7 @@ class NotesController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => $this->messageErreur($e, 'Erreur')
+                'message' => $this->clientErrorMessage($e, 'Erreur')
             ], 500);
         }
     }
@@ -541,7 +541,7 @@ class NotesController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => $this->messageErreur($e, 'Erreur')
+                'message' => $this->clientErrorMessage($e, 'Erreur')
             ], 500);
         }
     }
@@ -593,7 +593,7 @@ class NotesController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => $this->messageErreur($e, 'Erreur lors du calcul du classement')
+                'message' => $this->clientErrorMessage($e, 'Erreur lors du calcul du classement')
             ], 500);
         }
     }
@@ -703,7 +703,7 @@ class NotesController extends Controller
             
             return response()->json([
                 'success' => false,
-                'message' => $this->messageErreur($e, 'Erreur lors de l\'importation')
+                'message' => $this->clientErrorMessage($e, 'Erreur lors de l\'importation')
             ], 500);
         }
     }
@@ -741,7 +741,7 @@ class NotesController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Erreur lors de la récupération des notes',
-                'error' => $this->messageErreur($e)
+                'error' => $this->clientErrorMessage($e)
             ], 500);
         }
     }
@@ -788,7 +788,7 @@ class NotesController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Erreur lors du calcul des statistiques',
-                'error' => $this->messageErreur($e)
+                'error' => $this->clientErrorMessage($e)
             ], 500);
         }
     }
@@ -829,7 +829,7 @@ class NotesController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Erreur lors de la vérification',
-                'error' => $this->messageErreur($e)
+                'error' => $this->clientErrorMessage($e)
             ], 500);
         }
     }
@@ -920,7 +920,7 @@ public function filter(Request $request)
     } catch (\Exception $e) {
         return response()->json([
             'success' => false,
-            'message' => $this->messageErreur($e, 'Erreur lors du filtrage des notes')
+            'message' => $this->clientErrorMessage($e, 'Erreur lors du filtrage des notes')
         ], 500);
     }
 }
@@ -968,7 +968,7 @@ private function filterNotesByCategorie(Request $request, $categorie)
     } catch (\Exception $e) {
         return response()->json([
             'success' => false,
-            'message' => $this->messageErreur($e, 'Erreur lors du filtrage des notes')
+            'message' => $this->clientErrorMessage($e, 'Erreur lors du filtrage des notes')
         ], 500);
     }
 }
