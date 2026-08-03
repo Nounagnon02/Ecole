@@ -68,6 +68,21 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/classement/{classeId}/{periode}', [NotesController::class, 'classement'])->middleware('role:directeur,enseignant');
     });
 
+    // ============ PÉRIODES ============
+    //
+    // Ces routes manquaient alors que periodesController et le modèle periodes
+    // existent : deux pages du frontend appelaient GET /periodes dans le vide
+    // (cf. ECARTS_FRONT_BACK.md).
+    Route::prefix('periodes')->group(function () {
+        Route::get('/', [periodesController::class, 'Index']);
+        Route::get('/active', [periodesController::class, 'getActive']);
+        Route::get('/classe/{classeId}', [periodesController::class, 'getPeriodesByClasse']);
+        Route::get('/categorie/{categorie}', [periodesController::class, 'getPeriodesByCategorie']);
+        Route::get('/categorie/{categorie}/active', [periodesController::class, 'getActivePeriodesByCategorie']);
+        Route::post('/store', [periodesController::class, 'store'])->middleware('role:directeur');
+        Route::post('/{id}/active', [periodesController::class, 'setActive'])->middleware('role:directeur');
+    });
+
     // ============ BULLETINS ============
     Route::get('/bulletins/eleve/{eleveId}/{periode}', [BulletinController::class, 'getBulletin'])->middleware('role:directeur,parent,eleve');
 

@@ -26,16 +26,24 @@ class AuthController extends Controller
      */
     public function connexion(Request $request)
     {
+        // Le contrat était ambigu : le champ s'appelait `email` mais acceptait
+        // aussi un identifiant (l'interface le libelle « Email ou identifiant »),
+        // et beaucoup de comptes n'ont pas d'adresse — la colonne est nullable.
+        // Les deux noms de champ sont désormais acceptés, l'un ou l'autre suffit.
         $request->validate([
-            'email' => 'required|string',
-            'password' => 'required|string',
+            'email'       => 'required_without:identifiant|nullable|string',
+            'identifiant' => 'required_without:email|nullable|string',
+            'password'    => 'required|string',
             'device_name' => 'nullable|string|max:255',
         ]);
 
-        // Chercher par email ou par identifiant
-        $user = User::where('email', $request->email)
-                    ->orWhere('identifiant', $request->email)
-                    ->first();
+        $login = $request->input('identifiant') ?: $request->input('email');
+
+        // Parenthèses explicites : sans le groupement, un `orWhere` se
+        // combinerait mal avec toute condition ajoutée par la suite.
+        $user = User::where(function ($q) use ($login) {
+            $q->where('email', $login)->orWhere('identifiant', $login);
+        })->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
             return response()->json(['message' => 'Identifiants incorrects'], 401);

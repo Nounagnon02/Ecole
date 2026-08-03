@@ -17,3 +17,8 @@ yarn-error.log
 /.idea
 /.vscode
 .vercel
+
+# Bases SQLite par tenant, créées à la volée par stancl/tenancy quand les
+# migrations tournent. Ce sont des artefacts locaux, jamais du code source.
+/database/tenant*
+/database/*.sqlite

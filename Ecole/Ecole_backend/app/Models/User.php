@@ -45,6 +45,11 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'is_active' => 'boolean',
+        // Sans ce cast, `User::create(['password' => 'clair'])` stockait le mot
+        // de passe en clair : le hachage reposait entièrement sur la discipline
+        // de chaque appelant. Le cast est idempotent (il vérifie
+        // Hash::isHashed), donc les Hash::make() existants restent corrects.
+        'password' => 'hashed',
     ];
 
     // Profile relations

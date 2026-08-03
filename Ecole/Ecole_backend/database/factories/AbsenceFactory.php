@@ -15,7 +15,9 @@ class AbsenceFactory extends Factory
             'eleve_id' => Eleve::factory(),
             'date' => fake()->date(),
             'motif' => fake()->randomElement(['Maladie', 'Familial', 'Transport', 'Autre']),
-            'justifie' => fake()->boolean(),
+            // La colonne est `justifiee` (deux e), pas `justifie`.
+            'justifiee' => fake()->boolean(),
+            'type' => fake()->randomElement(['absence', 'retard']),
         ];
     }
 }
