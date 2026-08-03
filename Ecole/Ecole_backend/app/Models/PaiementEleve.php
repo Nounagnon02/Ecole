@@ -10,6 +10,17 @@ use App\Models\UserParent;
 
 class PaiementEleve extends Model
 {
+    /**
+     * Values of the `statut_global` column.
+     *
+     * The migration defaults it to 'EN_ATTENTE', and TransactionPaiement
+     * already uses this uppercase convention, so we follow it here rather
+     * than introduce a second spelling.
+     */
+    public const PENDING = 'EN_ATTENTE';
+    public const PARTIAL = 'PARTIEL';
+    public const PAID    = 'PAYE';
+
     use HasFactory, BelongsToEcole, Auditable;
     
     protected $table = 'paiements';
@@ -74,15 +85,27 @@ class PaiementEleve extends Model
         return $this->hasMany(StatutTranche::class, 'id_paiement_eleve');
     }
 
-    // Méthodes utilitaires
-    public function getMontantRestantAttribute()
+    /**
+     * Share of the amount due that has been settled, as a percentage.
+     *
+     * `montant_total`, `montant_paye` and `montant_restant` are real columns.
+     * There used to be a `getMontantRestantAttribute()` accessor here that
+     * shadowed the `montant_restant` column and computed
+     * `$this->contribution->montant - $this->montant_total_paye` instead —
+     * which dereferenced a null relation whenever `contribution_id` was unset,
+     * and read `montant_total_paye`, a column that does not exist. Any read of
+     * `$paiement->montant_restant` therefore threw. The accessor is gone; the
+     * column is authoritative.
+     */
+    public function getPourcentagePaiementAttribute(): float
     {
-        return $this->contribution->montant - $this->montant_total_paye;
-    }
+        $due = (float) $this->montant_total;
 
-    public function getPourcentagePaiementAttribute()
-    {
-        return ($this->montant_total_paye / $this->contribution->montant) * 100;
+        if ($due <= 0) {
+            return 0.0;
+        }
+
+        return round(((float) $this->montant_paye / $due) * 100, 2);
     }
 }
 

@@ -56,6 +56,13 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/bulletin/{enfantId}/{periode}', [ParentController::class, 'bulletinDetail']);
         Route::get('/messages', [ParentController::class, 'messages']);
         Route::get('/rendez-vous', [ParentController::class, 'rendezVous']);
+
+        // Sous-ressources par enfant. Chacune vérifie dans le contrôleur que
+        // l'enfant appartient bien au parent connecté.
+        Route::get('/enfants/{enfantId}/notes', [ParentController::class, 'enfantNotes']);
+        Route::get('/enfants/{enfantId}/absences', [ParentController::class, 'enfantAbsences']);
+        Route::get('/enfants/{enfantId}/emploi-du-temps', [ParentController::class, 'enfantEmploiDuTemps']);
+        Route::get('/enfants/{enfantId}/paiements', [ParentController::class, 'enfantPaiements']);
     });
 
     // ============ COMPTABLE ============

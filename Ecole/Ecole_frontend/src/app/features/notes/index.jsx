@@ -60,7 +60,7 @@ export default function GestionNotes() {
       setIsLoading(true);
       try {
         const [notesRes, classesRes, matieresRes, periodesRes, statsRes, moyennesRes] = await Promise.allSettled([
-          get('/notes'),
+          get('/notes/eleve'),
           get('/classes'),
           get('/matieres'),
           get('/periodes'),
