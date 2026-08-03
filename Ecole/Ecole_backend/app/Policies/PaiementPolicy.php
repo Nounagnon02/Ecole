@@ -4,17 +4,18 @@ namespace App\Policies;
 
 use App\Models\User;
 use App\Models\PaiementEleve;
+use App\Support\Roles;
 
 class PaiementPolicy
 {
     public function viewAny(User $user): bool
     {
-        return in_array($user->role, ['directeur', 'comptable', 'secretaire']);
+        return Roles::satisfies($user->role, ['directeur', 'comptable', 'secretaire']);
     }
 
     public function view(User $user, PaiementEleve $paiement): bool
     {
-        if (in_array($user->role, ['directeur', 'comptable', 'secretaire'])) return true;
+        if (Roles::satisfies($user->role, ['directeur', 'comptable', 'secretaire'])) return true;
         // Parent voit les paiements de ses enfants
         if ($user->role === 'parent') {
             return $user->parent?->eleves()->where('eleves.id', $paiement->eleve_id)->exists() ?? false;
@@ -24,16 +25,16 @@ class PaiementPolicy
 
     public function create(User $user): bool
     {
-        return in_array($user->role, ['directeur', 'comptable', 'secretaire']);
+        return Roles::satisfies($user->role, ['directeur', 'comptable', 'secretaire']);
     }
 
     public function update(User $user): bool
     {
-        return in_array($user->role, ['directeur', 'comptable']);
+        return Roles::satisfies($user->role, ['directeur', 'comptable']);
     }
 
     public function delete(User $user): bool
     {
-        return $user->role === 'directeur';
+        return Roles::isDirector($user->role);
     }
 }

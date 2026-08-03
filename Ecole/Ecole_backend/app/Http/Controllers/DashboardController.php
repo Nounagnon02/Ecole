@@ -3,16 +3,22 @@
 namespace App\Http\Controllers;
 
 use App\Models\{User, Eleve, Classes, Notes, Matieres};
+use App\Support\Roles;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
 class DashboardController extends Controller
 {
-    /** Rôles habilités à consulter le référentiel consolidé de l'école. */
-    private const DIRECTORY_ROLES = [
-        'directeur', 'directeurM', 'directeurP', 'directeurS',
-        'censeur', 'secretaire', 'super-admin',
-    ];
+    /**
+     * Rôles habilités à consulter le référentiel consolidé de l'école.
+     *
+     * Les chefs de cycle sont ajoutés par `Roles::expand()` : la liste ne les
+     * énumère plus, sinon elle redivergerait de celle des routes.
+     */
+    private function directoryRoles(): array
+    {
+        return Roles::expand([Roles::DIRECTOR, 'censeur', 'secretaire', Roles::SUPER_ADMIN]);
+    }
 
     /** Clé de cache du référentiel, par école. */
     private function directoryCacheKey(): string
@@ -44,7 +50,7 @@ class DashboardController extends Controller
         // Cet endpoint expose le référentiel complet de l'école (élèves,
         // classes, matières). Il n'avait aucun contrôle de rôle : un élève ou
         // un parent pouvait le lire intégralement (cf. audit S8).
-        if (!in_array(auth()->user()?->role, self::DIRECTORY_ROLES, true)) {
+        if (!in_array(auth()->user()?->role, $this->directoryRoles(), true)) {
             return response()->json(['success' => false, 'message' => 'Accès refusé'], 403);
         }
 

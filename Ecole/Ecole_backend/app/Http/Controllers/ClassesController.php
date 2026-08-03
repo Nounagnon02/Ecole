@@ -7,6 +7,7 @@ use App\Models\Series;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Support\Cycles;
 
 class ClassesController extends Controller
 {
@@ -41,17 +42,17 @@ class ClassesController extends Controller
     }
 
     public function getEffectifMaternelle(){
-        $effectif = Classes::where('categorie_classe', 'Maternelle')->count();
+        $effectif = Classes::where('categorie_classe', Cycles::KINDERGARTEN)->count();
         return response()->json($effectif);
     }
 
     public function getEffectifPrimaire(){
-        $effectif = Classes::where('categorie_classe', 'Primaire')->count();
+        $effectif = Classes::where('categorie_classe', Cycles::PRIMARY)->count();
         return response()->json($effectif);
     }
 
     public function getEffectifSecondaire(){
-        $effectif = Classes::where('categorie_classe', 'Secondaire')->count();
+        $effectif = Classes::where('categorie_classe', Cycles::SECONDARY)->count();
         return response()->json($effectif);
     }
 
@@ -68,7 +69,7 @@ public function attachMatieres(Request $request, $id)
         $validated = $request->validate([
             'matieres' => 'required|array',
             'matieres.*.id' => 'required|exists:matieres,id',
-            'categorie_classe' => 'required|string'
+            'categorie_classe' => 'required|string|' . Cycles::rule()
         ]);
 
         $matieresData = collect($validated['matieres'])->mapWithKeys(function ($matiere) use ($validated) {
@@ -122,7 +123,7 @@ public function getClassesWithSeriesAndMatieres()
 //Récupérer les classes de la maternelle avec leurs séries et matières
 public function getClassesWithSeriesAndMatieresMaternelle()
 {
-    return Classes::where('categorie_classe', 'Maternelle')->with(['series' => function($query) {
+    return Classes::where('categorie_classe', Cycles::KINDERGARTEN)->with(['series' => function($query) {
         $query->select('series.id', 'series.nom')
                 ->distinct()
                 ->with(['matieres' => function($q) {
@@ -152,7 +153,7 @@ public function getClassesWithSeriesAndMatieresMaternelle()
 
 public function getClassesWithSeriesAndMatieresPrimaire()
 {
-    return Classes::where('categorie_classe', 'Primaire')->with(['series' => function($query) {
+    return Classes::where('categorie_classe', Cycles::PRIMARY)->with(['series' => function($query) {
         $query->select('series.id', 'series.nom')
                 ->distinct()
                 ->with(['matieres' => function($q) {
@@ -182,7 +183,7 @@ public function getClassesWithSeriesAndMatieresPrimaire()
 
 public function getClassesWithSeriesAndMatieresSecondaire()
 {
-    return Classes::where('categorie_classe', 'Secondaire')->with(['series' => function($query) {
+    return Classes::where('categorie_classe', Cycles::SECONDARY)->with(['series' => function($query) {
         $query->select('series.id', 'series.nom')
                 ->distinct()
                 ->with(['matieres' => function($q) {
@@ -241,7 +242,7 @@ public function getClassesWithEffectifM()
 
 public function getClassesWithEffectifP(){
     //recuper l'effectif de chaque classe du primaire
-    $classes = Classes::where('categorie_classe', 'Primaire')->withCount('eleves')->get()->map(function($classe) {
+    $classes = Classes::where('categorie_classe', Cycles::PRIMARY)->withCount('eleves')->get()->map(function($classe) {
         return [
             'id' => $classe->id,
             'nom_classe' => $classe->nom_classe,
@@ -266,7 +267,7 @@ public function getClassesWithEffectifP(){
 
 public function getClassesWithEffectifS(){
     //recuper l'effectif de chaque classe du secondaire
-    $classes = Classes::where('categorie_classe', 'Secondaire')->withCount('eleves')->get()->map(function($classe) {
+    $classes = Classes::where('categorie_classe', Cycles::SECONDARY)->withCount('eleves')->get()->map(function($classe) {
         return [
             'id' => $classe->id,
             'nom_classe' => $classe->nom_classe,
@@ -447,7 +448,7 @@ public function updateSeries(Request $request, $id)
     }
     public function indexS(Request $request)
     {
-        $query = Classes::where('categorie_classe', "Secondaire");
+        $query = Classes::where('categorie_classe', Cycles::SECONDARY);
 
         // Chargement des relations selon les paramètres
         if ($request->has('with_series')) {
@@ -498,7 +499,7 @@ public function updateSeries(Request $request, $id)
     //Recuperer les classes de la maternelle
     public function getClassesM(Request $request)
     {
-        $classes = Classes::where('categorie_classe', 'Maternelle')->with('enseignantsMP')->get();
+        $classes = Classes::where('categorie_classe', Cycles::KINDERGARTEN)->with('enseignantsMP')->get();
 
         if ($classes->isEmpty()) {
             return response()->json(['message' => 'Aucune classe trouvée pour cette catégorie'], 404);
@@ -510,7 +511,7 @@ public function updateSeries(Request $request, $id)
     //Recuperer les classes du Primaire
     public function getClassesP(Request $request)
     {
-        $classes = Classes::where('categorie_classe', 'Primaire')->with('enseignantsMP')->get();
+        $classes = Classes::where('categorie_classe', Cycles::PRIMARY)->with('enseignantsMP')->get();
 
         if ($classes->isEmpty()) {
             return response()->json(['message' => 'Aucune classe trouvée pour cette catégorie'], 404);
@@ -523,7 +524,7 @@ public function updateSeries(Request $request, $id)
     //recuperer les classes du Secondaire avec les periodes et les types d'evaluation
     public function getClassesWithPeriodesAndTypesS(Request $request)
     {
-        $classes = Classes::where('categorie_classe', 'Secondaire')
+        $classes = Classes::where('categorie_classe', Cycles::SECONDARY)
             ->with(['typeEvaluations'])
             ->get();
         if ($classes->isEmpty()) {
@@ -535,7 +536,7 @@ public function updateSeries(Request $request, $id)
     //recuperer les classes du Secondaire avec les periodes et les types d'evaluation
     public function getClassesWithPeriodesAndTypesP(Request $request)
     {
-        $classes = Classes::where('categorie_classe', 'Primaire')
+        $classes = Classes::where('categorie_classe', Cycles::PRIMARY)
             ->with(['typeEvaluations'])
             ->get();
         if ($classes->isEmpty()) {
@@ -547,7 +548,7 @@ public function updateSeries(Request $request, $id)
     //recuperer les classes du Maternelle avec les periodes et les types d'evaluation
     public function getClassesWithPeriodesAndTypesM(Request $request)
     {
-        $classes = Classes::where('categorie_classe', 'Maternelle')
+        $classes = Classes::where('categorie_classe', Cycles::KINDERGARTEN)
             ->with(['typeEvaluations'])
             ->get();
         if ($classes->isEmpty()) {
@@ -559,7 +560,7 @@ public function updateSeries(Request $request, $id)
     //Recuperer les classes du Secondaire
     public function getClassesS(Request $request)
     {
-        $classes = Classes::where('categorie_classe', 'Secondaire')->get();
+        $classes = Classes::where('categorie_classe', Cycles::SECONDARY)->get();
 
         if ($classes->isEmpty()) {
             return response()->json(['message' => 'Aucune classe trouvée pour cette catégorie'], 404);

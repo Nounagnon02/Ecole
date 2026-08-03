@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
+use App\Support\Cycles;
 
 class EleveController extends Controller
 {
@@ -30,12 +31,17 @@ class EleveController extends Controller
         }
 
         $eleveId = $user->eleve->id;
-        
-        if ($user->eleve->classe->categorie_classe === 'secondaire') {
+
+        // `Cycles::is()` compare sans tenir compte de la casse. La comparaison
+        // était `=== 'secondaire'` contre un `Secondaire` stocké : toujours
+        // fausse, donc tout élève du secondaire recevait le bulletin
+        // maternelle/primaire — un autre calcul, sans coefficients.
+        // `?->` sur la classe : un élève non affecté faisait planter la route.
+        if (Cycles::is($user->eleve->classe?->categorie_classe, Cycles::SECONDARY)) {
             return $this->bulletinService->bulletinSecondaire($eleveId, $periode);
-        } else {
-            return $this->bulletinService->bulletinMaternellePrimaire($eleveId, $periode);
         }
+
+        return $this->bulletinService->bulletinMaternellePrimaire($eleveId, $periode);
     }
 
     /**
