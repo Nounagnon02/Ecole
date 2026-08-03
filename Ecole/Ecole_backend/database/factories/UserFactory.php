@@ -28,7 +28,10 @@ class UserFactory extends Factory
             'telephone' => fake()->numerify('##########'),
             'role' => 'eleve',
             'email_verified_at' => now(),
-            'password' => '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password
+            // Mot de passe en clair : le cast `hashed` du modèle s'en charge,
+            // au coût configuré. Un hash codé en dur (coût 10) échouait la
+            // vérification de configuration quand BCRYPT_ROUNDS vaut 4 en test.
+            'password' => 'password',
             'remember_token' => Str::random(10),
         ];
     }

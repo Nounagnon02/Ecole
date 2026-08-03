@@ -46,6 +46,12 @@ export const useApi = () => {
     return apiCall(() => api.put(url, data, config));
   }, [apiCall]);
 
+  // PATCH manquait : plusieurs endpoints de la couche SaaS n'acceptent
+  // que ce verbe (ex. PATCH /v1/admin/tenants/{t}/settings).
+  const patch = useCallback((url, data = {}, config = {}) => {
+    return apiCall(() => api.patch(url, data, config));
+  }, [apiCall]);
+
   const del = useCallback((url, config = {}) => {
     return apiCall(() => api.delete(url, config));
   }, [apiCall]);
@@ -54,6 +60,7 @@ export const useApi = () => {
     loading,
     error,
     clearError,
+    patch,
     get,
     post,
     put,

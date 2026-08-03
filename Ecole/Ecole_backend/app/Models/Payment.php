@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Traits\BelongsToEcole;
 
 class Payment extends Model
 {
-    use BelongsToEcole;
+    use HasFactory, BelongsToEcole;
 
     protected $fillable = [
         'eleve_id',

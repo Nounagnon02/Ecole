@@ -60,7 +60,7 @@ class AuditRegressionTest extends TestCase
     {
         $ecole = Ecole::factory()->create();
         $comptable = User::factory()->create(['role' => 'comptable', 'ecole_id' => $ecole->id]);
-        $eleve = Eleve::factory()->create(['ecole_id' => $ecole->id]);
+        $eleve = Eleve::factory()->pourEcole($ecole)->create();
 
         $payment = Payment::factory()->create([
             'ecole_id' => $ecole->id,
@@ -84,14 +84,12 @@ class AuditRegressionTest extends TestCase
     public function s3_un_eleve_ne_solde_pas_le_paiement_dun_autre()
     {
         $ecole = Ecole::factory()->create();
-        $eleveA = Eleve::factory()->create(['ecole_id' => $ecole->id]);
-        $eleveB = Eleve::factory()->create(['ecole_id' => $ecole->id]);
+        // pourEcole() rattache l'élève ET son utilisateur à la même école,
+        // sans quoi le scope tenant masque le paiement au compte de test.
+        $eleveA = Eleve::factory()->pourEcole($ecole)->create();
+        $eleveB = Eleve::factory()->pourEcole($ecole)->create();
 
-        $userA = User::factory()->create([
-            'role' => 'eleve',
-            'ecole_id' => $ecole->id,
-            'id' => $eleveA->user_id,
-        ]);
+        $userA = $eleveA->user;
 
         $payment = Payment::factory()->create([
             'ecole_id' => $ecole->id,

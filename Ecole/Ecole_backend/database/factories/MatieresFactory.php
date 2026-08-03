@@ -4,9 +4,9 @@ namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-class MatiereFactory extends Factory
+class MatieresFactory extends Factory
 {
-    protected $model = \App\Models\Matiere::class;
+    protected $model = \App\Models\Matieres::class;
 
     public function definition()
     {

@@ -34,4 +34,26 @@ class EleveFactory extends Factory
             'ecole_id'         => $ecole,
         ];
     }
+
+    /**
+     * Rattache l'élève ET son utilisateur à la même école.
+     *
+     * `Eleve::factory()->create(['ecole_id' => $e->id])` ne suffit pas : le
+     * User imbriqué dans definition() résout sa propre Ecole::factory(), donc
+     * l'utilisateur finit dans un autre établissement. Le global scope
+     * BelongsToEcole masque alors les enregistrements au compte de test, et
+     * les requêtes échouent en « No query results » — un faux négatif
+     * difficile à diagnostiquer.
+     */
+    public function pourEcole(\App\Models\Ecole $ecole): static
+    {
+        return $this->state(fn() => [
+            'ecole_id' => $ecole->id,
+            'user_id'  => \App\Models\User::factory()->state([
+                'role' => 'eleve',
+                'ecole_id' => $ecole->id,
+            ]),
+            'class_id' => \App\Models\Classes::factory()->state(['ecole_id' => $ecole->id]),
+        ]);
+    }
 }
