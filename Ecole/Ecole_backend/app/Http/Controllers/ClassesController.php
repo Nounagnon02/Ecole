@@ -84,7 +84,7 @@ public function attachMatieres(Request $request, $id)
     } catch (\Exception $e) {
         return response()->json([
             'message' => 'Erreur lors de l\'attachement des matières',
-            'error' => $this->messageErreur($e)
+            'error' => $this->clientErrorMessage($e)
         ], 500);
     }
 }
@@ -297,7 +297,7 @@ public function getMatieres($id)
     } catch (\Exception $e) {
         return response()->json([
             'message' => 'Erreur lors de la récupération des matières',
-            'error' => $this->messageErreur($e)
+            'error' => $this->clientErrorMessage($e)
         ], 404);
     }
 }

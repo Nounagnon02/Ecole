@@ -47,7 +47,7 @@ class TransportController extends Controller
         ]);
 
         $abonnement = AbonnementTransport::create(array_merge($validated, [
-            'statut' => 'actif',
+            'statut' => 'active',
             'montant_paye' => 0
         ]));
 

@@ -20,7 +20,7 @@ class EleveResource extends JsonResource
             'email' => $this->email,
             'telephone' => $this->telephone,
             'adresse' => $this->adresse,
-            'statut' => $this->statut ?? 'actif',
+            'statut' => $this->statut ?? 'active',
             'tuteur_nom' => $this->tuteur_nom,
             'tuteur_telephone' => $this->tuteur_telephone,
             'created_at' => $this->created_at?->isoFormat('LL'),

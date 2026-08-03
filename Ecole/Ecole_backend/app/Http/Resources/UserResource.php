@@ -18,7 +18,7 @@ class UserResource extends JsonResource
             'telephone' => $this->telephone,
             'avatar' => $this->avatar_url,
             'ecole_id' => $this->ecole_id,
-            'statut' => $this->statut ?? 'actif',
+            'statut' => $this->statut ?? 'active',
             'derniere_connexion' => $this->last_login_at?->diffForHumans(),
             'created_at' => $this->created_at?->isoFormat('LL'),
             'updated_at' => $this->updated_at?->diffForHumans(),

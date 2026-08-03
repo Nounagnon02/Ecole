@@ -15,15 +15,15 @@ class EcoleController extends Controller
      * BelongsToEcole. L'isolation doit donc être explicite ici, sinon un
      * directeur liste et modifie toutes les écoles clientes (cf. audit S5).
      */
-    private function estSuperAdmin(): bool
+    private function isSuperAdmin(): bool
     {
         return auth()->user()?->role === 'super-admin';
     }
 
     /** Refuse l'accès si l'école visée n'est pas celle de l'utilisateur. */
-    private function verifierPerimetre(Ecole $ecole): void
+    private function assertWithinScope(Ecole $ecole): void
     {
-        if ($this->estSuperAdmin()) {
+        if ($this->isSuperAdmin()) {
             return;
         }
 
@@ -37,7 +37,7 @@ class EcoleController extends Controller
         // Un directeur ne voit que son école ; le super-admin voit la plateforme.
         $query = Ecole::query();
 
-        if (!$this->estSuperAdmin()) {
+        if (!$this->isSuperAdmin()) {
             $query->where('id', auth()->user()?->ecole_id);
         }
 
@@ -50,7 +50,7 @@ class EcoleController extends Controller
     public function store(Request $request)
     {
         // Créer un établissement relève de la plateforme, pas d'un directeur.
-        if (!$this->estSuperAdmin()) {
+        if (!$this->isSuperAdmin()) {
             return response()->json(['success' => false, 'message' => 'Accès refusé'], 403);
         }
 
@@ -86,7 +86,7 @@ class EcoleController extends Controller
 
     public function show(Ecole $ecole)
     {
-        $this->verifierPerimetre($ecole);
+        $this->assertWithinScope($ecole);
 
         // On renvoie des compteurs, pas les collections complètes : le `load`
         // précédent dumpait tous les utilisateurs et élèves d'un coup (P3).
@@ -98,7 +98,7 @@ class EcoleController extends Controller
 
     public function update(Request $request, Ecole $ecole)
     {
-        $this->verifierPerimetre($ecole);
+        $this->assertWithinScope($ecole);
 
         $validated = $request->validate([
             'nom' => 'string|max:255',
@@ -128,7 +128,7 @@ class EcoleController extends Controller
     {
         // Suppression réservée à la plateforme : `ecole_id` est en
         // cascadeOnDelete, une suppression détruit toutes les données liées.
-        if (!$this->estSuperAdmin()) {
+        if (!$this->isSuperAdmin()) {
             return response()->json(['success' => false, 'message' => 'Accès refusé'], 403);
         }
 
@@ -155,7 +155,7 @@ class EcoleController extends Controller
     // Statistiques d'une école
     public function stats(Ecole $ecole)
     {
-        $this->verifierPerimetre($ecole);
+        $this->assertWithinScope($ecole);
 
         return response()->json([
             'success' => true,

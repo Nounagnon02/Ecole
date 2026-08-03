@@ -102,7 +102,7 @@ Route::prefix('api/v1/billing/webhook')->middleware('throttle:webhooks')->group(
 Route::prefix('api/v1/billing')->group(function () {
     Route::get('callback', 'App\Http\Controllers\Central\BillingController@callback')
         ->name('billing.callback');
-    // `cancelPayment` et non `cancel` : ce dernier annule un abonnement et
+    // `cancelPayment` et non `cancel` : ce dernier canceled un abonnement et
     // attend un modèle Subscription en paramètre.
     Route::get('cancel', 'App\Http\Controllers\Central\BillingController@cancelPayment')
         ->name('billing.cancel');

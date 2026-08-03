@@ -26,7 +26,7 @@ class ModuleFactory extends Factory
         ];
     }
 
-    public function coeur(): static
+    public function core(): static
     {
         return $this->state(fn() => ['is_core' => true]);
     }

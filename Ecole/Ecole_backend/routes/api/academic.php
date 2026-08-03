@@ -113,7 +113,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/', [DevoirController::class, 'store'])->middleware('role:directeur,enseignant');
         Route::get('/{id}', [DevoirController::class, 'show'])->middleware('role:directeur,enseignant,eleve,parent');
         Route::post('/{id}/soumettre', [DevoirController::class, 'soumettre'])->middleware('role:eleve');
-        Route::get('/{id}/copie/{eleveId}', [DevoirController::class, 'telechargerCopie'])->middleware('role:directeur,enseignant,censeur,eleve');
+        Route::get('/{id}/copie/{eleveId}', [DevoirController::class, 'downloadSubmission'])->middleware('role:directeur,enseignant,censeur,eleve');
         Route::post('/{id}/noter/{eleveId}', [DevoirController::class, 'noter'])->middleware('role:directeur,enseignant');
         Route::delete('/{id}', [DevoirController::class, 'destroy'])->middleware('role:directeur,enseignant');
     });

@@ -10,9 +10,14 @@ class MatieresFactory extends Factory
 
     public function definition()
     {
+        // La table `matieres` n'a qu'une colonne métier : `nom`. Ni
+        // `nom_matiere`, ni `code_matiere`, ni `coefficient` (ce dernier vit
+        // sur le pivot serie_matieres).
         return [
-            'nom_matiere' => fake()->randomElement(['Mathématiques', 'Français', 'Anglais', 'Physique', 'SVT', 'Histoire-Géo']),
-            'code_matiere' => strtoupper(fake()->lexify('???')),
+            'nom' => fake()->randomElement([
+                'Mathématiques', 'Français', 'Anglais', 'Histoire-Géographie',
+                'SVT', 'Physique-Chimie', 'EPS', 'Philosophie',
+            ]) . ' ' . fake()->unique()->numerify('##'),
         ];
     }
 }

@@ -17,7 +17,7 @@ use Illuminate\Http\Request;
 class MessageController extends Controller
 {
     /** Identifiant de l'utilisateur courant, au format stocké en base (string). */
-    private function moi(): string
+    private function currentUserId(): string
     {
         return (string) auth()->id();
     }
@@ -28,7 +28,7 @@ class MessageController extends Controller
      * @param  iterable<string>  $ids
      * @return array<string, string>
      */
-    private function nomsParId(iterable $ids): array
+    private function namesById(iterable $ids): array
     {
         $ids = collect($ids)->filter()->unique()->values();
 
@@ -48,11 +48,11 @@ class MessageController extends Controller
      */
     public function index(Request $request)
     {
-        $messages = Message::where('destinataire', $this->moi())
+        $messages = Message::where('destinataire', $this->currentUserId())
             ->orderByDesc('created_at')
             ->paginate((int) $request->input('per_page', 30));
 
-        $noms = $this->nomsParId($messages->pluck('expediteur'));
+        $noms = $this->namesById($messages->pluck('expediteur'));
         $messages->getCollection()->transform(function ($m) use ($noms) {
             $m->expediteur_nom = $noms[$m->expediteur] ?? 'Utilisateur ' . $m->expediteur;
             return $m;
@@ -66,11 +66,11 @@ class MessageController extends Controller
      */
     public function sent(Request $request)
     {
-        $messages = Message::where('expediteur', $this->moi())
+        $messages = Message::where('expediteur', $this->currentUserId())
             ->orderByDesc('created_at')
             ->paginate((int) $request->input('per_page', 30));
 
-        $noms = $this->nomsParId($messages->pluck('destinataire'));
+        $noms = $this->namesById($messages->pluck('destinataire'));
         $messages->getCollection()->transform(function ($m) use ($noms) {
             $m->destinataire_nom = $noms[$m->destinataire] ?? 'Utilisateur ' . $m->destinataire;
             return $m;
@@ -103,7 +103,7 @@ class MessageController extends Controller
         }
 
         $message = Message::create([
-            'expediteur'   => $this->moi(),
+            'expediteur'   => $this->currentUserId(),
             'destinataire' => (string) $destinataire->id,
             'sujet'        => $validated['sujet'],
             'contenu'      => $validated['contenu'],
@@ -120,7 +120,7 @@ class MessageController extends Controller
     {
         $message = Message::findOrFail($id);
 
-        if ($message->destinataire !== $this->moi()) {
+        if ($message->destinataire !== $this->currentUserId()) {
             return response()->json(['success' => false, 'message' => 'Accès refusé'], 403);
         }
 
@@ -134,7 +134,7 @@ class MessageController extends Controller
      */
     public function unreadCount()
     {
-        $count = Message::where('destinataire', $this->moi())
+        $count = Message::where('destinataire', $this->currentUserId())
             ->where('lu', false)
             ->count();
 
@@ -165,20 +165,20 @@ class MessageController extends Controller
      */
     public function getConversations()
     {
-        $moi = $this->moi();
+        $me = $this->currentUserId();
 
         $conversations = Message::query()
-            ->selectRaw('CASE WHEN expediteur = ? THEN destinataire ELSE expediteur END as contact_id', [$moi])
+            ->selectRaw('CASE WHEN expediteur = ? THEN destinataire ELSE expediteur END as contact_id', [$me])
             ->selectRaw('MAX(created_at) as derniere_date')
-            ->selectRaw('SUM(CASE WHEN destinataire = ? AND lu = 0 THEN 1 ELSE 0 END) as non_lus', [$moi])
-            ->where(fn($q) => $q->where('expediteur', $moi)->orWhere('destinataire', $moi))
+            ->selectRaw('SUM(CASE WHEN destinataire = ? AND lu = 0 THEN 1 ELSE 0 END) as non_lus', [$me])
+            ->where(fn($q) => $q->where('expediteur', $me)->orWhere('destinataire', $me))
             ->groupBy('contact_id')
             ->orderByDesc('derniere_date')
             ->get();
 
         // Un seul aller-retour pour tous les noms, au lieu d'une requête par
         // conversation comme précédemment (cf. audit P4).
-        $noms = $this->nomsParId($conversations->pluck('contact_id'));
+        $noms = $this->namesById($conversations->pluck('contact_id'));
 
         $conversations->transform(function ($c) use ($noms) {
             $c->contact_nom = $noms[(string) $c->contact_id] ?? 'Utilisateur ' . $c->contact_id;
@@ -193,12 +193,12 @@ class MessageController extends Controller
      */
     public function getConversation(Request $request, $contactId)
     {
-        $moi = $this->moi();
+        $me = $this->currentUserId();
         $contactId = (string) $contactId;
 
-        $messages = Message::where(function ($q) use ($moi, $contactId) {
-            $q->where(fn($sub) => $sub->where('expediteur', $moi)->where('destinataire', $contactId))
-              ->orWhere(fn($sub) => $sub->where('expediteur', $contactId)->where('destinataire', $moi));
+        $messages = Message::where(function ($q) use ($me, $contactId) {
+            $q->where(fn($sub) => $sub->where('expediteur', $me)->where('destinataire', $contactId))
+              ->orWhere(fn($sub) => $sub->where('expediteur', $contactId)->where('destinataire', $me));
         })
             ->orderBy('created_at')
             ->paginate((int) $request->input('per_page', 50));

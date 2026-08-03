@@ -39,7 +39,7 @@ class AppServiceProvider extends ServiceProvider
         // DB à CHAQUE démarrage de l'application (y compris `artisan` et les
         // tests, qui échouaient tous au boot). Le réglage ne sert qu'aux
         // migrations sur MySQL < 5.7 : on le limite à ce contexte.
-        if ($this->app->runningInConsole() && $this->executeUneMigration()) {
+        if ($this->app->runningInConsole() && $this->isRunningMigration()) {
             Schema::defaultStringLength(191);
         }
     }
@@ -47,7 +47,7 @@ class AppServiceProvider extends ServiceProvider
     /**
      * La commande en cours est-elle une commande de migration ?
      */
-    private function executeUneMigration(): bool
+    private function isRunningMigration(): bool
     {
         $commande = $_SERVER['argv'][1] ?? '';
 

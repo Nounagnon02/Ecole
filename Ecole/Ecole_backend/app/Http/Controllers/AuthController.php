@@ -62,7 +62,7 @@ class AuthController extends Controller
 
         // Client stateful (SPA sur domaine déclaré dans sanctum.stateful) :
         // session sur cookie httpOnly, aucun token exposé au JavaScript.
-        if ($this->estClientStateful($request)) {
+        if ($this->isStatefulClient($request)) {
             Auth::login($user);
             $request->session()?->regenerate();
 
@@ -91,7 +91,7 @@ class AuthController extends Controller
      * La requête vient-elle d'un front first-party gérant les cookies ?
      * Sanctum considère « stateful » les origines listées dans sanctum.stateful.
      */
-    private function estClientStateful(Request $request): bool
+    private function isStatefulClient(Request $request): bool
     {
         return \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::fromFrontend($request);
     }
@@ -175,7 +175,7 @@ class AuthController extends Controller
 
         } catch (\Exception $e) {
             \DB::rollBack();
-            return response()->json(['message' => 'Erreur lors de l\'inscription', 'error' => $this->messageErreur($e)], 500);
+            return response()->json(['message' => 'Erreur lors de l\'inscription', 'error' => $this->clientErrorMessage($e)], 500);
         }
     }
 

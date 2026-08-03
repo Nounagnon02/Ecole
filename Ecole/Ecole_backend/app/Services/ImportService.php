@@ -60,7 +60,7 @@ class ImportService
                         'numero_matricule' => $matricule,
                         'class_id' => $classe->id,
                         'serie_id' => $serieId,
-                        'statut_eleve' => 'actif'
+                        'statut_eleve' => 'active'
                     ]);
 
                     $stats['success']++;

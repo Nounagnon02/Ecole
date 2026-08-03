@@ -106,7 +106,7 @@ return new class extends Migration
         }
 
         // `ecoles` porte SoftDeletes : une école supprimée ne doit pas compter,
-        // sinon le cas courant (un seul établissement actif) serait bloqué.
+        // sinon le cas courant (un seul établissement active) serait bloqué.
         $ecoles = DB::table('ecoles')
             ->when(
                 Schema::hasColumn('ecoles', 'deleted_at'),

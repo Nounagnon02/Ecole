@@ -158,7 +158,7 @@ class MatieresController extends Controller
     } catch (\Exception $e) {
         return response()->json([
             'success' => false,
-            'message' => $this->messageErreur($e, 'Erreur lors de la récupération des matières')
+            'message' => $this->clientErrorMessage($e, 'Erreur lors de la récupération des matières')
         ], 500);
     }
 }
@@ -205,7 +205,7 @@ class MatieresController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => $this->messageErreur($e, 'Erreur lors de la récupération des matières')
+                'message' => $this->clientErrorMessage($e, 'Erreur lors de la récupération des matières')
             ], 500);
         }
     }
@@ -249,7 +249,7 @@ class MatieresController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => $this->messageErreur($e, 'Erreur lors de la récupération des matières')
+                'message' => $this->clientErrorMessage($e, 'Erreur lors de la récupération des matières')
             ], 500);
         }
     }

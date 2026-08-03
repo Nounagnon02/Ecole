@@ -17,7 +17,7 @@ class EcoleResource extends JsonResource
             'email' => $this->email,
             'logo_url' => $this->logo_url,
             'type' => $this->type,
-            'statut' => $this->statut ?? 'actif',
+            'statut' => $this->statut ?? 'active',
             'created_at' => $this->created_at?->isoFormat('LL'),
             'classes_count' => $this->whenCounted('classes'),
             'eleves_count' => $this->whenCounted('eleves'),

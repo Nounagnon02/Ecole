@@ -68,7 +68,7 @@ class AIService
 
                 return [
                     'success' => true,
-                    'content' => $this->extraireTexte($data['content'] ?? []),
+                    'content' => $this->extractText($data['content'] ?? []),
                     'usage' => $data['usage'] ?? [],
                     'model' => $data['model'] ?? $this->model,
                 ];
@@ -95,7 +95,7 @@ class AIService
      *
      * @param  array<int, array<string, mixed>>  $blocs
      */
-    private function extraireTexte(array $blocs): string
+    private function extractText(array $blocs): string
     {
         $textes = [];
 
