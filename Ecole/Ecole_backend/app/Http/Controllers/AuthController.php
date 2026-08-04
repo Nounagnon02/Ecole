@@ -190,8 +190,8 @@ class AuthController extends Controller
             if ($user->role === 'eleve') {
                 $profileData = $request->validate([
                     'numero_matricule' => 'required|string|unique:eleves',
-                    'class_id' => 'required|exists:classes,id',
-                    'serie_id' => 'nullable|exists:series,id',
+                    'class_id' => 'required|school_exists:classes,id',
+                    'serie_id' => 'nullable|school_exists:series,id',
                 ]);
                 Eleve::create([
                     'user_id' => $user->id,
@@ -210,6 +210,7 @@ class AuthController extends Controller
             return response()->json(['message' => 'Utilisateur créé avec succès', 'user' => $user], 201);
 
         } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
             \DB::rollBack();
             return response()->json(['message' => 'Erreur lors de l\'inscription', 'error' => $this->clientErrorMessage($e)], 500);
         }

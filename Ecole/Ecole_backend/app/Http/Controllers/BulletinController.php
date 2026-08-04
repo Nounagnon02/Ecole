@@ -112,6 +112,7 @@ class BulletinController extends Controller
             // Aucune note pour cette matière sur cette période.
             return 0;
         } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
             Log::error('Erreur calcul moyenne matière: ' . $e->getMessage());
             return 0;
         }
@@ -221,6 +222,7 @@ class BulletinController extends Controller
             ]);
 
         } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
             Log::error('Error in GenerateFile: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString()
             ]);
@@ -453,6 +455,7 @@ class BulletinController extends Controller
             ]);
 
         } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
             Log::error("Erreur génération bulletin: " . $e->getMessage());
             return response()->json([
                 'success' => false,
@@ -504,6 +507,7 @@ class BulletinController extends Controller
                 'total_eleves' => count($moyennes)
             ];
         } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
             Log::error('Erreur calcul rang général: ' . $e->getMessage());
             return [
                 'position' => null,
@@ -586,6 +590,7 @@ class BulletinController extends Controller
                 'total_eleves' => count($moyennes)
             ];
         } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
             Log::error('Erreur calcul rang: ' . $e->getMessage());
             return [
                 'position' => null,
@@ -628,6 +633,7 @@ class BulletinController extends Controller
                 'total_eleves' => count($moyennes)
             ];
         } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
             Log::error('Erreur calcul rang: ' . $e->getMessage());
             return [
                 'position' => null,
@@ -675,6 +681,7 @@ class BulletinController extends Controller
                 'total_eleves' => count($moyennes)
             ];
         } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
             Log::error('Erreur calcul rang: ' . $e->getMessage());
             return [
                 'position' => null,
@@ -719,6 +726,7 @@ class BulletinController extends Controller
                 'total_eleves' => count($moyennes)
             ];
         } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
             return [
                 'position' => null,
                 'total_eleves' => 0

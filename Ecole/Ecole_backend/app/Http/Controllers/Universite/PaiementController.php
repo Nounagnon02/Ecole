@@ -17,7 +17,7 @@ class PaiementController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'etudiant_id' => 'required|exists:etudiants,id',
+            'etudiant_id' => 'required|school_exists:etudiants,id',
             'montant' => 'required|numeric|min:0',
             'date_paiement' => 'required|date',
             'motif' => 'required|string|max:200'

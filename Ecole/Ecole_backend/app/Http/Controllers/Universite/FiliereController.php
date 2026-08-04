@@ -19,7 +19,7 @@ class FiliereController extends Controller
         $validated = $request->validate([
             'nom' => 'required|string|max:100',
             'niveau' => 'required|string|max:50',
-            'departement_id' => 'required|exists:departements,id'
+            'departement_id' => 'required|school_exists:departements,id'
         ]);
 
         $filiere = Filiere::create($validated);
@@ -36,7 +36,7 @@ class FiliereController extends Controller
         $validated = $request->validate([
             'nom' => 'sometimes|required|string|max:100',
             'niveau' => 'sometimes|required|string|max:50',
-            'departement_id' => 'sometimes|required|exists:departements,id'
+            'departement_id' => 'sometimes|required|school_exists:departements,id'
         ]);
 
         $filiere->update($validated);

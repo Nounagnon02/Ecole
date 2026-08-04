@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Traits\Auditable;
 use App\Traits\BelongsToEcole;
+use App\Traits\ScopedToCycle;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Matieres;
@@ -13,7 +14,16 @@ use App\Models\Enseignant;
 
 class Notes extends Model
 {
-    use HasFactory, BelongsToEcole, Auditable;
+    use HasFactory, BelongsToEcole, Auditable, ScopedToCycle;
+
+    /**
+     * Une note porte la classe où l'évaluation a eu lieu.
+     */
+    protected static function cyclePath(): array
+    {
+        return ['class' => 'classe_id'];
+    }
+
 
     protected $fillable = [
         'eleve_id',

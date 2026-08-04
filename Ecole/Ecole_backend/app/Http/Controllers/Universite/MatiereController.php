@@ -20,9 +20,9 @@ class MatiereController extends Controller
             'code' => 'required|string|unique:matieres',
             'intitule' => 'required|string|max:200',
             'credit' => 'required|integer|min:1',
-            'enseignant_id' => 'required|exists:enseignants,id',
-            'semestre_id' => 'required|exists:semestres,id',
-            'filiere_id' => 'required|exists:filieres,id'
+            'enseignant_id' => 'required|school_exists:enseignants,id',
+            'semestre_id' => 'required|school_exists:semestres,id',
+            'filiere_id' => 'required|school_exists:filieres,id'
         ]);
 
         $matiere = Matiere::create($validated);
@@ -40,9 +40,9 @@ class MatiereController extends Controller
             'code' => 'sometimes|required|string|unique:matieres,code,' . $matiere->id,
             'intitule' => 'sometimes|required|string|max:200',
             'credit' => 'sometimes|required|integer|min:1',
-            'enseignant_id' => 'sometimes|required|exists:enseignants,id',
-            'semestre_id' => 'sometimes|required|exists:semestres,id',
-            'filiere_id' => 'sometimes|required|exists:filieres,id'
+            'enseignant_id' => 'sometimes|required|school_exists:enseignants,id',
+            'semestre_id' => 'sometimes|required|school_exists:semestres,id',
+            'filiere_id' => 'sometimes|required|school_exists:filieres,id'
         ]);
 
         $matiere->update($validated);

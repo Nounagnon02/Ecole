@@ -29,8 +29,8 @@ class EmploiDuTempsController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'classe_id' => 'required|exists:classes,id',
-            'matiere_id' => 'required|exists:matieres,id',
+            'classe_id' => 'required|school_exists:classes,id',
+            'matiere_id' => 'required|school_exists:matieres,id',
             'enseignant_id' => 'required',
             'jour' => 'required|string',
             'heure_debut' => 'required',
@@ -49,8 +49,8 @@ class EmploiDuTempsController extends Controller
     public function update(Request $request, $id)
     {
         $validated = $request->validate([
-            'classe_id' => 'exists:classes,id',
-            'matiere_id' => 'exists:matieres,id',
+            'classe_id' => 'school_exists:classes,id',
+            'matiere_id' => 'school_exists:matieres,id',
             'enseignant_id' => 'string',
             'jour' => 'string',
             'heure_debut' => 'string',

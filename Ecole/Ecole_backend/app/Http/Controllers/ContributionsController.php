@@ -22,8 +22,8 @@ class ContributionsController extends Controller
             'montant_deuxieme_tranche' => 'required|integer',
             'date_fin_troisieme_tranche' => 'required|date',
             'montant_troisieme_tranche' => 'required|integer',
-            'id_classe' => 'required|exists:classes,id',
-            'id_serie'=> 'required|exists:series,id',
+            'id_classe' => 'required|school_exists:classes,id',
+            'id_serie'=> 'required|school_exists:series,id',
         ]);
 
         $contribution = Contributions::create($validated);
@@ -43,7 +43,7 @@ class ContributionsController extends Controller
             'date_fin_premiere_tranche' => 'date',
             'date_fin_deuxieme_tranche' => 'date',
             'date_fin_troisieme_tranche' => 'date',
-            'id_classe' => 'exists:classes,id',
+            'id_classe' => 'school_exists:classes,id',
         ]);
 
         $contribution = Contributions::findOrFail($id);

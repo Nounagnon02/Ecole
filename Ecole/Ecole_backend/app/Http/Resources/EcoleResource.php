@@ -13,11 +13,13 @@ class EcoleResource extends JsonResource
             'nom' => $this->nom,
             'slug' => $this->slug,
             'adresse' => $this->adresse,
-            'telephone' => $this->telephone,
+            'telephone' => $this->phone,
             'email' => $this->email,
-            'logo_url' => $this->logo_url,
-            'type' => $this->type,
-            'statut' => $this->statut ?? 'active',
+            'logo_url' => $this->logo,
+            // La colonne est `status`, pas `statut` : le repli `?? 'active'`
+            // faisait rapporter *toute* école comme active, y compris celle
+            // qu'on venait de désactiver.
+            'statut' => $this->status ?? 'active',
             'created_at' => $this->created_at?->isoFormat('LL'),
             'classes_count' => $this->whenCounted('classes'),
             'eleves_count' => $this->whenCounted('eleves'),

@@ -22,7 +22,7 @@ class PersonnelController extends Controller
             'poste' => 'required|string|max:100',
             'telephone' => 'nullable|string|max:20',
             'email' => 'nullable|email',
-            'universite_id' => 'required|exists:universites,id'
+            'universite_id' => 'required|school_exists:universites,id'
         ]);
 
         $personnel = Personnel::create($validated);
@@ -40,7 +40,7 @@ class PersonnelController extends Controller
             'nom' => 'sometimes|required|string|max:100',
             'prenom' => 'sometimes|required|string|max:100',
             'poste' => 'sometimes|required|string|max:100',
-            'universite_id' => 'sometimes|required|exists:universites,id'
+            'universite_id' => 'sometimes|required|school_exists:universites,id'
         ]);
 
         $personnel->update($validated);

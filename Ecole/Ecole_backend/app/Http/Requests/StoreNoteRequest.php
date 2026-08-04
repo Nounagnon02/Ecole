@@ -14,12 +14,12 @@ class StoreNoteRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'eleve_id' => 'required|exists:eleves,id',
-            'matiere_id' => 'required|exists:matieres,id',
+            'eleve_id' => 'required|school_exists:eleves,id',
+            'matiere_id' => 'required|school_exists:matieres,id',
             'valeur' => 'required|numeric|min:0|max:20',
             'valeur_sur' => 'sometimes|numeric|min:1|max:20',
-            'periode_id' => 'nullable|exists:periodes,id',
-            'type_evaluation_id' => 'nullable|exists:type_evaluations,id',
+            'periode_id' => 'nullable|school_exists:periodes,id',
+            'type_evaluation_id' => 'nullable|school_exists:type_evaluations,id',
             'date' => 'required|date',
             'appreciation' => 'nullable|string|max:500',
         ];

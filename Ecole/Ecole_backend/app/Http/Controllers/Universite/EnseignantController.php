@@ -23,7 +23,7 @@ class EnseignantController extends Controller
             'specialite' => 'nullable|string',
             'telephone' => 'nullable|string|max:20',
             'email' => 'nullable|email',
-            'departement_id' => 'required|exists:departements,id'
+            'departement_id' => 'required|school_exists:departements,id'
         ]);
 
         $enseignant = Enseignant::create($validated);
@@ -41,7 +41,7 @@ class EnseignantController extends Controller
             'nom' => 'sometimes|required|string|max:100',
             'prenom' => 'sometimes|required|string|max:100',
             'grade' => 'sometimes|required|string|max:50',
-            'departement_id' => 'sometimes|required|exists:departements,id'
+            'departement_id' => 'sometimes|required|school_exists:departements,id'
         ]);
 
         $enseignant->update($validated);

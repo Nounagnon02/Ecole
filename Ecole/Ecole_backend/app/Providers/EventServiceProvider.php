@@ -2,6 +2,9 @@
 
 namespace App\Providers;
 
+use App\Support\CycleAccess;
+use Illuminate\Auth\Events\Authenticated;
+use Illuminate\Auth\Events\Logout;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
@@ -27,6 +30,18 @@ class EventServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        // Le périmètre de cycle est mémoïsé par requête. Si l'identité change
+        // dans le même processus PHP — `actingAs` entre deux assertions, un job
+        // en file traitant plusieurs établissements, un worker Octane qui
+        // enchaîne les requêtes — le second appelant héritait du cycle du
+        // premier. Le cache devenait lui-même la fuite qu'il devait éviter.
+        //
+        // `Authenticated` couvre les deux cas : il est émis quand le garde
+        // résout l'utilisateur d'une requête, et aussi par `setUser()`, donc
+        // par `actingAs`.
+        Event::listen(Authenticated::class, fn() => CycleAccess::flush());
+        Event::listen(Logout::class, fn() => CycleAccess::flush());
+
         //
     }
 

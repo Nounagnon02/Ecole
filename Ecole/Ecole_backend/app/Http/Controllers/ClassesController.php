@@ -29,6 +29,7 @@ class ClassesController extends Controller
             return response()->json($classe, 201);
 
         } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
             Log::error('Erreur création classe', ['error' => $e->getMessage()]);
             return response()->json([
                 'message' => 'Erreur lors de l\'ajout',
@@ -68,7 +69,7 @@ public function attachMatieres(Request $request, $id)
 
         $validated = $request->validate([
             'matieres' => 'required|array',
-            'matieres.*.id' => 'required|exists:matieres,id',
+            'matieres.*.id' => 'required|school_exists:matieres,id',
             'categorie_classe' => 'required|string|' . Cycles::rule()
         ]);
 
@@ -83,6 +84,7 @@ public function attachMatieres(Request $request, $id)
             'classe' => $classe->load('matieres')
         ]);
     } catch (\Exception $e) {
+        $this->rethrowIfMeaningful($e);
         return response()->json([
             'message' => 'Erreur lors de l\'attachement des matières',
             'error' => $this->clientErrorMessage($e)
@@ -296,6 +298,7 @@ public function getMatieres($id)
             'matieres' => $classe->matieres
         ]);
     } catch (\Exception $e) {
+        $this->rethrowIfMeaningful($e);
         return response()->json([
             'message' => 'Erreur lors de la récupération des matières',
             'error' => $this->clientErrorMessage($e)
@@ -322,7 +325,7 @@ public function updateSeries(Request $request, $id)
 
     $validated = $request->validate([
         'series' => 'required|array',
-        'series.*' => 'exists:series,id'
+        'series.*' => 'school_exists:series,id'
     ]);
 
     $class->series()->sync($validated['series']);
@@ -394,7 +397,7 @@ public function updateSeries(Request $request, $id)
 
         $validated = $request->validate([
             'matieres' => 'required|array',
-            'matieres.*' => 'exists:matieres,id'
+            'matieres.*' => 'school_exists:matieres,id'
         ]);
 
         // Synchroniser les matières pour cette série spécifique

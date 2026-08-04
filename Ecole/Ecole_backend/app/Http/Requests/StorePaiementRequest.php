@@ -14,7 +14,7 @@ class StorePaiementRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'eleve_id' => 'required|exists:eleves,id',
+            'eleve_id' => 'required|school_exists:eleves,id',
             'montant' => 'required|numeric|min:0',
             'type' => 'required|in:frais_scolarite,inscription,tenue,transport,autre',
             'mode_paiement' => 'required|in:espece,cheque,virement,mobile_money,carte',

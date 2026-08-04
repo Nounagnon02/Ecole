@@ -3,12 +3,22 @@
 namespace App\Models;
 
 use App\Traits\BelongsToEcole;
+use App\Traits\ScopedToCycle;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Sanction extends Model
 {
-    use HasFactory, BelongsToEcole;
+    use HasFactory, BelongsToEcole, ScopedToCycle;
+
+    /**
+     * Une sanction vise un élève.
+     */
+    protected static function cyclePath(): array
+    {
+        return ['pupil' => 'eleve_id'];
+    }
+
 
     protected $fillable = [
         'eleve_id', 'type_sanction', 'motif', 'date', 'duree', 'statut', 'ecole_id'

@@ -651,6 +651,7 @@ class DashboardController extends Controller
                 ];
             }, range(1, 12));
         } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
             return [
                 ['name' => 'Aucune', 'students' => 0],
             ];
@@ -672,6 +673,7 @@ class DashboardController extends Controller
                 ['name' => 'Insuffisant', 'value' => $insuffisant ?: 0],
             ];
         } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
             return [
                 ['name' => 'Aucune donnée', 'value' => 0],
             ];

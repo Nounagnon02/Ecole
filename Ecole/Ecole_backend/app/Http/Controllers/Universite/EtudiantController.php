@@ -27,7 +27,7 @@ class EtudiantController extends Controller
             'email' => 'nullable|email',
             'adresse' => 'nullable|string',
             'annee_entree' => 'required|integer',
-            'filiere_id' => 'required|exists:filieres,id'
+            'filiere_id' => 'required|school_exists:filieres,id'
         ]);
 
         $etudiant = Etudiant::create($validated);
@@ -47,7 +47,7 @@ class EtudiantController extends Controller
             'prenom' => 'sometimes|required|string|max:100',
             'date_naissance' => 'sometimes|required|date',
             'sexe' => 'sometimes|required|in:M,F',
-            'filiere_id' => 'sometimes|required|exists:filieres,id'
+            'filiere_id' => 'sometimes|required|school_exists:filieres,id'
         ]);
 
         $etudiant->update($validated);

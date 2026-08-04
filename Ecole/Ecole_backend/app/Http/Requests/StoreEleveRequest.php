@@ -19,7 +19,7 @@ class StoreEleveRequest extends FormRequest
             'date_naissance' => 'required|date',
             'lieu_naissance' => 'nullable|string|max:255',
             'sexe' => 'required|in:M,F',
-            'classe_id' => 'required|exists:classes,id',
+            'classe_id' => 'required|school_exists:classes,id',
             'matricule' => 'required|string|unique:eleves,matricule',
             'email' => 'nullable|email|max:255|unique:users,email',
             'telephone' => 'nullable|string|max:20',

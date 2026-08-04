@@ -5,11 +5,21 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use App\Traits\Auditable;
 use App\Traits\BelongsToEcole;
+use App\Traits\ScopedToCycle;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Eleve extends Model
 {
-    use HasFactory, BelongsToEcole, Auditable;
+    use HasFactory, BelongsToEcole, Auditable, ScopedToCycle;
+
+    /**
+     * Un élève appartient au cycle de sa classe.
+     */
+    protected static function cyclePath(): array
+    {
+        return ['class' => 'class_id'];
+    }
+
 
     protected $fillable = [
         'user_id',

@@ -29,10 +29,10 @@ class typeEvaluationController extends Controller
     public function attach(Request $request)
     {
         $validated = $request->validate([
-            'classe_id' => 'required|exists:classes,id',
-            'serie_id' => 'required|exists:series,id',
-            'periode_id' => 'required|exists:periodes,id',
-            'typeevaluation_id' => 'required|exists:type_evaluations,id',
+            'classe_id' => 'required|school_exists:classes,id',
+            'serie_id' => 'required|school_exists:series,id',
+            'periode_id' => 'required|school_exists:periodes,id',
+            'typeevaluation_id' => 'required|school_exists:type_evaluations,id',
         ]);
 
         // Vérifier si la liaison existe déjà
@@ -58,10 +58,10 @@ class typeEvaluationController extends Controller
         try {
             $validated = $request->validate([
                 'liaisons' => 'required|array',
-                'liaisons.*.classe_id' => 'required|integer|exists:classes,id',
-                'liaisons.*.periode_id' => 'required|integer|exists:periodes,id',
-                'liaisons.*.typeevaluation_id' => 'required|integer|exists:type_evaluations,id',
-                'liaisons.*.serie_id' => 'nullable|integer|exists:series,id',
+                'liaisons.*.classe_id' => 'required|integer|school_exists:classes,id',
+                'liaisons.*.periode_id' => 'required|integer|school_exists:periodes,id',
+                'liaisons.*.typeevaluation_id' => 'required|integer|school_exists:type_evaluations,id',
+                'liaisons.*.serie_id' => 'nullable|integer|school_exists:series,id',
             ]);
 
             $created = [];
@@ -105,6 +105,7 @@ class typeEvaluationController extends Controller
                     }
 
                 } catch (\Exception $e) {
+                    $this->rethrowIfMeaningful($e);
                     Log::error('Error creating liaison:', [
                         'liaison' => $liaison,
                         'error' => $this->clientErrorMessage($e)
@@ -144,6 +145,7 @@ class typeEvaluationController extends Controller
                 'errors' => $e->errors()
             ], 422);
         } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
             Log::error('Unexpected error:', ['error' => $e->getMessage()]);
             return response()->json([
                 'success' => false,
@@ -160,10 +162,10 @@ class typeEvaluationController extends Controller
 
         $validated = $request->validate([
             'liaisons' => 'required|array',
-            'liaisons.*.classe_id' => 'required|exists:classes,id',
-            'liaisons.*.periode_id' => 'required|exists:periodes,id',
-            'liaisons.*.typeevaluation_id' => 'required|exists:type_evaluations,id',
-            'liaisons.*.serie_id' => 'nullable|exists:series,id',
+            'liaisons.*.classe_id' => 'required|school_exists:classes,id',
+            'liaisons.*.periode_id' => 'required|school_exists:periodes,id',
+            'liaisons.*.typeevaluation_id' => 'required|school_exists:type_evaluations,id',
+            'liaisons.*.serie_id' => 'nullable|school_exists:series,id',
         ]);
 
         try {
@@ -195,6 +197,7 @@ class typeEvaluationController extends Controller
 
                 $created[] = $liaison;
             } catch (\Exception $e) {
+                $this->rethrowIfMeaningful($e);
                 $errors[] = [
                     'liaison' => $liaison,
                     'message' => $this->clientErrorMessage($e)
@@ -204,6 +207,7 @@ class typeEvaluationController extends Controller
 
             return response()->json(['message' => 'Liaisons created successfully']);
         } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
             Log::error('Error creating liaisons:', ['error' => $e->getMessage()]);
             return response()->json(['message' => $this->clientErrorMessage($e)], 400);
         }
@@ -353,10 +357,10 @@ public function getClassesWithPeriodesAndTypesS()
     public function update(Request $request, $id)
     {
         $validated = $request->validate([
-            'classe_id' => 'required|exists:classes,id',
-            'serie_id' => 'nullable|exists:series,id',
-            'periode_id' => 'required|exists:periodes,id',
-            'typeevaluation_id' => 'required|exists:type_evaluations,id',
+            'classe_id' => 'required|school_exists:classes,id',
+            'serie_id' => 'nullable|school_exists:series,id',
+            'periode_id' => 'required|school_exists:periodes,id',
+            'typeevaluation_id' => 'required|school_exists:type_evaluations,id',
         ]);
 
         $updated = DB::table('typeevaluation_classes')

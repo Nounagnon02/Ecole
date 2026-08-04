@@ -77,7 +77,7 @@ class PaymentController extends Controller
     public function initializePayment(Request $request)
     {
         $request->validate([
-            'eleve_id' => 'required|exists:eleves,id',
+            'eleve_id' => 'required|school_exists:eleves,id',
             'amount' => 'required|numeric|min:100',
             'description' => 'required|string',
             'type' => 'required|in:scolarite,cantine,transport,autre',
@@ -141,6 +141,7 @@ class PaymentController extends Controller
             ]);
 
         } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
             DB::rollBack();
             Log::error('Payment initialization error', ['error' => $e->getMessage()]);
             return response()->json(['success' => false, 'message' => 'Erreur lors de l\'initialisation du paiement'], 500);
@@ -153,7 +154,7 @@ class PaymentController extends Controller
     public function processMobileMoney(Request $request)
     {
         $request->validate([
-            'payment_id' => 'required|exists:payments,id',
+            'payment_id' => 'required|school_exists:payments,id',
             'phone_number' => 'required|string',
             'operator' => 'required|in:mtn,moov'
         ]);
@@ -205,6 +206,7 @@ class PaymentController extends Controller
         } catch (\Illuminate\Auth\Access\AuthorizationException|\Symfony\Component\HttpKernel\Exception\HttpException $e) {
             throw $e;
         } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
             Log::error('Mobile Money error', ['error' => $e->getMessage()]);
             return response()->json(['success' => false, 'message' => 'Erreur lors du traitement du paiement'], 500);
         }
@@ -283,7 +285,7 @@ class PaymentController extends Controller
     public function requestRefund(Request $request)
     {
         $request->validate([
-            'payment_id' => 'required|exists:payments,id',
+            'payment_id' => 'required|school_exists:payments,id',
             'reason' => 'required|string'
         ]);
 
@@ -302,6 +304,7 @@ class PaymentController extends Controller
         } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
             throw $e;
         } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
             Log::error('Refund request error', ['error' => $e->getMessage()]);
             return response()->json(['success' => false, 'message' => 'Erreur lors de la demande de remboursement'], 500);
         }
@@ -312,7 +315,7 @@ class PaymentController extends Controller
      */
     public function processRefund(Request $request)
     {
-        $request->validate(['payment_id' => 'required|exists:payments,id']);
+        $request->validate(['payment_id' => 'required|school_exists:payments,id']);
 
         DB::beginTransaction();
         try {
@@ -345,6 +348,7 @@ class PaymentController extends Controller
             return response()->json(['success' => true, 'message' => 'Remboursement effectué']);
 
         } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
             DB::rollBack();
             Log::error('Refund processing error', ['error' => $e->getMessage()]);
             return response()->json(['success' => false, 'message' => 'Erreur lors du remboursement'], 500);
@@ -380,7 +384,7 @@ class PaymentController extends Controller
      */
     public function checkStatus(Request $request)
     {
-        $request->validate(['payment_id' => 'required|exists:payments,id']);
+        $request->validate(['payment_id' => 'required|school_exists:payments,id']);
 
         $payment = $this->authorizedPayment((int) $request->payment_id);
 
@@ -392,6 +396,7 @@ class PaymentController extends Controller
                     $payment->update(['status' => 'completed', 'paid_at' => now()]);
                 }
             } catch (\Exception $e) {
+                $this->rethrowIfMeaningful($e);
                 Log::error('Status check error', ['error' => $e->getMessage()]);
             }
         }
@@ -423,6 +428,7 @@ class PaymentController extends Controller
             return redirect(config('app.frontend_url') . '/payment/failed?id=' . $payment->id);
 
         } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
             Log::error('Callback error', ['error' => $e->getMessage()]);
             return redirect(config('app.frontend_url') . '/payment/error');
         }
@@ -464,6 +470,7 @@ class PaymentController extends Controller
             return response()->json(['success' => true]);
 
         } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
             Log::error('Webhook error', ['error' => $e->getMessage()]);
             return response()->json(['error' => 'Processing failed'], 500);
         }
