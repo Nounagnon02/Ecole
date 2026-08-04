@@ -7,19 +7,18 @@
  * - Intercepteur d'authentification
  * - Gestion 401 (déconnexion automatique)
  * - Retry (3 tentatives) sur erreur réseau 5xx
- * - Timeout 15s
- * - Base URL configurable via variable d'env
+ * - Base URL et timeout pilotés par EXPO_PUBLIC_API_URL /
+ *   EXPO_PUBLIC_API_TIMEOUT (cf. constants/api)
  * ============================================================================
  */
 
 import axios from 'axios';
 import { getToken, clearAll } from './secureStorage';
-
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000/api';
+import { URL_BASE_API, API_TIMEOUT } from '../../constants/api';
 
 export const api = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: 15000,
+  baseURL: URL_BASE_API,
+  timeout: API_TIMEOUT,
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',

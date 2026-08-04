@@ -13,27 +13,13 @@ import {
 } from 'lucide-react';
 import { cn, formatDate } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
-import FeatureUnavailable from '@/shared/components/ui/FeatureUnavailable';
 import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
 import { useApi } from '@/hooks/useApi';
 
-// Passera à `true` quand l'API sera construite ; le reste de la page
-// est déjà écrit et n'attend que la donnée.
-const API_AVAILABLE = false;
-
 export default function MesCoursPage() {
-  if (!API_AVAILABLE) {
-    return (
-      <FeatureUnavailable
-        title="Mes cours"
-        reason="La table etudiants ne porte pas de user_id : un compte connecté ne peut pas encore être relié à un étudiant."
-      />
-    );
-  }
-
   const { loading, error, get } = useApi();
   const [cours, setCours] = useState([]);
   const [search, setSearch] = useState('');
@@ -41,9 +27,9 @@ export default function MesCoursPage() {
   useEffect(() => {
     (async () => {
       try {
-        // L'endpoint n'existe pas encore (cf. ECARTS_FRONT_BACK.md) :
-        // on ne le sollicite pas, la page affiche un état explicite.
-        if (!API_AVAILABLE) return;
+        // GET /api/universite/mes-cours — un étudiant y reçoit les matières de
+        // sa filière, un enseignant celles qu'il assure. Le serveur résout le
+        // profil via `etudiants.user_id` / `uni_enseignants.user_id`.
         const res = await get('/universite/mes-cours');
         const items = Array.isArray(res?.data?.data) ? res.data.data
           : Array.isArray(res?.data) ? res.data

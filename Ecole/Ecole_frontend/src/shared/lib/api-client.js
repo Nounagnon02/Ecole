@@ -136,7 +136,14 @@ apiClient.interceptors.response.use(
       }
     }
 
-    // Mapping d'erreurs API vers un format standard
+    // Mapping d'erreurs API vers un format standard.
+    //
+    // `response` et `errors` sont conservés volontairement : toute la
+    // couche formulaire (LoginForm, ForgotPassword, ResetPassword,
+    // EcolesPage, useApi/useForm…) mappe les erreurs de validation via
+    // `err.response.data.errors`. En ne rejetant qu'un objet nu, cette
+    // branche ne s'exécutait jamais : un 422 Laravel n'affichait que le
+    // message général et aucun champ n'était marqué en erreur.
     const apiError = {
       status: error.response?.status || 0,
       code: error.response?.data?.error?.code || 'UNKNOWN_ERROR',
@@ -146,6 +153,9 @@ apiClient.interceptors.response.use(
         error.message ||
         'Une erreur est survenue',
       details: error.response?.data?.error?.details || [],
+      errors: error.response?.data?.errors || null,
+      response: error.response,
+      isApiError: true,
     };
 
     return Promise.reject(apiError);
@@ -155,6 +165,25 @@ apiClient.interceptors.response.use(
 export default apiClient;
 
 /* ─── React Query helpers ────────────────────────────────────────────────── */
+
+/**
+ * Politique de réessai.
+ *
+ * Un 4xx est un verdict, pas un aléa : réessayer un 403 ou un 404 ne
+ * peut pas réussir. `retry: 2` inconditionnel envoyait trois requêtes
+ * identiques et retardait l'affichage de l'erreur de plusieurs secondes
+ * (l'utilisateur restait devant des squelettes) ; sur 401 il déclenchait
+ * en plus trois purges de session. On n'insiste donc que sur les erreurs
+ * serveur et réseau, où un nouvel essai a un sens.
+ *
+ * @param {number} failureCount
+ * @param {{status?: number}} error  Erreur normalisée par l'intercepteur.
+ */
+function shouldRetry(failureCount, error) {
+  const status = error?.status ?? 0;
+  if (status >= 400 && status < 500) return false;
+  return failureCount < 2;
+}
 
 /**
  * Hook pour les queries GET standardisées.
@@ -168,7 +197,7 @@ export function useApiQuery(key, url, options = {}) {
       return data;
     },
     staleTime: 5 * 60 * 1000,
-    retry: 2,
+    retry: shouldRetry,
     refetchOnWindowFocus: false,
     ...options.queryOptions,
   });

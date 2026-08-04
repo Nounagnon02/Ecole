@@ -1,0 +1,6 @@
+# Dépendances
+node_modules/
+
+# Sorties electron-builder
+release/
+dist/

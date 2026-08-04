@@ -1,19 +1,34 @@
 name: Frontend CI (React + Vite)
 
+# Les chemins portaient `Ecole_frontend/**` alors que le projet vit dans
+# `Ecole/Ecole_frontend` : aucun filtre ne correspondait jamais, et
+# `working-directory` visait un répertoire inexistant.
 on:
   push:
     branches: [main, develop]
     paths:
-      - 'Ecole_frontend/**'
+      - 'Ecole/Ecole_frontend/**'
       - '.github/workflows/frontend.yml'
   pull_request:
     branches: [main]
     paths:
-      - 'Ecole_frontend/**'
+      - 'Ecole/Ecole_frontend/**'
+      - '.github/workflows/frontend.yml'
+  # `ci.yml` appelle ce fichier via `uses:`. Sans `workflow_call`, GitHub
+  # refuse le workflow appelant en entier (« invalid workflow file »).
+  workflow_call:
+    inputs:
+      deploy:
+        description: >-
+          Autorise l'étape de déploiement. Laissé à false pour les exécutions
+          déclenchées par les filtres ci-dessus, afin qu'un même commit ne
+          déploie pas deux fois (une fois ici, une fois via ci.yml).
+        type: boolean
+        default: false
 
 defaults:
   run:
-    working-directory: Ecole_frontend
+    working-directory: Ecole/Ecole_frontend
 
 jobs:
   lint:
@@ -27,7 +42,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
-          cache-dependency-path: Ecole_frontend/package-lock.json
+          cache-dependency-path: Ecole/Ecole_frontend/package-lock.json
       - name: Install dependencies
         run: npm ci
       - name: Run ESLint
@@ -50,10 +65,18 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
-          cache-dependency-path: Ecole_frontend/package-lock.json
+          cache-dependency-path: Ecole/Ecole_frontend/package-lock.json
       - name: Install dependencies
         run: npm ci
       - name: Run Vitest
+        run: npm test
+        env:
+          CI: true
+      # `--coverage` exige `@vitest/coverage-v8`, absent des devDependencies :
+      # la porte échouait sur une dépendance manquante, pas sur un test rouge.
+      # Le rapport reste facultatif jusqu'à ce que le paquet soit déclaré.
+      - name: Coverage report (non-blocking)
+        continue-on-error: true
         run: npx vitest run --coverage
         env:
           CI: true
@@ -70,32 +93,59 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
-          cache-dependency-path: Ecole_frontend/package-lock.json
+          cache-dependency-path: Ecole/Ecole_frontend/package-lock.json
       - name: Install dependencies
         run: npm ci
+      # `playwright.config.js` importe `@playwright/test`, et l'attente du
+      # serveur utilise `wait-on` : ni l'un ni l'autre n'est déclaré dans
+      # Ecole_frontend/package.json. `npx` les téléchargerait en version
+      # arbitraire, ou échouerait avec un message illisible. On dit donc
+      # précisément ce qui manque.
+      - name: E2E dependencies are declared
+        run: |
+          manquants=''
+          for paquet in @playwright/test wait-on; do
+            node -e "require.resolve('$paquet')" 2>/dev/null || manquants="$manquants $paquet"
+          done
+          if [ -n "$manquants" ]; then
+            echo "::error::devDependencies absentes de Ecole_frontend/package.json :$manquants"
+            exit 1
+          fi
       - name: Install Playwright
         run: npx playwright install --with-deps chromium
+      # `npx vite &` seul laissait le serveur attaché aux flux de l'étape :
+      # ceux-ci sont fermés à la fin du `run`, ce qui pouvait tuer le serveur
+      # avant l'étape d'attente.
       - name: Start dev server
-        run: npx vite --port 3000 &
+        run: nohup npx vite --port 3000 --strictPort > vite.log 2>&1 &
         env:
           CI: true
       - name: Wait for server
-        run: npx wait-on http://localhost:3000
+        run: npx wait-on --timeout 120000 http://localhost:3000
       - name: Run Playwright tests
         run: npx playwright test
         env:
           CI: true
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: Ecole/Ecole_frontend/playwright-report
+          retention-days: 7
 
   deploy:
     runs-on: ubuntu-22.04
     needs: e2e
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && inputs.deploy
     steps:
       - uses: actions/checkout@v4
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'npm'
+          cache-dependency-path: Ecole/Ecole_frontend/package-lock.json
       - name: Build
         run: |
           npm ci

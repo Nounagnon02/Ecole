@@ -11,6 +11,8 @@ import { devtools } from 'zustand/middleware';
 import axios from 'axios';
 import apiClient from '@/shared/lib/api-client';
 import { cacheClear } from '@/shared/lib/db';
+import { clearDashboardCache } from '@/shared/lib/dashboard-cache';
+import { normalizeRole } from '@/shared/types/roles';
 
 export const SESSION_CHECK_INTERVAL = 5 * 60 * 1000; // 5 min entre vérifications
 
@@ -137,6 +139,12 @@ const useAuthStore = create(
         // par l'utilisateur suivant sur un poste partagé (cf. audit S17).
         await cacheClear().catch(() => {});
 
+        // Même problème pour le cache mémoire des tableaux de bord, indexé
+        // par rôle et non par utilisateur : sans purge, l'utilisateur suivant
+        // voyait les effectifs et finances du précédent, éventuellement
+        // d'un autre établissement.
+        clearDashboardCache();
+
         set({ ...initialState, isLoading: false });
       },
 
@@ -145,6 +153,7 @@ const useAuthStore = create(
        */
       clearSession: () => {
         cacheClear().catch(() => {});
+        clearDashboardCache();
         set({ ...initialState, isLoading: false });
       },
 
@@ -177,10 +186,15 @@ const useAuthStore = create(
 
       /**
        * Vérifie si l'utilisateur connecté a un rôle spécifique.
+       *
+       * Un sous-rôle satisfait aussi le contrôle de son rôle parent
+       * (`directeurP` → `directeur`) : les sous-rôles n'ont pas de
+       * dashboard distinct, le serveur cloisonne leurs données par cycle.
        */
       hasRole: (role) => {
         const { user } = get();
-        return user?.role === role;
+        if (!user?.role) return false;
+        return user.role === role || normalizeRole(user.role) === role;
       },
 
       /**
@@ -188,8 +202,8 @@ const useAuthStore = create(
        */
       hasAnyRole: (roles) => {
         const { user } = get();
-        if (!user?.role) return false;
-        return roles.includes(user.role);
+        if (!user?.role || !Array.isArray(roles)) return false;
+        return roles.includes(user.role) || roles.includes(normalizeRole(user.role));
       },
     }),
     { name: 'auth-store' }

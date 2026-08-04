@@ -50,6 +50,29 @@ final class Roles
     public const TEACHER_KINDERGARTEN = 'enseignementM';
     public const TEACHER_PRIMARY      = 'enseignementP';
 
+    /* ─── University module ───────────────────────────────────────────── */
+
+    /**
+     * The university roles, named here rather than only inside route strings.
+     *
+     * They form no family: a `doyen` is not a narrower `recteur`, they are
+     * different offices, and the university hierarchy runs
+     * faculté → département → filière, which is not a cycle. Declaring them
+     * gives the module's controllers and policies one spelling to compare
+     * against — the same reason the scholastic roles are here.
+     */
+    public const CHANCELLOR = 'recteur';
+    public const DEAN       = 'doyen';
+    public const PROFESSOR  = 'professeur';
+    public const STUDENT    = 'etudiant';
+    public const STAFF      = 'personnel';
+
+    /** Roles that administer the university module rather than sit in it. */
+    public static function universityAdministration(): array
+    {
+        return [self::CHANCELLOR, self::DEAN];
+    }
+
     /* ─── Families ────────────────────────────────────────────────────── */
 
     /**
@@ -111,6 +134,37 @@ final class Roles
         }
 
         return array_values(array_unique($expanded));
+    }
+
+    /**
+     * The inverse of `expand`: every gate this role would pass.
+     *
+     *   gatesSatisfiedBy('directeurP') → directeurP, directeur
+     *   gatesSatisfiedBy('comptable')  → comptable
+     *
+     * `satisfies()` answers the question one gate at a time, which is what a
+     * middleware needs. A *query* needs it the other way round: an announcement
+     * addressed to `directeur` must reach the primary head, and the filter is
+     * `where audience_role in (…)` over this list. Deriving it from the same
+     * `FAMILIES` table is what keeps the two directions from drifting.
+     *
+     * @return array<int, string>
+     */
+    public static function gatesSatisfiedBy(?string $role): array
+    {
+        if ($role === null) {
+            return [];
+        }
+
+        $gates = [$role];
+
+        foreach (self::FAMILIES as $head => $members) {
+            if (in_array($role, $members, true)) {
+                $gates[] = $head;
+            }
+        }
+
+        return array_values(array_unique($gates));
     }
 
     /** Does this role satisfy a gate on any of the given roles? */
