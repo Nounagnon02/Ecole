@@ -8,7 +8,7 @@
 import axios from 'axios';
 import { useQuery as useReactQuery, useMutation as useReactMutation, useQueryClient } from '@tanstack/react-query';
 import useAuthStore from '@/shared/stores/auth-store';
-import { queueMutation, cacheGet, cacheSet, isOnline } from './db';
+import { queueMutation, cacheGet, cacheSet } from './db';
 
 /* ─── Axios instance ────────────────────────────────────────────────────── */
 const apiClient = axios.create({
@@ -17,8 +17,8 @@ const apiClient = axios.create({
   withCredentials: true,
   headers: {
     Accept: 'application/json',
-    'Content-Type': 'application/json',
-  },
+    'Content-Type': 'application/json'
+  }
 });
 
 /* ─── Request interceptor — offline queue + cache + auth timeout ──────── */
@@ -49,8 +49,8 @@ apiClient.interceptors.request.use(async (config) => {
             status: 200,
             statusText: 'OK (cached)',
             headers: { 'x-cached': 'true' },
-            config,
-          }),
+            config
+          })
       };
     }
   }
@@ -82,8 +82,8 @@ apiClient.interceptors.request.use(async (config) => {
           status: 202,
           statusText: 'Accepted (offline)',
           headers: { 'x-offline-queue': 'true' },
-          config,
-        }),
+          config
+        })
     };
   }
 
@@ -131,7 +131,7 @@ apiClient.interceptors.response.use(
           status: 200,
           statusText: 'OK (cached fallback)',
           headers: { 'x-cached': 'true' },
-          config: originalRequest,
+          config: originalRequest
         });
       }
     }
@@ -155,7 +155,7 @@ apiClient.interceptors.response.use(
       details: error.response?.data?.error?.details || [],
       errors: error.response?.data?.errors || null,
       response: error.response,
-      isApiError: true,
+      isApiError: true
     };
 
     return Promise.reject(apiError);
@@ -199,7 +199,7 @@ export function useApiQuery(key, url, options = {}) {
     staleTime: 5 * 60 * 1000,
     retry: shouldRetry,
     refetchOnWindowFocus: false,
-    ...options.queryOptions,
+    ...options.queryOptions
   });
 }
 
@@ -217,7 +217,7 @@ export function useApiMutation(url, options = {}) {
         method,
         url,
         data: variables,
-        ...(options.config || {}),
+        ...(options.config || {})
       });
       return data;
     },
@@ -229,7 +229,7 @@ export function useApiMutation(url, options = {}) {
       }
     },
     retry: options.retry ?? 1,
-    ...options.mutationOptions,
+    ...options.mutationOptions
   });
 }
 
@@ -241,5 +241,5 @@ export const api = {
   post: (url, data, config) => apiClient.post(url, data, config),
   put: (url, data, config) => apiClient.put(url, data, config),
   patch: (url, data, config) => apiClient.patch(url, data, config),
-  delete: (url, config) => apiClient.delete(url, config),
+  delete: (url, config) => apiClient.delete(url, config)
 };

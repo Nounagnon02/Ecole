@@ -9,7 +9,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   FileText, FolderOpen, Search, Plus, Download, Eye,
-  Clock, CheckCircle, FileSpreadsheet, File, Loader2, AlertCircle,
+  CheckCircle, FileSpreadsheet, File, Loader2, AlertCircle
 } from 'lucide-react';
 import { cn, formatDate } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
@@ -23,7 +23,7 @@ function getTypeIcon(type) {
   const cfg = {
     pdf: { icon: FileText, color: 'text-red-500 bg-red-100 dark:bg-red-900/20' },
     xlsx: { icon: FileSpreadsheet, color: 'text-emerald-500 bg-emerald-100 dark:bg-emerald-900/20' },
-    docx: { icon: File, color: 'text-blue-500 bg-blue-100 dark:bg-blue-900/20' },
+    docx: { icon: File, color: 'text-blue-500 bg-blue-100 dark:bg-blue-900/20' }
   };
   return cfg[type] || cfg.pdf;
 }
@@ -52,7 +52,7 @@ export default function DocumentsPage() {
   const stats = useMemo(() => ({
     total: documents.length,
     entrants: documents.filter((d) => d.type === 'entrant').length,
-    sortants: documents.filter((d) => d.type === 'sortant').length,
+    sortants: documents.filter((d) => d.type === 'sortant').length
   }), [documents]);
 
   const filtered = useMemo(() =>

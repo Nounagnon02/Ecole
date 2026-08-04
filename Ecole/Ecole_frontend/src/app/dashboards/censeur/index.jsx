@@ -9,12 +9,11 @@ import { useNavigate } from 'react-router-dom';
 import { useDashboardStats } from '../hooks/useDashboardData';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  BookOpen, Users, AlertTriangle, CheckCircle2, XCircle,
-  BarChart3, Gavel, CalendarX, MessageSquare, Scale,
+  BookOpen, Users, AlertTriangle, BarChart3, Gavel, CalendarX 
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip,
-  ResponsiveContainer, PieChart, Pie, Cell,
+  ResponsiveContainer, PieChart, Pie, Cell
 } from 'recharts';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -146,55 +145,10 @@ function ApercuSection({ stats, evolution, types_sanctions, sanctions }) {
   );
 }
 
-function DisciplineSection() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Gestion Disciplinaire</h2>
-          <p className="text-sm text-neutral-500 mt-1">Sanctions, suivis et convocations</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="ghost" size="sm"><MessageSquare className="h-4 w-4 mr-1" /> Convoquer</Button>
-          <Button><Scale className="h-4 w-4 mr-1" /> Nouvelle Sanction</Button>
-        </div>
-      </div>
-      <Card>
-        <Card.Body>
-          <p className="text-neutral-500 text-center py-12">
-            Interface complète de gestion disciplinaire — conseils de discipline, décisions, suivi
-          </p>
-        </Card.Body>
-      </Card>
-    </div>
-  );
-}
-
-function AbsencesSection() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Absences</h2>
-          <p className="text-sm text-neutral-500 mt-1">Suivi et justification des absences</p>
-        </div>
-        <Button variant="ghost" size="sm">Export</Button>
-      </div>
-      <Card>
-        <Card.Body>
-          <p className="text-neutral-500 text-center py-12">
-            Relevé d'absences avec filtres par classe, période, et statut de justification
-          </p>
-        </Card.Body>
-      </Card>
-    </div>
-  );
-}
-
 export default function CenseurDashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('apercu');
-  const { data, loading } = useDashboardStats('censeur');
+  const { data } = useDashboardStats('censeur');
 
   const stats = data?.stats?.map((s, i) => ({ ...s, icon: STATS_META[i]?.icon, color: STATS_META[i]?.color })) || [];
   const evolution = data?.evolution || [];
@@ -205,14 +159,14 @@ export default function CenseurDashboard() {
     if (tabId === 'apercu') { setActiveTab(tabId); return; }
     const routes = { discipline: '/censeur/discipline', absences: '/censeur/absences' };
     navigate(routes[tabId] || '/censeur/dashboard');
-  };
+ };
 
   const renderSection = () => {
     switch (activeTab) {
       case 'apercu': return <ApercuSection stats={stats} evolution={evolution} types_sanctions={types_sanctions} sanctions={sanctions} />;
       default: return <ApercuSection stats={stats} evolution={evolution} types_sanctions={types_sanctions} sanctions={sanctions} />;
-    }
-  };
+ }
+ };
 
   return (
     <div className="space-y-6">
@@ -246,7 +200,7 @@ export default function CenseurDashboard() {
                 <Icon className="h-4 w-4" /> {tab.label}
               </button>
             );
-          })}
+ })}
         </nav>
       </div>
 

@@ -22,9 +22,8 @@ import { LoadingSpinner } from '@/shared/components/ui/Skeleton';
 import NotFoundPage from '@/app/error/NotFoundPage';
 import ForbiddenPage from '@/app/error/ForbiddenPage';
 import {
-  ROUTE_CONFIG,
   PROTECTED_ROUTES,
-  ROLE_REDIRECT_MAP,
+  ROLE_REDIRECT_MAP
 } from '@/features/roles/route-config';
 
 /* ─── Page non autorisée ─────────────────────────────────────────────── */
@@ -127,7 +126,7 @@ function App() {
           className: '!rounded-lg !border !border-[var(--border)] !bg-[var(--surface-raised)] !shadow-[var(--shadow-3)] !text-sm !font-medium !text-[var(--text-primary)]',
           duration: 4000,
           success: { className: '!border-[var(--green-light)] !bg-[var(--green-subtle)] !text-[var(--green)]' },
-          error: { className: '!border-[var(--red-light)] !bg-[var(--red-subtle)] !text-[var(--red)]' },
+          error: { className: '!border-[var(--red-light)] !bg-[var(--red-subtle)] !text-[var(--red)]' }
         }}
         closeButton
         richColors={false}

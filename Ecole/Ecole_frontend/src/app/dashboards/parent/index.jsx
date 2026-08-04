@@ -9,28 +9,19 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Users,
-  GraduationCap,
   TrendingUp,
-  TrendingDown,
   Clock,
-  Calendar,
   ClipboardList,
   DollarSign,
   MessageSquare,
-  Award,
-  Bell,
-  AlertCircle,
   CheckCircle2,
   BarChart3,
   ArrowRight,
-  Eye,
-  School,
-  Heart,
-  BookOpen,
+  Eye
 } from 'lucide-react';
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer,
-  LineChart, Line, Area, AreaChart,
+  XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer,
+  Area, AreaChart
 } from 'recharts';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -41,7 +32,6 @@ import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Avatar from '@/shared/components/ui/Avatar';
 import Button from '@/shared/components/ui/Button';
-import Table from '@/shared/components/ui/Table';
 import { Skeleton } from '@/shared/components/ui/Skeleton';
 
 // ─── Constantes ───────────────────────────────────────────────
@@ -233,86 +223,6 @@ function ApercuSection({ data, loading }) {
   );
 }
 
-function NotesSection() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Notes des Enfants</h2>
-          <p className="text-sm text-neutral-500 mt-1">Suivi académique complet</p>
-        </div>
-      </div>
-      <Card>
-        <Card.Body>
-          <p className="text-neutral-500 text-center py-12">
-            Relevés de notes, bulletins et appréciations par enfant
-          </p>
-        </Card.Body>
-      </Card>
-    </div>
-  );
-}
-
-function EmploiSection() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Emploi du Temps</h2>
-          <p className="text-sm text-neutral-500 mt-1">Planning des enfants</p>
-        </div>
-      </div>
-      <Card>
-        <Card.Body>
-          <p className="text-neutral-500 text-center py-12">
-            Emploi du temps par enfant — vue hebdomadaire
-          </p>
-        </Card.Body>
-      </Card>
-    </div>
-  );
-}
-
-function PaiementsSection() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Paiements</h2>
-          <p className="text-sm text-neutral-500 mt-1">Frais de scolarité et factures</p>
-        </div>
-      </div>
-      <Card>
-        <Card.Body>
-          <p className="text-neutral-500 text-center py-12">
-            Historique des paiements, factures en ligne et échéances
-          </p>
-        </Card.Body>
-      </Card>
-    </div>
-  );
-}
-
-function CommunicationsSection() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Communications</h2>
-          <p className="text-sm text-neutral-500 mt-1">Messagerie avec l'établissement</p>
-        </div>
-      </div>
-      <Card>
-        <Card.Body>
-          <p className="text-neutral-500 text-center py-12">
-            Messagerie complète — contacter les enseignants et l'administration
-          </p>
-        </Card.Body>
-      </Card>
-    </div>
-  );
-}
-
 // ─── Composant Principal ──────────────────────────────────────
 
 export default function ParentDashboard() {
@@ -326,7 +236,7 @@ export default function ParentDashboard() {
       notes: '/notes',
       emploi: '/emploi-du-temps',
       paiements: '/paiements',
-      communications: '/communications',
+      communications: '/communications'
     };
     navigate(routes[tabId] || '/parent/dashboard');
   };

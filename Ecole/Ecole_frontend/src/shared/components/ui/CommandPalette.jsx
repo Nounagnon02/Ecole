@@ -17,30 +17,22 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Command,
   Users,
   BookOpen,
   DollarSign,
-  MessageSquare,
   Calendar,
-  Settings,
-  LayoutDashboard,
-  FileText,
-  GraduationCap,
   Search,
   Sparkles,
   BarChart3,
   CreditCard,
   ClipboardList,
-  School,
   ArrowRight,
-  Command as CommandIcon,
+  Command as CommandIcon
 } from 'lucide-react';
 import useAuthStore from '@/shared/stores/auth-store';
 import useUIStore from '@/shared/stores/ui-store';
 import { ROUTE_CONFIG } from '@/features/roles/route-config';
-import { ROLE_LABELS, ROLES } from '@/shared/types/roles';
-import { cn } from '@/shared/lib/utils';
+import { ROLES } from '@/shared/types/roles';
 
 /* ─── Mapping rôles ↔ icônes pour les actions rapides ──────────── */
 const ROLE_ACTIONS = {
@@ -68,7 +60,7 @@ const ROLE_ACTIONS = {
     { icon: DollarSign, label: 'Paiements', action: 'navigate', path: '/paiements' },
     { icon: BookOpen, label: 'Notes des enfants', action: 'navigate', path: '/notes' },
     { icon: Sparkles, label: 'Rapport hebdomadaire', action: 'navigate', path: '/parent/ai-report' },
-  ],
+  ]
 };
 
 /* ─── Helper : extraire les pages du route config ───────────────── */
@@ -80,7 +72,7 @@ function getAllRoutes(userRole) {
       label: cfg.label || key.charAt(0).toUpperCase() + key.slice(1),
       path: cfg.path,
       icon: cfg.icon || ArrowRight,
-      group: cfg.group || 'navigation',
+      group: cfg.group || 'navigation'
     }));
 }
 

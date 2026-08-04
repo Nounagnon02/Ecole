@@ -9,9 +9,8 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Search, Send, Paperclip, MoreHorizontal, Archive,
-  Trash2, Star, Inbox, MessageSquare, Users,
-  ChevronLeft, ChevronRight, Phone, Video, Loader2, AlertCircle,
+  Search, Send, Paperclip,   Trash2, Star, MessageSquare, Users,
+  Phone, Video, Loader2, AlertCircle
 } from 'lucide-react';
 import { cn, formatRelativeTime } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
@@ -54,7 +53,7 @@ export default function MessageriePage() {
         date: c.derniere_date || new Date().toISOString(),
         unread: Number(c.non_lus ?? 0),
         online: false,
-        avatar: null,
+        avatar: null
       })));
       if (items.length > 0 && !selectedConv) {
         setSelectedConv(items[0]);
@@ -86,7 +85,7 @@ export default function MessageriePage() {
           id: m.id,
           from: String(m.expediteur) === String(currentUserId) ? 'me' : 'them',
           text: m.contenu || '',
-          time: m.created_at || new Date().toISOString(),
+          time: m.created_at || new Date().toISOString()
         })));
       } catch (e) {
         console.error('Erreur chargement messages:', e);
@@ -110,14 +109,14 @@ export default function MessageriePage() {
     try {
       const res = await post('/messages', {
         destinataire: String(selectedConv.id),
-        contenu: text,
+        contenu: text
       });
       const newMsg = res?.data?.data || res?.data || res;
       setMessages((prev) => [...prev, {
         id: newMsg.id || Date.now(),
         from: 'me',
         text,
-        time: newMsg.created_at || new Date().toISOString(),
+        time: newMsg.created_at || new Date().toISOString()
       }]);
       // Update conversation list
       setConversations((prev) => prev.map((c) =>

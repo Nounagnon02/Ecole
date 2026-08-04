@@ -9,7 +9,7 @@ import { motion } from 'framer-motion';
 import {
   Building2, Plus, Search, MapPin, Phone, Mail, Users,
   BookOpen, GraduationCap, CheckCircle, XCircle, Eye,
-  Loader2, AlertCircle, RefreshCw, ChevronDown, KeyRound,
+  AlertCircle, RefreshCw, KeyRound
 } from 'lucide-react';
 import { cn } from '@/shared/lib/utils';
 import { unwrapList } from '@/shared/lib/unwrap';
@@ -24,7 +24,7 @@ import { api } from '@/shared/services/api';
 
 const STATUT_CONFIG = {
   active: { variant: 'primary', label: 'Actif' },
-  inactive: { variant: 'outline', label: 'Inactif' },
+  inactive: { variant: 'outline', label: 'Inactif' }
 };
 
 function EcoleSkeleton() {
@@ -141,7 +141,7 @@ export default function EcolesPage() {
       total: ecoles.length,
       actifs,
       inactifs: ecoles.length - actifs,
-      totalEffectifs: ecoles.reduce((s, e) => s + (e.total_eleves ?? 0), 0),
+      totalEffectifs: ecoles.reduce((s, e) => s + (e.total_eleves ?? 0), 0)
     };
   }, [ecoles]);
 

@@ -6,14 +6,13 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  BookOpen, GraduationCap, Clock, Calendar, ClipboardList,
-  TrendingUp, Award, BarChart3, FileText, DollarSign,
-  ArrowRight, CheckCircle2, AlertCircle, RefreshCw,
+  Clock, ClipboardList,
+  TrendingUp, Award, BarChart3, DollarSign,
+  AlertCircle, RefreshCw
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip,
-  ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
-} from 'recharts';
+  ResponsiveContainer } from 'recharts';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { cn } from '@/shared/lib/utils';
@@ -43,19 +42,19 @@ function ApercuSection({ data, loading }) {
       title: 'Moyenne Générale',
       value: stats.moyenne_generale ? `${stats.moyenne_generale}/20` : '—',
       icon: TrendingUp,
-      color: 'emerald',
+      color: 'emerald'
     },
     {
       title: 'Total Notes',
       value: String(stats.total_notes ?? 0),
       icon: Award,
-      color: 'primary',
+      color: 'primary'
     },
     {
       title: 'Absences ce Mois',
       value: String(stats.absences_mois ?? 0),
       icon: AlertCircle,
-      color: 'amber',
+      color: 'amber'
     },
   ];
 

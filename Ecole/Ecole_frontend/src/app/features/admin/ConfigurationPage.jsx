@@ -7,15 +7,10 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Settings, Save, Bell, Shield, Mail, Globe, Clock, Palette,
-  Database, Cloud, Lock, Users, BookOpen, Building2,
-  ChevronRight, ToggleLeft, ToggleRight, Eye, EyeOff,
-} from 'lucide-react';
+  Settings, Save, Bell, Shield,   Database, BookOpen,   ChevronRight } from 'lucide-react';
 import { cn } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
-import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
-import Input from '@/shared/components/ui/Input';
 
 const CONFIG_SECTIONS = [
   {
@@ -28,7 +23,7 @@ const CONFIG_SECTIONS = [
       { id: 'annee_scolaire', label: 'Année scolaire en cours', value: '2025-2026', type: 'text' },
       { id: 'langue', label: 'Langue par défaut', value: 'Français', type: 'select', options: ['Français', 'English'] },
       { id: 'fuseau', label: 'Fuseau horaire', value: 'Africa/Abidjan (UTC+0)', type: 'text' },
-    ],
+    ]
   },
   {
     id: 'scolarite',
@@ -40,7 +35,7 @@ const CONFIG_SECTIONS = [
       { id: 'notes_max', label: 'Note maximale', value: '20', type: 'text' },
       { id: 'seuil_reussite', label: 'Seuil de réussite (%)', value: '50', type: 'text' },
       { id: 'moyenne_requise', label: 'Moyenne générale requise', value: '10/20', type: 'text' },
-    ],
+    ]
   },
   {
     id: 'notifications',
@@ -52,7 +47,7 @@ const CONFIG_SECTIONS = [
       { id: 'notif_sms', label: 'Notifications par SMS', value: 'Désactivées', type: 'toggle', enabled: false },
       { id: 'rappel_paiement', label: 'Rappels de paiement', value: '7 jours avant échéance', type: 'text' },
       { id: 'rappel_absence', label: 'Alertes absences', value: 'Après 3 absences consécutives', type: 'text' },
-    ],
+    ]
   },
   {
     id: 'securite',
@@ -64,7 +59,7 @@ const CONFIG_SECTIONS = [
       { id: 'session', label: 'Durée de session max', value: '24 heures', type: 'text' },
       { id: 'tentatives', label: 'Tentatives avant verrouillage', value: '5', type: 'text' },
       { id: 'mdp_expire', label: 'Expiration mot de passe', value: '90 jours', type: 'text' },
-    ],
+    ]
   },
   {
     id: 'paiement',
@@ -76,7 +71,7 @@ const CONFIG_SECTIONS = [
       { id: 'mobile_money', label: 'Mobile Money', value: 'Activé (Orange Money, MTN MoMo)', type: 'toggle', enabled: true },
       { id: 'delai_paiement', label: 'Délai de paiement', value: '30 jours après facturation', type: 'text' },
       { id: 'frais_retard', label: 'Pénalité de retard (%)', value: '2% par mois', type: 'text' },
-    ],
+    ]
   },
 ];
 
@@ -85,7 +80,7 @@ const SECTION_COLORS = {
   scolarite: 'bg-emerald-100 dark:bg-emerald-900/20 text-emerald-500',
   notifications: 'bg-amber-100 dark:bg-amber-900/20 text-amber-500',
   securite: 'bg-red-100 dark:bg-red-900/20 text-red-500',
-  paiement: 'bg-sky-100 dark:bg-sky-900/20 text-sky-500',
+  paiement: 'bg-sky-100 dark:bg-sky-900/20 text-sky-500'
 };
 
 export default function ConfigurationPage() {

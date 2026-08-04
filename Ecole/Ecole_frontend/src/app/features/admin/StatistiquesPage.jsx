@@ -8,9 +8,9 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
-  BarChart3, TrendingUp, TrendingDown, Users, Building2, BookOpen,
+  TrendingUp, Users, Building2, BookOpen,
   GraduationCap, DollarSign, Activity, Clock, CheckCircle, AlertCircle,
-  ArrowUpRight, ArrowDownRight, Loader2,
+  ArrowUpRight, Loader2
 } from 'lucide-react';
 import { cn, formatNumber } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
@@ -24,7 +24,7 @@ const ACTIVITE_CONFIG = {
   note: { icon: GraduationCap, color: 'text-[var(--accent)] bg-[var(--accent-subtle)]' },
   compte: { icon: Users, color: 'text-blue-500 bg-blue-100 dark:bg-blue-900/20' },
   absence: { icon: AlertCircle, color: 'text-amber-500 bg-amber-100 dark:bg-amber-900/20' },
-  facture: { icon: BookOpen, color: 'text-purple-500 bg-purple-100 dark:bg-purple-900/20' },
+  facture: { icon: BookOpen, color: 'text-purple-500 bg-purple-100 dark:bg-purple-900/20' }
 };
 
 export default function StatistiquesPage() {

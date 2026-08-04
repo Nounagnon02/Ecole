@@ -9,13 +9,13 @@ import { useNavigate } from 'react-router-dom';
 import { useDashboardStats } from '../hooks/useDashboardData';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Wallet, Receipt, ArrowUpRight, ArrowDownRight, TrendingUp,
-  AlertCircle, CheckCircle2, Clock, BarChart3, FileSpreadsheet,
-  Download, Printer, Plus,
+  Wallet, Receipt, ArrowDownRight, TrendingUp,
+  CheckCircle2, Clock, BarChart3, FileSpreadsheet
+  
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip,
-  ResponsiveContainer, PieChart, Pie, Cell,
+  ResponsiveContainer, PieChart, Pie, Cell
 } from 'recharts';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -172,55 +172,10 @@ function ApercuSection({ stats, caData, repartition, factures }) {
   );
 }
 
-function FacturesSection() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Gestion des Factures</h2>
-          <p className="text-sm text-neutral-500 mt-1">Créer, suivre et gérer les factures</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="ghost" size="sm"><Download className="h-4 w-4 mr-1" /> Exporter</Button>
-          <Button><Plus className="h-4 w-4 mr-1" /> Nouvelle Facture</Button>
-        </div>
-      </div>
-      <Card>
-        <Card.Body>
-          <p className="text-neutral-500 text-center py-12">
-            Interface complète de gestion des factures — création, relances, remises
-          </p>
-        </Card.Body>
-      </Card>
-    </div>
-  );
-}
-
-function TransactionsSection() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Transactions</h2>
-          <p className="text-sm text-neutral-500 mt-1">Journal des transactions financières</p>
-        </div>
-        <Button variant="ghost" size="sm"><Printer className="h-4 w-4 mr-1" /> Imprimer</Button>
-      </div>
-      <Card>
-        <Card.Body>
-          <p className="text-neutral-500 text-center py-12">
-            Historique complet des transactions avec filtres et export
-          </p>
-        </Card.Body>
-      </Card>
-    </div>
-  );
-}
-
 export default function ComptableDashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('apercu');
-  const { data, loading } = useDashboardStats('comptable');
+  const { data } = useDashboardStats('comptable');
 
   const stats = data?.stats?.map((s, i) => ({ ...s, icon: STATS_META[i]?.icon, color: STATS_META[i]?.color })) || [];
   const caData = data?.donnes_ca || [];
@@ -231,14 +186,14 @@ export default function ComptableDashboard() {
     if (tabId === 'apercu') { setActiveTab(tabId); return; }
     const routes = { factures: '/comptable/factures', transactions: '/comptable/transactions' };
     navigate(routes[tabId] || '/comptable/dashboard');
-  };
+ };
 
   const renderSection = () => {
     switch (activeTab) {
       case 'apercu': return <ApercuSection stats={stats} caData={caData} repartition={repartition} factures={factures} />;
       default: return <ApercuSection stats={stats} caData={caData} repartition={repartition} factures={factures} />;
-    }
-  };
+ }
+ };
 
   return (
     <div className="space-y-6">
@@ -272,7 +227,7 @@ export default function ComptableDashboard() {
                 <Icon className="h-4 w-4" /> {tab.label}
               </button>
             );
-          })}
+ })}
         </nav>
       </div>
 

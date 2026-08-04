@@ -9,13 +9,12 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   User, GraduationCap, BookOpen, TrendingUp, Calendar,
-  AlertTriangle, FileText, Eye, ChevronRight, Clock, Loader2,
+  AlertTriangle, FileText, Clock, Loader2
 } from 'lucide-react';
 import { cn, formatNumber, formatDate } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Avatar from '@/shared/components/ui/Avatar';
-import Button from '@/shared/components/ui/Button';
 import StatsCard from '@/shared/components/ui/StatsCard';
 import { useApi } from '@/hooks/useApi';
 
@@ -43,7 +42,7 @@ export default function EnfantsPage() {
           frais: e.frais || { total: 0, paye: 0 },
           moyenne: e.moyenne ?? 0,
           rang: e.rang ?? 0,
-          absences: e.absences ?? 0,
+          absences: e.absences ?? 0
         })));
         if (items.length > 0 && !selectedEnfant) setSelectedEnfant(items[0]);
       } catch (e) {

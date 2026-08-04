@@ -48,6 +48,7 @@
     "@vitejs/plugin-react": "^4.2.0",
     "cross-fetch": "^4.1.0",
     "eslint": "^8.44.0",
+    "eslint-plugin-react": "^7.37.5",
     "jsdom": "^24.0.0",
     "tailwindcss": "^4.3.1",
     "typescript": "^6.0.3",

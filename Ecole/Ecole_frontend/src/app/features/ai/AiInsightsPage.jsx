@@ -9,18 +9,17 @@
  */
 
 import { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
   Sparkles, TrendingUp, AlertTriangle, Lightbulb,
   BarChart3, BookOpen, GraduationCap, Send,
-  Bot, User, Loader2, ChevronRight, Clock, Target,
-  Zap, MessageSquare, FileText, RefreshCw, School, HelpCircle,
+  Bot, User, Loader2, Target,
+  MessageSquare, FileText, RefreshCw, School, HelpCircle
 } from 'lucide-react';
 import useAuthStore from '@/shared/stores/auth-store';
-import useUIStore from '@/shared/stores/ui-store';
 import apiClient from '@/shared/lib/api-client';
 import { cn } from '@/shared/lib/utils';
-import { ROLES, ROLE_LABELS } from '@/shared/types/roles';
+import { ROLES } from '@/shared/types/roles';
 
 /* ─── Messages de bienvenue par rôle ────────────────────────────── */
 const WELCOME_MESSAGES = {
@@ -32,7 +31,7 @@ const WELCOME_MESSAGES = {
       { icon: TrendingUp, label: 'Tendances trimestrielles' },
       { icon: AlertTriangle, label: 'Alertes et risques' },
       { icon: Lightbulb, label: 'Recommandations' },
-    ],
+    ]
   },
   [ROLES.ENSEIGNANT]: {
     title: 'Assistant pédagogique IA',
@@ -42,7 +41,7 @@ const WELCOME_MESSAGES = {
       { icon: BarChart3, label: 'Analyser ma classe' },
       { icon: FileText, label: 'Générer un exercice' },
       { icon: GraduationCap, label: 'Conseil pédagogique' },
-    ],
+    ]
   },
   [ROLES.ELEVE]: {
     title: 'Tuteur IA',
@@ -52,7 +51,7 @@ const WELCOME_MESSAGES = {
       { icon: BookOpen, label: 'Aide en français' },
       { icon: BookOpen, label: 'Aide en physique' },
       { icon: GraduationCap, label: 'Réviser un contrôle' },
-    ],
+    ]
   },
   [ROLES.PARENT]: {
     title: 'Assistant parental',
@@ -62,8 +61,8 @@ const WELCOME_MESSAGES = {
       { icon: TrendingUp, label: 'Progrès récents' },
       { icon: MessageSquare, label: 'Conseil éducatif' },
       { icon: Target, label: 'Objectifs trimestre' },
-    ],
-  },
+    ]
+  }
 };
 
 const DEFAULT_WELCOME = {
@@ -74,7 +73,7 @@ const DEFAULT_WELCOME = {
     { icon: BarChart3, label: 'Statistiques' },
     { icon: FileText, label: 'Rapport' },
     { icon: HelpCircle, label: 'Aide' },
-  ],
+  ]
 };
 
 export default function AiInsightsPage() {
@@ -111,7 +110,7 @@ export default function AiInsightsPage() {
 
       const response = await apiClient.post('/v1/ia/chat', {
         message: userMsg.content,
-        mode,
+        mode
       });
       const data = response.data;
       setMessages((prev) => [

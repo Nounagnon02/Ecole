@@ -62,7 +62,12 @@ return new class extends Migration
             // deleted (2026_08_03_100000_restrict_school_deletion).
             $table->foreignId('ecole_id')->constrained('ecoles')->restrictOnDelete();
 
-            $table->foreignId('auteur_id')->constrained('users')->cascadeOnDelete();
+            // `nullOnDelete`, pas `cascadeOnDelete` : `User` est en suppression
+            // dure, donc la cascade effaçait *toutes* les annonces d'un membre du
+            // personnel au moment où l'on supprimait son compte. Une annonce est
+            // un enregistrement de l'établissement, pas la propriété de son
+            // auteur — elle survit, sans attribution.
+            $table->foreignId('auteur_id')->nullable()->constrained('users')->nullOnDelete();
 
             $table->string('titre');
             $table->text('contenu');

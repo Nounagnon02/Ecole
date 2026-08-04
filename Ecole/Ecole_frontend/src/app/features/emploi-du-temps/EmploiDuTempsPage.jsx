@@ -8,10 +8,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Calendar, Clock, ChevronLeft, ChevronRight, Filter,
-  MapPin, User, BookOpen, Download, Plus, Loader2,
+  Clock, ChevronLeft, ChevronRight, Filter,
+  MapPin, User, Download, Plus, Loader2
 } from 'lucide-react';
-import { cn, formatTime } from '@/shared/lib/utils';
+import { cn } from '@/shared/lib/utils';
 import logger from '@/shared/lib/logger';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
@@ -97,7 +97,7 @@ export default function EmploiDuTempsPage() {
           matiere: matieres[(seed + jIdx) % matieres.length],
           professeur: profs[(seed + cIdx) % profs.length],
           salle: salles[(seed + jIdx + cIdx) % salles.length],
-          groupe: groupes[seed % groupes.length],
+          groupe: groupes[seed % groupes.length]
         };
       }).filter(Boolean);
     });

@@ -9,12 +9,10 @@ import { useNavigate } from 'react-router-dom';
 import { useDashboardStats } from '../hooks/useDashboardData';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  BookOpen, Users, Bookmark, Clock, AlertTriangle, CheckCircle2,
-  BarChart3, Search, Library, Plus, TrendingUp,
-} from 'lucide-react';
+  BookOpen, Users, Bookmark, Clock, BarChart3, Search, Library } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip,
-  ResponsiveContainer, PieChart, Pie, Cell,
+  ResponsiveContainer, PieChart, Pie, Cell
 } from 'recharts';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -148,55 +146,10 @@ function ApercuSection({ stats, activite, categories, emprunts }) {
   );
 }
 
-function CatalogueSection() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Catalogue</h2>
-          <p className="text-sm text-neutral-500 mt-1">Gestion des ouvrages de la bibliothèque</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="ghost" size="sm"><Search className="h-4 w-4 mr-1" /> Rechercher</Button>
-          <Button><Plus className="h-4 w-4 mr-1" /> Ajouter un Ouvrage</Button>
-        </div>
-      </div>
-      <Card>
-        <Card.Body>
-          <p className="text-neutral-500 text-center py-12">
-            Catalogue complet — recherche, catégories, stock, et nouveautés
-          </p>
-        </Card.Body>
-      </Card>
-    </div>
-  );
-}
-
-function EmpruntsSection() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Emprunts</h2>
-          <p className="text-sm text-neutral-500 mt-1">Suivi des prêts et retours</p>
-        </div>
-        <Button variant="ghost" size="sm"><Bookmark className="h-4 w-4 mr-1" /> Historique</Button>
-      </div>
-      <Card>
-        <Card.Body>
-          <p className="text-neutral-500 text-center py-12">
-              Interface de gestion des prêts — enregistrement, rappels, prolongations
-          </p>
-        </Card.Body>
-      </Card>
-    </div>
-  );
-}
-
 export default function BibliothecaireDashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('apercu');
-  const { data, loading } = useDashboardStats('bibliothecaire');
+  const { data } = useDashboardStats('bibliothecaire');
 
   const stats = data?.stats?.map((s, i) => ({ ...s, icon: STATS_META[i]?.icon, color: STATS_META[i]?.color })) || [];
   const activite = data?.activite || [];
@@ -207,14 +160,14 @@ export default function BibliothecaireDashboard() {
     if (tabId === 'apercu') { setActiveTab(tabId); return; }
     const routes = { catalogue: '/bibliothecaire/catalogue', emprunts: '/bibliothecaire/emprunts' };
     navigate(routes[tabId] || '/bibliothecaire/dashboard');
-  };
+ };
 
   const renderSection = () => {
     switch (activeTab) {
       case 'apercu': return <ApercuSection stats={stats} activite={activite} categories={categories} emprunts={emprunts} />;
       default: return <ApercuSection stats={stats} activite={activite} categories={categories} emprunts={emprunts} />;
-    }
-  };
+ }
+ };
 
   return (
     <div className="space-y-6">
@@ -248,7 +201,7 @@ export default function BibliothecaireDashboard() {
                 <Icon className="h-4 w-4" /> {tab.label}
               </button>
             );
-          })}
+ })}
         </nav>
       </div>
 
