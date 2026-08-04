@@ -8,9 +8,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   User, Bell, Shield, Palette, Globe, Smartphone,
-  Moon, Sun, Eye, EyeOff, Key, Lock, LogOut,
-  Save, CreditCard, Users, BookOpen, Clock,
-} from 'lucide-react';
+  Moon, Sun   } from 'lucide-react';
 import Card from '@/shared/components/ui/Card';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';

@@ -6,10 +6,9 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
 import {
   Palette, Image, Globe, Monitor, Save,
-  Type, Eye, Smartphone, Loader2, AlertCircle,
+  Type, Eye, Smartphone, Loader2, AlertCircle
 } from 'lucide-react';
 import Card from '@/shared/components/ui/Card';
 import Button from '@/shared/components/ui/Button';
@@ -48,7 +47,7 @@ export default function WhiteLabelPage() {
           : [];
         setEcoles(items.map((e) => ({
           id: e.id,
-          nom: e.nom || e.name || `École ${e.id}`,
+          nom: e.nom || e.name || `École ${e.id}`
         })));
         if (items.length > 0 && !selectedTenant) {
           setSelectedTenant(String(items[0].id));
@@ -90,7 +89,7 @@ export default function WhiteLabelPage() {
       await patch(`/v1/admin/tenants/${selectedTenant}/settings`, {
         brand_name: brandName,
         primary_color: primaryColor,
-        secondary_color: secondaryColor,
+        secondary_color: secondaryColor
       });
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);

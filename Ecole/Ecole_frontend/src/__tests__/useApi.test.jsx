@@ -151,6 +151,34 @@ describe('useApi — chemins d’erreur', () => {
     expect(result.current.error).toBeNull();
   });
 
+  it('n’expose jamais qu’une chaîne dans error, même sur l’enveloppe { error: { … } }', async () => {
+    // La surface /api/v1 répond `{ error: { code, message } }`. Un objet
+    // placé dans `error` fait lever à React « Objects are not valid as a
+    // React child » : la page blanchit au lieu d'afficher l'échec.
+    http.onGet('/v1/admin/plans').reply(500, {
+      error: { code: 'INTERNAL', message: 'Panne interne' },
+    });
+    const { result } = renderHook(() => useApi());
+
+    await act(async () => {
+      await result.current.get('/v1/admin/plans').catch(() => {});
+    });
+
+    expect(typeof result.current.error).toBe('string');
+    expect(result.current.error).toBe('Panne interne');
+  });
+
+  it('accepte encore `error` sous forme de chaîne nue', async () => {
+    http.onGet('/notes').reply(400, { error: 'Requête malformée' });
+    const { result } = renderHook(() => useApi());
+
+    await act(async () => {
+      await result.current.get('/notes').catch(() => {});
+    });
+
+    expect(result.current.error).toBe('Requête malformée');
+  });
+
   it('ne laisse jamais error à null après un échec — sinon la page dit « vide »', async () => {
     for (const status of [400, 401, 403, 404, 409, 422, 500, 503]) {
       http.reset();

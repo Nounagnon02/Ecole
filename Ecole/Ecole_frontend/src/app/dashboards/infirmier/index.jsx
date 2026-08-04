@@ -9,12 +9,12 @@ import { useNavigate } from 'react-router-dom';
 import { useDashboardStats } from '../hooks/useDashboardData';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Heart, Users, Activity, AlertTriangle, CheckCircle2, Clock,
-  BarChart3, Stethoscope, FileText, Plus, Pill, Thermometer,
+  Heart, Activity, AlertTriangle, Clock,
+  BarChart3, Stethoscope, FileText 
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip,
-  ResponsiveContainer,
+  ResponsiveContainer
 } from 'recharts';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -142,55 +142,10 @@ function ApercuSection({ stats, frequentation, visites }) {
   );
 }
 
-function SoinsSection() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Soins Infirmiers</h2>
-          <p className="text-sm text-neutral-500 mt-1">Enregistrement et suivi des soins</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="ghost" size="sm"><Pill className="h-4 w-4 mr-1" /> Stock</Button>
-          <Button><Plus className="h-4 w-4 mr-1" /> Nouveau Soin</Button>
-        </div>
-      </div>
-      <Card>
-        <Card.Body>
-          <p className="text-neutral-500 text-center py-12">
-            Registre des soins — consultations, médicaments, et suivi des patients
-          </p>
-        </Card.Body>
-      </Card>
-    </div>
-  );
-}
-
-function DossiersSection() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Dossiers Médicaux</h2>
-          <p className="text-sm text-neutral-500 mt-1">Fiches de santé et antécédents</p>
-        </div>
-        <Button variant="ghost" size="sm"><Thermometer className="h-4 w-4 mr-1" /> Carnet de Santé</Button>
-      </div>
-      <Card>
-        <Card.Body>
-          <p className="text-neutral-500 text-center py-12">
-            Dossiers médicaux complets — antécédents, allergies, vaccins, visites
-          </p>
-        </Card.Body>
-      </Card>
-    </div>
-  );
-}
-
 export default function InfirmierDashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('apercu');
-  const { data, loading } = useDashboardStats('infirmier');
+  const { data } = useDashboardStats('infirmier');
 
   const stats = data?.stats?.map((s, i) => ({ ...s, icon: STATS_META[i]?.icon, color: STATS_META[i]?.color })) || [];
   const frequentation = data?.frequentation || [];
@@ -200,14 +155,14 @@ export default function InfirmierDashboard() {
     if (tabId === 'apercu') { setActiveTab(tabId); return; }
     const routes = { soins: '/infirmier/soins', dossiers: '/infirmier/dossiers' };
     navigate(routes[tabId] || '/infirmier/dashboard');
-  };
+ };
 
   const renderSection = () => {
     switch (activeTab) {
       case 'apercu': return <ApercuSection stats={stats} frequentation={frequentation} visites={visites} />;
       default: return <ApercuSection stats={stats} frequentation={frequentation} visites={visites} />;
-    }
-  };
+ }
+ };
 
   return (
     <div className="space-y-6">
@@ -241,7 +196,7 @@ export default function InfirmierDashboard() {
                 <Icon className="h-4 w-4" /> {tab.label}
               </button>
             );
-          })}
+ })}
         </nav>
       </div>
 

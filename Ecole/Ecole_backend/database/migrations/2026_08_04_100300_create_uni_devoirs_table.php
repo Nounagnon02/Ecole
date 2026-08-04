@@ -66,7 +66,13 @@ return new class extends Migration
         Schema::create('uni_devoir_etudiant', function (Blueprint $table) {
             $table->id();
             $table->foreignId('devoir_id')->constrained('uni_devoirs')->cascadeOnDelete();
-            $table->foreignId('etudiant_id')->constrained('etudiants')->cascadeOnDelete();
+            // `restrictOnDelete` : `Etudiant` est en suppression dure, donc la
+            // cascade effaçait tout le travail rendu et toutes les notes d'un
+            // étudiant à l'instant où l'on supprimait sa fiche. Même principe que
+            // pour l'établissement : on désactive, on ne supprime pas. La
+            // suppression échoue désormais franchement au lieu d'effacer un
+            // dossier académique.
+            $table->foreignId('etudiant_id')->constrained('etudiants')->restrictOnDelete();
 
             $table->text('reponse')->nullable();
             $table->string('fichier')->nullable();

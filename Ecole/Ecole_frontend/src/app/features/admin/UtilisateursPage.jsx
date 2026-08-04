@@ -8,10 +8,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Users, Plus, Search, Filter, Shield, UserCog, UserCheck,
-  Clock, CheckCircle, XCircle, Eye, Ban, Trash2, Loader2, AlertCircle,
+  Users, Plus, Search, Shield, UserCog, UserCheck,
+  Clock, CheckCircle, XCircle, Eye, Ban, Trash2, Loader2, AlertCircle
 } from 'lucide-react';
-import { cn, formatDate } from '@/shared/lib/utils';
+import { formatDate } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Avatar from '@/shared/components/ui/Avatar';
@@ -36,7 +36,7 @@ const ROLE_ICONS = {
   Censeur: UserCheck,
   Infirmier: UserCheck,
   Bibliothécaire: UserCheck,
-  Secrétaire: UserCog,
+  Secrétaire: UserCog
 };
 
 export default function UtilisateursPage() {
@@ -62,7 +62,7 @@ export default function UtilisateursPage() {
           ecole: t.name || t.nom || '—',
           statut: t.status === 'active' || t.is_active ? 'actif' : 'inactif',
           derniereConnexion: t.last_login_at || t.created_at,
-          dateCreation: t.created_at,
+          dateCreation: t.created_at
         })));
       } catch (e) {
         console.error('Erreur chargement utilisateurs:', e);
@@ -74,7 +74,7 @@ export default function UtilisateursPage() {
     total: utilisateurs.length,
     actifs: utilisateurs.filter((u) => u.statut === 'actif').length,
     inactifs: utilisateurs.filter((u) => u.statut === 'inactif').length,
-    roles: new Set(utilisateurs.map((u) => u.role)).size,
+    roles: new Set(utilisateurs.map((u) => u.role)).size
   }), [utilisateurs]);
 
   const filtered = useMemo(() =>

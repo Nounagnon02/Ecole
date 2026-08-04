@@ -8,8 +8,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
-  DollarSign, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight,
-  Search, Download, Eye, FileText, Loader2, AlertCircle,
+  DollarSign, TrendingUp, TrendingDown, ArrowUpRight,   Search, Download, Eye, FileText, Loader2, AlertCircle
 } from 'lucide-react';
 import { cn, formatCurrency, formatDate, formatNumber } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
@@ -70,7 +69,7 @@ export default function TransactionsPage() {
       totalRecettes,
       totalDepenses: 0,
       solde: totalRecettes,
-      transactions: transactions.length,
+      transactions: transactions.length
     };
   }, [transactions]);
 

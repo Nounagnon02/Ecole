@@ -8,25 +8,22 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Shield,
   Users,
   Settings,
   Activity,
   Database,
-  Server,
   HardDrive,
   AlertTriangle,
   CheckCircle2,
   Clock,
-  BarChart3,
   Download,
   RefreshCw,
   Bell,
-  Terminal,
+  Terminal
 } from 'lucide-react';
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer,
-  LineChart, Line, Area, AreaChart,
+  XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer,
+  Line, Area, AreaChart
 } from 'recharts';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -239,7 +236,7 @@ export default function AdminDashboard() {
     }
     const routes = {
       utilisateurs: '/admin/utilisateurs',
-      configuration: '/admin/configuration',
+      configuration: '/admin/configuration'
     };
     if (routes[tabId]) {
       navigate(routes[tabId]);

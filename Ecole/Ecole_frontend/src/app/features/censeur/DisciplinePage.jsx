@@ -9,8 +9,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   Scale, AlertTriangle, Search, Plus,
-  Clock, User, CheckCircle, Loader2, TrendingUp, TrendingDown,
-  AlertOctagon, Info,
+  Clock, CheckCircle, Loader2, TrendingUp, TrendingDown,
+  AlertOctagon, Info
 } from 'lucide-react';
 import { cn, formatDate } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
@@ -43,13 +43,13 @@ const getGraviteLabel = (g) => {
 const ALERT_ICONS = {
   danger: AlertOctagon,
   warning: AlertTriangle,
-  info: Info,
+  info: Info
 };
 
 const ALERT_COLORS = {
   danger: 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/10 text-red-700 dark:text-red-400',
   warning: 'border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/10 text-amber-700 dark:text-amber-400',
-  info: 'border-sky-200 bg-sky-50 dark:border-sky-800 dark:bg-sky-900/10 text-sky-700 dark:text-sky-400',
+  info: 'border-sky-200 bg-sky-50 dark:border-sky-800 dark:bg-sky-900/10 text-sky-700 dark:text-sky-400'
 };
 
 export default function DisciplinePage() {
@@ -77,7 +77,7 @@ export default function DisciplinePage() {
           ...inc,
           type: inc.description || inc.type || 'Incident',
           statut: inc.statut || 'en_cours',
-          rapportePar: '--',
+          rapportePar: '--'
         })));
 
         setStats(statsRes?.data?.data ?? null);
@@ -93,7 +93,7 @@ export default function DisciplinePage() {
     total: incidents.length,
     enCours: incidents.filter((i) => i.statut === 'en_cours' || i.statut === 'signalé').length,
     traitees: incidents.filter((i) => i.statut === 'termine' || i.statut === 'résolu' || i.statut === 'traitee').length,
-    graves: incidents.filter((i) => i.gravite === 'grave').length,
+    graves: incidents.filter((i) => i.gravite === 'grave').length
   }), [incidents]);
 
   const filtered = useMemo(() =>

@@ -8,16 +8,12 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  BookOpen,
   Users,
-  GraduationCap,
   ClipboardList,
   Clock,
   Calendar,
   MessageSquare,
   FileText,
-  CheckCircle2,
-  AlertCircle,
   TrendingUp,
   BarChart3,
   ArrowRight,
@@ -26,15 +22,8 @@ import {
   Eye,
   Download,
   RefreshCw,
-  Search,
-  Filter,
-  MoreHorizontal,
-  School,
+  Search
 } from 'lucide-react';
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer,
-  LineChart, Line, Area, AreaChart,
-} from 'recharts';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { cn } from '@/shared/lib/utils';
@@ -188,26 +177,6 @@ function ApercuSection({ stats, emploiTemps, devoirs, loading }) {
   );
 }
 
-function ClasseSection() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Mes Classes</h2>
-          <p className="text-sm text-neutral-500 mt-1">Gestion des classes et élèves</p>
-        </div>
-      </div>
-      <Card>
-        <Card.Body>
-          <p className="text-neutral-500 text-center py-12">
-            Liste des classes attribuées, profils élèves et suivi individuel
-          </p>
-        </Card.Body>
-      </Card>
-    </div>
-  );
-}
-
 function NotesSection({ notes, loading }) {
   return (
     <div className="space-y-6">
@@ -355,29 +324,6 @@ function EmploiSection({ emploiTemps }) {
         ))}
       </div>
       )}
-    </div>
-  );
-}
-
-function MessagesSection() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Messages</h2>
-          <p className="text-sm text-neutral-500 mt-1">Communications internes</p>
-        </div>
-        <Button>
-          <MessageSquare className="h-4 w-4 mr-2" /> Nouveau Message
-        </Button>
-      </div>
-      <Card>
-        <Card.Body>
-          <p className="text-neutral-500 text-center py-12">
-            Messagerie — à connecter avec l'API
-          </p>
-        </Card.Body>
-      </Card>
     </div>
   );
 }

@@ -9,12 +9,11 @@ import { useNavigate } from 'react-router-dom';
 import { useDashboardStats } from '../hooks/useDashboardData';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Shield, Users, Clock, AlertTriangle, CheckCircle2, XCircle,
-  BarChart3, UserCheck, UserX, Camera, MapPin,
+  Shield, Users, AlertTriangle, BarChart3, UserCheck, UserX, Camera, MapPin
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip,
-  ResponsiveContainer,
+  ResponsiveContainer
 } from 'recharts';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -138,52 +137,10 @@ function ApercuSection({ stats, presences, retards, data }) {
   );
 }
 
-function PresencesSection() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Gestion des Présences</h2>
-          <p className="text-sm text-neutral-500 mt-1">Saisie et suivi des présences par classe</p>
-        </div>
-        <Badge variant="success" size="sm"><Clock className="h-3 w-3 mr-1" /> En cours</Badge>
-      </div>
-      <Card>
-        <Card.Body>
-          <p className="text-neutral-500 text-center py-12">
-            Interface de pointage — feuilles de présence par classe, import, et validation
-          </p>
-        </Card.Body>
-      </Card>
-    </div>
-  );
-}
-
-function SurveillanceSection() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Surveillance</h2>
-          <p className="text-sm text-neutral-500 mt-1">Gestion des tours de garde et incidents</p>
-        </div>
-        <Button variant="ghost" size="sm"><Shield className="h-4 w-4 mr-1" /> Rapport</Button>
-      </div>
-      <Card>
-        <Card.Body>
-          <p className="text-neutral-500 text-center py-12">
-            Planning de surveillance, zones, et rapport d'incidents
-          </p>
-        </Card.Body>
-      </Card>
-    </div>
-  );
-}
-
 export default function SurveillantDashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('apercu');
-  const { data, loading } = useDashboardStats('surveillant');
+  const { data } = useDashboardStats('surveillant');
 
   const stats = data?.stats?.map((s, i) => ({ ...s, icon: STATS_META[i]?.icon, color: STATS_META[i]?.color })) || [];
   const presences = data?.presences_semaine || [];
@@ -193,14 +150,14 @@ export default function SurveillantDashboard() {
     if (tabId === 'apercu') { setActiveTab(tabId); return; }
     const routes = { presences: '/surveillant/presences', surveillance: '/surveillant/surveillance' };
     navigate(routes[tabId] || '/surveillant/dashboard');
-  };
+ };
 
   const renderSection = () => {
     switch (activeTab) {
       case 'apercu': return <ApercuSection stats={stats} presences={presences} retards={retards} data={data} />;
       default: return <ApercuSection stats={stats} presences={presences} retards={retards} data={data} />;
-    }
-  };
+ }
+ };
 
   return (
     <div className="space-y-6">
@@ -234,7 +191,7 @@ export default function SurveillantDashboard() {
                 <Icon className="h-4 w-4" /> {tab.label}
               </button>
             );
-          })}
+ })}
         </nav>
       </div>
 

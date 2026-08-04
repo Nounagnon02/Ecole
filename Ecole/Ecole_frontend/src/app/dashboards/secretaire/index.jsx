@@ -10,12 +10,11 @@ import { useNavigate } from 'react-router-dom';
 import { useDashboardStats } from '../hooks/useDashboardData';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  FileText, Users, Calendar, Clock, CheckCircle2, AlertCircle,
-  BarChart3, UserPlus, ClipboardList, Mail, Printer, Download, Plus,
+  FileText, Users, Calendar, BarChart3, UserPlus, ClipboardList 
 } from 'lucide-react';
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip,
-  ResponsiveContainer, AreaChart, Area,
+  XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip,
+  ResponsiveContainer, AreaChart, Area
 } from 'recharts';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -137,79 +136,10 @@ function ApercuSection({ stats, fluxInscriptions, rendezVous, inscriptions }) {
   );
 }
 
-function InscriptionsSection() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Inscriptions</h2>
-          <p className="text-sm text-neutral-500 mt-1">Gestion des inscriptions et réinscriptions</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="ghost" size="sm"><Download className="h-4 w-4 mr-1" /> Exporter</Button>
-          <Button><Plus className="h-4 w-4 mr-1" /> Nouvelle Inscription</Button>
-        </div>
-      </div>
-      <Card>
-        <Card.Body>
-          <p className="text-neutral-500 text-center py-12">
-            Module d'inscription — dossier complet, pièces justificatives, et validation
-          </p>
-        </Card.Body>
-      </Card>
-    </div>
-  );
-}
-
-function PlanningSection() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Planning</h2>
-          <p className="text-sm text-neutral-500 mt-1">Agenda et planification</p>
-        </div>
-        <Button variant="ghost" size="sm"><Printer className="h-4 w-4 mr-1" /> Imprimer</Button>
-      </div>
-      <Card>
-        <Card.Body>
-          <p className="text-neutral-500 text-center py-12">
-            Agenda — calendrier des rendez-vous, événements et échéances administratives
-          </p>
-        </Card.Body>
-      </Card>
-    </div>
-  );
-}
-
-function DocumentsSection() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Documents</h2>
-          <p className="text-sm text-neutral-500 mt-1">Génération et gestion des documents</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="ghost" size="sm"><Mail className="h-4 w-4 mr-1" /> Envoyer</Button>
-          <Button><FileText className="h-4 w-4 mr-1" /> Nouveau Document</Button>
-        </div>
-      </div>
-      <Card>
-        <Card.Body>
-          <p className="text-neutral-500 text-center py-12">
-            Générateur de documents — certificats, attestations, relevés, et correspondances
-          </p>
-        </Card.Body>
-      </Card>
-    </div>
-  );
-}
-
 export default function SecretaireDashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('apercu');
-  const { data, loading } = useDashboardStats('secretaire');
+  const { data } = useDashboardStats('secretaire');
 
   const stats = data?.stats?.map((s, i) => ({ ...s, icon: STATS_META[i]?.icon, color: STATS_META[i]?.color })) || [];
   const fluxInscriptions = data?.flux_inscriptions || [];
@@ -220,21 +150,21 @@ export default function SecretaireDashboard() {
     if (tabId === 'apercu') {
       setActiveTab(tabId);
       return;
-    }
+ }
     const routes = {
       inscriptions: '/secretaire/inscriptions',
       planning: '/secretaire/planning',
-      documents: '/secretaire/documents',
-    };
+      documents: '/secretaire/documents'
+ };
     navigate(routes[tabId] || '/secretaire/dashboard');
-  };
+ };
 
   const renderSection = () => {
     switch (activeTab) {
       case 'apercu': return <ApercuSection stats={stats} fluxInscriptions={fluxInscriptions} rendezVous={rendezVous} inscriptions={inscriptions} />;
       default: return <ApercuSection stats={stats} fluxInscriptions={fluxInscriptions} rendezVous={rendezVous} inscriptions={inscriptions} />;
-    }
-  };
+ }
+ };
 
   return (
     <div className="space-y-6">
@@ -268,7 +198,7 @@ export default function SecretaireDashboard() {
                 <Icon className="h-4 w-4" /> {tab.label}
               </button>
             );
-          })}
+ })}
         </nav>
       </div>
 

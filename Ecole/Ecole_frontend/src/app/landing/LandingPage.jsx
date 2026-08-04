@@ -13,18 +13,14 @@ import {
   Users,
   BookOpen,
   DollarSign,
-  Shield,
   MessageSquare,
   Calendar,
   BarChart3,
-  TrendingUp,
   ArrowRight,
   CheckCircle2,
   Star,
   Menu,
-  X,
-  ChevronRight,
-  Sparkles,
+  X
 } from 'lucide-react';
 /* ─── Animation variants ─────────────────────────────────────────────── */
 const fadeUp = {
@@ -32,16 +28,16 @@ const fadeUp = {
   visible: (i = 0) => ({
     opacity: 1,
     y: 0,
-    transition: { duration: 0.6, delay: i * 0.1, ease: 'easeOut' },
-  }),
+    transition: { duration: 0.6, delay: i * 0.1, ease: 'easeOut' }
+  })
 };
 
 const stagger = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: { staggerChildren: 0.08 },
-  },
+    transition: { staggerChildren: 0.08 }
+  }
 };
 
 /* ─── Features data ─────────────────────────────────────────────────── */
@@ -50,37 +46,37 @@ const FEATURES = [
     icon: Users,
     title: 'Gestion des élèves',
     desc: 'Suivi complet des inscriptions, dossiers, absences et performances individuelles.',
-    color: 'primary',
+    color: 'primary'
   },
   {
     icon: BookOpen,
     title: 'Notes & Bulletins',
     desc: 'Saisie intuitive, calcul automatique des moyennes, bulletins PDF personnalisables.',
-    color: 'emerald',
+    color: 'emerald'
   },
   {
     icon: Calendar,
     title: 'Emplois du temps',
     desc: 'Planification visuelle des cours, salles et enseignants avec détection des conflits.',
-    color: 'sky',
+    color: 'sky'
   },
   {
     icon: DollarSign,
     title: 'Paiements',
     desc: 'Gestion des frais de scolarité, facturation, relances et suivi des impayés.',
-    color: 'amber',
+    color: 'amber'
   },
   {
     icon: MessageSquare,
     title: 'Communications',
     desc: 'Messagerie intégrée parents-enseignants, notifications et bulletins d\'information.',
-    color: 'purple',
+    color: 'purple'
   },
   {
     icon: BarChart3,
     title: 'Statistiques',
     desc: 'Tableaux de bord dynamiques, indicateurs de performance et rapports exportables.',
-    color: 'rose',
+    color: 'rose'
   },
 ];
 
@@ -98,19 +94,19 @@ const TESTIMONIALS = [
     name: 'M. Koné',
     role: 'Directeur, Groupe Scolaire A',
     content: 'Un outil qui a révolutionné notre gestion quotidienne. Le suivi des paiements est devenu simple et transparent.',
-    rating: 5,
+    rating: 5
   },
   {
     name: 'Mme Diallo',
     role: 'Enseignante, Lycée B',
     content: 'La saisie des notes et la génération des bulletins me fait gagner des heures chaque fin de trimestre.',
-    rating: 5,
+    rating: 5
   },
   {
     name: 'M. Traoré',
     role: 'Parent d\'élève',
     content: 'Je peux suivre les notes et la présence de mon enfant en temps réel. Une tranquillité d\'esprit incomparable.',
-    rating: 5,
+    rating: 5
   },
 ];
 
