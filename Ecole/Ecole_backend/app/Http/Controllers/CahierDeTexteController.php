@@ -38,8 +38,8 @@ class CahierDeTexteController extends Controller
         }
 
         $validated = $request->validate([
-            'classe_id' => 'required|exists:classes,id',
-            'matiere_id' => 'required|exists:matieres,id',
+            'classe_id' => 'required|school_exists:classes,id',
+            'matiere_id' => 'required|school_exists:matieres,id',
             'date' => 'required|date',
             'titre_lecon' => 'required|string|max:255',
             'contenu' => 'required|string',

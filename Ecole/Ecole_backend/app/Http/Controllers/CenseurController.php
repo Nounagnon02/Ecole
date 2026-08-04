@@ -97,7 +97,7 @@ class CenseurController extends Controller
     public function storeConseilClasse(Request $request)
     {
         $validated = $request->validate([
-            'classe_id' => 'required|exists:classes,id',
+            'classe_id' => 'required|school_exists:classes,id',
             'date' => 'required|date',
             'trimestre' => 'required|string',
             'participants' => 'array',
@@ -121,7 +121,7 @@ class CenseurController extends Controller
         $conseil = ConseilClasse::findOrFail($id);
 
         $validated = $request->validate([
-            'classe_id' => 'sometimes|exists:classes,id',
+            'classe_id' => 'sometimes|school_exists:classes,id',
             'date' => 'sometimes|date',
             'trimestre' => 'sometimes|string',
             'participants' => 'sometimes|array',

@@ -32,7 +32,7 @@ class ParentsController extends Controller
             'ecole_id' => 'required|exists:ecoles,id',
             'telephone' => 'nullable|string',
             'eleve_ids' => 'sometimes|array',
-            'eleve_ids.*' => 'exists:eleves,id',
+            'eleve_ids.*' => 'school_exists:eleves,id',
         ]);
 
         try {
@@ -59,6 +59,7 @@ class ParentsController extends Controller
                 return response()->json($parent->load('user', 'eleves.user'), 201);
             });
         } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
             return response()->json(['message' => 'Erreur lors de la création', 'error' => $this->clientErrorMessage($e)], 500);
         }
     }
@@ -99,7 +100,7 @@ class ParentsController extends Controller
     public function updateEleves(Request $request, $id)
     {
         $parent = UserParent::findOrFail($id);
-        $request->validate(['eleve_ids' => 'required|array', 'eleve_ids.*' => 'exists:eleves,id']);
+        $request->validate(['eleve_ids' => 'required|array', 'eleve_ids.*' => 'school_exists:eleves,id']);
         
         $parent->eleves()->sync($request->eleve_ids);
         

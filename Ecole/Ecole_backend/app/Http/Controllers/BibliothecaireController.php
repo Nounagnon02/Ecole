@@ -55,8 +55,8 @@ class BibliothecaireController extends Controller
     public function storeEmprunt(Request $request)
     {
         $validated = $request->validate([
-            'livre_id' => 'required|exists:livres,id',
-            'eleve_id' => 'required|exists:eleves,id',
+            'livre_id' => 'required|school_exists:livres,id',
+            'eleve_id' => 'required|school_exists:eleves,id',
             'date_emprunt' => 'required|date',
             'date_retour_prevue' => 'required|date'
         ]);
@@ -81,8 +81,8 @@ class BibliothecaireController extends Controller
     public function storeReservation(Request $request)
     {
         $validated = $request->validate([
-            'livre_id' => 'required|exists:livres,id',
-            'eleve_id' => 'required|exists:eleves,id',
+            'livre_id' => 'required|school_exists:livres,id',
+            'eleve_id' => 'required|school_exists:eleves,id',
             'date_reservation' => 'required|date',
             'date_limite' => 'required|date'
         ]);

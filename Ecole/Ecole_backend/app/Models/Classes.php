@@ -5,6 +5,7 @@ namespace App\Models;
 
 use App\Support\Cycles;
 use App\Traits\BelongsToEcole;
+use App\Traits\ScopedToCycle;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -13,7 +14,16 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Classes extends Model
 {
-    use HasFactory, BelongsToEcole;
+    use HasFactory, BelongsToEcole, ScopedToCycle;
+
+    /**
+     * La classe *est* le porteur du cycle : c'est l'ancre de toute la frontière.
+     */
+    protected static function cyclePath(): array
+    {
+        return ['self' => 'categorie_classe'];
+    }
+
     protected $fillable= [
         'nom_classe',
         'categorie_classe',

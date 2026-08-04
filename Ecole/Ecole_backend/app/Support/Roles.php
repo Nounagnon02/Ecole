@@ -36,16 +36,31 @@ final class Roles
 
     public const TEACHER = 'enseignant';
 
+    /**
+     * Cycle-bound teaching roles.
+     *
+     * Declared by the frontend (`ROLES.ENSEIGNEMENT*`, with labels
+     * "Enseignement Maternelle/Primaire/Secondaire") and named in the project
+     * brief, but no backend code assigns them yet. They are declared here so
+     * that the day one is assigned, it inherits the teaching family and its
+     * cycle instead of reproducing the `directeurP` lockout — a role that
+     * exists in one layer and not the other is precisely how that happened.
+     */
+    public const TEACHER_SECONDARY    = 'enseignement';
+    public const TEACHER_KINDERGARTEN = 'enseignementM';
+    public const TEACHER_PRIMARY      = 'enseignementP';
+
     /* ─── Families ────────────────────────────────────────────────────── */
 
     /**
      * Members admitted when a route or policy gates on the family head.
      *
-     * A cycle head is a head of school for their cycle. Which cycle they may
-     * act on is a *data* question, not an access question: the cycle-specific
-     * endpoints (`/classes/primaire`, `/classes/secondaire`, …) are what
-     * separates them, and each cycle dashboard in the frontend calls its own.
-     * See `cycleOf()`.
+     * A cycle head is a head of school *for their cycle*. Which cycle they may
+     * act on is a data question, not an access question, and it is enforced by
+     * `ScopedToCycle` — not by routing. There are no cycle-specific endpoints:
+     * the three heads share the `directeur` dashboard (see the frontend's
+     * `ROLE_NORMALIZATION`), and the server confines what it returns. See
+     * `cycleOf()` and `App\Support\CycleAccess`.
      */
     private const FAMILIES = [
         self::DIRECTOR => [
@@ -53,13 +68,28 @@ final class Roles
             self::DIRECTOR_PRIMARY,
             self::DIRECTOR_SECONDARY,
         ],
+        self::TEACHER => [
+            self::TEACHER_KINDERGARTEN,
+            self::TEACHER_PRIMARY,
+            self::TEACHER_SECONDARY,
+        ],
     ];
 
-    /** Which cycle a role is confined to, or null when it spans the school. */
+    /**
+     * Which cycle a role is confined to, or null when it spans the school.
+     *
+     * The plain `enseignant` role stays unconfined on purpose: a teacher may
+     * hold classes in more than one cycle, and their reach is already bounded by
+     * `enseignant_matiere`. Only the cycle-named variants are confined.
+     */
     private const CYCLES = [
-        self::DIRECTOR_KINDERGARTEN => 'Maternelle',
-        self::DIRECTOR_PRIMARY      => 'Primaire',
-        self::DIRECTOR_SECONDARY    => 'Secondaire',
+        self::DIRECTOR_KINDERGARTEN => Cycles::KINDERGARTEN,
+        self::DIRECTOR_PRIMARY      => Cycles::PRIMARY,
+        self::DIRECTOR_SECONDARY    => Cycles::SECONDARY,
+
+        self::TEACHER_KINDERGARTEN  => Cycles::KINDERGARTEN,
+        self::TEACHER_PRIMARY       => Cycles::PRIMARY,
+        self::TEACHER_SECONDARY     => Cycles::SECONDARY,
     ];
 
     /**

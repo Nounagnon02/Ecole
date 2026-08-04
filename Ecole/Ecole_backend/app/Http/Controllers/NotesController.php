@@ -169,9 +169,9 @@ class NotesController extends Controller
 
             // Validation des données
             $validator = Validator::make($request->all(), [
-                'eleve_id' => 'required|exists:eleves,id',
-                'classe_id' => 'required|exists:classes,id',
-                'matiere_id' => 'required|exists:matieres,id',
+                'eleve_id' => 'required|school_exists:eleves,id',
+                'classe_id' => 'required|school_exists:classes,id',
+                'matiere_id' => 'required|school_exists:matieres,id',
                 'note' => 'required|numeric|min:0|max:20',
                 'note_sur' => 'required|numeric|min:1|max:20',
                 'type_evaluation' => 'required|in:Devoir1,Devoir2,Interrogation,1ère evaluation,2ème evaluation,3ème evaluation,4ème evaluation,5ème evaluation,6ème evaluation',
@@ -241,6 +241,7 @@ class NotesController extends Controller
                 ], 201);
 
             } catch (\Exception $e) {
+                $this->rethrowIfMeaningful($e);
                 DB::rollBack();
                 
                 return response()->json([
@@ -267,9 +268,9 @@ class NotesController extends Controller
 
         // Validation des données
         $validator = Validator::make($request->all(), [
-            'eleve_id' => 'required|exists:eleves,id',
-            'classe_id' => 'required|exists:classes,id',
-            'matiere_id' => 'required|exists:matieres,id',
+            'eleve_id' => 'required|school_exists:eleves,id',
+            'classe_id' => 'required|school_exists:classes,id',
+            'matiere_id' => 'required|school_exists:matieres,id',
             'note' => 'required|numeric|min:0|max:100',
             'note_sur' => 'required|numeric|min:1|max:100',
             'type_evaluation' => 'required|in:Devoir1,Devoir2,Interrogation',
@@ -349,6 +350,7 @@ class NotesController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
             DB::rollBack();
             
             return response()->json([
@@ -419,6 +421,7 @@ class NotesController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
             return response()->json([
                 'success' => false,
                 'message' => 'Erreur lors de la suppression de la note',
@@ -494,6 +497,7 @@ class NotesController extends Controller
             ])->deleteFileAfterSend(true);
 
         } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
             \Illuminate\Support\Facades\Log::error('Export notes XLSX error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
@@ -518,6 +522,7 @@ class NotesController extends Controller
                 'message' => 'Note verrouillée'
             ]);
         } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
             return response()->json([
                 'success' => false,
                 'message' => $this->clientErrorMessage($e, 'Erreur')
@@ -541,6 +546,7 @@ class NotesController extends Controller
                 'message' => 'Note déverrouillée'
             ]);
         } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
             return response()->json([
                 'success' => false,
                 'message' => $this->clientErrorMessage($e, 'Erreur')
@@ -612,6 +618,7 @@ class NotesController extends Controller
                 ]
             ]);
         } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
             return response()->json([
                 'success' => false,
                 'message' => $this->clientErrorMessage($e, 'Erreur lors du calcul du classement')
@@ -630,8 +637,8 @@ class NotesController extends Controller
             Log::debug('Import notes', ['keys' => array_keys($request->all())]);
             // 1. Validation des données reçues
             $validator = Validator::make($request->all(), [
-            'classe_id' => 'required|exists:classes,id',
-            'matiere_id' => 'required|exists:matieres,id',
+            'classe_id' => 'required|school_exists:classes,id',
+            'matiere_id' => 'required|school_exists:matieres,id',
             'type_evaluation' => 'required|in:Devoir1,Devoir2,Interrogation',
             'date_evaluation' => 'required|date',
             'periode' => 'required|in:Semestre 1,Semestre 2',
@@ -696,6 +703,7 @@ class NotesController extends Controller
                     $importedCount++;
 
                 } catch (\Exception $e) {
+                    $this->rethrowIfMeaningful($e);
                     $errors[] = "Erreur pour l'élève {$noteData['matricule']}: " . $e->getMessage();
                 }
             }
@@ -722,6 +730,7 @@ class NotesController extends Controller
             ]);
 
         } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
             DB::rollBack();
             \Illuminate\Support\Facades\Log::error('Erreur import notes: ' . $e->getMessage());
             
@@ -762,6 +771,7 @@ class NotesController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
             return response()->json([
                 'success' => false,
                 'message' => 'Erreur lors de la récupération des notes',
@@ -809,6 +819,7 @@ class NotesController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
             return response()->json([
                 'success' => false,
                 'message' => 'Erreur lors du calcul des statistiques',
@@ -850,6 +861,7 @@ class NotesController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
             return response()->json([
                 'success' => false,
                 'message' => 'Erreur lors de la vérification',
@@ -942,6 +954,7 @@ public function filter(Request $request)
             'data' => $notes
         ]);
     } catch (\Exception $e) {
+        $this->rethrowIfMeaningful($e);
         return response()->json([
             'success' => false,
             'message' => $this->clientErrorMessage($e, 'Erreur lors du filtrage des notes')
@@ -990,6 +1003,7 @@ private function filterNotesByCategorie(Request $request, $categorie)
             'data' => $notes
         ]);
     } catch (\Exception $e) {
+        $this->rethrowIfMeaningful($e);
         return response()->json([
             'success' => false,
             'message' => $this->clientErrorMessage($e, 'Erreur lors du filtrage des notes')

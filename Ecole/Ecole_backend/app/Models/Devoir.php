@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Traits\Auditable;
 use App\Traits\BelongsToEcole;
+use App\Traits\ScopedToCycle;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,7 +12,16 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Devoir extends Model
 {
-    use HasFactory, BelongsToEcole, Auditable;
+    use HasFactory, BelongsToEcole, Auditable, ScopedToCycle;
+
+    /**
+     * Un devoir est donné à une classe.
+     */
+    protected static function cyclePath(): array
+    {
+        return ['class' => 'classe_id'];
+    }
+
 
     protected $fillable = [
         'enseignant_id',

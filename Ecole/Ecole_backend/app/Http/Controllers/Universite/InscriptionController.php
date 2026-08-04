@@ -17,8 +17,8 @@ class InscriptionController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'etudiant_id' => 'required|exists:etudiants,id',
-            'annee_academique_id' => 'required|exists:annee_academiques,id',
+            'etudiant_id' => 'required|school_exists:etudiants,id',
+            'annee_academique_id' => 'required|school_exists:annee_academiques,id',
             'date_inscription' => 'required|date',
             'montant_frais' => 'required|numeric|min:0',
             'statut' => 'required|in:En cours,Validée,Annulée'

@@ -21,6 +21,11 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot()
     {
+        // `school_exists:` — cf. App\Validation\SchoolExistsRule. La règle
+        // `exists:` de Laravel travaille sur le query builder brut et ne voit
+        // donc pas le scope tenant.
+        \App\Validation\SchoolExistsRule::register();
+
         // Trace SQL réservée au développement local, et pilotée par un flag.
         // En production ce listener doublait les I/O disque à chaque requête et
         // écrivait des données personnelles en clair dans les logs — emails,

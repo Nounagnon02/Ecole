@@ -156,6 +156,7 @@ class MatieresController extends Controller
         ], 200);
 
     } catch (\Exception $e) {
+        $this->rethrowIfMeaningful($e);
         return response()->json([
             'success' => false,
             'message' => $this->clientErrorMessage($e, 'Erreur lors de la récupération des matières')
@@ -203,6 +204,7 @@ class MatieresController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
             return response()->json([
                 'success' => false,
                 'message' => $this->clientErrorMessage($e, 'Erreur lors de la récupération des matières')
@@ -247,6 +249,7 @@ class MatieresController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
             return response()->json([
                 'success' => false,
                 'message' => $this->clientErrorMessage($e, 'Erreur lors de la récupération des matières')

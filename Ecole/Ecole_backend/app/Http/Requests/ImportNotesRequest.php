@@ -15,11 +15,11 @@ class ImportNotesRequest extends FormRequest
     {
         return [
             'notes' => 'required|array|min:1',
-            'notes.*.eleve_id' => 'required|exists:eleves,id',
-            'notes.*.matiere_id' => 'required|exists:matieres,id',
+            'notes.*.eleve_id' => 'required|school_exists:eleves,id',
+            'notes.*.matiere_id' => 'required|school_exists:matieres,id',
             'notes.*.valeur' => 'required|numeric|min:0|max:20',
-            'notes.*.periode_id' => 'nullable|exists:periodes,id',
-            'notes.*.type_evaluation_id' => 'nullable|exists:type_evaluations,id',
+            'notes.*.periode_id' => 'nullable|school_exists:periodes,id',
+            'notes.*.type_evaluation_id' => 'nullable|school_exists:type_evaluations,id',
             'notes.*.date' => 'sometimes|date',
             'notes.*.appreciation' => 'nullable|string|max:500',
         ];

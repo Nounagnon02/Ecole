@@ -72,8 +72,8 @@ class EleveController extends Controller
             'password' => 'required|string|min:6',
             'ecole_id' => 'required|exists:ecoles,id',
             'numero_matricule' => 'required|string|unique:eleves,numero_matricule',
-            'class_id' => 'required|exists:classes,id',
-            'serie_id' => 'nullable|exists:series,id',
+            'class_id' => 'required|school_exists:classes,id',
+            'serie_id' => 'nullable|school_exists:series,id',
             'email' => 'nullable|email|unique:users,email',
         ]);
 
@@ -99,6 +99,7 @@ class EleveController extends Controller
                 return response()->json($eleve->load('user'), 201);
             });
         } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
             return response()->json(['message' => 'Erreur lors de la création', 'error' => $this->clientErrorMessage($e)], 500);
         }
     }
@@ -126,8 +127,8 @@ class EleveController extends Controller
             'name'             => 'sometimes|string|max:255',
             'prenom'           => 'sometimes|string|max:255',
             'email'            => 'sometimes|nullable|email|unique:users,email,' . $user->id,
-            'class_id'         => 'sometimes|exists:classes,id',
-            'serie_id'         => 'sometimes|nullable|exists:series,id',
+            'class_id'         => 'sometimes|school_exists:classes,id',
+            'serie_id'         => 'sometimes|nullable|school_exists:series,id',
             'numero_matricule' => 'sometimes|string|max:50|unique:eleves,numero_matricule,' . $eleve->id,
         ]);
 

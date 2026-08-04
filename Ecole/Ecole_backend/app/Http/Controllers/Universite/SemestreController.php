@@ -18,7 +18,7 @@ class SemestreController extends Controller
     {
         $validated = $request->validate([
             'libelle' => 'required|string|max:50',
-            'annee_academique_id' => 'required|exists:annee_academiques,id'
+            'annee_academique_id' => 'required|school_exists:annee_academiques,id'
         ]);
 
         $semestre = Semestre::create($validated);
@@ -34,7 +34,7 @@ class SemestreController extends Controller
     {
         $validated = $request->validate([
             'libelle' => 'sometimes|required|string|max:50',
-            'annee_academique_id' => 'sometimes|required|exists:annee_academiques,id'
+            'annee_academique_id' => 'sometimes|required|school_exists:annee_academiques,id'
         ]);
 
         $semestre->update($validated);

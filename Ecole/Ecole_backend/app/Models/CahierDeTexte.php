@@ -3,12 +3,22 @@
 namespace App\Models;
 
 use App\Traits\BelongsToEcole;
+use App\Traits\ScopedToCycle;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class CahierDeTexte extends Model
 {
-    use HasFactory, BelongsToEcole;
+    use HasFactory, BelongsToEcole, ScopedToCycle;
+
+    /**
+     * Le cahier de textes suit la progression d'une classe.
+     */
+    protected static function cyclePath(): array
+    {
+        return ['class' => 'classe_id'];
+    }
+
     protected $fillable = [
         'classe_id',
         'matiere_id',

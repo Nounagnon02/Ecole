@@ -74,8 +74,8 @@ class DevoirController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'classe_id' => 'required|exists:classes,id',
-            'matiere_id' => 'nullable|exists:matieres,id',
+            'classe_id' => 'required|school_exists:classes,id',
+            'matiere_id' => 'nullable|school_exists:matieres,id',
             'titre' => 'required|string|max:255',
             'description' => 'nullable|string',
             'date_limite' => 'nullable|date',

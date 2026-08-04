@@ -18,7 +18,7 @@ class DepartementController extends Controller
     {
         $validated = $request->validate([
             'nom' => 'required|string|max:100',
-            'faculte_id' => 'required|exists:facultes,id'
+            'faculte_id' => 'required|school_exists:facultes,id'
         ]);
 
         $departement = Departement::create($validated);
@@ -34,7 +34,7 @@ class DepartementController extends Controller
     {
         $validated = $request->validate([
             'nom' => 'sometimes|required|string|max:100',
-            'faculte_id' => 'sometimes|required|exists:facultes,id'
+            'faculte_id' => 'sometimes|required|school_exists:facultes,id'
         ]);
 
         $departement->update($validated);

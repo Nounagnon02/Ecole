@@ -35,7 +35,7 @@ class InfirmierController extends Controller
     public function storeConsultation(Request $request)
     {
         $validated = $request->validate([
-            'eleve_id' => 'required|exists:eleves,id',
+            'eleve_id' => 'required|school_exists:eleves,id',
             'motif' => 'required|string',
             'diagnostic' => 'required|string',
             'date' => 'required|date',
@@ -48,7 +48,7 @@ class InfirmierController extends Controller
     public function storeDossierMedical(Request $request)
     {
         $validated = $request->validate([
-            'eleve_id' => 'required|exists:eleves,id',
+            'eleve_id' => 'required|school_exists:eleves,id',
             'contact_urgence' => 'required|string'
         ]);
 
@@ -58,7 +58,7 @@ class InfirmierController extends Controller
     public function storeVaccination(Request $request)
     {
         $validated = $request->validate([
-            'eleve_id' => 'required|exists:eleves,id',
+            'eleve_id' => 'required|school_exists:eleves,id',
             'nom_vaccin' => 'required|string',
             'date_vaccination' => 'required|date',
             'numero_lot' => 'required|string'

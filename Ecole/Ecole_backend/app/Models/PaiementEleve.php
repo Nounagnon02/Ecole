@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Traits\Auditable;
 use App\Traits\BelongsToEcole;
+use App\Traits\ScopedToCycle;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\UserParent;
@@ -21,7 +22,17 @@ class PaiementEleve extends Model
     public const PARTIAL = 'PARTIEL';
     public const PAID    = 'PAYE';
 
-    use HasFactory, BelongsToEcole, Auditable;
+    use HasFactory, BelongsToEcole, Auditable, ScopedToCycle;
+
+    /**
+     * La scolarité d'un élève relève du cycle où il est inscrit ;
+     * le comptable, lui, n'a pas de cycle et voit tout l'établissement.
+     */
+    protected static function cyclePath(): array
+    {
+        return ['pupil' => 'eleve_id'];
+    }
+
     
     protected $table = 'paiements';
     
@@ -33,7 +44,11 @@ class PaiementEleve extends Model
         'montant_total',
         'montant_paye',
         'montant_restant',
-        'statut',
+        // `statut` n'existe pas sur `paiements` : la colonne de statut est
+        // `statut_global`. La déclarer assignable laissait croire qu'un
+        // `create(['statut' => ...])` fonctionnait — c'est la même confusion qui
+        // faisait filtrer ComptableController et DashboardController sur une
+        // colonne absente.
         'statut_global',
         'type_paiement',
         'mode_paiement',

@@ -97,6 +97,7 @@ class FedaPayController extends Controller
             ]);
 
         } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
             Log::error('FedaPay Init Error: ' . $e->getMessage());
             return response()->json(['success' => false, 'message' => 'Erreur lors de l\'initialisation du paiement'], 500);
         }
@@ -156,6 +157,7 @@ class FedaPayController extends Controller
 
             return response()->json(['received' => true]);
         } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
             Log::error('Webhook Error: ' . $e->getMessage());
 
             return response()->json(['error' => 'Processing failed'], 500);

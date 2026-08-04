@@ -8,6 +8,9 @@ use Illuminate\Support\Facades\DB;
 
 class ComptableController extends Controller
 {
+    /** Modes de règlement acceptés. */
+    private const PAYMENT_MODES = ['ESPECES', 'MOBILE_MONEY', 'VIREMENT', 'CHEQUE', 'CARTE'];
+
     public function paiements()
     {
         return PaiementEleve::with(['eleve.classe'])->latest()->get();
@@ -49,22 +52,57 @@ class ComptableController extends Controller
         return Bourse::with(['eleve.classe'])->latest()->get();
     }
 
+    /**
+     * Enregistrer un paiement.
+     *
+     * Cet endpoint répondait 500 à chaque appel : il exigeait `type_paiement`,
+     * que la table ne portait pas, et ne demandait pas `mode_paiement`, qu'elle
+     * exige. Aucune interface ne l'appelle encore, donc rien ne dépendait du
+     * contrat incomplet — il est ici complété plutôt que contourné.
+     */
     public function storePaiement(Request $request)
     {
         $validated = $request->validate([
-            'eleve_id' => 'required|exists:eleves,id',
-            'montant' => 'required|numeric',
-            'type_paiement' => 'required|string',
-            'date_paiement' => 'required|date'
+            'eleve_id'      => 'required|school_exists:eleves,id',
+            'montant'       => 'required|numeric|min:0',
+            'type_paiement' => 'required|string|max:255',
+            // NOT NULL en base, et une écriture comptable sans mode de
+            // règlement n'est pas rapprochable.
+            'mode_paiement' => 'required|string|in:' . implode(',', self::PAYMENT_MODES),
+            'date_paiement' => 'required|date',
+            'reference'     => 'nullable|string|max:255',
         ]);
 
-        return PaiementEleve::create($validated);
+        // Le solde est dérivé, pas saisi : le laisser null rendait
+        // `montant_restant` illisible pour tout ce qui calcule un reste à payer.
+        $montant = (float) $validated['montant'];
+
+        $paiement = PaiementEleve::create($validated + [
+            'montant_total'   => $montant,
+            'montant_paye'    => $montant,
+            'montant_restant' => 0,
+            'statut_global'   => PaiementEleve::PAID,
+            'reference'       => $validated['reference'] ?? $this->nextReference(),
+        ]);
+
+        return response()->json(['success' => true, 'data' => $paiement], 201);
+    }
+
+    /**
+     * Référence lisible et unique par établissement.
+     *
+     * `paiements.reference` est unique par école depuis que les identifiants
+     * émis par l'établissement ont été sortis de l'unicité plateforme.
+     */
+    private function nextReference(): string
+    {
+        return 'PAY-' . now()->format('Ymd') . '-' . strtoupper(\Illuminate\Support\Str::random(6));
     }
 
     public function storeBourse(Request $request)
     {
         $validated = $request->validate([
-            'eleve_id' => 'required|exists:eleves,id',
+            'eleve_id' => 'required|school_exists:eleves,id',
             'type_bourse' => 'required|string',
             'montant' => 'required|numeric',
             'pourcentage' => 'required|integer',
