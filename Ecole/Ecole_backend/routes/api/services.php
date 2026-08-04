@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\{
     EcoleController,
+    CommunicationsController,
     ContributionsController,
     PaymentController,
     MessageController,
@@ -99,6 +100,16 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/{id}/read', [NotificationController::class, 'markAsRead']);
         Route::put('/mark-all-read', [NotificationController::class, 'markAllAsRead']);
     });
+
+    // ============ COMMUNICATIONS ============
+    //
+    // Le tableau d'affichage de l'établissement. Aucune garde de rôle sur la
+    // lecture : tout membre de l'école lit le fil, et *ce qu'il y lit* est
+    // décidé par la règle d'audience dans la requête elle-même
+    // (`Communication::scopeVisibleTo`), pas par le routeur. L'écriture est
+    // gardée par `CommunicationPolicy` — plus fin qu'un `role:` puisqu'elle
+    // distingue l'auteur d'un pair du même rôle.
+    Route::apiResource('communications', CommunicationsController::class);
 
     // ============ ÉVÉNEMENTS ============
     Route::prefix('evenements')->group(function () {

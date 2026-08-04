@@ -100,7 +100,8 @@ export default function EruditButton({
   ...props
 }) {
   const config = useButtonConfig(variant, size);
-  const { s, colors: vc } = config;
+  // useButtonConfig expose les métriques sous la clé `size`, pas `s`.
+  const { size: s, colors: vc } = config;
   const { colors: themeColors } = useTheme();
 
   const baseStyle = useMemo(() => ({

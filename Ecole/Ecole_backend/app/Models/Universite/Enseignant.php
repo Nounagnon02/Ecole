@@ -19,8 +19,20 @@ class Enseignant extends Model
         'telephone',
         'email',
         'departement_id',
+        'user_id',
         'ecole_id',
     ];
+
+    /**
+     * The login account this staff record belongs to, if one was issued.
+     *
+     * Same hole as `Etudiant`, same fix: without it the server cannot tell
+     * *which* lecturer is asking for "my courses".
+     */
+    public function user()
+    {
+        return $this->belongsTo(\App\Models\User::class);
+    }
 
     public function departement()
     {

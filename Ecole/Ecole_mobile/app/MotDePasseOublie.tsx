@@ -1,26 +1,17 @@
 /**
  * MotDePasseOublie — Érudit v4
  *
- * Wrapper Expo Router autour de ForgotPasswordScreen
+ * Wrapper Expo Router autour de ForgotPasswordScreen.
  */
 
+import { useMemo } from 'react';
 import { useRouter } from 'expo-router';
 import ForgotPasswordScreen from '../src/screens/ForgotPasswordScreen';
+import { creerNavigationProxy } from '../src/navigation/routerBridge';
 
 export default function MotDePasseOublie() {
   const router = useRouter();
+  const navigation = useMemo(() => creerNavigationProxy(router), [router]);
 
-  const navigationProxy = {
-    navigate: (routeName) => {
-      const map = { ForgotPassword: '/MotDePasseOublie', Login: '/' };
-      router.push(map[routeName] || `/`);
-    },
-    replace: (routeName) => {
-      const map = { ForgotPassword: '/MotDePasseOublie', Login: '/' };
-      router.replace(map[routeName] || `/`);
-    },
-    goBack: () => router.back(),
-  };
-
-  return <ForgotPasswordScreen navigation={navigationProxy} />;
+  return <ForgotPasswordScreen navigation={navigation} />;
 }

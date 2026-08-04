@@ -5,7 +5,7 @@
  * Chaque entrée référence les dashboards premium dans features/roles/.
  */
 
-import { ROLES, ROLE_GROUPS } from '@/shared/types/roles';
+import { ROLES, ROLE_GROUPS, ROLE_NORMALIZATION } from '@/shared/types/roles';
 
 /* ─── Tous les rôles authentifiés ───────────────────────────────────── */
 const ROLES_ALL = Object.values(ROLES);
@@ -347,7 +347,7 @@ export const PUBLIC_ROUTES = Object.fromEntries(
 );
 
 /* ─── Redirection par rôle ───────────────────────────────────────────── */
-export const ROLE_REDIRECT_MAP = {
+const BASE_ROLE_REDIRECTS = {
   [ROLES.DIRECTEUR]: '/directeur/dashboard',
   [ROLES.ENSEIGNANT]: '/enseignant/dashboard',
   [ROLES.ELEVE]: '/eleve/dashboard',
@@ -365,6 +365,27 @@ export const ROLE_REDIRECT_MAP = {
   [ROLES.PERSONNEL]: '/universite/dashboard',
   [ROLES.SUPER_ADMIN]: '/admin/dashboard',
   [ROLES.ADMIN]: '/admin/dashboard',
+};
+
+/**
+ * Les sous-rôles (`directeurM/P/S`, `enseignement/M/P`) n'ont pas de
+ * dashboard propre : ils héritent de celui de leur rôle parent, le
+ * serveur se chargeant de cloisonner les données par cycle.
+ *
+ * Sans ces entrées dérivées, `ROLE_REDIRECT_MAP[user.role]` était
+ * `undefined` pour ces rôles : après une authentification réussie,
+ * LoginForm et AuthRedirect retombaient sur FALLBACK_REDIRECT, c'est-à-dire
+ * l'écran de connexion lui-même — l'utilisateur ne pouvait jamais entrer.
+ */
+const SUB_ROLE_REDIRECTS = Object.fromEntries(
+  Object.entries(ROLE_NORMALIZATION)
+    .filter(([, parent]) => BASE_ROLE_REDIRECTS[parent])
+    .map(([sub, parent]) => [sub, BASE_ROLE_REDIRECTS[parent]])
+);
+
+export const ROLE_REDIRECT_MAP = {
+  ...BASE_ROLE_REDIRECTS,
+  ...SUB_ROLE_REDIRECTS,
 };
 
 /* ─── Fallback ───────────────────────────────────────────────────────── */

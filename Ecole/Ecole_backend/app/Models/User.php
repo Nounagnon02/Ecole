@@ -70,6 +70,30 @@ class User extends Authenticatable
     }
 
     /**
+     * The university student record behind this account, if any.
+     *
+     * `etudiants.user_id` did not exist, so this relation could not be written
+     * and no personal view of the university module was possible. See
+     * `2026_08_04_100000_link_university_profiles_to_accounts`.
+     */
+    public function etudiant()
+    {
+        return $this->hasOne(\App\Models\Universite\Etudiant::class);
+    }
+
+    /**
+     * The university lecturer record behind this account, if any.
+     *
+     * Named apart from `enseignant()`, which resolves the *scholastic*
+     * `enseignants` row. The two are separate tables and an account holds at
+     * most one of them.
+     */
+    public function enseignantUniversite()
+    {
+        return $this->hasOne(\App\Models\Universite\Enseignant::class);
+    }
+
+    /**
      * Does this account satisfy a role gate?
      *
      * Family-aware, like the `role:` middleware: asking for `directeur` also

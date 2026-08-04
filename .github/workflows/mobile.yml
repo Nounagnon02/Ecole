@@ -1,0 +1,55 @@
+name: Mobile CI (React Native + Expo)
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'Ecole/Ecole_mobile/**'
+      - '.github/workflows/mobile.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'Ecole/Ecole_mobile/**'
+      - '.github/workflows/mobile.yml'
+  workflow_call:
+
+defaults:
+  run:
+    working-directory: Ecole/Ecole_mobile
+
+jobs:
+  check:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: Ecole/Ecole_mobile/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      # Les trois contrôles tournent même si l'un échoue : sur un projet qu'on
+      # est en train de remettre d'aplomb, savoir « lint rouge, types verts »
+      # vaut mieux qu'un arrêt à la première erreur. La porte finale ci-dessous
+      # fait échouer le job dès qu'un contrôle est rouge.
+      - name: TypeScript
+        id: typecheck
+        run: npm run typecheck
+        continue-on-error: true
+      - name: ESLint
+        id: lint
+        run: npm run lint
+        continue-on-error: true
+      - name: Jest
+        id: test
+        run: npm test -- --ci
+        continue-on-error: true
+      - name: Gate
+        run: |
+          echo "typecheck : ${{ steps.typecheck.outcome }}"
+          echo "lint      : ${{ steps.lint.outcome }}"
+          echo "test      : ${{ steps.test.outcome }}"
+          test "${{ steps.typecheck.outcome }}" = success \
+            && test "${{ steps.lint.outcome }}" = success \
+            && test "${{ steps.test.outcome }}" = success
