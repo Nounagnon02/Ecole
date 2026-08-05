@@ -5,10 +5,18 @@ namespace App\Models\Universite;
 use App\Traits\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Etudiant extends Model
 {
-    use HasFactory, BelongsToEcole;
+    use HasFactory, BelongsToEcole, SoftDeletes;
+
+    /** L'étudiant est inscrit. */
+    public const ACTIVE = 'active';
+
+    /** L'étudiant n'est plus inscrit, mais son dossier reste consultable. */
+    public const INACTIVE = 'inactive';
+
     protected $fillable = [
         'matricule',
         'nom',
@@ -23,6 +31,7 @@ class Etudiant extends Model
         'filiere_id',
         'user_id',
         'ecole_id',
+        'statut',
     ];
 
     /**

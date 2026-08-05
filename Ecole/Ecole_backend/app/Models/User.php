@@ -28,6 +28,15 @@ class User extends Authenticatable
         'ecole_id',
     ];
 
+    /**
+     * Inerte tant que `$fillable` est renseigné — Eloquent ne consulte `$guarded`
+     * que si `$fillable` est vide. La protection réelle de `is_active` vient de
+     * son absence du `$fillable` ci-dessus.
+     *
+     * Conservé pour que l'intention reste lisible : l'état d'un compte ne se
+     * règle pas depuis une charge de requête, seulement depuis du code serveur
+     * par affectation directe.
+     */
     protected $guarded = [
         'is_active'
     ];

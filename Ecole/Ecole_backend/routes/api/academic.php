@@ -51,6 +51,13 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/store', [EleveController::class, 'store'])->middleware('role:directeur');
         Route::get('/{id}', [EleveController::class, 'show']); // ElevePolicy::view appliquée dans le contrôleur
         Route::put('/update/{id}', [EleveController::class, 'update'])->middleware('role:directeur');
+
+        // Sortie et retour dans les effectifs. Il n'y a volontairement pas de
+        // DELETE ici : un dossier d'élève ne se supprime pas (cf.
+        // 2026_08_05_100100_restrict_student_deletion). Le DELETE que la surface
+        // tenant expose via apiResource délègue à `deactivate`.
+        Route::post('/{eleve}/deactivate', [EleveController::class, 'deactivate'])->middleware('role:directeur');
+        Route::post('/{eleve}/activate', [EleveController::class, 'activate'])->middleware('role:directeur');
         
         // Espace Elève
         Route::get('/me/bulletin/{periode}', [EleveController::class, 'bulletin'])->middleware('role:eleve');

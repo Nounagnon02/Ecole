@@ -139,16 +139,90 @@ class EleveController extends Controller
         return response()->json($eleve->load('user'));
     }
 
+    /**
+     * Retirer un élève des effectifs — sans effacer son dossier.
+     *
+     * Cette méthode faisait `$eleve->delete()` puis `$user->delete()`, deux
+     * suppressions dures, et 18 tables cascadaient sur `eleves.id` : un seul
+     * appel effaçait notes, absences, paiements, moyennes, dossier médical,
+     * vaccinations, emprunts, bourses, certificats, rendez-vous et inscriptions
+     * aux examens. Le dossier d'un élève est précisément ce qu'un établissement
+     * doit pouvoir relire des années plus tard, pour un certificat, un relevé ou
+     * un litige.
+     *
+     * Même règle que pour l'établissement : on désactive, on ne supprime pas.
+     * Les contraintes sont passées en RESTRICT
+     * (`2026_08_05_100100_restrict_student_deletion`), donc une suppression
+     * échoue désormais franchement au lieu d'obéir.
+     */
     public function destroy($id)
     {
         $eleve = Eleve::findOrFail($id);
         $this->authorize('delete', $eleve);
+
+        return $this->deactivate($eleve);
+    }
+
+    /**
+     * Sortir l'élève des effectifs. Idempotent.
+     */
+    public function deactivate(Eleve $eleve)
+    {
+        $this->authorize('delete', $eleve);
+
+        $eleve->update(['statut' => Eleve::INACTIVE]);
+
+        // Le compte perd l'accès mais survit : le supprimer effacerait l'identité
+        // de connexion et, depuis que `communications.auteur_id` est en SET NULL,
+        // orphelinerait ce que la personne a publié.
+        //
+        // Affectation directe, pas `update()` : `is_active` n'est pas dans le
+        // `$fillable` de User — délibérément, l'état d'un compte ne doit pas se
+        // régler depuis une charge de requête. Un `update()` l'écartait donc en
+        // silence et la désactivation ne coupait rien.
+        $this->setAccountAccess($eleve, false);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Élève retiré des effectifs. Son dossier reste consultable.',
+            'data'    => $eleve->fresh()->load('user'),
+        ]);
+    }
+
+    /**
+     * Réinscrire l'élève. Idempotent.
+     */
+    public function activate(Eleve $eleve)
+    {
+        $this->authorize('update', $eleve);
+
+        $eleve->update(['statut' => Eleve::ACTIVE]);
+        $this->setAccountAccess($eleve, true);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Élève réinscrit.',
+            'data'    => $eleve->fresh()->load('user'),
+        ]);
+    }
+
+    /**
+     * Ouvrir ou fermer l'accès du compte rattaché à l'élève.
+     *
+     * `is_active` est hors du `$fillable` de User, donc inaccessible en
+     * assignation de masse. Un élève peut par ailleurs ne pas avoir de compte —
+     * l'inscription précède parfois la remise des identifiants.
+     */
+    private function setAccountAccess(Eleve $eleve, bool $active): void
+    {
         $user = $eleve->user;
 
-        $eleve->delete();
-        $user->delete();
+        if (!$user) {
+            return;
+        }
 
-        return response()->json(['message' => 'Élève supprimé']);
+        $user->is_active = $active;
+        $user->save();
     }
 
     /**
