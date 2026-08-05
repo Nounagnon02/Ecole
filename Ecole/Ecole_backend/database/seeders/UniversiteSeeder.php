@@ -17,7 +17,14 @@ use App\Models\Universite\Paiement;
 use App\Models\Universite\Personnel;
 use App\Models\Universite\Diplome;
 use Illuminate\Database\Seeder;
+use App\Models\Ecole;
+use App\Models\User;
+use App\Support\Roles;
+use App\Support\SchoolContext;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class UniversiteSeeder extends Seeder
 {
@@ -26,8 +33,27 @@ class UniversiteSeeder extends Seeder
      */
     public function run(): void
     {
-        // Disable foreign key checks for smooth seeding across related tables
-        DB::statement('SET FOREIGN_KEY_CHECKS=0');
+        // `Schema::disableForeignKeyConstraints()`, pas `SET FOREIGN_KEY_CHECKS=0` :
+        // la seconde forme est du SQL MySQL brut et lève une erreur de syntaxe sur
+        // SQLite, si bien que ce seeder échouait dès sa première ligne. La méthode
+        // du schema builder émet l'instruction propre au pilote en cours.
+        Schema::disableForeignKeyConstraints();
+
+        // Sans contexte d'école, `BelongsToEcole` laissait `ecole_id` à null sur
+        // chaque ligne créée : ce seeder produisait 12 étudiants, 13 filières,
+        // 20 matières, 76 notes et 18 paiements qui n'appartenaient à aucun
+        // établissement et restaient invisibles pour tout le monde — un
+        // `Etudiant::count()` renvoyait 0 au directeur de l'école qui les
+        // possédait. Aucune erreur n'était levée.
+        $ecole = Ecole::orderBy('id')->first();
+
+        if (!$ecole) {
+            $this->command->warn('Aucune école en base : lancez BeninEducationSeeder ou EcoleSeeder d\'abord.');
+
+            return;
+        }
+
+        SchoolContext::bind($ecole);
 
         // ---- 1. UNIVERSITE ----
         $universite = Universite::create([
@@ -675,15 +701,61 @@ class UniversiteSeeder extends Seeder
             'mention' => 'Bien',
         ]);
 
-        // Re-enable foreign key checks
-        DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        // Un étudiant sans compte ne peut pas ouvrir son espace : `etudiants.user_id`
+        // est le prérequis de toute vue personnelle du module (cf.
+        // ECARTS_FRONT_BACK.md §4). Les 12 fiches naissaient sans lien, donc la
+        // fonctionnalité n'avait rien à exercer.
+        $comptes = $this->issueStudentAccounts($ecole);
+
+        Schema::enableForeignKeyConstraints();
+        SchoolContext::forget();
 
         $this->command->info('✓ Module universitaire seedé avec succès !');
+        $this->command->info("  {$comptes} comptes étudiants délivrés (mot de passe : password1234)");
         $this->command->info('  1 Université, 3 Facultés, 8 Départements, 13 Filières');
         $this->command->info('  6 Enseignants, 12 Étudiants, 4 Personnels');
         $this->command->info('  1 Année Académique, 2 Semestres');
         $this->command->info('  ' . count($matieres) . ' Matières');
         $this->command->info('  12 Inscriptions avec notes et paiements');
         $this->command->info('  1 Diplôme');
+    }
+
+    /**
+     * Délivrer un compte de connexion à chaque étudiant qui n'en a pas.
+     *
+     * L'inscription se fait au bureau du registraire et les identifiants
+     * arrivent après, donc une fiche sans compte est un état normal — mais
+     * aucune des 12 n'en avait, si bien que l'espace étudiant restait
+     * inatteignable même une fois construit.
+     *
+     * `firstOrCreate` sur l'email : rejouer le seeder ne doit pas échouer sur une
+     * contrainte d'unicité, et l'identité de connexion est unique à l'échelle de
+     * la plateforme, pas de l'école.
+     */
+    private function issueStudentAccounts(Ecole $ecole): int
+    {
+        $issued = 0;
+
+        foreach (Etudiant::whereNull('user_id')->get() as $etudiant) {
+            $email = $etudiant->email ?: Str::slug($etudiant->matricule) . '@etu.uac.bj';
+
+            $user = User::firstOrCreate(
+                ['email' => $email],
+                [
+                    'identifiant' => Str::lower($etudiant->matricule),
+                    'name'        => $etudiant->nom,
+                    'prenom'      => $etudiant->prenom,
+                    'telephone'   => $etudiant->telephone,
+                    'password'    => Hash::make('password1234'),
+                    'role'        => Roles::STUDENT,
+                    'ecole_id'    => $ecole->id,
+                ]
+            );
+
+            $etudiant->update(['user_id' => $user->id]);
+            $issued++;
+        }
+
+        return $issued;
     }
 }

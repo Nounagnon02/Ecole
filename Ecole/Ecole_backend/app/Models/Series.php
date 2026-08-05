@@ -71,7 +71,7 @@ public function calculMoyenneGenerale($eleve_id)
             
             if ($note) {
                 $coefficient = $matiere->pivot->coefficient;
-                $totalPoints += $note->valeur * $coefficient;
+                $totalPoints += $note->note * $coefficient;
                 $totalCoefficients += $coefficient;
             }
         }

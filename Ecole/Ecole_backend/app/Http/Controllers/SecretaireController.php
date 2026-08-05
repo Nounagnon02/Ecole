@@ -121,7 +121,7 @@ class SecretaireController extends Controller
             'type_dossier' => 'required|string'
         ]);
 
-        return response()->json(['message' => 'Dossier créé', 'id' => rand(1, 1000)]);
+        return response()->json(['message' => 'Fonctionnalité en cours de développement'], 501);
     }
 
     public function storeCourrier(Request $request)
@@ -134,7 +134,7 @@ class SecretaireController extends Controller
             'date_reception' => 'required|date'
         ]);
 
-        return response()->json(['message' => 'Courrier enregistré', 'id' => rand(1, 1000)]);
+        return response()->json(['message' => 'Fonctionnalité en cours de développement'], 501);
     }
 
     public function storeVisiteur(Request $request)
@@ -146,6 +146,6 @@ class SecretaireController extends Controller
             'date_visite' => 'required|date'
         ]);
 
-        return response()->json(['message' => 'Visiteur enregistré', 'id' => rand(1, 1000)]);
+        return response()->json(['message' => 'Fonctionnalité en cours de développement'], 501);
     }
 }

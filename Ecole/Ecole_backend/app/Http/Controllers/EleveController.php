@@ -264,4 +264,26 @@ class EleveController extends Controller
 
         return response()->json(['success' => true, 'data' => $lessons]);
     }
+
+    /**
+     * Timetable for the signed-in student's class.
+     *
+     * GET /eleves/me/emploi-du-temps
+     */
+    public function emploiDuTemps(Request $request)
+    {
+        $eleve = Auth::user()?->eleve;
+
+        if (!$eleve) {
+            return response()->json(['success' => false, 'message' => 'Profil élève non trouvé'], 404);
+        }
+
+        $emploi = EmploiDuTemps::with(['matiere:id,nom', 'enseignant.user:id,name,prenom'])
+            ->where('classe_id', $eleve->class_id)
+            ->orderBy('jour')
+            ->orderBy('heure_debut')
+            ->get();
+
+        return response()->json(['success' => true, 'data' => $emploi]);
+    }
 }

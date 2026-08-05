@@ -107,6 +107,20 @@ class ParentsController extends Controller
         return response()->json(['message' => 'Enfants mis à jour avec succès']);
     }
 
+    /**
+     * Liste des élèves d'un parent.
+     * GET /parents/{id}/eleves
+     */
+    public function getElevesByParent($id)
+    {
+        $parent = UserParent::with('eleves.classe', 'eleves.user')->findOrFail($id);
+
+        return response()->json([
+            'success' => true,
+            'data'    => $parent->eleves,
+        ]);
+    }
+
     public function destroy($id)
     {
         $parent = UserParent::findOrFail($id);
