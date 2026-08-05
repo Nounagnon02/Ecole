@@ -1,0 +1,65 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: dashboard.spec.mjs >> Dashboard >> landing page loads successfully
+- Location: e2e/dashboard.spec.mjs:11:3
+
+# Error details
+
+```
+Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/
+Call log:
+  - navigating to "http://localhost:3000/", waiting until "load"
+
+```
+
+# Test source
+
+```ts
+  1  | /**
+  2  |  * E2E — Dashboard rendering
+  3  |  *
+  4  |  * Verifies dashboards render for different roles.
+  5  |  */
+  6  | 
+  7  | // @ts-check
+  8  | import { test, expect } from '@playwright/test';
+  9  | 
+  10 | test.describe('Dashboard', () => {
+  11 |   test('landing page loads successfully', async ({ page }) => {
+> 12 |     const response = await page.goto('/');
+     |                                 ^ Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/
+  13 |     expect(response?.status()).toBeLessThan(500);
+  14 |   });
+  15 | 
+  16 |   test('login page has form elements', async ({ page }) => {
+  17 |     await page.goto('/connexion');
+  18 |     await expect(page.locator('input[type="email"], input[name="email"], input[type="text"]').first()).toBeVisible({ timeout: 5000 }).catch(async () => {
+  19 |       // May use different input name
+  20 |     });
+  21 |   });
+  22 | 
+  23 |   test('protected routes redirect to login', async ({ page }) => {
+  24 |     await page.goto('/directeur/dashboard');
+  25 |     const url = page.url();
+  26 |     expect(url.includes('connexion') || url.includes('login') || url.includes('403') || url.includes('401')).toBeTruthy();
+  27 |   });
+  28 | 
+  29 |   test('error pages have correct status codes', async ({ page }) => {
+  30 |     const response = await page.goto('/404');
+  31 |     expect(response?.status()).toBe(200);
+  32 |     await expect(page.locator('text=404').first()).toBeVisible({ timeout: 5000 }).catch(async () => {
+  33 |       await expect(page.locator('text=introuvable').first()).toBeVisible({ timeout: 5000 }).catch(async () => {
+  34 |         const text = await page.locator('body').innerText();
+  35 |         expect(text).toBeTruthy();
+  36 |       });
+  37 |     });
+  38 |   });
+  39 | });
+  40 | 
+```
