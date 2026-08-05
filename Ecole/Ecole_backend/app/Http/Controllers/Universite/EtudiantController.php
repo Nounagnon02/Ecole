@@ -54,9 +54,61 @@ class EtudiantController extends Controller
         return response()->json($etudiant);
     }
 
+    /**
+     * Retirer un étudiant des effectifs — sans effacer son dossier.
+     *
+     * `delete()` était une suppression dure et quatre tables cascadaient sur
+     * `etudiants.id` : diplômes, inscriptions, notes et paiements disparaissaient
+     * avec la fiche. Même règle que pour l'élève et pour l'établissement : on
+     * désactive.
+     */
     public function destroy(Etudiant $etudiant)
     {
-        $etudiant->delete();
-        return response()->json(null, 204);
+        return $this->deactivate($etudiant);
+    }
+
+    /** Sortir l'étudiant des effectifs. Idempotent. */
+    public function deactivate(Etudiant $etudiant)
+    {
+        $etudiant->update(['statut' => Etudiant::INACTIVE]);
+        $this->setAccountAccess($etudiant, false);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Étudiant retiré des effectifs. Son dossier reste consultable.',
+            'data'    => $etudiant->fresh(),
+        ]);
+    }
+
+    /** Réinscrire l'étudiant. Idempotent. */
+    public function activate(Etudiant $etudiant)
+    {
+        $etudiant->update(['statut' => Etudiant::ACTIVE]);
+        $this->setAccountAccess($etudiant, true);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Étudiant réinscrit.',
+            'data'    => $etudiant->fresh(),
+        ]);
+    }
+
+    /**
+     * Ouvrir ou fermer l'accès du compte rattaché à l'étudiant.
+     *
+     * Affectation directe : `is_active` est hors du `$fillable` de User, si bien
+     * qu'un `update()` l'écarterait en silence. Le compte est nullable — une
+     * inscription au bureau du registraire précède la remise des identifiants.
+     */
+    private function setAccountAccess(Etudiant $etudiant, bool $active): void
+    {
+        $user = $etudiant->user;
+
+        if (!$user) {
+            return;
+        }
+
+        $user->is_active = $active;
+        $user->save();
     }
 }

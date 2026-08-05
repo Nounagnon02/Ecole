@@ -42,6 +42,12 @@ Route::middleware(['auth:sanctum', 'role:recteur,doyen,professeur,etudiant,perso
 
     // Étudiants
     Route::apiResource('etudiants', EtudiantController::class)->middleware('role:recteur,doyen,professeur,super-admin');
+    // Le DELETE de la ressource délègue à `deactivate` : un dossier étudiant
+    // porte diplômes, inscriptions, notes et paiements, et ne se supprime pas.
+    Route::post('etudiants/{etudiant}/deactivate', [EtudiantController::class, 'deactivate'])
+        ->middleware('role:recteur,doyen,super-admin');
+    Route::post('etudiants/{etudiant}/activate', [EtudiantController::class, 'activate'])
+        ->middleware('role:recteur,doyen,super-admin');
 
     // Enseignants universitaires
     Route::apiResource('enseignants', UnivEnseignantController::class)->middleware('role:recteur,doyen,super-admin');

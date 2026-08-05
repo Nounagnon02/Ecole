@@ -119,23 +119,16 @@ class RecordDurabilityTest extends TestCase
     /**
      * @test
      *
-     * Mesure de la dette, pas une validation.
+     * Le pendant de `SchoolDeactivationTest`, un cran plus bas.
      *
-     * 22 tables héritées cascadent vers `eleves` ou `etudiants` : supprimer un
-     * élève efface ses notes, absences, paiements, moyennes, dossier médical,
-     * vaccinations, emprunts, bourses, certificats et rendez-vous. C'est le même
-     * défaut que les 62 cascades sur `ecole_id`, un cran plus bas.
-     *
-     * Il n'est pas corrigé ici parce que le corriger suppose d'abord une voie de
-     * désactivation : `eleves` ne porte ni `status`, ni `deleted_at`, ni
-     * `is_active`. Passer les 22 contraintes en `restrict` sans cela rendrait
-     * simplement toute suppression d'élève impossible, sans alternative — ce que
-     * `ecoles` a résolu par `status` + `SoftDeletes`.
-     *
-     * Le test échoue si le compte **augmente**. Il ne prétend pas que 22 soit
-     * acceptable ; il empêche que ce soit 23 sans décision.
+     * 22 tables cascadaient vers `eleves` ou `etudiants` : une seule suppression
+     * effaçait notes, absences, paiements, moyennes, dossier médical,
+     * vaccinations, emprunts, bourses, certificats, rendez-vous, inscriptions aux
+     * examens, diplômes. Ce test mesurait cette dette ; il vérifie désormais
+     * qu'elle est éteinte, `2026_08_05_100100_restrict_student_deletion` ayant
+     * basculé les 22 contraintes en RESTRICT.
      */
-    public function la_dette_de_cascade_sur_les_dossiers_eleves_ne_grandit_pas()
+    public function aucune_table_ne_cascade_vers_un_dossier_eleve_ou_etudiant()
     {
         $cascading = [];
 
@@ -145,17 +138,28 @@ class RecordDurabilityTest extends TestCase
 
                 if (in_array($target, ['eleves', 'etudiants'], true)
                     && strtolower((string) ($fk['on_delete'] ?? '')) === 'cascade') {
-                    $cascading[] = $table['name'] . ' → ' . $target;
+                    $cascading[] = $table['name'] . '.' . implode(',', $fk['columns'] ?? []) . ' → ' . $target;
                 }
             }
         }
 
         sort($cascading);
 
-        $this->assertLessThanOrEqual(
-            22,
-            count($cascading),
-            "La dette a grandi. Cascades vers un dossier élève/étudiant :\n  " . implode("\n  ", $cascading)
+        $this->assertSame(
+            [],
+            $cascading,
+            "Ces contraintes effaceraient un dossier scolaire :\n  " . implode("\n  ", $cascading)
         );
+    }
+
+    /** @test */
+    public function un_dossier_eleve_peut_etre_desactive_plutot_que_supprime()
+    {
+        // La contrepartie indispensable du RESTRICT : sans voie de sortie, on
+        // aurait seulement rendu toute radiation impossible.
+        $this->assertTrue(Schema::hasColumn('eleves', 'statut'));
+        $this->assertTrue(Schema::hasColumn('eleves', 'deleted_at'));
+        $this->assertTrue(Schema::hasColumn('etudiants', 'statut'));
+        $this->assertTrue(Schema::hasColumn('etudiants', 'deleted_at'));
     }
 }

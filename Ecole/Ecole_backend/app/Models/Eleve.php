@@ -7,10 +7,17 @@ use App\Traits\Auditable;
 use App\Traits\BelongsToEcole;
 use App\Traits\ScopedToCycle;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Eleve extends Model
 {
-    use HasFactory, BelongsToEcole, Auditable, ScopedToCycle;
+    use HasFactory, BelongsToEcole, Auditable, ScopedToCycle, SoftDeletes;
+
+    /** L'élève est inscrit. */
+    public const ACTIVE = 'active';
+
+    /** L'élève n'est plus inscrit, mais son dossier reste consultable. */
+    public const INACTIVE = 'inactive';
 
     /**
      * Un élève appartient au cycle de sa classe.
@@ -30,6 +37,7 @@ class Eleve extends Model
         'class_id',
         'serie_id',
         'ecole_id',
+        'statut',
     ];
 
     public function user()
