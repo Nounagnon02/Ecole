@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Exercice;
+use App\Models\Classes;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class ExerciceController extends Controller
 {
@@ -11,15 +12,14 @@ class ExerciceController extends Controller
     {
         $enseignantId = $request->query('enseignant_id');
         
-        $query = DB::table('exercices')
-            ->join('classes', 'exercices.classe_id', '=', 'classes.id')
-            ->select('exercices.*', 'classes.nom_classe as classe');
+        $query = Exercice::with(['classe:id,nom_classe', 'enseignant.user:id,name,prenom'])
+            ->orderByDesc('date_limite');
         
         if ($enseignantId) {
-            $query->where('exercices.enseignant_id', $enseignantId);
+            $query->where('enseignant_id', $enseignantId);
         }
         
-        $exercices = $query->orderBy('exercices.date_limite', 'desc')->get();
+        $exercices = $query->paginate((int) $request->input('per_page', 50));
         
         return response()->json(['success' => true, 'data' => $exercices]);
     }
@@ -27,37 +27,47 @@ class ExerciceController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'classe_id' => 'required|integer',
-            'enseignant_id' => 'required|integer',
-            'titre' => 'required|string',
+            'classe_id' => 'required|school_exists:classes,id',
+            'enseignant_id' => 'required|exists:enseignants,id',
+            'titre' => 'required|string|max:255',
             'description' => 'required|string',
-            'date_limite' => 'required|date'
+            'date_limite' => 'required|date',
         ]);
 
-        $id = DB::table('exercices')->insertGetId(array_merge($validated, [
-            'created_at' => now(),
-            'updated_at' => now()
-        ]));
+        $validated['ecole_id'] = auth()->user()?->ecole_id;
 
-        return response()->json(['success' => true, 'data' => ['id' => $id]], 201);
+        $exercice = Exercice::create($validated);
+
+        return response()->json(['success' => true, 'data' => $exercice->load('classe', 'enseignant.user')], 201);
+    }
+
+    public function show($id)
+    {
+        $exercice = Exercice::with('classe', 'enseignant.user')->findOrFail($id);
+
+        return response()->json(['success' => true, 'data' => $exercice]);
     }
 
     public function update(Request $request, $id)
     {
+        $exercice = Exercice::findOrFail($id);
+
         $validated = $request->validate([
-            'titre' => 'string',
-            'description' => 'string',
-            'date_limite' => 'date'
+            'titre' => 'sometimes|string|max:255',
+            'description' => 'sometimes|string',
+            'date_limite' => 'sometimes|date',
         ]);
 
-        DB::table('exercices')->where('id', $id)->update(array_merge($validated, ['updated_at' => now()]));
+        $exercice->update($validated);
 
-        return response()->json(['success' => true]);
+        return response()->json(['success' => true, 'data' => $exercice]);
     }
 
     public function destroy($id)
     {
-        DB::table('exercices')->where('id', $id)->delete();
+        $exercice = Exercice::findOrFail($id);
+        $exercice->delete();
+
         return response()->json(['success' => true]);
     }
 }

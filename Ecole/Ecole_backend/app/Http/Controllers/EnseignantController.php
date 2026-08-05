@@ -6,6 +6,7 @@ use App\Models\Enseignant;
 use App\Models\User;
 use App\Models\Classes;
 use App\Models\EmploiDuTemps;
+use App\Models\Notes;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -129,5 +130,43 @@ class EnseignantController extends Controller
             'success' => true,
             'data'    => $notes,
         ]);
+    }
+
+    /**
+     * Mettre à jour un enseignant (Admin / Directeur)
+     * PUT /enseignants/update/{id}
+     */
+    public function update(Request $request, $id)
+    {
+        $enseignant = Enseignant::with('user')->findOrFail($id);
+        $user = $enseignant->user;
+
+        $validated = $request->validate([
+            'name'    => 'sometimes|string|max:255',
+            'prenom'  => 'sometimes|string|max:255',
+            'email'   => 'sometimes|nullable|email|unique:users,email,' . $user->id,
+            'role'    => 'sometimes|in:enseignant,enseignantM,enseignantP',
+        ]);
+
+        $user->update(array_intersect_key($validated, array_flip(['name', 'prenom', 'email', 'role'])));
+
+        return response()->json($enseignant->fresh()->load('user'));
+    }
+
+    /**
+     * Supprimer un enseignant (Admin / Directeur)
+     * DELETE /enseignants/delete/{id}
+     */
+    public function destroy($id)
+    {
+        $enseignant = Enseignant::with('user')->findOrFail($id);
+        $user = $enseignant->user;
+
+        $enseignant->delete();
+        if ($user) {
+            $user->delete();
+        }
+
+        return response()->json(['message' => 'Enseignant supprimé'], 200);
     }
 }

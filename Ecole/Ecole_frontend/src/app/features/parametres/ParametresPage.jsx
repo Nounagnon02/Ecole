@@ -8,12 +8,16 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   User, Bell, Shield, Palette, Globe, Smartphone,
-  Moon, Sun   } from 'lucide-react';
+  Moon, Sun, Save, CheckCircle2
+} from 'lucide-react';
 import Card from '@/shared/components/ui/Card';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import Badge from '@/shared/components/ui/Badge';
 import Avatar from '@/shared/components/ui/Avatar';
+import { useApi } from '@/hooks/useApi';
+import { toast } from 'sonner';
+import useAuthStore from '@/shared/stores/auth-store';
 
 const SECTIONS = [
   { id: 'profil', label: 'Profil', icon: User },
@@ -24,12 +28,38 @@ const SECTIONS = [
 ];
 
 export default function ParametresPage() {
+  const { user, setUser } = useAuthStore();
+  const { loading, error, put } = useApi();
   const [activeSection, setActiveSection] = useState('profil');
+  const [saved, setSaved] = useState(false);
+
+  const handleSaveProfile = async (e) => {
+    e.preventDefault();
+    setSaved(false);
+    try {
+      const form = e.target;
+      const data = {
+        name: form.querySelector('[name="name"]')?.value,
+        prenom: form.querySelector('[name="prenom"]')?.value,
+        email: form.querySelector('[name="email"]')?.value,
+        telephone: form.querySelector('[name="telephone"]')?.value,
+      };
+      const res = await put('/auth/profile', data);
+      if (res?.success) {
+        setUser({ ...user, ...res.user });
+        setSaved(true);
+        toast.success('Profil mis à jour');
+        setTimeout(() => setSaved(false), 3000);
+      }
+    } catch (err) {
+      toast.error(err?.message || 'Erreur lors de la mise à jour');
+    }
+  };
 
   const renderSection = () => {
     switch (activeSection) {
       case 'profil':
-        return <ProfilSection />;
+        return <ProfilSection user={user} onSave={handleSaveProfile} saving={loading} saved={saved} />;
       case 'notifications':
         return <NotificationsSection />;
       case 'securite':
@@ -81,15 +111,15 @@ export default function ParametresPage() {
 }
 
 /* ─── Profil ──────────────────────────────────────────────────────── */
-function ProfilSection() {
+function ProfilSection({ user, onSave, saving, saved }) {
   return (
     <div className="space-y-4">
       <Card>
         <Card.Header title="Photo de profil" />
         <div className="flex items-center gap-4">
-          <Avatar name="Admin" size="xl" />
+          <Avatar name={user?.name || 'User'} size="xl" />
           <div className="space-y-1">
-            <Button size="sm">Changer la photo</Button>
+            <Button size="sm" variant="outline">Changer la photo</Button>
             <p className="text-xs text-neutral-500">PNG, JPG. Max 2 Mo.</p>
           </div>
         </div>
@@ -97,27 +127,36 @@ function ProfilSection() {
 
       <Card>
         <Card.Header title="Informations personnelles" />
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Prénom</label>
-            <Input defaultValue="Admin" />
+        <form onSubmit={onSave} className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Prénom</label>
+              <Input name="prenom" defaultValue={user?.prenom || ''} />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Nom</label>
+              <Input name="name" defaultValue={user?.name || ''} />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Email</label>
+              <Input type="email" name="email" defaultValue={user?.email || ''} />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Téléphone</label>
+              <Input name="telephone" defaultValue={user?.telephone || ''} />
+            </div>
           </div>
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Nom</label>
-            <Input defaultValue="Système" />
+          <div className="flex items-center gap-3">
+            <Button type="submit" loading={saving} icon={<Save className="h-4 w-4" />}>
+              Enregistrer
+            </Button>
+            {saved && (
+              <span className="inline-flex items-center gap-1.5 text-sm text-emerald-600">
+                <CheckCircle2 className="h-4 w-4" /> Enregistré
+              </span>
+            )}
           </div>
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Email</label>
-            <Input type="email" defaultValue="admin@ecole.ci" />
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Téléphone</label>
-            <Input defaultValue="+225 01 02 03 04 05" />
-          </div>
-        </div>
-        <div className="mt-4 flex justify-end">
-          <Button>Enregistrer</Button>
-        </div>
+        </form>
       </Card>
     </div>
   );

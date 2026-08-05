@@ -2,7 +2,7 @@
 
 namespace App\Mail;
 
-use App\Models\Candidats;
+use App\Models\Eleve;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
@@ -14,18 +14,18 @@ class NumeroMatriculeMail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public $candidat;
+    public $eleve;
 
-    public function __construct(Candidats $candidat)
+    public function __construct(Eleve $eleve)
     {
-        $this->candidat = $candidat;
+        $this->eleve = $eleve;
     }
 
     public function build()
     {
         return $this->view('emails.numero_matricule')
                     ->with([
-                        'numeroMatricule' => $this->candidat->numero_matricule,
+                        'numeroMatricule' => $this->eleve->numero_matricule,
                     ]);
     }
 }

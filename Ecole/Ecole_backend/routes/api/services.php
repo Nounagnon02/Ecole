@@ -118,6 +118,15 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/{id}', [EvenementController::class, 'destroy'])->middleware('role:directeur');
     });
 
+    // ============ EXERCICES ============
+    Route::prefix('exercices')->middleware('role:directeur,enseignant')->group(function () {
+        Route::get('/', [ExerciceController::class, 'index']);
+        Route::post('/', [ExerciceController::class, 'store']);
+        Route::get('/{id}', [ExerciceController::class, 'show']);
+        Route::put('/{id}', [ExerciceController::class, 'update']);
+        Route::delete('/{id}', [ExerciceController::class, 'destroy']);
+    });
+
 });
 
 /*

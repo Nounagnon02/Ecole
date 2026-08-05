@@ -3,22 +3,76 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Models\{Paiement, Bourse, Absence, Incident, Sanction, ConsultationMedicale, DossierMedical, Vaccination, Livre, Emprunt, Reservation, RendezVous, Certificat, Message, Devoir, EmploiDuTemps, ConseilClasse, Examen, Eleves, Classes, Matieres, Enseignants, Parents};
+// Quatre de ces noms n'existaient pas : `Eleves`, `Enseignants` et `Parents`
+// au pluriel (les modèles sont `Eleve`, `Enseignant`, `UserParent`) et
+// `Paiement` (c'est `PaiementEleve`). Le seeder plantait sur la première ligne
+// de `run()`, ce qui explique le `@todo` qui le désactivait.
+use App\Models\{
+    PaiementEleve, Bourse, Absence, Incident, Sanction, ConsultationMedicale,
+    DossierMedical, Vaccination, Livre, Emprunt, Reservation, RendezVous,
+    Certificat, Message, Devoir, EmploiDuTemps, ConseilClasse, Examen,
+    Eleve, Classes, Matieres, Enseignant, UserParent
+};
+use App\Models\Ecole;
+use App\Support\SchoolContext;
 
 class CompleteDataSeeder extends Seeder
 {
     public function run()
     {
+        // Sans contexte d'école, `BelongsToEcole` laisse `ecole_id` à null à
+        // l'écriture — la ligne n'appartient à aucun établissement et devient
+        // invisible pour tous — et retombe sur `1 = 0` à la lecture, donc
+        // `Eleve::all()` ci-dessous renverrait une collection vide et ce seeder
+        // ne créerait rien du tout. Les deux échecs sont silencieux.
+        $ecole = Ecole::orderBy('id')->first();
+
+        if (!$ecole) {
+            $this->command->warn('Aucune école en base : lancez BeninEducationSeeder d\'abord.');
+
+            return;
+        }
+
+        SchoolContext::bind($ecole);
+
+        try {
+            $this->seedAll();
+        } finally {
+            SchoolContext::forget();
+        }
+    }
+
+    private function seedAll(): void
+    {
         // Paiements
-        $eleves = Eleves::all();
+        $eleves = Eleve::all();
         foreach ($eleves->take(20) as $eleve) {
-            Paiement::create([
-                'eleve_id' => $eleve->id,
-                'montant' => rand(50000, 200000),
+            $montant = rand(50000, 200000);
+            $statut  = [PaiementEleve::PAID, PaiementEleve::PENDING, PaiementEleve::PARTIAL][rand(0, 2)];
+
+            // Le solde est dérivé du statut, pas laissé nul : sinon tout calcul
+            // de reste à payer lit un montant manquant.
+            $paye = match ($statut) {
+                PaiementEleve::PAID    => $montant,
+                PaiementEleve::PARTIAL => (int) round($montant / 2),
+                default                => 0,
+            };
+
+            PaiementEleve::create([
+                'eleve_id'      => $eleve->id,
+                'montant'       => $montant,
                 'type_paiement' => 'Scolarité',
+                // NOT NULL en base, et une écriture comptable sans mode de
+                // règlement n'est pas rapprochable.
+                'mode_paiement' => ['ESPECES', 'MOBILE_MONEY', 'VIREMENT'][rand(0, 2)],
                 'date_paiement' => now()->subDays(rand(1, 30)),
-                'statut' => ['payé', 'en_attente', 'annulé'][rand(0, 2)],
-                'reference' => 'PAY-' . rand(1000, 9999)
+                // `statut_global` : `paiements` n'a pas de colonne `statut`, et les
+                // valeurs suivent les constantes du modèle plutôt qu'un texte libre.
+                'statut_global'   => $statut,
+                'montant_total'   => $montant,
+                'montant_paye'    => $paye,
+                'montant_restant' => $montant - $paye,
+                'reference'       => 'PAY-' . now()->format('Ymd') . '-' . rand(1000, 9999),
             ]);
         }
 
@@ -150,8 +204,8 @@ class CompleteDataSeeder extends Seeder
         }
 
         // Rendez-vous
-        $parents = Parents::all();
-        $enseignants = Enseignants::all();
+        $parents = UserParent::all();
+        $enseignants = Enseignant::all();
         foreach ($parents->take(8) as $parent) {
             RendezVous::create([
                 'motif' => 'Suivi scolaire',

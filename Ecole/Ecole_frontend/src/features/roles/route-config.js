@@ -240,6 +240,11 @@ export const ROUTE_CONFIG = {
     component: lazy(() => import('@/app/features/universite/EtudiantsPage')),
     roles: [ROLES.RECTEUR, ROLES.DOYEN, ROLES.PROFESSEUR],
   },
+  universiteEnseignants: {
+    path: '/universite/enseignants',
+    component: lazy(() => import('@/app/features/universite/EnseignantsPage')),
+    roles: [ROLES.RECTEUR, ROLES.DOYEN, ROLES.PROFESSEUR],
+  },
   universiteCours: {
     path: '/universite/cours',
     component: lazy(() => import('@/app/features/universite/CoursPage')),

@@ -157,6 +157,17 @@ class DemoDataSeeder extends Seeder
         $ensCount = DB::table('enseignants')->where('ecole_id', $ecoleId)->count();
         echo "✓ Enseignants: {$ensCount}\n";
 
+        // ─── 5b. Affectations enseignant → matière → classe ─────────────
+        //
+        // Le pivot `enseignant_matiere` restait vide, si bien que
+        // `Enseignant::classes()` renvoyait une collection vide pour tout le
+        // monde : le tableau de bord enseignant n'affichait rien, et
+        // `ElevePolicy::view` comme `AbsencePolicy::view` refusaient chaque
+        // élève à chaque enseignant — la policy est correcte, il n'y avait
+        // simplement rien à autoriser.
+        $affectations = $this->assignTeachers($ecoleId);
+        echo "✓ Affectations enseignant/matière/classe: {$affectations}\n";
+
         // ─── 6. More students (30+) ────────────────────────────────────
         $studentNames = [
             ['name' => 'ADJOVI', 'prenom' => 'Koffi', 'mat' => 'SCO2025001', 'sexe' => 'M'],
@@ -501,5 +512,80 @@ class DemoDataSeeder extends Seeder
 
         $prio = ['Mathématiques' => 5, 'Français' => 4, 'Physique-Chimie' => 3, 'SVT' => 2];
         return $prio[$matiereNom] ?? 1;
+    }
+
+    /**
+     * Affecter chaque enseignant aux classes qui portent sa spécialité.
+     *
+     * L'affectation suit `classe_matieres` : une classe n'enseigne une matière
+     * que si le lien existe, donc croiser les deux évite d'inventer des
+     * affectations incohérentes. La série est reprise de la classe quand elle en
+     * a une — la colonne est NOT NULL sur le pivot.
+     *
+     * `insertOrIgnore` : rejouer le seeder ne doit pas échouer sur un doublon.
+     */
+    private function assignTeachers(int $ecoleId): int
+    {
+        $teachers = DB::table('enseignants')
+            ->where('ecole_id', $ecoleId)
+            ->select('id', 'specialite')
+            ->get();
+
+        if ($teachers->isEmpty()) {
+            return 0;
+        }
+
+        // Une série par classe, pour satisfaire la contrainte NOT NULL du pivot.
+        $serieParClasse = DB::table('classe_series')
+            ->where('ecole_id', $ecoleId)
+            ->pluck('serie_id', 'classe_id');
+
+        $serieDefaut = DB::table('series')->where('ecole_id', $ecoleId)->value('id');
+
+        $rows = [];
+
+        foreach ($teachers as $teacher) {
+            // La matière dont l'intitulé correspond à la spécialité, si elle existe.
+            $matiereId = DB::table('matieres')
+                ->where('ecole_id', $ecoleId)
+                ->where('nom', 'like', '%' . $teacher->specialite . '%')
+                ->value('id');
+
+            if (!$matiereId) {
+                continue;
+            }
+
+            $classeIds = DB::table('classe_matieres')
+                ->where('ecole_id', $ecoleId)
+                ->where('matiere_id', $matiereId)
+                ->limit(4)
+                ->pluck('classe_id');
+
+            foreach ($classeIds as $classeId) {
+                $serieId = $serieParClasse[$classeId] ?? $serieDefaut;
+
+                if (!$serieId) {
+                    continue;
+                }
+
+                $rows[] = [
+                    'enseignant_id' => $teacher->id,
+                    'matiere_id'    => $matiereId,
+                    'classe_id'     => $classeId,
+                    'serie_id'      => $serieId,
+                    'ecole_id'      => $ecoleId,
+                    'created_at'    => now(),
+                    'updated_at'    => now(),
+                ];
+            }
+        }
+
+        if ($rows === []) {
+            return 0;
+        }
+
+        DB::table('enseignant_matiere')->insertOrIgnore($rows);
+
+        return DB::table('enseignant_matiere')->where('ecole_id', $ecoleId)->count();
     }
 }

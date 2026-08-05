@@ -257,4 +257,28 @@ class MatieresController extends Controller
         }
     }
 
+    /**
+     * Get subjects filtered by education level (niveau).
+     * GET /matieres/niveaux/{niveau}
+     */
+    public function getByNiveau($niveau)
+    {
+        $niveau = strtolower($niveau);
+
+        $seriesMap = [
+            'maternelle' => ['Maternelle 1', 'Maternelle 2', 'Maternelle'],
+            'primaire'   => ['CI', 'CP', 'CE1', 'CE2', 'CM1', 'CM2'],
+            'secondaire' => ['6ème', '5ème', '4ème', '3ème', '2nde', '1ère', 'Terminale', 'Tle'],
+        ];
+
+        if (!isset($seriesMap[$niveau])) {
+            return response()->json(['success' => false, 'message' => 'Niveau invalide'], 404);
+        }
+
+        $matieres = Matieres::whereHas('series', function ($q) use ($seriesMap, $niveau) {
+            $q->whereIn('nom', $seriesMap[$niveau]);
+        })->get(['id', 'nom']);
+
+        return response()->json(['success' => true, 'data' => $matieres]);
+    }
 }

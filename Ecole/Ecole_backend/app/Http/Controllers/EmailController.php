@@ -2,19 +2,19 @@
 
 namespace App\Http\Controllers;
 use Illuminate\Support\Facades\Mail;
-use App\Models\Candidats;
+use App\Models\Eleve;
 use Illuminate\Http\Request;
 
 class EmailController extends Controller
 {
     public function envoyerEmailCandidats(Request $request)
     {
-        // Récupérer tous les candidats
-        $candidats = Candidats::all();
+        $eleves = Eleve::whereHas('user', function ($q) {
+            $q->whereNotNull('email');
+        })->get();
 
-        foreach ($candidats as $candidat) {
-            // Envoi de l'email à chaque candidat
-            Mail::to($candidat->email)->send(new \App\Mail\NumeroMatriculeMail($candidat));
+        foreach ($eleves as $eleve) {
+            Mail::to($eleve->user->email)->send(new \App\Mail\NumeroMatriculeMail($eleve));
         }
 
         return response()->json(['message' => 'Emails envoyés avec succès !'], 200);
