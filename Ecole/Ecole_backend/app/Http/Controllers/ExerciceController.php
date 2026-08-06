@@ -28,7 +28,7 @@ class ExerciceController extends Controller
     {
         $validated = $request->validate([
             'classe_id' => 'required|school_exists:classes,id',
-            'enseignant_id' => 'required|exists:enseignants,id',
+            'enseignant_id' => 'required|school_exists:enseignants,id',
             'titre' => 'required|string|max:255',
             'description' => 'required|string',
             'date_limite' => 'required|date',

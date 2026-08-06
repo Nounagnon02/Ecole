@@ -23,7 +23,7 @@ class EleveService extends BaseService
             'date_naissance' => 'required|date',
             'lieu_naissance' => 'nullable|string|max:255',
             'sexe' => 'required|in:M,F',
-            'classe_id' => 'required|exists:classes,id',
+            'classe_id' => 'required|school_exists:classes,id',
             'matricule' => 'required|string|unique:eleves,matricule',
             'email' => 'nullable|email|max:255',
             'telephone' => 'nullable|string|max:20',

@@ -141,10 +141,8 @@ it('returns a paginated list of exercises', function () {
 
 it('creates an exercise', function () {
     $ecole = Ecole::factory()->create();
-    $enseignant = Enseignant::factory()->create();
     $user = User::factory()->create(['role' => 'enseignant', 'ecole_id' => $ecole->id]);
-    $enseignant->user()->associate($user);
-    $enseignant->save();
+    $enseignant = Enseignant::factory()->forSchool($ecole)->create(['user_id' => $user->id]);
     $classe = Classes::factory()->create(['ecole_id' => $ecole->id]);
 
     $response = $this->actingAs($user)->postJson('/api/exercices', [

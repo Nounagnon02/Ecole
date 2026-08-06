@@ -225,7 +225,7 @@ class EcoleController extends Controller
             'password' => 'nullable|string|min:6',
         ]);
 
-        $password = $validated['password'] ?? 'password1234';
+        $password = $validated['password'] ?? Str::password(16);
 
         // Créer l'école
         $data = [
