@@ -48,13 +48,13 @@ class TenantScopeBypassTest extends TestCase
             'classe_id' => $theirClass->id,
             'ecole_id'  => $theirs->id,
             'note'      => 19,
-            'periode'   => 'Semestre 1',
+            'periode'   => 'Trimestre 1',
         ]);
 
         $head = User::factory()->create(['role' => 'directeur', 'ecole_id' => $mine->id]);
 
         $response = $this->actingAs($head)
-            ->getJson("/api/notes/classement/{$theirClass->id}/Semestre 1")
+            ->getJson("/api/notes/classement/{$theirClass->id}/Trimestre 1")
             ->assertStatus(200);
 
         // Their pupil must not appear in my ranking.
@@ -82,14 +82,14 @@ class TenantScopeBypassTest extends TestCase
                 'ecole_id'  => $school->id,
                 'note'      => $note,
                 'note_sur'  => 20,
-                'periode'   => 'Semestre 1',
+                'periode'   => 'Trimestre 1',
             ]);
         }
 
         $head = User::factory()->create(['role' => 'directeur', 'ecole_id' => $school->id]);
 
         $ranking = $this->actingAs($head)
-            ->getJson("/api/notes/classement/{$classe->id}/Semestre 1")
+            ->getJson("/api/notes/classement/{$classe->id}/Trimestre 1")
             ->assertStatus(200)
             ->json('data.classement');
 
@@ -117,18 +117,18 @@ class TenantScopeBypassTest extends TestCase
         // 9/10 is 18/20, so ahead of 15/20 — the raw 9 < 15 must not decide.
         Notes::factory()->create([
             'eleve_id' => $onTen->id, 'classe_id' => $classe->id, 'ecole_id' => $school->id,
-            'note' => 9, 'note_sur' => 10, 'periode' => 'Semestre 1',
+            'note' => 9, 'note_sur' => 10, 'periode' => 'Trimestre 1',
         ]);
         Notes::factory()->create([
             'eleve_id' => $onTwenty->id, 'classe_id' => $classe->id, 'ecole_id' => $school->id,
-            'note' => 15, 'note_sur' => 20, 'periode' => 'Semestre 1',
+            'note' => 15, 'note_sur' => 20, 'periode' => 'Trimestre 1',
         ]);
 
         $head = User::factory()->create(['role' => 'directeur', 'ecole_id' => $school->id]);
 
         $ranking = collect(
             $this->actingAs($head)
-                ->getJson("/api/notes/classement/{$classe->id}/Semestre 1")
+                ->getJson("/api/notes/classement/{$classe->id}/Trimestre 1")
                 ->assertStatus(200)
                 ->json('data.classement')
         )->keyBy('eleve_id');
@@ -153,7 +153,7 @@ class TenantScopeBypassTest extends TestCase
 
             Notes::factory()->create([
                 'eleve_id' => $pupil->id, 'classe_id' => $classe->id, 'ecole_id' => $school->id,
-                'note' => 18, 'note_sur' => 20, 'periode' => 'Semestre 1',
+                'note' => 18, 'note_sur' => 20, 'periode' => 'Trimestre 1',
             ]);
         }
 
@@ -183,7 +183,7 @@ class TenantScopeBypassTest extends TestCase
         // 5.5 fell between the old `0-5` and `6-10` bands and disappeared.
         Notes::factory()->create([
             'eleve_id' => $pupil->id, 'classe_id' => $classe->id, 'ecole_id' => $school->id,
-            'note' => 5.5, 'note_sur' => 20, 'periode' => 'Semestre 1',
+            'note' => 5.5, 'note_sur' => 20, 'periode' => 'Trimestre 1',
         ]);
 
         $head = User::factory()->create(['role' => 'directeur', 'ecole_id' => $school->id]);

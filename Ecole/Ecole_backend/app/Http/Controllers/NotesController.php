@@ -176,7 +176,7 @@ class NotesController extends Controller
                 'note_sur' => 'required|numeric|min:1|max:20',
                 'type_evaluation' => 'required|in:Devoir1,Devoir2,Interrogation,1ère evaluation,2ème evaluation,3ème evaluation,4ème evaluation,5ème evaluation,6ème evaluation',
                 'date_evaluation' => 'required|date',
-                'periode' => 'required|in:Semestre 1,Semestre 2',
+                'periode' => 'required|in:Trimestre 1,Trimestre 2,Trimestre 3',
                 'observation' => 'nullable|string|max:500'
             ]);
 
@@ -275,7 +275,7 @@ class NotesController extends Controller
             'note_sur' => 'required|numeric|min:1|max:100',
             'type_evaluation' => 'required|in:Devoir1,Devoir2,Interrogation',
             'date_evaluation' => 'required|date',
-            'periode' => 'required|in:Semestre 1,Semestre 2',
+            'periode' => 'required|in:Trimestre 1,Trimestre 2,Trimestre 3',
             'observation' => 'nullable|string|max:500'
         ]);
 
@@ -641,7 +641,7 @@ class NotesController extends Controller
             'matiere_id' => 'required|school_exists:matieres,id',
             'type_evaluation' => 'required|in:Devoir1,Devoir2,Interrogation',
             'date_evaluation' => 'required|date',
-            'periode' => 'required|in:Semestre 1,Semestre 2',
+            'periode' => 'required|in:Trimestre 1,Trimestre 2,Trimestre 3',
             'notes' => 'required'
         ]);
 

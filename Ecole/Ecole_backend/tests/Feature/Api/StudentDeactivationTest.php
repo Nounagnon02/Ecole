@@ -65,7 +65,7 @@ class StudentDeactivationTest extends TestCase
             'classe_id' => $this->pupil->class_id,
             'ecole_id'  => $this->school->id,
             'note'      => 14,
-            'periode'   => 'Semestre 1',
+            'periode'   => 'Trimestre 1',
         ]);
 
         $absence = Absence::factory()->create([

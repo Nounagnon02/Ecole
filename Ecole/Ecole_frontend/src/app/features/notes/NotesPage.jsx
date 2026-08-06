@@ -26,7 +26,7 @@ export default function NotesPage() {
   const [filterClasse, setFilterClasse] = useState('');
   const [tab, setTab] = useState('notes'); // 'notes' | 'classement'
   const [classementClasse, setClassementClasse] = useState('');
-  const [classementPeriode, setClassementPeriode] = useState('Semestre 1');
+  const [classementPeriode, setClassementPeriode] = useState('Trimestre 1');
 
   const { data: notesData, isLoading, error, refetch } = useApiQuery(
     ['notes'],
@@ -306,8 +306,9 @@ export default function NotesPage() {
                   onChange={(e) => setClassementPeriode(e.target.value)}
                   className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm text-neutral-700 outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
                 >
-                  <option value="Semestre 1">Semestre 1</option>
-                  <option value="Semestre 2">Semestre 2</option>
+                  <option value="Trimestre 1">Trimestre 1</option>
+                  <option value="Trimestre 2">Trimestre 2</option>
+                  <option value="Trimestre 3">Trimestre 3</option>
                 </select>
                 <Button
                   size="sm"

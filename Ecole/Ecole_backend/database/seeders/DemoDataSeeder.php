@@ -335,7 +335,7 @@ class DemoDataSeeder extends Seeder
             ->where('ecole_id', $ecoleId)
             ->get(['id', 'class_id']);
 
-        $periodes = ['Semestre 1', 'Semestre 2'];
+        $periodes = ['Trimestre 1', 'Trimestre 2', 'Trimestre 3'];
         $evalTypes = ['Devoir1', 'Devoir2', 'Interrogation', '1ère evaluation', '2ème evaluation'];
 
         // No existing notes to check on fresh seed
