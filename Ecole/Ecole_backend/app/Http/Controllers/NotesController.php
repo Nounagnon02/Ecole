@@ -8,6 +8,7 @@ use App\Models\Eleve;
 use App\Models\Classes;
 use App\Models\Matieres;
 use App\Models\Series;
+use App\Support\AnneeScolaire;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -177,6 +178,7 @@ class NotesController extends Controller
                 'type_evaluation' => 'required|in:Devoir1,Devoir2,Interrogation,1ère evaluation,2ème evaluation,3ème evaluation,4ème evaluation,5ème evaluation,6ème evaluation',
                 'date_evaluation' => 'required|date',
                 'periode' => 'required|in:Trimestre 1,Trimestre 2,Trimestre 3',
+                'annee_scolaire' => 'nullable|string|regex:/^\d{4}-\d{4}$/',
                 'observation' => 'nullable|string|max:500'
             ]);
 
@@ -228,6 +230,7 @@ class NotesController extends Controller
                     'type_evaluation' => $request->type_evaluation,
                     'date_evaluation' => $request->date_evaluation,
                     'periode' => $request->periode,
+                    'annee_scolaire' => $request->annee_scolaire ?? AnneeScolaire::courante(),
                     'observation' => $request->observation,
                     
                 ]);
@@ -338,6 +341,7 @@ class NotesController extends Controller
                 'type_evaluation' => $request->type_evaluation,
                 'date_evaluation' => $request->date_evaluation,
                 'periode' => $request->periode,
+                'annee_scolaire' => $request->annee_scolaire ?? $note->annee_scolaire ?? AnneeScolaire::courante(),
                 'observation' => $request->observation
             ]);
 
@@ -697,6 +701,7 @@ class NotesController extends Controller
                         'type_evaluation' => $request->type_evaluation,
                         'date_evaluation' => $request->date_evaluation,
                         'periode' => $request->periode,
+                        'annee_scolaire' => $request->annee_scolaire ?? AnneeScolaire::courante(),
                         
                     ]);
 

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\BulletinController;
+use App\Http\Controllers\BulletinsController;
 use App\Http\Controllers\CahierDeTexteController;
 use App\Http\Controllers\ClassesController;
 use App\Http\Controllers\DevoirController;
@@ -87,6 +88,17 @@ Route::middleware('auth:sanctum')->group(function () {
             ->middleware('role:directeur,enseignant,censeur,parent,eleve');
         Route::post('/recalculer', [MoyennesController::class, 'recalculer'])
             ->middleware('role:directeur,enseignant');
+    });
+
+    // ============ BULLETINS (archives verrouillées) ============
+    // POST /bulletins/verrouiller fige le bulletin d'une classe pour une
+    // période (moyenne, rang, mention, détail par matière), GET /bulletins le
+    // relit dans le périmètre du demandeur.
+    Route::prefix('bulletins')->group(function () {
+        Route::get('/', [BulletinsController::class, 'index'])
+            ->middleware('role:directeur,enseignant,censeur,parent,eleve');
+        Route::post('/verrouiller', [BulletinsController::class, 'verrouiller'])
+            ->middleware('role:directeur,enseignant,censeur');
     });
 
     // ============ PÉRIODES ============

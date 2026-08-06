@@ -2,9 +2,11 @@
 
 namespace App\Services;
 
+use App\Models\Bulletin;
 use App\Models\Eleve;
 use App\Models\Moyennes;
 use App\Models\Notes;
+use App\Support\AnneeScolaire;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -301,8 +303,9 @@ class BulletinService
      * remplacé, jamais accumulé. Retourne les lignes persistées, chargées avec
      * l'élève et la matière.
      */
-    public function recalculerClasseMoyennes($classeId, $periode): array
+    public function recalculerClasseMoyennes($classeId, $periode, $anneeScolaire = null): array
     {
+        $anneeScolaire ??= AnneeScolaire::courante();
 
         $eleves = Eleve::with(['notes.matiere'])
             ->where('class_id', $classeId)
@@ -339,9 +342,10 @@ class BulletinService
             $subjectAverages
         );
 
-        return DB::transaction(function () use ($eleves, $classeId, $periode, $ecoleId, $generalAverages, $subjectRanks) {
+        return DB::transaction(function () use ($eleves, $classeId, $periode, $anneeScolaire, $ecoleId, $generalAverages, $subjectRanks) {
             Moyennes::where('classe_id', $classeId)
                 ->where('periode', $periode)
+                ->where('annee_scolaire', $anneeScolaire)
                 ->delete();
 
             $rows = [];
@@ -352,6 +356,7 @@ class BulletinService
                     'classe_id' => $classeId,
                     'matiere_id' => null,
                     'periode' => $periode,
+                    'annee_scolaire' => $anneeScolaire,
                     'valeur' => round((float) $generalAverages->get($pupil->id, 0.0), 2),
                     'coefficient' => null,
                     'rang' => $this->positionOf($generalAverages, $pupil->id),
@@ -362,7 +367,7 @@ class BulletinService
                     'updated_at' => now(),
                 ];
 
-                $pupil->notes->where('periode', $periode)->groupBy('matiere_id')->each(function ($subjectMarks) use (&$rows, $pupil, $classeId, $periode, $ecoleId, $subjectRanks) {
+                $pupil->notes->where('periode', $periode)->groupBy('matiere_id')->each(function ($subjectMarks) use (&$rows, $pupil, $classeId, $periode, $anneeScolaire, $ecoleId, $subjectRanks) {
                     $subject = $subjectMarks->first()->matiere;
 
                     if (! $subject) {
@@ -374,6 +379,7 @@ class BulletinService
                         'classe_id' => $classeId,
                         'matiere_id' => $subject->id,
                         'periode' => $periode,
+                        'annee_scolaire' => $anneeScolaire,
                         'valeur' => round($this->moyenneMatiere($subjectMarks), 2),
                         'coefficient' => $this->getCoefficient($subject->id, $pupil->class_id, $pupil->serie_id),
                         'rang' => $this->positionOf($subjectRanks[$subject->id], $pupil->id),
@@ -392,9 +398,102 @@ class BulletinService
 
             return Moyennes::where('classe_id', $classeId)
                 ->where('periode', $periode)
+                ->where('annee_scolaire', $anneeScolaire)
                 ->with(['eleve', 'matiere'])
                 ->get()
                 ->toArray();
+        });
+    }
+
+    /**
+     * Mention béninoise d'un bulletin, selon la moyenne générale sur 20.
+     */
+    public function mentionPour(float $moyenne): string
+    {
+        return match (true) {
+            $moyenne >= 16 => 'Très Bien',
+            $moyenne >= 14 => 'Bien',
+            $moyenne >= 12 => 'Assez Bien',
+            $moyenne >= 10 => 'Passable',
+            default => 'Insuffisant',
+        };
+    }
+
+    /**
+     * Verrouille le bulletin d'une classe pour une période : un enregistrement
+     * `bulletins` par élève, figé depuis l'instantané `moyennes`.
+     *
+     * Les bulletins existants de la classe pour cette période et cette année
+     * scolaire sont remplacés (un bulletin se reverrouille). Retourne les
+     * bulletins archivés, ou une collection vide si la classe n'a pas encore
+     * d'instantané pour la période.
+     */
+    public function archiverClasse($classeId, $periode, $anneeScolaire = null)
+    {
+        $anneeScolaire ??= AnneeScolaire::courante();
+
+        return DB::transaction(function () use ($classeId, $periode, $anneeScolaire) {
+            $snapshot = Moyennes::query()
+                ->where('classe_id', $classeId)
+                ->where('periode', $periode)
+                ->where('annee_scolaire', $anneeScolaire)
+                ->with(['eleve', 'matiere'])
+                ->get();
+
+            $generals = $snapshot->whereNull('matiere_id')->keyBy('eleve_id');
+
+            if ($generals->isEmpty()) {
+                return collect();
+            }
+
+            $subjectsByEleve = $snapshot
+                ->whereNotNull('matiere_id')
+                ->groupBy('eleve_id');
+
+            $bulletins = [];
+
+            foreach ($generals as $eleveId => $general) {
+                $moyenne = (float) $general->valeur;
+
+                $detail = collect($subjectsByEleve->get($eleveId, []))
+                    ->map(fn ($row) => [
+                        'matiere_id' => $row->matiere_id,
+                        'matiere' => $row->matiere?->nom ?? $row->matiere_id,
+                        'moyenne' => (float) $row->valeur,
+                        'coefficient' => $row->coefficient !== null ? (float) $row->coefficient : null,
+                        'rang' => $row->rang,
+                    ])
+                    ->values();
+
+                $bulletins[] = [
+                    'eleve_id' => $eleveId,
+                    'classe_id' => $classeId,
+                    'periode' => $periode,
+                    'annee_scolaire' => $anneeScolaire,
+                    'moyenne_generale' => round($moyenne, 2),
+                    'rang' => $general->rang,
+                    'total_eleves' => $general->total_eleves,
+                    'mention' => $this->mentionPour($moyenne),
+                    'data' => json_encode($detail),
+                    'created_by' => auth()->id(),
+                    'ecole_id' => $general->ecole_id,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
+
+            Bulletin::where('classe_id', $classeId)
+                ->where('periode', $periode)
+                ->where('annee_scolaire', $anneeScolaire)
+                ->delete();
+
+            Bulletin::insert($bulletins);
+
+            return Bulletin::where('classe_id', $classeId)
+                ->where('periode', $periode)
+                ->where('annee_scolaire', $anneeScolaire)
+                ->with(['eleve', 'classe'])
+                ->get();
         });
     }
 }
