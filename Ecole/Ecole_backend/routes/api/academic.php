@@ -1,16 +1,15 @@
 <?php
 
-use App\Http\Controllers\{
-    ClassesController,
-    EleveController,
-    MatieresController,
-    NotesController,
-    BulletinController,
-    periodesController,
-    EmploiDuTempsController,
-    CahierDeTexteController,
-    DevoirController
-};
+use App\Http\Controllers\BulletinController;
+use App\Http\Controllers\CahierDeTexteController;
+use App\Http\Controllers\ClassesController;
+use App\Http\Controllers\DevoirController;
+use App\Http\Controllers\EleveController;
+use App\Http\Controllers\EmploiDuTempsController;
+use App\Http\Controllers\MatieresController;
+use App\Http\Controllers\MoyennesController;
+use App\Http\Controllers\NotesController;
+use App\Http\Controllers\periodesController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -28,7 +27,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/store', [MatieresController::class, 'store'])->middleware('role:directeur,admin');
         Route::post('/update/{id}', [MatieresController::class, 'update'])->middleware('role:directeur,admin');
         Route::delete('/delete/{id}', [MatieresController::class, 'destroy'])->middleware('role:directeur,admin');
-        
+
         Route::get('/niveaux/{niveau}', [MatieresController::class, 'getByNiveau']);
     });
 
@@ -56,7 +55,7 @@ Route::middleware('auth:sanctum')->group(function () {
         // tenant expose via apiResource délègue à `deactivate`.
         Route::post('/{eleve}/deactivate', [EleveController::class, 'deactivate'])->middleware('role:directeur');
         Route::post('/{eleve}/activate', [EleveController::class, 'activate'])->middleware('role:directeur');
-        
+
         // Espace Elève
         Route::get('/me/bulletin/{periode}', [EleveController::class, 'bulletin'])->middleware('role:eleve');
         Route::get('/me/emploi-du-temps', [EleveController::class, 'emploiDuTemps'])->middleware('role:eleve');
@@ -77,6 +76,17 @@ Route::middleware('auth:sanctum')->group(function () {
         // Le périmètre est restreint dans le contrôleur selon le rôle.
         Route::get('/stats', [NotesController::class, 'stats']);
         Route::get('/moyennes-par-matiere', [NotesController::class, 'moyennesParMatiere']);
+    });
+
+    // ============ MOYENNES (instantané bulletin) ============
+    // La table `moyennes` archive moyenne et rang par matière + moyenne
+    // générale et rang général, par élève et par période, au verrouillage du
+    // bulletin (POST /moyennes/recalculer). GET relit cet instantané.
+    Route::prefix('moyennes')->group(function () {
+        Route::get('/', [MoyennesController::class, 'index'])
+            ->middleware('role:directeur,enseignant,censeur,parent,eleve');
+        Route::post('/recalculer', [MoyennesController::class, 'recalculer'])
+            ->middleware('role:directeur,enseignant');
     });
 
     // ============ PÉRIODES ============

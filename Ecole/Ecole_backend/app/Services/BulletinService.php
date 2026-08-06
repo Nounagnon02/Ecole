@@ -2,7 +2,11 @@
 
 namespace App\Services;
 
-use App\Models\{Eleve, Notes};
+use App\Models\Eleve;
+use App\Models\Moyennes;
+use App\Models\Notes;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class BulletinService
 {
@@ -14,19 +18,19 @@ class BulletinService
     {
         $eleve = Eleve::with(['classe', 'notes.matiere'])->findOrFail($eleveId);
         $notes = $eleve->notes()->where('periode', $periode)->with('matiere')->get();
-        
+
         $evaluations = $notes->groupBy('matiere.nom')->map(function ($notesMatiere, $matiere) {
             $evaluationsMatiere = [];
-            
+
             foreach (['1ère evaluation', '2ème evaluation', '3ème evaluation', '4ème evaluation', '5ème evaluation'] as $type) {
                 $note = $notesMatiere->where('type_evaluation', $type)->first();
                 $evaluationsMatiere[] = [
                     'type' => $type,
                     'note' => $note ? $note->note : null,
-                    'rang' => $note ? $this->calculerRang($note) : null
+                    'rang' => $note ? $this->calculerRang($note) : null,
                 ];
             }
-            
+
             return ['matiere' => $matiere, 'evaluations' => $evaluationsMatiere];
         })->values();
 
@@ -41,32 +45,30 @@ class BulletinService
     {
         $eleve = Eleve::with(['classe', 'notes.matiere'])->findOrFail($eleveId);
         $notes = $eleve->notes()->where('periode', $periode)->with('matiere')->get();
-        
+
         $moyennesParMatiere = $notes->groupBy('matiere_id')->map(function ($notesMatiere) use ($eleve) {
             $matiere = $notesMatiere->first()->matiere;
-            
+
             // Moyennes par type d'évaluation
             $devoir1 = $this->moyenneType($notesMatiere, 'Devoir1');
             $devoir2 = $this->moyenneType($notesMatiere, 'Devoir2');
             $interrogations = $this->moyenneType($notesMatiere, 'Interrogation');
-            
+
             // Moyenne des seules évaluations présentes.
             // `filter()` sans callback écartait aussi les notes à 0 — un élève
             // ayant réellement 0 à un devoir le voyait ignoré, ce qui gonflait
             // sa moyenne. On ne filtre donc que les valeurs nulles.
-            $moyenne = collect([$devoir1, $devoir2, $interrogations])
-                ->filter(fn($v) => $v !== null)
-                ->avg() ?? 0;
-            
+            $moyenne = $this->moyenneMatiere($notesMatiere);
+
             $coefficient = $this->getCoefficient($matiere->id, $eleve->class_id, $eleve->serie_id);
-            
+
             return [
                 'matiere' => $matiere->nom,
                 'coefficient' => $coefficient,
                 'details' => ['devoir1' => $devoir1, 'devoir2' => $devoir2, 'moyenne_interrogations' => $interrogations],
                 'moyenne' => round($moyenne, 2),
                 'moyenne_ponderee' => round($moyenne * $coefficient, 2),
-                'rang' => $this->calculerRang($notesMatiere->first())
+                'rang' => $this->calculerRang($notesMatiere->first()),
             ];
         })->values();
 
@@ -80,7 +82,7 @@ class BulletinService
             'periode' => $periode,
             'moyennes_par_matiere' => $moyennesParMatiere,
             'moyenne_generale' => round($moyenneGenerale, 2),
-            'rang' => $this->calculerRangGeneral($eleve, $periode, $moyenneGenerale)
+            'rang' => $this->calculerRangGeneral($eleve, $periode, $moyenneGenerale),
         ];
     }
 
@@ -105,6 +107,54 @@ class BulletinService
     }
 
     /**
+     * Moyenne d'une matière sur une période : moyenne des seuls types
+     * d'évaluation renseignés (Devoir1, Devoir2, Interrogations).
+     *
+     * `filter()` sans callback écarterait aussi les notes à 0 — un élève ayant
+     * réellement 0 verrait la note ignorée, ce qui gonflerait sa moyenne. On ne
+     * filtre donc que les valeurs nulles.
+     */
+    private function moyenneMatiere($subjectMarks): float
+    {
+        $devoir1 = $this->moyenneType($subjectMarks, 'Devoir1');
+        $devoir2 = $this->moyenneType($subjectMarks, 'Devoir2');
+        $interrogations = $this->moyenneType($subjectMarks, 'Interrogation');
+
+        return collect([$devoir1, $devoir2, $interrogations])
+            ->filter(fn ($v) => $v !== null)
+            ->avg() ?? 0;
+    }
+
+    /**
+     * Moyenne générale pondérée d'un élève sur une période.
+     *
+     * `class_id`, pas `classe_id` — la colonne n'existe pas, donc le coefficient
+     * était toujours cherché avec null.
+     */
+    private function moyenneGeneraleEleve(Eleve $pupil, string $periode): float
+    {
+        $marks = $pupil->notes->where('periode', $periode);
+        $totalPoints = 0.0;
+        $totalCoeff = 0.0;
+
+        $marks->groupBy('matiere_id')->each(function ($subjectMarks) use (&$totalPoints, &$totalCoeff, $pupil) {
+            $subject = $subjectMarks->first()->matiere;
+
+            if (! $subject) {
+                return;
+            }
+
+            $subjectAverage = $this->moyenneMatiere($subjectMarks);
+            $coeff = $this->getCoefficient($subject->id, $pupil->class_id, $pupil->serie_id);
+
+            $totalPoints += $subjectAverage * $coeff;
+            $totalCoeff += $coeff;
+        });
+
+        return $totalCoeff > 0 ? $totalPoints / $totalCoeff : 0.0;
+    }
+
+    /**
      * Coefficient of a subject for a given class, and série when there is one.
      *
      * Three defects met here. The table was `classe_matiere`, singular, which
@@ -126,8 +176,8 @@ class BulletinService
             $coefficient = \DB::table('serie_matieres')
                 ->where('serie_id', $serieId)
                 ->where('matiere_id', $matiereId)
-                ->when($classeId, fn($q) => $q->where('classe_id', $classeId))
-                ->when($ecoleId, fn($q) => $q->where('ecole_id', $ecoleId))
+                ->when($classeId, fn ($q) => $q->where('classe_id', $classeId))
+                ->when($ecoleId, fn ($q) => $q->where('ecole_id', $ecoleId))
                 ->value('coefficient');
 
             if ($coefficient) {
@@ -138,7 +188,7 @@ class BulletinService
         $coefficient = \DB::table('classe_matieres')
             ->where('classe_id', $classeId)
             ->where('matiere_id', $matiereId)
-            ->when($ecoleId, fn($q) => $q->where('ecole_id', $ecoleId))
+            ->when($ecoleId, fn ($q) => $q->where('ecole_id', $ecoleId))
             ->value('coefficient');
 
         return $coefficient ? (float) $coefficient : 1.0;
@@ -161,22 +211,22 @@ class BulletinService
      */
     private function calculerRang($note)
     {
-        if (!$note || !$note->eleve) {
+        if (! $note || ! $note->eleve) {
             return null;
         }
 
         $marks = Notes::where('matiere_id', $note->matiere_id)
             ->where('periode', $note->periode)
-            ->whereHas('eleve', fn($q) => $q->where('class_id', $note->eleve->class_id))
+            ->whereHas('eleve', fn ($q) => $q->where('class_id', $note->eleve->class_id))
             ->get(['eleve_id', 'note', 'note_sur']);
 
         $averages = $marks
             ->groupBy('eleve_id')
-            ->map(fn($pupilMarks) => $this->averageOnTwenty($pupilMarks))
+            ->map(fn ($pupilMarks) => $this->averageOnTwenty($pupilMarks))
             ->sortDesc();
 
         return [
-            'position'     => $this->positionOf($averages, $note->eleve_id),
+            'position' => $this->positionOf($averages, $note->eleve_id),
             'total_eleves' => $averages->count(),
         ];
     }
@@ -202,18 +252,18 @@ class BulletinService
      * the key is absent is deliberate: the previous code returned 1, so a
      * miscomputation put every pupil top of the class.
      *
-     * @param  \Illuminate\Support\Collection  $sortedDesc  key => average
+     * @param  Collection  $sortedDesc  key => average
      */
     private function positionOf($sortedDesc, $key): ?int
     {
-        if (!$sortedDesc->has($key)) {
+        if (! $sortedDesc->has($key)) {
             return null;
         }
 
         $target = $sortedDesc->get($key);
 
         // Number of pupils strictly ahead, plus one.
-        return $sortedDesc->filter(fn($value) => $value > $target + 0.001)->count() + 1;
+        return $sortedDesc->filter(fn ($value) => $value > $target + 0.001)->count() + 1;
     }
 
     private function calculerRangGeneral($eleve, $periode, $moyenne)
@@ -229,44 +279,122 @@ class BulletinService
         // échec de recherche renvoyait false, donc `position => 1`. Toute erreur
         // de calcul déclarait l'élève premier de sa classe.
         $averages = $classmates
-            ->mapWithKeys(function ($pupil) use ($periode) {
-                $marks = $pupil->notes->where('periode', $periode);
-                $totalPoints = 0.0;
-                $totalCoeff = 0.0;
-
-                $marks->groupBy('matiere_id')->each(function ($subjectMarks) use (&$totalPoints, &$totalCoeff, $pupil) {
-                    $subject = $subjectMarks->first()->matiere;
-
-                    if (!$subject) {
-                        return;
-                    }
-
-                    $devoir1  = $this->moyenneType($subjectMarks, 'Devoir1');
-                    $devoir2  = $this->moyenneType($subjectMarks, 'Devoir2');
-                    $interros = $this->moyenneType($subjectMarks, 'Interrogation');
-
-                    // `filter()` sans callback écartait les notes à 0 : un élève
-                    // ayant réellement 0 voyait la note ignorée, ce qui gonflait
-                    // sa moyenne. On ne filtre que les valeurs nulles.
-                    $subjectAverage = collect([$devoir1, $devoir2, $interros])
-                        ->filter(fn($v) => $v !== null)
-                        ->avg() ?? 0;
-
-                    // `class_id`, pas `classe_id` — la colonne n'existe pas, donc
-                    // le coefficient était toujours cherché avec null.
-                    $coeff = $this->getCoefficient($subject->id, $pupil->class_id, $pupil->serie_id);
-
-                    $totalPoints += $subjectAverage * $coeff;
-                    $totalCoeff  += $coeff;
-                });
-
-                return [$pupil->id => $totalCoeff > 0 ? $totalPoints / $totalCoeff : 0.0];
-            })
+            ->mapWithKeys(fn ($pupil) => [$pupil->id => $this->moyenneGeneraleEleve($pupil, $periode)])
             ->sortDesc();
 
         return [
-            'position'     => $this->positionOf($averages, $eleve->id),
+            'position' => $this->positionOf($averages, $eleve->id),
             'total_eleves' => $averages->count(),
         ];
+    }
+
+    /**
+     * Recalcule et archive l'instantané des moyennes et rangs d'une classe pour
+     * une période (le « verrouillage du bulletin »).
+     *
+     * Chaque élève produit une ligne par matière (moyenne, coefficient, rang
+     * dans la classe) et une ligne générale (`matiere_id` null) avec sa moyenne
+     * générale pondérée et son rang général — la même arithmétique que le
+     * bulletin et le classement, en une seule passe pour éviter les N+1.
+     *
+     * La passe est transactionnelle : l'instantané précédent de la classe est
+     * remplacé, jamais accumulé. Retourne les lignes persistées, chargées avec
+     * l'élève et la matière.
+     */
+    public function recalculerClasseMoyennes($classeId, $periode): array
+    {
+
+        $eleves = Eleve::with(['notes.matiere'])
+            ->where('class_id', $classeId)
+            ->get();
+
+        if ($eleves->isEmpty()) {
+            return [];
+        }
+
+        $ecoleId = auth()->user()?->ecole_id ?? session('ecole_id');
+
+        // Moyenne générale de chaque élève, triée : base du rang général.
+        $generalAverages = $eleves
+            ->mapWithKeys(fn ($pupil) => [$pupil->id => $this->moyenneGeneraleEleve($pupil, $periode)])
+            ->sortDesc();
+
+        // Moyennes par matière sur toute la classe, triées : base des rangs matière.
+        $subjectAverages = [];
+
+        $eleves->each(function ($pupil) use ($periode, &$subjectAverages) {
+            $pupil->notes->where('periode', $periode)->groupBy('matiere_id')->each(function ($subjectMarks) use (&$subjectAverages) {
+                $subject = $subjectMarks->first()->matiere;
+
+                if (! $subject) {
+                    return;
+                }
+
+                $subjectAverages[$subject->id][$subjectMarks->first()->eleve_id] = $this->moyenneMatiere($subjectMarks);
+            });
+        });
+
+        $subjectRanks = array_map(
+            fn ($averages) => collect($averages)->sortDesc(),
+            $subjectAverages
+        );
+
+        return DB::transaction(function () use ($eleves, $classeId, $periode, $ecoleId, $generalAverages, $subjectRanks) {
+            Moyennes::where('classe_id', $classeId)
+                ->where('periode', $periode)
+                ->delete();
+
+            $rows = [];
+
+            foreach ($eleves as $pupil) {
+                $rows[] = [
+                    'eleve_id' => $pupil->id,
+                    'classe_id' => $classeId,
+                    'matiere_id' => null,
+                    'periode' => $periode,
+                    'valeur' => round((float) $generalAverages->get($pupil->id, 0.0), 2),
+                    'coefficient' => null,
+                    'rang' => $this->positionOf($generalAverages, $pupil->id),
+                    'total_eleves' => $generalAverages->count(),
+                    'created_by' => auth()->id(),
+                    'ecole_id' => $ecoleId,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+
+                $pupil->notes->where('periode', $periode)->groupBy('matiere_id')->each(function ($subjectMarks) use (&$rows, $pupil, $classeId, $periode, $ecoleId, $subjectRanks) {
+                    $subject = $subjectMarks->first()->matiere;
+
+                    if (! $subject) {
+                        return;
+                    }
+
+                    $rows[] = [
+                        'eleve_id' => $pupil->id,
+                        'classe_id' => $classeId,
+                        'matiere_id' => $subject->id,
+                        'periode' => $periode,
+                        'valeur' => round($this->moyenneMatiere($subjectMarks), 2),
+                        'coefficient' => $this->getCoefficient($subject->id, $pupil->class_id, $pupil->serie_id),
+                        'rang' => $this->positionOf($subjectRanks[$subject->id], $pupil->id),
+                        'total_eleves' => $subjectRanks[$subject->id]->count(),
+                        'created_by' => auth()->id(),
+                        'ecole_id' => $ecoleId,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+                });
+            }
+
+            foreach (array_chunk($rows, 200) as $chunk) {
+                Moyennes::insert($chunk);
+            }
+
+            return Moyennes::where('classe_id', $classeId)
+                ->where('periode', $periode)
+                ->with(['eleve', 'matiere'])
+                ->get()
+                ->toArray();
+        });
     }
 }
