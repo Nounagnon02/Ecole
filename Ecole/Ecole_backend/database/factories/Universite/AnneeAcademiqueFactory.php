@@ -3,6 +3,7 @@
 namespace Database\Factories\Universite;
 
 use App\Models\Universite\AnneeAcademique;
+use App\Models\Ecole;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class AnneeAcademiqueFactory extends Factory
@@ -18,5 +19,10 @@ class AnneeAcademiqueFactory extends Factory
             'date_debut' => $start->format('Y-m-d'),
             'date_fin'   => (clone $start)->modify('+1 year')->format('Y-m-d'),
         ];
+    }
+
+    public function forSchool(Ecole $school): static
+    {
+        return $this->state(fn() => ['ecole_id' => $school->id]);
     }
 }

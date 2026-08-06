@@ -4,6 +4,7 @@ namespace Database\Factories\Universite;
 
 use App\Models\Universite\Etudiant;
 use App\Models\Universite\Filiere;
+use App\Models\Ecole;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class EtudiantFactory extends Factory
@@ -13,8 +14,6 @@ class EtudiantFactory extends Factory
     public function definition(): array
     {
         return [
-            // Unique per school since 2026_08_03_120000, so a value unique in
-            // the run is enough and two schools may share a numbering scheme.
             'matricule'      => 'ETU' . fake()->unique()->numerify('######'),
             'nom'            => fake()->lastName(),
             'prenom'         => fake()->firstName(),
@@ -25,12 +24,20 @@ class EtudiantFactory extends Factory
             'email'          => fake()->unique()->safeEmail(),
             'annee_entree'   => (int) date('Y'),
             'filiere_id'     => Filiere::factory(),
+            'statut'         => 'active',
         ];
     }
 
-    /** Attach a login account — the link this whole change is about. */
     public function forUser(\App\Models\User $user): static
     {
-        return $this->state(fn() => ['user_id' => $user->id]);
+        return $this->state(fn() => ['user_id' => $user->id, 'ecole_id' => $user->ecole_id]);
+    }
+
+    public function forSchool(Ecole $school): static
+    {
+        return $this->state(fn() => [
+            'ecole_id'   => $school->id,
+            'filiere_id' => Filiere::factory()->forSchool($school),
+        ]);
     }
 }

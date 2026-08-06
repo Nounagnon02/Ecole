@@ -4,6 +4,7 @@ namespace Database\Factories\Universite;
 
 use App\Models\Universite\Devoir;
 use App\Models\Universite\Matiere;
+use App\Models\Ecole;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class DevoirFactory extends Factory
@@ -27,5 +28,13 @@ class DevoirFactory extends Factory
     public function draft(): static
     {
         return $this->state(fn() => ['publie' => false]);
+    }
+
+    public function forSchool(Ecole $school): static
+    {
+        return $this->state(fn() => [
+            'ecole_id'   => $school->id,
+            'matiere_id' => Matiere::factory()->forSchool($school),
+        ]);
     }
 }
