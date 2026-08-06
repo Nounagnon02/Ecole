@@ -3,6 +3,7 @@
 namespace Database\Factories\Universite;
 
 use App\Models\Universite\Universite;
+use App\Models\Ecole;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -25,5 +26,10 @@ class UniversiteFactory extends Factory
             'nom'   => 'Université de ' . fake()->unique()->city(),
             'sigle' => strtoupper(fake()->unique()->lexify('U??')),
         ];
+    }
+
+    public function forSchool(Ecole $school): static
+    {
+        return $this->state(fn() => ['ecole_id' => $school->id]);
     }
 }

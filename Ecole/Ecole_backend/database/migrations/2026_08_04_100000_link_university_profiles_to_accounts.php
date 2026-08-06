@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Give a university student — and a university lecturer — a login account.
@@ -52,30 +53,45 @@ return new class extends Migration
 
     public function up(): void
     {
+        Log::info('Running link_university_profiles_to_accounts migration');
+        
         foreach ($this->tables as $table => $after) {
-            if (!Schema::hasTable($table) || Schema::hasColumn($table, 'user_id')) {
+            $hasTable = Schema::hasTable($table);
+            $hasColumn = $hasTable ? Schema::hasColumn($table, 'user_id') : false;
+            
+            Log::info("Checking table: $table, hasTable: $hasTable, hasColumn: $hasColumn");
+            
+            if (!$hasTable || $hasColumn) {
+                Log::info("Skipping table: $table");
                 continue;
             }
 
-            // Column, constraint and index in separate calls: SQLite rebuilds
-            // the table to honour a foreign key, and mixing the three in one
-            // Blueprint makes the outcome driver-dependent. On SQLite
-            // `compileForeign` is a no-op for an ALTER, so the constraint is
-            // simply absent there — the column and its index are what the
-            // scope and the relation need.
-            Schema::table($table, function (Blueprint $blueprint) use ($after) {
-                $blueprint->foreignId('user_id')->nullable()->after($after);
-            });
-
+            Log::info("Adding user_id to table: $table");
+            
+            // Use unsignedBigInteger directly — foreignId() on SQLite ALTER TABLE
+            // can be flaky. The column is what matters; the FK constraint is
+            // added separately and skipped on SQLite anyway.
             Schema::table($table, function (Blueprint $blueprint) {
-                $blueprint->foreign('user_id')
-                    ->references('id')->on('users')
-                    ->nullOnDelete();
+                $blueprint->unsignedBigInteger('user_id')->nullable();
             });
 
+            Log::info("Column added to $table, checking again: " . (Schema::hasColumn($table, 'user_id') ? 'YES' : 'NO'));
+
+            // Foreign key constraint — skipped on SQLite (no-op for ALTER)
+            if (Schema::getConnection()->getDriverName() !== 'sqlite') {
+                Schema::table($table, function (Blueprint $blueprint) {
+                    $blueprint->foreign('user_id')
+                        ->references('id')->on('users')
+                        ->nullOnDelete();
+                });
+            }
+
+            // Unique index — works on both drivers
             Schema::table($table, function (Blueprint $blueprint) use ($table) {
                 $blueprint->unique('user_id', $table . '_user_id_unique');
             });
+            
+            Log::info("Unique index added to $table");
         }
     }
 

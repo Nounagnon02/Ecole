@@ -6,6 +6,7 @@ use App\Models\Universite\Enseignant;
 use App\Models\Universite\Filiere;
 use App\Models\Universite\Matiere;
 use App\Models\Universite\Semestre;
+use App\Models\Ecole;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class MatiereFactory extends Factory
@@ -22,5 +23,15 @@ class MatiereFactory extends Factory
             'semestre_id'   => Semestre::factory(),
             'filiere_id'    => Filiere::factory(),
         ];
+    }
+
+    public function forSchool(Ecole $school): static
+    {
+        return $this->state(fn() => [
+            'ecole_id'      => $school->id,
+            'enseignant_id' => Enseignant::factory()->forSchool($school),
+            'semestre_id'   => Semestre::factory()->forSchool($school),
+            'filiere_id'    => Filiere::factory()->forSchool($school),
+        ]);
     }
 }
