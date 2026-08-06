@@ -237,7 +237,7 @@ class BulletinController extends Controller
     {
         try {
             // Validation de la période
-            $periode = $request->get('periode', 'Semestre 1');
+            $periode = $request->get('periode', 'Trimestre 1');
             
             // Récupérer l'élève avec ses relations de base
             if (!$eleveId) {
@@ -736,7 +736,7 @@ class BulletinController extends Controller
     // Méthode pour débugger les données d'un élève
     public function debugEleve($eleveId, Request $request)
     {
-        $periode = $request->get('periode', 'Semestre 1');
+        $periode = $request->get('periode', 'Trimestre 1');
         
         // Récupérer toutes les notes de l'élève
         $notes = Notes::where('eleve_id', $eleveId)

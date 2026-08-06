@@ -18,7 +18,7 @@ return new class extends Migration
             $table->decimal('note_sur', 5, 2)->default(20);
             $table->enum('type_evaluation', ['Devoir1', 'Devoir2', 'Interrogation', '1ère evaluation', '2ème evaluation', '3ème evaluation', '4ème evaluation', '5ème evaluation', '6ème evaluation']);
             $table->date('date_evaluation');
-            $table->enum('periode', ['Semestre 1', 'Semestre 2']);
+            $table->enum('periode', ['Trimestre 1', 'Trimestre 2', 'Trimestre 3']);
             $table->text('observation')->nullable();
             $table->foreignId('created_by')->nullable()->constrained('users');
             $table->timestamps();

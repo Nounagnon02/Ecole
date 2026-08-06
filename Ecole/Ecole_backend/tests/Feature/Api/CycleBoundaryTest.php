@@ -78,7 +78,7 @@ class CycleBoundaryTest extends TestCase
             'classe_id' => $pupil->class_id,
             'ecole_id'  => $this->school->id,
             'note'      => $note,
-            'periode'   => 'Semestre 1',
+            'periode'   => 'Trimestre 1',
         ]);
     }
 
@@ -258,7 +258,7 @@ class CycleBoundaryTest extends TestCase
             'eleve_id'  => $this->secondaryPupil->id,
             'classe_id' => $this->secondary->id,
             'ecole_id'  => $this->school->id,
-            'periode'   => 'Semestre 1',
+            'periode'   => 'Trimestre 1',
         ]);
     }
 
@@ -285,7 +285,7 @@ class CycleBoundaryTest extends TestCase
             'eleve_id'  => $pupil->id,
             'classe_id' => $this->primary->id,
             'ecole_id'  => $this->school->id,
-            'periode'   => 'Semestre 1',
+            'periode'   => 'Trimestre 1',
         ]);
         $this->assertNotNull($mark->id);
     }

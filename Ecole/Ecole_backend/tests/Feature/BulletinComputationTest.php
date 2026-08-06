@@ -41,7 +41,7 @@ class BulletinComputationTest extends TestCase
             'type_evaluation' => $type,
             'note'            => $note,
             'note_sur'        => $scale,
-            'periode'         => 'Semestre 1',
+            'periode'         => 'Trimestre 1',
         ]);
     }
 
@@ -54,7 +54,7 @@ class BulletinComputationTest extends TestCase
 
         $this->mark($pupil, $subject, 'Devoir1', 15);
 
-        $report = app(BulletinService::class)->bulletinSecondaire($pupil->id, 'Semestre 1');
+        $report = app(BulletinService::class)->bulletinSecondaire($pupil->id, 'Trimestre 1');
 
         // 15, not 5.
         $this->assertEquals(15, $report['moyennes_par_matiere'][0]['moyenne']);
@@ -69,7 +69,7 @@ class BulletinComputationTest extends TestCase
 
         $this->mark($pupil, $subject, 'Devoir1', 8, 10);
 
-        $report = app(BulletinService::class)->bulletinSecondaire($pupil->id, 'Semestre 1');
+        $report = app(BulletinService::class)->bulletinSecondaire($pupil->id, 'Trimestre 1');
 
         // 8 out of 10 is 16 out of 20.
         $this->assertEquals(16, $report['moyennes_par_matiere'][0]['moyenne']);
@@ -85,7 +85,7 @@ class BulletinComputationTest extends TestCase
         $this->mark($pupil, $subject, 'Devoir1', 20);
         $this->mark($pupil, $subject, 'Devoir2', 0);
 
-        $report = app(BulletinService::class)->bulletinSecondaire($pupil->id, 'Semestre 1');
+        $report = app(BulletinService::class)->bulletinSecondaire($pupil->id, 'Trimestre 1');
 
         // (20 + 0) / 2 = 10. Dropping the zero would have given 20.
         $this->assertEquals(10, $report['moyennes_par_matiere'][0]['moyenne']);
@@ -111,7 +111,7 @@ class BulletinComputationTest extends TestCase
         $this->mark($pupil, $subject, 'Devoir1', 15);
 
         // Used to throw: the query targeted `classe_matiere`, singular.
-        $report = app(BulletinService::class)->bulletinSecondaire($pupil->id, 'Semestre 1');
+        $report = app(BulletinService::class)->bulletinSecondaire($pupil->id, 'Trimestre 1');
 
         $subjectLine = $report['moyennes_par_matiere'][0];
         $this->assertEquals(4, $subjectLine['coefficient']);
@@ -136,7 +136,7 @@ class BulletinComputationTest extends TestCase
         $this->mark($pupil, $maths, 'Devoir1', 20);
         $this->mark($pupil, $sport, 'Devoir1', 10);
 
-        $report = app(BulletinService::class)->bulletinSecondaire($pupil->id, 'Semestre 1');
+        $report = app(BulletinService::class)->bulletinSecondaire($pupil->id, 'Trimestre 1');
 
         // (20×4 + 10×1) / 5 = 18, not the unweighted 15.
         $this->assertEquals(18, $report['moyenne_generale']);
@@ -162,9 +162,9 @@ class BulletinComputationTest extends TestCase
 
         $service = app(BulletinService::class);
 
-        $this->assertSame(1, $service->bulletinSecondaire($best->id, 'Semestre 1')['rang']['position']);
-        $this->assertSame(2, $service->bulletinSecondaire($middle->id, 'Semestre 1')['rang']['position']);
-        $this->assertSame(3, $service->bulletinSecondaire($last->id, 'Semestre 1')['rang']['position']);
+        $this->assertSame(1, $service->bulletinSecondaire($best->id, 'Trimestre 1')['rang']['position']);
+        $this->assertSame(2, $service->bulletinSecondaire($middle->id, 'Trimestre 1')['rang']['position']);
+        $this->assertSame(3, $service->bulletinSecondaire($last->id, 'Trimestre 1')['rang']['position']);
     }
 
     /** @test */
@@ -184,8 +184,8 @@ class BulletinComputationTest extends TestCase
 
         $service = app(BulletinService::class);
 
-        $this->assertSame(1, $service->bulletinSecondaire($onTen->id, 'Semestre 1')['rang']['position']);
-        $this->assertSame(2, $service->bulletinSecondaire($onTwenty->id, 'Semestre 1')['rang']['position']);
+        $this->assertSame(1, $service->bulletinSecondaire($onTen->id, 'Trimestre 1')['rang']['position']);
+        $this->assertSame(2, $service->bulletinSecondaire($onTwenty->id, 'Trimestre 1')['rang']['position']);
     }
 
     /** @test */
@@ -206,10 +206,10 @@ class BulletinComputationTest extends TestCase
 
         $service = app(BulletinService::class);
 
-        $this->assertSame(1, $service->bulletinSecondaire($first->id, 'Semestre 1')['rang']['position']);
-        $this->assertSame(1, $service->bulletinSecondaire($tied->id, 'Semestre 1')['rang']['position']);
+        $this->assertSame(1, $service->bulletinSecondaire($first->id, 'Trimestre 1')['rang']['position']);
+        $this->assertSame(1, $service->bulletinSecondaire($tied->id, 'Trimestre 1')['rang']['position']);
         // Two pupils ahead, so third.
-        $this->assertSame(3, $service->bulletinSecondaire($behind->id, 'Semestre 1')['rang']['position']);
+        $this->assertSame(3, $service->bulletinSecondaire($behind->id, 'Trimestre 1')['rang']['position']);
     }
 
     /** @test */
@@ -224,7 +224,7 @@ class BulletinComputationTest extends TestCase
         $subject = Matieres::factory()->create(['ecole_id' => $school->id]);
         $this->mark($marked, $subject, 'Devoir1', 17);
 
-        $report = app(BulletinService::class)->bulletinSecondaire($unmarked->id, 'Semestre 1');
+        $report = app(BulletinService::class)->bulletinSecondaire($unmarked->id, 'Trimestre 1');
 
         // No marks means a 0 average, so last — never first. The old code
         // returned position 1 whenever the pupil could not be placed.
@@ -242,7 +242,7 @@ class BulletinComputationTest extends TestCase
         // `note_sur` is writable, so guard the degenerate case.
         $this->mark($pupil, $subject, 'Devoir1', 10, 0);
 
-        $report = app(BulletinService::class)->bulletinSecondaire($pupil->id, 'Semestre 1');
+        $report = app(BulletinService::class)->bulletinSecondaire($pupil->id, 'Trimestre 1');
 
         $this->assertEquals(0, $report['moyennes_par_matiere'][0]['moyenne']);
     }
