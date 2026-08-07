@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\UserParent;
 use App\Models\User;
+use App\Models\ParentEleve;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -33,10 +34,15 @@ class ParentsController extends Controller
             'telephone' => 'nullable|string',
             'eleve_ids' => 'sometimes|array',
             'eleve_ids.*' => 'school_exists:eleves,id',
+            'liens' => 'sometimes|array',
+            'liens.*.eleve_id' => 'required|school_exists:eleves,id',
+            'liens.*.role' => 'sometimes|nullable|in:' . implode(',', ParentEleve::ROLES),
+            'liens.*.is_primary' => 'sometimes|boolean',
+            'liens.*.is_guardian' => 'sometimes|boolean',
         ]);
 
         try {
-            return DB::transaction(function () use ($validated) {
+            return DB::transaction(function () use ($validated, $request) {
                 $user = User::create([
                     'name' => $validated['name'],
                     'prenom' => $validated['prenom'],
@@ -52,8 +58,10 @@ class ParentsController extends Controller
                     'user_id' => $user->id,
                 ]);
 
-                if (!empty($validated['eleve_ids'])) {
-                    $parent->eleves()->sync($validated['eleve_ids']);
+                if ($request->has('liens')) {
+                    $parent->setEleves($request->input('liens'));
+                } elseif (!empty($validated['eleve_ids'])) {
+                    $parent->setEleves($validated['eleve_ids']);
                 }
 
                 return response()->json($parent->load('user', 'eleves.user'), 201);
@@ -83,12 +91,18 @@ class ParentsController extends Controller
             'prenom' => 'sometimes|string',
             'telephone' => 'sometimes|string',
             'eleve_ids' => 'sometimes|array',
+            // Comme dans store() et updateEleves() : sans cette règle, un admin
+            // liait n'importe quel élève (d'une autre école) à ce parent — le
+            // lien de filiation traverse les établissements.
+            'eleve_ids.*' => 'school_exists:eleves,id',
         ]);
 
         $user->update($request->only(['name', 'prenom', 'email', 'telephone']));
         
-        if ($request->has('eleve_ids')) {
-            $parent->eleves()->sync($request->eleve_ids);
+        if ($request->has('liens')) {
+            $parent->setEleves($request->input('liens'));
+        } elseif ($request->has('eleve_ids')) {
+            $parent->setEleves($request->input('eleve_ids'));
         }
 
         return response()->json($parent->load('user', 'eleves.user'));
@@ -100,10 +114,22 @@ class ParentsController extends Controller
     public function updateEleves(Request $request, $id)
     {
         $parent = UserParent::findOrFail($id);
-        $request->validate(['eleve_ids' => 'required|array', 'eleve_ids.*' => 'school_exists:eleves,id']);
-        
-        $parent->eleves()->sync($request->eleve_ids);
-        
+        $request->validate([
+            'eleve_ids' => 'sometimes|array',
+            'eleve_ids.*' => 'school_exists:eleves,id',
+            'liens' => 'sometimes|array',
+            'liens.*.eleve_id' => 'required|school_exists:eleves,id',
+            'liens.*.role' => 'sometimes|nullable|in:' . implode(',', ParentEleve::ROLES),
+            'liens.*.is_primary' => 'sometimes|boolean',
+            'liens.*.is_guardian' => 'sometimes|boolean',
+        ]);
+
+        if ($request->has('liens')) {
+            $parent->setEleves($request->input('liens'));
+        } elseif ($request->has('eleve_ids')) {
+            $parent->setEleves($request->input('eleve_ids'));
+        }
+
         return response()->json(['message' => 'Enfants mis à jour avec succès']);
     }
 

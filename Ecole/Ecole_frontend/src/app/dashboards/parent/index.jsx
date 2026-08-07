@@ -55,9 +55,24 @@ const STATS_META = [
 
 function ApercuSection({ data, loading }) {
   const safeStats = data?.stats?.map((s, i) => ({ ...s, icon: STATS_META[i]?.icon, color: STATS_META[i]?.color })) || [];
-  const safeEnfants = data?.enfants || [];
+  const safeEnfants = data?.enfants || data?.children || [];
   const safeEvolution = data?.evolution || [];
   const safeCommunications = data?.communications || [];
+
+  // Clés dynamiques du graphique : un prénom par enfant (plus de "Koffi"/"Ama" codés en dur).
+  const childKeys = [...new Set(safeEvolution.flatMap((row) =>
+    Object.keys(row).filter((k) => k !== 'mois')
+  ))];
+
+  const roleVariant = (role) => {
+    const map = {
+      père: 'primary',
+      mère: 'accent',
+      tuteur: 'warning',
+      correspondant: 'info',
+    };
+    return map[role] || 'default';
+  };
 
   return (
     <div className="space-y-6">
@@ -86,21 +101,21 @@ function ApercuSection({ data, loading }) {
                 <Card.Title>Évolution des Notes</Card.Title>
                 <Card.Description>Suivi trimestriel</Card.Description>
               </div>
-              <div className="flex items-center gap-4 text-xs">
-                <div className="flex items-center gap-1">
-                  <span className="h-2.5 w-2.5 rounded-full bg-[var(--accent)]" />
-                  <span className="text-neutral-500">Koffi</span>
+              {childKeys.length > 0 && (
+                <div className="flex items-center gap-4 text-xs">
+                  {childKeys.slice(0, 4).map((key, i) => (
+                    <div key={key} className="flex items-center gap-1">
+                      <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: i === 0 ? 'var(--accent)' : i === 1 ? 'var(--emerald)' : 'var(--amber)' }} />
+                      <span className="text-neutral-500">{key}</span>
+                    </div>
+                  ))}
                 </div>
-                <div className="flex items-center gap-1">
-                  <span className="h-2.5 w-2.5 rounded-full bg-[var(--emerald)]" />
-                  <span className="text-neutral-500">Ama</span>
-                </div>
-              </div>
+              )}
             </div>
           </Card.Header>
           <Card.Body>
             <div className="h-[250px]">
-              {safeEvolution.length === 0 ? (
+              {safeEvolution.length === 0 || childKeys.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-[var(--text-tertiary)]">
                   <TrendingUp className="h-10 w-10 mb-3 opacity-40" />
                   <p className="text-sm">Aucune donnée d'évolution disponible</p>
@@ -109,14 +124,12 @@ function ApercuSection({ data, loading }) {
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={safeEvolution}>
                   <defs>
-                    <linearGradient id="koffiGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="var(--accent)" stopOpacity={0.2} />
-                      <stop offset="95%" stopColor="var(--accent)" stopOpacity={0} />
-                    </linearGradient>
-                    <linearGradient id="amaGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="var(--green)" stopOpacity={0.2} />
-                      <stop offset="95%" stopColor="var(--green)" stopOpacity={0} />
-                    </linearGradient>
+                    {childKeys.slice(0, 4).map((key, i) => (
+                      <linearGradient key={key} id={`childGrad-${i}`} x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor={i === 0 ? 'var(--accent)' : i === 1 ? 'var(--emerald)' : 'var(--amber)'} stopOpacity={0.2} />
+                        <stop offset="95%" stopColor={i === 0 ? 'var(--accent)' : i === 1 ? 'var(--emerald)' : 'var(--amber)'} stopOpacity={0} />
+                      </linearGradient>
+                    ))}
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                   <XAxis dataKey="mois" tick={{ fontSize: 12 }} stroke="var(--text-tertiary)" />
@@ -124,8 +137,16 @@ function ApercuSection({ data, loading }) {
                   <ReTooltip
                     contentStyle={{ borderRadius: '8px', border: '1px solid var(--border)' }}
                   />
-                  <Area type="monotone" dataKey="Koffi" stroke="var(--accent)" fill="url(#koffiGrad)" strokeWidth={2} />
-                  <Area type="monotone" dataKey="Ama" stroke="var(--green)" fill="url(#amaGrad)" strokeWidth={2} />
+                  {childKeys.slice(0, 4).map((key, i) => (
+                    <Area
+                      key={key}
+                      type="monotone"
+                      dataKey={key}
+                      stroke={i === 0 ? 'var(--accent)' : i === 1 ? 'var(--emerald)' : 'var(--amber)'}
+                      fill={`url(#childGrad-${i})`}
+                      strokeWidth={2}
+                    />
+                  ))}
                 </AreaChart>
               </ResponsiveContainer>
               )}
@@ -154,13 +175,26 @@ function ApercuSection({ data, loading }) {
                   <div className="flex items-center gap-3">
                     <Avatar name={enfant.nom} size="lg" />
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-neutral-900 dark:text-white">{enfant.nom}</p>
+                      <p className="font-semibold text-neutral-900 dark:text-white">
+                        {enfant.nom} {enfant.prenom}
+                      </p>
                       <p className="text-xs text-neutral-500">{enfant.classe}</p>
+                      <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                        {enfant.role && (
+                          <Badge variant={roleVariant(enfant.role)} size="sm">{enfant.role}</Badge>
+                        )}
+                        {enfant.is_primary && (
+                          <Badge variant="success" size="sm">Contact principal</Badge>
+                        )}
+                        {enfant.is_guardian && (
+                          <Badge variant="info" size="sm">Tuteur légal</Badge>
+                        )}
+                      </div>
                     </div>
-                    <Badge variant="primary" size="sm">{enfant.moyenne}</Badge>
+                    <Badge variant="primary" size="sm">{enfant.moyenne ?? '—'}</Badge>
                   </div>
                   <div className="mt-3 flex items-center justify-between text-sm">
-                    <span className="text-neutral-500">Rang: <strong className="text-neutral-700 dark:text-neutral-300">{enfant.rang}</strong></span>
+                    <span className="text-neutral-500">Rang: <strong className="text-neutral-700 dark:text-neutral-300">{enfant.rang ?? '—'}</strong></span>
                     <Button variant="ghost" size="sm">
                       <Eye className="h-4 w-4" />
                     </Button>

@@ -77,7 +77,8 @@ public function coefficientsParClasse()
             'enseignant_matiere',
             'matiere_id',
             'enseignant_id'
-        )->withPivot(['classe_id', 'serie_id']);
+        )->using(EnseignantMatiere::class)
+         ->withPivot(['classe_id', 'serie_id']);
     }
 
     /*public function enseignantPrimaire()

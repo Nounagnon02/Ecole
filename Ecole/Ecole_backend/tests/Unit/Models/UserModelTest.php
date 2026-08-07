@@ -67,8 +67,8 @@ class UserModelTest extends TestCase
         // toute requête renvoie un ensemble vide (cf. actingInSchool).
         $school = $this->actingInSchool();
         $classe = Classes::factory()->create(['ecole_id' => $school->id]);
-        // La colonne est `class_id`, pas `classe_id`.
-        $eleve = Eleve::factory()->forSchool($school)->create(['class_id' => $classe->id]);
+        // La colonne est `classe_id`.
+        $eleve = Eleve::factory()->forSchool($school)->create(['classe_id' => $classe->id]);
 
         $this->assertInstanceOf(Classes::class, $eleve->classe);
         $this->assertEquals($classe->id, $eleve->classe->id);

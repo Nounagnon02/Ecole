@@ -143,7 +143,7 @@ trait ScopedToCycle
             // back null and the write would be refused with the wrong reason.
             $classId = Eleve::withoutGlobalScope('cycle')
                 ->whereKey($model->{$column})
-                ->value('class_id');
+                ->value('classe_id');
 
             if (!CycleAccess::allowsClass($classId)) {
                 throw new OutsideCycleException(

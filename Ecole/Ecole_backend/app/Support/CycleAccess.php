@@ -147,7 +147,7 @@ final class CycleAccess
     {
         return \App\Models\Eleve::query()
             ->select('eleves.id')
-            ->whereIn('eleves.class_id', self::classIds() ?? []);
+            ->whereIn('eleves.classe_id', self::classIds() ?? []);
     }
 
     /**

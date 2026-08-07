@@ -334,7 +334,7 @@ class CenseurController extends Controller
     {
         return round(
             Notes::whereHas('eleve', function ($query) use ($classeId) {
-                $query->where('class_id', $classeId);
+                $query->where('classe_id', $classeId);
             })->avg('note') ?? 0,
             2
         );
@@ -346,7 +346,7 @@ class CenseurController extends Controller
     private function getAdmis($classeId)
     {
         return Notes::whereHas('eleve', function ($query) use ($classeId) {
-            $query->where('class_id', $classeId);
+            $query->where('classe_id', $classeId);
         })
         ->where('note', '>=', 10)
         ->distinct('eleve_id')
@@ -359,7 +359,7 @@ class CenseurController extends Controller
     private function getEchec($classeId)
     {
         return Notes::whereHas('eleve', function ($query) use ($classeId) {
-            $query->where('class_id', $classeId);
+            $query->where('classe_id', $classeId);
         })
         ->where('note', '<', 10)
         ->distinct('eleve_id')
@@ -371,7 +371,7 @@ class CenseurController extends Controller
      */
     private function getTauxReussiteClasse($classeId)
     {
-        $totalEleves = Eleve::where('class_id', $classeId)->count();
+        $totalEleves = Eleve::where('classe_id', $classeId)->count();
         if ($totalEleves == 0) return 0;
 
         $admis = $this->getAdmis($classeId);

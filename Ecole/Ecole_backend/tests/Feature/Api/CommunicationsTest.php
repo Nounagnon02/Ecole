@@ -592,7 +592,7 @@ class CommunicationsTest extends TestCase
 
     private function pupilIn(Classes $classe): Eleve
     {
-        return Eleve::factory()->forSchool($this->school)->create(['class_id' => $classe->id]);
+        return Eleve::factory()->forSchool($this->school)->create(['classe_id' => $classe->id]);
     }
 
     /**

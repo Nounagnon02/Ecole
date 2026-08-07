@@ -73,6 +73,10 @@ class CompleteDataSeeder extends Seeder
                 'montant_paye'    => $paye,
                 'montant_restant' => $montant - $paye,
                 'reference'       => 'PAY-' . now()->format('Ymd') . '-' . rand(1000, 9999),
+                // Rattaché au parent responsable du dossier, jamais à une autre
+                // famille : la colonne est nullable en base, mais un règlement
+                // sans responsable rend le recouvrement injoignable.
+                'parents_id'      => $eleve->responsibleParent()?->id,
             ]);
         }
 

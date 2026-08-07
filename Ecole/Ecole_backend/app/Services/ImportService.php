@@ -58,7 +58,7 @@ class ImportService
                     Eleve::create([
                         'user_id' => $user->id,
                         'numero_matricule' => $matricule,
-                        'class_id' => $classe->id,
+                        'classe_id' => $classe->id,
                         'serie_id' => $serieId,
                         'statut_eleve' => 'active'
                     ]);

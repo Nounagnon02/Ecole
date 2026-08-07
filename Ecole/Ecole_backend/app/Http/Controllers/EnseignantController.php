@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Classes;
 use App\Models\EmploiDuTemps;
 use App\Models\Notes;
+use App\Support\Roles;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -34,7 +35,7 @@ class EnseignantController extends Controller
             'identifiant' => 'required|string|unique:users,identifiant',
             'password' => 'required|string|min:6',
             'ecole_id' => 'required|exists:ecoles,id',
-            'role' => 'required|in:enseignant,enseignantM,enseignantP',
+            'role' => 'required|in:' . implode(',', Roles::teachers()),
         ]);
 
         try {
@@ -145,7 +146,7 @@ class EnseignantController extends Controller
             'name'    => 'sometimes|string|max:255',
             'prenom'  => 'sometimes|string|max:255',
             'email'   => 'sometimes|nullable|email|unique:users,email,' . $user->id,
-            'role'    => 'sometimes|in:enseignant,enseignantM,enseignantP',
+            'role'    => 'sometimes|in:' . implode(',', Roles::teachers()),
         ]);
 
         $user->update(array_intersect_key($validated, array_flip(['name', 'prenom', 'email', 'role'])));

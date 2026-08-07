@@ -25,7 +25,7 @@ class ExportController extends Controller
         $query = Eleve::with('user:id,name,prenom,email,telephone', 'classe:id,nom_classe');
 
         if ($classeId) {
-            $query->where('class_id', $classeId);
+            $query->where('classe_id', $classeId);
         }
 
         // Traitement par lots : `->get()` chargeait tout l'effectif en mémoire

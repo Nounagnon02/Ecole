@@ -12,6 +12,7 @@ import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { MemoryRouter, Routes, Route, useLocation } from 'react-router-dom';
 import DirecteurDashboard from '@/app/dashboards/directeur';
 import EleveDashboard from '@/app/dashboards/eleve';
+import ParentDashboard from '@/app/dashboards/parent';
 import useAuthStore from '@/shared/stores/auth-store';
 import { clearDashboardCache } from '@/shared/lib/dashboard-cache';
 import { installHttpMock } from './helpers/http-mock';
@@ -323,5 +324,75 @@ describe('cache des tableaux de bord', () => {
     renderDashboard(<EleveDashboard />);
 
     await waitFor(() => expect(screen.getByText('11/20')).toBeInTheDocument());
+  });
+});
+
+describe('ParentDashboard', () => {
+  const PARENT_ENDPOINT = '/dashboard/parent';
+
+  const PARENT_PAYLOAD = {
+    parent: { id: 9 },
+    enfants: [
+      {
+        id: 1,
+        nom: 'Aho',
+        prenom: 'Kossi',
+        classe: '6e A',
+        moyenne: 14,
+        rang: 3,
+        role: 'père',
+        is_primary: true,
+        is_guardian: true,
+      },
+      {
+        id: 2,
+        nom: 'Aho',
+        prenom: 'Ama',
+        classe: '5e B',
+        moyenne: 11,
+        rang: null,
+        role: 'mère',
+        is_primary: false,
+        is_guardian: false,
+      },
+    ],
+    stats: [
+      { title: 'Enfants Scolarisés', value: 2 },
+      { title: 'Moyenne Générale', value: 12.5 },
+    ],
+    evolution: [{ mois: 'Fév', Kossi: 14 }],
+    communications: [],
+  };
+
+  beforeEach(() => {
+    useAuthStore.setState({
+      user: { id: 1, name: 'Test', role: 'parent' },
+      isAuthenticated: true,
+      isLoading: false,
+      sessionLastVerified: Date.now(),
+    });
+  });
+
+  it('affiche la filiation enrichie de chaque enfant', async () => {
+    http.onGet(PARENT_ENDPOINT).reply(200, { data: PARENT_PAYLOAD });
+
+    renderDashboard(<ParentDashboard />);
+
+    await waitFor(() => expect(screen.getByText('Aho Kossi')).toBeInTheDocument());
+    expect(screen.getByText('Aho Ama')).toBeInTheDocument();
+    expect(screen.getAllByText('père')).toHaveLength(1);
+    expect(screen.getAllByText('Contact principal')).toHaveLength(1);
+    expect(screen.getAllByText('mère')).toHaveLength(1);
+    expect(screen.getByText('Enfants Scolarisés')).toBeInTheDocument();
+  });
+
+  it('affiche l’état vide quand le parent n’a pas d’enfants', async () => {
+    http.onGet(PARENT_ENDPOINT).reply(200, {
+      data: { ...PARENT_PAYLOAD, enfants: [], evolution: [], communications: [] },
+    });
+
+    renderDashboard(<ParentDashboard />);
+
+    await waitFor(() => expect(screen.getByText('Aucun enfant trouvé')).toBeInTheDocument());
   });
 });

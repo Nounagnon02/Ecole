@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Password;
+use App\Support\Roles;
 
 class StoreUserRequest extends FormRequest
 {
@@ -20,7 +21,7 @@ class StoreUserRequest extends FormRequest
             'email' => 'required|email|max:255|unique:users,email',
             'telephone' => 'nullable|string|max:20',
             'password' => ['required', 'string', Password::defaults()],
-            'role' => 'required|string|in:directeur,enseignant,eleve,parent,comptable,secretaire,surveillant,censeur,infirmier,bibliothecaire',
+            'role' => 'required|string|in:' . implode(',', Roles::provisionable()),
             'ecole_id' => 'required|exists:ecoles,id',
         ];
     }

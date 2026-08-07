@@ -21,7 +21,7 @@ class AbsencePolicy
         // une absence dont l'élève a disparu faisait planter la vérification au
         // lieu de la refuser.
         if ($user->role === 'enseignant') {
-            $classId = $absence->eleve?->class_id;
+            $classId = $absence->eleve?->classe_id;
 
             return $classId !== null
                 && ($user->enseignant?->classes()->where('classes.id', $classId)->exists() ?? false);

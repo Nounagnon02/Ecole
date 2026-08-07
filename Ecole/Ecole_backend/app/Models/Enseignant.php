@@ -28,11 +28,14 @@ class Enseignant extends Model
     public function matieres()
     {
         return $this->belongsToMany(Matieres::class, 'enseignant_matiere', 'enseignant_id', 'matiere_id')
+                    ->using(EnseignantMatiere::class)
                     ->withPivot(['classe_id', 'serie_id']);
     }
     
     public function classes()
     {
-        return $this->belongsToMany(Classes::class, 'enseignant_matiere', 'enseignant_id', 'classe_id');
+        return $this->belongsToMany(Classes::class, 'enseignant_matiere', 'enseignant_id', 'classe_id')
+                    ->using(EnseignantMatiere::class)
+                    ->withPivot(['matiere_id', 'serie_id']);
     }
 }

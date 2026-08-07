@@ -38,7 +38,15 @@ const STATS_META = [
   { title: 'Consultations', icon: Stethoscope, color: 'emerald' },
 ];
 
-function ApercuSection({ stats, frequentation, visites }) {
+const MOTIF_COLORS = [
+  'bg-[var(--accent)]',
+  'bg-[var(--amber)]',
+  'bg-[var(--red)]',
+  'bg-[var(--emerald)]',
+  'bg-[var(--purple)]',
+];
+
+function ApercuSection({ stats, frequentation, visites, motifs }) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -82,23 +90,23 @@ function ApercuSection({ stats, frequentation, visites }) {
           </Card.Header>
           <Card.Body>
             <div className="space-y-3">
-              {[
-                { motif: 'Maux de tête', count: 28, color: 'bg-[var(--accent)]' },
-                { motif: 'Douleurs abdominales', count: 19, color: 'bg-[var(--amber)]' },
-                { motif: 'Blessures légères', count: 15, color: 'bg-[var(--red)]' },
-                { motif: 'Fièvre', count: 12, color: 'bg-[var(--emerald)]' },
-                { motif: 'Réactions allergiques', count: 8, color: 'bg-[var(--purple)]' },
-              ].map((item) => (
-                <div key={item.motif} className="flex items-center justify-between text-sm">
-                  <span className="text-neutral-600 dark:text-neutral-400">{item.motif}</span>
-                  <div className="flex items-center gap-2">
-                    <div className="w-24 h-1.5 rounded-full bg-neutral-100 dark:bg-neutral-800 overflow-hidden">
-                      <div className={`h-full rounded-full ${item.color}`} style={{ width: `${(item.count / 28) * 100}%` }} />
+              {(motifs?.length ? motifs : []).map((item, i) => {
+                const max = Math.max(...(motifs?.map((m) => m.count) || [1]), 1);
+                return (
+                  <div key={item.motif} className="flex items-center justify-between text-sm">
+                    <span className="text-neutral-600 dark:text-neutral-400">{item.motif}</span>
+                    <div className="flex items-center gap-2">
+                      <div className="w-24 h-1.5 rounded-full bg-neutral-100 dark:bg-neutral-800 overflow-hidden">
+                        <div className={`h-full rounded-full ${MOTIF_COLORS[i % MOTIF_COLORS.length]}`} style={{ width: `${(item.count / max) * 100}%` }} />
+                      </div>
+                      <span className="w-6 text-right font-medium text-neutral-900 dark:text-white">{item.count}</span>
                     </div>
-                    <span className="w-6 text-right font-medium text-neutral-900 dark:text-white">{item.count}</span>
                   </div>
-                </div>
-              ))}
+                );
+              })}
+              {!motifs?.length && (
+                <p className="text-sm text-neutral-400 dark:text-neutral-500">Aucune consultation ce mois-ci.</p>
+              )}
             </div>
           </Card.Body>
         </Card>
@@ -150,6 +158,7 @@ export default function InfirmierDashboard() {
   const stats = data?.stats?.map((s, i) => ({ ...s, icon: STATS_META[i]?.icon, color: STATS_META[i]?.color })) || [];
   const frequentation = data?.frequentation || [];
   const visites = data?.visites || [];
+  const motifs = data?.motifs || [];
 
   const handleTabClick = (tabId) => {
     if (tabId === 'apercu') { setActiveTab(tabId); return; }
@@ -159,8 +168,8 @@ export default function InfirmierDashboard() {
 
   const renderSection = () => {
     switch (activeTab) {
-      case 'apercu': return <ApercuSection stats={stats} frequentation={frequentation} visites={visites} />;
-      default: return <ApercuSection stats={stats} frequentation={frequentation} visites={visites} />;
+      case 'apercu': return <ApercuSection stats={stats} frequentation={frequentation} visites={visites} motifs={motifs} />;
+      default: return <ApercuSection stats={stats} frequentation={frequentation} visites={visites} motifs={motifs} />;
  }
  };
 

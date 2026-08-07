@@ -58,9 +58,9 @@ class CycleBoundaryTest extends TestCase
         ]);
 
         $this->primaryPupil = Eleve::factory()->forSchool($this->school)
-            ->create(['class_id' => $this->primary->id]);
+            ->create(['classe_id' => $this->primary->id]);
         $this->secondaryPupil = Eleve::factory()->forSchool($this->school)
-            ->create(['class_id' => $this->secondary->id]);
+            ->create(['classe_id' => $this->secondary->id]);
     }
 
     private function staffWithRole(string $role): User
@@ -75,7 +75,7 @@ class CycleBoundaryTest extends TestCase
     {
         return Notes::factory()->create([
             'eleve_id'  => $pupil->id,
-            'classe_id' => $pupil->class_id,
+            'classe_id' => $pupil->classe_id,
             'ecole_id'  => $this->school->id,
             'note'      => $note,
             'periode'   => 'Trimestre 1',
@@ -216,7 +216,7 @@ class CycleBoundaryTest extends TestCase
         $this->expectException(OutsideCycleException::class);
 
         Eleve::factory()->forSchool($this->school)->create([
-            'class_id' => $this->secondary->id,
+            'classe_id' => $this->secondary->id,
         ]);
     }
 
@@ -230,7 +230,7 @@ class CycleBoundaryTest extends TestCase
 
         $this->expectException(OutsideCycleException::class);
 
-        $pupil->update(['class_id' => $this->secondary->id]);
+        $pupil->update(['classe_id' => $this->secondary->id]);
     }
 
     /** @test */
@@ -270,7 +270,7 @@ class CycleBoundaryTest extends TestCase
         // The boundary must not make the role useless: everything inside the
         // cycle stays writable.
         $pupil = Eleve::factory()->forSchool($this->school)->create([
-            'class_id' => $this->primary->id,
+            'classe_id' => $this->primary->id,
         ]);
         $this->assertNotNull($pupil->id);
 

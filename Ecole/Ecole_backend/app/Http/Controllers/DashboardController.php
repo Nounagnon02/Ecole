@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{User, Eleve, Classes, Notes, Matieres};
+use App\Models\{User, Eleve, Classes, Notes, Matieres, Message};
 use App\Support\Roles;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -61,7 +61,7 @@ class DashboardController extends Controller
                     $c->effectif = $c->eleves_count;
                     return $c;
                 }),
-                'eleves' => Eleve::select('id', 'user_id', 'class_id', 'numero_matricule', 'ecole_id')->get(),
+                'eleves' => Eleve::select('id', 'user_id', 'classe_id', 'numero_matricule', 'ecole_id')->get(),
                 // `coefficient` vit sur le pivot serie_matieres et `code`
                 // n'existe pas : le select d'origine levait une erreur SQL.
                 'matieres' => Matieres::select('id', 'nom', 'ecole_id')->get(),
@@ -134,28 +134,145 @@ class DashboardController extends Controller
         $parent = $user->parent;
 
         if (!$parent) {
-            return response()->json(['success' => true, 'data' => ['parent' => $user, 'children' => []]]);
+            return response()->json(['success' => true, 'data' => ['parent' => $user, 'enfants' => [], 'children' => [], 'stats' => [], 'evolution' => [], 'communications' => []]]);
         }
 
         // `user` doit être préchargé : il est lu dans le map ci-dessous, ce qui
         // déclenchait une requête par enfant (cf. audit P4).
         $children = $parent->eleves()->with(['user:id,name,prenom', 'classe', 'notes.matiere'])->get();
 
+        // Rangs : une requête par classe distincte, partagée par tous ses élèves.
+        $rangsParClasse = $children->pluck('classe_id')
+            ->filter()
+            ->unique()
+            ->mapWithKeys(fn ($classeId) => [$classeId => Eleve::classRanks($classeId)]);
+
+        $enfants = $children->map(function ($child) use ($rangsParClasse) {
+            $moyenne = $this->calculateAverage($child->notes);
+
+            return [
+                'id'           => $child->id,
+                'nom'          => $child->user->name ?? 'N/A',
+                'prenom'       => $child->user->prenom ?? '',
+                'matricule'    => $child->numero_matricule ?? 'N/A',
+                'classe'       => $child->classe->nom_classe ?? $child->classe->nom ?? 'N/A',
+                'classe_id'    => $child->classe_id,
+                'moyenne'      => $moyenne !== null ? round($moyenne, 2) : null,
+                'rang'         => $rangsParClasse[$child->classe_id][$child->id] ?? null,
+                // Filiation enrichie (point B) : rôle du parent, contact de
+                // référence (`is_primary`), tuteur légal.
+                'role'         => $child->pivot?->role ?? null,
+                'is_primary'   => (bool) ($child->pivot?->is_primary ?? false),
+                'is_guardian'  => (bool) ($child->pivot?->is_guardian ?? false),
+                'filiation'    => [
+                    'role'        => $child->pivot?->role ?? null,
+                    'is_primary'  => (bool) ($child->pivot?->is_primary ?? false),
+                    'is_guardian' => (bool) ($child->pivot?->is_guardian ?? false),
+                ],
+            ];
+        });
+
+        // ─── Stats ──────────────────────────────────────────────────
+        $moyenneGenerale = $enfants->pluck('moyenne')->filter()->avg();
+        $absencesMois = $children->isNotEmpty()
+            ? \App\Models\Absence::whereIn('eleve_id', $children->pluck('id'))
+                ->whereMonth('date', now()->month)
+                ->whereYear('date', now()->year)
+                ->count()
+            : 0;
+        $assiduite = $children->isNotEmpty()
+            ? max(0, 100 - (int) round(($absencesMois / ($children->count() * 22)) * 100))
+            : 100;
+        $solde = \App\Models\PaiementEleve::whereIn('eleve_id', $children->pluck('id'))
+            ->where('montant_restant', '>', 0)
+            ->sum('montant_restant');
+
+        $stats = [
+            ['title' => 'Enfants Scolarisés', 'value' => $children->count()],
+            ['title' => 'Moyenne Générale', 'value' => $moyenneGenerale !== null ? round($moyenneGenerale, 2) : '—'],
+            ['title' => 'Assiduité', 'value' => $assiduite . '%'],
+            ['title' => 'Solde', 'value' => $solde > 0 ? number_format($solde, 0, ',', ' ') . ' FCFA' : '0 FCFA'],
+        ];
+
+        // ─── Évolution des notes (6 derniers mois, par enfant) ───────
+        $evolution = $this->parentEvolution($children);
+
+        // ─── Communications récentes adressées au parent ─────────────
+        $communications = Message::where(function ($q) use ($user) {
+            $q->where('destinataire', $user->name)
+                ->orWhere('destinataire', $user->email)
+                ->orWhere('destinataire', $user->identifiant ?? '');
+        })
+            ->latest()
+            ->take(5)
+            ->get()
+            ->map(fn ($msg) => [
+                'id'      => $msg->id,
+                'from'    => $msg->expediteur ?? 'École',
+                'role'    => 'École',
+                'sujet'   => $msg->sujet,
+                'date'    => $msg->created_at?->format('d/m/Y'),
+                'urgent'  => false,
+            ]);
+
         return response()->json([
             'success' => true,
             'data' => [
-                'parent' => $user,
-                'children' => $children->map(function($child) {
+                'parent'         => $user,
+                // Contrat frontend (cf. C4) : `enfants` est la clé attendue,
+                // `children` reste en alias pour l'application mobile.
+                'enfants'        => $enfants,
+                'children'       => $children->map(function ($child) use ($rangsParClasse) {
                     return [
-                        'id' => $child->id,
-                        'name' => $child->user->name ?? 'N/A',
-                        'class' => $child->classe->nom_classe ?? 'N/A',
+                        'id'      => $child->id,
+                        'name'    => $child->user->name ?? 'N/A',
+                        'class'   => $child->classe->nom_classe ?? 'N/A',
                         'matricule' => $child->numero_matricule ?? 'N/A',
-                        'moyenne_generale' => $this->calculateAverage($child->notes)
+                        'role'    => $child->pivot?->role ?? null,
+                        'is_primary'  => (bool) ($child->pivot?->is_primary ?? false),
+                        'is_guardian' => (bool) ($child->pivot?->is_guardian ?? false),
+                        'moyenne_generale' => $this->calculateAverage($child->notes),
+                        'rang'    => $rangsParClasse[$child->classe_id][$child->id] ?? null,
                     ];
-                })
-            ]
+                }),
+                'stats'          => $stats,
+                'evolution'      => $evolution,
+                'communications' => $communications,
+            ],
         ]);
+    }
+
+    /**
+     * Moyenne par mois et par enfant sur les 6 derniers mois.
+     * Retourne des lignes `{ mois, <prénom de l'enfant>: moyenne }` — le front
+     * construit ses aires de façon dynamique sur ces clés.
+     */
+    private function parentEvolution($children)
+    {
+        $moisCourts = [1 => 'Jan', 2 => 'Fév', 3 => 'Mar', 4 => 'Avr', 5 => 'Mai', 6 => 'Juin',
+                       7 => 'Juil', 8 => 'Août', 9 => 'Sep', 10 => 'Oct', 11 => 'Nov', 12 => 'Déc'];
+
+        $rows = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $mois = now()->startOfMonth()->subMonths($i);
+            $rows[$mois->format('Y-m')] = ['mois' => $moisCourts[(int) $mois->format('n')]];
+        }
+
+        foreach ($children as $child) {
+            $prenom = $child->user->prenom ?: $child->user->name ?: 'Enfant ' . $child->id;
+            $parMois = $child->notes
+                ->filter(fn ($note) => $note->created_at && $note->created_at->gte(now()->startOfMonth()->subMonths(6)))
+                ->groupBy(fn ($note) => $note->created_at->format('Y-m'));
+
+            foreach ($parMois as $cle => $groupe) {
+                if (!isset($rows[$cle])) {
+                    continue;
+                }
+                $rows[$cle][$prenom] = round($groupe->avg('note'), 2);
+            }
+        }
+
+        return array_values($rows);
     }
 
     /**
@@ -187,7 +304,7 @@ class DashboardController extends Controller
             ];
         })->values();
 
-        $emploiDuTemps = \App\Models\EmploiDuTemps::where('classe_id', $eleve->class_id)
+        $emploiDuTemps = \App\Models\EmploiDuTemps::where('classe_id', $eleve->classe_id)
             ->with(['matiere', 'enseignant.user'])
             ->orderBy('jour')
             ->get();
@@ -358,6 +475,35 @@ class DashboardController extends Controller
 
     // ─── STAFF DASHBOARDS (6 rôles — R4) ────────────────────────────
 
+    /** Libellés courts français des mois, indexés 1..12. */
+    private function moisLabels(): array
+    {
+        return ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
+    }
+
+    /** Les 6 derniers mois glissants au format Y-m, avec leur libellé. */
+    private function sixDerniersMois(): array
+    {
+        $labels = $this->moisLabels();
+        $mois = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $m = now()->startOfMonth()->subMonths($i);
+            $mois[$m->format('Y-m')] = $labels[$m->month - 1];
+        }
+
+        return $mois;
+    }
+
+    /** Prénom + nom d'un élève, proprement concaténés. */
+    private function nomEleve($eleve): string
+    {
+        if (!$eleve) {
+            return '—';
+        }
+
+        return trim(($eleve->user?->name ?? '') . ' ' . ($eleve->user?->prenom ?? ''));
+    }
+
     /**
      * Dashboard Comptable — données réelles
      */
@@ -367,45 +513,88 @@ class DashboardController extends Controller
             $moisActuel = now()->month;
             $anneeActuelle = now()->year;
 
-            $revenusMois = \App\Models\PaiementEleve::whereMonth('date_paiement', $moisActuel)
+            $revenusMois = (float) \App\Models\PaiementEleve::whereMonth('date_paiement', $moisActuel)
                 ->whereYear('date_paiement', $anneeActuelle)
-                ->where('statut', 'paye')
+                ->where('statut_global', \App\Models\PaiementEleve::PAID)
                 ->sum('montant');
 
-            $enAttente = \App\Models\PaiementEleve::where('statut_global', \App\Models\PaiementEleve::PENDING)->count();
+            $enAttente = \App\Models\PaiementEleve::whereIn('statut_global', [
+                \App\Models\PaiementEleve::PENDING,
+                \App\Models\PaiementEleve::PARTIAL,
+            ])->count();
 
             $totalPaiements = \App\Models\PaiementEleve::whereMonth('date_paiement', $moisActuel)->count();
-            $payes = \App\Models\PaiementEleve::whereMonth('date_paiement', $moisActuel)->where('statut_global', \App\Models\PaiementEleve::PAID)->count();
+            $payes = \App\Models\PaiementEleve::whereMonth('date_paiement', $moisActuel)
+                ->where('statut_global', \App\Models\PaiementEleve::PAID)->count();
             $tauxRecouvrement = $totalPaiements > 0 ? round(($payes / $totalPaiements) * 100) : 0;
 
-            $donneesMensuelles = \App\Models\PaiementEleve::selectRaw('MONTH(date_paiement) as mois, SUM(montant) as revenus')
-                ->whereYear('date_paiement', $anneeActuelle)
-                ->where('statut', 'paye')
-                ->groupBy('mois')
-                ->orderBy('mois')
+            $depensesMois = (float) \App\Models\Depense::whereMonth('date_depense', $moisActuel)
+                ->whereYear('date_depense', $anneeActuelle)->sum('montant');
+
+            // Évolution des finances — 6 derniers mois (revenus + dépenses)
+            $paiements = \App\Models\PaiementEleve::whereBetween('date_paiement', [
+                now()->startOfMonth()->subMonths(5), now()->endOfMonth(),
+            ])->where('statut_global', \App\Models\PaiementEleve::PAID)->get();
+
+            $depenses = \App\Models\Depense::whereBetween('date_depense', [
+                now()->startOfMonth()->subMonths(5), now()->endOfMonth(),
+            ])->get();
+
+            $revenusParMois = $paiements->groupBy(fn ($p) => $p->date_paiement?->format('Y-m'))
+                ->map(fn ($g) => (float) $g->sum('montant'));
+
+            $depensesParMois = $depenses->groupBy(fn ($d) => $d->date_depense?->format('Y-m'))
+                ->map(fn ($g) => (float) $g->sum('montant'));
+
+            $donneesMensuelles = [];
+            foreach ($this->sixDerniersMois() as $cle => $label) {
+                $donneesMensuelles[] = [
+                    'mois' => $label,
+                    'revenus' => $revenusParMois->get($cle, 0),
+                    'depenses' => $depensesParMois->get($cle, 0),
+                ];
+            }
+
+            // Répartition par type de paiement (en %)
+            $types = \App\Models\PaiementEleve::select('type_paiement')
+                ->whereNotNull('type_paiement')
                 ->get()
-                ->map(fn($r) => ['mois' => $r->mois, 'revenus' => $r->revenus]);
+                ->groupBy('type_paiement');
+
+            $totalTypes = max($types->flatten()->count(), 1);
+            $repartition = $types->map(fn ($g, $nom) => [
+                'name' => $nom,
+                'value' => round(($g->count() / $totalTypes) * 100),
+            ])->values();
+
+            $statutsFR = [
+                \App\Models\PaiementEleve::PAID => 'Payée',
+                \App\Models\PaiementEleve::PARTIAL => 'Partiel',
+                \App\Models\PaiementEleve::PENDING => 'En attente',
+            ];
 
             $dernieresPaiements = \App\Models\PaiementEleve::with(['eleve.user', 'eleve.classe'])
                 ->latest('date_paiement')
                 ->take(10)
                 ->get()
-                ->map(fn($p) => [
+                ->map(fn ($p) => [
                     'id' => $p->id,
-                    'eleve' => $p->eleve?->user?->name . ' ' . $p->eleve?->user?->prenom,
+                    'eleve' => $this->nomEleve($p->eleve),
                     'classe' => $p->eleve?->classe?->nom_classe,
-                    'montant' => $p->montant,
-                    'statut' => $p->statut,
-                    'date' => $p->date_paiement,
+                    'montant' => (float) $p->montant,
+                    'statut' => $statutsFR[$p->statut_global] ?? 'En attente',
+                    'echeance' => $p->date_paiement?->format('d/m/Y'),
                 ]);
 
             return [
                 'stats' => [
-                    ['title' => 'Revenus du Mois', 'value' => number_format($revenusMois, 0, ',', ' ') . ' F', 'trend' => 0],
-                    ['title' => 'Factures en Attente', 'value' => (string) $enAttente, 'trend' => 0],
-                    ['title' => 'Taux Recouvrement', 'value' => "{$tauxRecouvrement}%", 'trend' => 0],
+                    ['title' => 'Revenus du Mois', 'value' => number_format($revenusMois, 0, ',', ' ') . ' F', 'trend' => 0, 'trendLabel' => 'ce mois'],
+                    ['title' => 'Factures en Attente', 'value' => (string) $enAttente, 'trend' => 0, 'trendLabel' => 'non soldées'],
+                    ['title' => 'Taux Recouvrement', 'value' => "{$tauxRecouvrement}%", 'trend' => 0, 'trendLabel' => 'ce mois'],
+                    ['title' => 'Dépenses du Mois', 'value' => number_format($depensesMois, 0, ',', ' ') . ' F', 'trend' => 0, 'trendLabel' => 'ce mois'],
                 ],
                 'donnes_ca' => $donneesMensuelles,
+                'repartition' => $repartition,
                 'factures' => $dernieresPaiements,
             ];
         });
@@ -420,37 +609,75 @@ class DashboardController extends Controller
     {
         $data = \Illuminate\Support\Facades\Cache::remember('dashboard_surveillant_' . auth()->id(), 60, function () {
             $totalEleves = \App\Models\Eleve::count();
-            $absentsAujourdhui = \App\Models\Absence::whereDate('date', today())->count();
-            $presents = $totalEleves - $absentsAujourdhui;
 
-            $absencesParJour = \App\Models\Absence::selectRaw('DATE(date) as jour, COUNT(*) as absents')
+            $absentsAujourdhui = \App\Models\Absence::whereDate('date', today())
+                ->where('type', 'absence')->count();
+            $presents = max($totalEleves - $absentsAujourdhui, 0);
+
+            $alertes = \App\Models\Incident::whereIn('statut', ['ouvert', 'en_cours'])->count();
+
+            // Présences de la semaine (lundi → dimanche)
+            $joursSemaine = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+            $absencesSemaine = \App\Models\Absence::where('type', 'absence')
                 ->whereBetween('date', [now()->startOfWeek(), now()->endOfWeek()])
-                ->groupBy('jour')
-                ->orderBy('jour')
                 ->get()
-                ->map(fn($r) => ['jour' => $r->jour, 'absents' => $r->absents, 'presents' => $totalEleves - $r->absents]);
+                ->groupBy(fn ($a) => $a->date?->format('Y-m-d'));
+
+            $presencesSemaine = [];
+            foreach (range(0, 6) as $i) {
+                $jour = now()->startOfWeek()->addDays($i)->format('Y-m-d');
+                $absentsJour = $absencesSemaine->get($jour)?->count() ?? 0;
+                $presencesSemaine[] = [
+                    'jour' => $joursSemaine[$i],
+                    'presents' => max($totalEleves - $absentsJour, 0),
+                    'absents' => $absentsJour,
+                ];
+            }
+
+            // Points de surveillance : une zone par cycle réellement présent
+            $points = \App\Models\Classes::select('categorie_classe')
+                ->distinct()
+                ->get()
+                ->map(function ($classe) {
+                    $personnels = \App\Models\Enseignant::whereHas('classes', fn ($q) => $q->where('categorie_classe', $classe->categorie_classe))->count();
+
+                    return [
+                        'zone' => $classe->categorie_classe,
+                        'personnels' => $personnels,
+                        'etat' => $personnels > 0 ? 'Actif' : 'Inactif',
+                    ];
+                })->values();
 
             $derniersRetards = \App\Models\Absence::with(['eleve.user', 'eleve.classe'])
                 ->where('type', 'retard')
                 ->latest('date')
                 ->take(10)
                 ->get()
-                ->map(fn($a) => [
-                    'id' => $a->id,
-                    'eleve' => $a->eleve?->user?->name,
-                    'classe' => $a->eleve?->classe?->nom_classe,
-                    'motif' => $a->motif,
-                    'date' => $a->date,
-                    'justifiee' => $a->justifiee,
-                ]);
+                ->map(function ($a) {
+                    $recurrent = \App\Models\Absence::where('eleve_id', $a->eleve_id)
+                        ->where('type', 'retard')
+                        ->where('date', '>=', now()->subDays(30))
+                        ->count() >= 2;
+
+                    return [
+                        'id' => $a->id,
+                        'eleve' => $this->nomEleve($a->eleve),
+                        'classe' => $a->eleve?->classe?->nom_classe,
+                        'temps' => $a->date?->format('d/m/Y'),
+                        'motif' => $a->motif,
+                        'recurrent' => $recurrent,
+                    ];
+                });
 
             return [
                 'stats' => [
-                    ['title' => 'Total Élèves', 'value' => (string) $totalEleves],
-                    ['title' => 'Présents', 'value' => (string) $presents],
-                    ['title' => 'Absents', 'value' => (string) $absentsAujourdhui],
+                    ['title' => 'Total Élèves', 'value' => (string) $totalEleves, 'trend' => 0],
+                    ['title' => 'Présents Aujourd\'hui', 'value' => (string) $presents, 'trend' => 0],
+                    ['title' => 'Absents', 'value' => (string) $absentsAujourdhui, 'trend' => 0],
+                    ['title' => 'Alertes', 'value' => (string) $alertes, 'trend' => 0],
                 ],
-                'presences_semaine' => $absencesParJour,
+                'presences_semaine' => $presencesSemaine,
+                'points_surveillance' => $points,
                 'retards' => $derniersRetards,
             ];
         });
@@ -465,38 +692,66 @@ class DashboardController extends Controller
     {
         $data = \Illuminate\Support\Facades\Cache::remember('dashboard_censeur_' . auth()->id(), 120, function () {
             $totalEleves = \App\Models\Eleve::count();
-            $sanctionsMois = \App\Models\Sanction::whereMonth('created_at', now()->month)->count();
+            $sanctionsMois = \App\Models\Sanction::whereMonth('date', now()->month)
+                ->whereYear('date', now()->year)->count();
             $absencesNonJustifiees = \App\Models\Absence::where('justifiee', false)
+                ->where('type', 'absence')
+                ->whereMonth('date', now()->month)->count();
+            $avertissements = \App\Models\Sanction::where('type_sanction', 'like', '%Avertissement%')
                 ->whereMonth('date', now()->month)->count();
 
-            $evolutionMensuelle = \App\Models\Sanction::selectRaw('MONTH(created_at) as mois, COUNT(*) as sanctions')
-                ->whereYear('created_at', now()->year)
-                ->groupBy('mois')
-                ->orderBy('mois')
-                ->get()
-                ->map(fn($r) => ['mois' => $r->mois, 'sanctions' => $r->sanctions]);
+            // Évolution disciplinaire — 6 derniers mois (sanctions + avertissements)
+            $sanctions = \App\Models\Sanction::whereBetween('date', [
+                now()->startOfMonth()->subMonths(5), now()->endOfMonth(),
+            ])->get()->groupBy(fn ($s) => $s->date?->format('Y-m'));
+
+            $evolution = [];
+            foreach ($this->sixDerniersMois() as $cle => $label) {
+                $groupe = $sanctions->get($cle, collect());
+                $evolution[] = [
+                    'mois' => $label,
+                    'sanctions' => $groupe->count(),
+                    'avertissements' => $groupe->filter(fn ($s) => str_contains($s->type_sanction, 'Avertissement'))->count(),
+                ];
+            }
+
+            // Répartition par type de sanction (en %)
+            $types = \App\Models\Sanction::select('type_sanction')->get()->groupBy('type_sanction');
+            $totalTypes = max($types->flatten()->count(), 1);
+            $typesSanctions = $types->map(fn ($g, $nom) => [
+                'name' => $nom,
+                'value' => round(($g->count() / $totalTypes) * 100),
+            ])->values();
+
+            $statutsFR = [
+                'active' => 'En cours',
+                'terminee' => 'Exécuté',
+                'levee' => 'Levée',
+            ];
 
             $dernieresSanctions = \App\Models\Sanction::with(['eleve.user', 'eleve.classe'])
-                ->latest()
+                ->latest('date')
                 ->take(10)
                 ->get()
-                ->map(fn($s) => [
+                ->map(fn ($s) => [
                     'id' => $s->id,
-                    'eleve' => $s->eleve?->user?->name,
+                    'eleve' => $this->nomEleve($s->eleve),
                     'classe' => $s->eleve?->classe?->nom_classe,
                     'motif' => $s->motif,
-                    'sanction' => $s->type_sanction ?? $s->description,
-                    'date' => $s->created_at->toDateString(),
-                    'statut' => $s->statut ?? 'En cours',
+                    'sanction' => $s->type_sanction,
+                    'date' => $s->date?->format('d/m/Y'),
+                    'statut' => $statutsFR[$s->statut] ?? 'En cours',
                 ]);
 
             return [
                 'stats' => [
-                    ['title' => 'Total Élèves', 'value' => (string) $totalEleves],
-                    ['title' => 'Sanctions', 'value' => (string) $sanctionsMois],
-                    ['title' => 'Abs. non justifiées', 'value' => (string) $absencesNonJustifiees],
+                    ['title' => 'Total Élèves', 'value' => (string) $totalEleves, 'trend' => 0],
+                    ['title' => 'Sanctions du Mois', 'value' => (string) $sanctionsMois, 'trend' => 0],
+                    ['title' => 'Absences Non Justifiées', 'value' => (string) $absencesNonJustifiees, 'trend' => 0],
+                    ['title' => 'Avertissements', 'value' => (string) $avertissements, 'trend' => 0],
                 ],
-                'evolution' => $evolutionMensuelle,
+                'evolution' => $evolution,
+                'types_sanctions' => $typesSanctions,
                 'sanctions' => $dernieresSanctions,
             ];
         });
@@ -510,30 +765,61 @@ class DashboardController extends Controller
     public function infirmier()
     {
         $data = \Illuminate\Support\Facades\Cache::remember('dashboard_infirmier_' . auth()->id(), 60, function () {
-            $visitesAujourdhui = \App\Models\ConsultationMedicale::whereDate('created_at', today())->count();
-            $visitesMois = \App\Models\ConsultationMedicale::whereMonth('created_at', now()->month)->count();
-            $enObservation = \App\Models\ConsultationMedicale::where('statut', 'observation')->count();
+            $visitesMois = \App\Models\ConsultationMedicale::whereMonth('date', now()->month)
+                ->whereYear('date', now()->year)->count();
+            $visitesAujourdhui = \App\Models\ConsultationMedicale::whereDate('date', today())->count();
+            $casUrgents = \App\Models\ConsultationMedicale::where('urgence', true)
+                ->whereMonth('date', now()->month)->count();
+            $consultations = \App\Models\ConsultationMedicale::count();
+
+            // Fréquentation — 6 derniers mois (visites + urgences)
+            $visites = \App\Models\ConsultationMedicale::whereBetween('date', [
+                now()->startOfMonth()->subMonths(5), now()->endOfMonth(),
+            ])->get()->groupBy(fn ($c) => $c->date?->format('Y-m'));
+
+            $frequentation = [];
+            foreach ($this->sixDerniersMois() as $cle => $label) {
+                $groupe = $visites->get($cle, collect());
+                $frequentation[] = [
+                    'mois' => $label,
+                    'visites' => $groupe->count(),
+                    'urgences' => $groupe->filter(fn ($c) => $c->urgence)->count(),
+                ];
+            }
+
+            // Motifs les plus fréquents — 5 derniers ce mois-ci
+            $motifs = \App\Models\ConsultationMedicale::select('motif')
+                ->whereMonth('date', now()->month)
+                ->selectRaw('COUNT(*) as total')
+                ->groupBy('motif')
+                ->orderByDesc('total')
+                ->take(5)
+                ->get()
+                ->map(fn ($m) => ['motif' => $m->motif, 'count' => $m->total]);
 
             $dernieresVisites = \App\Models\ConsultationMedicale::with(['eleve.user', 'eleve.classe'])
-                ->latest()
+                ->latest('date')
                 ->take(10)
                 ->get()
-                ->map(fn($c) => [
+                ->map(fn ($c) => [
                     'id' => $c->id,
-                    'eleve' => $c->eleve?->user?->name,
+                    'eleve' => $this->nomEleve($c->eleve),
                     'classe' => $c->eleve?->classe?->nom_classe,
                     'motif' => $c->motif,
                     'soin' => $c->traitement,
-                    'statut' => $c->statut ?? 'Traité',
-                    'date' => $c->created_at->format('H:i'),
+                    'statut' => $c->traitement ? 'Traité' : 'En cours',
+                    'heure' => $c->date?->format('H:i'),
                 ]);
 
             return [
                 'stats' => [
-                    ['title' => 'Visites du Mois', 'value' => (string) $visitesMois],
-                    ['title' => 'Aujourd\'hui', 'value' => (string) $visitesAujourdhui],
-                    ['title' => 'En Observation', 'value' => (string) $enObservation],
+                    ['title' => 'Visites du Mois', 'value' => (string) $visitesMois, 'trend' => 0, 'trendLabel' => 'ce mois'],
+                    ['title' => 'En Cours', 'value' => (string) $visitesAujourdhui, 'trend' => 0, 'trendLabel' => 'aujourd\'hui'],
+                    ['title' => 'Cas Urgents', 'value' => (string) $casUrgents, 'trend' => 0, 'trendLabel' => 'ce mois'],
+                    ['title' => 'Consultations', 'value' => (string) $consultations, 'trend' => 0, 'trendLabel' => 'total'],
                 ],
+                'frequentation' => $frequentation,
+                'motifs' => $motifs,
                 'visites' => $dernieresVisites,
             ];
         });
@@ -548,30 +834,70 @@ class DashboardController extends Controller
     {
         $data = \Illuminate\Support\Facades\Cache::remember('dashboard_bibliothecaire_' . auth()->id(), 120, function () {
             $totalLivres = \App\Models\Livre::count();
-            $empruntsEnCours = \App\Models\Emprunt::where('statut', 'en_cours')->count();
-            $retards = \App\Models\Emprunt::where('statut', 'en_cours')
+            $empruntsEnCours = \App\Models\Emprunt::whereNull('date_retour_effective')->count();
+            $retards = \App\Models\Emprunt::whereNull('date_retour_effective')
                 ->where('date_retour_prevue', '<', today())->count();
+            $membresActifs = \App\Models\Emprunt::distinct('eleve_id')->count('eleve_id');
+
+            // Activité — 6 derniers mois (emprunts + retours)
+            $emprunts = \App\Models\Emprunt::whereBetween('date_emprunt', [
+                now()->startOfMonth()->subMonths(5), now()->endOfMonth(),
+            ])->get();
+
+            $empruntsParMois = $emprunts->groupBy(fn ($e) => $e->date_emprunt?->format('Y-m'))
+                ->map(fn ($g) => $g->count());
+
+            $retoursParMois = $emprunts->filter(fn ($e) => $e->date_retour_effective)
+                ->groupBy(fn ($e) => $e->date_retour_effective->format('Y-m'))
+                ->map(fn ($g) => $g->count());
+
+            $activite = [];
+            foreach ($this->sixDerniersMois() as $cle => $label) {
+                $activite[] = [
+                    'mois' => $label,
+                    'emprunts' => $empruntsParMois->get($cle, 0),
+                    'retours' => $retoursParMois->get($cle, 0),
+                ];
+            }
+
+            // Répartition par catégorie d'ouvrage (en %)
+            $categories = \App\Models\Livre::select('categorie')
+                ->get()->groupBy('categorie');
+            $totalCategories = max($categories->flatten()->count(), 1);
+            $repartitionCategories = $categories->map(fn ($g, $nom) => [
+                'name' => $nom,
+                'value' => round(($g->count() / $totalCategories) * 100),
+            ])->values();
 
             $derniersEmprunts = \App\Models\Emprunt::with(['eleve.user', 'eleve.classe', 'livre'])
-                ->latest()
+                ->latest('date_emprunt')
                 ->take(10)
                 ->get()
-                ->map(fn($e) => [
-                    'id' => $e->id,
-                    'eleve' => $e->eleve?->user?->name,
-                    'classe' => $e->eleve?->classe?->nom_classe,
-                    'ouvrage' => $e->livre?->titre,
-                    'dateEmprunt' => $e->date_emprunt,
-                    'dateRetour' => $e->date_retour_prevue,
-                    'statut' => $e->statut,
-                ]);
+                ->map(function ($e) {
+                    $statut = $e->date_retour_effective
+                        ? 'Retourné'
+                        : ($e->date_retour_prevue?->lt(today()) ? 'En retard' : 'En cours');
+
+                    return [
+                        'id' => $e->id,
+                        'eleve' => $this->nomEleve($e->eleve),
+                        'classe' => $e->eleve?->classe?->nom_classe,
+                        'ouvrage' => $e->livre?->titre,
+                        'dateEmprunt' => $e->date_emprunt?->format('d/m/Y'),
+                        'dateRetour' => $e->date_retour_prevue?->format('d/m/Y'),
+                        'statut' => $statut,
+                    ];
+                });
 
             return [
                 'stats' => [
-                    ['title' => 'Total Ouvrages', 'value' => (string) $totalLivres],
-                    ['title' => 'Emprunts en Cours', 'value' => (string) $empruntsEnCours],
-                    ['title' => 'Retards', 'value' => (string) $retards],
+                    ['title' => 'Total Ouvrages', 'value' => (string) $totalLivres, 'trend' => 0, 'trendLabel' => 'au catalogue'],
+                    ['title' => 'Emprunts en Cours', 'value' => (string) $empruntsEnCours, 'trend' => 0],
+                    ['title' => 'Retards', 'value' => (string) $retards, 'trend' => 0],
+                    ['title' => 'Membres Actifs', 'value' => (string) $membresActifs, 'trend' => 0, 'trendLabel' => 'emprunteurs'],
                 ],
+                'activite' => $activite,
+                'categories' => $repartitionCategories,
                 'emprunts' => $derniersEmprunts,
             ];
         });
@@ -587,36 +913,71 @@ class DashboardController extends Controller
         $data = \Illuminate\Support\Facades\Cache::remember('dashboard_secretaire_' . auth()->id(), 120, function () {
             $totalInscriptions = \App\Models\Eleve::count();
             $nouveauxMois = \App\Models\Eleve::whereMonth('created_at', now()->month)->count();
+            $dossiersEnCours = \App\Models\Certificat::where('delivre', false)->count();
+            $documentsGeneres = \App\Models\Certificat::count();
 
-            $rendezVous = \App\Models\RendezVous::whereDate('date', today())
+            // Flux d'inscriptions — 6 derniers mois (nouveaux + transferts)
+            $eleves = \App\Models\Eleve::whereBetween('created_at', [
+                now()->startOfMonth()->subMonths(5), now()->endOfMonth(),
+            ])->get()->groupBy(fn ($e) => $e->created_at?->format('Y-m'));
+
+            $fluxInscriptions = [];
+            foreach ($this->sixDerniersMois() as $cle => $label) {
+                $fluxInscriptions[] = [
+                    'mois' => $label,
+                    'nouveaux' => $eleves->get($cle)?->count() ?? 0,
+                    'transferts' => 0,
+                ];
+            }
+
+            $statutsFR = [
+                'programmé' => 'Programmé',
+                'confirmé' => 'Confirmé',
+                'annulé' => 'Annulé',
+            ];
+
+            $rendezVous = \App\Models\RendezVous::with(['parent.user', 'eleve.user', 'enseignant.user'])
+                ->whereDate('date', today())
                 ->latest()
                 ->take(10)
                 ->get()
-                ->map(fn($r) => [
-                    'id' => $r->id,
-                    'visiteur' => $r->nom_visiteur,
-                    'motif' => $r->motif,
-                    'heure' => $r->heure,
-                    'statut' => $r->statut,
-                ]);
+                ->map(function ($r) {
+                    $visiteur = $r->parent?->user
+                        ?? $r->eleve?->user
+                        ?? $r->enseignant?->user;
+
+                    $statutsFR = ['programmé' => 'Programmé', 'confirmé' => 'Confirmé', 'annulé' => 'Annulé'];
+
+                    return [
+                        'id' => $r->id,
+                        'visiteur' => trim(($visiteur?->name ?? '') . ' ' . ($visiteur?->prenom ?? '')) ?: 'Visiteur',
+                        'motif' => $r->motif,
+                        'heure' => $r->heure,
+                        'statut' => $statutsFR[$r->statut] ?? $r->statut,
+                    ];
+                });
 
             $dernieresInscriptions = \App\Models\Eleve::with(['user', 'classe'])
                 ->latest()
                 ->take(10)
                 ->get()
-                ->map(fn($e) => [
+                ->map(fn ($e) => [
                     'id' => $e->id,
-                    'nom' => $e->user?->name . ' ' . $e->user?->prenom,
+                    'nom' => trim(($e->user?->name ?? '') . ' ' . ($e->user?->prenom ?? '')),
                     'classe' => $e->classe?->nom_classe,
-                    'date' => $e->created_at->toDateString(),
+                    'type' => $e->created_at?->gte(now()->startOfMonth()) ? 'Nouveau' : 'Régulier',
+                    'date' => $e->created_at?->format('d/m/Y'),
                     'statut' => 'Complété',
                 ]);
 
             return [
                 'stats' => [
-                    ['title' => 'Total Inscriptions', 'value' => (string) $totalInscriptions],
-                    ['title' => 'Nouveaux ce Mois', 'value' => (string) $nouveauxMois],
+                    ['title' => 'Inscriptions', 'value' => (string) $totalInscriptions, 'trend' => 0, 'trendLabel' => 'total'],
+                    ['title' => 'Nouveaux ce Mois', 'value' => (string) $nouveauxMois, 'trend' => 0],
+                    ['title' => 'Dossiers en Cours', 'value' => (string) $dossiersEnCours, 'trend' => 0, 'trendLabel' => 'certificats'],
+                    ['title' => 'Documents Générés', 'value' => (string) $documentsGeneres, 'trend' => 0, 'trendLabel' => 'émis'],
                 ],
+                'flux_inscriptions' => $fluxInscriptions,
                 'rendez_vous' => $rendezVous,
                 'inscriptions' => $dernieresInscriptions,
             ];

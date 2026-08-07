@@ -48,7 +48,7 @@ class EleveResource extends JsonResource
             // every pupil as active, including deactivated ones.
             'statut' => ($user?->is_active ?? true) ? 'active' : 'inactive',
 
-            'class_id'   => $this->class_id,
+            'classe_id'  => $this->classe_id,
             'serie_id'   => $this->serie_id,
             'created_at' => $this->created_at?->isoFormat('LL'),
 

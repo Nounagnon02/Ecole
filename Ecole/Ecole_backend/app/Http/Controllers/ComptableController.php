@@ -71,11 +71,29 @@ class ComptableController extends Controller
             'mode_paiement' => 'required|string|in:' . implode(',', self::PAYMENT_MODES),
             'date_paiement' => 'required|date',
             'reference'     => 'nullable|string|max:255',
+            'parents_id'    => 'nullable|school_exists:parents,id',
         ]);
 
         // Le solde est dérivé, pas saisi : le laisser null rendait
         // `montant_restant` illisible pour tout ce qui calcule un reste à payer.
         $montant = (float) $validated['montant'];
+
+        $eleve = \App\Models\Eleve::findOrFail($validated['eleve_id']);
+
+        // `paiements.parents_id` doit nommer le parent responsable *réellement
+        // lié* à l'élève : accepter n'importe quel parent permettrait
+        // d'imputer un règlement à une autre famille (ou un autre
+        // établissement). S'il est fourni, on vérifie la filiation ; sinon on
+        // dérive du premier parent du dossier.
+        if (!empty($validated['parents_id'])) {
+            abort_unless(
+                $eleve->parents()->where('parents.id', $validated['parents_id'])->exists(),
+                422,
+                'Le parent indiqué n\'est pas lié à cet élève.'
+            );
+        } else {
+            $validated['parents_id'] = $eleve->responsibleParent()?->id;
+        }
 
         $paiement = PaiementEleve::create($validated + [
             'montant_total'   => $montant,

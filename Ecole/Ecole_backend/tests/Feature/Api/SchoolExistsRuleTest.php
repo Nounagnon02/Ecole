@@ -145,7 +145,7 @@ class SchoolExistsRuleTest extends TestCase
             'date_naissance'   => '2012-01-01',
             'lieu_naissance'   => 'Cotonou',
             'sexe'             => 'M',
-            'class_id'         => $this->theirClass->id,
+            'classe_id'         => $this->theirClass->id,
             'ecole_id'         => $this->theirs->id,
         ]);
 

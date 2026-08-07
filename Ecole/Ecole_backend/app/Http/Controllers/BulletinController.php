@@ -274,7 +274,7 @@ class BulletinController extends Controller
 
             // Debug des matières trouvées
             Log::info("Matières pour l'élève {$eleveId}:", [
-                'classe_id' => $eleve->class_id,
+                'classe_id' => $eleve->classe_id,
                 'serie_id' => $eleve->serie->id,
                 'matieres' => $eleve->serie->matieres->map(function($m) {
                     return [
@@ -303,7 +303,7 @@ class BulletinController extends Controller
                         $note = $this->getNote($eleveId, $matiere->id, $periode, $type);
                         $moye = $this->calculerMoyenneMatiere($eleveId, $matiere->id, $periode);
                         // Rang par matière pour cette évaluation
-                        $rangEval = $this->calculateRankEvaluation($eleveId, $matiere->id, $eleve->class_id, $periode, $type);
+                        $rangEval = $this->calculateRankEvaluation($eleveId, $matiere->id, $eleve->classe_id, $periode, $type);
                         // Rang général pour cette évaluation (toutes matières confondues)
                         //$rangGeneralEval = $this->calculateRankGeneralEvaluation($eleveId, $eleve->classe_id, $periode, $type, $eleve->serie->matieres);
 
@@ -325,7 +325,7 @@ class BulletinController extends Controller
                         'eleve' => $this->formatEleveData($eleve, $categorie),
                         'periode' => $periode,
                         'evaluations' => $evaluations,
-                        'rang' => $this->calculateRank($eleveId, $eleve->class_id,$eleve->serie_id, $periode),
+                        'rang' => $this->calculateRank($eleveId, $eleve->classe_id,$eleve->serie_id, $periode),
                     ]
                 ]);
             }
@@ -344,7 +344,7 @@ class BulletinController extends Controller
                         $note = $this->getNote($eleveId, $matiere->id, $periode, $type);
                         $moye = $this->calculerMoyenneMatiere($eleveId, $matiere->id, $periode);
                         // Rang par matière pour cette évaluation
-                        $rangEval = $this->calculateRankEvaluation($eleveId, $matiere->id, $eleve->class_id, $periode, $type);
+                        $rangEval = $this->calculateRankEvaluation($eleveId, $matiere->id, $eleve->classe_id, $periode, $type);
                         // Rang général pour cette évaluation (toutes matières confondues)
                         //$rangGeneralEval = $this->calculateRankGeneralEvaluation($eleveId, $eleve->classe_id, $periode, $type, $eleve->serie->matieres);
 
@@ -366,7 +366,7 @@ class BulletinController extends Controller
                         'eleve' => $this->formatEleveData($eleve, $categorie),
                         'periode' => $periode,
                         'evaluations' => $evaluations,
-                        'rang' => $this->calculateRank($eleveId, $eleve->class_id,$eleve->serie_id, $periode),
+                        'rang' => $this->calculateRank($eleveId, $eleve->classe_id,$eleve->serie_id, $periode),
                     ]
                 ]);
             }
@@ -382,7 +382,7 @@ class BulletinController extends Controller
                 
                 // Utiliser le coefficient spécifique à la classe
                 $coefficient = $matiere->pivot->coefficient;
-                $rangMatiere = $this->calculateRankMatiere($eleveId, $matiere->id, $eleve->class_id,$eleve->serie_id, $periode);
+                $rangMatiere = $this->calculateRankMatiere($eleveId, $matiere->id, $eleve->classe_id,$eleve->serie_id, $periode);
 
                 
                 $moyennesParMatiere[] = [
@@ -407,7 +407,7 @@ class BulletinController extends Controller
             // Calcul de la moyenne générale
             $moyenneGenerale = $totalCoefficients > 0 ? round($moyenneGenerale / $totalCoefficients, 2) : 0;
             // Calcul du rang général
-            $rangGeneral = $this->calculateRank($eleveId, $eleve->class_id,$eleve->serie_id, $periode);
+            $rangGeneral = $this->calculateRank($eleveId, $eleve->classe_id,$eleve->serie_id, $periode);
 
             /*return response()->json([
                 'success' => true,
@@ -471,7 +471,7 @@ class BulletinController extends Controller
     {
         try {
             // Récupérer tous les élèves de la classe
-            $eleves = Eleve::where('class_id', $classeId)->get();
+            $eleves = Eleve::where('classe_id', $classeId)->get();
             
             $moyennes = [];
             
@@ -557,7 +557,7 @@ class BulletinController extends Controller
     {
         try {
             // Récupérer tous les élèves de la classe
-            $eleves = Eleve::where('class_id', $classeId)->get();
+            $eleves = Eleve::where('classe_id', $classeId)->get();
             
             $moyennes = [];
             
@@ -602,7 +602,7 @@ class BulletinController extends Controller
     private function calculateRank($eleveId, $classeId,$serieId, $periode)
     {
         try {
-            $eleves = Eleve::where('class_id', $classeId)->where('serie_id',$serieId)->get();
+            $eleves = Eleve::where('classe_id', $classeId)->where('serie_id',$serieId)->get();
             $moyennes = [];
             
             foreach ($eleves as $eleve) {
@@ -648,7 +648,7 @@ class BulletinController extends Controller
     {
         try {
             // Récupérer tous les élèves de la classe
-            $eleves = Eleve::where('class_id', $classeId)->get();
+            $eleves = Eleve::where('classe_id', $classeId)->get();
             
             $moyennes = [];
             
@@ -696,7 +696,7 @@ class BulletinController extends Controller
     private function calculateRankMatiere($eleveId, $matiereId, $classeId,$serieId, $periode)
     {
         try {
-            $eleves = \App\Models\Eleve::where('class_id', $classeId)->where('serie_id', $serieId)->get();
+            $eleves = \App\Models\Eleve::where('classe_id', $classeId)->where('serie_id', $serieId)->get();
             $moyennes = [];
     
             foreach ($eleves as $eleve) {

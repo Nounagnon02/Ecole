@@ -161,8 +161,8 @@ class RoleFamilyTest extends TestCase
         ]);
         $this->assignClass($teacher, $classe, $school);
 
-        $mine     = Eleve::factory()->forSchool($school)->create(['class_id' => $classe->id]);
-        $notMine  = Eleve::factory()->forSchool($school)->create(['class_id' => $other->id]);
+        $mine     = Eleve::factory()->forSchool($school)->create(['classe_id' => $classe->id]);
+        $notMine  = Eleve::factory()->forSchool($school)->create(['classe_id' => $other->id]);
 
         // `Enseignant` carries BelongsToEcole, whose scope fails closed with no
         // authenticated user — so the policy must be evaluated inside a session.
@@ -186,7 +186,7 @@ class RoleFamilyTest extends TestCase
 
         $mark = Notes::factory()->create([
             'eleve_id'   => $pupil->id,
-            'classe_id'  => $pupil->class_id,
+            'classe_id'  => $pupil->classe_id,
             'ecole_id'   => $school->id,
             'created_by' => $author->id,
         ]);
@@ -215,7 +215,7 @@ class RoleFamilyTest extends TestCase
         ]);
         $this->assignClass($teacher, $classe, $school);
 
-        $pupil   = Eleve::factory()->forSchool($school)->create(['class_id' => $classe->id]);
+        $pupil   = Eleve::factory()->forSchool($school)->create(['classe_id' => $classe->id]);
         $absence = Absence::factory()->create([
             'eleve_id' => $pupil->id,
             'ecole_id' => $school->id,
@@ -228,5 +228,158 @@ class RoleFamilyTest extends TestCase
         // A dangling absence must deny, not raise on a null pupil.
         $absence->setRelation('eleve', null);
         $this->assertFalse($teacherUser->fresh()->can('view', $absence));
+    }
+
+    /* ─── The exhaustive vocabulary (audit 2026-08-07) ────────────────── */
+
+    /** @test */
+    public function every_role_the_backend_gates_on_is_declared_in_roles()
+    {
+        $gates = ['eleve', 'parent', 'comptable', 'surveillant', 'censeur',
+            'infirmier', 'bibliothecaire', 'secretaire', 'admin'];
+
+        foreach ($gates as $gate) {
+            $this->assertContains(
+                $gate,
+                Roles::all(),
+                "Le rôle {$gate} est gaté dans les routes mais absent de Roles::all()"
+            );
+        }
+    }
+
+    /** @test */
+    public function provisionable_covers_the_school_organigramme_but_not_the_platform()
+    {
+        $provisionable = Roles::provisionable();
+
+        foreach (['admin', 'directeur', 'directeurM', 'directeurP', 'directeurS',
+                'censeur', 'secretaire', 'comptable', 'surveillant',
+                'infirmier', 'bibliothecaire', 'eleve', 'parent', 'enseignant'] as $role) {
+            $this->assertContains($role, $provisionable);
+        }
+
+        // The truly platform roles are never assignable from a tenant context.
+        $this->assertNotContains('super-admin', $provisionable);
+        $this->assertNotContains('recteur', $provisionable);
+        $this->assertNotContains('doyen', $provisionable);
+        $this->assertNotContains('professeur', $provisionable);
+        $this->assertNotContains('personnel', $provisionable);
+        $this->assertNotContains('etudiant', $provisionable);
+    }
+
+    /** @test */
+    public function a_cycle_teacher_reaches_a_teacher_gated_route()
+    {
+        $school = Ecole::factory()->create(['status' => 'active']);
+
+        foreach (['enseignement', 'enseignementM', 'enseignementP'] as $role) {
+            $teacherUser = User::factory()->create(['role' => $role, 'ecole_id' => $school->id]);
+            Enseignant::factory()->create(['user_id' => $teacherUser->id, 'ecole_id' => $school->id]);
+
+            $this->assertTrue(
+                Roles::satisfies($role, ['enseignant']),
+                "Le rôle {$role} devrait satisfaire la gate enseignant"
+            );
+
+            $this->actingAs($teacherUser)
+                ->getJson('/api/dashboard/enseignant')
+                ->assertStatus(200, "Le rôle {$role} devrait atteindre une route role:enseignant");
+        }
+    }
+
+    /** @test */
+    public function the_legacy_enseignant_pellet_vocabulary_is_rejected()
+    {
+        // `EnseignantController` validated `enseignantM`/`enseignantP`, which
+        // exist in no family — an account created that way was locked out of
+        // every teacher route (the directeurP lockout, replayed). The canonical
+        // spellings are `enseignementM`/`enseignementP`.
+        $this->assertNotContains('enseignantM', Roles::teachers());
+        $this->assertNotContains('enseignantP', Roles::teachers());
+    }
+
+    /** @test */
+    public function a_librarian_may_list_the_pupils_of_a_class()
+    {
+        $school = Ecole::factory()->create(['status' => 'active']);
+        $classe = Classes::factory()->create(['ecole_id' => $school->id]);
+        Eleve::factory()->forSchool($school)->create(['classe_id' => $classe->id]);
+
+        $librarian = User::factory()->create(['role' => 'bibliothecaire', 'ecole_id' => $school->id]);
+
+        $this->actingAs($librarian)
+            ->getJson("/api/classes/{$classe->id}/eleves")
+            ->assertStatus(200);
+    }
+
+    /* ─── Every provisioned role is reachable (lot L2) ────────────────── */
+
+    /** @test */
+    public function every_school_organigramme_role_can_sign_in_with_its_seeded_identity()
+    {
+        $this->withoutMiddleware(\Illuminate\Routing\Middleware\ThrottleRequests::class);
+
+        $school = Ecole::factory()->create(['status' => 'active']);
+
+        $roles = [
+            'admin'           => ['admin', "admin'spassword1234567@"],
+            'directeur'       => ['directeur', "director'spassword1234567@"],
+            'directeurM'      => ['directeurM', "directorM'spassword1234567@"],
+            'directeurP'      => ['directeurP', "directorP'spassword1234567@"],
+            'directeurS'      => ['directeurS', "directorS'spassword1234567@"],
+            'censeur'         => ['censeur', "censeur'spassword1234567@"],
+            'secretaire'      => ['secretaire', "secretaire'spassword1234567@"],
+            'comptable'       => ['comptable', "comptable'spassword1234567@"],
+            'surveillant'     => ['surveillant', "surveillant'spassword1234567@"],
+            'infirmier'       => ['infirmier', "infirmier'spassword1234567@"],
+            'bibliothecaire'  => ['bibliothecaire', "bibliothecaire'spassword1234567@"],
+            'enseignant'      => ['enseignant', "enseignant'spassword1234567@"],
+        ];
+
+        foreach ($roles as $role => [$identifiant, $password]) {
+            User::factory()->create([
+                'role'        => $role,
+                'identifiant' => $identifiant . '_ecole' . $school->id,
+                'email'       => $role . 'ecole' . $school->id . '@gmail.cj',
+                'password'    => $password,
+                'ecole_id'    => $school->id,
+            ]);
+
+            $this->postJson('/api/auth/login', [
+                'identifiant' => $identifiant . '_ecole' . $school->id,
+                'password'    => $password,
+            ])->assertStatus(200, "Le compte {$role} devrait se connecter avec son identifiant");
+        }
+    }
+
+    /** @test */
+    public function every_university_role_can_sign_in_with_its_seeded_identity()
+    {
+        $this->withoutMiddleware(\Illuminate\Routing\Middleware\ThrottleRequests::class);
+
+        $school = Ecole::factory()->create(['status' => 'active']);
+
+        \App\Models\Universite\Universite::factory()->forSchool($school)->create();
+
+        $accounts = [
+            'recteur'     => 'recteur@uac.bj',
+            'doyen'       => 'doyen1@uac.bj',
+            'professeur'  => 'vincent.kodjogbe@uac.bj',
+            'personnel'   => 'marcellin.bossou@uac.bj',
+            'etudiant'    => 'kossi.adjovi@etu.uac.bj',
+        ];
+
+        foreach ($accounts as $role => $email) {
+            User::factory()->create([
+                'role'     => $role,
+                'email'    => $email,
+                'password' => 'password1234',
+                'ecole_id' => $school->id,
+            ]);
+
+            $this->postJson('/api/auth/login', [
+                'email' => $email, 'password' => 'password1234',
+            ])->assertStatus(200, "Le compte {$role} devrait se connecter avec son email");
+        }
     }
 }
