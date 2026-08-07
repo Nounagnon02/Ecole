@@ -13,6 +13,7 @@ import { MemoryRouter, Routes, Route, useLocation } from 'react-router-dom';
 import DirecteurDashboard from '@/app/dashboards/directeur';
 import EleveDashboard from '@/app/dashboards/eleve';
 import ParentDashboard from '@/app/dashboards/parent';
+import AdminDashboard from '@/app/dashboards/admin';
 import useAuthStore from '@/shared/stores/auth-store';
 import { clearDashboardCache } from '@/shared/lib/dashboard-cache';
 import { installHttpMock } from './helpers/http-mock';
@@ -394,5 +395,55 @@ describe('ParentDashboard', () => {
     renderDashboard(<ParentDashboard />);
 
     await waitFor(() => expect(screen.getByText('Aucun enfant trouvé')).toBeInTheDocument());
+  });
+});
+
+describe('AdminDashboard', () => {
+  const ADMIN_ENDPOINT = '/dashboard/admin';
+
+  const ADMIN_PAYLOAD = {
+    stats: [
+      { title: 'Utilisateurs Actifs', value: '1 240', trend: 12, trendLabel: 'nouveaux / 7j' },
+      { title: 'Requêtes/minute', value: '—', trend: 0, trendLabel: 'métrique à configurer' },
+      { title: 'Espace Disque', value: '62%', trend: 0, trendLabel: 'utilisé' },
+      { title: 'Erreurs API', value: '3', trend: 0, trendLabel: 'dans le journal' },
+      { title: 'Temps Réponse', value: '85 ms', trend: 0, trendLabel: 'utile après cache' },
+      { title: 'Uptime', value: '12j 4h', trend: 0, trendLabel: 'serveur' },
+    ],
+    traffic: [
+      { jour: '2026-08-01', req: 120, temps: 40 },
+      { jour: '2026-08-02', req: 200, temps: 55 },
+    ],
+    health: [
+      { label: 'Disque', value: '62%', width: '62%', color: 'bg-[var(--accent)]' },
+      { label: 'Base de données', value: 'connectée', width: '100%', color: 'bg-[var(--emerald)]' },
+    ],
+    logs: [
+      { id: 1, level: 'INFO', time: '14:00:01', message: 'Login utilisateur', module: 'laravel' },
+      { id: 2, level: 'ERROR', time: '14:00:02', message: 'Faille SQL', module: 'laravel' },
+    ],
+    utilisateurs: [],
+  };
+
+  beforeEach(() => {
+    useAuthStore.setState({
+      user: { id: 1, name: 'Test', role: 'admin' },
+      isAuthenticated: true,
+      isLoading: false,
+      sessionLastVerified: Date.now(),
+    });
+  });
+
+  it('affiche les stats, le trafic, la santé système et les logs', async () => {
+    http.onGet(ADMIN_ENDPOINT).reply(200, { data: ADMIN_PAYLOAD });
+
+    renderDashboard(<AdminDashboard />);
+
+    await waitFor(() => expect(screen.getByText('Utilisateurs Actifs')).toBeInTheDocument());
+    expect(screen.getByText('1 240')).toBeInTheDocument();
+    expect(screen.getByText('Trafic API')).toBeInTheDocument();
+    expect(screen.getByText('Disque')).toBeInTheDocument();
+    expect(screen.getByText('1 erreurs')).toBeInTheDocument();
+    expect(screen.getByText('Faille SQL')).toBeInTheDocument();
   });
 });

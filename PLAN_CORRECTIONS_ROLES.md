@@ -65,10 +65,10 @@ Retirer l'assignation Spatie `super-admin` ; super-admin reste réservé au pers
 
 | Lot | Contenu | Fichiers | Test | Verrouille |
 |---|---|---|---|---|
-| **L1 — Vocabulaire unique** | D1, D2, D7, D8, D9 | `app/Support/Roles.php`, `EnseignantController`, `StoreUserRequest`, `AuthController`, `OnboardingController`, `routes/api/users.php` (gate bibliothécaire), front `CommandPalette` | `RoleFamilyTest` étendu (satisfies/provisionable), test lockout `enseignementP` → 200, test bibliothécaire listage élèves | C1, C7, C8, C9, C10, C11, C12 |
+| **L1 — Vocabulaire unique** ✅ fait (07/08) | D1, D2, D7, D8, D9 | `app/Support/Roles.php`, `EnseignantController`, `StoreUserRequest`, `AuthController`, `OnboardingController`, `routes/api/users.php` (gate bibliothécaire), front `CommandPalette` | `RoleFamilyTest` étendu (satisfies/provisionable), test lockout `enseignementP` → 200, test bibliothécaire listage élèves | C1, C7, C8, C9, C10, C11, C12 |
 | **L2 — Rôles seedés** ✅ fait (07/08) | D3, D4 | `AdminUsersSeeder` (+ `admin`, `infirmier`, `bibliothecaire`, `enseignant`), `UniversiteSeeder` (recteur/doyen/professeur/personnel), `TestDataSeeder` supprimé, `Roles::provisionable()` (+`admin`), front `route-config.js` `/admin/dashboard` (retirer directeur) | Test : chaque rôle provisionné a un compte qui se connecte (login API) — `RoleFamilyTest` ×2 | C2, C3 |
 | **L3 — Dashboards staff** ✅ fait (07/08) | D5 (staff), D6 | `DashboardController` (comptable, surveillant, censeur, infirmier, bibliothecaire, secretaire) + stats[4] | `StaffDashboardContractTest` (6 endpoints : stats[4], `donnes_ca`, `presences_semaine`, `points_surveillance`, `evolution`, `types_sanctions`, `frequentation`, `motifs`, `activite`, `categories`, `flux_inscriptions`, `rendez_vous`, clés de ligne exactes) + front infirmier `motifs` dynamique | C5 |
-| **L4 — Dashboards parent & admin** | D5 (parent/admin) | `DashboardController@parent` (`enfants/stats/evolution/communications`), `@admin` (`traffic/logs/health/utilisateurs`) | Tests Feature : contrat exact | C4, C6 |
+| **L4 — Dashboards parent & admin** ✅ fait (07/08) | D5 (parent/admin) | `DashboardController@parent` (`enfants/stats/evolution/communications` + filiation enrichie), `@admin` (`stats/traffic/health/logs/utilisateurs`) | `ParentDashboardTest` (contrat exact), `AdminDashboardTest` (contrat exact + 403 directeur) | C4, C6 |
 
 Chaque lot = tests verts obligatoires avant de passer au suivant (`php artisan test` complet).
 

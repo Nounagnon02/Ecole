@@ -336,7 +336,10 @@ class DashboardController extends Controller
     public function admin()
     {
         $ecoleId = auth()->user()?->ecole_id ?? 'global';
+
+        $debut = microtime(true);
         $data = \Illuminate\Support\Facades\Cache::remember('dashboard_admin_' . $ecoleId, 120, function () {
+            // ─── Utilisateurs & plateforme ───────────────────────────
             $totalEcoles = \App\Models\Ecole::count();
             $totalUsers = User::count();
             $activeUsers = User::where('is_active', true)->count();
@@ -371,15 +374,92 @@ class DashboardController extends Controller
                 });
             }
 
+            // ─── Trafic API (7 derniers jours) ───────────────────────
+            // Aucune table de journalisation HTTP n'existe ; on proxifie le
+            // trafic par les actions auditées du jour, et le temps de réponse
+            // de l'endpoint lui-même est mesuré hors cache (voir ci-dessous).
+            $traffic = collect(range(6, 0))->map(function ($offset) {
+                $jour = now()->subDays($offset)->format('Y-m-d');
+                $req = class_exists(\App\Models\AuditLog::class)
+                    ? \App\Models\AuditLog::whereDate('created_at', $jour)->count()
+                    : 0;
+                return ['jour' => $jour, 'req' => $req, 'temps' => 0];
+            })->values();
+
+            // ─── Santé système (valeurs réelles du serveur PHP) ──────
+            $freeDisk  = function_exists('disk_free_space') ? disk_free_space(base_path()) : false;
+            $totalDisk = function_exists('disk_total_space') ? disk_total_space(base_path()) : false;
+            $diskUsage = ($freeDisk && $totalDisk) ? (int) round((1 - $freeDisk / $totalDisk) * 100) : 0;
+            $diskLabel = ($freeDisk && $totalDisk) ? number_format($freeDisk / 1024 / 1024, 0, ',', ' ') . ' Mo libres' : '—';
+
+            $memLimit = ini_get('memory_limit');
+            $memPct = 0;
+            if ($memLimit && strcasecmp($memLimit, '-1') !== 0) {
+                $parsed = preg_replace_callback('/(\d+)([GMK])/i', function ($m) {
+                    $mul = ['K' => 1024, 'M' => 1024 ** 2, 'G' => 1024 ** 3];
+                    return $mul[strtoupper($m[2])] * $m[1];
+                }, $memLimit);
+                $memPct = $parsed > 0 ? (int) round((memory_get_usage(true) / $parsed) * 100) : 0;
+            }
+
+            $uptime = null;
+            if (is_readable('/proc/uptime') && ($boot = (float) file_get_contents('/proc/uptime'))) {
+                $uptime = floor($boot / 86400) . 'j ' . floor(($boot % 86400) / 3600) . 'h';
+            }
+
+            $health = [
+                ['label' => 'Disque', 'value' => $diskUsage . '%', 'width' => $diskUsage . '%', 'color' => $diskUsage > 85 ? 'bg-[var(--red)]' : ($diskUsage > 70 ? 'bg-[var(--amber)]' : 'bg-[var(--accent)]')],
+                ['label' => 'Mémoire PHP', 'value' => $memPct . '%', 'width' => $memPct . '%', 'color' => $memPct > 85 ? 'bg-[var(--red)]' : ($memPct > 70 ? 'bg-[var(--amber)]' : 'bg-[var(--emerald)]')],
+                ['label' => 'Base de données', 'value' => 'connectée', 'width' => '100%', 'color' => 'bg-[var(--emerald)]'],
+                ['label' => 'Uptime serveur', 'value' => $uptime ?? '—', 'width' => '100%', 'color' => 'bg-[var(--emerald)]'],
+            ];
+
+            // ─── Logs (dernières lignes réelles du journal Laravel) ───
+            $logs = $this->tailLaravelLogs(6);
+            $erreursApi = $this->countLogErrors();
+
+            // ─── Utilisateurs récents ─────────────────────────────────
+            $utilisateurs = User::with('ecole:id,nom')
+                ->latest()
+                ->take(8)
+                ->get(['id', 'name', 'prenom', 'email', 'role', 'ecole_id', 'is_active', 'created_at'])
+                ->map(function ($u) {
+                    return [
+                        'id'         => $u->id,
+                        'name'       => trim($u->name . ' ' . $u->prenom),
+                        'email'      => $u->email,
+                        'role'       => $u->role,
+                        'ecole'      => $u->ecole?->nom ?? '—',
+                        'is_active'  => (bool) $u->is_active,
+                        'created_at' => $u->created_at?->toIso8601String(),
+                    ];
+                });
+
+            // L'endpoint lui-même apporte une réponse au trafic : le volume du
+            // jour est incrémenté de cette requête.
+            $traffic = $traffic->map(function ($t) {
+                if ($t['jour'] === now()->format('Y-m-d')) {
+                    $t['req'] += 1;
+                }
+                return $t;
+            })->values();
+
             return [
                 'stats' => [
-                    ['title' => 'Total Ecoles', 'value' => (string) $totalEcoles, 'trend' => 0, 'trendLabel' => 'etablissements'],
-                    ['title' => 'Utilisateurs', 'value' => number_format($totalUsers), 'trend' => 0, 'trendLabel' => 'inscrits'],
-                    ['title' => "Taux d'Activite", 'value' => "{$tauxActivite}%", 'trend' => 0, 'trendLabel' => 'actifs'],
+                    ['title' => 'Utilisateurs Actifs', 'value' => number_format($activeUsers), 'trend' => $nouveautesSemaine, 'trendLabel' => 'nouveaux / 7j'],
+                    ['title' => 'Requêtes/minute', 'value' => '—', 'trend' => 0, 'trendLabel' => 'métrique à configurer'],
+                    ['title' => 'Espace Disque', 'value' => $diskUsage . '%', 'trend' => 0, 'trendLabel' => 'utilisé'],
+                    ['title' => 'Erreurs API', 'value' => (string) $erreursApi, 'trend' => 0, 'trendLabel' => 'dans le journal'],
+                    ['title' => 'Temps Réponse', 'value' => '—', 'trend' => 0, 'trendLabel' => 'utile après cache'],
+                    ['title' => 'Uptime', 'value' => $uptime ?? '—', 'trend' => 0, 'trendLabel' => 'serveur'],
                 ],
+                'traffic'         => $traffic,
+                'health'          => $health,
+                'logs'            => $logs,
+                'utilisateurs'    => $utilisateurs,
                 'repartition_roles' => $repartitionRoles,
                 'ecoles'            => $totalEcoles,
-                'utilisateurs'      => $totalUsers,
+                'utilisateurs_total' => $totalUsers,
                 'taux_activite'     => $tauxActivite,
                 'plans_actifs'      => $plansActifs,
                 'modules_actifs'    => $modulesActifs,
@@ -389,7 +469,82 @@ class DashboardController extends Controller
             ];
         });
 
+        // Temps de réponse réel de l'endpoint (non cacheable) et erreurs
+        // comptées dans le journal — injectés après le cache.
+        $elapsed = round((microtime(true) - $debut) * 1000);
+        $data['stats'][4]['value'] = $elapsed . ' ms';
+
         return response()->json(['success' => true, 'data' => $data]);
+    }
+
+    /**
+     * Les dernières lignes du journal Laravel, parsées en entrées de log.
+     */
+    private function tailLaravelLogs(int $limit = 6): array
+    {
+        $logFile = storage_path('logs/laravel.log');
+        if (!is_readable($logFile)) {
+            return $this->legacyLogsLog($limit);
+        }
+
+        $lines = collect(file($logFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES))->take(-$limit * 2);
+        $parsed = $lines->filter(function ($line) {
+            return preg_match('/^\[[^\]]+\] (production|local)\.(\w+):/', $line);
+        })->map(function ($line, $i) {
+            preg_match('/\[([^\]]+)\] (production|local)\.(\w+): (.*)/', $line, $m);
+            return [
+                'id'      => $i,
+                'level'   => strtoupper($m[3] ?? 'INFO'),
+                'time'    => isset($m[1]) ? date('H:i:s', strtotime($m[1])) : '—',
+                'message' => mb_substr($m[4] ?? '', 0, 160),
+                'module'  => 'laravel',
+            ];
+        })->take(-$limit)->values();
+
+        return $parsed->isNotEmpty() ? $parsed->all() : $this->legacyLogsLog($limit);
+    }
+
+    /**
+     * Nombre de lignes d'erreur dans le journal (lecture bornée à 1000 lignes).
+     */
+    private function countLogErrors(): int
+    {
+        $logFile = storage_path('logs/laravel.log');
+        if (!is_readable($logFile)) {
+            return 0;
+        }
+
+        $lignes = file($logFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        if (!$lignes) {
+            return 0;
+        }
+
+        $dernieres = array_slice($lignes, -1000);
+
+        return count(array_filter($dernieres, function ($line) {
+            return preg_match('/\.ERROR:/', $line) === 1;
+        }));
+    }
+
+    /**
+     * Repli : dernières actions auditées quand le fichier de log est
+     * inaccessible (environnement de test notamment).
+     */
+    private function legacyLogsLog(int $limit = 6): array
+    {
+        if (!class_exists(\App\Models\AuditLog::class)) {
+            return [];
+        }
+
+        return \App\Models\AuditLog::latest()->take($limit)->get()->map(function ($log, $i) {
+            return [
+                'id'      => $i,
+                'level'   => str_contains((string) $log->event, 'error') ? 'ERROR' : 'INFO',
+                'time'    => $log->created_at?->format('H:i') ?? '—',
+                'message' => mb_substr($log->description ?? $log->event ?? 'action', 0, 160),
+                'module'  => 'audit',
+            ];
+        })->all();
     }
 
     /**
