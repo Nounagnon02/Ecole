@@ -22,7 +22,8 @@ const getStatutColor = (statut) => {
   switch (statut) {
     case 'paye':
     case 'payee': return 'primary';
-    case 'en_attente': return 'warning';
+    case 'en_attente':
+    case 'partiel': return 'warning';
     case 'echec': return 'danger';
     case 'rembourse': return 'ghost';
     default: return 'outline';
@@ -34,6 +35,7 @@ const getStatutLabel = (statut) => {
     case 'paye':
     case 'payee': return 'Payée';
     case 'en_attente': return 'En attente';
+    case 'partiel': return 'Partielle';
     case 'echec': return 'Échec';
     case 'rembourse': return 'Remboursé';
     default: return statut || '—';

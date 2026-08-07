@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{PaiementEleve, Bourse, Eleve};
+use App\Models\{PaiementEleve, Bourse, Depense, Eleve};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -11,40 +11,161 @@ class ComptableController extends Controller
     /** Modes de règlement acceptés. */
     private const PAYMENT_MODES = ['ESPECES', 'MOBILE_MONEY', 'VIREMENT', 'CHEQUE', 'CARTE'];
 
+    /**
+     * Normalisation insensible à la casse et aux accents de `statut_global`.
+     *
+     * Les seeders historiques écrivent `'payé'` (accentué, minuscule),
+     * `'impayé'`, etc. — `strtoupper('payé')` donne `PAYÉ`, qui ne
+     * correspond à aucune constante du modèle. On replie les accents avant
+     * de comparer.
+     */
+    private function normaliseStatut(?string $global): string
+    {
+        return str_replace('É', 'E', mb_strtoupper((string) $global));
+    }
+
+    private function statutSlug(?string $global): string
+    {
+        return match ($this->normaliseStatut($global)) {
+            PaiementEleve::PAID => 'payee',
+            PaiementEleve::PARTIAL => 'partiel',
+            default => 'en_attente',
+        };
+    }
+
+    private function statutLabel(?string $global): string
+    {
+        return match ($this->normaliseStatut($global)) {
+            PaiementEleve::PAID => 'Payée',
+            PaiementEleve::PARTIAL => 'Partielle',
+            default => 'En attente',
+        };
+    }
+
+    /**
+     * Liste des paiements pour le portail comptable.
+     *
+     * Le contrat consommé par `FacturesPage` et `TransactionsPage` :
+     * enveloppe `{ success, data }`, une ligne par paiement avec l'identité
+     * de l'élève (nom/prénom vivent sur `users`), la classe, le motif, le
+     * montant et le statut en slug.
+     */
     public function paiements()
     {
-        return PaiementEleve::with(['eleve.classe'])->latest()->get();
+        $items = PaiementEleve::with(['eleve.user', 'eleve.classe'])
+            ->latest('date_paiement')
+            ->get()
+            ->map(function (PaiementEleve $p) {
+                $reference = $p->reference ?? ('PAY-' . str_pad((string) $p->id, 6, '0', STR_PAD_LEFT));
+                $eleve = $p->eleve;
+
+                return [
+                    'id' => $p->id,
+                    'reference' => $reference,
+                    'numero' => $reference,
+                    'eleve' => [
+                        'id' => $eleve?->id,
+                        'nom' => $eleve?->user?->name ?? $eleve?->user?->nom ?? '',
+                        'prenom' => $eleve?->user?->prenom ?? '',
+                        'classe' => [
+                            'nom_classe' => $eleve?->classe?->nom_classe,
+                        ],
+                        'matricule' => $eleve?->numero_matricule,
+                    ],
+                    'client' => trim(($eleve?->user?->name ?? '') . ' ' . ($eleve?->user?->prenom ?? '')) ?: '—',
+                    'classe' => $eleve?->classe?->nom_classe,
+                    'motif' => $p->type_paiement ?: 'Frais de scolarité',
+                    'type_paiement' => $p->type_paiement,
+                    'montant' => (float) $p->montant,
+                    'montant_paye' => (float) ($p->montant_paye ?? 0),
+                    'montant_restant' => (float) ($p->montant_restant ?? 0),
+                    'date_paiement' => $p->date_paiement?->format('Y-m-d'),
+                    'mode_paiement' => $p->mode_paiement,
+                    'statut' => $this->statutSlug($p->statut_global),
+                    'statut_label' => $this->statutLabel($p->statut_global),
+                    'created_at' => $p->created_at?->toISOString(),
+                ];
+            });
+
+        return response()->json(['success' => true, 'data' => $items]);
     }
 
     public function finances()
     {
         $stats = [
-            // La colonne est `statut_global` : `where('statut', …)` levait
-            // « Unknown column » et cet endpoint échouait en 500.
             'total_recettes' => PaiementEleve::where('statut_global', PaiementEleve::PAID)->sum('montant'),
-            'total_depenses' => 0, // À implémenter selon votre logique
-            'paiements_en_attente' => PaiementEleve::where('statut_global', PaiementEleve::PENDING)->count(),
-            'bourses_accordees' => Bourse::where('statut', 'active')->count()
+            'total_depenses' => (float) Depense::sum('montant'),
+            'paiements_en_attente' => PaiementEleve::whereIn('statut_global', [
+                PaiementEleve::PENDING,
+                PaiementEleve::PARTIAL,
+            ])->count(),
+            'bourses_accordees' => Bourse::where('statut', 'active')->count(),
         ];
 
-        $revenusMensuels = PaiementEleve::selectRaw('MONTH(date_paiement) as mois, SUM(montant) as total')
-            ->whereYear('date_paiement', now()->year)
+        // Revenus mensuels de l'année. Calculés en PHP — `MONTH(date_paiement)`
+        // n'existe pas sur SQLite (l'environnement de test) alors que
+        // `date_paiement` peut être null ; le regroupement en mémoire est
+        // portable et évite les deux pièges.
+        $revenusParMois = PaiementEleve::whereYear('date_paiement', now()->year)
             ->where('statut_global', PaiementEleve::PAID)
-            ->groupBy('mois')
-            ->orderBy('mois')
-            ->pluck('total', 'mois');
+            ->get(['date_paiement', 'montant'])
+            ->groupBy(fn ($p) => $p->date_paiement?->format('n'))
+            ->map(fn ($groupe) => (float) $groupe->sum('montant'));
 
         $chart = [
             'labels' => ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Juil', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'],
             'datasets' => [[
-                'data' => collect(range(1, 12))->map(fn($m) => (int) ($revenusMensuels[$m] ?? 0))->values()
+                'data' => collect(range(1, 12))->map(fn($m) => $revenusParMois->get((string) $m, 0))->values()
             ]]
         ];
 
         return response()->json([
-            'stats' => $stats,
-            'chart' => $chart
+            'success' => true,
+            'data' => [
+                'stats' => $stats,
+                'chart' => $chart,
+            ],
         ]);
+    }
+
+    /**
+     * Dépenses de l'établissement, pour alimenter le poste « Dépenses »
+     * des synthèses. Scopé à l'école par le trait BelongsToEcole.
+     */
+    public function depenses()
+    {
+        $items = Depense::latest('date_depense')
+            ->get()
+            ->map(fn (Depense $d) => [
+                'id' => $d->id,
+                'categorie' => $d->categorie,
+                'description' => $d->description,
+                'montant' => (float) $d->montant,
+                'date_depense' => $d->date_depense?->format('Y-m-d'),
+            ]);
+
+        return response()->json(['success' => true, 'data' => $items]);
+    }
+
+    public function storeDepense(Request $request)
+    {
+        $validated = $request->validate([
+            'categorie' => 'required|string|max:255',
+            'description' => 'required|string|max:1000',
+            'montant' => 'required|numeric|min:0.01',
+            'date_depense' => 'required|date',
+        ]);
+
+        $depense = Depense::create($validated);
+
+        return response()->json(['success' => true, 'data' => $depense], 201);
+    }
+
+    public function destroyDepense($id)
+    {
+        Depense::findOrFail($id)->delete();
+
+        return response()->json(['success' => true]);
     }
 
     public function bourses()
@@ -138,6 +259,13 @@ class ComptableController extends Controller
         $paiement = PaiementEleve::with(['eleve.user', 'eleve.classe', 'contribution'])->findOrFail($id);
         $ecole = auth()->user()?->ecole;
 
+        // `statut` n'existe pas sur `paiements` — la colonne est
+        // `statut_global`. Lire `$paiement->statut` renvoyait null : le
+        // badge et le libellé étaient « En attente »/vide sur chaque reçu.
+        $statutGlobal = $paiement->statut_global;
+        $estPaye = $this->normaliseStatut($statutGlobal) === PaiementEleve::PAID;
+        $statutLabel = $this->statutLabel($statutGlobal);
+
         $html = '<!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -177,7 +305,7 @@ class ComptableController extends Controller
         <tr><td>Type</td><td>' . e($paiement->type_paiement ?? '—') . '</td></tr>
         <tr><td>Date</td><td>' . e($paiement->date_paiement?->format('d/m/Y') ?? '—') . '</td></tr>
         <tr><td>Mode</td><td>' . e($paiement->mode_paiement ?? '—') . '</td></tr>
-        <tr><td>Statut</td><td><span class="badge ' . ($paiement->statut === 'paye' || $paiement->statut === 'payé' ? 'paye' : 'en_attente') . '">' . e($paiement->statut) . '</span></td></tr>
+        <tr><td>Statut</td><td><span class="badge ' . ($estPaye ? 'paye' : 'en_attente') . '">' . e($statutLabel) . '</span></td></tr>
     </table>
 
     <div class="amount">' . number_format((float) $paiement->montant, 0, ',', ' ') . ' FCFA</div>
@@ -195,7 +323,12 @@ class ComptableController extends Controller
     }
 
     /**
-     * Échéancier de paiement pour un élève
+     * Échéancier de paiement pour un élève.
+     *
+     * Les soldes sont calculés sur les colonnes réelles de `paiements` :
+     * `montant_total`, `montant_paye` et `montant_restant` — somme de
+     * `montant` (ligne) ou de `statut` (colonne inexistante) donnait des
+     * chiffres faux ou nuls.
      */
     public function echeancier($eleveId)
     {
@@ -205,34 +338,37 @@ class ComptableController extends Controller
             ->orderBy('date_paiement')
             ->get();
 
-        $total_du = (float) $paiements->sum('montant');
-        $total_paye = (float) $paiements->where('statut_global', PaiementEleve::PAID)->sum('montant');
+        $total_du = (float) $paiements->sum('montant_total');
+        $total_paye = (float) $paiements->sum('montant_paye');
+        $solde = (float) $paiements->sum('montant_restant');
 
         return response()->json([
             'success' => true,
             'data' => [
                 'eleve' => [
                     'id' => $eleve->id,
-                    'nom' => ($eleve->user->name ?? '') . ' ' . ($eleve->user->prenom ?? ''),
+                    'nom' => trim(($eleve->user->name ?? '') . ' ' . ($eleve->user->prenom ?? '')),
                     'classe' => $eleve->classe->nom_classe ?? '—',
                     'matricule' => $eleve->numero_matricule ?? '—',
                 ],
                 'resume' => [
                     'total_du' => $total_du,
                     'total_paye' => $total_paye,
-                    'solde' => $total_du - $total_paye,
+                    'solde' => $solde,
                     'nb_echeances' => $paiements->count(),
-                    'nb_payees' => $paiements->where('statut_global', PaiementEleve::PAID)->count(),
+                    'nb_payees' => $paiements
+                        ->filter(fn ($p) => $this->normaliseStatut($p->statut_global) === PaiementEleve::PAID)
+                        ->count(),
                 ],
                 'echeances' => $paiements->map(function ($p) {
                     return [
                         'id' => $p->id,
                         'reference' => $p->reference ?? 'PAY-' . $p->id,
-                        // `type_paiement` n'existe pas sur cette table.
-                        'type' => $p->mode_paiement,
+                        'type' => $p->type_paiement ?: $p->mode_paiement,
                         'montant' => (float) $p->montant,
                         'date' => $p->date_paiement?->format('d/m/Y'),
-                        'statut' => $p->statut,
+                        'statut' => $this->statutSlug($p->statut_global),
+                        'statut_label' => $this->statutLabel($p->statut_global),
                         'mode' => $p->mode_paiement,
                     ];
                 }),
