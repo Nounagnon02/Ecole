@@ -169,7 +169,7 @@ class NewEndpointsTest extends TestCase
     {
         $school  = Ecole::factory()->create();
         $classe  = Classes::factory()->create(['ecole_id' => $school->id]);
-        $eleve   = Eleve::factory()->forSchool($school)->create(['class_id' => $classe->id]);
+        $eleve   = Eleve::factory()->forSchool($school)->create(['classe_id' => $classe->id]);
         $matiere = Matieres::factory()->create(['ecole_id' => $school->id]);
 
         // La clé étrangère pointe vers `enseignants`, pas vers `users`.

@@ -6,6 +6,7 @@ use App\Models\Eleve;
 use App\Models\Enseignant;
 use App\Models\User;
 use App\Models\UserParent;
+use App\Support\Roles;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -221,13 +222,13 @@ class AuthController extends Controller
             if ($user->role === 'eleve') {
                 $profileData = $request->validate([
                     'numero_matricule' => 'required|string|unique:eleves',
-                    'class_id' => 'required|school_exists:classes,id',
+                    'classe_id' => 'required|school_exists:classes,id',
                     'serie_id' => 'nullable|school_exists:series,id',
                 ]);
                 Eleve::create([
                     'user_id' => $user->id,
                     'numero_matricule' => $profileData['numero_matricule'],
-                    'class_id' => $profileData['class_id'],
+                    'classe_id' => $profileData['classe_id'],
                     'serie_id' => $profileData['serie_id'],
                 ]);
             } elseif ($user->role === 'parent') {
@@ -311,12 +312,28 @@ class AuthController extends Controller
     protected function getRedirectRouteBasedOnRole($role)
     {
         $routes = [
-            'eleve' => '/dashboard-eleve',
-            'parent' => '/dashboard-parent',
-            'enseignant' => '/dashboard-enseignant',
-            'directeur' => '/dashboard-admin',
-            'admin' => '/dashboard-admin',
-            'comptable' => '/dashboard-comptable',
+            Roles::ELEVE => '/dashboard-eleve',
+            Roles::PARENT => '/dashboard-parent',
+            Roles::TEACHER => '/dashboard-enseignant',
+            Roles::TEACHER_KINDERGARTEN => '/dashboard-enseignant',
+            Roles::TEACHER_PRIMARY => '/dashboard-enseignant',
+            Roles::TEACHER_SECONDARY => '/dashboard-enseignant',
+            Roles::DIRECTOR => '/dashboard-admin',
+            Roles::DIRECTOR_KINDERGARTEN => '/dashboard-admin',
+            Roles::DIRECTOR_PRIMARY => '/dashboard-admin',
+            Roles::DIRECTOR_SECONDARY => '/dashboard-admin',
+            Roles::ADMIN => '/dashboard-admin',
+            Roles::COMPTABLE => '/dashboard-comptable',
+            Roles::CENSEUR => '/dashboard-censeur',
+            Roles::SURVEILLANT => '/dashboard-surveillant',
+            Roles::SECRETAIRE => '/dashboard-secretaire',
+            Roles::INFIRMIER => '/dashboard-infirmier',
+            Roles::BIBLIOTHECAIRE => '/dashboard-bibliothecaire',
+            Roles::CHANCELLOR => '/dashboard-universite',
+            Roles::DEAN => '/dashboard-universite',
+            Roles::PROFESSOR => '/dashboard-universite',
+            Roles::STUDENT => '/dashboard-universite',
+            Roles::STAFF => '/dashboard-universite',
         ];
 
         return $routes[$role] ?? '/dashboard';

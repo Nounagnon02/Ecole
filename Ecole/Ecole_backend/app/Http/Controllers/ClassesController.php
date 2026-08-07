@@ -575,10 +575,10 @@ public function updateSeries(Request $request, $id)
     public function getEleves($id)
     {
         // `DB::table` contournait le scope BelongsToEcole, et les colonnes
-        // visées n'existent pas : la clé est `class_id`, le matricule
+        // visées n'existent pas : la clé est `classe_id`, le matricule
         // `numero_matricule`, et nom/prénom vivent sur `users`.
         $eleves = \App\Models\Eleve::with('user:id,name,prenom')
-            ->where('class_id', $id)
+            ->where('classe_id', $id)
             ->get(['id', 'user_id', 'numero_matricule'])
             ->map(fn($e) => [
                 'id' => $e->id,

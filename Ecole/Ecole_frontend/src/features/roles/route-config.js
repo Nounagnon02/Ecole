@@ -53,7 +53,7 @@ export const ROUTE_CONFIG = {
   admin: {
     path: '/admin/dashboard',
     component: lazy(() => import('@/app/dashboards/admin')),
-    roles: [ROLES.ADMIN, ROLES.DIRECTEUR, ROLES.SUPER_ADMIN],
+    roles: [ROLES.ADMIN, ROLES.SUPER_ADMIN],
   },
 
   // ─── STAFF ────────────────────────────────────────────────────────────

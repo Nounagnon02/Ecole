@@ -97,7 +97,7 @@ it('returns student timetable', function () {
     $user = User::factory()->create(['role' => 'eleve', 'ecole_id' => $ecole->id]);
     $eleve = Eleve::factory()->create(['user_id' => $user->id, 'ecole_id' => $ecole->id]);
     $classe = Classes::factory()->create(['ecole_id' => $ecole->id]);
-    $eleve->update(['class_id' => $classe->id]);
+    $eleve->update(['classe_id' => $classe->id]);
 
     EmploiDuTemps::factory()->create(['classe_id' => $classe->id, 'ecole_id' => $ecole->id]);
 
@@ -294,7 +294,7 @@ it('series average calculation uses correct column name', function () {
     $serie = Series::factory()->create(['ecole_id' => $ecole->id]);
     $matiere = Matieres::factory()->create(['ecole_id' => $ecole->id]);
     $serie->matieres()->attach($matiere, ['coefficient' => 2, 'classe_id' => $classe->id]);
-    $eleve = Eleve::factory()->create(['serie_id' => $serie->id, 'class_id' => $classe->id, 'ecole_id' => $ecole->id]);
+    $eleve = Eleve::factory()->create(['serie_id' => $serie->id, 'classe_id' => $classe->id, 'ecole_id' => $ecole->id]);
 
     Notes::factory()->create([
         'eleve_id' => $eleve->id,

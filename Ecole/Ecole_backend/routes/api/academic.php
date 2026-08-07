@@ -40,7 +40,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/store', [ClassesController::class, 'store'])->middleware('role:directeur');
         Route::get('/{id}', [ClassesController::class, 'show']);
         Route::get('/{id}/eleves', [ClassesController::class, 'getEleves'])
-            ->middleware('role:directeur,enseignant,censeur,surveillant,secretaire,infirmier');
+            ->middleware('role:directeur,enseignant,censeur,surveillant,secretaire,infirmier,bibliothecaire');
     });
 
     // ============ ÉLÈVES ============

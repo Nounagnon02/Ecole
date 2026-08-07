@@ -46,7 +46,7 @@ class StudentDeactivationTest extends TestCase
         ]);
 
         $this->pupil = Eleve::factory()->forSchool($this->school)
-            ->create(['class_id' => $classe->id]);
+            ->create(['classe_id' => $classe->id]);
     }
 
     private function schoolHead(): User
@@ -62,7 +62,7 @@ class StudentDeactivationTest extends TestCase
     {
         $mark = Notes::factory()->create([
             'eleve_id'  => $this->pupil->id,
-            'classe_id' => $this->pupil->class_id,
+            'classe_id' => $this->pupil->classe_id,
             'ecole_id'  => $this->school->id,
             'note'      => 14,
             'periode'   => 'Trimestre 1',
@@ -193,7 +193,7 @@ class StudentDeactivationTest extends TestCase
             'categorie_classe' => 'Secondaire',
         ]);
         $secondaryPupil = Eleve::factory()->forSchool($this->school)
-            ->create(['class_id' => $secondary->id]);
+            ->create(['classe_id' => $secondary->id]);
 
         $primaryHead = User::factory()->create([
             'role'     => 'directeurP',

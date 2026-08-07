@@ -62,7 +62,7 @@ class BulletinService
             // sa moyenne. On ne filtre donc que les valeurs nulles.
             $moyenne = $this->moyenneMatiere($notesMatiere);
 
-            $coefficient = $this->getCoefficient($matiere->id, $eleve->class_id, $eleve->serie_id);
+            $coefficient = $this->getCoefficient($matiere->id, $eleve->classe_id, $eleve->serie_id);
 
             return [
                 'matiere' => $matiere->nom,
@@ -147,7 +147,7 @@ class BulletinService
             }
 
             $subjectAverage = $this->moyenneMatiere($subjectMarks);
-            $coeff = $this->getCoefficient($subject->id, $pupil->class_id, $pupil->serie_id);
+            $coeff = $this->getCoefficient($subject->id, $pupil->classe_id, $pupil->serie_id);
 
             $totalPoints += $subjectAverage * $coeff;
             $totalCoeff += $coeff;
@@ -219,7 +219,7 @@ class BulletinService
 
         $marks = Notes::where('matiere_id', $note->matiere_id)
             ->where('periode', $note->periode)
-            ->whereHas('eleve', fn ($q) => $q->where('class_id', $note->eleve->class_id))
+            ->whereHas('eleve', fn ($q) => $q->where('classe_id', $note->eleve->classe_id))
             ->get(['eleve_id', 'note', 'note_sur']);
 
         $averages = $marks
@@ -272,7 +272,7 @@ class BulletinService
     {
         // Une seule passe pour toute la classe, pour éviter un N+1.
         $classmates = Eleve::with(['notes.matiere'])
-            ->where('class_id', $eleve->class_id)
+            ->where('classe_id', $eleve->classe_id)
             ->get();
 
         // Moyenne générale pondérée de chaque élève, indexée par son id : c'est
@@ -308,7 +308,7 @@ class BulletinService
         $anneeScolaire ??= AnneeScolaire::courante();
 
         $eleves = Eleve::with(['notes.matiere'])
-            ->where('class_id', $classeId)
+            ->where('classe_id', $classeId)
             ->get();
 
         if ($eleves->isEmpty()) {
@@ -381,7 +381,7 @@ class BulletinService
                         'periode' => $periode,
                         'annee_scolaire' => $anneeScolaire,
                         'valeur' => round($this->moyenneMatiere($subjectMarks), 2),
-                        'coefficient' => $this->getCoefficient($subject->id, $pupil->class_id, $pupil->serie_id),
+                        'coefficient' => $this->getCoefficient($subject->id, $pupil->classe_id, $pupil->serie_id),
                         'rang' => $this->positionOf($subjectRanks[$subject->id], $pupil->id),
                         'total_eleves' => $subjectRanks[$subject->id]->count(),
                         'created_by' => auth()->id(),

@@ -46,7 +46,7 @@ class Classes extends Model
 
     public function eleves()
     {
-        return $this->hasMany(Eleve::class, 'class_id');
+        return $this->hasMany(Eleve::class, 'classe_id');
     }
 
     // Ajout de méthodes utiles

@@ -24,7 +24,7 @@ class Eleve extends Model
      */
     protected static function cyclePath(): array
     {
-        return ['class' => 'class_id'];
+        return ['class' => 'classe_id'];
     }
 
 
@@ -34,11 +34,43 @@ class Eleve extends Model
         'date_naissance',
         'lieu_naissance',
         'sexe',
-        'class_id',
+        'classe_id',
         'serie_id',
         'ecole_id',
         'statut',
     ];
+
+    /**
+     * Rangs (ex æquo possible) de tous les élèves d'une classe, calculés sur
+     * la moyenne de leurs notes : `[eleve_id => rang]`. Une seule requête par
+     * classe, réutilisée pour toute la liste des enfants d'un parent.
+     */
+    public static function classRanks(int $classeId): array
+    {
+        $moyennes = Notes::query()
+            ->whereHas('eleve', function ($q) use ($classeId) {
+                $q->where('classe_id', $classeId);
+            })
+            ->get(['eleve_id', 'note'])
+            ->groupBy('eleve_id')
+            ->map(fn ($groupe) => round($groupe->avg('note'), 2));
+
+        $sorted = $moyennes->sortDesc();
+
+        $ranks = [];
+        $position = 0;
+        $last = null;
+        foreach ($sorted as $eleveId => $moyenne) {
+            $position++;
+            if ($moyenne !== $last) {
+                $rank = $position;
+            }
+            $ranks[$eleveId] = $rank;
+            $last = $moyenne;
+        }
+
+        return $ranks;
+    }
 
     public function user()
     {
@@ -47,12 +79,43 @@ class Eleve extends Model
 
     public function parents()
     {
-        return $this->belongsToMany(UserParent::class, 'eleves_parents', 'eleve_id', 'parent_id');
+        return $this->belongsToMany(UserParent::class, 'eleves_parents', 'eleve_id', 'parent_id')
+            ->withPivot(['role', 'is_primary', 'is_guardian'])
+            ->using(ParentEleve::class);
+    }
+
+    /**
+     * Le parent à contacter en priorité pour cet élève.
+     *
+     * `paiements.parents_id` référence ce responsable : sans lui, un règlement
+     * créé pour un élève n'était rattaché à aucune famille, alors que la
+     * filiation existe déjà dans `eleves_parents`.
+     *
+     * Le tuteur « premier parent venu » est déprécié : depuis que le pivot
+     * porte `is_primary`, on renvoie le parent primaire de la filiation,
+     * en ne retombant sur le premier parent lié que pour les données
+     * historiques non encore réparties.
+     */
+    public function responsibleParent(): ?UserParent
+    {
+        return $this->parents()
+            ->orderByDesc('eleves_parents.is_primary')
+            ->first();
+    }
+
+    /**
+     * La filiation primaire (contact de référence) de cet élève, si désignée.
+     */
+    public function primaryFiliation(): ?ParentEleve
+    {
+        return ParentEleve::where('eleve_id', $this->id)
+            ->primary()
+            ->first();
     }
 
     public function classe()
     {
-        return $this->belongsTo(Classes::class, 'class_id');
+        return $this->belongsTo(Classes::class, 'classe_id');
     }
 
     public function serie()

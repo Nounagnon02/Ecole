@@ -47,6 +47,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/', [ParentsController::class, 'store'])->middleware('role:directeur');
         Route::get('/{id}', [ParentsController::class, 'show']);
         Route::get('/{id}/eleves', [ParentsController::class, 'getElevesByParent']);
+        // Lier/révoquer la filiation. Les deux endpoints valident chaque
+        // `eleve_id` avec `school_exists`, sinon un directeur lierait les
+        // enfants d'un autre établissement à ce parent.
+        Route::put('/{id}/eleves', [ParentsController::class, 'updateEleves'])->middleware('role:directeur');
+        Route::put('/{id}', [ParentsController::class, 'update'])->middleware('role:directeur');
     });
 
     // ============ PARENT DASHBOARD ============

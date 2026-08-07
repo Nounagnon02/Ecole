@@ -232,7 +232,7 @@ class DemoDataSeeder extends Seeder
                 'user_id' => $userId,
                 'numero_matricule' => $e['mat'],
                 'sexe' => $e['sexe'],
-                'class_id' => $classIds[$targetClass],
+                'classe_id' => $classIds[$targetClass],
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -321,11 +321,13 @@ class DemoDataSeeder extends Seeder
             if (!isset($newParentIds[$i])) continue;
 
             DB::table('eleves_parents')->insert([
-                'ecole_id' => $ecoleId,
-                'parent_id' => $newParentIds[$i],
-                'eleve_id' => $eleveId,
-                'created_at' => now(),
-                'updated_at' => now(),
+                'ecole_id'    => $ecoleId,
+                'parent_id'   => $newParentIds[$i],
+                'eleve_id'    => $eleveId,
+                'role'        => $i % 2 === 0 ? 'père' : 'mère',
+                'is_primary'  => true,
+                'created_at'  => now(),
+                'updated_at'  => now(),
             ]);
         }
         echo "✓ Parents liés aux élèves\n";
@@ -333,7 +335,7 @@ class DemoDataSeeder extends Seeder
         // ─── 9. Notes for all students ────────────────────────────────
         $allEleves = DB::table('eleves')
             ->where('ecole_id', $ecoleId)
-            ->get(['id', 'class_id']);
+            ->get(['id', 'classe_id']);
 
         $periodes = ['Trimestre 1', 'Trimestre 2', 'Trimestre 3'];
         $evalTypes = ['Devoir1', 'Devoir2', 'Interrogation', '1ère evaluation', '2ème evaluation'];
@@ -348,7 +350,7 @@ class DemoDataSeeder extends Seeder
         foreach ($allEleves as $eleve) {
             $classeMatieres = DB::table('classe_matieres')
                 ->where('ecole_id', $ecoleId)
-                ->where('classe_id', $eleve->class_id)
+                ->where('classe_id', $eleve->classe_id)
                 ->get();
 
             foreach ($classeMatieres as $cm) {
@@ -370,7 +372,7 @@ class DemoDataSeeder extends Seeder
                     $batchNotes[] = [
                         'ecole_id' => $ecoleId,
                         'eleve_id' => $eleve->id,
-                        'classe_id' => $eleve->class_id,
+                        'classe_id' => $eleve->classe_id,
                         'matiere_id' => $cm->matiere_id,
                         'note' => $note,
                         'note_sur' => $noteSur,
@@ -449,7 +451,7 @@ class DemoDataSeeder extends Seeder
 
             $contribution = DB::table('contributions')
                 ->where('ecole_id', $ecoleId)
-                ->where('id_classe', $eleve->class_id)
+                ->where('id_classe', $eleve->classe_id)
                 ->first();
 
             $montant = $contribution ? $contribution->montant : 150000;

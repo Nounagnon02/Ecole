@@ -31,7 +31,7 @@ class BulletinArchiveTest extends TestCase
         Notes::factory()->create([
             'eleve_id' => $pupil->id,
             'matiere_id' => $subject->id,
-            'classe_id' => $pupil->class_id,
+            'classe_id' => $pupil->classe_id,
             'ecole_id' => $pupil->ecole_id,
             'type_evaluation' => 'Devoir1',
             'note' => $note,
@@ -62,9 +62,9 @@ class BulletinArchiveTest extends TestCase
         $school = $this->actingInSchool();
         $classe = Classes::factory()->create(['ecole_id' => $school->id]);
 
-        $best = Eleve::factory()->forSchool($school)->create(['class_id' => $classe->id]);
-        $middle = Eleve::factory()->forSchool($school)->create(['class_id' => $classe->id]);
-        $last = Eleve::factory()->forSchool($school)->create(['class_id' => $classe->id]);
+        $best = Eleve::factory()->forSchool($school)->create(['classe_id' => $classe->id]);
+        $middle = Eleve::factory()->forSchool($school)->create(['classe_id' => $classe->id]);
+        $last = Eleve::factory()->forSchool($school)->create(['classe_id' => $classe->id]);
 
         $maths = Matieres::factory()->create(['ecole_id' => $school->id]);
         DB::table('classe_matieres')->insert([
@@ -110,7 +110,7 @@ class BulletinArchiveTest extends TestCase
     {
         $school = $this->actingInSchool();
         $classe = Classes::factory()->create(['ecole_id' => $school->id]);
-        $pupil = Eleve::factory()->forSchool($school)->create(['class_id' => $classe->id]);
+        $pupil = Eleve::factory()->forSchool($school)->create(['classe_id' => $classe->id]);
         $subject = Matieres::factory()->create(['ecole_id' => $school->id]);
 
         $this->mark($pupil, $subject, 10);
@@ -134,7 +134,7 @@ class BulletinArchiveTest extends TestCase
     {
         $school = $this->actingInSchool();
         $classe = Classes::factory()->create(['ecole_id' => $school->id]);
-        Eleve::factory()->forSchool($school)->create(['class_id' => $classe->id]);
+        Eleve::factory()->forSchool($school)->create(['classe_id' => $classe->id]);
 
         $this->lock($classe)->assertOk()->assertJson(['data' => []]);
         $this->assertDatabaseCount('bulletins', 0);
@@ -158,8 +158,8 @@ class BulletinArchiveTest extends TestCase
     {
         $school = $this->actingInSchool();
         $classe = Classes::factory()->create(['ecole_id' => $school->id]);
-        $mine = Eleve::factory()->forSchool($school)->create(['class_id' => $classe->id]);
-        $theirs = Eleve::factory()->forSchool($school)->create(['class_id' => $classe->id]);
+        $mine = Eleve::factory()->forSchool($school)->create(['classe_id' => $classe->id]);
+        $theirs = Eleve::factory()->forSchool($school)->create(['classe_id' => $classe->id]);
         $subject = Matieres::factory()->create(['ecole_id' => $school->id]);
 
         $this->mark($mine, $subject, 14);
@@ -190,7 +190,7 @@ class BulletinArchiveTest extends TestCase
     {
         $school = $this->actingInSchool();
         $classe = Classes::factory()->create(['ecole_id' => $school->id]);
-        $pupil = Eleve::factory()->forSchool($school)->create(['class_id' => $classe->id]);
+        $pupil = Eleve::factory()->forSchool($school)->create(['classe_id' => $classe->id]);
         $subject = Matieres::factory()->create(['ecole_id' => $school->id]);
 
         $this->postJson('/api/notes/store', [

@@ -207,9 +207,9 @@ class Communication extends Model
         }
 
         return match (true) {
-            $user->role === 'eleve'  => array_filter([$user->eleve?->class_id]),
+            $user->role === 'eleve'  => array_filter([$user->eleve?->classe_id]),
             $user->role === 'parent' => $user->parent
-                ? $user->parent->eleves()->pluck('eleves.class_id')->filter()->unique()->values()->all()
+                ? $user->parent->eleves()->pluck('eleves.classe_id')->filter()->unique()->values()->all()
                 : [],
             Roles::satisfies($user->role, [Roles::TEACHER]) => $user->enseignant
                 ? $user->enseignant->classes()->pluck('classes.id')->unique()->values()->all()

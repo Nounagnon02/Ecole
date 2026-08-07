@@ -707,11 +707,17 @@ class UniversiteSeeder extends Seeder
         // fonctionnalité n'avait rien à exercer.
         $comptes = $this->issueStudentAccounts($ecole);
 
+        // Même principe pour l'administration : sans comptes `recteur`, `doyen`,
+        // `professeur` et `personnel`, le module universitaire n'était pilotable
+        // par personne en base de test (cf. PLAN_CORRECTIONS_ROLES.md lot L2).
+        $staff = $this->issueStaffAccounts($ecole);
+
         Schema::enableForeignKeyConstraints();
         SchoolContext::forget();
 
         $this->command->info('✓ Module universitaire seedé avec succès !');
         $this->command->info("  {$comptes} comptes étudiants délivrés (mot de passe : password1234)");
+        $this->command->info("  {$staff} comptes d'administration délivrés (mot de passe : password1234)");
         $this->command->info('  1 Université, 3 Facultés, 8 Départements, 13 Filières');
         $this->command->info('  6 Enseignants, 12 Étudiants, 4 Personnels');
         $this->command->info('  1 Année Académique, 2 Semestres');
@@ -753,6 +759,101 @@ class UniversiteSeeder extends Seeder
             );
 
             $etudiant->update(['user_id' => $user->id]);
+            $issued++;
+        }
+
+        return $issued;
+    }
+
+    /**
+     * Délivrer les comptes d'administration du module universitaire.
+     *
+     * Les routes du module exigent `role:recteur,doyen,professeur,personnel,...`
+     * (cf. `routes/api/universite.php`), mais personne ne possédait ces rôles en
+     * base de test : seule `etudiant` était provisionnée. Chaque retour correspond
+     * à un poste de l'organigramme UAC (1 recteur, 1 doyen par faculté, 1 compte
+     * par enseignant et par membre du personnel).
+     *
+     * `uni_enseignants` porte une colonne `user_id` (migration
+     * `link_university_profiles_to_accounts`), donc le hook professeur est
+     * réellement relié à sa fiche ; recteur/doyen/personnel n'ont pas de colonne
+     * de liaison (le contrôle se fait par rôle middleware), on se contente d'un
+     * compte avec le rôle adéquat.
+     */
+    private function issueStaffAccounts(Ecole $ecole): int
+    {
+        $issued = 0;
+
+        // ---- Recteur (1 par université : l'université seedée) ----
+        $universite = Universite::first();
+
+        if ($universite) {
+            User::firstOrCreate(
+                ['email' => 'recteur@uac.bj'],
+                [
+                    'identifiant' => 'recteur_universite',
+                    'name'        => 'Recteur',
+                    'prenom'      => $universite->nom,
+                    'password'    => Hash::make('password1234'),
+                    'role'        => Roles::CHANCELLOR,
+                    'ecole_id'    => $ecole->id,
+                ]
+            );
+            $issued++;
+        }
+
+        // ---- 2. Un doyen par faculté ----
+        foreach (Faculte::all() as $index => $faculte) {
+            User::firstOrCreate(
+                ['email' => 'doyen' . ($index + 1) . '@uac.bj'],
+                [
+                    'identifiant' => 'doyen_faculte' . ($index + 1),
+                    'name'        => $faculte->nom,
+                    'prenom'      => 'Doyen',
+                    'password'    => Hash::make('password1234'),
+                    'role'        => Roles::DEAN,
+                    'ecole_id'    => $ecole->id,
+                ]
+            );
+            $issued++;
+        }
+
+        // ---- 3. Un compte par professeur (relie à sa fiche `uni_enseignants`) ----
+        foreach (Enseignant::whereNull('user_id')->get() as $enseignant) {
+            $email = $enseignant->email ?: 'prof.' . Str::slug($enseignant->nom . '-' . $enseignant->prenom) . '@uac.bj';
+
+            $user = User::firstOrCreate(
+                ['email' => $email],
+                [
+                    'identifiant' => 'prof_' . Str::slug($enseignant->nom . '-' . $enseignant->prenom),
+                    'name'        => $enseignant->nom,
+                    'prenom'      => $enseignant->prenom,
+                    'telephone'   => $enseignant->telephone,
+                    'password'    => Hash::make('password1234'),
+                    'role'        => Roles::PROFESSOR,
+                    'ecole_id'    => $ecole->id,
+                ]
+            );
+
+            $enseignant->update(['user_id' => $user->id]);
+            $issued++;
+        }
+
+        // ---- 4. Un compte par personne du personnel ----
+        foreach (Personnel::all() as $personne) {
+            $email = $personne->email ?: 'personnel.' . Str::slug($personne->nom . '-' . $personne->prenom) . '@uac.bj';
+
+            User::firstOrCreate(
+                ['email' => $email],
+                [
+                    'identifiant' => 'perso_' . Str::slug($personne->nom . '-' . $personne->prenom),
+                    'name'        => $personne->nom,
+                    'prenom'      => $personne->prenom,
+                    'password'    => Hash::make('password1234'),
+                    'role'        => Roles::STAFF,
+                    'ecole_id'    => $ecole->id,
+                ]
+            );
             $issued++;
         }
 

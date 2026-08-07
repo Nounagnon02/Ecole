@@ -32,7 +32,7 @@ class MoyennesPersistenceTest extends TestCase
         Notes::factory()->create([
             'eleve_id' => $pupil->id,
             'matiere_id' => $subject->id,
-            'classe_id' => $pupil->class_id,
+            'classe_id' => $pupil->classe_id,
             'ecole_id' => $pupil->ecole_id,
             'type_evaluation' => $type,
             'note' => $note,
@@ -47,9 +47,9 @@ class MoyennesPersistenceTest extends TestCase
         $school = $this->actingInSchool();
         $classe = Classes::factory()->create(['ecole_id' => $school->id]);
 
-        $best = Eleve::factory()->forSchool($school)->create(['class_id' => $classe->id]);
-        $middle = Eleve::factory()->forSchool($school)->create(['class_id' => $classe->id]);
-        $last = Eleve::factory()->forSchool($school)->create(['class_id' => $classe->id]);
+        $best = Eleve::factory()->forSchool($school)->create(['classe_id' => $classe->id]);
+        $middle = Eleve::factory()->forSchool($school)->create(['classe_id' => $classe->id]);
+        $last = Eleve::factory()->forSchool($school)->create(['classe_id' => $classe->id]);
 
         $maths = Matieres::factory()->create(['ecole_id' => $school->id]);
 
@@ -104,9 +104,9 @@ class MoyennesPersistenceTest extends TestCase
         $school = $this->actingInSchool();
         $classe = Classes::factory()->create(['ecole_id' => $school->id]);
 
-        $best = Eleve::factory()->forSchool($school)->create(['class_id' => $classe->id]);
-        $middle = Eleve::factory()->forSchool($school)->create(['class_id' => $classe->id]);
-        $last = Eleve::factory()->forSchool($school)->create(['class_id' => $classe->id]);
+        $best = Eleve::factory()->forSchool($school)->create(['classe_id' => $classe->id]);
+        $middle = Eleve::factory()->forSchool($school)->create(['classe_id' => $classe->id]);
+        $last = Eleve::factory()->forSchool($school)->create(['classe_id' => $classe->id]);
 
         $subject = Matieres::factory()->create(['ecole_id' => $school->id]);
 
@@ -141,7 +141,7 @@ class MoyennesPersistenceTest extends TestCase
     {
         $school = $this->actingInSchool();
         $classe = Classes::factory()->create(['ecole_id' => $school->id]);
-        $pupil = Eleve::factory()->forSchool($school)->create(['class_id' => $classe->id]);
+        $pupil = Eleve::factory()->forSchool($school)->create(['classe_id' => $classe->id]);
         $subject = Matieres::factory()->create(['ecole_id' => $school->id]);
 
         $this->mark($pupil, $subject, 'Devoir1', 10);
@@ -173,8 +173,8 @@ class MoyennesPersistenceTest extends TestCase
     {
         $school = $this->actingInSchool();
         $classe = Classes::factory()->create(['ecole_id' => $school->id]);
-        $mine = Eleve::factory()->forSchool($school)->create(['class_id' => $classe->id]);
-        $theirs = Eleve::factory()->forSchool($school)->create(['class_id' => $classe->id]);
+        $mine = Eleve::factory()->forSchool($school)->create(['classe_id' => $classe->id]);
+        $theirs = Eleve::factory()->forSchool($school)->create(['classe_id' => $classe->id]);
         $subject = Matieres::factory()->create(['ecole_id' => $school->id]);
 
         $this->mark($mine, $subject, 'Devoir1', 14);

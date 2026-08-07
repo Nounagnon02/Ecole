@@ -41,7 +41,7 @@ class TenantScopeBypassTest extends TestCase
             'ecole_id'         => $theirs->id,
             'categorie_classe' => Cycles::SECONDARY,
         ]);
-        $theirPupil = Eleve::factory()->forSchool($theirs)->create(['class_id' => $theirClass->id]);
+        $theirPupil = Eleve::factory()->forSchool($theirs)->create(['classe_id' => $theirClass->id]);
 
         Notes::factory()->create([
             'eleve_id'  => $theirPupil->id,
@@ -71,9 +71,9 @@ class TenantScopeBypassTest extends TestCase
             'categorie_classe' => Cycles::SECONDARY,
         ]);
 
-        $tiedA  = Eleve::factory()->forSchool($school)->create(['class_id' => $classe->id]);
-        $tiedB  = Eleve::factory()->forSchool($school)->create(['class_id' => $classe->id]);
-        $behind = Eleve::factory()->forSchool($school)->create(['class_id' => $classe->id]);
+        $tiedA  = Eleve::factory()->forSchool($school)->create(['classe_id' => $classe->id]);
+        $tiedB  = Eleve::factory()->forSchool($school)->create(['classe_id' => $classe->id]);
+        $behind = Eleve::factory()->forSchool($school)->create(['classe_id' => $classe->id]);
 
         foreach ([[$tiedA, 15], [$tiedB, 15], [$behind, 9]] as [$pupil, $note]) {
             Notes::factory()->create([
@@ -111,8 +111,8 @@ class TenantScopeBypassTest extends TestCase
             'categorie_classe' => Cycles::SECONDARY,
         ]);
 
-        $onTen    = Eleve::factory()->forSchool($school)->create(['class_id' => $classe->id]);
-        $onTwenty = Eleve::factory()->forSchool($school)->create(['class_id' => $classe->id]);
+        $onTen    = Eleve::factory()->forSchool($school)->create(['classe_id' => $classe->id]);
+        $onTwenty = Eleve::factory()->forSchool($school)->create(['classe_id' => $classe->id]);
 
         // 9/10 is 18/20, so ahead of 15/20 — the raw 9 < 15 must not decide.
         Notes::factory()->create([
@@ -149,7 +149,7 @@ class TenantScopeBypassTest extends TestCase
                 'ecole_id'         => $school->id,
                 'categorie_classe' => Cycles::SECONDARY,
             ]);
-            $pupil = Eleve::factory()->forSchool($school)->create(['class_id' => $classe->id]);
+            $pupil = Eleve::factory()->forSchool($school)->create(['classe_id' => $classe->id]);
 
             Notes::factory()->create([
                 'eleve_id' => $pupil->id, 'classe_id' => $classe->id, 'ecole_id' => $school->id,
@@ -178,7 +178,7 @@ class TenantScopeBypassTest extends TestCase
             'ecole_id'         => $school->id,
             'categorie_classe' => Cycles::SECONDARY,
         ]);
-        $pupil = Eleve::factory()->forSchool($school)->create(['class_id' => $classe->id]);
+        $pupil = Eleve::factory()->forSchool($school)->create(['classe_id' => $classe->id]);
 
         // 5.5 fell between the old `0-5` and `6-10` bands and disappeared.
         Notes::factory()->create([
@@ -209,11 +209,11 @@ class TenantScopeBypassTest extends TestCase
         // Same numbering scheme in both schools — nothing forbids it.
         $mySubject = Matieres::factory()->create(['ecole_id' => $mine->id]);
         $myPupil = Eleve::factory()->forSchool($mine)->create([
-            'class_id'         => $myClass->id,
+            'classe_id'         => $myClass->id,
             'numero_matricule' => 'MAT-001',
         ]);
         $theirPupil = Eleve::factory()->forSchool($theirs)->create([
-            'class_id'         => $theirClass->id,
+            'classe_id'         => $theirClass->id,
             'numero_matricule' => 'MAT-001',
         ]);
 

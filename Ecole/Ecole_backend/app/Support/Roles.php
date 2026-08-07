@@ -25,12 +25,35 @@ final class Roles
     /** The one genuinely transverse role. `directeur` is not transverse. */
     public const SUPER_ADMIN = 'super-admin';
 
+    /**
+     * Platform administrator.
+     *
+     * A legacy role kept alive because seven routes gate on it and the frontend
+     * ships a full `/admin/*` surface. It is a *management* role, not a
+     * transverse one: unlike `SUPER_ADMIN` it does not pass every gate.
+     */
+    public const ADMIN = 'admin';
+
     /* ─── Heads of school ─────────────────────────────────────────────── */
 
     public const DIRECTOR             = 'directeur';
     public const DIRECTOR_KINDERGARTEN = 'directeurM';
     public const DIRECTOR_PRIMARY      = 'directeurP';
     public const DIRECTOR_SECONDARY    = 'directeurS';
+
+    /* ─── Scholastic staff ─────────────────────────────────────────────── */
+
+    public const CENSEUR       = 'censeur';
+    public const SECRETAIRE    = 'secretaire';
+    public const COMPTABLE     = 'comptable';
+    public const SURVEILLANT   = 'surveillant';
+    public const INFIRMIER     = 'infirmier';
+    public const BIBLIOTHECAIRE = 'bibliothecaire';
+
+    /* ─── Learners and guardians ───────────────────────────────────────── */
+
+    public const ELEVE  = 'eleve';
+    public const PARENT = 'parent';
 
     /* ─── Teaching ────────────────────────────────────────────────────── */
 
@@ -41,14 +64,95 @@ final class Roles
      *
      * Declared by the frontend (`ROLES.ENSEIGNEMENT*`, with labels
      * "Enseignement Maternelle/Primaire/Secondaire") and named in the project
-     * brief, but no backend code assigns them yet. They are declared here so
-     * that the day one is assigned, it inherits the teaching family and its
-     * cycle instead of reproducing the `directeurP` lockout — a role that
-     * exists in one layer and not the other is precisely how that happened.
+     * brief. They inherit the teaching family and their cycle (see `CYCLES`)
+     * instead of reproducing the `directeurP` lockout — a role that exists in
+     * one layer and not the other is precisely how that happened.
      */
     public const TEACHER_SECONDARY    = 'enseignement';
     public const TEACHER_KINDERGARTEN = 'enseignementM';
     public const TEACHER_PRIMARY      = 'enseignementP';
+
+    /**
+     * Every role the platform knows about.
+     *
+     * The single authoritative enumeration. Route gates, form requests and
+     * policies must consume it (or `provisionable()`) instead of spelling
+     * their own list — divergent lists are how the `directeurP` lockout and
+     * the `enseignantM`/`enseignementM` split happened.
+     *
+     * @return array<int, string>
+     */
+    public static function all(): array
+    {
+        return [
+            self::SUPER_ADMIN,
+            self::ADMIN,
+            self::DIRECTOR,
+            self::DIRECTOR_KINDERGARTEN,
+            self::DIRECTOR_PRIMARY,
+            self::DIRECTOR_SECONDARY,
+            self::CENSEUR,
+            self::SECRETAIRE,
+            self::COMPTABLE,
+            self::SURVEILLANT,
+            self::INFIRMIER,
+            self::BIBLIOTHECAIRE,
+            self::ELEVE,
+            self::PARENT,
+            self::TEACHER,
+            self::TEACHER_SECONDARY,
+            self::TEACHER_KINDERGARTEN,
+            self::TEACHER_PRIMARY,
+            self::CHANCELLOR,
+            self::DEAN,
+            self::PROFESSOR,
+            self::STUDENT,
+            self::STAFF,
+        ];
+    }
+
+    /**
+     * Roles a school-side administrator may assign when creating a user.
+     *
+     * `admin` is a school-level administrative role (gated alongside
+     * `directeur` on the management routes), so it is staff-provisionable. The
+     * truly platform roles — `super-admin` and the university family — are
+     * reserved for the SaaS layer and never assignable from a tenant context.
+     *
+     * @return array<int, string>
+     */
+    public static function provisionable(): array
+    {
+        return [
+            self::ADMIN,
+            self::DIRECTOR,
+            self::DIRECTOR_KINDERGARTEN,
+            self::DIRECTOR_PRIMARY,
+            self::DIRECTOR_SECONDARY,
+            self::CENSEUR,
+            self::SECRETAIRE,
+            self::COMPTABLE,
+            self::SURVEILLANT,
+            self::INFIRMIER,
+            self::BIBLIOTHECAIRE,
+            self::ELEVE,
+            self::PARENT,
+            self::TEACHER,
+            self::TEACHER_SECONDARY,
+            self::TEACHER_KINDERGARTEN,
+            self::TEACHER_PRIMARY,
+        ];
+    }
+
+    /**
+     * Roles that may teach in a given scope (teacher + cycle variants).
+     *
+     * @return array<int, string>
+     */
+    public static function teachers(): array
+    {
+        return self::expand([self::TEACHER]);
+    }
 
     /* ─── University module ───────────────────────────────────────────── */
 

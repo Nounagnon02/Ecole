@@ -72,7 +72,7 @@ class EleveController extends Controller
             'password' => 'required|string|min:6',
             'ecole_id' => 'required|exists:ecoles,id',
             'numero_matricule' => 'required|string|unique:eleves,numero_matricule',
-            'class_id' => 'required|school_exists:classes,id',
+            'classe_id' => 'required|school_exists:classes,id',
             'serie_id' => 'nullable|school_exists:series,id',
             'email' => 'nullable|email|unique:users,email',
         ]);
@@ -92,7 +92,7 @@ class EleveController extends Controller
                 $eleve = Eleve::create([
                     'user_id' => $user->id,
                     'numero_matricule' => $validated['numero_matricule'],
-                    'class_id' => $validated['class_id'],
+                    'classe_id' => $validated['classe_id'],
                     'serie_id' => $validated['serie_id'],
                 ]);
 
@@ -127,14 +127,14 @@ class EleveController extends Controller
             'name'             => 'sometimes|string|max:255',
             'prenom'           => 'sometimes|string|max:255',
             'email'            => 'sometimes|nullable|email|unique:users,email,' . $user->id,
-            'class_id'         => 'sometimes|school_exists:classes,id',
+            'classe_id'         => 'sometimes|school_exists:classes,id',
             'serie_id'         => 'sometimes|nullable|school_exists:series,id',
             'numero_matricule' => 'sometimes|string|max:50|unique:eleves,numero_matricule,' . $eleve->id,
         ]);
 
         // On n'écrit que les champs effectivement validés et présents.
         $user->update(array_intersect_key($validated, array_flip(['name', 'prenom', 'email'])));
-        $eleve->update(array_intersect_key($validated, array_flip(['class_id', 'serie_id', 'numero_matricule'])));
+        $eleve->update(array_intersect_key($validated, array_flip(['classe_id', 'serie_id', 'numero_matricule'])));
 
         return response()->json($eleve->load('user'));
     }
@@ -246,7 +246,7 @@ class EleveController extends Controller
         // `enseignants` ne porte pas de nom : l'identité est sur `users`,
         // atteinte via la relation enseignant.user.
         $lessons = CahierDeTexte::with(['matiere:id,nom', 'enseignant.user:id,name,prenom'])
-            ->where('classe_id', $eleve->class_id)
+            ->where('classe_id', $eleve->classe_id)
             ->when($request->filled('matiere_id'), fn($q) => $q->where('matiere_id', $request->matiere_id))
             ->orderByDesc('date')
             ->paginate((int) $request->input('per_page', 50));

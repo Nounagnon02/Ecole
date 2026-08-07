@@ -195,7 +195,7 @@ class NotesController extends Controller
 
                 // Vérifier que l'élève appartient bien à la classe
                 $eleve = Eleve::find($request->eleve_id);
-                if ($eleve->class_id != $request->classe_id) {
+                if ($eleve->classe_id != $request->classe_id) {
                     return response()->json([
                         'success' => false,
                         'message' => 'L\'élève n\'appartient pas à cette classe'
@@ -306,7 +306,7 @@ class NotesController extends Controller
 
             // Vérifier que l'élève appartient bien à la classe
             $eleve = Eleve::find($request->eleve_id);
-            if ($eleve->class_id != $request->classe_id) {
+            if ($eleve->classe_id != $request->classe_id) {
                 return response()->json([
                     'success' => false,
                     'message' => 'L\'élève n\'appartient pas à cette classe'
@@ -683,7 +683,7 @@ class NotesController extends Controller
                     // matricule voyaient l'import rattacher la note à l'élève de
                     // l'autre école.
                     $eleve = Eleve::where('numero_matricule', $noteData['matricule'])
-                        ->where('class_id', $request->classe_id)
+                        ->where('classe_id', $request->classe_id)
                         ->first();
 
                     if (!$eleve) {
@@ -878,10 +878,9 @@ class NotesController extends Controller
     private function findEleve($identifier, $classeId)
     {
         // Recherche par nom complet, prénom, nom ou numéro
-        // Colonnes réelles : la clé de classe est `class_id`, le numéro
-        // `numero_matricule`, et nom/prénom vivent sur `users` — d'où la
-        // recherche via la relation plutôt que sur `eleves`.
-        return Eleve::where('class_id', $classeId)
+        // La clé de classe est `classe_id`, et nom/prénom vivent sur `users` —
+        // d'où la recherche via la relation plutôt que sur `eleves`.
+        return Eleve::where('classe_id', $classeId)
             ->where(function ($query) use ($identifier) {
                 $query->where('numero_matricule', $identifier)
                     ->orWhereHas('user', function ($u) use ($identifier) {
@@ -910,7 +909,7 @@ class NotesController extends Controller
     public function getElevesByClasse($classeId)
     {
         $eleves = Eleve::with('user:id,name,prenom')
-            ->where('class_id', $classeId)
+            ->where('classe_id', $classeId)
             ->get(['id', 'user_id', 'numero_matricule'])
             ->map(fn($e) => [
                 'id' => $e->id,

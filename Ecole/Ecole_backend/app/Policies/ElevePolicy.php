@@ -21,7 +21,7 @@ class ElevePolicy
         // comparaison portait sur null et aucun enseignant ne pouvait voir
         // aucun élève.
         if ($user->role === 'enseignant') {
-            return $user->enseignant?->classes()->where('classes.id', $eleve->class_id)->exists() ?? false;
+            return $user->enseignant?->classes()->where('classes.id', $eleve->classe_id)->exists() ?? false;
         }
         // Parent voit ses enfants
         if ($user->role === 'parent') {

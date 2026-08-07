@@ -53,10 +53,10 @@ class EleveService extends BaseService
      */
     public function getByClasse(int $classeId)
     {
-        // Colonnes réelles : la clé de classe est `class_id`, et le nom vit
+        // Colonnes réelles : la clé de classe est `classe_id`, et le nom vit
         // sur `users` — on trie donc via la relation, pas sur `eleves.nom`.
         return Eleve::with($this->defaultRelations())
-            ->where('class_id', $classeId)
+            ->where('classe_id', $classeId)
             ->join('users', 'users.id', '=', 'eleves.user_id')
             ->orderBy('users.name')
             ->select('eleves.*')
@@ -72,7 +72,7 @@ class EleveService extends BaseService
         return Eleve::with(['classe', 'notes' => function ($q) use ($periodeId) {
             $q->where('periode', $periodeId);
         }])
-            ->where('class_id', $classeId)
+            ->where('classe_id', $classeId)
             ->join('users', 'users.id', '=', 'eleves.user_id')
             ->orderBy('users.name')
             ->select('eleves.*')

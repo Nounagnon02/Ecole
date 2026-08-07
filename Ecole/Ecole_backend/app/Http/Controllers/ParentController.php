@@ -45,7 +45,12 @@ class ParentController extends Controller
             'notes.matiere',
         ])->get();
 
-        $data = $enfants->map(function ($eleve) {
+        $rangsParClasse = $enfants->pluck('classe_id')
+            ->filter()
+            ->unique()
+            ->mapWithKeys(fn ($classeId) => [$classeId => Eleve::classRanks($classeId)]);
+
+        $data = $enfants->map(function ($eleve) use ($rangsParClasse) {
             $notes = $eleve->notes;
             $moyenne = $notes->avg('note');
 
@@ -64,7 +69,18 @@ class ParentController extends Controller
                     'nom' => $eleve->classe->nom_classe ?? $eleve->classe->nom ?? 'N/A',
                 ] : null,
                 'moyenne_generale'  => $moyenne ? round($moyenne, 2) : null,
+                'rang'              => $rangsParClasse[$eleve->classe_id][$eleve->id] ?? null,
                 'absences_count'    => $absencesCount,
+                // Filiation enrichie (point B) : chaque enfant est lié via un
+                // pivot `ParentEleve` qui porte role, is_primary, is_guardian.
+                'role'              => $eleve->pivot?->role ?? null,
+                'is_primary'        => (bool) ($eleve->pivot?->is_primary ?? false),
+                'is_guardian'       => (bool) ($eleve->pivot?->is_guardian ?? false),
+                'filiation'         => [
+                    'role'        => $eleve->pivot?->role ?? null,
+                    'is_primary'  => (bool) ($eleve->pivot?->is_primary ?? false),
+                    'is_guardian' => (bool) ($eleve->pivot?->is_guardian ?? false),
+                ],
             ];
         });
 
@@ -368,7 +384,7 @@ class ParentController extends Controller
     {
         $child = $this->ownChildOrFail($enfantId);
 
-        $slots = EmploiDuTemps::where('classe_id', $child->class_id)
+        $slots = EmploiDuTemps::where('classe_id', $child->classe_id)
             ->orderBy('jour')
             ->orderBy('heure_debut')
             ->get();

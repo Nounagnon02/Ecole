@@ -11,9 +11,8 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  * Factory du modèle App\Models\Eleve.
  *
  * Les colonnes de `eleves` sont : user_id, numero_matricule, date_naissance,
- * lieu_naissance, sexe, class_id, serie_id, ecole_id. La version précédente
- * écrivait `nom`, `prenom` et `classe_id`, qui n'existent pas sur cette table
- * (l'identité vit sur `users`, et la clé est `class_id`).
+ * lieu_naissance, sexe, classe_id, serie_id, ecole_id. L'identité vit sur
+ * `users`, et la clé de classe est `classe_id`.
  */
 class EleveFactory extends Factory
 {
@@ -29,7 +28,7 @@ class EleveFactory extends Factory
             'date_naissance'   => fake()->date(),
             'lieu_naissance'   => fake()->city(),
             'sexe'             => fake()->randomElement(['M', 'F']),
-            'class_id'         => Classes::factory()->state(['ecole_id' => $ecole]),
+            'classe_id'         => Classes::factory()->state(['ecole_id' => $ecole]),
             'serie_id'         => null,
             'ecole_id'         => $ecole,
         ];
@@ -53,7 +52,7 @@ class EleveFactory extends Factory
                 'role' => 'eleve',
                 'ecole_id' => $ecole->id,
             ]),
-            'class_id' => \App\Models\Classes::factory()->state(['ecole_id' => $ecole->id]),
+            'classe_id' => \App\Models\Classes::factory()->state(['ecole_id' => $ecole->id]),
         ]);
     }
 }
