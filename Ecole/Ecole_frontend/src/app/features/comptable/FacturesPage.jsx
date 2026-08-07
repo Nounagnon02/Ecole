@@ -23,7 +23,8 @@ const getStatutVariant = (statut) => {
   switch (statut) {
     case 'paye':
     case 'payee': return 'primary';
-    case 'en_attente': return 'warning';
+    case 'en_attente':
+    case 'partiel': return 'warning';
     case 'impaye':
     case 'echec': return 'danger';
     default: return 'outline';
@@ -35,6 +36,7 @@ const getStatutLabel = (statut) => {
     case 'paye':
     case 'payee': return 'Payée';
     case 'en_attente': return 'En attente';
+    case 'partiel': return 'Partielle';
     case 'impaye':
     case 'echec': return 'Impayée';
     default: return statut || '—';

@@ -77,6 +77,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/bourses', [ComptableController::class, 'bourses']);
         Route::post('/paiements', [ComptableController::class, 'storePaiement']);
         Route::post('/bourses', [ComptableController::class, 'storeBourse']);
+        Route::get('/depenses', [ComptableController::class, 'depenses']);
+        Route::post('/depenses', [ComptableController::class, 'storeDepense']);
+        Route::delete('/depenses/{id}', [ComptableController::class, 'destroyDepense']);
         Route::get('/paiements/{id}/recu', [ComptableController::class, 'recu']);
         Route::get('/echeancier/{eleveId}', [ComptableController::class, 'echeancier']);
     });
