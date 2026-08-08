@@ -1,16 +1,27 @@
 /**
  * MessageriePage — Messagerie interne
  *
- * Système de messagerie interne pour tous les rôles.
- * Données dynamiques via /messages/conversations, /messages/conversation/:id
- * et POST /messages.
+ * Données dynamiques via :
+ *   - GET  /messages/conversations        liste des fils
+ *   - GET  /messages/conversation/:id     fil de discussion
+ *   - POST /messages                      envoi
+ *   - PUT  /messages/conversation/:id/read  marquage lu du fil
+ *   - GET  /messages/contacts             contacteur (nouvelle conversation)
+ *
+ * Trois pièges corrigés :
+ *   - la sélection automatique enregistrait la ligne BRUTE de l'API (sans
+ *     `id`/`name`) — le fil partait sur /conversation/undefined ;
+ *   - le dernier message d'une conversation n'était jamais rendu (le backend
+ *     ne fournissait pas `dernier_message`) ;
+ *   - rien ne marquait un fil lu : les badges non-lus ne redescendaient
+ *     jamais. L'ouverture d'un fil appelle PUT …/read puis rafraîchit la liste.
  */
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Search, Send, Paperclip,   Trash2, Star, MessageSquare, Users,
-  Phone, Video, Loader2, AlertCircle
+  Search, Send, Paperclip, Trash2, Star, MessageSquare, Users,
+  Phone, Video, Loader2, AlertCircle, X
 } from 'lucide-react';
 import { cn, formatRelativeTime } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
@@ -22,8 +33,27 @@ import { useApi } from '@/hooks/useApi';
 import useAuthStore from '@/shared/stores/auth-store';
 import { unwrapList } from '@/shared/lib/unwrap';
 
+/**
+ * Normalise une ligne de conversation en objet UI. Le backend expose
+ * `id` (identifiant stable), `contact_nom`, `role`, `dernier_message` et
+ * `non_lus` ; la page en a besoin sous des clés homogènes.
+ */
+function mapConversations(items) {
+  return items.map((c) => ({
+    ...c,
+    id: c.id ?? c.contact_id,
+    name: c.contact_nom || 'Conversation',
+    role: c.role || 'Utilisateur',
+    lastMessage: c.dernier_message || '',
+    date: c.derniere_date || new Date().toISOString(),
+    unread: Number(c.non_lus ?? 0),
+    online: false,
+    avatar: null,
+  }));
+}
+
 export default function MessageriePage() {
-  const { loading, error, get, post } = useApi();
+  const { loading, error, get, post, put } = useApi();
   // Nécessaire pour distinguer les messages envoyés de ceux reçus : l'API
   // renvoie l'identifiant de l'auteur dans `expediteur`.
   const currentUserId = useAuthStore((s) => s.user?.id);
@@ -35,41 +65,37 @@ export default function MessageriePage() {
   const [filter, setFilter] = useState('inbox');
   const [loadingConv, setLoadingConv] = useState(false);
   const [loadingMsg, setLoadingMsg] = useState(false);
+  const [showContacts, setShowContacts] = useState(false);
+  const [contacts, setContacts] = useState([]);
+  const [loadingContacts, setLoadingContacts] = useState(false);
 
-  // Load conversations
-  const loadConversations = useCallback(async () => {
+  const refreshConversations = useCallback(async () => {
     setLoadingConv(true);
     try {
-      // L'API est /messages/conversations : elle renvoie contact_id,
-      // contact_nom, derniere_date et non_lus. `/messagerie/*` n'a jamais existé.
       const res = await get('/messages/conversations');
-      const items = unwrapList(res?.data ?? res);
-      setConversations(items.map((c) => ({
-        ...c,
-        id: c.contact_id,
-        name: c.contact_nom || 'Conversation',
-        role: c.role || 'Utilisateur',
-        lastMessage: c.dernier_message || '',
-        date: c.derniere_date || new Date().toISOString(),
-        unread: Number(c.non_lus ?? 0),
-        online: false,
-        avatar: null
-      })));
-      if (items.length > 0 && !selectedConv) {
-        setSelectedConv(items[0]);
-      }
+      const mapped = mapConversations(unwrapList(res?.data ?? res));
+      setConversations(mapped);
+      return mapped;
     } catch (e) {
       console.error('Erreur chargement conversations:', e);
+      return [];
     } finally {
       setLoadingConv(false);
     }
-  }, [get, selectedConv]);
+  }, [get]);
 
+  // Chargement initial : la première conversation est sélectionnée — la
+  // version MAPPÉE (avec `id`/`name`), jamais la ligne brute de l'API.
   useEffect(() => {
-    loadConversations();
-  }, [loadConversations]);
+    (async () => {
+      const mapped = await refreshConversations();
+      if (mapped.length > 0) {
+        setSelectedConv((prev) => prev ?? mapped[0]);
+      }
+    })();
+  }, [refreshConversations]);
 
-  // Load messages for selected conversation
+  // Chargement du fil, puis marquage lu et rafraîchissement des badges.
   useEffect(() => {
     if (!selectedConv) {
       setMessages([]);
@@ -80,13 +106,16 @@ export default function MessageriePage() {
       try {
         const res = await get(`/messages/conversation/${selectedConv.id}`);
         const items = unwrapList(res?.data ?? res);
-        // `expediteur` est l'identifiant de l'auteur, stocké en chaîne.
         setMessages(items.map((m) => ({
           id: m.id,
           from: String(m.expediteur) === String(currentUserId) ? 'me' : 'them',
           text: m.contenu || '',
           time: m.created_at || new Date().toISOString()
         })));
+        // À l'ouverture, le fil est marqué lu : les badges non-lus doivent
+        // redescendre côté serveur et dans la liste.
+        put(`/messages/conversation/${selectedConv.id}/read`).catch(() => {});
+        refreshConversations().catch(() => {});
       } catch (e) {
         console.error('Erreur chargement messages:', e);
         setMessages([]);
@@ -94,7 +123,38 @@ export default function MessageriePage() {
         setLoadingMsg(false);
       }
     })();
-  }, [selectedConv, get, currentUserId]);
+  }, [selectedConv, get, put, currentUserId, refreshConversations]);
+
+  const openContacts = useCallback(async () => {
+    setShowContacts(true);
+    setLoadingContacts(true);
+    try {
+      const res = await get('/messages/contacts');
+      setContacts(unwrapList(res?.data ?? res));
+    } catch (e) {
+      console.error('Erreur chargement contacts:', e);
+    } finally {
+      setLoadingContacts(false);
+    }
+  }, [get]);
+
+  const startConversation = useCallback((contact) => {
+    setShowContacts(false);
+    const thread = {
+      id: contact.id,
+      name: contact.name || 'Conversation',
+      role: contact.role || 'Utilisateur',
+      lastMessage: '',
+      date: new Date().toISOString(),
+      unread: 0,
+      online: false,
+      avatar: null,
+    };
+    setConversations((prev) =>
+      prev.some((c) => c.id === contact.id) ? prev : [thread, ...prev]
+    );
+    setSelectedConv(thread);
+  }, []);
 
   const filtered = useMemo(() =>
     conversations.filter((c) =>
@@ -118,7 +178,7 @@ export default function MessageriePage() {
         text,
         time: newMsg.created_at || new Date().toISOString()
       }]);
-      // Update conversation list
+      // Met à jour la liste des conversations localement, sans recharger.
       setConversations((prev) => prev.map((c) =>
         c.id === selectedConv.id ? { ...c, lastMessage: text, date: new Date().toISOString(), unread: 0 } : c
       ));
@@ -155,7 +215,7 @@ export default function MessageriePage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
       <div className="flex flex-col lg:flex-row h-[calc(100vh-12rem)] gap-4">
         {/* Liste des conversations */}
-        <Card className="w-full lg:w-80 shrink-0 flex flex-col max-h-48 lg:max-h-none">
+        <Card className="relative w-full lg:w-80 shrink-0 flex flex-col max-h-48 lg:max-h-none">
           <div className="border-b border-neutral-200 p-3 dark:border-neutral-700">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
@@ -234,10 +294,45 @@ export default function MessageriePage() {
           </div>
 
           <div className="border-t border-neutral-200 p-3 dark:border-neutral-700">
-            <Button variant="ghost" size="sm" icon={<Users />} className="w-full justify-start">
+            <Button variant="ghost" size="sm" icon={<Users />} className="w-full justify-start" onClick={openContacts}>
               Nouvelle conversation
             </Button>
           </div>
+
+          {/* Contacteur — nouvelle conversation */}
+          {showContacts && (
+            <div className="absolute inset-0 z-10 flex flex-col rounded-xl border border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-900">
+              <div className="flex items-center justify-between border-b border-neutral-200 p-3 dark:border-neutral-700">
+                <p className="text-sm font-semibold text-neutral-900 dark:text-white">Nouvelle conversation</p>
+                <button onClick={() => setShowContacts(false)} aria-label="Fermer">
+                  <X className="h-4 w-4 text-neutral-400" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto">
+                {loadingContacts && (
+                  <div className="flex items-center justify-center p-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-neutral-400" />
+                  </div>
+                )}
+                {!loadingContacts && contacts.length === 0 && (
+                  <p className="p-4 text-sm text-neutral-400">Aucun contact disponible</p>
+                )}
+                {contacts.map((contact) => (
+                  <button
+                    key={contact.id}
+                    onClick={() => startConversation(contact)}
+                    className="flex w-full items-center gap-3 p-3 text-left transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800/50"
+                  >
+                    <Avatar name={contact.name} size="sm" />
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-neutral-900 dark:text-white">{contact.name}</p>
+                      <p className="text-xs text-neutral-500">{contact.role}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </Card>
 
         {/* Zone de message */}
