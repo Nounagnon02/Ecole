@@ -276,7 +276,18 @@ export const ROUTE_CONFIG = {
     roles: [ROLES.RECTEUR, ROLES.DOYEN, ROLES.PROFESSEUR, ROLES.ETUDIANT, ROLES.PERSONNEL],
   },
 
-  // ─── IA / EDUPILOT ───────────────────────────────────────────────────
+  // ─── PAIEMENT EN LIGNE ────────────────────────────────────────────────
+  paiementCallback: {
+    path: '/paiement/callback',
+    component: lazy(() => import('@/app/features/paiements/PaiementCallbackPage')),
+    roles: [
+      ...ROLE_GROUPS.DIRECTION,
+      ROLES.COMPTABLE,
+      ROLES.ELEVE,
+      ROLES.PARENT,
+      ROLES.SECRETAIRE,
+    ],
+  },
   directeurAiInsights: {
     path: '/directeur/ai-insights',
     component: lazy(() => import('@/app/features/ai/AiInsightsPage')),
