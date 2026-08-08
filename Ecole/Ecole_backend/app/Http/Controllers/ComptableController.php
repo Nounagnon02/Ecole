@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{PaiementEleve, Bourse, Depense, Eleve};
+use App\Models\{PaiementEleve, Bourse, Depense, Eleve, TransactionPaiement};
+use App\Services\FedaPayService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ComptableController extends Controller
 {
@@ -374,5 +376,166 @@ class ComptableController extends Controller
                 }),
             ],
         ]);
+    }
+
+    /**
+     * Initialiser un paiement FedaPay pour une échéance.
+     *
+     * Le client (frontend) appelle cet endpoint quand l'utilisateur clique
+     * sur « Payer » sur une échéance non payée. On crée la transaction
+     * côté FedaPay, on stocke l'id FedaPay côté serveur pour le rattacher
+     * au bon paiement élève, et on renvoie l'URL de paiement.
+     */
+    public function initierPaiementEcheance(Request $request, $paiementId)
+    {
+        $paiement = PaiementEleve::with('eleve.user')->findOrFail($paiementId);
+
+        // L'échéance doit être en attente ou partielle
+        $statutNorm = $this->normaliseStatut($paiement->statut_global);
+        if ($statutNorm === PaiementEleve::PAID) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cette échéance est déjà payée.',
+            ], 422);
+        }
+
+        $montantDu = (float) $paiement->montant_restant;
+        if ($montantDu <= 0) {
+            $montantDu = (float) $paiement->montant;
+        }
+
+        // Générer une référence unique pour Fedapay
+        $reference = 'TX-' . $paiement->reference . '-' . now()->format('YmdHis');
+
+        $eleve = $paiement->eleve;
+        $parent = $eleve?->responsibleParent();
+        $user = $parent?->user;
+
+        try {
+            $fedapay = app(FedaPayService::class);
+            $result = $fedapay->createTransaction([
+                'amount' => $montantDu,
+                'description' => "Paiement échéance: {$paiement->type_paiement} - {$eleve?->user?->name} {$eleve?->user?->prenom}",
+                'reference' => $reference,
+                'customer_firstname' => $eleve?->user?->prenom ?? '',
+                'customer_lastname' => $eleve?->user?->name ?? '',
+                'customer_email' => $user?->email ?? '',
+                'customer_phone' => $user?->telephone ?? $parent?->telephone ?? '',
+            ]);
+
+            // Stocker la référence de transaction pour le webhook / vérification
+            TransactionPaiement::create([
+                'id_paiement_eleve' => $paiement->id,
+                'tranche' => $paiement->type_paiement,
+                'montant_paye' => $montantDu,
+                'date_paiement' => now(),
+                'statut' => 'EN_ATTENTE',
+                'methode_paiement' => 'FEDAPAY',
+                'reference_transaction' => $result['transaction']->id,
+                'recu_par' => auth()->id(),
+                'observation' => "Paiement en ligne initié via Fedapay (ref: {$reference})",
+                'ecole_id' => auth()->user()->ecole_id ?? 1,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'payment_url' => $result['payment_url'],
+                'transaction_id' => $result['transaction']->id,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Init paiement echeance failed: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de l\'initialisation du paiement : ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Callback FedaPay (retour navigateur après paiement).
+     *
+     * FedaPay redirige l'utilisateur vers cette URL après paiement.
+     * On vérifie le statut côté serveur et on met à jour la transaction.
+     * Ensuite on redirige vers l'interface frontend (échéancier).
+     */
+    public function paiementCallback(Request $request)
+    {
+        $transactionId = $request->query('transaction_id');
+
+        if (!$transactionId) {
+            return redirect()->route('frontend.echeancier')
+                ->with('error', 'Transaction introuvable.');
+        }
+
+        try {
+            $fedapay = app(FedaPayService::class);
+            $result = $fedapay->verifyTransaction($transactionId);
+
+            if ($result && $result->status === 'approved') {
+                // Mettre à jour la transaction locale
+                $tx = TransactionPaiement::where('reference_transaction', $transactionId)->first();
+                if ($tx) {
+                    $tx->update([
+                        'statut' => 'APPROUVE',
+                        'date_paiement' => now(),
+                        'observation' => $tx->observation . ' | Confirmé via callback Fedapay (' . now()->format('d/m/Y H:i') . ')',
+                    ]);
+
+                    // Recalculer le paiement élève
+                    $paiement = PaiementEleve::find($tx->id_paiement_eleve);
+                    if ($paiement) {
+                        $paiement->increment('montant_paye', $tx->montant_paye);
+                        $paiement->decrement('montant_restant', $tx->montant_paye);
+                        if ((float) $paiement->montant_restant <= 0) {
+                            $paiement->update(['statut_global' => \App\Models\PaiementEleve::PAID]);
+                        } elseif ((float) $paiement->montant_paye > 0) {
+                            $paiement->update(['statut_global' => \App\Models\PaiementEleve::PARTIAL]);
+                        }
+                    }
+                }
+
+                return redirect()->route('frontend.echeancier')
+                    ->with('success', 'Paiement confirmé avec succès !');
+            }
+        } catch (\Exception $e) {
+            Log::error('FedaPay callback error: ' . $e->getMessage());
+        }
+
+        return redirect()->route('frontend.echeancier')
+            ->with('error', 'Le paiement n\'a pas pu être confirmé. Veuillez réessayer.');
+    }
+
+    /**
+     * Vérifier le statut d'un paiement côté serveur.
+     *
+     * Appelé par le frontend pour rafraîchir le statut sans attendre
+     * le callback navigateur (ex: après refresh page).
+     */
+    public function verifierPaiement($transactionId)
+    {
+        try {
+            $fedapay = app(FedaPayService::class);
+            $result = $fedapay->verifyTransaction($transactionId);
+
+            if (!$result) {
+                return response()->json([
+                    'success' => false,
+                    'status' => 'inconnu',
+                    'message' => 'Impossible de vérifier le paiement.',
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'status' => $result->status, // 'approved', 'pending', 'failed'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Vérification paiement failed: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'status' => 'erreur',
+                'message' => 'Erreur de vérification.',
+            ], 500);
+        }
     }
 }

@@ -82,6 +82,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/depenses/{id}', [ComptableController::class, 'destroyDepense']);
         Route::get('/paiements/{id}/recu', [ComptableController::class, 'recu']);
         Route::get('/echeancier/{eleveId}', [ComptableController::class, 'echeancier']);
+        // Paiement en ligne (FedaPay)
+        Route::post('/echeancier/{paiementId}/initier-paiement', [ComptableController::class, 'initierPaiementEcheance']);
+        Route::get('/paiement/callback', [ComptableController::class, 'paiementCallback'])->name('api.fedapay.callback');
+        Route::get('/paiement/verifier/{transactionId}', [ComptableController::class, 'verifierPaiement']);
     });
 
     // ============ SURVEILLANT ============
