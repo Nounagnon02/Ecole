@@ -83,6 +83,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/received', [MessageController::class, 'index']);
         Route::get('/sent', [MessageController::class, 'sent']);
         Route::get('/conversation/{contactId}', [MessageController::class, 'getConversation']);
+        Route::put('/conversation/{contactId}/read', [MessageController::class, 'markConversationRead']);
         Route::post('/', [MessageController::class, 'store']);
         Route::put('/{id}/read', [MessageController::class, 'markAsRead']);
 

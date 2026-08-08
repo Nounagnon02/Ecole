@@ -2,10 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Notification;
+use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth;
 
+/**
+ * NotificationController — notifications internes.
+ *
+ * Toutes les lectures passent par le modèle Notification, qui porte le
+ * trait BelongsToEcole : sans lui, une requête `DB::table` retournait les
+ * lignes de tous les établissements à la fois — un utilisateur connecté
+ * pouvait lire les notifications d'un autre (audit S4). Le scope applique
+ * `WHERE notifications.ecole_id = …` sur chaque requête, et l'écriture
+ * (`store`) résout l'école depuis le destinataire.
+ */
 class NotificationController extends Controller
 {
     /**
@@ -13,18 +23,19 @@ class NotificationController extends Controller
      */
     public function index(Request $request)
     {
-        $user = Auth::user();
-        
-        $notifications = DB::table('notifications')
-            ->where('user_id', $user->id)
-            ->orderBy('created_at', 'desc')
+        $notifications = Notification::where('user_id', auth()->id())
+            ->orderByDesc('created_at')
             ->get();
 
         return response()->json(['success' => true, 'data' => $notifications]);
     }
 
     /**
-     * Envoi d'une notification (Admin ou Système)
+     * Envoi d'une notification (Admin ou Système).
+     *
+     * `ecole_id` est dérivé de l'utilisateur destinataire : une
+     * notification écrite sans école resterait invisible pour tout le monde
+     * (le scope exclut les lignes sans école).
      */
     public function store(Request $request)
     {
@@ -36,45 +47,44 @@ class NotificationController extends Controller
             'channel' => 'nullable|in:db,sms,whatsapp,email'
         ]);
 
-        $id = DB::table('notifications')->insertGetId([
-            'user_id' => $validated['user_id'],
+        $destinataire = User::findOrFail($validated['user_id']);
+
+        $notification = Notification::create([
+            'user_id' => $destinataire->id,
             'type' => $validated['type'],
             'titre' => $validated['titre'],
             'message' => $validated['message'],
             'lu' => false,
-            'created_at' => now(),
-            'updated_at' => now()
+            // L'école du destinataire, jamais celle de l'émetteur.
+            'ecole_id' => $destinataire->ecole_id,
         ]);
 
-        // Ici on pourrait déclencher le service de SMS/WhatsApp
+        // Ici on pourrait déclencher le service de SMS/WhatsApp.
         // Log::info("Notification envoyée via " . ($validated['channel'] ?? 'db'));
 
-        return response()->json(['success' => true, 'id' => $id], 201);
+        return response()->json(['success' => true, 'id' => $notification->id], 201);
     }
 
     public function markAsRead($id)
     {
-        DB::table('notifications')
-            ->where('id', $id)
-            ->where('user_id', Auth::id())
-            ->update(['lu' => true, 'updated_at' => now()]);
-            
+        Notification::where('id', $id)
+            ->where('user_id', auth()->id())
+            ->update(['lu' => true]);
+
         return response()->json(['success' => true]);
     }
 
     public function markAllAsRead()
     {
-        DB::table('notifications')
-            ->where('user_id', Auth::id())
-            ->update(['lu' => true, 'updated_at' => now()]);
-            
+        Notification::where('user_id', auth()->id())
+            ->update(['lu' => true]);
+
         return response()->json(['success' => true]);
     }
 
     public function unreadCount()
     {
-        $count = DB::table('notifications')
-            ->where('user_id', Auth::id())
+        $count = Notification::where('user_id', auth()->id())
             ->where('lu', false)
             ->count();
 

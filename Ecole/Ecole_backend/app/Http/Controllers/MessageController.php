@@ -44,6 +44,37 @@ class MessageController extends Controller
     }
 
     /**
+     * Noms ET rôles pour un lot d'identifiants, en une requête.
+     *
+     * La liste des conversations a besoin du rôle du contact — la page
+     * l'affiche sous le nom (« Enseignant », « Directeur »…). Le filtre
+     * `ecole_id` est un filet de sécurité : un contact d'un autre
+     * établissement ne doit jamais ressortir avec son nom ici.
+     *
+     * @param  iterable<string>  $ids
+     * @return array<string, array{nom: string, role: ?string}>
+     */
+    private function usersById(iterable $ids): array
+    {
+        $ids = collect($ids)->filter()->unique()->values();
+
+        if ($ids->isEmpty()) {
+            return [];
+        }
+
+        return User::whereIn('id', $ids)
+            ->where('ecole_id', auth()->user()?->ecole_id)
+            ->get(['id', 'name', 'prenom', 'role'])
+            ->mapWithKeys(fn($u) => [
+                (string) $u->id => [
+                    'nom' => trim($u->prenom . ' ' . $u->name) ?: ('Utilisateur ' . $u->id),
+                    'role' => $u->role,
+                ],
+            ])
+            ->all();
+    }
+
+    /**
      * Messages reçus par l'utilisateur connecté.
      */
     public function index(Request $request)
@@ -166,6 +197,11 @@ class MessageController extends Controller
 
     /**
      * Liste des conversations de l'utilisateur connecté.
+     *
+     * Contrat de la page de messagerie : chaque ligne porte un identifiant
+     * stable (`id`), le nom du contact (`contact_nom`), son rôle, l'aperçu
+     * du dernier message (`dernier_message`) — sans lui l'aperçu restait
+     * « Aucun message » — et le compte non lu (`non_lus`).
      */
     public function getConversations()
     {
@@ -180,12 +216,29 @@ class MessageController extends Controller
             ->orderByDesc('derniere_date')
             ->get();
 
-        // Un seul aller-retour pour tous les noms, au lieu d'une requête par
-        // conversation comme précédemment (cf. audit P4).
-        $noms = $this->namesById($conversations->pluck('contact_id'));
+        // Dernier message de chaque fil, en un seul aller-retour : les
+        // messages sont triés du plus récent au plus ancien, donc le premier
+        // de chaque groupe est le dernier échangé avec le contact.
+        $derniers = Message::where(fn($q) => $q->where('expediteur', $me)->orWhere('destinataire', $me))
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->get(['id', 'expediteur', 'destinataire', 'contenu', 'created_at'])
+            ->groupBy(fn($m) => $m->expediteur === $me ? $m->destinataire : $m->expediteur)
+            ->map(fn($groupe) => $groupe->first());
 
-        $conversations->transform(function ($c) use ($noms) {
-            $c->contact_nom = $noms[(string) $c->contact_id] ?? 'Utilisateur ' . $c->contact_id;
+        $contacts = $this->usersById($conversations->pluck('contact_id'));
+
+        $conversations->transform(function ($c) use ($contacts, $derniers) {
+            $key = (string) $c->contact_id;
+            $contact = $contacts[$key] ?? ['nom' => 'Utilisateur ' . $key, 'role' => null];
+            $dernier = $derniers[$key] ?? null;
+
+            $c->id = (int) $c->contact_id;
+            $c->contact_id = (int) $c->contact_id;
+            $c->contact_nom = $contact['nom'];
+            $c->role = $contact['role'];
+            $c->dernier_message = $dernier ? mb_strimwidth($dernier->contenu, 0, 120, '…') : null;
+
             return $c;
         });
 
@@ -207,6 +260,33 @@ class MessageController extends Controller
             ->orderBy('created_at')
             ->paginate((int) $request->input('per_page', 50));
 
+        // Même enrichissement que la boîte de réception : le fil doit pouvoir
+        // afficher l'auteur d'un message sans requête supplémentaire.
+        $noms = $this->namesById($messages->pluck('expediteur')->merge($messages->pluck('destinataire')));
+        $messages->getCollection()->transform(function ($m) use ($noms) {
+            $m->expediteur_nom = $noms[$m->expediteur] ?? 'Utilisateur ' . $m->expediteur;
+            $m->destinataire_nom = $noms[$m->destinataire] ?? 'Utilisateur ' . $m->destinataire;
+            return $m;
+        });
+
         return response()->json(['success' => true, 'data' => $messages]);
+    }
+
+    /**
+     * Marque comme lue toute la conversation avec un contact : chaque
+     * message reçu de ce contact, et non lu, passe à lu. La page l'appelle
+     * à l'ouverture d'un fil pour faire redescendre les badges non-lus.
+     */
+    public function markConversationRead($contactId)
+    {
+        $me = $this->currentUserId();
+        $contactId = (string) $contactId;
+
+        $marked = Message::where('destinataire', $me)
+            ->where('expediteur', $contactId)
+            ->where('lu', false)
+            ->update(['lu' => true]);
+
+        return response()->json(['success' => true, 'data' => ['marked' => $marked]]);
     }
 }
