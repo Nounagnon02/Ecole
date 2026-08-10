@@ -744,7 +744,153 @@ class NotesController extends Controller
                 'message' => $this->clientErrorMessage($e, 'Erreur lors de l\'importation')
             ], 500);
         }
+/**
+     * Importer des notes depuis un fichier CSV
+     * 
+     * Format attendu : matricule,note,type_evaluation (optionnel)
+     * Le type_evaluation par défaut est 'Interrogation'
+     */
+    public function importCsv(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'classe_id' => 'required|school_exists:classes,id',
+                'matiere_id' => 'required|school_exists:matieres,id',
+                'periode' => 'required|in:Trimestre 1,Trimestre 2,Trimestre 3',
+                'type_evaluation' => 'nullable|in:Devoir1,Devoir2,Interrogation',
+                'date_evaluation' => 'nullable|date',
+                'file' => 'required|file|mimes:csv,txt|max:2048',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Données invalides',
+                    'errors' => $validator->errors()
+                ], 400);
+            }
+
+            $file = $request->file('file');
+            $handle = fopen($file->getRealPath(), 'r');
+            
+            if (!$handle) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Impossible de lire le fichier CSV'
+                ], 400);
+            }
+
+            // Lire l'en-tête
+            $header = fgetcsv($handle);
+            if (!$header) {
+                fclose($handle);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Fichier CSV vide'
+                ], 400);
+            }
+
+            // Normaliser les en-têtes
+            $header = array_map('strtolower', array_map('trim', $header));
+            
+            // Mapping des colonnes attendues
+            $colMatricule = array_search('matricule', $header);
+            $colNote = array_search('note', $header);
+            $colTypeEval = array_search('type_evaluation', $header);
+            $colDateEval = array_search('date_evaluation', $header);
+
+            if ($colMatricule === false || $colNote === false) {
+                fclose($handle);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Colonnes obligatoires manquantes : matricule, note'
+                ], 400);
+            }
+
+            $typeEvaluation = $request->input('type_evaluation', 'Interrogation');
+            $dateEvaluation = $request->input('date_evaluation', now()->format('Y-m-d'));
+            $importedCount = 0;
+            $errors = [];
+
+            DB::beginTransaction();
+
+            while (($row = fgetcsv($handle)) !== false) {
+                if (empty(array_filter($row))) continue; // Ligne vide
+
+                $matricule = trim($row[$colMatricule] ?? '');
+                $note = trim($row[$colNote] ?? '');
+
+                if (!$matricule || $note === '') {
+                    $errors[] = "Ligne ignorée : matricule ou note manquant";
+                    continue;
+                }
+
+                $noteValue = (float) $note;
+                if ($noteValue < 0 || $noteValue > 20) {
+                    $errors[] = "Note invalide pour matricule {$matricule} : {$noteValue}";
+                    continue;
+                }
+
+                $eleve = Eleve::where('numero_matricule', $matricule)
+                    ->where('classe_id', $request->classe_id)
+                    ->first();
+
+                if (!$eleve) {
+                    $errors[] = "Élève avec matricule {$matricule} non trouvé dans cette classe";
+                    continue;
+                }
+
+                $typeEval = $row[$colTypeEval] ?? $request->input('type_evaluation', 'Interrogation');
+                $dateEval = $row[$colDateEval] ?? $request->input('date_evaluation', now()->format('Y-m-d'));
+
+                Notes::create([
+                    'eleve_id' => $eleve->id,
+                    'classe_id' => $request->classe_id,
+                    'matiere_id' => $request->matiere_id,
+                    'note' => $noteValue,
+                    'note_sur' => 20,
+                    'type_evaluation' => $typeEval,
+                    'date_evaluation' => $dateEval,
+                    'periode' => $request->periode,
+                    'annee_scolaire' => $request->annee_scolaire ?? AnneeScolaire::courante(),
+                ]);
+
+                $importedCount++;
+            }
+
+            fclose($handle);
+
+            if ($importedCount === 0) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Aucune note n\'a pu être importée',
+                    'errors' => $errors
+                ], 400);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => "$importedCount notes ont été importées avec succès depuis CSV",
+                'count' => $importedCount,
+                'warnings' => $errors
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->rethrowIfMeaningful($e);
+            \Illuminate\Support\Facades\Log::error('Erreur import CSV notes: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => $this->clientErrorMessage($e, 'Erreur lors de l\'importation CSV')
+            ], 500);
+        }
     }
+
+    /**    }
 
     /**
      * Lister les notes d'un élève pour une période donnée
