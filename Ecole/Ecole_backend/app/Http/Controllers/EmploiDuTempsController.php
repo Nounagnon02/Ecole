@@ -2,27 +2,30 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\EmploiDuTemps;
+use App\Models\Classes;
+use App\Models\Matieres;
+use App\Models\Enseignant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class EmploiDuTempsController extends Controller
 {
     public function index(Request $request)
     {
-        $query = DB::table('emplois_du_temps')
-            ->join('classes', 'emplois_du_temps.classe_id', '=', 'classes.id')
-            ->join('matieres', 'emplois_du_temps.matiere_id', '=', 'matieres.id')
-            ->select('emplois_du_temps.*', 'classes.nom_classe', 'matieres.nom as nom_matiere');
+        $query = EmploiDuTemps::with(['classe', 'matiere', 'enseignant']);
 
         if ($request->has('classe_id')) {
-            $query->where('emplois_du_temps.classe_id', $request->classe_id);
+            $query->where('classe_id', $request->classe_id);
         }
 
         if ($request->has('enseignant_id')) {
-            $query->where('emplois_du_temps.enseignant_id', $request->enseignant_id);
+            $query->where('enseignant_id', $request->enseignant_id);
         }
 
         $emplois = $query->orderBy('jour')->orderBy('heure_debut')->get();
+
         return response()->json(['success' => true, 'data' => $emplois]);
     }
 
@@ -31,19 +34,16 @@ class EmploiDuTempsController extends Controller
         $validated = $request->validate([
             'classe_id' => 'required|school_exists:classes,id',
             'matiere_id' => 'required|school_exists:matieres,id',
-            'enseignant_id' => 'required',
+            'enseignant_id' => 'required|string',
             'jour' => 'required|string',
             'heure_debut' => 'required',
             'heure_fin' => 'required',
-            'salle' => 'nullable|string'
+            'salle' => 'nullable|string',
         ]);
 
-        $id = DB::table('emplois_du_temps')->insertGetId(array_merge($validated, [
-            'created_at' => now(),
-            'updated_at' => now()
-        ]));
+        $emploi = EmploiDuTemps::create($validated);
 
-        return response()->json(['success' => true, 'data' => ['id' => $id]], 201);
+        return response()->json(['success' => true, 'data' => $emploi->load(['classe', 'matiere', 'enseignant'])], 201);
     }
 
     public function update(Request $request, $id)
@@ -55,37 +55,44 @@ class EmploiDuTempsController extends Controller
             'jour' => 'string',
             'heure_debut' => 'string',
             'heure_fin' => 'string',
-            'salle' => 'nullable|string'
+            'salle' => 'nullable|string',
         ]);
 
-        DB::table('emplois_du_temps')->where('id', $id)->update(array_merge($validated, [
-            'updated_at' => now()
-        ]));
+        $emploi = EmploiDuTemps::findOrFail($id);
+        $emploi->update($validated);
 
-        return response()->json(['success' => true]);
+        return response()->json(['success' => true, 'data' => $emploi->load(['classe', 'matiere', 'enseignant'])]);
     }
 
     public function destroy($id)
     {
-        DB::table('emplois_du_temps')->where('id', $id)->delete();
+        EmploiDuTemps::findOrFail($id)->delete();
         return response()->json(['success' => true]);
     }
 
     public function getByClasse($classeId)
     {
-        $emplois = DB::table('emplois_du_temps')
-            ->join('matieres', 'emplois_du_temps.matiere_id', '=', 'matieres.id')
-            ->leftJoin('enseignants', 'emplois_du_temps.enseignant_id', '=', DB::raw('CAST(enseignants.id AS CHAR)'))
-            ->where('emplois_du_temps.classe_id', $classeId)
-            ->select(
-                'emplois_du_temps.*',
-                'matieres.nom as matiere',
-                DB::raw('CONCAT(enseignants.nom, " ", enseignants.prenom) as professeur')
-            )
+        $emplois = EmploiDuTemps::with(['matiere', 'enseignant.user'])
+            ->where('classe_id', $classeId)
             ->orderBy('jour')
             ->orderBy('heure_debut')
             ->get();
 
-        return response()->json(['success' => true, 'data' => $emplois]);
+        return response()->json([
+            'success' => true,
+            'data' => $emplois->map(function ($emploi) {
+                return [
+                    'id' => $emploi->id,
+                    'jour' => $emploi->jour,
+                    'heure_debut' => $emploi->heure_debut,
+                    'heure_fin' => $emploi->heure_fin,
+                    'matiere' => $emploi->matiere?->nom,
+                    'professeur' => $emploi->enseignant?->user
+                        ? trim(($emploi->enseignant->user->name ?? '') . ' ' . ($emploi->enseignant->user->prenom ?? ''))
+                        : null,
+                    'salle' => $emploi->salle,
+                ];
+            }),
+        ]);
     }
 }
