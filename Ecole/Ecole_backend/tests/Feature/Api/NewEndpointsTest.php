@@ -209,7 +209,7 @@ class NewEndpointsTest extends TestCase
         $this->actingAs($alice)
             ->getJson('/api/messages/conversations')
             ->assertStatus(200)
-            ->assertJsonPath('data.0.contact_id', (string) $bob->id);
+            ->assertJsonPath('data.0.contact_id', $bob->id);
 
         $this->actingAs($bob)
             ->getJson('/api/messages/unread-count')
