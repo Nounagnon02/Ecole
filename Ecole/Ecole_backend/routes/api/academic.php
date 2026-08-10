@@ -69,6 +69,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/eleve/{eleveId?}', [NotesController::class, 'index']);
         Route::post('/store', [NotesController::class, 'store'])->middleware('role:directeur,enseignant');
         Route::post('/import', [NotesController::class, 'import'])->middleware(['role:directeur,enseignant', 'throttle:5,1']);
+        Route::post('/import-csv', [NotesController::class, 'importCsv'])->middleware(['role:directeur,enseignant', 'throttle:5,1']);
         Route::get('/export', [NotesController::class, 'export'])->middleware('role:directeur,enseignant');
         Route::post('/{id}/lock', [NotesController::class, 'lock'])->middleware('role:directeur,enseignant');
         Route::post('/{id}/unlock', [NotesController::class, 'unlock'])->middleware('role:directeur,enseignant');
