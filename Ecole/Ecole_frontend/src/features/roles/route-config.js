@@ -135,6 +135,11 @@ export const ROUTE_CONFIG = {
     component: lazy(() => import('@/app/features/messagerie/MessageriePage')),
     roles: ROLES_ALL,
   },
+  affectations: {
+    path: '/affectations',
+    component: lazy(() => import('@/app/features/affectations/AffectationsPage')),
+    roles: [...ROLE_GROUPS.DIRECTION],
+  },
 
   // ─── FEATURES ENSEIGNANT ─────────────────────────────────────────────
   enseignantClasses: {
