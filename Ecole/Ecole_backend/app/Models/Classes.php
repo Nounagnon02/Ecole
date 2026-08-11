@@ -105,4 +105,51 @@ public function series()
         return $this->hasMany(\App\Models\Contributions::class, 'id_classe');
     }
 
+    /* ── Vie scolaire ────────────────────────────────────────────────── */
+
+    public function notes()
+    {
+        return $this->hasMany(Notes::class);
+    }
+
+    public function emploisDuTemps()
+    {
+        return $this->hasMany(EmploiDuTemps::class);
+    }
+
+    public function devoirs()
+    {
+        return $this->hasMany(Devoir::class);
+    }
+
+    public function moyennes()
+    {
+        return $this->hasMany(Moyennes::class);
+    }
+
+    public function cahierDeTextes()
+    {
+        return $this->hasMany(CahierDeTexte::class);
+    }
+
+    public function exercices()
+    {
+        return $this->hasMany(Exercice::class);
+    }
+
+    public function bulletins()
+    {
+        return $this->hasMany(Bulletin::class);
+    }
+
+    public function conseilsClasse()
+    {
+        return $this->hasMany(ConseilClasse::class);
+    }
+
+    public function enseignantMatieres()
+    {
+        return $this->hasMany(EnseignantMatiere::class, 'classe_id');
+    }
+
 }

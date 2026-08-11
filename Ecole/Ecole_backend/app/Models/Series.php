@@ -85,6 +85,11 @@ public function calculMoyenneGenerale($eleve_id)
         return $this->hasMany(Eleve::class, 'serie_id');
     }
 
+    public function contributions()
+    {
+        return $this->hasMany(\App\Models\Contributions::class, 'id_serie');
+    }
+
     
 
 // Exemples d'utilisation

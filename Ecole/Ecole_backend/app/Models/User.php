@@ -79,6 +79,17 @@ class User extends Authenticatable
     }
 
     /**
+     * Le profil Maternelle & Primaire derrière ce compte, s'il existe.
+     *
+     * `enseignant()` (secondaire) et `enseignantMP()` pointent vers deux
+     * tables distinctes ; un compte porte au plus l'un des deux profils.
+     */
+    public function enseignantMP()
+    {
+        return $this->hasOne(EnseignantsMaternellePrimaire::class);
+    }
+
+    /**
      * The university student record behind this account, if any.
      *
      * `etudiants.user_id` did not exist, so this relation could not be written
