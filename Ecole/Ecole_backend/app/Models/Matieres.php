@@ -52,7 +52,8 @@ public function coefficientsParClasse()
     // Autres relations existantes...
     public function eleves()
     {
-        return $this->belongsToMany(Eleve::class, 'eleve_matiere');
+        return $this->belongsToMany(Eleve::class, 'eleves_matieres', 'matieres_id', 'eleves_id')
+                    ->withTimestamps();
     }
 
 
@@ -85,10 +86,6 @@ public function coefficientsParClasse()
     {
         return $this->belongsTo(Enseignants_Martenel_Primaire::class, 'enseignants_id');
     }*/
-    public function classe()
-    {
-        return $this->belongsTo(Classes::class, 'class_id');
-    }
 
 
 

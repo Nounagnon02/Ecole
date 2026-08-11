@@ -34,9 +34,4 @@ class Sessions extends Model
     {
         return $this->belongsToMany(Eleve::class, 'sessions_candidats');
     }
-
-    public function notes()
-    {
-        return $this->hasMany(Notes::class);
-    }
 }
