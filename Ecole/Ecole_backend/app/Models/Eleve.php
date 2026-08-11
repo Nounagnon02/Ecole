@@ -137,4 +137,17 @@ class Eleve extends Model
     {
         return $this->hasMany(PaiementEleve::class, 'eleve_id');
     }
+
+    /**
+     * Les matières suivies par l'élève, via le pivot `eleves_matieres`.
+     *
+     * `SeriesController::getElevesByMatiere` filtre les élèves d'une série sur
+     * leur matière ; sans cette relation, `whereHas('matieres')` levait
+     * « Call to undefined relationship ».
+     */
+    public function matieres()
+    {
+        return $this->belongsToMany(Matieres::class, 'eleves_matieres', 'eleves_id', 'matieres_id')
+                    ->withTimestamps();
+    }
 }
