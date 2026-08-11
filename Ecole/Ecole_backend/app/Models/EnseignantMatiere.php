@@ -11,6 +11,10 @@ class EnseignantMatiere extends Pivot
 
     protected $table = 'enseignant_matiere';
 
+    // La table pivot porte un `id` auto-incrémenté : sans ce flag, `create()`
+    // ne relit pas l'identifiant et `destroy` sur la ligne fraîche échouait.
+    public $incrementing = true;
+
     protected $fillable = [
         'enseignant_id',
         'matiere_id',

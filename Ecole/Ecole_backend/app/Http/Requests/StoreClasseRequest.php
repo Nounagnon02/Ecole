@@ -25,6 +25,7 @@ class StoreClasseRequest extends FormRequest
         return [
             'nom_classe' => 'required|string|max:255',
             'categorie_classe' => 'required|string|' . Cycles::rule(),
+            'capacite_max' => 'nullable|integer|min:1',
         ];
     }
 

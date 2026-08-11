@@ -27,6 +27,7 @@ class Classes extends Model
     protected $fillable= [
         'nom_classe',
         'categorie_classe',
+        'capacite_max',
         'ecole_id'
     ];
 
@@ -58,7 +59,8 @@ class Classes extends Model
     public function enseignants()
     {
         return $this->belongsToMany(Enseignant::class, 'enseignant_matiere', 'classe_id', 'enseignant_id')
-            ->withPivot('categorie_classe')
+            ->using(EnseignantMatiere::class)
+            ->withPivot('matiere_id', 'serie_id')
             ->withTimestamps();
     }
 
