@@ -38,4 +38,26 @@ class Enseignant extends Model
                     ->using(EnseignantMatiere::class)
                     ->withPivot(['matiere_id', 'serie_id']);
     }
+
+    /* ── Activités pédagogiques ──────────────────────────────────────── */
+
+    public function exercices()
+    {
+        return $this->hasMany(Exercice::class);
+    }
+
+    public function cahierDeTextes()
+    {
+        return $this->hasMany(CahierDeTexte::class);
+    }
+
+    public function emploisDuTemps()
+    {
+        return $this->hasMany(EmploiDuTemps::class);
+    }
+
+    public function rendezVous()
+    {
+        return $this->hasMany(RendezVous::class);
+    }
 }

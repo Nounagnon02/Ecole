@@ -150,4 +150,56 @@ class Eleve extends Model
         return $this->belongsToMany(Matieres::class, 'eleves_matieres', 'eleves_id', 'matieres_id')
                     ->withTimestamps();
     }
+
+    /* ── Dossier scolaire & santé ────────────────────────────────────── */
+
+    public function bourses()
+    {
+        return $this->hasMany(Bourse::class);
+    }
+
+    public function certificats()
+    {
+        return $this->hasMany(Certificat::class);
+    }
+
+    public function sanctions()
+    {
+        return $this->hasMany(Sanction::class);
+    }
+
+    public function vaccinations()
+    {
+        return $this->hasMany(Vaccination::class);
+    }
+
+    public function consultationsMedicales()
+    {
+        return $this->hasMany(ConsultationMedicale::class);
+    }
+
+    public function dossiersMedicaux()
+    {
+        return $this->hasMany(DossierMedical::class);
+    }
+
+    public function abonnementsTransport()
+    {
+        return $this->hasMany(AbonnementTransport::class);
+    }
+
+    public function emprunts()
+    {
+        return $this->hasMany(Emprunt::class);
+    }
+
+    public function reservations()
+    {
+        return $this->hasMany(Reservation::class);
+    }
+
+    public function rendezVous()
+    {
+        return $this->hasMany(RendezVous::class);
+    }
 }
