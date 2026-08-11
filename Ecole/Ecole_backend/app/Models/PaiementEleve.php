@@ -65,16 +65,6 @@ class PaiementEleve extends Model
         'montant_restant' => 'decimal:2',
     ];
 
-    public function paiement()
-    {
-        return $this->hasMany(TransactionPaiement::class, 'id_paiement_eleve');
-    }
-
-    /*public function statutsTranches()
-    {
-        return $this->hasMany(StatutTranche::class, 'id_paiement_eleve');
-    }*/
-
     public function eleve()
     {
         return $this->belongsTo(Eleve::class, 'eleve_id');
