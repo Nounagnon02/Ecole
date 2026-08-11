@@ -319,7 +319,7 @@ class EnseignantAffectationTest extends TestCase
                 'role'     => 'enseignant',
                 'ecole_id' => $school->id,
             ])->id,
-            'class_id' => $classe->id,
+            'classe_id' => $classe->id,
             'ecole_id' => $school->id,
         ]);
     }
@@ -350,14 +350,14 @@ class EnseignantAffectationTest extends TestCase
         $mp = $this->creerMp($school, $classeA);
 
         $this->postJson("/api/enseignants-mp/{$mp->id}/affectation", [
-            'class_id' => $classeB->id,
+            'classe_id' => $classeB->id,
         ])->assertStatus(201)
           ->assertJsonPath('success', true)
           ->assertJsonPath('data.classe.id', $classeB->id);
 
-        $this->assertDatabaseHas('enseignants_martenel_primaire', [
-            'id'       => $mp->id,
-            'class_id' => $classeB->id,
+        $this->assertDatabaseHas('enseignants_maternelle_primaire', [
+            'id'        => $mp->id,
+            'classe_id' => $classeB->id,
         ]);
     }
 
@@ -372,12 +372,12 @@ class EnseignantAffectationTest extends TestCase
         $otherClasse = Classes::factory()->create(['ecole_id' => $otherSchool->id]);
 
         $this->postJson("/api/enseignants-mp/{$mp->id}/affectation", [
-            'class_id' => $otherClasse->id,
+            'classe_id' => $otherClasse->id,
         ])->assertStatus(422);
 
-        $this->assertDatabaseHas('enseignants_martenel_primaire', [
-            'id'       => $mp->id,
-            'class_id' => $classe->id,
+        $this->assertDatabaseHas('enseignants_maternelle_primaire', [
+            'id'        => $mp->id,
+            'classe_id' => $classe->id,
         ]);
     }
 }

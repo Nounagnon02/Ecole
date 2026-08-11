@@ -245,7 +245,7 @@ describe('AffectationsPage — Maternelle & Primaire', () => {
     fireEvent.change(screen.getByLabelText(/Classe de Dossou Aline/), { target: { value: '4' } });
 
     await waitFor(() => expect(http.callsTo('post', '/enseignants-mp/7/affectation')).toHaveLength(1));
-    expect(http.callsTo('post', '/enseignants-mp/7/affectation')[0].body).toEqual({ class_id: 4 });
+    expect(http.callsTo('post', '/enseignants-mp/7/affectation')[0].body).toEqual({ classe_id: 4 });
     await waitFor(() => expect(screen.getByText('CE1')).toBeInTheDocument());
   });
 });

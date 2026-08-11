@@ -82,11 +82,6 @@ public function coefficientsParClasse()
          ->withPivot(['classe_id', 'serie_id']);
     }
 
-    /*public function enseignantPrimaire()
-    {
-        return $this->belongsTo(Enseignants_Martenel_Primaire::class, 'enseignants_id');
-    }*/
-
 
 
 }

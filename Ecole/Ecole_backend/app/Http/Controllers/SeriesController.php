@@ -510,7 +510,7 @@ public function getMatieresWithCoefficients(Request $request, $id)
             'classes' => 'required|array',
             'classes.*.classe_id' => 'required|school_exists:classes,id',
             'classes.*.enseignants_martenel_primaire' => 'array',
-            'classes.*.enseignants.*' => 'school_exists:enseignants_martenel_primaire,id'
+            'classes.*.enseignants.*' => 'school_exists:enseignants_maternelle_primaire,id'
         ]);
 
         $classe = Classes::findOrFail($classeId);
