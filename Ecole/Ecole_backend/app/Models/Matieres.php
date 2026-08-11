@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 class Matieres extends Model
 {
     use HasFactory, BelongsToEcole;
-    protected $fillable=['nom', 'ecole_id'];
+    protected $fillable=['nom', 'volume_horaire', 'ecole_id'];
 
 
 

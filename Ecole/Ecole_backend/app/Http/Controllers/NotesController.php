@@ -734,7 +734,7 @@ class NotesController extends Controller
                 'warnings' => $errors
             ]);
 
-        } catch (\Exception $e) {
+} catch (\Exception $e) {
             $this->rethrowIfMeaningful($e);
             DB::rollBack();
             \Illuminate\Support\Facades\Log::error('Erreur import notes: ' . $e->getMessage());
@@ -744,7 +744,9 @@ class NotesController extends Controller
                 'message' => $this->clientErrorMessage($e, 'Erreur lors de l\'importation')
             ], 500);
         }
-/**
+    }
+
+    /**
      * Importer des notes depuis un fichier CSV
      * 
      * Format attendu : matricule,note,type_evaluation (optionnel)
@@ -889,8 +891,6 @@ class NotesController extends Controller
             ], 500);
         }
     }
-
-    /**    }
 
     /**
      * Lister les notes d'un élève pour une période donnée
@@ -1334,6 +1334,178 @@ public function filterSecondaire(Request $request)
             ->values();
 
         return response()->json(['success' => true, 'data' => $rows]);
+    }
+
+    /**
+     * Saisie groupée : enregistre les notes de toute une classe en un appel.
+     *
+     * POST /notes/bulk
+     * Body : { "classe_id": 3, "matiere_id": 5, "type_evaluation": "Devoir1",
+     *          "date_evaluation": "2026-01-15", "periode": "Trimestre 1",
+     *          "notes": [{ "eleve_id": 10, "note": 14, "observation": null }, ...] }
+     */
+    public function bulkStore(Request $request)
+    {
+        $this->authorize('create', Notes::class);
+
+        $validator = Validator::make($request->all(), [
+            'classe_id' => 'required|school_exists:classes,id',
+            'matiere_id' => 'required|school_exists:matieres,id',
+            'type_evaluation' => 'required|in:Devoir1,Devoir2,Interrogation',
+            'date_evaluation' => 'required|date',
+            'periode' => 'required|in:Trimestre 1,Trimestre 2,Trimestre 3',
+            'notes' => 'required|array|min:1',
+            'notes.*.eleve_id' => 'required|school_exists:eleves,id',
+            'notes.*.note' => 'required|numeric|min:0|max:20',
+            'notes.*.note_sur' => 'nullable|numeric|min:1|max:20',
+            'notes.*.observation' => 'nullable|string|max:500',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Données invalides',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $imported = 0;
+            $errors = [];
+
+            foreach ($request->notes as $item) {
+                $eleve = Eleve::find($item['eleve_id']);
+
+                if (!$eleve || $eleve->classe_id != $request->classe_id) {
+                    $errors[] = "Élève #{$item['eleve_id']} absent de cette classe";
+                    continue;
+                }
+
+                $serieHasMatiere = $eleve->serie
+                    ? $eleve->serie->matieres()->where('matiere_id', $request->matiere_id)->exists()
+                    : true;
+
+                if (!$serieHasMatiere) {
+                    $errors[] = "Élève #{$item['eleve_id']} : matière absente de sa série";
+                    continue;
+                }
+
+                $check = $this->validateNoteByType(
+                    $request->merge([
+                        'eleve_id' => $item['eleve_id'],
+                        'note' => $item['note'],
+                    ]),
+                );
+
+                if (!$check['success']) {
+                    $errors[] = "Élève #{$item['eleve_id']} : {$check['message']}";
+                    continue;
+                }
+
+                Notes::create([
+                    'eleve_id' => $item['eleve_id'],
+                    'classe_id' => $request->classe_id,
+                    'matiere_id' => $request->matiere_id,
+                    'note' => $item['note'],
+                    'note_sur' => $item['note_sur'] ?? 20,
+                    'type_evaluation' => $request->type_evaluation,
+                    'date_evaluation' => $request->date_evaluation,
+                    'periode' => $request->periode,
+                    'annee_scolaire' => $request->annee_scolaire ?? AnneeScolaire::courante(),
+                    'observation' => $item['observation'] ?? null,
+                ]);
+
+                $imported++;
+            }
+
+            if ($imported === 0) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Aucune note n\'a pu être enregistrée',
+                    'errors' => $errors,
+                ], 400);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => "$imported notes enregistrées",
+                'count' => $imported,
+                'warnings' => $errors,
+            ], 201);
+
+        } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => $this->clientErrorMessage($e, 'Erreur lors de la saisie groupée'),
+            ], 500);
+        }
+    }
+
+    /**
+     * Données prêtes à remplir une grille de notes pour une classe :
+     * élèves de la classe + matières (avec coefficients) de ses séries.
+     *
+     * GET /notes/grille/{classeId}
+     */
+    public function grilleSaisie($classeId)
+    {
+        $this->authorize('viewAny', Notes::class);
+
+        $classe = Classes::find($classeId);
+        if (!$classe) {
+            return response()->json(['success' => false, 'message' => 'Classe non trouvée'], 404);
+        }
+
+        $eleves = Eleve::with('user:id,name,prenom')
+            ->where('classe_id', $classeId)
+            ->orderBy('numero_matricule')
+            ->get(['id', 'user_id', 'numero_matricule'])
+            ->map(fn($e) => [
+                'id' => $e->id,
+                'nom' => $e->user->name ?? '',
+                'prenom' => $e->user->prenom ?? '',
+                'matricule' => $e->numero_matricule,
+            ])
+            ->values();
+
+        // Matières de la classe via ses séries (coefficients du pivot), sinon
+        // via la liaison directe classe <-> matière.
+        $matieres = $classe->series()
+            ->with(['matieres' => fn($q) => $q->select('matieres.id', 'matieres.nom')->withPivot('coefficient')])
+            ->get()
+            ->flatMap(fn($serie) => $serie->matieres->map(fn($m) => [
+                'id' => $m->id,
+                'nom' => $m->nom,
+                'coefficient' => $m->pivot->coefficient,
+            ]))
+            ->unique('id')
+            ->values();
+
+        if ($matieres->isEmpty()) {
+            $matieres = $classe->matieres()->get(['matieres.id', 'matieres.nom'])
+                ->map(fn($m) => ['id' => $m->id, 'nom' => $m->nom, 'coefficient' => null]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'classe' => [
+                    'id' => $classe->id,
+                    'nom_classe' => $classe->nom_classe,
+                    'categorie_classe' => $classe->categorie_classe,
+                ],
+                'eleves' => $eleves,
+                'matieres' => $matieres,
+            ],
+        ]);
     }
 
     /**

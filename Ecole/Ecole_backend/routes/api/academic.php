@@ -30,6 +30,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/delete/{id}', [MatieresController::class, 'destroy'])->middleware('role:directeur,admin');
 
         Route::get('/niveaux/{niveau}', [MatieresController::class, 'getByNiveau']);
+
+        // Affectation série/classe + coefficients
+        Route::post('/{id}/series', [MatieresController::class, 'attachSeries'])->middleware('role:directeur,admin');
+        Route::delete('/{id}/series/{serieId}', [MatieresController::class, 'detachSeries'])->middleware('role:directeur,admin');
+        Route::get('/{id}/coefficients', [MatieresController::class, 'getCoefficients']);
     });
 
     // ============ CLASSES ============
@@ -41,6 +46,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/{id}', [ClassesController::class, 'show']);
         Route::get('/{id}/eleves', [ClassesController::class, 'getEleves'])
             ->middleware('role:directeur,enseignant,censeur,surveillant,secretaire,infirmier,bibliothecaire');
+        Route::get('/{id}/enseignants', [ClassesController::class, 'getEnseignants'])
+            ->middleware('role:directeur,enseignant,censeur,secretaire');
     });
 
     // ============ ÉLÈVES ============
@@ -70,6 +77,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/store', [NotesController::class, 'store'])->middleware('role:directeur,enseignant');
         Route::post('/import', [NotesController::class, 'import'])->middleware(['role:directeur,enseignant', 'throttle:5,1']);
         Route::post('/import-csv', [NotesController::class, 'importCsv'])->middleware(['role:directeur,enseignant', 'throttle:5,1']);
+        Route::post('/bulk', [NotesController::class, 'bulkStore'])->middleware('role:directeur,enseignant');
+        Route::get('/grille/{classeId}', [NotesController::class, 'grilleSaisie'])->middleware('role:directeur,enseignant');
         Route::get('/export', [NotesController::class, 'export'])->middleware('role:directeur,enseignant');
         Route::post('/{id}/lock', [NotesController::class, 'lock'])->middleware('role:directeur,enseignant');
         Route::post('/{id}/unlock', [NotesController::class, 'unlock'])->middleware('role:directeur,enseignant');

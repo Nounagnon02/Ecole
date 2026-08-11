@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\{
     EnseignantController,
+    EnseignantsMaternellePrimaireController,
     ParentsController,
     ParentController,
     ComptableController,
@@ -14,6 +15,21 @@ use App\Http\Controllers\{
     ImportController
 };
 use Illuminate\Support\Facades\Route;
+
+/*
+|--------------------------------------------------------------------------
+| Routes Publiques (sans authentification)
+|--------------------------------------------------------------------------
+*/
+
+// Invitation parent - vérification token (public)
+Route::get('/public/parent/invitation/{token}/verify', [ParentsController::class, 'verifyInvitation']);
+
+// Inscription parent via invitation (public)
+Route::post('/public/parent/accept-invitation', [ParentsController::class, 'acceptInvitation']);
+
+// Auto-inscription parent (matricule + code secret)
+Route::post('/public/parent/register', [ParentsController::class, 'register']);
 
 /*
 |--------------------------------------------------------------------------
@@ -32,6 +48,24 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/store', [EnseignantController::class, 'store'])->middleware('role:directeur');
         Route::put('/update/{id}', [EnseignantController::class, 'update'])->middleware('role:directeur');
         Route::delete('/delete/{id}', [EnseignantController::class, 'destroy'])->middleware('role:directeur');
+
+        // Affectations classe × série × matière. `/{id}` est enregistré avant
+        // ces routes : les segments supplémentaires les rendent plus précises
+        // et Laravel ne confond pas `/{id}` avec `/{id}/affectations`.
+        Route::get('/{id}/affectations', [EnseignantController::class, 'affectations'])
+            ->middleware('role:directeur,censeur,secretaire,enseignant');
+        Route::post('/{id}/affectations', [EnseignantController::class, 'storeAffectations'])
+            ->middleware('role:directeur');
+        Route::delete('/{id}/affectations/{affectationId}', [EnseignantController::class, 'destroyAffectation'])
+            ->middleware('role:directeur');
+    });
+
+    // ============ ENSEIGNANTS Maternelle / Primaire ============
+    Route::prefix('enseignants-mp')->middleware('role:directeur,censeur,secretaire')->group(function () {
+        Route::get('/', [EnseignantsMaternellePrimaireController::class, 'index']);
+        Route::get('/{id}', [EnseignantsMaternellePrimaireController::class, 'show']);
+        Route::post('/{id}/affectation', [EnseignantsMaternellePrimaireController::class, 'storeAffectation'])
+            ->middleware('role:directeur');
     });
 
     // ============ ENSEIGNANT DASHBOARD ============
@@ -52,6 +86,10 @@ Route::middleware('auth:sanctum')->group(function () {
         // enfants d'un autre établissement à ce parent.
         Route::put('/{id}/eleves', [ParentsController::class, 'updateEleves'])->middleware('role:directeur');
         Route::put('/{id}', [ParentsController::class, 'update'])->middleware('role:directeur');
+        
+        // Gestion invitations parents
+        Route::post('/invite', [ParentsController::class, 'invite']);
+        Route::post('/{eleveId}/generate-code', [ParentsController::class, 'generateParentCode']);
     });
 
     // ============ PARENT DASHBOARD ============
