@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
  * Affectations Maternelle / Primaire.
  *
  * Un enseignant M/P enseigne une classe entière : pas de « matière » ni de
- * « série » au sens du secondaire. Le modèle porte déjà sa classe (`class_id`,
+ * « série » au sens du secondaire. Le modèle porte déjà sa classe (`classe_id`,
  * non nullable) — le même contrat qu'`EnseignantController::affectations`,
  * réduit à l'essentiel : lister les enseignants avec leur classe, et
  * affecter/déplacer un enseignant vers une classe.
@@ -54,7 +54,7 @@ class EnseignantsMaternellePrimaireController extends Controller
 
     /**
      * Affecter (ou déplacer) un enseignant M/P vers une classe.
-     * POST /enseignants-mp/{id}/affectation — body { class_id }
+     * POST /enseignants-mp/{id}/affectation — body { classe_id }
      */
     public function storeAffectation(Request $request, $id)
     {
@@ -64,16 +64,16 @@ class EnseignantsMaternellePrimaireController extends Controller
         }
 
         $validated = $request->validate([
-            'class_id' => 'required|school_exists:classes,id',
+            'classe_id' => 'required|school_exists:classes,id',
         ]);
 
-        // Source de vérité : `class_id` du profil. L'ancien pivot
+        // Source de vérité : `classe_id` du profil. L'ancien pivot
         // `enseignantmp_classe` pointe (migration défectueuse) vers la table
         // `enseignants` et ne peut jamais contenir un enseignant M/P : on ne
         // le synchronise pas.
-        $classe = Classes::find($validated['class_id']);
+        $classe = Classes::find($validated['classe_id']);
 
-        $enseignant->class_id = $classe->id;
+        $enseignant->classe_id = $classe->id;
         $enseignant->save();
 
         return response()->json([

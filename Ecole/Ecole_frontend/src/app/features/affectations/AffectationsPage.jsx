@@ -155,7 +155,7 @@ export default function AffectationsPage() {
     setActionError(null);
     try {
       const res = await post(`/enseignants-mp/${mpTeacherId}/affectation`, {
-        class_id: Number(newClassId),
+        classe_id: Number(newClassId),
       });
       const updated = res?.data?.data ?? unwrap(res);
       setMpTeachers((prev) =>

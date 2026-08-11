@@ -10,14 +10,14 @@ class EnseignantsMaternellePrimaire extends Model
 {
     use HasFactory, BelongsToEcole;
 
-    protected $table = 'enseignants_martenel_primaire';
+    protected $table = 'enseignants_maternelle_primaire';
 
     protected $fillable = [
         'user_id',
         'date_naissance',
         'lieu_naissance',
         'sexe',
-        'class_id',
+        'classe_id',
         'ecole_id',
     ];
 
@@ -28,6 +28,6 @@ class EnseignantsMaternellePrimaire extends Model
 
     public function classe()
     {
-        return $this->belongsTo(Classes::class, 'class_id');
+        return $this->belongsTo(Classes::class, 'classe_id');
     }
 }
