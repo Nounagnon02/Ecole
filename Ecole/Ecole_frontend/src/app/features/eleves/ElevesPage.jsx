@@ -6,10 +6,12 @@ import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   Users, Search, Download, Plus, GraduationCap,
-  MoreHorizontal, UserCheck, UserX, RefreshCw,
+  MoreHorizontal, UserCheck, UserX, RefreshCw, Trash2,
 } from 'lucide-react';
 import { cn } from '@/shared/lib/utils';
 import { useApiQuery } from '@/shared/lib/api-client';
+import apiClient from '@/shared/lib/api-client';
+import { useQueryClient } from '@tanstack/react-query';
 import StatsCard from '@/shared/components/ui/StatsCard';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
@@ -33,6 +35,21 @@ export default function ElevesPage() {
     ['eleves'],
     '/eleves',
   );
+
+  const queryClient = useQueryClient();
+
+  const handleRetirer = async (eleve) => {
+    const nom = `${eleve.user?.name ?? ''} ${eleve.user?.prenom ?? ''}`.trim() || `élève n°${eleve.id}`;
+    if (!window.confirm(`Retirer ${nom} des effectifs ? Son dossier (notes, paiements…) reste consultable.`)) {
+      return;
+    }
+    try {
+      await apiClient.post(`/eleves/${eleve.id}/deactivate`);
+      queryClient.invalidateQueries({ queryKey: ['eleves'] });
+    } catch (e) {
+      window.alert(e?.response?.data?.message ?? 'Impossible de retirer l\'élève');
+    }
+  };
 
   const eleves = elevesData?.data ?? elevesData ?? [];
 
@@ -162,7 +179,17 @@ export default function ElevesPage() {
                   </span>
                 </Table.Cell>
                 <Table.Cell className="text-right">
-                  <Button variant="ghost" size="sm" icon={<MoreHorizontal />} />
+                  <div className="flex justify-end gap-1">
+                    <Button variant="ghost" size="sm" icon={<MoreHorizontal />} title="Plus d'actions" />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      icon={<Trash2 />}
+                      title="Retirer des effectifs"
+                      className="text-red-500 hover:text-red-600"
+                      onClick={() => handleRetirer(eleve)}
+                    />
+                  </div>
                 </Table.Cell>
               </Table.Row>
             ))}
