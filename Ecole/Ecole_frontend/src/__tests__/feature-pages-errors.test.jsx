@@ -132,6 +132,34 @@ describe('ElevesPage', () => {
     await waitFor(() => expect(screen.queryByText(/Kponou/)).not.toBeInTheDocument());
     expect(screen.getByText(/Adjovi/)).toBeInTheDocument();
   });
+
+  it('retire un élève des effectifs après confirmation', async () => {
+    http.onGet('/eleves').reply(200, { data: [ELEVE] });
+    http.onPost('/eleves/1/deactivate').reply(200, { success: true });
+
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    renderPage(<ElevesPage />, { withQuery: true });
+
+    await waitFor(() => expect(screen.getByText(/Adjovi/)).toBeInTheDocument());
+
+    fireEvent.click(screen.getByTitle('Retirer des effectifs'));
+
+    await waitFor(() =>
+      expect(http.callsTo('post', '/eleves/1/deactivate')).toHaveLength(1)
+    );
+  });
+
+  it('ne retire pas l’élève quand la confirmation est refusée', async () => {
+    http.onGet('/eleves').reply(200, { data: [ELEVE] });
+
+    vi.spyOn(window, 'confirm').mockReturnValue(false);
+    renderPage(<ElevesPage />, { withQuery: true });
+
+    await waitFor(() => expect(screen.getByText(/Adjovi/)).toBeInTheDocument());
+    fireEvent.click(screen.getByTitle('Retirer des effectifs'));
+
+    expect(http.callsTo('post', '/eleves/1/deactivate')).toHaveLength(0);
+  });
 });
 
 /* ══════════════════════════════════════════════════════════════════════
