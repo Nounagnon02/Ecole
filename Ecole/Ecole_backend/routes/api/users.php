@@ -86,6 +86,8 @@ Route::middleware('auth:sanctum')->group(function () {
         // enfants d'un autre établissement à ce parent.
         Route::put('/{id}/eleves', [ParentsController::class, 'updateEleves'])->middleware('role:directeur');
         Route::put('/{id}', [ParentsController::class, 'update'])->middleware('role:directeur');
+        // Suppression douce du compte parent (directeur).
+        Route::delete('/{id}', [ParentsController::class, 'destroy'])->middleware('role:directeur');
         
         // Gestion invitations parents
         Route::post('/invite', [ParentsController::class, 'invite']);

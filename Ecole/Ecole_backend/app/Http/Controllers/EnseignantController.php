@@ -18,10 +18,14 @@ class EnseignantController extends Controller
 {
     /**
      * Liste des enseignants (Admin)
+     *
+     * `whereHas('user')` exclut les profils dont le compte a été supprimé
+     * (soft delete) : le user revient `null` via la relation, inutile de les
+     * exposer dans les listes de personnel actif.
      */
     public function index()
     {
-        return response()->json(Enseignant::with('user')->get());
+        return response()->json(Enseignant::with('user')->whereHas('user')->get());
     }
 
     /**
@@ -304,14 +308,22 @@ class EnseignantController extends Controller
     /**
      * Supprimer un enseignant (Admin / Directeur)
      * DELETE /enseignants/delete/{id}
+     *
+     * Suppression douce du compte : le profil `enseignants` (et son historique,
+     * emplois du temps, affectations…) est conservé, seul `users.deleted_at`
+     * est posé. Le compte est ainsi privé d'accès sans que ses données ne
+     * disparaissent en cascade.
      */
     public function destroy($id)
     {
         $enseignant = Enseignant::with('user')->findOrFail($id);
         $user = $enseignant->user;
 
-        $enseignant->delete();
         if ($user) {
+            $user->is_active = false;
+            $user->save();
+            $user->tokens()->delete();
+            DB::table('sessions')->where('user_id', $user->id)->delete();
             $user->delete();
         }
 

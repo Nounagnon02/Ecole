@@ -43,7 +43,9 @@ it('deletes a teacher', function () {
     $response = $this->actingAs($user)->deleteJson("/api/enseignants/delete/{$enseignant->id}");
 
     $response->assertOk();
-    expect(Enseignant::find($enseignant->id))->toBeNull();
+    // Suppression douce : le profil survit, seul le compte est désactivé.
+    expect(Enseignant::find($enseignant->id))->not->toBeNull();
+    expect($enseignant->fresh()->user)->toBeNull();
 });
 
 it('returns subjects filtered by niveau primaire', function () {
