@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Ecole;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 /**
  * AdminController — Gestion administrateur centralisée
@@ -127,10 +128,18 @@ class AdminController extends Controller
 
     /**
      * Supprimer un utilisateur.
+     *
+     * Suppression douce (`deleted_at`) : le compte est privé d'accès et
+     * disparaît des listes, mais ses profils et son historique sont conservés
+     * (les FK `users.*` étant en cascade, une suppression dure effaçait tout).
      */
     public function destroy($id)
     {
         $user = User::findOrFail($id);
+        $user->is_active = false;
+        $user->save();
+        $user->tokens()->delete();
+        DB::table('sessions')->where('user_id', $user->id)->delete();
         $user->delete();
 
         return response()->json([

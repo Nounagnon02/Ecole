@@ -17,10 +17,13 @@ class ParentsController extends Controller
 {
     /**
      * Liste des parents (Admin)
+     *
+     * `whereHas('user')` : les profils dont le compte a été supprimé (soft
+     * delete) renvoient `user` nul et sortent des listes de personnel actif.
      */
     public function index()
     {
-        return response()->json(UserParent::with('user', 'eleves.user')->get());
+        return response()->json(UserParent::with('user', 'eleves.user')->whereHas('user')->get());
     }
 
     /**
@@ -153,11 +156,16 @@ class ParentsController extends Controller
 
     public function destroy($id)
     {
-        $parent = UserParent::findOrFail($id);
+        $parent = UserParent::with('user')->findOrFail($id);
         $user = $parent->user;
-        
-        $parent->delete();
-        $user->delete();
+
+        if ($user) {
+            $user->is_active = false;
+            $user->save();
+            $user->tokens()->delete();
+            DB::table('sessions')->where('user_id', $user->id)->delete();
+            $user->delete();
+        }
 
         return response()->json(['message' => 'Parent supprimé']);
     }
