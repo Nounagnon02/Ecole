@@ -20,10 +20,10 @@ class DashboardController extends Controller
         return Roles::expand([Roles::DIRECTOR, 'censeur', 'secretaire', Roles::SUPER_ADMIN]);
     }
 
-    /** Clé de cache du référentiel, par école. */
+    /** Clé de cache du référentiel, par école résolue (cf. audit empoisonnement). */
     private function directoryCacheKey(): string
     {
-        return 'dashboard_directeur_' . (auth()->user()?->ecole_id ?? 'global');
+        return 'dashboard_directeur_' . (\App\Models\Eleve::currentEcoleId() ?? 'global');
     }
 
     public function directeur()
@@ -454,7 +454,7 @@ class DashboardController extends Controller
      */
     public function admin()
     {
-        $ecoleId = auth()->user()?->ecole_id ?? 'global';
+        $ecoleId = \App\Models\Eleve::currentEcoleId() ?? 'global';
 
         $debut = microtime(true);
         $data = \Illuminate\Support\Facades\Cache::remember('dashboard_admin_' . $ecoleId, 120, function () {
@@ -671,7 +671,7 @@ class DashboardController extends Controller
      */
     public function universite()
     {
-        $ecoleId = auth()->user()?->ecole_id ?? 'global';
+        $ecoleId = \App\Models\Eleve::currentEcoleId() ?? 'global';
         $data = \Illuminate\Support\Facades\Cache::remember('dashboard_universite_' . $ecoleId, 300, function () {
             $facultesModel = \App\Models\Universite\Faculte::class;
             $departementsModel = \App\Models\Universite\Departement::class;
@@ -783,7 +783,7 @@ class DashboardController extends Controller
      */
     public function comptable()
     {
-        $data = \Illuminate\Support\Facades\Cache::remember('dashboard_comptable_' . auth()->id(), 120, function () {
+        $data = \Illuminate\Support\Facades\Cache::remember('dashboard_comptable_' . (\App\Models\Eleve::currentEcoleId() ?? 'global'), 120, function () {
             $moisActuel = now()->month;
             $anneeActuelle = now()->year;
 
@@ -881,7 +881,7 @@ class DashboardController extends Controller
      */
     public function surveillant()
     {
-        $data = \Illuminate\Support\Facades\Cache::remember('dashboard_surveillant_' . auth()->id(), 60, function () {
+        $data = \Illuminate\Support\Facades\Cache::remember('dashboard_surveillant_' . (\App\Models\Eleve::currentEcoleId() ?? 'global'), 60, function () {
             $totalEleves = \App\Models\Eleve::count();
 
             $absentsAujourdhui = \App\Models\Absence::whereDate('date', today())
@@ -964,7 +964,7 @@ class DashboardController extends Controller
      */
     public function censeur()
     {
-        $data = \Illuminate\Support\Facades\Cache::remember('dashboard_censeur_' . auth()->id(), 120, function () {
+        $data = \Illuminate\Support\Facades\Cache::remember('dashboard_censeur_' . (\App\Models\Eleve::currentEcoleId() ?? 'global'), 120, function () {
             $totalEleves = \App\Models\Eleve::count();
             $sanctionsMois = \App\Models\Sanction::whereMonth('date', now()->month)
                 ->whereYear('date', now()->year)->count();
@@ -1038,7 +1038,7 @@ class DashboardController extends Controller
      */
     public function infirmier()
     {
-        $data = \Illuminate\Support\Facades\Cache::remember('dashboard_infirmier_' . auth()->id(), 60, function () {
+        $data = \Illuminate\Support\Facades\Cache::remember('dashboard_infirmier_' . (\App\Models\Eleve::currentEcoleId() ?? 'global'), 60, function () {
             $visitesMois = \App\Models\ConsultationMedicale::whereMonth('date', now()->month)
                 ->whereYear('date', now()->year)->count();
             $visitesAujourdhui = \App\Models\ConsultationMedicale::whereDate('date', today())->count();
@@ -1106,7 +1106,7 @@ class DashboardController extends Controller
      */
     public function bibliothecaire()
     {
-        $data = \Illuminate\Support\Facades\Cache::remember('dashboard_bibliothecaire_' . auth()->id(), 120, function () {
+        $data = \Illuminate\Support\Facades\Cache::remember('dashboard_bibliothecaire_' . (\App\Models\Eleve::currentEcoleId() ?? 'global'), 120, function () {
             $totalLivres = \App\Models\Livre::count();
             $empruntsEnCours = \App\Models\Emprunt::whereNull('date_retour_effective')->count();
             $retards = \App\Models\Emprunt::whereNull('date_retour_effective')
@@ -1184,7 +1184,7 @@ class DashboardController extends Controller
      */
     public function secretaire()
     {
-        $data = \Illuminate\Support\Facades\Cache::remember('dashboard_secretaire_' . auth()->id(), 120, function () {
+        $data = \Illuminate\Support\Facades\Cache::remember('dashboard_secretaire_' . (\App\Models\Eleve::currentEcoleId() ?? 'global'), 120, function () {
             $totalInscriptions = \App\Models\Eleve::count();
             $nouveauxMois = \App\Models\Eleve::whereMonth('created_at', now()->month)->count();
             $dossiersEnCours = \App\Models\Certificat::where('delivre', false)->count();

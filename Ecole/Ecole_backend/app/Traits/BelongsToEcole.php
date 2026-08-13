@@ -71,4 +71,18 @@ trait BelongsToEcole
     {
         return $this->belongsTo(Ecole::class);
     }
+
+    /**
+     * École effective pour la requête en cours, en accès public.
+     *
+     * Les clés de cache et les décisions d'isolation doivent reposer sur la
+     * même valeur que le scope `ecole` — jamais sur `user->ecole_id` brut :
+     * pour un super-admin ciblant un établissement via `X-Ecole-Id`, le champ
+     * de l'utilisateur est null alors que les requêtes sont scopées sur
+     * l'école de la session (cf. audit — empoisonnement du cache dashboards).
+     */
+    public static function currentEcoleId(): ?int
+    {
+        return static::resolveEcoleId();
+    }
 }
