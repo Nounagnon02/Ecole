@@ -39,6 +39,20 @@ class Enseignant extends Model
                     ->withPivot(['matiere_id', 'serie_id']);
     }
 
+    /* ── Profil professionnel (cf. audit F3) ────────────────────────── */
+
+    public function experiences()
+    {
+        return $this->hasMany(EnseignantExperience::class);
+    }
+
+    public function matieresMaitrisees()
+    {
+        return $this->belongsToMany(Matieres::class, 'enseignant_matiere_maitrisee', 'enseignant_id', 'matiere_id')
+                    ->using(EnseignantMatiereMaitrisee::class)
+                    ->withTimestamps();
+    }
+
     /* ── Activités pédagogiques ──────────────────────────────────────── */
 
     public function exercices()

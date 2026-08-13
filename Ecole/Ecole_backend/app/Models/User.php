@@ -24,6 +24,7 @@ class User extends Authenticatable
         'prenom',
         'email',
         'telephone',
+        'avatar',
         'password',
         'role',
         'ecole_id',
