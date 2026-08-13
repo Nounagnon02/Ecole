@@ -4,11 +4,11 @@
  * Préférences, notifications, sécurité et configuration du profil.
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   User, Bell, Shield, Palette, Globe, Smartphone,
-  Moon, Sun, Save, CheckCircle2
+  Moon, Sun, Save, CheckCircle2, Plus, Trash2, Briefcase
 } from 'lucide-react';
 import Card from '@/shared/components/ui/Card';
 import Button from '@/shared/components/ui/Button';
@@ -18,6 +18,7 @@ import Avatar from '@/shared/components/ui/Avatar';
 import { useApi } from '@/hooks/useApi';
 import { toast } from 'sonner';
 import useAuthStore from '@/shared/stores/auth-store';
+import { ROLE_GROUPS, hasRole } from '@/shared/types/roles';
 
 const SECTIONS = [
   { id: 'profil', label: 'Profil', icon: User },
@@ -28,12 +29,12 @@ const SECTIONS = [
 ];
 
 export default function ParametresPage() {
-  const { user, setUser } = useAuthStore();
+  const { user, updateUser } = useAuthStore();
   const { loading, error, put } = useApi();
   const [activeSection, setActiveSection] = useState('profil');
   const [saved, setSaved] = useState(false);
 
-  const handleSaveProfile = async (e) => {
+  const handleSaveProfile = async (e, extra = {}) => {
     e.preventDefault();
     setSaved(false);
     try {
@@ -43,10 +44,11 @@ export default function ParametresPage() {
         prenom: form.querySelector('[name="prenom"]')?.value,
         email: form.querySelector('[name="email"]')?.value,
         telephone: form.querySelector('[name="telephone"]')?.value,
+        ...extra,
       };
       const res = await put('/auth/profile', data);
-      if (res?.success) {
-        setUser({ ...user, ...res.user });
+      if (res?.data?.success) {
+        updateUser(res.data.user);
         setSaved(true);
         toast.success('Profil mis à jour');
         setTimeout(() => setSaved(false), 3000);
@@ -112,14 +114,97 @@ export default function ParametresPage() {
 
 /* ─── Profil ──────────────────────────────────────────────────────── */
 function ProfilSection({ user, onSave, saving, saved }) {
+  const isTeacher = hasRole(user?.role, ROLE_GROUPS.ENSEIGNANTS);
+  const { get } = useApi();
+
+  const [avatarDraft, setAvatarDraft] = useState(null);
+  const [matieres, setMatieres] = useState([]);
+  const [selectedMatieres, setSelectedMatieres] = useState(
+    () => user?.profil?.matieres_maitrisees?.map((m) => m.id) || []
+  );
+  const [experiences, setExperiences] = useState(
+    () => user?.profil?.experiences || []
+  );
+
+  useEffect(() => {
+    if (!isTeacher || matieres.length > 0) return;
+    get('/matieres')
+      .then((res) => {
+        const list = Array.isArray(res?.data?.data)
+          ? res.data.data
+          : Array.isArray(res?.data)
+            ? res.data
+            : Array.isArray(res) ? res : [];
+        setMatieres(list);
+      })
+      .catch(() => {});
+  }, [isTeacher]);
+
+  const handleAvatarChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Image trop lourde (max 2 Mo)');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setAvatarDraft(reader.result);
+    reader.readAsDataURL(file);
+  };
+
+  const handleSubmit = (e) => {
+    const form = e.target;
+    onSave(e, {
+      avatar: avatarDraft,
+      specialite: form.querySelector('[name="specialite"]')?.value,
+      grade: form.querySelector('[name="grade"]')?.value,
+      experiences,
+      matieres_maitrisees: selectedMatieres,
+    });
+  };
+
+  const addExperience = () =>
+    setExperiences((rows) => [
+      ...rows,
+      { id: null, poste: '', etablissement: '', date_debut: '', date_fin: '', description: '' },
+    ]);
+
+  const updateExperience = (index, field, value) =>
+    setExperiences((rows) =>
+      rows.map((row, i) => (i === index ? { ...row, [field]: value } : row))
+    );
+
+  const removeExperience = (index) =>
+    setExperiences((rows) => rows.filter((_, i) => i !== index));
+
+  const toggleMatiere = (id) =>
+    setSelectedMatieres((ids) =>
+      ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]
+    );
+
   return (
     <div className="space-y-4">
       <Card>
         <Card.Header title="Photo de profil" />
         <div className="flex items-center gap-4">
-          <Avatar name={user?.name || 'User'} size="xl" />
+          <Avatar src={avatarDraft || user?.avatar || null} name={user?.name || 'User'} size="xl" />
           <div className="space-y-1">
-            <Button size="sm" variant="outline">Changer la photo</Button>
+            <label className="inline-block">
+              <span className="inline-flex cursor-pointer items-center justify-center rounded-xl border border-neutral-200 px-4 h-9 text-sm font-medium text-neutral-700 transition hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800">
+                Changer la photo
+              </span>
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/jpg,image/webp"
+                className="sr-only"
+                onChange={handleAvatarChange}
+              />
+            </label>
+            {avatarDraft && (
+              <Button size="sm" variant="ghost" onClick={() => setAvatarDraft(null)}>
+                Annuler
+              </Button>
+            )}
             <p className="text-xs text-neutral-500">PNG, JPG. Max 2 Mo.</p>
           </div>
         </div>
@@ -127,7 +212,7 @@ function ProfilSection({ user, onSave, saving, saved }) {
 
       <Card>
         <Card.Header title="Informations personnelles" />
-        <form onSubmit={onSave} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Prénom</label>
@@ -146,6 +231,117 @@ function ProfilSection({ user, onSave, saving, saved }) {
               <Input name="telephone" defaultValue={user?.telephone || ''} />
             </div>
           </div>
+
+          {isTeacher && (
+            <>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Spécialité</label>
+                  <Input name="specialite" defaultValue={user?.profil?.specialite || ''} />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Grade</label>
+                  <Input name="grade" defaultValue={user?.profil?.grade || ''} />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                  Matières maîtrisées
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {matieres.map((m) => {
+                    const active = selectedMatieres.includes(m.id);
+                    return (
+                      <button
+                        key={m.id}
+                        type="button"
+                        onClick={() => toggleMatiere(m.id)}
+                        className={`rounded-full border px-3 py-1 text-sm transition-all ${
+                          active
+                            ? 'border-[var(--accent)] bg-[var(--accent-subtle)] text-[var(--accent)]'
+                            : 'border-neutral-200 text-neutral-600 hover:border-neutral-300 dark:border-neutral-700 dark:text-neutral-400'
+                        }`}
+                      >
+                        {m.nom}
+                      </button>
+                    );
+                  })}
+                  {matieres.length === 0 && (
+                    <p className="text-xs text-neutral-500">Chargement des matières…</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="flex items-center gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                    <Briefcase className="h-4 w-4" /> Expériences professionnelles
+                  </label>
+                  <Button type="button" size="sm" variant="outline" onClick={addExperience} icon={<Plus className="h-4 w-4" />}>
+                    Ajouter
+                  </Button>
+                </div>
+                {experiences.length === 0 && (
+                  <p className="text-xs text-neutral-500">Aucune expérience renseignée.</p>
+                )}
+                {experiences.map((exp, i) => (
+                  <div key={i} className="rounded-xl border border-neutral-200 p-3 space-y-3 dark:border-neutral-700">
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-medium text-neutral-500">Poste</label>
+                        <Input
+                          value={exp.poste}
+                          onChange={(e) => updateExperience(i, 'poste', e.target.value)}
+                          placeholder="Professeur de mathématiques"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-medium text-neutral-500">Établissement</label>
+                        <Input
+                          value={exp.etablissement}
+                          onChange={(e) => updateExperience(i, 'etablissement', e.target.value)}
+                          placeholder="Lycée public"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-medium text-neutral-500">Début</label>
+                        <Input
+                          type="date"
+                          value={exp.date_debut}
+                          onChange={(e) => updateExperience(i, 'date_debut', e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-medium text-neutral-500">Fin (optionnel)</label>
+                        <Input
+                          type="date"
+                          value={exp.date_fin}
+                          onChange={(e) => updateExperience(i, 'date_fin', e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium text-neutral-500">Description (optionnel)</label>
+                      <textarea
+                        value={exp.description}
+                        onChange={(e) => updateExperience(i, 'description', e.target.value)}
+                        rows={2}
+                        className="w-full rounded-xl border border-neutral-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+                        placeholder="Missions, classes encadrées…"
+                      />
+                    </div>
+                    <div className="flex justify-end">
+                      <Button type="button" size="sm" variant="ghost" onClick={() => removeExperience(i)} icon={<Trash2 className="h-4 w-4" />}>
+                        Retirer
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
           <div className="flex items-center gap-3">
             <Button type="submit" loading={saving} icon={<Save className="h-4 w-4" />}>
               Enregistrer
