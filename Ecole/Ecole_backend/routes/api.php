@@ -31,6 +31,7 @@ Illuminate\Support\Facades\Route::get('/v1/health', fn() => response()->json([
 require __DIR__.'/api/auth.php';
 require __DIR__.'/api/dashboard.php';
 require __DIR__.'/api/academic.php';
+require __DIR__.'/api/series.php';
 require __DIR__.'/api/users.php';
 require __DIR__.'/api/services.php';
 require __DIR__.'/api/universite.php';
