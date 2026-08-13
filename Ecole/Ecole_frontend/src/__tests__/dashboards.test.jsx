@@ -13,6 +13,7 @@ import { MemoryRouter, Routes, Route, useLocation } from 'react-router-dom';
 import DirecteurDashboard from '@/app/dashboards/directeur';
 import EleveDashboard from '@/app/dashboards/eleve';
 import ParentDashboard from '@/app/dashboards/parent';
+import EnseignantDashboard from '@/app/dashboards/enseignant';
 import AdminDashboard from '@/app/dashboards/admin';
 import useAuthStore from '@/shared/stores/auth-store';
 import { clearDashboardCache } from '@/shared/lib/dashboard-cache';
@@ -398,6 +399,104 @@ describe('ParentDashboard', () => {
   });
 });
 
+describe('EnseignantDashboard', () => {
+  const ENSEIGNANT_ENDPOINT = '/dashboard/enseignant';
+
+  const ENSEIGNANT_PAYLOAD = {
+    stats: [
+      { title: 'Mes Élèves', value: '2', trend: 0, trendLabel: 'dans mes classes' },
+      { title: 'Cours Cette Semaine', value: '2', trend: 0, trendLabel: 'créneaux planifiés' },
+      { title: 'Moyenne Classe', value: '14,00', trend: 0, trendLabel: 'mes notes' },
+      { title: 'Devoirs à Corriger', value: '1', trend: 0, trendLabel: 'échéance atteinte' },
+    ],
+    emploi_temps: [
+      {
+        jour: 'Jeudi',
+        cours: [
+          { heure: '08h00', matiere: 'Mathématiques', classe: '6e A', salle: 'S101' },
+          { heure: '10h00', matiere: 'Sciences', classe: '6e A', salle: 'Labo' },
+        ],
+      },
+      {
+        jour: 'Lundi',
+        cours: [{ heure: '10h00', matiere: 'Mathématiques', classe: '6e A', salle: 'S202' }],
+      },
+    ],
+    devoirs: [
+      { id: 1, titre: 'Exercices à venir', classe: '6e A', date: '15/08/2026', etat: 'à venir' },
+    ],
+    notes_recentes: [
+      { id: 1, eleve: 'Aho Kossi', classe: '6e A', matiere: 'Mathématiques', note: 16, date: '12/08/2026', appreciation: 'Excellent' },
+      { id: 2, eleve: 'Aho Ama', classe: '6e A', matiere: 'Mathématiques', note: 12, date: '11/08/2026', appreciation: 'Moyen' },
+    ],
+  };
+
+  beforeEach(() => {
+    useAuthStore.setState({
+      user: { id: 1, name: 'Test', role: 'enseignant' },
+      isAuthenticated: true,
+      isLoading: false,
+      sessionLastVerified: Date.now(),
+    });
+  });
+
+  it('affiche les 4 cartes de stats depuis l’API', async () => {
+    http.onGet(ENSEIGNANT_ENDPOINT).reply(200, { data: ENSEIGNANT_PAYLOAD });
+
+    renderDashboard(<EnseignantDashboard />);
+
+    await waitFor(() => expect(screen.getByText('Mes Élèves')).toBeInTheDocument());
+    expect(screen.getByText('Cours Cette Semaine')).toBeInTheDocument();
+    expect(screen.getByText('Moyenne Classe')).toBeInTheDocument();
+    expect(screen.getByText('Devoirs à Corriger')).toBeInTheDocument();
+    expect(screen.getAllByText('2').length).toBeGreaterThan(0);
+    expect(screen.getByText('14,00')).toBeInTheDocument();
+  });
+
+  it('affiche les cours du jour et les devoirs à venir', async () => {
+    http.onGet(ENSEIGNANT_ENDPOINT).reply(200, { data: ENSEIGNANT_PAYLOAD });
+
+    renderDashboard(<EnseignantDashboard />);
+
+    // « Aujourd'hui » = emploi_temps[0] ; ses cours sont rendus.
+    await waitFor(() => expect(screen.getByText('Mathématiques')).toBeInTheDocument());
+    expect(screen.getByText(/6e A · S101/)).toBeInTheDocument();
+    expect(screen.getByText('Exercices à venir')).toBeInTheDocument();
+  });
+
+  it('liste les dernières notes dans l’onglet Notes, avec appréciation', async () => {
+    http.onGet(ENSEIGNANT_ENDPOINT).reply(200, { data: ENSEIGNANT_PAYLOAD });
+
+    renderDashboard(<EnseignantDashboard />);
+    await waitFor(() => expect(screen.getByText('Mes Élèves')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole('button', { name: /Notes/i }));
+
+    await waitFor(() => expect(screen.getByText('Aho Kossi')).toBeInTheDocument());
+    expect(screen.getByText('Aho Ama')).toBeInTheDocument();
+    expect(screen.getByText('Excellent')).toBeInTheDocument();
+  });
+
+  it('affiche les états vides quand l’API ne renvoie aucune donnée', async () => {
+    http.onGet(ENSEIGNANT_ENDPOINT).reply(200, {
+      data: { stats: [], emploi_temps: [], devoirs: [], notes_recentes: [] },
+    });
+
+    renderDashboard(<EnseignantDashboard />);
+
+    await waitFor(() => expect(screen.getByText(/Aucun cours prévu aujourd/)).toBeInTheDocument());
+    expect(screen.getByText(/Aucun devoir ou évaluation à venir/)).toBeInTheDocument();
+  });
+
+  it('signale l’erreur de chargement sans afficher de fausses données', async () => {
+    http.onGet(ENSEIGNANT_ENDPOINT).reply(500, { message: 'Erreur interne' });
+
+    renderDashboard(<EnseignantDashboard />);
+
+    await waitFor(() => expect(screen.getByText(/Erreur de chargement/)).toBeInTheDocument());
+  });
+});
+
 describe('AdminDashboard', () => {
   const ADMIN_ENDPOINT = '/dashboard/admin';
 
@@ -422,7 +521,9 @@ describe('AdminDashboard', () => {
       { id: 1, level: 'INFO', time: '14:00:01', message: 'Login utilisateur', module: 'laravel' },
       { id: 2, level: 'ERROR', time: '14:00:02', message: 'Faille SQL', module: 'laravel' },
     ],
-    utilisateurs: [],
+    utilisateurs: [
+      { id: 1, name: 'Aho Kossi', email: 'k.aho@ecole.bj', role: 'admin', ecole: 'Complexe A', is_active: true, created_at: '2026-08-01T09:00:00.000Z' },
+    ],
   };
 
   beforeEach(() => {
@@ -445,5 +546,49 @@ describe('AdminDashboard', () => {
     expect(screen.getByText('Disque')).toBeInTheDocument();
     expect(screen.getByText('1 erreurs')).toBeInTheDocument();
     expect(screen.getByText('Faille SQL')).toBeInTheDocument();
+  });
+
+  it('liste les utilisateurs récents depuis l’API', async () => {
+    http.onGet(ADMIN_ENDPOINT).reply(200, { data: ADMIN_PAYLOAD });
+
+    renderDashboard(<AdminDashboard />);
+
+    await waitFor(() => expect(screen.getByText('Aho Kossi')).toBeInTheDocument());
+    expect(screen.getByText('Utilisateurs Récents')).toBeInTheDocument();
+    expect(screen.getByText(/k\.aho@ecole\.bj/)).toBeInTheDocument();
+  });
+
+  it('affiche les logs réels dans l’onglet Logs Système et les filtre', async () => {
+    http.onGet(ADMIN_ENDPOINT).reply(200, { data: ADMIN_PAYLOAD });
+
+    renderDashboard(<AdminDashboard />);
+    await waitFor(() => expect(screen.getByText('Utilisateurs Actifs')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole('button', { name: /Logs Système/i }));
+
+    // La bascule d'onglet passe par une animation (AnimatePresence) : on
+    // attend un marqueur propre à la section Logs, pas un texte présent
+    // aussi dans l'Aperçu.
+    await waitFor(() => expect(screen.getByText(/Journalisation détaillée/)).toBeInTheDocument());
+    expect(screen.getByText('Login utilisateur')).toBeInTheDocument();
+    expect(screen.getByText('Faille SQL')).toBeInTheDocument();
+
+    // Filtre par niveau ERROR : seule l'entrée en erreur subsiste.
+    fireEvent.click(screen.getByRole('button', { name: 'ERROR' }));
+    await waitFor(() => expect(screen.queryByText('Login utilisateur')).not.toBeInTheDocument());
+    expect(screen.getByText('Faille SQL')).toBeInTheDocument();
+  });
+
+  it('affiche un état vide dans l’onglet Logs quand il n’y a aucune entrée', async () => {
+    http.onGet(ADMIN_ENDPOINT).reply(200, {
+      data: { ...ADMIN_PAYLOAD, logs: [], utilisateurs: [] },
+    });
+
+    renderDashboard(<AdminDashboard />);
+    await waitFor(() => expect(screen.getByText('Utilisateurs Actifs')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole('button', { name: /Logs Système/i }));
+
+    await waitFor(() => expect(screen.getByText(/Aucune entrée de journal/)).toBeInTheDocument());
   });
 });
