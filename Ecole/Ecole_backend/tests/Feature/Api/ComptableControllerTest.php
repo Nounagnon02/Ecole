@@ -328,7 +328,7 @@ class ComptableControllerTest extends TestCase
         $this->assertDatabaseHas('transaction_paiements', [
             'id_paiement_eleve' => $paiement->id,
             'reference_transaction' => 'TX_TEST_123',
-            'statut' => 'EN_ATTENTE',
+            'statut' => TransactionPaiement::EN_ATTENTE,
         ]);
     }
 

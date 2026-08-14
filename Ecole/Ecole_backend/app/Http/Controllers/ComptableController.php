@@ -422,7 +422,7 @@ class ComptableController extends Controller
                 'tranche' => $paiement->type_paiement,
                 'montant_paye' => $montantDu,
                 'date_paiement' => now(),
-                'statut' => 'EN_ATTENTE',
+                'statut' => TransactionPaiement::EN_ATTENTE,
                 'methode_paiement' => 'FEDAPAY',
                 'reference_transaction' => $result['transaction']->id,
                 'recu_par' => auth()->id(),
@@ -469,7 +469,7 @@ class ComptableController extends Controller
                 $tx = TransactionPaiement::where('reference_transaction', $transactionId)->first();
                 if ($tx) {
                     $tx->update([
-                        'statut' => 'APPROUVE',
+                        'statut' => TransactionPaiement::APPROUVE,
                         'date_paiement' => now(),
                         'observation' => $tx->observation . ' | Confirmé via callback Fedapay (' . now()->format('d/m/Y H:i') . ')',
                     ]);
