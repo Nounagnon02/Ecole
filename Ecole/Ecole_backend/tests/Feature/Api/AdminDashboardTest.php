@@ -31,23 +31,17 @@ class AdminDashboardTest extends TestCase
 
         $data = $response->json('data');
 
-        // Les 6 cartes, dans l'ordre attendu par STATS_META du front.
-        $this->assertCount(6, $data['stats']);
+        // Les 4 cartes, dans l'ordre attendu par STATS_META du front.
+        $this->assertCount(4, $data['stats']);
         $this->assertSame('Utilisateurs Actifs', $data['stats'][0]['title']);
-        $this->assertSame('Requêtes/minute', $data['stats'][1]['title']);
-        $this->assertSame('Espace Disque', $data['stats'][2]['title']);
-        $this->assertSame('Erreurs API', $data['stats'][3]['title']);
-        $this->assertSame('Temps Réponse', $data['stats'][4]['title']);
-        $this->assertSame('Uptime', $data['stats'][5]['title']);
-
-        // Temps de réponse réel, injecté après le cache.
-        $this->assertMatchesRegularExpression('/\d+ ms/', $data['stats'][4]['value']);
+        $this->assertSame('Espace Disque', $data['stats'][1]['title']);
+        $this->assertSame('Erreurs API', $data['stats'][2]['title']);
+        $this->assertSame('Uptime', $data['stats'][3]['title']);
 
         // Trafic sur 7 jours avec les clés du graphique.
         $this->assertCount(7, $data['traffic']);
         $this->assertArrayHasKey('jour', $data['traffic'][0]);
         $this->assertArrayHasKey('req', $data['traffic'][0]);
-        $this->assertArrayHasKey('temps', $data['traffic'][0]);
 
         // Santé système.
         $this->assertNotEmpty($data['health']);
