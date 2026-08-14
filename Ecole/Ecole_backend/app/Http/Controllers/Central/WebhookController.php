@@ -74,7 +74,7 @@ class WebhookController extends Controller
             return response()->json(['message' => 'Invalid signature'], 401);
         }
 
-        Log::info('[Webhook] CinetPay notification', $request->all());
+        Log::info('[Webhook] CinetPay notification', ['keys' => array_keys($request->all())]);
 
         $transactionId = $request->input('transaction_id');
 
@@ -107,7 +107,7 @@ class WebhookController extends Controller
             return response()->json(['message' => 'Invalid signature'], 401);
         }
 
-        Log::info('[Webhook] FedaPay notification', $request->all());
+        Log::info('[Webhook] FedaPay notification', ['keys' => array_keys($request->all())]);
 
         $transactionId = $request->input('transaction_id') ?? $request->input('id');
 
@@ -140,7 +140,7 @@ class WebhookController extends Controller
             return response()->json(['message' => 'Invalid signature'], 401);
         }
 
-        Log::info('[Webhook] Stripe notification', $request->all());
+        Log::info('[Webhook] Stripe notification', ['keys' => array_keys($request->all())]);
 
         $event = $request->input('type');
         $session = $request->input('data.object', []);

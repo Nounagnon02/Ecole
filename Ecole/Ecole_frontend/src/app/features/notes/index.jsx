@@ -9,27 +9,20 @@ import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search,
-  Filter,
   BarChart3,
-  Download,
   Plus,
-  BookOpen,
-  TrendingUp,
-  TrendingDown,
   Award,
-  Calendar,
   FileText,
   Eye,
   Edit,
   Trash2,
   CheckCircle2,
-  AlertCircle,
-  Loader2,
+  AlertCircle
 } from 'lucide-react';
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer
 } from 'recharts';
-import { cn, formatNumber } from '@/shared/lib/utils';
+import { cn } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
@@ -40,7 +33,7 @@ import StatsCard from '@/shared/components/ui/StatsCard';
 import { useApi } from '@/hooks/useApi';
 
 export default function GestionNotes() {
-  const { loading, error, get, post, put, delete: del } = useApi();
+  const { get } = useApi();
   const [activeTab, setActiveTab] = useState('consultation');
   const [search, setSearch] = useState('');
   const [classeFilter, setClasseFilter] = useState('Toutes');
@@ -60,7 +53,7 @@ export default function GestionNotes() {
       setIsLoading(true);
       try {
         const [notesRes, classesRes, matieresRes, periodesRes, statsRes, moyennesRes] = await Promise.allSettled([
-          get('/notes'),
+          get('/notes/eleve'),
           get('/classes'),
           get('/matieres'),
           get('/periodes'),
@@ -299,7 +292,7 @@ export default function GestionNotes() {
           tauxReussite: notes.length > 0
             ? Math.round((notes.filter((n) => parseFloat(n.note) >= 10).length / notes.length) * 100)
             : 0,
-          totalEvaluations: notes.length,
+          totalEvaluations: notes.length
         };
         const moyennesData = moyennesMatieres.length > 0 ? moyennesMatieres : [
           { matiere: 'Mathématiques', moyenne: 12.5, max: 18 },

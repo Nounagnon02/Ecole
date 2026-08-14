@@ -39,6 +39,7 @@
     "lint:fix": "eslint src --ext .js,.jsx,.ts,.tsx --fix"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@tailwindcss/vite": "^4.3.1",
     "@testing-library/jest-dom": "^5.16.4",
     "@testing-library/react": "^13.3.0",
@@ -48,6 +49,7 @@
     "@vitejs/plugin-react": "^4.2.0",
     "cross-fetch": "^4.1.0",
     "eslint": "^8.44.0",
+    "eslint-plugin-react": "^7.37.5",
     "jsdom": "^24.0.0",
     "tailwindcss": "^4.3.1",
     "typescript": "^6.0.3",

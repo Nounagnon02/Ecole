@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Support\Cycles;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreClasseRequest extends FormRequest
@@ -23,7 +24,8 @@ class StoreClasseRequest extends FormRequest
     {
         return [
             'nom_classe' => 'required|string|max:255',
-            'categorie_classe' => 'required|string|in:Maternelle,Primaire,Secondaire',
+            'categorie_classe' => 'required|string|' . Cycles::rule(),
+            'capacite_max' => 'nullable|integer|min:1',
         ];
     }
 
@@ -37,7 +39,7 @@ class StoreClasseRequest extends FormRequest
         return [
             'nom_classe.required' => 'Le nom de la classe est requis.',
             'categorie_classe.required' => 'La catégorie de la classe est requise.',
-            'categorie_classe.in' => 'La catégorie doit être Maternelle, Primaire ou Secondaire.',
+            'categorie_classe.in' => 'La catégorie doit être ' . implode(', ', Cycles::all()) . '.',
         ];
     }
 }

@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 class Matieres extends Model
 {
     use HasFactory, BelongsToEcole;
-    protected $fillable=['nom', 'ecole_id'];
+    protected $fillable=['nom', 'volume_horaire', 'ecole_id'];
 
 
 
@@ -52,7 +52,8 @@ public function coefficientsParClasse()
     // Autres relations existantes...
     public function eleves()
     {
-        return $this->belongsToMany(Eleve::class, 'eleve_matiere');
+        return $this->belongsToMany(Eleve::class, 'eleves_matieres', 'matieres_id', 'eleves_id')
+                    ->withTimestamps();
     }
 
 
@@ -77,16 +78,8 @@ public function coefficientsParClasse()
             'enseignant_matiere',
             'matiere_id',
             'enseignant_id'
-        )->withPivot(['classe_id', 'serie_id']);
-    }
-
-    /*public function enseignantPrimaire()
-    {
-        return $this->belongsTo(Enseignants_Martenel_Primaire::class, 'enseignants_id');
-    }*/
-    public function classe()
-    {
-        return $this->belongsTo(Classes::class, 'class_id');
+        )->using(EnseignantMatiere::class)
+         ->withPivot(['classe_id', 'serie_id']);
     }
 
 

@@ -145,7 +145,10 @@ class OnboardingController extends Controller
             });
         }
 
-        // Create the admin user inside the tenant
+        // Create the admin user inside the tenant.
+        // The tenant admin is the school's `directeur`. The platform
+        // super-admin is reserved for the SaaS layer — assigning it here would
+        // hand a tenant account a transverse role (cf. `Roles::SUPER_ADMIN`).
         $user = null;
         $tenant->run(function () use ($validated, &$user) {
             $user = \App\Models\User::create([
@@ -156,9 +159,6 @@ class OnboardingController extends Controller
                 'phone' => $validated['phone'] ?? '',
                 'role' => 'directeur',
             ]);
-
-            // Assign super-admin role via Spatie
-            $user->assignRole('super-admin');
         });
 
         $tenant->setSetting('admin_email', $validated['email']);

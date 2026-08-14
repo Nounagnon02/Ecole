@@ -4,18 +4,22 @@ namespace App\Policies;
 
 use App\Models\User;
 use App\Models\Eleve;
+use App\Support\Roles;
 
 class ElevePolicy
 {
     public function viewAny(User $user): bool
     {
-        return in_array($user->role, ['directeur', 'enseignant', 'censeur', 'surveillant', 'infirmier', 'bibliothecaire', 'secretaire']);
+        return Roles::satisfies($user->role, ['directeur', 'enseignant', 'censeur', 'surveillant', 'infirmier', 'bibliothecaire', 'secretaire']);
     }
 
     public function view(User $user, Eleve $eleve): bool
     {
-        if ($user->role === 'directeur') return true;
-        // Enseignant voit les élèves de sa classe
+        if (Roles::isDirector($user->role)) return true;
+        // Enseignant voit les élèves de sa classe.
+        // `class_id` — la colonne `eleves.classe_id` n'existe pas, donc la
+        // comparaison portait sur null et aucun enseignant ne pouvait voir
+        // aucun élève.
         if ($user->role === 'enseignant') {
             return $user->enseignant?->classes()->where('classes.id', $eleve->classe_id)->exists() ?? false;
         }
@@ -25,21 +29,21 @@ class ElevePolicy
         }
         // Élève voit lui-même
         if ($user->role === 'eleve') return $user->eleve?->id === $eleve->id;
-        return in_array($user->role, ['censeur', 'surveillant', 'infirmier', 'secretaire']);
+        return in_array($user->role, ['censeur', 'surveillant', 'infirmier', 'secretaire'], true);
     }
 
     public function create(User $user): bool
     {
-        return in_array($user->role, ['directeur', 'secretaire']);
+        return Roles::satisfies($user->role, ['directeur', 'secretaire']);
     }
 
     public function update(User $user, Eleve $eleve): bool
     {
-        return in_array($user->role, ['directeur', 'secretaire']);
+        return Roles::satisfies($user->role, ['directeur', 'secretaire']);
     }
 
     public function delete(User $user, Eleve $eleve): bool
     {
-        return $user->role === 'directeur';
+        return Roles::isDirector($user->role);
     }
 }

@@ -6,27 +6,60 @@ on:
   pull_request:
     branches: [main]
 
+# Une nouvelle poussée sur la même branche annule la précédente : les quatre
+# surfaces réunies coûtent trop de minutes pour laisser des exécutions
+# obsolètes se terminer.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  # Ce workflow contourne volontairement les filtres `paths:` des workflows
+  # appelés : il donne l'état complet du dépôt sur chaque poussée, et c'est lui
+  # — et lui seul — qui autorise le déploiement.
   backend:
     uses: ./.github/workflows/backend.yml
+    with:
+      deploy: ${{ github.ref == 'refs/heads/main' }}
     secrets: inherit
 
   frontend:
     uses: ./.github/workflows/frontend.yml
+    with:
+      deploy: ${{ github.ref == 'refs/heads/main' }}
+    secrets: inherit
+
+  mobile:
+    uses: ./.github/workflows/mobile.yml
+    secrets: inherit
+
+  desktop:
+    uses: ./.github/workflows/desktop.yml
     secrets: inherit
 
   notify:
     runs-on: ubuntu-22.04
-    needs: [backend, frontend]
+    needs: [backend, frontend, mobile, desktop]
     if: always()
     steps:
       - name: Check status
         run: |
-          echo "Backend: ${{ needs.backend.result }}"
+          echo "Backend:  ${{ needs.backend.result }}"
           echo "Frontend: ${{ needs.frontend.result }}"
-          if [ "${{ needs.backend.result }}" = "success" ] && [ "${{ needs.frontend.result }}" = "success" ]; then
-            echo "✅ All pipelines passed"
+          echo "Mobile:   ${{ needs.mobile.result }}"
+          echo "Desktop:  ${{ needs.desktop.result }}"
+          echec=0
+          for resultat in \
+            "${{ needs.backend.result }}" \
+            "${{ needs.frontend.result }}" \
+            "${{ needs.mobile.result }}" \
+            "${{ needs.desktop.result }}"
+          do
+            if [ "$resultat" != "success" ]; then echec=1; fi
+          done
+          if [ "$echec" -eq 0 ]; then
+            echo "Toutes les chaînes sont vertes."
           else
-            echo "❌ Some pipelines failed"
+            echo "Au moins une chaîne a échoué."
             exit 1
           fi

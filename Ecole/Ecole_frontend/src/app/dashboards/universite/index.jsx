@@ -10,13 +10,12 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Building2, Users, BookOpen, GraduationCap, Calendar,
-  TrendingUp, TrendingDown, Activity, School, MapPin,
-  UserCheck, FileText, Clock, Plus, Search, Bell,
-  BarChart3, ChevronRight,
+  Activity, School, UserCheck, FileText, Search, Bell,
+  BarChart3, ChevronRight
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip,
-  ResponsiveContainer, PieChart, Pie, Cell, Legend,
+  ResponsiveContainer, PieChart, Pie, Cell, Legend
 } from 'recharts';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -24,11 +23,10 @@ import { cn } from '@/shared/lib/utils';
 import { useDashboardStats } from '@/app/dashboards/hooks/useDashboardData';
 import StatsCard from '@/shared/components/ui/StatsCard';
 import Card from '@/shared/components/ui/Card';
-import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
-import Table from '@/shared/components/ui/Table';
-import Avatar from '@/shared/components/ui/Avatar';
 import { Skeleton } from '@/shared/components/ui/Skeleton';
+import { RefreshButton } from '@/shared/components/ui';
+import { ErrorDisplay } from '@/shared/components/ui/EmptyState';
 
 /* ─── Constantes ─────────────────────────────────────────────── */
 const COLORS = ['var(--accent)', 'var(--green)', 'var(--amber)', 'var(--blue)', 'var(--primary)', 'var(--red)'];
@@ -171,147 +169,11 @@ function ApercuSection({ stats, inscriptions, facultes, activites, loading }) {
   );
 }
 
-function FacultesSection({ facultes }) {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Facultés & Départements</h2>
-          <p className="text-sm text-neutral-500 mt-1">Gestion des facultés et départements</p>
-        </div>
-        <Button size="sm" icon={<Plus />}>Nouvelle Faculté</Button>
-      </div>
-
-      {facultes.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-[var(--text-tertiary)]">
-          <Building2 className="h-12 w-12 mb-3 opacity-40" />
-          <p className="text-sm">Aucune faculté disponible</p>
-        </div>
-      ) : (
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {facultes.map((f) => (
-          <Card key={f.nom}>
-            <Card.Body>
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--accent-subtle)]">
-                  <Building2 className="h-5 w-5 text-[var(--accent)]" />
-                </div>
-                <Badge variant="neutral" size="sm">{f.departements} dép.</Badge>
-              </div>
-              <h3 className="text-base font-semibold text-neutral-900 dark:text-white">{f.nom}</h3>
-              <div className="mt-4 flex gap-4 text-sm text-neutral-500">
-                <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" /> {f.etudiants}</span>
-                <span className="flex items-center gap-1"><GraduationCap className="h-3.5 w-3.5" /> {f.enseignants}</span>
-              </div>
-            </Card.Body>
-          </Card>
-        ))}
-      </div>
-      )}
-    </div>
-  );
-}
-
-function EtudiantsSection({ etudiantsData }) {
-  const data = etudiantsData || [];
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Étudiants</h2>
-          <p className="text-sm text-neutral-500 mt-1">Gestion des inscriptions et dossiers étudiants</p>
-        </div>
-        <Button size="sm" icon={<Plus />}>Nouvel Étudiant</Button>
-      </div>
-
-      {data.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-[var(--text-tertiary)]">
-          <Users className="h-12 w-12 mb-3 opacity-40" />
-          <p className="text-sm">Aucune donnée étudiante disponible</p>
-        </div>
-      ) : (
-      <Card>
-        <Card.Header>
-          <Card.Title>Inscriptions du Semestre</Card.Title>
-          <Card.Description>Répartition par niveau</Card.Description>
-        </Card.Header>
-        <Card.Body className="p-0">
-          <Table>
-            <Table.Header>
-              <Table.Head>Niveau</Table.Head>
-              <Table.Head>Inscrits</Table.Head>
-              <Table.Head>Hommes</Table.Head>
-              <Table.Head>Femmes</Table.Head>
-              <Table.Head>Évolution</Table.Head>
-            </Table.Header>
-            <Table.Body>
-              {data.map((r) => (
-                <Table.Row key={r.niveau}>
-                  <Table.Cell><span className="font-medium text-neutral-900 dark:text-white">{r.niveau}</span></Table.Cell>
-                  <Table.Cell>{r.inscrits}</Table.Cell>
-                  <Table.Cell>{r.h}</Table.Cell>
-                  <Table.Cell>{r.f}</Table.Cell>
-                  <Table.Cell><Badge variant="success" size="sm">{r.evol}</Badge></Table.Cell>
-                </Table.Row>
-              ))}
-            </Table.Body>
-          </Table>
-        </Card.Body>
-      </Card>
-      )}
-    </div>
-  );
-}
-
-function CoursSection() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Cours & Programmes</h2>
-          <p className="text-sm text-neutral-500 mt-1">Gestion des enseignements et programmes</p>
-        </div>
-        <Button size="sm" icon={<Plus />}>Nouveau Cours</Button>
-      </div>
-
-      <Card>
-        <Card.Body>
-          <p className="text-neutral-500 text-center py-12">
-            Interface de gestion des cours — programmes, affectations, et suivis pédagogiques
-          </p>
-        </Card.Body>
-      </Card>
-    </div>
-  );
-}
-
-function PlanningSection() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Planning</h2>
-          <p className="text-sm text-neutral-500 mt-1">Emplois du temps et calendrier universitaire</p>
-        </div>
-        <Button size="sm" icon={<Plus />}>Nouvel Événement</Button>
-      </div>
-
-      <Card>
-        <Card.Body>
-          <p className="text-neutral-500 text-center py-12">
-            Calendrier universitaire — emplois du temps, examens, et événements académiques
-          </p>
-        </Card.Body>
-      </Card>
-    </div>
-  );
-}
-
 /* ─── Dashboard principal ──────────────────────────────────────── */
 export default function UniversiteDashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('apercu');
-  const { data, loading } = useDashboardStats('universite');
+  const { data, loading, error, refetch } = useDashboardStats('universite');
 
   const stats = data?.stats?.map((s, i) => ({ ...s, icon: STATS_META[i]?.icon, color: STATS_META[i]?.color })) || [];
   const inscriptions = data?.inscriptions || [];
@@ -324,17 +186,17 @@ export default function UniversiteDashboard() {
       facultes: '/universite/facultes',
       etudiants: '/universite/etudiants',
       cours: '/universite/cours',
-      planning: '/universite/planning',
-    };
+      planning: '/universite/planning'
+ };
     navigate(routes[tabId] || '/universite/dashboard');
-  };
+ };
 
   const renderSection = () => {
     switch (activeTab) {
       case 'apercu': return <ApercuSection stats={stats} inscriptions={inscriptions} facultes={facultes} activites={activites} loading={loading} />;
       default: return <ApercuSection stats={stats} inscriptions={inscriptions} facultes={facultes} activites={activites} loading={loading} />;
-    }
-  };
+ }
+ };
 
   return (
     <div className="space-y-6">
@@ -350,6 +212,7 @@ export default function UniversiteDashboard() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <RefreshButton loading={loading} onRefresh={refetch} />
           <Button variant="ghost" size="sm" icon={<Search className="h-4 w-4" />} />
           <Button variant="ghost" size="sm"><Bell className="h-4 w-4" /></Button>
           <Button variant="ghost" size="sm" icon={<Calendar className="h-4 w-4" />}>
@@ -357,6 +220,10 @@ export default function UniversiteDashboard() {
           </Button>
         </div>
       </div>
+
+      {error && (
+        <ErrorDisplay message={error} onRetry={refetch} />
+      )}
 
       {/* Tabs */}
       <div className="border-b border-neutral-200 dark:border-neutral-800">
@@ -375,7 +242,7 @@ export default function UniversiteDashboard() {
                 <Icon className="h-4 w-4" /> {tab.label}
               </button>
             );
-          })}
+ })}
         </nav>
       </div>
 

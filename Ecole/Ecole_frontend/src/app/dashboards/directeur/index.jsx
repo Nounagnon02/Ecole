@@ -6,15 +6,14 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Users, BookOpen, GraduationCap, DollarSign, TrendingUp,
-  Activity, School, CheckCircle2, XCircle, Bell, MessageSquare,
-  Calendar, BarChart3, PieChart, ArrowRight, Download,
-  Search, Filter, RefreshCw,
+  Users, GraduationCap, DollarSign,   Activity, School, MessageSquare,
+  Calendar, BarChart3, Download,
+  Search, RefreshCw
 } from 'lucide-react';
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart as RePieChart, Pie, Cell, Legend,
-  Area, AreaChart,
+  Area, AreaChart
 } from 'recharts';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -23,7 +22,6 @@ import { useDashboardStats } from '@/app/dashboards/hooks/useDashboardData';
 import StatsCard from '@/shared/components/ui/StatsCard';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
-import Avatar from '@/shared/components/ui/Avatar';
 import Button from '@/shared/components/ui/Button';
 import Table from '@/shared/components/ui/Table';
 import Input from '@/shared/components/ui/Input';
@@ -246,7 +244,7 @@ export default function DirecteurDashboard() {
       performances: '/notes',
       finances: '/paiements',
       messages: '/messagerie',
-      calendrier: '/emploi-du-temps',
+      calendrier: '/emploi-du-temps'
     };
     navigate(routes[tabId] || '/directeur/dashboard');
   };

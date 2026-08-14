@@ -11,7 +11,6 @@ import { motion } from 'framer-motion';
 import { Mail, ArrowLeft, AlertCircle, CheckCircle2, Send } from 'lucide-react';
 import { Button, Input } from '@/shared/components/ui';
 import { api } from '@/shared/services/api';
-import { LoadingSpinner } from '@/shared/components/ui/Skeleton';
 
 /* ─── Composants décoratifs réutilisés de LoginForm ──────────────── */
 function TopDecorativeBand() {
@@ -51,11 +50,11 @@ function DividerOrnament({ className }) {
 /* ─── Variants d'animation ───────────────────────────────────────── */
 const fadeUp = {
   hidden: { opacity: 0, y: 16 },
-  visible: { opacity: 1, y: 0 },
+  visible: { opacity: 1, y: 0 }
 };
 const container = {
   hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.06, delayChildren: 0.05 } },
+  visible: { opacity: 1, transition: { staggerChildren: 0.06, delayChildren: 0.05 } }
 };
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -109,7 +108,7 @@ export default function ForgotPassword() {
         setErrors({
           _general:
             err.response?.data?.message ||
-            'Erreur lors de l\'envoi. Veuillez réessayer.',
+            'Erreur lors de l\'envoi. Veuillez réessayer.'
         });
       }
     } finally {

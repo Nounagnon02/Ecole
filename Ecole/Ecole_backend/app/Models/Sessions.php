@@ -24,8 +24,14 @@ class Sessions extends Model
         return $this->belongsToMany(Eleve::class, 'sessions_candidats');
     }
 
-    public function notes()
+    /**
+     * Alias métier de `eleves` : le pivot s'appelle `sessions_candidats` et
+     * SessionsController désigne ces élèves par « candidats ». Sans cette
+     * relation, chaque `with('candidats')` du contrôleur levait
+     * « Call to undefined relationship ».
+     */
+    public function candidats()
     {
-        return $this->hasMany(Notes::class);
+        return $this->belongsToMany(Eleve::class, 'sessions_candidats');
     }
 }

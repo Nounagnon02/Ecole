@@ -4,20 +4,27 @@ namespace App\Policies;
 
 use App\Models\User;
 use App\Models\Absence;
+use App\Support\Roles;
 
 class AbsencePolicy
 {
     public function viewAny(User $user): bool
     {
-        return in_array($user->role, ['directeur', 'enseignant', 'surveillant', 'censeur', 'parent']);
+        return Roles::satisfies($user->role, ['directeur', 'enseignant', 'surveillant', 'censeur', 'parent']);
     }
 
     public function view(User $user, Absence $absence): bool
     {
-        if (in_array($user->role, ['directeur', 'surveillant', 'censeur'])) return true;
-        // Enseignant voit les absences de sa classe
+        if (Roles::satisfies($user->role, ['directeur', 'surveillant', 'censeur'])) return true;
+        // Enseignant voit les absences de sa classe.
+        // `class_id`, et `?->` sur l'élève : `eleves.classe_id` n'existe pas, et
+        // une absence dont l'élève a disparu faisait planter la vérification au
+        // lieu de la refuser.
         if ($user->role === 'enseignant') {
-            return $user->enseignant?->classes()->where('classes.id', $absence->eleve->classe_id)->exists() ?? false;
+            $classId = $absence->eleve?->classe_id;
+
+            return $classId !== null
+                && ($user->enseignant?->classes()->where('classes.id', $classId)->exists() ?? false);
         }
         // Parent voit les absences de ses enfants
         if ($user->role === 'parent') {
@@ -28,16 +35,16 @@ class AbsencePolicy
 
     public function create(User $user): bool
     {
-        return in_array($user->role, ['directeur', 'enseignant', 'surveillant']);
+        return Roles::satisfies($user->role, ['directeur', 'enseignant', 'surveillant']);
     }
 
     public function update(User $user): bool
     {
-        return in_array($user->role, ['directeur', 'surveillant']);
+        return Roles::satisfies($user->role, ['directeur', 'surveillant']);
     }
 
     public function delete(User $user): bool
     {
-        return $user->role === 'directeur';
+        return Roles::isDirector($user->role);
     }
 }

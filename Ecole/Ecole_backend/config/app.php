@@ -45,6 +45,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Query Logging
+    |--------------------------------------------------------------------------
+    |
+    | Trace des requêtes SQL. Uniquement honorée en environnement `local`
+    | (cf. AppServiceProvider). Ne jamais activer en production : les bindings
+    | contiennent des données personnelles.
+    |
+    */
+
+    'log_queries' => (bool) env('LOG_QUERIES', false),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application URL
     |--------------------------------------------------------------------------
     |
@@ -197,6 +210,10 @@ return [
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
 
+        // Sans cet enregistrement, mapRoutes() n'était jamais appelé et
+        // routes/tenant.php (dont tous les endpoints IA EduPilot) n'était
+        // jamais chargé (cf. audit F1).
+        App\Providers\TenancyServiceProvider::class,
 
     ],
 

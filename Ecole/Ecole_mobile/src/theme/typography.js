@@ -138,6 +138,9 @@ export const numberStyles = {
 
 /* ─── Presets texte utilitaires ──────────────────────────────────────────── */
 export const textPresets = {
+  // Base des titres, sans taille imposée : les écrans d'authentification
+  // n'ont besoin que de la famille de police et fixent eux-mêmes fontSize.
+  heading: headingBase,
   heading1: headingStyles.h1,
   heading2: headingStyles.h2,
   heading3: headingStyles.h3,

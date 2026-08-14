@@ -8,10 +8,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
-  BookOpen, Plus, Search, Filter, Clock, Users, Calendar,
+  BookOpen, Plus, Search, Clock, Users,
   GraduationCap, Building2, Eye, Loader2, AlertCircle,
 } from 'lucide-react';
-import { cn, formatDate, formatTime } from '@/shared/lib/utils';
+import { cn } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
@@ -28,7 +28,7 @@ export default function CoursPage() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await get('/universite/cours');
+        const res = await get('/universite/matieres');
         const items = Array.isArray(res?.data?.data) ? res.data.data
           : Array.isArray(res?.data) ? res.data
           : Array.isArray(res) ? res
@@ -38,7 +38,7 @@ export default function CoursPage() {
           credits: c.credits || c.ects || 0,
           heures: c.heures || c.volume_horaire || 0,
           etudiants: c.etudiants_count || c.etudiants || 0,
-          statut: c.statut || 'actif',
+          statut: c.statut || 'actif'
         })));
       } catch (e) {
         console.error('Erreur chargement cours:', e);
@@ -50,7 +50,7 @@ export default function CoursPage() {
     total: cours.length,
     actifs: cours.filter((c) => c.statut === 'actif').length,
     termines: cours.filter((c) => c.statut === 'termine' || c.statut === 'terminé').length,
-    creditsTotal: cours.reduce((s, c) => s + Number(c.credits || 0), 0),
+    creditsTotal: cours.reduce((s, c) => s + Number(c.credits || 0), 0)
   }), [cours]);
 
   const niveaux = useMemo(() => ['Tous', ...new Set(cours.map((c) => c.niveau).filter(Boolean))], [cours]);

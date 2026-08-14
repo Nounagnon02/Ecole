@@ -18,7 +18,8 @@ class Personnel extends Model
         'type_contrat',
         'salaire_base',
         'date_embauche',
-        'is_active'
+        'is_active',
+        'ecole_id',
     ];
 
     public function user()

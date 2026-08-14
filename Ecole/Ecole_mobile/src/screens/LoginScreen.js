@@ -29,6 +29,7 @@ import { useTheme } from '../theme';
 import EruditInput from '../components/EruditInput';
 import EruditButton from '../components/EruditButton';
 import EruditCard from '../components/EruditCard';
+import { hrefDashboard } from '../navigation/routerBridge';
 
 const ROLES = [
   { key: 'directeur', label: 'Directeur', icon: '🏫' },
@@ -85,12 +86,22 @@ export default function LoginScreen({ navigation }) {
     setLoading(true);
     try {
       const userData = await login({ email: email.trim(), password, role });
-      // Redirection vers le dashboard du rôle
-      const route = userData?.role || role;
+      // Le rôle qui fait foi est celui renvoyé par l'API, pas celui choisi
+      // dans le formulaire : l'utilisateur peut se tromper de badge. Le rôle
+      // du formulaire ne sert que si la réponse n'en porte aucun.
+      const roleEffectif = userData?.role || role;
+      const href = hrefDashboard(roleEffectif);
+      if (!href) {
+        Alert.alert(
+          'Espace indisponible',
+          `Aucun espace mobile n'existe pour le rôle « ${roleEffectif} ». Utilisez l'application web.`
+        );
+        return;
+      }
       if (navigation?.replace) {
-        navigation.replace(`/(app)/${route}`);
+        navigation.replace(href);
       } else {
-        navigation?.navigate(`/(app)/${route}`);
+        navigation?.navigate(href);
       }
     } catch (error) {
       Alert.alert('Erreur', error.message || 'Identifiants incorrects');

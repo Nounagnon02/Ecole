@@ -8,10 +8,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Building2, Plus, Search, Users, BookOpen, Calendar,
-  MapPin, Phone, Mail, Globe, Loader2, AlertCircle,
+  Building2, Plus, Search, Users, BookOpen,   Phone, Mail, Loader2, AlertCircle
 } from 'lucide-react';
-import { cn } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
@@ -38,7 +36,7 @@ export default function FacultesPage() {
           code: f.sigle || f.code || '—',
           departements: f.departements_count ?? f.departements ?? 0,
           enseignants: f.enseignants_count ?? f.enseignants ?? 0,
-          etudiants: f.etudiants_count ?? f.etudiants ?? 0,
+          etudiants: f.etudiants_count ?? f.etudiants ?? 0
         })));
       } catch (e) {
         console.error('Erreur chargement facultés:', e);
@@ -50,7 +48,7 @@ export default function FacultesPage() {
     total: facultes.length,
     departements: facultes.reduce((s, f) => s + Number(f.departements), 0),
     enseignants: facultes.reduce((s, f) => s + Number(f.enseignants), 0),
-    etudiants: facultes.reduce((s, f) => s + Number(f.etudiants), 0),
+    etudiants: facultes.reduce((s, f) => s + Number(f.etudiants), 0)
   }), [facultes]);
 
   const filtered = useMemo(() =>

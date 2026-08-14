@@ -8,10 +8,10 @@ import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   BookOpen, Search, Download, Plus, TrendingUp, TrendingDown, Award,
-  FileSpreadsheet, RefreshCw, Lock, Unlock, Trophy,
+  FileSpreadsheet, RefreshCw, Lock, Unlock, Trophy, FileText,
 } from 'lucide-react';
 import { cn } from '@/shared/lib/utils';
-import { useApiQuery, api } from '@/shared/lib/api-client';
+import { useApiQuery, useApiMutation, api } from '@/shared/lib/api-client';
 import StatsCard from '@/shared/components/ui/StatsCard';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
@@ -26,7 +26,7 @@ export default function NotesPage() {
   const [filterClasse, setFilterClasse] = useState('');
   const [tab, setTab] = useState('notes'); // 'notes' | 'classement'
   const [classementClasse, setClassementClasse] = useState('');
-  const [classementPeriode, setClassementPeriode] = useState('Semestre 1');
+  const [classementPeriode, setClassementPeriode] = useState('Trimestre 1');
 
   const { data: notesData, isLoading, error, refetch } = useApiQuery(
     ['notes'],
@@ -104,6 +104,68 @@ export default function NotesPage() {
 
   const classement = classementData?.data;
 
+  // ============ Bulletins (instantané moyennes + archives verrouillées) ============
+  const [bulletinClasse, setBulletinClasse] = useState('');
+  const [bulletinPeriode, setBulletinPeriode] = useState('Trimestre 1');
+  const [bulletinAnnee, setBulletinAnnee] = useState(() => {
+    const now = new Date();
+    const start = now.getMonth() >= 8 ? now.getFullYear() : now.getFullYear() - 1;
+    return `${start}-${start + 1}`;
+  });
+
+  const annees = useMemo(() => {
+    const now = new Date();
+    const start = now.getMonth() >= 8 ? now.getFullYear() : now.getFullYear() - 1;
+    return [start - 1, start, start + 1].map((y) => `${y}-${y + 1}`);
+  }, []);
+
+  const bulletinClasseId = bulletinClasse ? classMap.get(bulletinClasse) : null;
+  const bulletinConfig = bulletinClasseId
+    ? { params: { classe_id: bulletinClasseId, periode: bulletinPeriode, annee_scolaire: bulletinAnnee } }
+    : null;
+
+  const { data: moyennesData, isLoading: moyennesLoading } = useApiQuery(
+    ['moyennes', bulletinClasseId, bulletinPeriode, bulletinAnnee],
+    '/moyennes',
+    { config: bulletinConfig, queryOptions: { enabled: !!bulletinClasseId } },
+  );
+
+  const { data: bulletinsData, isLoading: bulletinsLoading } = useApiQuery(
+    ['bulletins', bulletinClasseId, bulletinPeriode, bulletinAnnee],
+    '/bulletins',
+    { config: bulletinConfig, queryOptions: { enabled: !!bulletinClasseId } },
+  );
+
+  const recalculerMutation = useApiMutation('/moyennes/recalculer', {
+    method: 'POST',
+    invalidateKeys: [['moyennes'], ['bulletins']],
+  });
+
+  const verrouillerMutation = useApiMutation('/bulletins/verrouiller', {
+    method: 'POST',
+    invalidateKeys: [['moyennes'], ['bulletins']],
+  });
+
+  const handleRecalculer = () => {
+    if (!bulletinClasseId) return;
+    recalculerMutation.mutate({ classe_id: bulletinClasseId, periode: bulletinPeriode, annee_scolaire: bulletinAnnee });
+  };
+
+  const handleVerrouiller = () => {
+    if (!bulletinClasseId) return;
+    verrouillerMutation.mutate({ classe_id: bulletinClasseId, periode: bulletinPeriode, annee_scolaire: bulletinAnnee });
+  };
+
+  const moyennesGenerales = (moyennesData?.data ?? []).filter((r) => !r.matiere_id);
+  const bulletins = bulletinsData?.data ?? [];
+
+  const mentionColor = (m) =>
+    m === 'Très Bien' ? 'text-emerald-600'
+      : m === 'Bien' ? 'text-emerald-500'
+      : m === 'Assez Bien' ? 'text-amber-500'
+      : m === 'Passable' ? 'text-amber-600'
+      : 'text-red-500';
+
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       {/* Header */}
@@ -157,6 +219,18 @@ export default function NotesPage() {
         >
           <Trophy className="h-4 w-4 inline mr-1.5" />
           Classement
+        </button>
+        <button
+          onClick={() => setTab('bulletins')}
+          className={cn(
+            'pb-2 text-sm font-medium border-b-2 transition-colors',
+            tab === 'bulletins'
+              ? 'border-[var(--accent)] text-[var(--accent)]'
+              : 'border-transparent text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'
+          )}
+        >
+          <FileText className="h-4 w-4 inline mr-1.5" />
+          Bulletins
         </button>
       </div>
 
@@ -306,8 +380,9 @@ export default function NotesPage() {
                   onChange={(e) => setClassementPeriode(e.target.value)}
                   className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm text-neutral-700 outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
                 >
-                  <option value="Semestre 1">Semestre 1</option>
-                  <option value="Semestre 2">Semestre 2</option>
+                  <option value="Trimestre 1">Trimestre 1</option>
+                  <option value="Trimestre 2">Trimestre 2</option>
+                  <option value="Trimestre 3">Trimestre 3</option>
                 </select>
                 <Button
                   size="sm"
@@ -393,6 +468,179 @@ export default function NotesPage() {
             )}
           </div>
         </Card>
+      )}
+
+      {/* Tab: Bulletins */}
+      {tab === 'bulletins' && (
+        <div className="space-y-6">
+          <Card>
+            <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+              <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">
+                <FileText className="h-5 w-5 inline mr-2 text-[var(--accent)]" />
+                Bulletins
+              </h3>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <select
+                  value={bulletinClasse}
+                  onChange={(e) => setBulletinClasse(e.target.value)}
+                  className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm text-neutral-700 outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+                >
+                  <option value="">Sélectionner une classe</option>
+                  {classes.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+                <select
+                  value={bulletinPeriode}
+                  onChange={(e) => setBulletinPeriode(e.target.value)}
+                  className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm text-neutral-700 outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+                >
+                  <option value="Trimestre 1">Trimestre 1</option>
+                  <option value="Trimestre 2">Trimestre 2</option>
+                  <option value="Trimestre 3">Trimestre 3</option>
+                </select>
+                <select
+                  value={bulletinAnnee}
+                  onChange={(e) => setBulletinAnnee(e.target.value)}
+                  className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm text-neutral-700 outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+                >
+                  {annees.map((a) => <option key={a} value={a}>{a}</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2 px-4 pb-4">
+              <Button
+                size="sm"
+                variant="outline"
+                icon={<RefreshCw className={cn('h-4 w-4', recalculerMutation.isPending && 'animate-spin')} />}
+                onClick={handleRecalculer}
+                disabled={!bulletinClasse || recalculerMutation.isPending}
+              >
+                Recalculer l'instantané
+              </Button>
+              <Button
+                size="sm"
+                icon={<Lock className="h-4 w-4" />}
+                onClick={handleVerrouiller}
+                disabled={!bulletinClasse || verrouillerMutation.isPending}
+              >
+                Verrouiller le bulletin
+              </Button>
+            </div>
+          </Card>
+
+          <Card>
+            <div className="border-b border-neutral-200 p-4 dark:border-neutral-800">
+              <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">Moyennes de la classe</h3>
+              <p className="text-xs text-neutral-500">Instantané {bulletinPeriode} · {bulletinAnnee}</p>
+            </div>
+            {!bulletinClasse && (
+              <div className="py-10 text-center text-sm text-neutral-500">
+                Sélectionnez une classe pour consulter les moyennes
+              </div>
+            )}
+            {bulletinClasse && moyennesLoading && (
+              <div className="space-y-2 p-6">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Skeleton key={i} className="h-9 w-full" />
+                ))}
+              </div>
+            )}
+            {bulletinClasse && !moyennesLoading && moyennesGenerales.length === 0 && (
+              <div className="py-10 text-center text-sm text-neutral-500">
+                Aucun instantané pour cette classe et cette période. Cliquez sur « Recalculer l'instantané ».
+              </div>
+            )}
+            {bulletinClasse && !moyennesLoading && moyennesGenerales.length > 0 && (
+              <Table>
+                <Table.Header>
+                  <Table.Head className="w-12">Rang</Table.Head>
+                  <Table.Head>Élève</Table.Head>
+                  <Table.Head className="text-right">Moyenne Générale</Table.Head>
+                  <Table.Head className="text-right">Effectif</Table.Head>
+                </Table.Header>
+                <Table.Body>
+                  {moyennesGenerales.map((row) => (
+                    <Table.Row key={row.eleve_id}>
+                      <Table.Cell>
+                        <span className="inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold bg-neutral-100 dark:bg-neutral-800">
+                          {row.rang}
+                        </span>
+                      </Table.Cell>
+                      <Table.Cell>
+                        <span className="font-medium text-neutral-900 dark:text-white">
+                          {row.eleve?.user?.name} {row.eleve?.user?.prenom}
+                        </span>
+                      </Table.Cell>
+                      <Table.Cell className="text-right font-semibold">{parseFloat(row.valeur).toFixed(2)}/20</Table.Cell>
+                      <Table.Cell className="text-right text-neutral-500">{row.total_eleves}</Table.Cell>
+                    </Table.Row>
+                  ))}
+                </Table.Body>
+              </Table>
+            )}
+          </Card>
+
+          <Card>
+            <div className="border-b border-neutral-200 p-4 dark:border-neutral-800">
+              <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">Bulletins verrouillés</h3>
+              <p className="text-xs text-neutral-500">Archives immuables {bulletinPeriode} · {bulletinAnnee}</p>
+            </div>
+            {!bulletinClasse && (
+              <div className="py-10 text-center text-sm text-neutral-500">
+                Sélectionnez une classe pour consulter les bulletins
+              </div>
+            )}
+            {bulletinClasse && bulletinsLoading && (
+              <div className="space-y-2 p-6">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Skeleton key={i} className="h-9 w-full" />
+                ))}
+              </div>
+            )}
+            {bulletinClasse && !bulletinsLoading && bulletins.length === 0 && (
+              <div className="py-10 text-center text-sm text-neutral-500">
+                Aucun bulletin verrouillé. Recalculez l'instantané puis verrouillez le bulletin.
+              </div>
+            )}
+            {bulletinClasse && !bulletinsLoading && bulletins.length > 0 && (
+              <Table>
+                <Table.Header>
+                  <Table.Head className="w-12">Rang</Table.Head>
+                  <Table.Head>Élève</Table.Head>
+                  <Table.Head className="text-right">Moyenne Générale</Table.Head>
+                  <Table.Head>Mention</Table.Head>
+                  <Table.Head className="text-right">Statut</Table.Head>
+                </Table.Header>
+                <Table.Body>
+                  {bulletins.map((b) => (
+                    <Table.Row key={b.id}>
+                      <Table.Cell>
+                        <span className="inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold bg-neutral-100 dark:bg-neutral-800">
+                          {b.rang}
+                        </span>
+                      </Table.Cell>
+                      <Table.Cell>
+                        <span className="font-medium text-neutral-900 dark:text-white">
+                          {b.eleve?.user?.name} {b.eleve?.user?.prenom}
+                        </span>
+                      </Table.Cell>
+                      <Table.Cell className="text-right font-semibold">
+                        {parseFloat(b.moyenne_generale).toFixed(2)}/20
+                      </Table.Cell>
+                      <Table.Cell>
+                        <span className={cn('font-medium text-sm', mentionColor(b.mention))}>{b.mention}</span>
+                      </Table.Cell>
+                      <Table.Cell className="text-right">
+                        <Badge variant={b.publie ? 'success' : 'neutral'} size="sm">
+                          {b.publie ? 'Publié' : 'Verrouillé'}
+                        </Badge>
+                      </Table.Cell>
+                    </Table.Row>
+                  ))}
+                </Table.Body>
+              </Table>
+            )}
+          </Card>
+        </div>
       )}
     </motion.div>
   );

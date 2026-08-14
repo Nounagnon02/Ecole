@@ -8,11 +8,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
 import {
-  DollarSign, TrendingUp, CreditCard, FileText,
-  CheckCircle2, XCircle, Clock, Search, Download,
-  Loader2, AlertCircle,
+  DollarSign, CreditCard, FileText,
+  CheckCircle2, Clock, Download,
+  Loader2, AlertCircle
 } from 'lucide-react';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
@@ -20,14 +19,14 @@ import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer
 } from 'recharts';
 import { useApi } from '@/hooks/useApi';
 
 const STATUS_BADGE = {
   paid: { variant: 'success', label: 'Payé' },
   pending: { variant: 'warning', label: 'En attente' },
-  failed: { variant: 'danger', label: 'Échoué' },
+  failed: { variant: 'danger', label: 'Échoué' }
 };
 
 export default function BillingPage() {
@@ -40,8 +39,8 @@ export default function BillingPage() {
     (async () => {
       try {
         const [invoicesRes, revenusRes] = await Promise.allSettled([
-          get('/api/v1/admin/billing/invoices'),
-          get('/api/v1/admin/billing/revenus-mensuels'),
+          get('/v1/admin/billing/invoices'),
+          get('/v1/admin/analytics/revenue'),
         ]);
 
         const invoicesData = invoicesRes.status === 'fulfilled'
@@ -67,7 +66,7 @@ export default function BillingPage() {
     total: invoices.length,
     paid: invoices.filter((inv) => inv.status === 'paid').length,
     pending: invoices.filter((inv) => inv.status === 'pending').length,
-    totalRevenue: invoices.reduce((s, inv) => s + Number(inv.amount || 0), 0),
+    totalRevenue: invoices.reduce((s, inv) => s + Number(inv.amount || 0), 0)
   }), [invoices]);
 
   const filtered = useMemo(() =>

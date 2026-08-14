@@ -11,12 +11,27 @@ class PaiementEleveFactory extends Factory
 
     public function definition()
     {
+        // Colonnes réelles de `paiements` : ni `type_paiement`, ni `statut`.
+        // Le statut s'appelle `statut_global`, et le mode de règlement
+        // `mode_paiement`. Les valeurs suivent les constantes du modèle
+        // (majuscules) — la casse des seeders historiques est normalisée
+        // au moment de la lecture.
+        $total = fake()->randomFloat(2, 1000, 100000);
+        $paye  = fake()->randomFloat(2, 0, $total);
+
         return [
-            'eleve_id' => Eleve::factory(),
-            'montant' => fake()->randomFloat(2, 1000, 100000),
-            'type_paiement' => fake()->randomElement(['frais_scolaire', 'cantine', 'transport']),
-            'date_paiement' => fake()->date(),
-            'statut' => fake()->randomElement(['payé', 'en_attente', 'en_retard']),
+            'eleve_id'        => Eleve::factory(),
+            'montant'         => $total,
+            'montant_total'   => $total,
+            'montant_paye'    => $paye,
+            'montant_restant' => round($total - $paye, 2),
+            'mode_paiement'   => fake()->randomElement(['ESPECES', 'MOBILE_MONEY', 'VIREMENT']),
+            'date_paiement'   => fake()->date(),
+            'statut_global'   => fake()->randomElement([
+                \App\Models\PaiementEleve::PAID,
+                \App\Models\PaiementEleve::PARTIAL,
+                \App\Models\PaiementEleve::PENDING,
+            ]),
         ];
     }
 }

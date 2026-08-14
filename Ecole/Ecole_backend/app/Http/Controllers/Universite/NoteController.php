@@ -17,8 +17,8 @@ class NoteController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'etudiant_id' => 'required|exists:etudiants,id',
-            'matiere_id' => 'required|exists:matieres,id',
+            'etudiant_id' => 'required|school_exists:etudiants,id',
+            'matiere_id' => 'required|school_exists:matieres,id',
             'note' => 'required|numeric|min:0|max:20',
             'type' => 'required|in:CC,TP,Examen',
             'date_evaluation' => 'required|date'

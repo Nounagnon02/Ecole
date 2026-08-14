@@ -2,13 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class AbonnementTransport extends Model
 {
-    use HasFactory;
-
+    use HasFactory, BelongsToEcole;
     protected $table = 'abonnements_transport';
 
     protected $fillable = [
@@ -18,7 +18,8 @@ class AbonnementTransport extends Model
         'date_debut',
         'date_fin',
         'statut',
-        'montant_paye'
+        'montant_paye',
+        'ecole_id',
     ];
 
     protected $casts = [

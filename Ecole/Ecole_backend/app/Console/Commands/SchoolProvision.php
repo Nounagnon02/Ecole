@@ -14,7 +14,7 @@ class SchoolProvision extends Command
         {nom : Nom de l\'établissement}
         {email : Email de contact de l\'école}
         {adresse : Adresse physique}
-        {--password= : Mot de passe commun pour tous les comptes (défaut: password1234)}
+        {--password= : Mot de passe commun pour tous les comptes (défaut: aléatoire)}
         {--prefix= : Préfixe pour les emails des comptes (défaut: slug de l\'école)}
         {--no-seed : Ne pas créer les comptes utilisateurs}';
 
@@ -43,7 +43,7 @@ class SchoolProvision extends Command
         }
 
         // ─── 2. Créer les comptes utilisateurs ────────────────────────
-        $password = $this->option('password') ?? 'password1234';
+        $password = $this->option('password') ?? Str::password(16);
         $comptes = [
             ['role' => 'directeur',    'label' => 'Directeur Général'],
             ['role' => 'directeurM',   'label' => 'Directeur Maternelle'],

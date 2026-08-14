@@ -10,12 +10,11 @@ import { useNavigate } from 'react-router-dom';
 import { useDashboardStats } from '../hooks/useDashboardData';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  FileText, Users, Calendar, Clock, CheckCircle2, AlertCircle,
-  BarChart3, UserPlus, ClipboardList, Mail, Printer, Download, Plus,
+  FileText, Users, Calendar, BarChart3, UserPlus, ClipboardList 
 } from 'lucide-react';
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip,
-  ResponsiveContainer, AreaChart, Area,
+  XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip,
+  ResponsiveContainer, AreaChart, Area
 } from 'recharts';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -25,6 +24,8 @@ import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Table from '@/shared/components/ui/Table';
+import { RefreshButton } from '@/shared/components/ui';
+import { ErrorDisplay } from '@/shared/components/ui/EmptyState';
 
 const TABS = [
   { id: 'apercu', label: 'Aperçu', icon: BarChart3 },
@@ -40,7 +41,7 @@ const STATS_META = [
   { title: 'Documents Générés', icon: FileText, color: 'sky' },
 ];
 
-function ApercuSection({ stats, fluxInscriptions, rendezVous, inscriptions }) {
+function ApercuSection({ stats, fluxInscriptions, rendezVous, inscriptions, planningRendezVous, certificatsAttente }) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -55,7 +56,7 @@ function ApercuSection({ stats, fluxInscriptions, rendezVous, inscriptions }) {
         <Card className="lg:col-span-2">
           <Card.Header>
             <Card.Title>Flux d'Inscriptions</Card.Title>
-            <Card.Description>Nouveaux inscrits et transferts — 6 derniers mois</Card.Description>
+            <Card.Description>Nouveaux inscrits — 6 derniers mois</Card.Description>
           </Card.Header>
           <Card.Body>
             <div className="h-[260px]">
@@ -63,14 +64,12 @@ function ApercuSection({ stats, fluxInscriptions, rendezVous, inscriptions }) {
                 <AreaChart data={fluxInscriptions}>
                   <defs>
                     <linearGradient id="colorNouveaux" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="var(--accent)" stopOpacity={0.3} /><stop offset="95%" stopColor="var(--accent)" stopOpacity={0} /></linearGradient>
-                    <linearGradient id="colorTransferts" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="var(--amber)" stopOpacity={0.3} /><stop offset="95%" stopColor="var(--amber)" stopOpacity={0} /></linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                   <XAxis dataKey="mois" tick={{ fontSize: 12 }} stroke="var(--text-tertiary)" />
                   <YAxis tick={{ fontSize: 12 }} stroke="var(--text-tertiary)" />
                   <ReTooltip contentStyle={{ borderRadius: '8px', border: '1px solid var(--border)' }} />
                   <Area type="monotone" dataKey="nouveaux" name="Nouveaux" stroke="var(--accent)" fill="url(#colorNouveaux)" strokeWidth={2} />
-                  <Area type="monotone" dataKey="transferts" name="Transferts" stroke="var(--amber)" fill="url(#colorTransferts)" strokeWidth={2} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -133,75 +132,83 @@ function ApercuSection({ stats, fluxInscriptions, rendezVous, inscriptions }) {
           </Table>
         </Card.Body>
       </Card>
-    </div>
-  );
-}
 
-function InscriptionsSection() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Inscriptions</h2>
-          <p className="text-sm text-neutral-500 mt-1">Gestion des inscriptions et réinscriptions</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="ghost" size="sm"><Download className="h-4 w-4 mr-1" /> Exporter</Button>
-          <Button><Plus className="h-4 w-4 mr-1" /> Nouvelle Inscription</Button>
-        </div>
-      </div>
-      <Card>
-        <Card.Body>
-          <p className="text-neutral-500 text-center py-12">
-            Module d'inscription — dossier complet, pièces justificatives, et validation
-          </p>
-        </Card.Body>
-      </Card>
-    </div>
-  );
-}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <Card.Header>
+            <div className="flex items-center justify-between">
+              <Card.Title>Planning à Venir</Card.Title>
+              <Card.Description>7 prochains jours</Card.Description>
+              {planningRendezVous.length > 0 && (
+                <Badge variant="primary" size="sm">{planningRendezVous.length}</Badge>
+              )}
+            </div>
+          </Card.Header>
+          <Card.Body className="p-0">
+            {planningRendezVous.length > 0 ? (
+            <Table>
+              <Table.Header>
+                <Table.Head>Visiteur</Table.Head>
+                <Table.Head>Motif</Table.Head>
+                <Table.Head>Date</Table.Head>
+                <Table.Head>Heure</Table.Head>
+              </Table.Header>
+              <Table.Body>
+                {planningRendezVous.map((rv) => (
+                  <Table.Row key={rv.id}>
+                    <Table.Cell><span className="font-medium text-neutral-900 dark:text-white">{rv.visiteur}</span></Table.Cell>
+                    <Table.Cell className="max-w-[180px] truncate">{rv.motif}</Table.Cell>
+                    <Table.Cell className="text-neutral-400">{rv.date}</Table.Cell>
+                    <Table.Cell className="text-neutral-400">{rv.heure}</Table.Cell>
+                  </Table.Row>
+                ))}
+              </Table.Body>
+            </Table>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-[var(--text-tertiary)]">
+                <Calendar className="h-8 w-8 mb-2 opacity-30" />
+                <p className="text-sm">Aucun rendez-vous prévu cette semaine</p>
+              </div>
+            )}
+          </Card.Body>
+        </Card>
 
-function PlanningSection() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Planning</h2>
-          <p className="text-sm text-neutral-500 mt-1">Agenda et planification</p>
-        </div>
-        <Button variant="ghost" size="sm"><Printer className="h-4 w-4 mr-1" /> Imprimer</Button>
+        <Card>
+          <Card.Header>
+            <div className="flex items-center justify-between">
+              <Card.Title>Certificats à Émettre</Card.Title>
+              {certificatsAttente.length > 0 && (
+                <Badge variant="warning" size="sm">{certificatsAttente.length}</Badge>
+              )}
+            </div>
+          </Card.Header>
+          <Card.Body className="p-0">
+            {certificatsAttente.length > 0 ? (
+            <Table>
+              <Table.Header>
+                <Table.Head>Élève</Table.Head>
+                <Table.Head>Type</Table.Head>
+                <Table.Head>Demande</Table.Head>
+              </Table.Header>
+              <Table.Body>
+                {certificatsAttente.map((c) => (
+                  <Table.Row key={c.id}>
+                    <Table.Cell><span className="font-medium text-neutral-900 dark:text-white">{c.eleve}</span></Table.Cell>
+                    <Table.Cell>{c.type}</Table.Cell>
+                    <Table.Cell className="text-neutral-400">{c.date}</Table.Cell>
+                  </Table.Row>
+                ))}
+              </Table.Body>
+            </Table>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-[var(--text-tertiary)]">
+                <FileText className="h-8 w-8 mb-2 opacity-30" />
+                <p className="text-sm">Aucun certificat en attente</p>
+              </div>
+            )}
+          </Card.Body>
+        </Card>
       </div>
-      <Card>
-        <Card.Body>
-          <p className="text-neutral-500 text-center py-12">
-            Agenda — calendrier des rendez-vous, événements et échéances administratives
-          </p>
-        </Card.Body>
-      </Card>
-    </div>
-  );
-}
-
-function DocumentsSection() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Documents</h2>
-          <p className="text-sm text-neutral-500 mt-1">Génération et gestion des documents</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="ghost" size="sm"><Mail className="h-4 w-4 mr-1" /> Envoyer</Button>
-          <Button><FileText className="h-4 w-4 mr-1" /> Nouveau Document</Button>
-        </div>
-      </div>
-      <Card>
-        <Card.Body>
-          <p className="text-neutral-500 text-center py-12">
-            Générateur de documents — certificats, attestations, relevés, et correspondances
-          </p>
-        </Card.Body>
-      </Card>
     </div>
   );
 }
@@ -209,32 +216,34 @@ function DocumentsSection() {
 export default function SecretaireDashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('apercu');
-  const { data, loading } = useDashboardStats('secretaire');
+  const { data, loading, error, refetch } = useDashboardStats('secretaire');
 
   const stats = data?.stats?.map((s, i) => ({ ...s, icon: STATS_META[i]?.icon, color: STATS_META[i]?.color })) || [];
   const fluxInscriptions = data?.flux_inscriptions || [];
   const rendezVous = data?.rendez_vous || [];
   const inscriptions = data?.inscriptions || [];
+  const planningRendezVous = data?.planning_rendez_vous || [];
+  const certificatsAttente = data?.certificats_attente || [];
 
   const handleTabClick = (tabId) => {
     if (tabId === 'apercu') {
       setActiveTab(tabId);
       return;
-    }
+ }
     const routes = {
       inscriptions: '/secretaire/inscriptions',
       planning: '/secretaire/planning',
-      documents: '/secretaire/documents',
-    };
+      documents: '/secretaire/documents'
+ };
     navigate(routes[tabId] || '/secretaire/dashboard');
-  };
+ };
 
   const renderSection = () => {
     switch (activeTab) {
-      case 'apercu': return <ApercuSection stats={stats} fluxInscriptions={fluxInscriptions} rendezVous={rendezVous} inscriptions={inscriptions} />;
-      default: return <ApercuSection stats={stats} fluxInscriptions={fluxInscriptions} rendezVous={rendezVous} inscriptions={inscriptions} />;
-    }
-  };
+      case 'apercu': return <ApercuSection stats={stats} fluxInscriptions={fluxInscriptions} rendezVous={rendezVous} inscriptions={inscriptions} planningRendezVous={planningRendezVous} certificatsAttente={certificatsAttente} />;
+      default: return <ApercuSection stats={stats} fluxInscriptions={fluxInscriptions} rendezVous={rendezVous} inscriptions={inscriptions} planningRendezVous={planningRendezVous} certificatsAttente={certificatsAttente} />;
+ }
+ };
 
   return (
     <div className="space-y-6">
@@ -249,8 +258,15 @@ export default function SecretaireDashboard() {
             Gestion administrative — {format(new Date(), 'EEEE d MMMM yyyy', { locale: fr })}
           </p>
         </div>
-        <Button variant="ghost" size="sm"><ClipboardList className="h-4 w-4 mr-1" /> Tableau de Bord</Button>
+        <div className="flex items-center gap-2">
+          <RefreshButton loading={loading} onRefresh={refetch} />
+          <Button variant="ghost" size="sm"><ClipboardList className="h-4 w-4 mr-1" /> Tableau de Bord</Button>
+        </div>
       </div>
+
+      {error && (
+        <ErrorDisplay message={error} onRetry={refetch} />
+      )}
 
       <div className="border-b border-neutral-200 dark:border-neutral-800">
         <nav className="flex gap-1 overflow-x-auto -mb-px">
@@ -268,7 +284,7 @@ export default function SecretaireDashboard() {
                 <Icon className="h-4 w-4" /> {tab.label}
               </button>
             );
-          })}
+ })}
         </nav>
       </div>
 

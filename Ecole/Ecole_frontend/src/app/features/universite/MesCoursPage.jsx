@@ -27,6 +27,9 @@ export default function MesCoursPage() {
   useEffect(() => {
     (async () => {
       try {
+        // GET /api/universite/mes-cours — un étudiant y reçoit les matières de
+        // sa filière, un enseignant celles qu'il assure. Le serveur résout le
+        // profil via `etudiants.user_id` / `uni_enseignants.user_id`.
         const res = await get('/universite/mes-cours');
         const items = Array.isArray(res?.data?.data) ? res.data.data
           : Array.isArray(res?.data) ? res.data

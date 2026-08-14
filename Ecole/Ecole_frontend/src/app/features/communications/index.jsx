@@ -8,26 +8,19 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search,
-  Send,
   Paperclip,
   MoreHorizontal,
   Star,
   Inbox,
   MessageSquare,
-  Bell,
   Megaphone,
   Users,
-  ChevronDown,
   Reply,
   Trash2,
   Eye,
-  CheckCheck,
-  Clock,
-  AlertCircle,
   FileText,
-  Image as ImageIcon,
   Download,
-  Plus,
+  Plus
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';

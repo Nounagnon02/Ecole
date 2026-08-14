@@ -5,7 +5,7 @@
  * Chaque entrée référence les dashboards premium dans features/roles/.
  */
 
-import { ROLES, ROLE_GROUPS } from '@/shared/types/roles';
+import { ROLES, ROLE_GROUPS, ROLE_NORMALIZATION } from '@/shared/types/roles';
 
 /* ─── Tous les rôles authentifiés ───────────────────────────────────── */
 const ROLES_ALL = Object.values(ROLES);
@@ -53,7 +53,7 @@ export const ROUTE_CONFIG = {
   admin: {
     path: '/admin/dashboard',
     component: lazy(() => import('@/app/dashboards/admin')),
-    roles: [ROLES.ADMIN, ROLES.DIRECTEUR, ROLES.SUPER_ADMIN],
+    roles: [ROLES.ADMIN, ROLES.SUPER_ADMIN],
   },
 
   // ─── STAFF ────────────────────────────────────────────────────────────
@@ -134,6 +134,11 @@ export const ROUTE_CONFIG = {
     path: '/messagerie',
     component: lazy(() => import('@/app/features/messagerie/MessageriePage')),
     roles: ROLES_ALL,
+  },
+  affectations: {
+    path: '/affectations',
+    component: lazy(() => import('@/app/features/affectations/AffectationsPage')),
+    roles: [...ROLE_GROUPS.DIRECTION],
   },
 
   // ─── FEATURES ENSEIGNANT ─────────────────────────────────────────────
@@ -240,6 +245,11 @@ export const ROUTE_CONFIG = {
     component: lazy(() => import('@/app/features/universite/EtudiantsPage')),
     roles: [ROLES.RECTEUR, ROLES.DOYEN, ROLES.PROFESSEUR],
   },
+  universiteEnseignants: {
+    path: '/universite/enseignants',
+    component: lazy(() => import('@/app/features/universite/EnseignantsPage')),
+    roles: [ROLES.RECTEUR, ROLES.DOYEN, ROLES.PROFESSEUR],
+  },
   universiteCours: {
     path: '/universite/cours',
     component: lazy(() => import('@/app/features/universite/CoursPage')),
@@ -271,7 +281,18 @@ export const ROUTE_CONFIG = {
     roles: [ROLES.RECTEUR, ROLES.DOYEN, ROLES.PROFESSEUR, ROLES.ETUDIANT, ROLES.PERSONNEL],
   },
 
-  // ─── IA / EDUPILOT ───────────────────────────────────────────────────
+  // ─── PAIEMENT EN LIGNE ────────────────────────────────────────────────
+  paiementCallback: {
+    path: '/paiement/callback',
+    component: lazy(() => import('@/app/features/paiements/PaiementCallbackPage')),
+    roles: [
+      ...ROLE_GROUPS.DIRECTION,
+      ROLES.COMPTABLE,
+      ROLES.ELEVE,
+      ROLES.PARENT,
+      ROLES.SECRETAIRE,
+    ],
+  },
   directeurAiInsights: {
     path: '/directeur/ai-insights',
     component: lazy(() => import('@/app/features/ai/AiInsightsPage')),
@@ -347,7 +368,7 @@ export const PUBLIC_ROUTES = Object.fromEntries(
 );
 
 /* ─── Redirection par rôle ───────────────────────────────────────────── */
-export const ROLE_REDIRECT_MAP = {
+const BASE_ROLE_REDIRECTS = {
   [ROLES.DIRECTEUR]: '/directeur/dashboard',
   [ROLES.ENSEIGNANT]: '/enseignant/dashboard',
   [ROLES.ELEVE]: '/eleve/dashboard',
@@ -365,6 +386,27 @@ export const ROLE_REDIRECT_MAP = {
   [ROLES.PERSONNEL]: '/universite/dashboard',
   [ROLES.SUPER_ADMIN]: '/admin/dashboard',
   [ROLES.ADMIN]: '/admin/dashboard',
+};
+
+/**
+ * Les sous-rôles (`directeurM/P/S`, `enseignement/M/P`) n'ont pas de
+ * dashboard propre : ils héritent de celui de leur rôle parent, le
+ * serveur se chargeant de cloisonner les données par cycle.
+ *
+ * Sans ces entrées dérivées, `ROLE_REDIRECT_MAP[user.role]` était
+ * `undefined` pour ces rôles : après une authentification réussie,
+ * LoginForm et AuthRedirect retombaient sur FALLBACK_REDIRECT, c'est-à-dire
+ * l'écran de connexion lui-même — l'utilisateur ne pouvait jamais entrer.
+ */
+const SUB_ROLE_REDIRECTS = Object.fromEntries(
+  Object.entries(ROLE_NORMALIZATION)
+    .filter(([, parent]) => BASE_ROLE_REDIRECTS[parent])
+    .map(([sub, parent]) => [sub, BASE_ROLE_REDIRECTS[parent]])
+);
+
+export const ROLE_REDIRECT_MAP = {
+  ...BASE_ROLE_REDIRECTS,
+  ...SUB_ROLE_REDIRECTS,
 };
 
 /* ─── Fallback ───────────────────────────────────────────────────────── */

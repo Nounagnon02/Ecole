@@ -39,6 +39,9 @@ export default function PlanningPage() {
   useEffect(() => {
     (async () => {
       try {
+        // GET /api/universite/planning — séances datées. Un étudiant n'y reçoit
+        // que sa filière et les séances communes (filiere_id null), le personnel
+        // reçoit tout le calendrier.
         const res = await get('/universite/planning');
         const items = Array.isArray(res?.data?.data) ? res.data.data
           : Array.isArray(res?.data) ? res.data
@@ -52,7 +55,14 @@ export default function PlanningPage() {
           debut: e.heure_debut || e.debut || '08:00',
           fin: e.heure_fin || e.fin || '10:00',
           lieu: e.lieu || e.salle || '—',
-          intervenant: e.intervenant || e.professeur || e.enseignant || '—',
+          // `enseignant` arrive comme relation ({id, nom, prenom}), pas comme
+          // chaîne : rendu tel quel, React lève « Objects are not valid as a
+          // React child » et la page blanchit. On aplatit ici.
+          intervenant:
+            e.intervenant ||
+            e.professeur ||
+            (e.enseignant ? `${e.enseignant.prenom || ''} ${e.enseignant.nom || ''}`.trim() : '') ||
+            '—',
           statut: e.statut || 'planifie',
         })));
       } catch (e) {

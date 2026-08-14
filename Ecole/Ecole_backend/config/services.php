@@ -41,9 +41,11 @@ return [
     // Anthropic Claude API
     'anthropic' => [
         'api_key' => env('ANTHROPIC_API_KEY'),
-        'model' => env('ANTHROPIC_MODEL', 'claude-sonnet-4-20250514'),
+        // claude-sonnet-4-20250514 est déprécié (retrait le 15/06/2026) ;
+        // claude-sonnet-5 est son remplaçant direct.
+        'model' => env('ANTHROPIC_MODEL', 'claude-sonnet-5'),
         'max_tokens' => env('ANTHROPIC_MAX_TOKENS', 4096),
-        'temperature' => env('ANTHROPIC_TEMPERATURE', 0.7),
+        // `temperature` retiré : rejeté avec une 400 sur les modèles courants.
     ],
 ];
 

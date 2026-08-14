@@ -8,15 +8,14 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
-  BookOpen, Users, Search, Filter, GraduationCap,
-  BarChart3, FileText, ArrowRight, Clock, Loader2,
+  BookOpen, Users, Search, GraduationCap,
+  BarChart3, FileText, Clock, Loader2
 } from 'lucide-react';
-import { cn, formatNumber } from '@/shared/lib/utils';
+import { cn } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Avatar from '@/shared/components/ui/Avatar';
 import Button from '@/shared/components/ui/Button';
-import StatsCard from '@/shared/components/ui/StatsCard';
 import Input from '@/shared/components/ui/Input';
 import { useApi } from '@/hooks/useApi';
 
@@ -48,7 +47,7 @@ export default function ClassesPage() {
     if (!selectedClasse) return;
     (async () => {
       try {
-        const res = await get(`/enseignant/classes/${selectedClasse.id}/eleves`);
+        const res = await get(`/classes/${selectedClasse.id}/eleves`);
         const items = Array.isArray(res?.data?.data) ? res.data.data
           : Array.isArray(res?.data) ? res.data
           : Array.isArray(res) ? res

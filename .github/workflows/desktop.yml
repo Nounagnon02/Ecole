@@ -1,0 +1,82 @@
+name: Desktop CI (Electron)
+
+# Le wrapper Electron affiche le build du frontend web : toute modification du
+# frontend peut casser le desktop sans toucher à `Ecole_desktop`. Les deux
+# répertoires déclenchent donc ce workflow.
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'Ecole/Ecole_desktop/**'
+      - 'Ecole/Ecole_frontend/**'
+      - '.github/workflows/desktop.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'Ecole/Ecole_desktop/**'
+      - 'Ecole/Ecole_frontend/**'
+      - '.github/workflows/desktop.yml'
+  workflow_call:
+
+jobs:
+  verify:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: |
+            Ecole/Ecole_frontend/package-lock.json
+            Ecole/Ecole_desktop/package-lock.json
+
+      # Electron a besoin d'un serveur X et des bibliothèques GTK/NSS ; l'image
+      # du runner les fournit, on les installe explicitement pour ne pas
+      # dépendre de son contenu.
+      - name: System dependencies for Electron
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            xvfb libgtk-3-0 libnss3 libasound2 libgbm1 libxshmfence1
+
+      # `npm run verify` charge le build du frontend : il doit exister.
+      - name: Build the web frontend
+        working-directory: Ecole/Ecole_frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Install desktop dependencies
+        working-directory: Ecole/Ecole_desktop
+        run: npm ci
+
+      # Vérifie que la fenêtre s'ouvre, que le frontend se charge et que React
+      # monte réellement. Sans le dernier point, une fenêtre blanche passerait
+      # pour un succès.
+      - name: Start the app and load the frontend
+        working-directory: Ecole/Ecole_desktop
+        run: npm run verify
+        env:
+          ECOLE_SMOKE_SCREENSHOT: ${{ github.workspace }}/desktop-smoke.png
+
+      - name: Upload smoke screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-smoke
+          path: desktop-smoke.png
+          retention-days: 7
+          if-no-files-found: ignore
+
+      # Cible `dir` : on empaquette sans construire d'AppImage ni de .deb. Cela
+      # suffit à vérifier que `extraResources` embarque bien le build du
+      # frontend — sans lui, le binaire livré n'a rien à afficher.
+      - name: Package (unpacked)
+        working-directory: Ecole/Ecole_desktop
+        run: npx electron-builder --linux dir
+
+      - name: The packaged app embeds the frontend build
+        working-directory: Ecole/Ecole_desktop
+        run: test -f release/linux-unpacked/resources/Ecole_frontend/build/index.html

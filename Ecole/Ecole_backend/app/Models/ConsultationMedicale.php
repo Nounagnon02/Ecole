@@ -8,6 +8,14 @@ use Illuminate\Database\Eloquent\Model;
 
 class ConsultationMedicale extends Model
 {
+    /**
+     * Sans cette déclaration, Eloquent déduit `consultation_medicales` — au
+     * singulier sur le premier mot — et la table n'existe pas. Toute requête
+     * passant par ce modèle échouait, donc les consultations de l'infirmier et
+     * le compteur du tableau de bord aussi.
+     */
+    protected $table = 'consultations_medicales';
+
     use HasFactory, BelongsToEcole;
 
     protected $fillable = [

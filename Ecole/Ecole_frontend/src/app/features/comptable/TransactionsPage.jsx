@@ -8,8 +8,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
-  DollarSign, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight,
-  Search, Download, Eye, FileText, Loader2, AlertCircle,
+  DollarSign, TrendingUp, TrendingDown, ArrowUpRight,   Search, Download, Eye, FileText, Loader2, AlertCircle
 } from 'lucide-react';
 import { cn, formatCurrency, formatDate, formatNumber } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
@@ -23,7 +22,8 @@ const getStatutColor = (statut) => {
   switch (statut) {
     case 'paye':
     case 'payee': return 'primary';
-    case 'en_attente': return 'warning';
+    case 'en_attente':
+    case 'partiel': return 'warning';
     case 'echec': return 'danger';
     case 'rembourse': return 'ghost';
     default: return 'outline';
@@ -35,6 +35,7 @@ const getStatutLabel = (statut) => {
     case 'paye':
     case 'payee': return 'Payée';
     case 'en_attente': return 'En attente';
+    case 'partiel': return 'Partielle';
     case 'echec': return 'Échec';
     case 'rembourse': return 'Remboursé';
     default: return statut || '—';
@@ -70,7 +71,7 @@ export default function TransactionsPage() {
       totalRecettes,
       totalDepenses: 0,
       solde: totalRecettes,
-      transactions: transactions.length,
+      transactions: transactions.length
     };
   }, [transactions]);
 

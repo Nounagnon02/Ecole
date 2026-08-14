@@ -9,12 +9,12 @@ import { useNavigate } from 'react-router-dom';
 import { useDashboardStats } from '../hooks/useDashboardData';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Heart, Users, Activity, AlertTriangle, CheckCircle2, Clock,
-  BarChart3, Stethoscope, FileText, Plus, Pill, Thermometer,
+  Heart, Activity, AlertTriangle, Clock,
+  BarChart3, Stethoscope, FileText 
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip,
-  ResponsiveContainer,
+  ResponsiveContainer
 } from 'recharts';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -24,6 +24,8 @@ import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Table from '@/shared/components/ui/Table';
+import { RefreshButton } from '@/shared/components/ui';
+import { ErrorDisplay } from '@/shared/components/ui/EmptyState';
 
 const TABS = [
   { id: 'apercu', label: 'Aperçu', icon: BarChart3 },
@@ -38,7 +40,15 @@ const STATS_META = [
   { title: 'Consultations', icon: Stethoscope, color: 'emerald' },
 ];
 
-function ApercuSection({ stats, frequentation, visites }) {
+const MOTIF_COLORS = [
+  'bg-[var(--accent)]',
+  'bg-[var(--amber)]',
+  'bg-[var(--red)]',
+  'bg-[var(--emerald)]',
+  'bg-[var(--purple)]',
+];
+
+function ApercuSection({ stats, frequentation, visites, motifs, urgencesJour, alertesMedicales, soinsRecurrents }) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -82,23 +92,23 @@ function ApercuSection({ stats, frequentation, visites }) {
           </Card.Header>
           <Card.Body>
             <div className="space-y-3">
-              {[
-                { motif: 'Maux de tête', count: 28, color: 'bg-[var(--accent)]' },
-                { motif: 'Douleurs abdominales', count: 19, color: 'bg-[var(--amber)]' },
-                { motif: 'Blessures légères', count: 15, color: 'bg-[var(--red)]' },
-                { motif: 'Fièvre', count: 12, color: 'bg-[var(--emerald)]' },
-                { motif: 'Réactions allergiques', count: 8, color: 'bg-[var(--purple)]' },
-              ].map((item) => (
-                <div key={item.motif} className="flex items-center justify-between text-sm">
-                  <span className="text-neutral-600 dark:text-neutral-400">{item.motif}</span>
-                  <div className="flex items-center gap-2">
-                    <div className="w-24 h-1.5 rounded-full bg-neutral-100 dark:bg-neutral-800 overflow-hidden">
-                      <div className={`h-full rounded-full ${item.color}`} style={{ width: `${(item.count / 28) * 100}%` }} />
+              {(motifs?.length ? motifs : []).map((item, i) => {
+                const max = Math.max(...(motifs?.map((m) => m.count) || [1]), 1);
+                return (
+                  <div key={item.motif} className="flex items-center justify-between text-sm">
+                    <span className="text-neutral-600 dark:text-neutral-400">{item.motif}</span>
+                    <div className="flex items-center gap-2">
+                      <div className="w-24 h-1.5 rounded-full bg-neutral-100 dark:bg-neutral-800 overflow-hidden">
+                        <div className={`h-full rounded-full ${MOTIF_COLORS[i % MOTIF_COLORS.length]}`} style={{ width: `${(item.count / max) * 100}%` }} />
+                      </div>
+                      <span className="w-6 text-right font-medium text-neutral-900 dark:text-white">{item.count}</span>
                     </div>
-                    <span className="w-6 text-right font-medium text-neutral-900 dark:text-white">{item.count}</span>
                   </div>
-                </div>
-              ))}
+                );
+              })}
+              {!motifs?.length && (
+                <p className="text-sm text-neutral-400 dark:text-neutral-500">Aucune consultation ce mois-ci.</p>
+              )}
             </div>
           </Card.Body>
         </Card>
@@ -138,51 +148,113 @@ function ApercuSection({ stats, frequentation, visites }) {
           </Table>
         </Card.Body>
       </Card>
-    </div>
-  );
-}
 
-function SoinsSection() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Soins Infirmiers</h2>
-          <p className="text-sm text-neutral-500 mt-1">Enregistrement et suivi des soins</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="ghost" size="sm"><Pill className="h-4 w-4 mr-1" /> Stock</Button>
-          <Button><Plus className="h-4 w-4 mr-1" /> Nouveau Soin</Button>
-        </div>
-      </div>
-      <Card>
-        <Card.Body>
-          <p className="text-neutral-500 text-center py-12">
-            Registre des soins — consultations, médicaments, et suivi des patients
-          </p>
-        </Card.Body>
-      </Card>
-    </div>
-  );
-}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card>
+          <Card.Header>
+            <div className="flex items-center justify-between">
+              <Card.Title>Urgences du Jour</Card.Title>
+              {urgencesJour.length > 0 && (
+                <Badge variant="danger" size="sm">{urgencesJour.length}</Badge>
+              )}
+            </div>
+          </Card.Header>
+          <Card.Body className="p-0">
+            {urgencesJour.length > 0 ? (
+            <Table>
+              <Table.Header>
+                <Table.Head>Élève</Table.Head>
+                <Table.Head>Motif</Table.Head>
+                <Table.Head>Heure</Table.Head>
+              </Table.Header>
+              <Table.Body>
+                {urgencesJour.map((u) => (
+                  <Table.Row key={u.id}>
+                    <Table.Cell><span className="font-medium text-neutral-900 dark:text-white">{u.eleve}</span></Table.Cell>
+                    <Table.Cell className="max-w-[160px] truncate">{u.motif}</Table.Cell>
+                    <Table.Cell className="text-neutral-400">{u.heure}</Table.Cell>
+                  </Table.Row>
+                ))}
+              </Table.Body>
+            </Table>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-[var(--text-tertiary)]">
+                <Heart className="h-8 w-8 mb-2 opacity-30" />
+                <p className="text-sm">Aucune urgence aujourd'hui</p>
+              </div>
+            )}
+          </Card.Body>
+        </Card>
 
-function DossiersSection() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Dossiers Médicaux</h2>
-          <p className="text-sm text-neutral-500 mt-1">Fiches de santé et antécédents</p>
-        </div>
-        <Button variant="ghost" size="sm"><Thermometer className="h-4 w-4 mr-1" /> Carnet de Santé</Button>
+        <Card>
+          <Card.Header>
+            <div className="flex items-center justify-between">
+              <Card.Title>Alertes Médicales</Card.Title>
+              {alertesMedicales.length > 0 && (
+                <Badge variant="warning" size="sm">{alertesMedicales.length}</Badge>
+              )}
+            </div>
+          </Card.Header>
+          <Card.Body className="p-0">
+            {alertesMedicales.length > 0 ? (
+            <Table>
+              <Table.Header>
+                <Table.Head>Élève</Table.Head>
+                <Table.Head>Allergies / Maladie</Table.Head>
+              </Table.Header>
+              <Table.Body>
+                {alertesMedicales.map((a) => (
+                  <Table.Row key={a.id}>
+                    <Table.Cell><span className="font-medium text-neutral-900 dark:text-white">{a.eleve}</span></Table.Cell>
+                    <Table.Cell className="max-w-[180px] truncate">{a.allergies || a.maladie}</Table.Cell>
+                  </Table.Row>
+                ))}
+              </Table.Body>
+            </Table>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-[var(--text-tertiary)]">
+                <AlertTriangle className="h-8 w-8 mb-2 opacity-30" />
+                <p className="text-sm">Aucune alerte médicale signalée</p>
+              </div>
+            )}
+          </Card.Body>
+        </Card>
+
+        <Card>
+          <Card.Header>
+            <Card.Title>Soins Récurrents</Card.Title>
+            <Card.Description>Élèves suivis régulièrement</Card.Description>
+          </Card.Header>
+          <Card.Body className="p-0">
+            {soinsRecurrents.length > 0 ? (
+            <Table>
+              <Table.Header>
+                <Table.Head>Élève</Table.Head>
+                <Table.Head>Visites</Table.Head>
+              </Table.Header>
+              <Table.Body>
+                {soinsRecurrents.map((s) => (
+                  <Table.Row key={s.eleve}>
+                    <Table.Cell>
+                      <span className="font-medium text-neutral-900 dark:text-white">{s.eleve}</span>
+                      <span className="block text-xs text-neutral-400">{s.dernier_motif}</span>
+                    </Table.Cell>
+                    <Table.Cell>
+                      <Badge variant={s.visites >= 3 ? 'danger' : 'warning'} size="sm">{s.visites}</Badge>
+                    </Table.Cell>
+                  </Table.Row>
+                ))}
+              </Table.Body>
+            </Table>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-[var(--text-tertiary)]">
+                <Activity className="h-8 w-8 mb-2 opacity-30" />
+                <p className="text-sm">Aucun élève suivi de façon récurrente</p>
+              </div>
+            )}
+          </Card.Body>
+        </Card>
       </div>
-      <Card>
-        <Card.Body>
-          <p className="text-neutral-500 text-center py-12">
-            Dossiers médicaux complets — antécédents, allergies, vaccins, visites
-          </p>
-        </Card.Body>
-      </Card>
     </div>
   );
 }
@@ -190,24 +262,28 @@ function DossiersSection() {
 export default function InfirmierDashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('apercu');
-  const { data, loading } = useDashboardStats('infirmier');
+  const { data, loading, error, refetch } = useDashboardStats('infirmier');
 
   const stats = data?.stats?.map((s, i) => ({ ...s, icon: STATS_META[i]?.icon, color: STATS_META[i]?.color })) || [];
   const frequentation = data?.frequentation || [];
   const visites = data?.visites || [];
+  const motifs = data?.motifs || [];
+  const urgencesJour = data?.urgences_jour || [];
+  const alertesMedicales = data?.alertes_medicales || [];
+  const soinsRecurrents = data?.soins_recurrents || [];
 
   const handleTabClick = (tabId) => {
     if (tabId === 'apercu') { setActiveTab(tabId); return; }
     const routes = { soins: '/infirmier/soins', dossiers: '/infirmier/dossiers' };
     navigate(routes[tabId] || '/infirmier/dashboard');
-  };
+ };
 
   const renderSection = () => {
     switch (activeTab) {
-      case 'apercu': return <ApercuSection stats={stats} frequentation={frequentation} visites={visites} />;
-      default: return <ApercuSection stats={stats} frequentation={frequentation} visites={visites} />;
-    }
-  };
+      case 'apercu': return <ApercuSection stats={stats} frequentation={frequentation} visites={visites} motifs={motifs} urgencesJour={urgencesJour} alertesMedicales={alertesMedicales} soinsRecurrents={soinsRecurrents} />;
+      default: return <ApercuSection stats={stats} frequentation={frequentation} visites={visites} motifs={motifs} urgencesJour={urgencesJour} alertesMedicales={alertesMedicales} soinsRecurrents={soinsRecurrents} />;
+ }
+ };
 
   return (
     <div className="space-y-6">
@@ -222,8 +298,15 @@ export default function InfirmierDashboard() {
             Soins et santé — {format(new Date(), 'EEEE d MMMM yyyy', { locale: fr })}
           </p>
         </div>
-        <Button variant="ghost" size="sm"><Heart className="h-4 w-4 mr-1" /> État des Lieux</Button>
+        <div className="flex items-center gap-2">
+          <RefreshButton loading={loading} onRefresh={refetch} />
+          <Button variant="ghost" size="sm"><Heart className="h-4 w-4 mr-1" /> État des Lieux</Button>
+        </div>
       </div>
+
+      {error && (
+        <ErrorDisplay message={error} onRetry={refetch} />
+      )}
 
       <div className="border-b border-neutral-200 dark:border-neutral-800">
         <nav className="flex gap-1 overflow-x-auto -mb-px">
@@ -241,7 +324,7 @@ export default function InfirmierDashboard() {
                 <Icon className="h-4 w-4" /> {tab.label}
               </button>
             );
-          })}
+ })}
         </nav>
       </div>
 

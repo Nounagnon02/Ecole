@@ -34,6 +34,10 @@ return [
         'api_key' => env('FEDAPAY_API_KEY', ''),
         'secret_key' => env('FEDAPAY_SECRET_KEY', ''),
         'public_key' => env('FEDAPAY_PUBLIC_KEY', ''),
+        // Secret de signature des webhooks. Vide = vérification désactivée
+        // (le statut reste confirmé par un appel serveur à FedaPay), mais il
+        // doit impérativement être renseigné en production.
+        'webhook_secret' => env('FEDAPAY_WEBHOOK_SECRET', ''),
         'sandbox' => env('FEDAPAY_SANDBOX', true),
     ],
 

@@ -9,7 +9,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   Heart, Plus, Search, Clock, AlertTriangle, CheckCircle,
-  Pill, Thermometer, Activity, Droplets, Loader2, AlertCircle,
+  Pill, Activity, Loader2, AlertCircle
 } from 'lucide-react';
 import { cn, formatDate } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
@@ -60,7 +60,7 @@ export default function SoinsPage() {
       total: soins.length,
       aujourdhui: soins.filter((s) => s.date && new Date(s.date).toDateString() === today).length,
       urgences: soins.filter((s) => s.urgence).length,
-      traites: soins.filter((s) => s.traitement).length,
+      traites: soins.filter((s) => s.traitement).length
     };
   }, [soins]);
 

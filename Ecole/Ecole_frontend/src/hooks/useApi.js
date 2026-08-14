@@ -11,10 +11,21 @@ export const useApi = () => {
   }, []);
 
   const handleError = useCallback((err) => {
-    const errorMessage = err.response?.data?.message ||
-                        err.response?.data?.error ||
-                        err.message ||
-                        'Une erreur est survenue';
+    const data = err.response?.data;
+
+    // `error` n'est pas toujours une chaîne : la surface /api/v1 répond
+    // `{ error: { code, message } }`. Renvoyer cet objet dans `error`
+    // faisait lever à React « Objects are not valid as a React child »
+    // dès que la page le rendait — l'écran blanchissait au lieu
+    // d'afficher l'échec, ce qui est pire qu'un message imparfait. On ne
+    // retient donc que du texte, quelle que soit l'enveloppe.
+    const errorMessage =
+      data?.message ||
+      data?.error?.message ||
+      (typeof data?.error === 'string' ? data.error : null) ||
+      err.message ||
+      'Une erreur est survenue';
+
     setError(errorMessage);
     logger.error('Erreur API:', err);
   }, []);
@@ -46,6 +57,12 @@ export const useApi = () => {
     return apiCall(() => api.put(url, data, config));
   }, [apiCall]);
 
+  // PATCH manquait : plusieurs endpoints de la couche SaaS n'acceptent
+  // que ce verbe (ex. PATCH /v1/admin/tenants/{t}/settings).
+  const patch = useCallback((url, data = {}, config = {}) => {
+    return apiCall(() => api.patch(url, data, config));
+  }, [apiCall]);
+
   const del = useCallback((url, config = {}) => {
     return apiCall(() => api.delete(url, config));
   }, [apiCall]);
@@ -54,6 +71,7 @@ export const useApi = () => {
     loading,
     error,
     clearError,
+    patch,
     get,
     post,
     put,

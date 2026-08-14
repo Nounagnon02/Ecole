@@ -33,7 +33,12 @@ Route::middleware([
             Route::post('/auth/logout', 'App\Http\Controllers\AuthController@logout');
 
             // Dashboard
-            Route::get('/dashboard/{role}/data', 'App\Http\Controllers\DashboardController@getDashboardData');
+            // Legacy : exposait getDashboardData pour n'importe quel `role` —
+            // l'URL dictait le rôle, pas le compte. Restreint aux rôles du
+            // référentiel (directeur, censeur, secretaire) comme la route
+            // moderne api/dashboard.php (cf. audit).
+            Route::get('/dashboard/{role}/data', 'App\Http\Controllers\DashboardController@getDashboardData')
+                ->middleware('role:directeur,censeur,secretaire');
 
             // Academic
             Route::apiResource('matieres', 'App\Http\Controllers\MatieresController');
@@ -42,19 +47,21 @@ Route::middleware([
             Route::apiResource('notes', 'App\Http\Controllers\NotesController');
 
             // Services
-            Route::apiResource('messages', 'App\Http\Controllers\MessageController');
-            Route::apiResource('paiements', 'App\Http\Controllers\PaiementController');
-            Route::apiResource('notifications', 'App\Http\Controllers\NotificationController');
+            //
+            // `->only()` explicite : ces contrôleurs n'implémentent pas les
+            // sept verbes d'un apiResource. Sans restriction, les routes
+            // étaient déclarées puis échouaient en 500 à l'appel. Et
+            // `PaiementController` n'existe pas du tout — la ressource
+            // 'paiements' pointait dans le vide (les paiements passent par
+            // PaymentController / FedaPayController, cf. routes/api/services.php).
+            Route::apiResource('messages', 'App\Http\Controllers\MessageController')
+                ->only(['index', 'store']);
+            Route::apiResource('notifications', 'App\Http\Controllers\NotificationController')
+                ->only(['index', 'store']);
 
-            // IA / EduPilot
-            Route::prefix('ia')->middleware('throttle:ia')->group(function () {
-                Route::post('/chat', 'App\Http\Controllers\Api\AIController@chat');
-                Route::get('/predictive', 'App\Http\Controllers\Api\AIController@predictiveAnalysis');
-                Route::post('/lesson-plan', 'App\Http\Controllers\Api\AIController@lessonPlan');
-                Route::post('/tutor', 'App\Http\Controllers\Api\AIController@tutor');
-                Route::post('/parent-assistant', 'App\Http\Controllers\Api\AIController@parentAssistant');
-                Route::post('/analyze-results', 'App\Http\Controllers\Api\AIController@analyzeResults');
-            });
+            // IA / EduPilot : déclarées dans routes/api/ia.php, sur la surface
+            // principale. Les redéclarer ici créerait des URI en double, la
+            // dernière enregistrée masquant la précédente.
         });
     });
 });

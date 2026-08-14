@@ -8,25 +8,22 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Shield,
   Users,
   Settings,
   Activity,
   Database,
-  Server,
   HardDrive,
   AlertTriangle,
   CheckCircle2,
   Clock,
-  BarChart3,
   Download,
   RefreshCw,
   Bell,
-  Terminal,
+  Terminal
 } from 'lucide-react';
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer,
-  LineChart, Line, Area, AreaChart,
+  XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer,
+  Line, Area, AreaChart
 } from 'recharts';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -36,6 +33,8 @@ import StatsCard from '@/shared/components/ui/StatsCard';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
+import { RefreshButton } from '@/shared/components/ui';
+import { ErrorDisplay } from '@/shared/components/ui/EmptyState';
 
 // ─── Constantes ───────────────────────────────────────────────
 
@@ -58,7 +57,7 @@ const STATS_META = [
 
 // ─── Sections ─────────────────────────────────────────────────
 
-function ApercuSection({ data, loading }) {
+function ApercuSection({ data, loading, onRefresh }) {
   const safeStats = data?.stats?.map((s, i) => ({ ...s, icon: STATS_META[i]?.icon, color: STATS_META[i]?.color })) || [];
   const safeTraffic = data?.traffic || [];
   const safeLogs = data?.logs || [];
@@ -89,8 +88,8 @@ function ApercuSection({ data, loading }) {
                 <Card.Title>Trafic API</Card.Title>
                 <Card.Description>Requêtes et temps de réponse — 7 derniers jours</Card.Description>
               </div>
-              <Button variant="ghost" size="sm">
-                <RefreshCw className="h-4 w-4 mr-1" /> Actualiser
+              <Button variant="ghost" size="sm" onClick={onRefresh} disabled={loading}>
+                <RefreshCw className={cn('h-4 w-4 mr-1', loading && 'animate-spin')} /> Actualiser
               </Button>
             </div>
           </Card.Header>
@@ -175,27 +174,120 @@ function ApercuSection({ data, loading }) {
           </Button>
         </Card.Footer>
       </Card>
+
+      {/* Utilisateurs récents */}
+      <Card>
+        <Card.Header>
+          <div className="flex items-center justify-between">
+            <Card.Title>Utilisateurs Récents</Card.Title>
+            <Badge size="sm">{safeUtilisateurs.length} comptes</Badge>
+          </div>
+        </Card.Header>
+        <Card.Body className="p-0">
+          {safeUtilisateurs.length === 0 ? (
+            <p className="text-neutral-500 text-center py-8 text-sm">Aucun utilisateur récent</p>
+          ) : (
+            <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
+              {safeUtilisateurs.map((u) => (
+                <div key={u.id} className="flex items-center gap-3 px-6 py-3 hover:bg-neutral-50 dark:hover:bg-neutral-800/50">
+                  <div className="h-9 w-9 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
+                    <Users className="h-4 w-4 text-neutral-500" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-neutral-900 dark:text-white truncate">{u.name}</p>
+                    <p className="text-xs text-neutral-500 truncate">{u.email} · {u.ecole}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge size="sm" variant={u.is_active ? 'success' : 'default'}>{u.role}</Badge>
+                    <span className="text-xs text-neutral-400">{format(new Date(u.created_at), 'dd/MM/yyyy')}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card.Body>
+      </Card>
     </div>
   );
 }
 
-function LogsSection() {
+function LogsSection({ data, loading }) {
+  const logs = data?.logs || [];
+  const [niveau, setNiveau] = useState('Tous');
+  const [recherche, setRecherche] = useState('');
+
+  const niveaux = ['Tous', ...new Set(logs.map((l) => l.level))];
+  const filtres = logs.filter((l) => {
+    const okNiveau = niveau === 'Tous' || l.level === niveau;
+    const okRecherche = !recherche || (l.message || '').toLowerCase().includes(recherche.toLowerCase());
+    return okNiveau && okRecherche;
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Logs Système</h2>
-          <p className="text-sm text-neutral-500 mt-1">Journalisation détaillée</p>
+          <p className="text-sm text-neutral-500 mt-1">Journalisation détaillée — {logs.length} entrées</p>
         </div>
-        <Button variant="ghost" size="sm">
+        <Button variant="ghost" size="sm" onClick={() => window.print()}>
           <Download className="h-4 w-4 mr-1" /> Exporter
         </Button>
       </div>
+
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <Terminal className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
+          <input
+            value={recherche}
+            onChange={(e) => setRecherche(e.target.value)}
+            placeholder="Rechercher dans les logs…"
+            className="w-full pl-9 pr-4 py-2 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+          />
+        </div>
+        <div className="flex gap-1">
+          {niveaux.map((n) => (
+            <button
+              key={n}
+              onClick={() => setNiveau(n)}
+              className={cn(
+                'px-3 py-2 rounded-lg text-xs font-medium transition-colors',
+                niveau === n
+                  ? 'bg-[var(--accent)] text-white'
+                  : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700'
+              )}
+            >
+              {n}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <Card>
-        <Card.Body>
-          <p className="text-neutral-500 text-center py-12">
-            Console de logs avec filtres, recherche et export
-          </p>
+        <Card.Body className="p-0">
+          {loading ? (
+            <p className="text-neutral-500 text-center py-12">Chargement des logs…</p>
+          ) : filtres.length === 0 ? (
+            <p className="text-neutral-500 text-center py-12">Aucune entrée de journal pour ce filtre</p>
+          ) : (
+            <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
+              {filtres.map((log) => (
+                <div key={log.id} className="flex items-start gap-3 px-6 py-3 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 text-sm font-mono">
+                  <span className={cn(
+                    'text-xs font-semibold uppercase min-w-[4rem]',
+                    log.level === 'ERROR' && 'text-[var(--red)]',
+                    log.level === 'WARN' && 'text-[var(--amber)]',
+                    log.level === 'INFO' && 'text-[var(--emerald)]',
+                  )}>
+                    {log.level}
+                  </span>
+                  <span className="text-neutral-500 text-xs min-w-[5rem]">{log.time}</span>
+                  <span className="text-neutral-700 dark:text-neutral-300 flex-1">{log.message}</span>
+                  <span className="text-neutral-400 text-xs">{log.module}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </Card.Body>
       </Card>
     </div>
@@ -230,7 +322,7 @@ function SauvegardesSection() {
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('apercu');
-  const { data, loading } = useDashboardStats('admin');
+  const { data, loading, error, refetch } = useDashboardStats('admin');
 
   const handleTabClick = (tabId) => {
     if (tabId === 'apercu') {
@@ -239,7 +331,7 @@ export default function AdminDashboard() {
     }
     const routes = {
       utilisateurs: '/admin/utilisateurs',
-      configuration: '/admin/configuration',
+      configuration: '/admin/configuration'
     };
     if (routes[tabId]) {
       navigate(routes[tabId]);
@@ -250,10 +342,10 @@ export default function AdminDashboard() {
 
   const renderSection = () => {
     switch (activeTab) {
-      case 'apercu': return <ApercuSection data={data} loading={loading} />;
-      case 'logs': return <LogsSection />;
+      case 'apercu': return <ApercuSection data={data} loading={loading} onRefresh={refetch} />;
+      case 'logs': return <LogsSection data={data} loading={loading} />;
       case 'sauvegardes': return <SauvegardesSection />;
-      default: return <ApercuSection data={data} loading={loading} />;
+      default: return <ApercuSection data={data} loading={loading} onRefresh={refetch} />;
     }
   };
 
@@ -273,6 +365,7 @@ export default function AdminDashboard() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <RefreshButton loading={loading} onRefresh={refetch} />
           <Button variant="ghost" size="sm">
             <Bell className="h-4 w-4 mr-1" /> Alertes
           </Button>
@@ -281,6 +374,10 @@ export default function AdminDashboard() {
           </Button>
         </div>
       </div>
+
+      {error && (
+        <ErrorDisplay message={error} onRetry={refetch} />
+      )}
 
       <div className="border-b border-neutral-200 dark:border-neutral-800">
         <nav className="flex gap-1 overflow-x-auto -mb-px">

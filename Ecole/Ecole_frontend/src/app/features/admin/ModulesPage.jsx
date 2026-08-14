@@ -8,9 +8,9 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Puzzle, CheckCircle2, XCircle, ToggleLeft, ToggleRight,
+  Puzzle, ToggleLeft, ToggleRight,
   BookOpen, DollarSign, MessageSquare, Calendar, Zap,
-  BarChart3, Globe, Smartphone, Shield, Loader2, AlertCircle,
+  BarChart3, Globe, Smartphone, Shield, Loader2, AlertCircle
 } from 'lucide-react';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
@@ -27,7 +27,7 @@ const MODULE_ICONS = {
   api: Globe,
   mobile: Smartphone,
   bibliotheque: BookOpen,
-  infirmerie: BarChart3,
+  infirmerie: BarChart3
 };
 
 const MODULE_COLORS = {
@@ -40,7 +40,7 @@ const MODULE_COLORS = {
   api: 'cyan',
   mobile: 'neutral',
   bibliotheque: 'teal',
-  infirmerie: 'red',
+  infirmerie: 'red'
 };
 
 export default function ModulesPage() {
@@ -50,7 +50,7 @@ export default function ModulesPage() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await get('/api/v1/admin/modules');
+        const res = await get('/v1/admin/modules');
         const items = Array.isArray(res?.data?.data) ? res.data.data
           : Array.isArray(res?.data) ? res.data
           : Array.isArray(res) ? res

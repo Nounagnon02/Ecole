@@ -44,7 +44,7 @@ class PaiementConfirmed implements ShouldBroadcast
             'type' => $this->paiement->type,
             'mode' => $this->paiement->mode,
             'reference' => $this->paiement->reference,
-            'statut' => $this->paiement->statut,
+            'statut' => $this->paiement->statut_global,
             'created_at' => $this->paiement->created_at->toISOString(),
         ];
     }

@@ -9,12 +9,11 @@ import { useNavigate } from 'react-router-dom';
 import { useDashboardStats } from '../hooks/useDashboardData';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  BookOpen, Users, AlertTriangle, CheckCircle2, XCircle,
-  BarChart3, Gavel, CalendarX, MessageSquare, Scale,
+  BookOpen, Users, AlertTriangle, BarChart3, Gavel, CalendarX 
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip,
-  ResponsiveContainer, PieChart, Pie, Cell,
+  ResponsiveContainer, PieChart, Pie, Cell
 } from 'recharts';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -24,6 +23,8 @@ import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Table from '@/shared/components/ui/Table';
+import { RefreshButton } from '@/shared/components/ui';
+import { ErrorDisplay } from '@/shared/components/ui/EmptyState';
 
 const TABS = [
   { id: 'apercu', label: 'Aperçu', icon: BarChart3 },
@@ -40,7 +41,7 @@ const STATS_META = [
 
 const SANCTIONS_COLORS = ['var(--accent)', 'var(--red)', 'var(--amber)', 'var(--green)'];
 
-function ApercuSection({ stats, evolution, types_sanctions, sanctions }) {
+function ApercuSection({ stats, evolution, types_sanctions, sanctions, absencesParClasse, sanctionsAttente, recidivistes }) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -142,51 +143,110 @@ function ApercuSection({ stats, evolution, types_sanctions, sanctions }) {
           </Table>
         </Card.Body>
       </Card>
-    </div>
-  );
-}
 
-function DisciplineSection() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Gestion Disciplinaire</h2>
-          <p className="text-sm text-neutral-500 mt-1">Sanctions, suivis et convocations</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="ghost" size="sm"><MessageSquare className="h-4 w-4 mr-1" /> Convoquer</Button>
-          <Button><Scale className="h-4 w-4 mr-1" /> Nouvelle Sanction</Button>
-        </div>
-      </div>
-      <Card>
-        <Card.Body>
-          <p className="text-neutral-500 text-center py-12">
-            Interface complète de gestion disciplinaire — conseils de discipline, décisions, suivi
-          </p>
-        </Card.Body>
-      </Card>
-    </div>
-  );
-}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card>
+          <Card.Header>
+            <Card.Title>Absences par Classe</Card.Title>
+            <Card.Description>Non justifiées ce mois-ci</Card.Description>
+          </Card.Header>
+          <Card.Body>
+            {absencesParClasse.length > 0 ? (
+            <div className="space-y-3">
+              {absencesParClasse.map((item) => {
+                const max = Math.max(...absencesParClasse.map((c) => c.absences), 1);
+                return (
+                  <div key={item.name} className="flex items-center justify-between text-sm">
+                    <span className="text-neutral-600 dark:text-neutral-400">{item.name}</span>
+                    <div className="flex items-center gap-2">
+                      <div className="w-24 h-1.5 rounded-full bg-neutral-100 dark:bg-neutral-800 overflow-hidden">
+                        <div className="h-full rounded-full bg-[var(--red)]" style={{ width: `${(item.absences / max) * 100}%` }} />
+                      </div>
+                      <span className="w-6 text-right font-medium text-neutral-900 dark:text-white">{item.absences}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-[var(--text-tertiary)]">
+                <CalendarX className="h-8 w-8 mb-2 opacity-30" />
+                <p className="text-sm">Aucune absence non justifiée ce mois</p>
+              </div>
+            )}
+          </Card.Body>
+        </Card>
 
-function AbsencesSection() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Absences</h2>
-          <p className="text-sm text-neutral-500 mt-1">Suivi et justification des absences</p>
-        </div>
-        <Button variant="ghost" size="sm">Export</Button>
+        <Card>
+          <Card.Header>
+            <div className="flex items-center justify-between">
+              <Card.Title>Sanctions en Attente</Card.Title>
+              {sanctionsAttente.length > 0 && (
+                <Badge variant="warning" size="sm">{sanctionsAttente.length}</Badge>
+              )}
+            </div>
+          </Card.Header>
+          <Card.Body className="p-0">
+            {sanctionsAttente.length > 0 ? (
+            <Table>
+              <Table.Header>
+                <Table.Head>Élève</Table.Head>
+                <Table.Head>Sanction</Table.Head>
+                <Table.Head>Date</Table.Head>
+              </Table.Header>
+              <Table.Body>
+                {sanctionsAttente.map((s) => (
+                  <Table.Row key={s.id}>
+                    <Table.Cell><span className="font-medium text-neutral-900 dark:text-white">{s.eleve}</span></Table.Cell>
+                    <Table.Cell>{s.sanction}</Table.Cell>
+                    <Table.Cell className="text-neutral-400">{s.date}</Table.Cell>
+                  </Table.Row>
+                ))}
+              </Table.Body>
+            </Table>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-[var(--text-tertiary)]">
+                <Gavel className="h-8 w-8 mb-2 opacity-30" />
+                <p className="text-sm">Aucune sanction à suivre</p>
+              </div>
+            )}
+          </Card.Body>
+        </Card>
+
+        <Card>
+          <Card.Header>
+            <Card.Title>Récidivistes</Card.Title>
+            <Card.Description>2 sanctions ou plus</Card.Description>
+          </Card.Header>
+          <Card.Body className="p-0">
+            {recidivistes.length > 0 ? (
+            <Table>
+              <Table.Header>
+                <Table.Head>Élève</Table.Head>
+                <Table.Head>Classe</Table.Head>
+                <Table.Head>Sanctions</Table.Head>
+              </Table.Header>
+              <Table.Body>
+                {recidivistes.map((r) => (
+                  <Table.Row key={r.eleve}>
+                    <Table.Cell><span className="font-medium text-neutral-900 dark:text-white">{r.eleve}</span></Table.Cell>
+                    <Table.Cell>{r.classe}</Table.Cell>
+                    <Table.Cell>
+                      <Badge variant={r.sanctions >= 3 ? 'danger' : 'warning'} size="sm">{r.sanctions}</Badge>
+                    </Table.Cell>
+                  </Table.Row>
+                ))}
+              </Table.Body>
+            </Table>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-[var(--text-tertiary)]">
+                <AlertTriangle className="h-8 w-8 mb-2 opacity-30" />
+                <p className="text-sm">Aucun récidiviste</p>
+              </div>
+            )}
+          </Card.Body>
+        </Card>
       </div>
-      <Card>
-        <Card.Body>
-          <p className="text-neutral-500 text-center py-12">
-            Relevé d'absences avec filtres par classe, période, et statut de justification
-          </p>
-        </Card.Body>
-      </Card>
     </div>
   );
 }
@@ -194,25 +254,28 @@ function AbsencesSection() {
 export default function CenseurDashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('apercu');
-  const { data, loading } = useDashboardStats('censeur');
+  const { data, loading, error, refetch } = useDashboardStats('censeur');
 
   const stats = data?.stats?.map((s, i) => ({ ...s, icon: STATS_META[i]?.icon, color: STATS_META[i]?.color })) || [];
   const evolution = data?.evolution || [];
   const types_sanctions = data?.types_sanctions || [];
   const sanctions = data?.sanctions || [];
+  const absencesParClasse = data?.absences_par_classe || [];
+  const sanctionsAttente = data?.sanctions_attente || [];
+  const recidivistes = data?.recidivistes || [];
 
   const handleTabClick = (tabId) => {
     if (tabId === 'apercu') { setActiveTab(tabId); return; }
     const routes = { discipline: '/censeur/discipline', absences: '/censeur/absences' };
     navigate(routes[tabId] || '/censeur/dashboard');
-  };
+ };
 
   const renderSection = () => {
     switch (activeTab) {
-      case 'apercu': return <ApercuSection stats={stats} evolution={evolution} types_sanctions={types_sanctions} sanctions={sanctions} />;
-      default: return <ApercuSection stats={stats} evolution={evolution} types_sanctions={types_sanctions} sanctions={sanctions} />;
-    }
-  };
+      case 'apercu': return <ApercuSection stats={stats} evolution={evolution} types_sanctions={types_sanctions} sanctions={sanctions} absencesParClasse={absencesParClasse} sanctionsAttente={sanctionsAttente} recidivistes={recidivistes} />;
+      default: return <ApercuSection stats={stats} evolution={evolution} types_sanctions={types_sanctions} sanctions={sanctions} absencesParClasse={absencesParClasse} sanctionsAttente={sanctionsAttente} recidivistes={recidivistes} />;
+ }
+ };
 
   return (
     <div className="space-y-6">
@@ -227,8 +290,15 @@ export default function CenseurDashboard() {
             Discipline et absences — {format(new Date(), 'EEEE d MMMM yyyy', { locale: fr })}
           </p>
         </div>
-        <Button variant="ghost" size="sm"><BookOpen className="h-4 w-4 mr-1" /> Règlement</Button>
+        <div className="flex items-center gap-2">
+          <RefreshButton loading={loading} onRefresh={refetch} />
+          <Button variant="ghost" size="sm"><BookOpen className="h-4 w-4 mr-1" /> Règlement</Button>
+        </div>
       </div>
+
+      {error && (
+        <ErrorDisplay message={error} onRetry={refetch} />
+      )}
 
       <div className="border-b border-neutral-200 dark:border-neutral-800">
         <nav className="flex gap-1 overflow-x-auto -mb-px">
@@ -246,7 +316,7 @@ export default function CenseurDashboard() {
                 <Icon className="h-4 w-4" /> {tab.label}
               </button>
             );
-          })}
+ })}
         </nav>
       </div>
 

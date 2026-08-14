@@ -97,6 +97,10 @@ export const ROLE_GROUPS = Object.freeze({
 /**
  * Vérifie si un rôle utilisateur est présent dans une liste de rôles autorisés.
  *
+ * Un sous-rôle est accepté partout où son rôle parent l'est
+ * (cf. `ROLE_NORMALIZATION`) : `directeurP` passe un contrôle
+ * `[ROLES.DIRECTEUR]`, sans pour autant gagner d'autres droits.
+ *
  * @param {string|null|undefined} userRole - Le rôle de l'utilisateur (ex: `'directeur'`)
  * @param {string[]} allowedRoles - Liste des rôles autorisés
  * @returns {boolean} `true` si le rôle est autorisé
@@ -106,8 +110,8 @@ export const ROLE_GROUPS = Object.freeze({
  * // => true si l'utilisateur est directeur ou admin
  */
 export function hasRole(userRole, allowedRoles) {
-  if (!userRole) return false;
-  return allowedRoles.includes(userRole);
+  if (!userRole || !Array.isArray(allowedRoles)) return false;
+  return allowedRoles.includes(userRole) || allowedRoles.includes(normalizeRole(userRole));
 }
 
 /**
@@ -124,7 +128,10 @@ export function hasRole(userRole, allowedRoles) {
  */
 export function hasAnyRole(userRole, ...roleSets) {
   if (!userRole) return false;
-  return roleSets.some((set) => set.includes(userRole));
+  const effective = normalizeRole(userRole);
+  return roleSets.some(
+    (set) => Array.isArray(set) && (set.includes(userRole) || set.includes(effective))
+  );
 }
 
 /**
@@ -145,6 +152,26 @@ export const ROLE_NORMALIZATION = Object.freeze({
   [R.ENSEIGNEMENT_M]: R.ENSEIGNANT,
   [R.ENSEIGNEMENT_P]: R.ENSEIGNANT,
 });
+
+/**
+ * Résout un rôle vers le rôle « effectif » qui porte le dashboard,
+ * le menu et les contrôles d'accès.
+ *
+ * Les sous-rôles n'ont pas de surface propre côté client : le serveur
+ * cloisonne leurs données par cycle. Tout ce qui décide d'une
+ * destination ou d'une permission doit donc passer par ici.
+ *
+ * @param {string|null|undefined} role
+ * @returns {string|null|undefined} Le rôle parent, ou le rôle inchangé.
+ *
+ * @example
+ * normalizeRole('directeurP') // => 'directeur'
+ * normalizeRole('eleve')      // => 'eleve'
+ */
+export function normalizeRole(role) {
+  if (!role) return role;
+  return ROLE_NORMALIZATION[role] ?? role;
+}
 
 /**
  * Libellés d'affichage pour chaque rôle (français).

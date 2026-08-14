@@ -17,7 +17,7 @@ class DiplomeController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'etudiant_id' => 'required|exists:etudiants,id',
+            'etudiant_id' => 'required|school_exists:etudiants,id',
             'intitule' => 'required|string|max:200',
             'date_delivrance' => 'required|date',
             'mention' => 'nullable|in:Passable,Assez bien,Bien,Très bien,Excellent'

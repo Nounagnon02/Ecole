@@ -9,12 +9,10 @@ import { useNavigate } from 'react-router-dom';
 import { useDashboardStats } from '../hooks/useDashboardData';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  BookOpen, Users, Bookmark, Clock, AlertTriangle, CheckCircle2,
-  BarChart3, Search, Library, Plus, TrendingUp,
-} from 'lucide-react';
+  BookOpen, Users, Bookmark, Clock, BarChart3, Search, Library } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip,
-  ResponsiveContainer, PieChart, Pie, Cell,
+  ResponsiveContainer, PieChart, Pie, Cell
 } from 'recharts';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -24,6 +22,8 @@ import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Table from '@/shared/components/ui/Table';
+import { RefreshButton } from '@/shared/components/ui';
+import { ErrorDisplay } from '@/shared/components/ui/EmptyState';
 
 const TABS = [
   { id: 'apercu', label: 'Aperçu', icon: BarChart3 },
@@ -40,7 +40,7 @@ const STATS_META = [
 
 const CAT_COLORS = ['var(--accent)', 'var(--green)', 'var(--amber)', 'var(--red)', 'var(--primary)'];
 
-function ApercuSection({ stats, activite, categories, emprunts }) {
+function ApercuSection({ stats, activite, categories, emprunts, retardsListe, nouveautes, populaires }) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -144,51 +144,111 @@ function ApercuSection({ stats, activite, categories, emprunts }) {
           </Table>
         </Card.Body>
       </Card>
-    </div>
-  );
-}
 
-function CatalogueSection() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Catalogue</h2>
-          <p className="text-sm text-neutral-500 mt-1">Gestion des ouvrages de la bibliothèque</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="ghost" size="sm"><Search className="h-4 w-4 mr-1" /> Rechercher</Button>
-          <Button><Plus className="h-4 w-4 mr-1" /> Ajouter un Ouvrage</Button>
-        </div>
-      </div>
-      <Card>
-        <Card.Body>
-          <p className="text-neutral-500 text-center py-12">
-            Catalogue complet — recherche, catégories, stock, et nouveautés
-          </p>
-        </Card.Body>
-      </Card>
-    </div>
-  );
-}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card>
+          <Card.Header>
+            <div className="flex items-center justify-between">
+              <Card.Title>Retards de Retour</Card.Title>
+              {retardsListe.length > 0 && (
+                <Badge variant="danger" size="sm">{retardsListe.length}</Badge>
+              )}
+            </div>
+          </Card.Header>
+          <Card.Body className="p-0">
+            {retardsListe.length > 0 ? (
+            <Table>
+              <Table.Header>
+                <Table.Head>Élève</Table.Head>
+                <Table.Head>Ouvrage</Table.Head>
+                <Table.Head>Retard</Table.Head>
+              </Table.Header>
+              <Table.Body>
+                {retardsListe.map((r) => (
+                  <Table.Row key={r.id}>
+                    <Table.Cell><span className="font-medium text-neutral-900 dark:text-white">{r.eleve}</span></Table.Cell>
+                    <Table.Cell className="max-w-[160px] truncate">{r.ouvrage}</Table.Cell>
+                    <Table.Cell>
+                      <Badge variant={r.jours_retard >= 7 ? 'danger' : 'warning'} size="sm">{r.jours_retard} j</Badge>
+                    </Table.Cell>
+                  </Table.Row>
+                ))}
+              </Table.Body>
+            </Table>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-[var(--text-tertiary)]">
+                <Clock className="h-8 w-8 mb-2 opacity-30" />
+                <p className="text-sm">Aucun retour en retard</p>
+              </div>
+            )}
+          </Card.Body>
+        </Card>
 
-function EmpruntsSection() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Emprunts</h2>
-          <p className="text-sm text-neutral-500 mt-1">Suivi des prêts et retours</p>
-        </div>
-        <Button variant="ghost" size="sm"><Bookmark className="h-4 w-4 mr-1" /> Historique</Button>
+        <Card>
+          <Card.Header>
+            <Card.Title>Nouveautés</Card.Title>
+            <Card.Description>Derniers ajouts au catalogue</Card.Description>
+          </Card.Header>
+          <Card.Body className="p-0">
+            {nouveautes.length > 0 ? (
+            <Table>
+              <Table.Header>
+                <Table.Head>Titre</Table.Head>
+                <Table.Head>Auteur</Table.Head>
+              </Table.Header>
+              <Table.Body>
+                {nouveautes.map((n) => (
+                  <Table.Row key={n.id}>
+                    <Table.Cell>
+                      <span className="font-medium text-neutral-900 dark:text-white">{n.titre}</span>
+                      <span className="block text-xs text-neutral-400">{n.categorie}</span>
+                    </Table.Cell>
+                    <Table.Cell>{n.auteur}</Table.Cell>
+                  </Table.Row>
+                ))}
+              </Table.Body>
+            </Table>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-[var(--text-tertiary)]">
+                <BookOpen className="h-8 w-8 mb-2 opacity-30" />
+                <p className="text-sm">Aucune nouveauté récente</p>
+              </div>
+            )}
+          </Card.Body>
+        </Card>
+
+        <Card>
+          <Card.Header>
+            <Card.Title>Les Plus Empruntés</Card.Title>
+            <Card.Description>Ouvrages les plus lus</Card.Description>
+          </Card.Header>
+          <Card.Body>
+            {populaires.length > 0 ? (
+            <div className="space-y-3">
+              {populaires.map((p, i) => {
+                const max = Math.max(...populaires.map((x) => x.emprunts), 1);
+                return (
+                  <div key={p.titre} className="flex items-center justify-between text-sm">
+                    <span className="text-neutral-600 dark:text-neutral-400 truncate">{i + 1}. {p.titre}</span>
+                    <div className="flex items-center gap-2">
+                      <div className="w-20 h-1.5 rounded-full bg-neutral-100 dark:bg-neutral-800 overflow-hidden">
+                        <div className="h-full rounded-full bg-[var(--accent)]" style={{ width: `${(p.emprunts / max) * 100}%` }} />
+                      </div>
+                      <span className="w-6 text-right font-medium text-neutral-900 dark:text-white">{p.emprunts}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-[var(--text-tertiary)]">
+                <Library className="h-8 w-8 mb-2 opacity-30" />
+                <p className="text-sm">Aucun emprunt enregistré</p>
+              </div>
+            )}
+          </Card.Body>
+        </Card>
       </div>
-      <Card>
-        <Card.Body>
-          <p className="text-neutral-500 text-center py-12">
-              Interface de gestion des prêts — enregistrement, rappels, prolongations
-          </p>
-        </Card.Body>
-      </Card>
     </div>
   );
 }
@@ -196,25 +256,28 @@ function EmpruntsSection() {
 export default function BibliothecaireDashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('apercu');
-  const { data, loading } = useDashboardStats('bibliothecaire');
+  const { data, loading, error, refetch } = useDashboardStats('bibliothecaire');
 
   const stats = data?.stats?.map((s, i) => ({ ...s, icon: STATS_META[i]?.icon, color: STATS_META[i]?.color })) || [];
   const activite = data?.activite || [];
   const categories = data?.categories || [];
   const emprunts = data?.emprunts || [];
+  const retardsListe = data?.retards_liste || [];
+  const nouveautes = data?.nouveautes || [];
+  const populaires = data?.populaires || [];
 
   const handleTabClick = (tabId) => {
     if (tabId === 'apercu') { setActiveTab(tabId); return; }
     const routes = { catalogue: '/bibliothecaire/catalogue', emprunts: '/bibliothecaire/emprunts' };
     navigate(routes[tabId] || '/bibliothecaire/dashboard');
-  };
+ };
 
   const renderSection = () => {
     switch (activeTab) {
-      case 'apercu': return <ApercuSection stats={stats} activite={activite} categories={categories} emprunts={emprunts} />;
-      default: return <ApercuSection stats={stats} activite={activite} categories={categories} emprunts={emprunts} />;
-    }
-  };
+      case 'apercu': return <ApercuSection stats={stats} activite={activite} categories={categories} emprunts={emprunts} retardsListe={retardsListe} nouveautes={nouveautes} populaires={populaires} />;
+      default: return <ApercuSection stats={stats} activite={activite} categories={categories} emprunts={emprunts} retardsListe={retardsListe} nouveautes={nouveautes} populaires={populaires} />;
+ }
+ };
 
   return (
     <div className="space-y-6">
@@ -229,8 +292,15 @@ export default function BibliothecaireDashboard() {
             Gestion des ouvrages — {format(new Date(), 'EEEE d MMMM yyyy', { locale: fr })}
           </p>
         </div>
-        <Button variant="ghost" size="sm"><Search className="h-4 w-4 mr-1" /> Recherche Rapide</Button>
+        <div className="flex items-center gap-2">
+          <RefreshButton loading={loading} onRefresh={refetch} />
+          <Button variant="ghost" size="sm"><Search className="h-4 w-4 mr-1" /> Recherche Rapide</Button>
+        </div>
       </div>
+
+      {error && (
+        <ErrorDisplay message={error} onRetry={refetch} />
+      )}
 
       <div className="border-b border-neutral-200 dark:border-neutral-800">
         <nav className="flex gap-1 overflow-x-auto -mb-px">
@@ -248,7 +318,7 @@ export default function BibliothecaireDashboard() {
                 <Icon className="h-4 w-4" /> {tab.label}
               </button>
             );
-          })}
+ })}
         </nav>
       </div>
 

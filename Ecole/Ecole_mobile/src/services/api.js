@@ -3,23 +3,22 @@
  * api — Érudit v4 (React Native)
  *
  * Instance Axios améliorée :
- * - Token depuis AsyncStorage (@ecole_token)
+ * - Token depuis le stockage sécurisé (Keychain / Keystore)
  * - Intercepteur d'authentification
  * - Gestion 401 (déconnexion automatique)
  * - Retry (3 tentatives) sur erreur réseau 5xx
- * - Timeout 15s
- * - Base URL configurable via variable d'env
+ * - Base URL et timeout pilotés par EXPO_PUBLIC_API_URL /
+ *   EXPO_PUBLIC_API_TIMEOUT (cf. constants/api)
  * ============================================================================
  */
 
 import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000/api';
+import { getToken, clearAll } from './secureStorage';
+import { URL_BASE_API, API_TIMEOUT } from '../../constants/api';
 
 export const api = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: 15000,
+  baseURL: URL_BASE_API,
+  timeout: API_TIMEOUT,
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
@@ -31,7 +30,7 @@ export const api = axios.create({
  */
 api.interceptors.request.use(
   async (config) => {
-    const token = await AsyncStorage.getItem('@ecole_token');
+    const token = await getToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -62,7 +61,7 @@ api.interceptors.response.use(
     // 401 → token invalide → déconnexion
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
-      await AsyncStorage.multiRemove(['@ecole_user', '@ecole_token']);
+      await clearAll();
       delete api.defaults.headers.common['Authorization'];
       return Promise.reject(error);
     }

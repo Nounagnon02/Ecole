@@ -4,15 +4,16 @@
  *
  * Contexte d'authentification amélioré :
  * - Login / Logout / Forgot password / Reset password
- * - Persistance AsyncStorage (user + token + role)
+ * - Persistance : token en stockage sécurisé, profil en AsyncStorage
  * - Restauration de session au démarrage
  * - Gestion des erreurs réseau
  * ============================================================================
  */
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 import { api } from '../services/api';
+import { setToken, getToken, setUser as persistUser, getUser, clearAll } from '../services/secureStorage';
 
 const AuthContext = createContext();
 
@@ -28,17 +29,13 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   /**
-   * Restaure la session depuis AsyncStorage au démarrage.
+   * Restaure la session au démarrage (token chiffré + profil en cache).
    */
   const checkAuthState = useCallback(async () => {
     try {
-      const [userData, token] = await Promise.all([
-        AsyncStorage.getItem('@ecole_user'),
-        AsyncStorage.getItem('@ecole_token'),
-      ]);
+      const [userData, token] = await Promise.all([getUser(), getToken()]);
       if (userData && token) {
-        const parsed = JSON.parse(userData);
-        setUser(parsed);
+        setUser(userData);
         // Attacher le token à l'instance Axios
         api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       }
@@ -55,14 +52,19 @@ export const AuthProvider = ({ children }) => {
   const login = async (credentials) => {
     setError(null);
     try {
-      const response = await api.post('/auth/login', credentials);
+      // `device_name` permet au backend de nommer le token Sanctum émis,
+      // et donc de le révoquer appareil par appareil.
+      const response = await api.post('/auth/login', {
+        ...credentials,
+        device_name: Platform.OS === 'ios' ? 'ios' : 'android',
+      });
       const userData = response.data.user || response.data;
       const token = response.data.token || userData.token;
 
-      // Stockage persistant
-      await AsyncStorage.setItem('@ecole_user', JSON.stringify(userData));
+      // Profil en clair (affichage), token en stockage chiffré.
+      await persistUser(userData);
       if (token) {
-        await AsyncStorage.setItem('@ecole_token', token);
+        await setToken(token);
         api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       }
 
@@ -87,7 +89,7 @@ export const AuthProvider = ({ children }) => {
     } catch (_) {
       // Déconnexion même sans réponse serveur
     }
-    await AsyncStorage.multiRemove(['@ecole_user', '@ecole_token']);
+    await clearAll();
     delete api.defaults.headers.common['Authorization'];
     setUser(null);
     setError(null);
@@ -138,7 +140,7 @@ export const AuthProvider = ({ children }) => {
   const updateUser = async (updatedData) => {
     const merged = { ...user, ...updatedData };
     setUser(merged);
-    await AsyncStorage.setItem('@ecole_user', JSON.stringify(merged));
+    await persistUser(merged);
   };
 
   return (

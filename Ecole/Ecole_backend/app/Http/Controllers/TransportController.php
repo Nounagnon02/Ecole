@@ -39,15 +39,15 @@ class TransportController extends Controller
     public function storeAbonnement(Request $request)
     {
         $validated = $request->validate([
-            'eleve_id' => 'required|exists:eleves,id',
-            'trajet_id' => 'required|exists:trajets_transport,id',
-            'vehicule_id' => 'nullable|exists:vehicules,id',
+            'eleve_id' => 'required|school_exists:eleves,id',
+            'trajet_id' => 'required|school_exists:trajets_transport,id',
+            'vehicule_id' => 'nullable|school_exists:vehicules,id',
             'date_debut' => 'required|date',
             'date_fin' => 'nullable|date|after:date_debut',
         ]);
 
         $abonnement = AbonnementTransport::create(array_merge($validated, [
-            'statut' => 'actif',
+            'statut' => 'active',
             'montant_paye' => 0
         ]));
 

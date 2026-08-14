@@ -9,9 +9,10 @@ import { motion } from 'framer-motion';
 import {
   Building2, Plus, Search, MapPin, Phone, Mail, Users,
   BookOpen, GraduationCap, CheckCircle, XCircle, Eye,
-  Loader2, AlertCircle, RefreshCw, ChevronDown, KeyRound,
+  AlertCircle, RefreshCw, KeyRound
 } from 'lucide-react';
 import { cn } from '@/shared/lib/utils';
+import { unwrapList } from '@/shared/lib/unwrap';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
@@ -23,7 +24,7 @@ import { api } from '@/shared/services/api';
 
 const STATUT_CONFIG = {
   active: { variant: 'primary', label: 'Actif' },
-  inactive: { variant: 'outline', label: 'Inactif' },
+  inactive: { variant: 'outline', label: 'Inactif' }
 };
 
 function EcoleSkeleton() {
@@ -123,7 +124,8 @@ export default function EcolesPage() {
     setError(null);
     try {
       const res = await api.get('/ecoles');
-      setEcoles(res.data?.data ?? []);
+      // `/ecoles` est paginé : res.data.data est le paginateur, pas le tableau.
+      setEcoles(unwrapList(res.data));
     } catch (err) {
       setError(err.response?.data?.message || 'Erreur de chargement');
     } finally {
@@ -139,7 +141,7 @@ export default function EcolesPage() {
       total: ecoles.length,
       actifs,
       inactifs: ecoles.length - actifs,
-      totalEffectifs: ecoles.reduce((s, e) => s + (e.total_eleves ?? 0), 0),
+      totalEffectifs: ecoles.reduce((s, e) => s + (e.total_eleves ?? 0), 0)
     };
   }, [ecoles]);
 
