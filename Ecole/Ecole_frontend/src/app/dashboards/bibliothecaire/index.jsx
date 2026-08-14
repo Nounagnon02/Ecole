@@ -22,6 +22,8 @@ import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Table from '@/shared/components/ui/Table';
+import { RefreshButton } from '@/shared/components/ui';
+import { ErrorDisplay } from '@/shared/components/ui/EmptyState';
 
 const TABS = [
   { id: 'apercu', label: 'Aperçu', icon: BarChart3 },
@@ -149,7 +151,7 @@ function ApercuSection({ stats, activite, categories, emprunts }) {
 export default function BibliothecaireDashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('apercu');
-  const { data } = useDashboardStats('bibliothecaire');
+  const { data, loading, error, refetch } = useDashboardStats('bibliothecaire');
 
   const stats = data?.stats?.map((s, i) => ({ ...s, icon: STATS_META[i]?.icon, color: STATS_META[i]?.color })) || [];
   const activite = data?.activite || [];
@@ -182,8 +184,15 @@ export default function BibliothecaireDashboard() {
             Gestion des ouvrages — {format(new Date(), 'EEEE d MMMM yyyy', { locale: fr })}
           </p>
         </div>
-        <Button variant="ghost" size="sm"><Search className="h-4 w-4 mr-1" /> Recherche Rapide</Button>
+        <div className="flex items-center gap-2">
+          <RefreshButton loading={loading} onRefresh={refetch} />
+          <Button variant="ghost" size="sm"><Search className="h-4 w-4 mr-1" /> Recherche Rapide</Button>
+        </div>
       </div>
+
+      {error && (
+        <ErrorDisplay message={error} onRetry={refetch} />
+      )}
 
       <div className="border-b border-neutral-200 dark:border-neutral-800">
         <nav className="flex gap-1 overflow-x-auto -mb-px">

@@ -33,6 +33,8 @@ import StatsCard from '@/shared/components/ui/StatsCard';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
+import { RefreshButton } from '@/shared/components/ui';
+import { ErrorDisplay } from '@/shared/components/ui/EmptyState';
 
 // ─── Constantes ───────────────────────────────────────────────
 
@@ -55,7 +57,7 @@ const STATS_META = [
 
 // ─── Sections ─────────────────────────────────────────────────
 
-function ApercuSection({ data, loading }) {
+function ApercuSection({ data, loading, onRefresh }) {
   const safeStats = data?.stats?.map((s, i) => ({ ...s, icon: STATS_META[i]?.icon, color: STATS_META[i]?.color })) || [];
   const safeTraffic = data?.traffic || [];
   const safeLogs = data?.logs || [];
@@ -86,8 +88,8 @@ function ApercuSection({ data, loading }) {
                 <Card.Title>Trafic API</Card.Title>
                 <Card.Description>Requêtes et temps de réponse — 7 derniers jours</Card.Description>
               </div>
-              <Button variant="ghost" size="sm">
-                <RefreshCw className="h-4 w-4 mr-1" /> Actualiser
+              <Button variant="ghost" size="sm" onClick={onRefresh} disabled={loading}>
+                <RefreshCw className={cn('h-4 w-4 mr-1', loading && 'animate-spin')} /> Actualiser
               </Button>
             </div>
           </Card.Header>
@@ -320,7 +322,7 @@ function SauvegardesSection() {
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('apercu');
-  const { data, loading } = useDashboardStats('admin');
+  const { data, loading, error, refetch } = useDashboardStats('admin');
 
   const handleTabClick = (tabId) => {
     if (tabId === 'apercu') {
@@ -340,10 +342,10 @@ export default function AdminDashboard() {
 
   const renderSection = () => {
     switch (activeTab) {
-      case 'apercu': return <ApercuSection data={data} loading={loading} />;
+      case 'apercu': return <ApercuSection data={data} loading={loading} onRefresh={refetch} />;
       case 'logs': return <LogsSection data={data} loading={loading} />;
       case 'sauvegardes': return <SauvegardesSection />;
-      default: return <ApercuSection data={data} loading={loading} />;
+      default: return <ApercuSection data={data} loading={loading} onRefresh={refetch} />;
     }
   };
 
@@ -363,6 +365,7 @@ export default function AdminDashboard() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <RefreshButton loading={loading} onRefresh={refetch} />
           <Button variant="ghost" size="sm">
             <Bell className="h-4 w-4 mr-1" /> Alertes
           </Button>
@@ -371,6 +374,10 @@ export default function AdminDashboard() {
           </Button>
         </div>
       </div>
+
+      {error && (
+        <ErrorDisplay message={error} onRetry={refetch} />
+      )}
 
       <div className="border-b border-neutral-200 dark:border-neutral-800">
         <nav className="flex gap-1 overflow-x-auto -mb-px">

@@ -23,6 +23,8 @@ import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Table from '@/shared/components/ui/Table';
 import Button from '@/shared/components/ui/Button';
+import { RefreshButton } from '@/shared/components/ui';
+import { ErrorDisplay } from '@/shared/components/ui/EmptyState';
 
 const TABS = [
   { id: 'apercu', label: 'Aperçu', icon: BarChart3 },
@@ -140,7 +142,7 @@ function ApercuSection({ stats, presences, retards, data }) {
 export default function SurveillantDashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('apercu');
-  const { data } = useDashboardStats('surveillant');
+  const { data, loading, error, refetch } = useDashboardStats('surveillant');
 
   const stats = data?.stats?.map((s, i) => ({ ...s, icon: STATS_META[i]?.icon, color: STATS_META[i]?.color })) || [];
   const presences = data?.presences_semaine || [];
@@ -172,8 +174,15 @@ export default function SurveillantDashboard() {
             Suivi des présences — {format(new Date(), 'EEEE d MMMM yyyy', { locale: fr })}
           </p>
         </div>
-        <Button variant="ghost" size="sm"><Shield className="h-4 w-4 mr-1" /> Mon Service</Button>
+        <div className="flex items-center gap-2">
+          <RefreshButton loading={loading} onRefresh={refetch} />
+          <Button variant="ghost" size="sm"><Shield className="h-4 w-4 mr-1" /> Mon Service</Button>
+        </div>
       </div>
+
+      {error && (
+        <ErrorDisplay message={error} onRetry={refetch} />
+      )}
 
       <div className="border-b border-neutral-200 dark:border-neutral-800">
         <nav className="flex gap-1 overflow-x-auto -mb-px">

@@ -611,6 +611,49 @@ class DashboardController extends Controller
     }
 
     /**
+     * Les dernières lignes d'un fichier, sans le charger intégralement.
+     *
+     * `file()` lisait tout le journal Laravel à chaque ouverture du dashboard
+     * admin ; un journal de plusieurs centaines de Mo devenait un coût par
+     * requête. On lit depuis la fin, par blocs (cf. audit P4).
+     */
+    private function tailLines(string $path, int $nbLignes): array
+    {
+        $handle = @fopen($path, 'rb');
+        if (!$handle) {
+            return [];
+        }
+
+        $taille = filesize($path);
+        $bloc = 4096;
+        $position = $taille;
+        $contenu = '';
+        $lignes = [];
+
+        while ($position > 0 && count($lignes) < $nbLignes) {
+            $lecture = min($bloc, $position);
+            $position -= $lecture;
+            fseek($handle, $position);
+            $contenu = fread($handle, $lecture) . $contenu;
+
+            if (substr_count($contenu, "\n") >= $nbLignes) {
+                $lignes = explode("\n", $contenu);
+                break;
+            }
+        }
+
+        if ($lignes === []) {
+            $lignes = explode("\n", $contenu);
+        }
+
+        fclose($handle);
+
+        $lignes = array_values(array_filter($lignes, fn ($l) => trim($l) !== ''));
+
+        return array_slice($lignes, -$nbLignes);
+    }
+
+    /**
      * Les dernières lignes du journal Laravel, parsées en entrées de log.
      */
     private function tailLaravelLogs(int $limit = 6): array
@@ -620,7 +663,7 @@ class DashboardController extends Controller
             return $this->legacyLogsLog($limit);
         }
 
-        $lines = collect(file($logFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES))->take(-$limit * 2);
+        $lines = collect($this->tailLines($logFile, $limit * 2));
         $parsed = $lines->filter(function ($line) {
             return preg_match('/^\[[^\]]+\] (production|local)\.(\w+):/', $line);
         })->map(function ($line, $i) {
@@ -647,12 +690,7 @@ class DashboardController extends Controller
             return 0;
         }
 
-        $lignes = file($logFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-        if (!$lignes) {
-            return 0;
-        }
-
-        $dernieres = array_slice($lignes, -1000);
+        $dernieres = $this->tailLines($logFile, 1000);
 
         return count(array_filter($dernieres, function ($line) {
             return preg_match('/\.ERROR:/', $line) === 1;
@@ -787,6 +825,20 @@ class DashboardController extends Controller
         return $mois;
     }
 
+    /**
+     * Expression SQL du mois « Y-m » d'une colonne date, portable SQLite/MySQL.
+     *
+     * SQLite n'a ni `MONTH()` ni `DATE_FORMAT` : les agrégations mensuelles
+     * doivent s'exprimer selon le moteur (cf. audit P4 — les séries de 6 mois
+     * chargeaient des collections entières puis les regroupaient en PHP).
+     */
+    private function monthExpression(string $column): string
+    {
+        return \Illuminate\Support\Facades\DB::getDriverName() === 'sqlite'
+            ? "strftime('%Y-%m', {$column})"
+            : "DATE_FORMAT({$column}, '%Y-%m')";
+    }
+
     /** Prénom + nom d'un élève, proprement concaténés. */
     private function nomEleve($eleve): string
     {
@@ -824,27 +876,28 @@ class DashboardController extends Controller
             $depensesMois = (float) \App\Models\Depense::whereMonth('date_depense', $moisActuel)
                 ->whereYear('date_depense', $anneeActuelle)->sum('montant');
 
-            // Évolution des finances — 6 derniers mois (revenus + dépenses)
-            $paiements = \App\Models\PaiementEleve::whereBetween('date_paiement', [
+            // Évolution des finances — 6 derniers mois (revenus + dépenses),
+            // agrégée en SQL (cf. audit P4) : l'ancien code chargeait toutes les
+            // lignes de la fenêtre puis les regroupait en PHP.
+            $revenusParMois = \App\Models\PaiementEleve::whereBetween('date_paiement', [
                 now()->startOfMonth()->subMonths(5), now()->endOfMonth(),
-            ])->where('statut_global', \App\Models\PaiementEleve::PAID)->get();
+            ])->where('statut_global', \App\Models\PaiementEleve::PAID)
+                ->selectRaw($this->monthExpression('date_paiement') . ' as mois, SUM(montant) as total')
+                ->groupBy('mois')
+                ->pluck('total', 'mois');
 
-            $depenses = \App\Models\Depense::whereBetween('date_depense', [
+            $depensesParMois = \App\Models\Depense::whereBetween('date_depense', [
                 now()->startOfMonth()->subMonths(5), now()->endOfMonth(),
-            ])->get();
-
-            $revenusParMois = $paiements->groupBy(fn ($p) => $p->date_paiement?->format('Y-m'))
-                ->map(fn ($g) => (float) $g->sum('montant'));
-
-            $depensesParMois = $depenses->groupBy(fn ($d) => $d->date_depense?->format('Y-m'))
-                ->map(fn ($g) => (float) $g->sum('montant'));
+            ])->selectRaw($this->monthExpression('date_depense') . ' as mois, SUM(montant) as total')
+                ->groupBy('mois')
+                ->pluck('total', 'mois');
 
             $donneesMensuelles = [];
             foreach ($this->sixDerniersMois() as $cle => $label) {
                 $donneesMensuelles[] = [
                     'mois' => $label,
-                    'revenus' => $revenusParMois->get($cle, 0),
-                    'depenses' => $depensesParMois->get($cle, 0),
+                    'revenus' => (float) ($revenusParMois->get($cle, 0)),
+                    'depenses' => (float) ($depensesParMois->get($cle, 0)),
                 ];
             }
 
@@ -933,12 +986,21 @@ class DashboardController extends Controller
                 ];
             }
 
-            // Points de surveillance : une zone par cycle réellement présent
+            // Points de surveillance : une zone par cycle réellement présent.
+            // Une seule agrégation pour toutes les zones, au lieu d'un comptage
+            // d'enseignants par catégorie (N+1, cf. audit P4) — les deux requêtes
+            // restent scopées à l'école résolue.
+            $personnelsParCategorie = \App\Models\Enseignant::with('classes:id,categorie_classe')
+                ->get()
+                ->flatMap(fn ($e) => $e->classes->pluck('categorie_classe'))
+                ->countBy()
+                ->all();
+
             $points = \App\Models\Classes::select('categorie_classe')
                 ->distinct()
                 ->get()
-                ->map(function ($classe) {
-                    $personnels = \App\Models\Enseignant::whereHas('classes', fn ($q) => $q->where('categorie_classe', $classe->categorie_classe))->count();
+                ->map(function ($classe) use ($personnelsParCategorie) {
+                    $personnels = $personnelsParCategorie[$classe->categorie_classe] ?? 0;
 
                     return [
                         'zone' => $classe->categorie_classe,
@@ -951,22 +1013,28 @@ class DashboardController extends Controller
                 ->where('type', 'retard')
                 ->latest('date')
                 ->take(10)
-                ->get()
-                ->map(function ($a) {
-                    $recurrent = \App\Models\Absence::where('eleve_id', $a->eleve_id)
-                        ->where('type', 'retard')
-                        ->where('date', '>=', now()->subDays(30))
-                        ->count() >= 2;
+                ->get();
 
-                    return [
-                        'id' => $a->id,
-                        'eleve' => $this->nomEleve($a->eleve),
-                        'classe' => $a->eleve?->classe?->nom_classe,
-                        'temps' => $a->date?->format('d/m/Y'),
-                        'motif' => $a->motif,
-                        'recurrent' => $recurrent,
-                    ];
-                });
+            // Récurrence (≥ 2 retards sur 30 jours) en une seule requête
+            // d'agrégation, au lieu d'un comptage par retard (N+1, cf. audit P4).
+            $eleveIds = $derniersRetards->pluck('eleve_id')->filter()->unique()->values();
+            $retardsParEleve = \App\Models\Absence::where('type', 'retard')
+                ->where('date', '>=', now()->subDays(30))
+                ->whereIn('eleve_id', $eleveIds)
+                ->selectRaw('eleve_id, COUNT(*) as total')
+                ->groupBy('eleve_id')
+                ->pluck('total', 'eleve_id');
+
+            $derniersRetards = $derniersRetards->map(function ($a) use ($retardsParEleve) {
+                return [
+                    'id' => $a->id,
+                    'eleve' => $this->nomEleve($a->eleve),
+                    'classe' => $a->eleve?->classe?->nom_classe,
+                    'temps' => $a->date?->format('d/m/Y'),
+                    'motif' => $a->motif,
+                    'recurrent' => (int) ($retardsParEleve[$a->eleve_id] ?? 0) >= 2,
+                ];
+            });
 
             return [
                 'stats' => [
@@ -995,22 +1063,33 @@ class DashboardController extends Controller
                 ->whereYear('date', now()->year)->count();
             $absencesNonJustifiees = \App\Models\Absence::where('justifiee', false)
                 ->where('type', 'absence')
-                ->whereMonth('date', now()->month)->count();
+                ->whereMonth('date', now()->month)
+                ->whereYear('date', now()->year)->count();
             $avertissements = \App\Models\Sanction::where('type_sanction', 'like', '%Avertissement%')
-                ->whereMonth('date', now()->month)->count();
+                ->whereMonth('date', now()->month)
+                ->whereYear('date', now()->year)->count();
 
-            // Évolution disciplinaire — 6 derniers mois (sanctions + avertissements)
-            $sanctions = \App\Models\Sanction::whereBetween('date', [
+            // Évolution disciplinaire — 6 derniers mois (sanctions + avertissements),
+            // agrégée en SQL (cf. audit P4).
+            $sanctionsParMois = \App\Models\Sanction::whereBetween('date', [
                 now()->startOfMonth()->subMonths(5), now()->endOfMonth(),
-            ])->get()->groupBy(fn ($s) => $s->date?->format('Y-m'));
+            ])->selectRaw($this->monthExpression('date') . ' as mois, COUNT(*) as total')
+                ->groupBy('mois')
+                ->pluck('total', 'mois');
+
+            $avertissementsParMois = \App\Models\Sanction::where('type_sanction', 'like', '%Avertissement%')
+                ->whereBetween('date', [
+                    now()->startOfMonth()->subMonths(5), now()->endOfMonth(),
+                ])->selectRaw($this->monthExpression('date') . ' as mois, COUNT(*) as total')
+                ->groupBy('mois')
+                ->pluck('total', 'mois');
 
             $evolution = [];
             foreach ($this->sixDerniersMois() as $cle => $label) {
-                $groupe = $sanctions->get($cle, collect());
                 $evolution[] = [
                     'mois' => $label,
-                    'sanctions' => $groupe->count(),
-                    'avertissements' => $groupe->filter(fn ($s) => str_contains($s->type_sanction, 'Avertissement'))->count(),
+                    'sanctions' => (int) ($sanctionsParMois->get($cle, 0)),
+                    'avertissements' => (int) ($avertissementsParMois->get($cle, 0)),
                 ];
             }
 
@@ -1074,18 +1153,23 @@ class DashboardController extends Controller
                 ->whereYear('date', now()->year)->count();
             $consultations = \App\Models\ConsultationMedicale::count();
 
-            // Fréquentation — 6 derniers mois (visites + urgences)
-            $visites = \App\Models\ConsultationMedicale::whereBetween('date', [
+            // Fréquentation — 6 derniers mois (visites + urgences), agrégée en
+            // SQL (cf. audit P4).
+            $visitesParMois = \App\Models\ConsultationMedicale::whereBetween('date', [
                 now()->startOfMonth()->subMonths(5), now()->endOfMonth(),
-            ])->get()->groupBy(fn ($c) => $c->date?->format('Y-m'));
+            ])->selectRaw(
+                $this->monthExpression('date') . ' as mois, '
+                . 'COUNT(*) as visites, '
+                . 'SUM(CASE WHEN urgence = 1 THEN 1 ELSE 0 END) as urgences'
+            )->groupBy('mois')->get()->keyBy('mois');
 
             $frequentation = [];
             foreach ($this->sixDerniersMois() as $cle => $label) {
-                $groupe = $visites->get($cle, collect());
+                $ligne = $visitesParMois->get($cle);
                 $frequentation[] = [
                     'mois' => $label,
-                    'visites' => $groupe->count(),
-                    'urgences' => $groupe->filter(fn ($c) => $c->urgence)->count(),
+                    'visites' => (int) ($ligne->visites ?? 0),
+                    'urgences' => (int) ($ligne->urgences ?? 0),
                 ];
             }
 
@@ -1146,24 +1230,29 @@ class DashboardController extends Controller
                 now()->startOfMonth()->subMonths(5), now()->endOfMonth(),
             ])->distinct('eleve_id')->count('eleve_id');
 
-            // Activité — 6 derniers mois (emprunts + retours)
-            $emprunts = \App\Models\Emprunt::whereBetween('date_emprunt', [
+            // Activité — 6 derniers mois (emprunts + retours), agrégée en SQL
+            // (cf. audit P4). Les retours comptent par leur date de retour :
+            // l'ancien code ne voyait que les retours d'ouvrages empruntés dans
+            // la fenêtre, et perdait un livre rendu ce mois-ci après un emprunt
+            // plus ancien.
+            $empruntsParMois = \App\Models\Emprunt::whereBetween('date_emprunt', [
                 now()->startOfMonth()->subMonths(5), now()->endOfMonth(),
-            ])->get();
+            ])->selectRaw($this->monthExpression('date_emprunt') . ' as mois, COUNT(*) as total')
+                ->groupBy('mois')
+                ->pluck('total', 'mois');
 
-            $empruntsParMois = $emprunts->groupBy(fn ($e) => $e->date_emprunt?->format('Y-m'))
-                ->map(fn ($g) => $g->count());
-
-            $retoursParMois = $emprunts->filter(fn ($e) => $e->date_retour_effective)
-                ->groupBy(fn ($e) => $e->date_retour_effective->format('Y-m'))
-                ->map(fn ($g) => $g->count());
+            $retoursParMois = \App\Models\Emprunt::whereBetween('date_retour_effective', [
+                now()->startOfMonth()->subMonths(5), now()->endOfMonth(),
+            ])->selectRaw($this->monthExpression('date_retour_effective') . ' as mois, COUNT(*) as total')
+                ->groupBy('mois')
+                ->pluck('total', 'mois');
 
             $activite = [];
             foreach ($this->sixDerniersMois() as $cle => $label) {
                 $activite[] = [
                     'mois' => $label,
-                    'emprunts' => $empruntsParMois->get($cle, 0),
-                    'retours' => $retoursParMois->get($cle, 0),
+                    'emprunts' => (int) ($empruntsParMois->get($cle, 0)),
+                    'retours' => (int) ($retoursParMois->get($cle, 0)),
                 ];
             }
 
@@ -1226,19 +1315,22 @@ class DashboardController extends Controller
             $dossiersEnCours = \App\Models\Certificat::where('delivre', false)->count();
             $documentsGeneres = \App\Models\Certificat::count();
 
-            // Flux d'inscriptions — 6 derniers mois. `transferts` a été retiré :
-            // aucune table, colonne ni signal ne porte cette donnée (le statut
-            // élève ne connaît que actif/inactif, cf. migration enrolment). Un
-            // `transferts => 0` codé en dur affichait un faux compteur (audit P3).
-            $eleves = \App\Models\Eleve::whereBetween('created_at', [
+            // Flux d'inscriptions — 6 derniers mois, agrégé en SQL (cf. audit
+            // P4). `transferts` a été retiré : aucune table, colonne ni signal ne
+            // porte cette donnée (le statut élève ne connaît que actif/inactif,
+            // cf. migration enrolment). Un `transferts => 0` codé en dur affichait
+            // un faux compteur (audit P3).
+            $nouveauxParMois = \App\Models\Eleve::whereBetween('created_at', [
                 now()->startOfMonth()->subMonths(5), now()->endOfMonth(),
-            ])->get()->groupBy(fn ($e) => $e->created_at?->format('Y-m'));
+            ])->selectRaw($this->monthExpression('created_at') . ' as mois, COUNT(*) as total')
+                ->groupBy('mois')
+                ->pluck('total', 'mois');
 
             $fluxInscriptions = [];
             foreach ($this->sixDerniersMois() as $cle => $label) {
                 $fluxInscriptions[] = [
                     'mois' => $label,
-                    'nouveaux' => $eleves->get($cle)?->count() ?? 0,
+                    'nouveaux' => (int) ($nouveauxParMois->get($cle, 0)),
                 ];
             }
 

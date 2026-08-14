@@ -25,6 +25,8 @@ import StatsCard from '@/shared/components/ui/StatsCard';
 import Card from '@/shared/components/ui/Card';
 import Button from '@/shared/components/ui/Button';
 import { Skeleton } from '@/shared/components/ui/Skeleton';
+import { RefreshButton } from '@/shared/components/ui';
+import { ErrorDisplay } from '@/shared/components/ui/EmptyState';
 
 /* ─── Constantes ─────────────────────────────────────────────── */
 const COLORS = ['var(--accent)', 'var(--green)', 'var(--amber)', 'var(--blue)', 'var(--primary)', 'var(--red)'];
@@ -171,7 +173,7 @@ function ApercuSection({ stats, inscriptions, facultes, activites, loading }) {
 export default function UniversiteDashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('apercu');
-  const { data, loading } = useDashboardStats('universite');
+  const { data, loading, error, refetch } = useDashboardStats('universite');
 
   const stats = data?.stats?.map((s, i) => ({ ...s, icon: STATS_META[i]?.icon, color: STATS_META[i]?.color })) || [];
   const inscriptions = data?.inscriptions || [];
@@ -210,6 +212,7 @@ export default function UniversiteDashboard() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <RefreshButton loading={loading} onRefresh={refetch} />
           <Button variant="ghost" size="sm" icon={<Search className="h-4 w-4" />} />
           <Button variant="ghost" size="sm"><Bell className="h-4 w-4" /></Button>
           <Button variant="ghost" size="sm" icon={<Calendar className="h-4 w-4" />}>
@@ -217,6 +220,10 @@ export default function UniversiteDashboard() {
           </Button>
         </div>
       </div>
+
+      {error && (
+        <ErrorDisplay message={error} onRetry={refetch} />
+      )}
 
       {/* Tabs */}
       <div className="border-b border-neutral-200 dark:border-neutral-800">
