@@ -25,6 +25,8 @@ import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Table from '@/shared/components/ui/Table';
+import { RefreshButton } from '@/shared/components/ui';
+import { ErrorDisplay } from '@/shared/components/ui/EmptyState';
 
 const TABS = [
   { id: 'apercu', label: 'Aperçu', icon: BarChart3 },
@@ -175,7 +177,7 @@ function ApercuSection({ stats, caData, repartition, factures }) {
 export default function ComptableDashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('apercu');
-  const { data } = useDashboardStats('comptable');
+  const { data, loading, error, refetch } = useDashboardStats('comptable');
 
   const stats = data?.stats?.map((s, i) => ({ ...s, icon: STATS_META[i]?.icon, color: STATS_META[i]?.color })) || [];
   const caData = data?.donnes_ca || [];
@@ -208,8 +210,15 @@ export default function ComptableDashboard() {
             Suivi financier — {format(new Date(), 'EEEE d MMMM yyyy', { locale: fr })}
           </p>
         </div>
-        <Button variant="ghost" size="sm"><Wallet className="h-4 w-4 mr-1" /> Synthèse</Button>
+        <div className="flex items-center gap-2">
+          <RefreshButton loading={loading} onRefresh={refetch} />
+          <Button variant="ghost" size="sm"><Wallet className="h-4 w-4 mr-1" /> Synthèse</Button>
+        </div>
       </div>
+
+      {error && (
+        <ErrorDisplay message={error} onRetry={refetch} />
+      )}
 
       <div className="border-b border-neutral-200 dark:border-neutral-800">
         <nav className="flex gap-1 overflow-x-auto -mb-px">

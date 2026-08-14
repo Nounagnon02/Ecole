@@ -33,6 +33,8 @@ import Badge from '@/shared/components/ui/Badge';
 import Avatar from '@/shared/components/ui/Avatar';
 import Button from '@/shared/components/ui/Button';
 import { Skeleton } from '@/shared/components/ui/Skeleton';
+import { RefreshButton } from '@/shared/components/ui';
+import { ErrorDisplay } from '@/shared/components/ui/EmptyState';
 
 // ─── Constantes ───────────────────────────────────────────────
 
@@ -133,7 +135,7 @@ function ApercuSection({ data, loading }) {
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                   <XAxis dataKey="mois" tick={{ fontSize: 12 }} stroke="var(--text-tertiary)" />
-                  <YAxis domain={[10, 18]} tick={{ fontSize: 12 }} stroke="var(--text-tertiary)" />
+                  <YAxis domain={['auto', 'auto']} tick={{ fontSize: 12 }} stroke="var(--text-tertiary)" />
                   <ReTooltip
                     contentStyle={{ borderRadius: '8px', border: '1px solid var(--border)' }}
                   />
@@ -262,7 +264,7 @@ function ApercuSection({ data, loading }) {
 export default function ParentDashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('apercu');
-  const { data, loading } = useDashboardStats('parent');
+  const { data, loading, error, refetch } = useDashboardStats('parent');
 
   const handleTabClick = (tabId) => {
     if (tabId === 'apercu') { setActiveTab(tabId); return; }
@@ -297,7 +299,12 @@ export default function ParentDashboard() {
             Suivi de vos enfants — {format(new Date(), 'EEEE d MMMM yyyy', { locale: fr })}
           </p>
         </div>
+        <RefreshButton loading={loading} onRefresh={refetch} />
       </div>
+
+      {error && (
+        <ErrorDisplay message={error} onRetry={refetch} />
+      )}
 
       <div className="border-b border-neutral-200 dark:border-neutral-800">
         <nav className="flex gap-1 overflow-x-auto -mb-px">
