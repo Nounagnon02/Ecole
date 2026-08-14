@@ -89,7 +89,7 @@ function ApercuSection({ stats, caData, repartition, factures, impayes, tresorer
         <Card>
           <Card.Header>
             <Card.Title>Répartition</Card.Title>
-            <Card.Description>Par type de paiement</Card.Description>
+            <Card.Description>Part des montants par type</Card.Description>
           </Card.Header>
           <Card.Body>
             {repartition.length > 0 ? (
@@ -250,7 +250,7 @@ export default function ComptableDashboard() {
 
   const stats = data?.stats?.map((s, i) => ({ ...s, icon: STATS_META[i]?.icon, color: STATS_META[i]?.color })) || [];
   const caData = data?.donnes_ca || [];
-  const repartition = data?.repartition || [];
+  const repartition = data?.repartition_revenus || data?.repartition || [];
   const factures = data?.factures || [];
   const impayes = data?.impayes || [];
   const tresorerie = data?.tresorerie || { encaissements_mois: 0, depenses_mois: 0, solde: 0 };
