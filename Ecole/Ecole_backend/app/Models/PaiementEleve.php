@@ -65,6 +65,18 @@ class PaiementEleve extends Model
         'montant_restant' => 'decimal:2',
     ];
 
+    /*
+     * Sémantique des colonnes de montant (documentée, pas de doublon réel) :
+     *
+     *   - `montant`        : montant de la ligne — ce que ce règlement apporte
+     *                        (le seeder y inscrit le payé, `storePaiement` le
+     *                        montant encaissé).
+     *   - `montant_total`  : dû total de l'échéance (frais de scolarité, tranche).
+     *   - `montant_paye`   : somme encaissée à ce jour sur l'échéance.
+     *   - `montant_restant`: reste à payer (= total - paye, borné à 0 par
+     *                        PaiementEleve::credit()).
+     */
+
     public function eleve()
     {
         return $this->belongsTo(Eleve::class, 'eleve_id');

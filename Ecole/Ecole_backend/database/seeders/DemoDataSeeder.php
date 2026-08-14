@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\PaiementEleve;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -464,7 +465,7 @@ class DemoDataSeeder extends Seeder
                 'montant_total' => $montant,
                 'montant_paye' => $paye,
                 'montant_restant' => $montant - $paye,
-                'statut_global' => $paye >= $montant ? 'payé' : ($paye > 0 ? 'partiel' : 'impayé'),
+                'statut_global' => $paye >= $montant ? PaiementEleve::PAID : ($paye > 0 ? PaiementEleve::PARTIAL : PaiementEleve::PENDING),
                 'montant' => $paye,
                 'mode_paiement' => $modes[array_rand($modes)],
                 'date_paiement' => now()->subDays(mt_rand(1, 90)),

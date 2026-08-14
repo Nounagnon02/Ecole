@@ -14,21 +14,15 @@ class ComptableController extends Controller
     private const PAYMENT_MODES = ['ESPECES', 'MOBILE_MONEY', 'VIREMENT', 'CHEQUE', 'CARTE'];
 
     /**
-     * Normalisation insensible à la casse et aux accents de `statut_global`.
+     * Statut en slug et en libellé à partir de `statut_global`.
      *
-     * Les seeders historiques écrivent `'payé'` (accentué, minuscule),
-     * `'impayé'`, etc. — `strtoupper('payé')` donne `PAYÉ`, qui ne
-     * correspond à aucune constante du modèle. On replie les accents avant
-     * de comparer.
+     * La table porte les constantes du modèle depuis la migration de
+     * normalisation : l'ancien repli d'accents (`'payé'` → `PAYE`) n'a plus de
+     * raison d'être.
      */
-    private function normaliseStatut(?string $global): string
-    {
-        return str_replace('É', 'E', mb_strtoupper((string) $global));
-    }
-
     private function statutSlug(?string $global): string
     {
-        return match ($this->normaliseStatut($global)) {
+        return match ($global) {
             PaiementEleve::PAID => 'payee',
             PaiementEleve::PARTIAL => 'partiel',
             default => 'en_attente',
@@ -37,7 +31,7 @@ class ComptableController extends Controller
 
     private function statutLabel(?string $global): string
     {
-        return match ($this->normaliseStatut($global)) {
+        return match ($global) {
             PaiementEleve::PAID => 'Payée',
             PaiementEleve::PARTIAL => 'Partielle',
             default => 'En attente',
@@ -265,7 +259,7 @@ class ComptableController extends Controller
         // `statut_global`. Lire `$paiement->statut` renvoyait null : le
         // badge et le libellé étaient « En attente »/vide sur chaque reçu.
         $statutGlobal = $paiement->statut_global;
-        $estPaye = $this->normaliseStatut($statutGlobal) === PaiementEleve::PAID;
+        $estPaye = $statutGlobal === PaiementEleve::PAID;
         $statutLabel = $this->statutLabel($statutGlobal);
 
         $html = '<!DOCTYPE html>
@@ -359,7 +353,7 @@ class ComptableController extends Controller
                     'solde' => $solde,
                     'nb_echeances' => $paiements->count(),
                     'nb_payees' => $paiements
-                        ->filter(fn ($p) => $this->normaliseStatut($p->statut_global) === PaiementEleve::PAID)
+                        ->filter(fn ($p) => $p->statut_global === PaiementEleve::PAID)
                         ->count(),
                 ],
                 'echeances' => $paiements->map(function ($p) {
@@ -391,8 +385,7 @@ class ComptableController extends Controller
         $paiement = PaiementEleve::with('eleve.user')->findOrFail($paiementId);
 
         // L'échéance doit être en attente ou partielle
-        $statutNorm = $this->normaliseStatut($paiement->statut_global);
-        if ($statutNorm === PaiementEleve::PAID) {
+        if ($paiement->statut_global === PaiementEleve::PAID) {
             return response()->json([
                 'success' => false,
                 'message' => 'Cette échéance est déjà payée.',
