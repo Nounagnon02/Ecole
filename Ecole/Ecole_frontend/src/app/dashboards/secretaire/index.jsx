@@ -54,7 +54,7 @@ function ApercuSection({ stats, fluxInscriptions, rendezVous, inscriptions }) {
         <Card className="lg:col-span-2">
           <Card.Header>
             <Card.Title>Flux d'Inscriptions</Card.Title>
-            <Card.Description>Nouveaux inscrits et transferts — 6 derniers mois</Card.Description>
+            <Card.Description>Nouveaux inscrits — 6 derniers mois</Card.Description>
           </Card.Header>
           <Card.Body>
             <div className="h-[260px]">
@@ -62,14 +62,12 @@ function ApercuSection({ stats, fluxInscriptions, rendezVous, inscriptions }) {
                 <AreaChart data={fluxInscriptions}>
                   <defs>
                     <linearGradient id="colorNouveaux" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="var(--accent)" stopOpacity={0.3} /><stop offset="95%" stopColor="var(--accent)" stopOpacity={0} /></linearGradient>
-                    <linearGradient id="colorTransferts" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="var(--amber)" stopOpacity={0.3} /><stop offset="95%" stopColor="var(--amber)" stopOpacity={0} /></linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                   <XAxis dataKey="mois" tick={{ fontSize: 12 }} stroke="var(--text-tertiary)" />
                   <YAxis tick={{ fontSize: 12 }} stroke="var(--text-tertiary)" />
                   <ReTooltip contentStyle={{ borderRadius: '8px', border: '1px solid var(--border)' }} />
                   <Area type="monotone" dataKey="nouveaux" name="Nouveaux" stroke="var(--accent)" fill="url(#colorNouveaux)" strokeWidth={2} />
-                  <Area type="monotone" dataKey="transferts" name="Transferts" stroke="var(--amber)" fill="url(#colorTransferts)" strokeWidth={2} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>

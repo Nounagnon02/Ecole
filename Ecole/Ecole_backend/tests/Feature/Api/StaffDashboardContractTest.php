@@ -418,7 +418,7 @@ class StaffDashboardContractTest extends TestCase
         $this->assertCount(6, $response->json('data.flux_inscriptions'));
         $response->assertJsonStructure([
             'data' => [
-                'flux_inscriptions' => [['mois', 'nouveaux', 'transferts']],
+                'flux_inscriptions' => [['mois', 'nouveaux']],
                 'rendez_vous'       => [['id', 'visiteur', 'motif', 'heure', 'statut']],
                 'inscriptions'      => [['id', 'nom', 'classe', 'type', 'date', 'statut']],
             ],

@@ -33,7 +33,11 @@ class DashboardController extends Controller
             'data' => [
                 'total_eleves' => Eleve::count(),
                 'total_classes' => Classes::count(),
-                'total_enseignants' => User::where('role', 'enseignant')->where('ecole_id', auth()->user()?->ecole_id)->count(),
+                // Profils enseignants scopés à l'école résolue. L'ancien compte
+                // filtrait `users.role = 'enseignant'` sur `user->ecole_id` brut :
+                // pour un super-admin (null), il renvoyait 0 enseignant même en
+                // ciblant un établissement (cf. audit P3).
+                'total_enseignants' => \App\Models\Enseignant::count(),
                 // Compteurs plutôt que collections complètes : `with(['eleves',
                 // 'enseignants'])` chargeait tout l'effectif de l'école (P3).
                 'classes' => Classes::withCount(['eleves', 'enseignants'])->get(),
@@ -70,7 +74,7 @@ class DashboardController extends Controller
                 'stats' => [
                     'total_eleves' => Eleve::count(),
                     'total_classes' => Classes::count(),
-                    'total_enseignants' => User::where('role', 'enseignant')->where('ecole_id', auth()->user()?->ecole_id)->count(),
+                    'total_enseignants' => \App\Models\Enseignant::count(),
                     'evolution_effectifs' => $this->computeMonthlyEnrollment(),
                     'repartition_notes' => $this->computeGradeDistribution(),
                 ]
@@ -411,15 +415,25 @@ class DashboardController extends Controller
             ->get();
 
         $moyenneGenerale = $notes->avg('note');
+        // Le filtre année manquait : oùMonth seul additionnait le même mois sur
+        // toutes les années (cf. audit P3).
         $absences = \App\Models\Absence::where('eleve_id', $eleve->id)
             ->whereMonth('date', now()->month)
+            ->whereYear('date', now()->year)
             ->count();
 
-        $notesByMatiere = $notes->groupBy('matiere.nom')->map(function ($group, $nom) {
+        // Coefficients réels par (matière, classe, série). `matiere->coefficient`
+        // n'existe pas (la colonne vit sur `coefficient_matieres`), donc l'ancien
+        // code affichait toujours le repli `?? 1` (cf. audit P3).
+        $coefficients = \App\Models\Coefficients::where('classe_id', $eleve->classe_id)
+            ->where('serie_id', $eleve->serie_id)
+            ->pluck('coefficient', 'matiere_id');
+
+        $notesByMatiere = $notes->groupBy('matiere.nom')->map(function ($group, $nom) use ($coefficients) {
             return [
                 'name' => $nom,
                 'note' => round($group->avg('note'), 2),
-                'coeff' => $group->first()->matiere->coefficient ?? 1,
+                'coeff' => $coefficients[$group->first()->matiere_id] ?? 1,
             ];
         })->values();
 
@@ -701,14 +715,19 @@ class DashboardController extends Controller
             // Stats par faculté
             $facultes = $facultesModel::withCount(['departements'])
                 ->get()
-                ->map(function ($f) use ($etudiantsModel) {
+                ->map(function ($f) use ($etudiantsModel, $enseignantsModel) {
                     $deptIds = $f->departements->pluck('id');
                     $filiereIds = \App\Models\Universite\Filiere::whereIn('departement_id', $deptIds)->pluck('id');
                     $etudiantsCount = $etudiantsModel::whereIn('filiere_id', $filiereIds)->count();
+                    // `enseignants_count ?? 0` renvoyait toujours 0 : la relation
+                    // n'existe pas sur Faculte. Les enseignants sont rattachés à
+                    // un département, lui-même à une faculté (cf. audit P3).
+                    $enseignantsCount = $enseignantsModel::whereHas('departement', fn ($q) => $q->where('faculte_id', $f->id))->count();
+
                     return [
                         'nom' => $f->nom,
                         'etudiants' => $etudiantsCount,
-                        'enseignants' => $f->enseignants_count ?? 0,
+                        'enseignants' => $enseignantsCount,
                         'departements' => $f->departements_count,
                     ];
                 })->values();
@@ -721,7 +740,7 @@ class DashboardController extends Controller
                 ->map(fn($i) => [
                     'id' => $i->id,
                     'type' => 'inscription',
-                    'message' => "Nouvel étudiant inscrit — {$i->etudiant?->prenom} {$i->etudiant?->nom}",
+                    'message' => "Nouvel étudiant inscrit — {$i->etudiant?->nom} {$i->etudiant?->prenom}",
                     'temps' => $i->date_inscription ? $i->date_inscription->diffForHumans() : null,
                 ]);
 
@@ -884,23 +903,29 @@ class DashboardController extends Controller
         $data = \Illuminate\Support\Facades\Cache::remember('dashboard_surveillant_' . (\App\Models\Eleve::currentEcoleId() ?? 'global'), 60, function () {
             $totalEleves = \App\Models\Eleve::count();
 
+            // Un élève absent compte une fois, même avec plusieurs lignes dans
+            // la journée — l'ancien `count()` gonflait « Absents » et tirait
+            // « Présents » vers le bas (cf. audit P3).
             $absentsAujourdhui = \App\Models\Absence::whereDate('date', today())
-                ->where('type', 'absence')->count();
+                ->where('type', 'absence')
+                ->distinct('eleve_id')
+                ->count('eleve_id');
             $presents = max($totalEleves - $absentsAujourdhui, 0);
 
             $alertes = \App\Models\Incident::whereIn('statut', ['ouvert', 'en_cours'])->count();
 
-            // Présences de la semaine (lundi → dimanche)
+            // Présences de la semaine (lundi → dimanche), mêmes élèves distincts
             $joursSemaine = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
             $absencesSemaine = \App\Models\Absence::where('type', 'absence')
                 ->whereBetween('date', [now()->startOfWeek(), now()->endOfWeek()])
                 ->get()
-                ->groupBy(fn ($a) => $a->date?->format('Y-m-d'));
+                ->groupBy(fn ($a) => $a->date?->format('Y-m-d'))
+                ->map(fn ($jour) => $jour->pluck('eleve_id')->unique()->count());
 
             $presencesSemaine = [];
             foreach (range(0, 6) as $i) {
                 $jour = now()->startOfWeek()->addDays($i)->format('Y-m-d');
-                $absentsJour = $absencesSemaine->get($jour)?->count() ?? 0;
+                $absentsJour = $absencesSemaine->get($jour) ?? 0;
                 $presencesSemaine[] = [
                     'jour' => $joursSemaine[$i],
                     'presents' => max($totalEleves - $absentsJour, 0),
@@ -1039,11 +1064,14 @@ class DashboardController extends Controller
     public function infirmier()
     {
         $data = \Illuminate\Support\Facades\Cache::remember('dashboard_infirmier_' . (\App\Models\Eleve::currentEcoleId() ?? 'global'), 60, function () {
+            // Le filtre année manquait sur ces deux compteurs : le même mois
+            // était additionné sur toutes les années (cf. audit P3).
             $visitesMois = \App\Models\ConsultationMedicale::whereMonth('date', now()->month)
                 ->whereYear('date', now()->year)->count();
             $visitesAujourdhui = \App\Models\ConsultationMedicale::whereDate('date', today())->count();
             $casUrgents = \App\Models\ConsultationMedicale::where('urgence', true)
-                ->whereMonth('date', now()->month)->count();
+                ->whereMonth('date', now()->month)
+                ->whereYear('date', now()->year)->count();
             $consultations = \App\Models\ConsultationMedicale::count();
 
             // Fréquentation — 6 derniers mois (visites + urgences)
@@ -1111,7 +1139,12 @@ class DashboardController extends Controller
             $empruntsEnCours = \App\Models\Emprunt::whereNull('date_retour_effective')->count();
             $retards = \App\Models\Emprunt::whereNull('date_retour_effective')
                 ->where('date_retour_prevue', '<', today())->count();
-            $membresActifs = \App\Models\Emprunt::distinct('eleve_id')->count('eleve_id');
+            // « Membres Actifs » = emprunteurs de la fenêtre d'activité (6 mois),
+            // pas de toute l'histoire : l'ancien comptait un élève ayant emprunté
+            // une fois il y a deux ans comme « actif » (cf. audit P3).
+            $membresActifs = \App\Models\Emprunt::whereBetween('date_emprunt', [
+                now()->startOfMonth()->subMonths(5), now()->endOfMonth(),
+            ])->distinct('eleve_id')->count('eleve_id');
 
             // Activité — 6 derniers mois (emprunts + retours)
             $emprunts = \App\Models\Emprunt::whereBetween('date_emprunt', [
@@ -1186,11 +1219,17 @@ class DashboardController extends Controller
     {
         $data = \Illuminate\Support\Facades\Cache::remember('dashboard_secretaire_' . (\App\Models\Eleve::currentEcoleId() ?? 'global'), 120, function () {
             $totalInscriptions = \App\Models\Eleve::count();
-            $nouveauxMois = \App\Models\Eleve::whereMonth('created_at', now()->month)->count();
+            // Filtre année manquant : le même mois était additionné sur toutes
+            // les années (cf. audit P3).
+            $nouveauxMois = \App\Models\Eleve::whereMonth('created_at', now()->month)
+                ->whereYear('created_at', now()->year)->count();
             $dossiersEnCours = \App\Models\Certificat::where('delivre', false)->count();
             $documentsGeneres = \App\Models\Certificat::count();
 
-            // Flux d'inscriptions — 6 derniers mois (nouveaux + transferts)
+            // Flux d'inscriptions — 6 derniers mois. `transferts` a été retiré :
+            // aucune table, colonne ni signal ne porte cette donnée (le statut
+            // élève ne connaît que actif/inactif, cf. migration enrolment). Un
+            // `transferts => 0` codé en dur affichait un faux compteur (audit P3).
             $eleves = \App\Models\Eleve::whereBetween('created_at', [
                 now()->startOfMonth()->subMonths(5), now()->endOfMonth(),
             ])->get()->groupBy(fn ($e) => $e->created_at?->format('Y-m'));
@@ -1200,7 +1239,6 @@ class DashboardController extends Controller
                 $fluxInscriptions[] = [
                     'mois' => $label,
                     'nouveaux' => $eleves->get($cle)?->count() ?? 0,
-                    'transferts' => 0,
                 ];
             }
 
@@ -1271,20 +1309,37 @@ class DashboardController extends Controller
     {
         // Tente de récupérer les inscriptions par mois depuis la base
         try {
-            $eleves = \App\Models\Eleve::selectRaw('MONTH(created_at) as mois, COUNT(*) as total')
-                ->whereYear('created_at', now()->year)
-                ->groupBy('mois')
-                ->pluck('total', 'mois')
-                ->toArray();
+            // L'année scolaire commence en septembre : la fenêtre doit courir de
+            // septembre à août, pas sur l'année civile. L'ancien code croisait des
+            // libellés scolaires avec `whereYear(now()->year)` : en janvier, les
+            // inscriptions de septembre-décembre (même année scolaire) disparaissaient
+            // du graphique, et le mois en cours portait l'étiquette « Sept » (audit P3).
+            $now = now();
+            $debutAnneeScolaire = $now->month >= 9
+                ? $now->copy()->startOfMonth()->month(9)
+                : $now->copy()->startOfMonth()->month(9)->subYear();
+
+            // Regroupement en PHP plutôt que MONTH()/EXTRACT : portable entre
+            // MySQL (production) et SQLite (tests).
+            $eleves = \App\Models\Eleve::whereBetween('created_at', [
+                $debutAnneeScolaire,
+                $debutAnneeScolaire->copy()->addYear()->subSecond(),
+            ])->pluck('created_at')
+                ->countBy(fn ($d) => $d->month)
+                ->all();
 
             $months = ['Sept', 'Oct', 'Nov', 'Déc', 'Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août'];
 
             return array_map(function ($i) use ($months, $eleves) {
+                // Le mois scolaire i (0 = Sept) correspond au mois civil (9 + i) % 12.
+                $moisCivil = ($i + 9) % 12;
+                $moisCivil = $moisCivil === 0 ? 12 : $moisCivil;
+
                 return [
-                    'name' => $months[$i - 1] ?? "Mois $i",
-                    'students' => $eleves[$i] ?? 0,
+                    'name' => $months[$i],
+                    'students' => $eleves[$moisCivil] ?? 0,
                 ];
-            }, range(1, 12));
+            }, range(0, 11));
         } catch (\Exception $e) {
             $this->rethrowIfMeaningful($e);
             return [
