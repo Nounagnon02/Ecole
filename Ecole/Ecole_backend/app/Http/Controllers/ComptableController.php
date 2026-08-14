@@ -481,16 +481,12 @@ class ComptableController extends Controller
                         'observation' => $tx->observation . ' | Confirmé via callback Fedapay (' . now()->format('d/m/Y H:i') . ')',
                     ]);
 
-                    // Recalculer le paiement élève
+                    // Recalculer le paiement élève — écriture comptable unique
+                    // (crédite le payé, débite le restant borné à 0, bascule
+                    // le statut global) : voir PaiementEleve::credit().
                     $paiement = PaiementEleve::find($tx->id_paiement_eleve);
                     if ($paiement) {
-                        $paiement->increment('montant_paye', $tx->montant_paye);
-                        $paiement->decrement('montant_restant', $tx->montant_paye);
-                        if ((float) $paiement->montant_restant <= 0) {
-                            $paiement->update(['statut_global' => \App\Models\PaiementEleve::PAID]);
-                        } elseif ((float) $paiement->montant_paye > 0) {
-                            $paiement->update(['statut_global' => \App\Models\PaiementEleve::PARTIAL]);
-                        }
+                        $paiement->credit((float) $tx->montant_paye);
                     }
                 }
 
