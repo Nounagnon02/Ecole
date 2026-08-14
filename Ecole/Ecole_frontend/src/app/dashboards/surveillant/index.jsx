@@ -9,7 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { useDashboardStats } from '../hooks/useDashboardData';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Shield, Users, AlertTriangle, BarChart3, UserCheck, UserX, Camera, MapPin
+  Shield, Users, AlertTriangle, BarChart3, UserCheck, UserX, Camera, MapPin, Clock
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip,
@@ -135,6 +135,118 @@ function ApercuSection({ stats, presences, retards, data }) {
           </Table>
         </Card.Body>
       </Card>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card>
+          <Card.Header>
+            <div className="flex items-center justify-between">
+              <Card.Title>Absents du Jour</Card.Title>
+              {data?.absents_jour?.length > 0 && (
+                <Badge variant="danger" size="sm">{data.absents_jour.length}</Badge>
+              )}
+            </div>
+          </Card.Header>
+          <Card.Body className="p-0">
+            {data?.absents_jour?.length > 0 ? (
+            <Table>
+              <Table.Header>
+                <Table.Head>Élève</Table.Head>
+                <Table.Head>Classe</Table.Head>
+                <Table.Head>Justifié</Table.Head>
+              </Table.Header>
+              <Table.Body>
+                {data.absents_jour.map((a) => (
+                  <Table.Row key={a.id}>
+                    <Table.Cell><span className="font-medium text-neutral-900 dark:text-white">{a.eleve}</span></Table.Cell>
+                    <Table.Cell>{a.classe}</Table.Cell>
+                    <Table.Cell>
+                      {a.justifiee ? <Badge variant="success" size="sm">Oui</Badge> : <Badge variant="danger" size="sm">Non</Badge>}
+                    </Table.Cell>
+                  </Table.Row>
+                ))}
+              </Table.Body>
+            </Table>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-[var(--text-tertiary)]">
+                <UserCheck className="h-8 w-8 mb-2 opacity-30" />
+                <p className="text-sm">Aucun absent signalé aujourd'hui</p>
+              </div>
+            )}
+          </Card.Body>
+        </Card>
+
+        <Card>
+          <Card.Header>
+            <div className="flex items-center justify-between">
+              <Card.Title>Incidents Récents</Card.Title>
+              {data?.incidents?.length > 0 && (
+                <Badge variant="warning" size="sm">{data.incidents.length}</Badge>
+              )}
+            </div>
+          </Card.Header>
+          <Card.Body className="p-0">
+            {data?.incidents?.length > 0 ? (
+            <Table>
+              <Table.Header>
+                <Table.Head>Incident</Table.Head>
+                <Table.Head>Date</Table.Head>
+                <Table.Head>Gravité</Table.Head>
+              </Table.Header>
+              <Table.Body>
+                {data.incidents.map((i) => (
+                  <Table.Row key={i.id}>
+                    <Table.Cell className="max-w-[180px] truncate"><span className="font-medium text-neutral-900 dark:text-white">{i.description}</span></Table.Cell>
+                    <Table.Cell className="text-neutral-400">{i.date}</Table.Cell>
+                    <Table.Cell>
+                      <Badge variant={i.gravite === 'Majeure' ? 'danger' : i.gravite === 'Moyenne' ? 'warning' : 'neutral'} size="sm">{i.gravite}</Badge>
+                    </Table.Cell>
+                  </Table.Row>
+                ))}
+              </Table.Body>
+            </Table>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-[var(--text-tertiary)]">
+                <AlertTriangle className="h-8 w-8 mb-2 opacity-30" />
+                <p className="text-sm">Aucun incident récent</p>
+              </div>
+            )}
+          </Card.Body>
+        </Card>
+
+        <Card>
+          <Card.Header>
+            <div className="flex items-center justify-between">
+              <Card.Title>Absences Non Justifiées</Card.Title>
+              {data?.absences_non_justifiees?.length > 0 && (
+                <Badge variant="danger" size="sm">{data.absences_non_justifiees.length}</Badge>
+              )}
+            </div>
+          </Card.Header>
+          <Card.Body className="p-0">
+            {data?.absences_non_justifiees?.length > 0 ? (
+            <Table>
+              <Table.Header>
+                <Table.Head>Élève</Table.Head>
+                <Table.Head>Date</Table.Head>
+              </Table.Header>
+              <Table.Body>
+                {data.absences_non_justifiees.map((a) => (
+                  <Table.Row key={a.id}>
+                    <Table.Cell><span className="font-medium text-neutral-900 dark:text-white">{a.eleve}</span></Table.Cell>
+                    <Table.Cell className="text-neutral-400">{a.date}</Table.Cell>
+                  </Table.Row>
+                ))}
+              </Table.Body>
+            </Table>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-[var(--text-tertiary)]">
+                <Clock className="h-8 w-8 mb-2 opacity-30" />
+                <p className="text-sm">Toutes les absences sont justifiées</p>
+              </div>
+            )}
+          </Card.Body>
+        </Card>
+      </div>
     </div>
   );
 }

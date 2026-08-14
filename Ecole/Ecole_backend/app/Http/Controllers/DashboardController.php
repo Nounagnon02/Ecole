@@ -59,6 +59,43 @@ class DashboardController extends Controller
         }
 
         $data = Cache::remember($this->directoryCacheKey(), 300, function () {
+            // ─── KPI financiers du directeur (compteur, pas la compta) ───
+            $revenusMois = (float) \App\Models\PaiementEleve::whereMonth('date_paiement', now()->month)
+                ->whereYear('date_paiement', now()->year)
+                ->where('statut_global', \App\Models\PaiementEleve::PAID)
+                ->sum('montant');
+            $depensesMois = (float) \App\Models\Depense::whereMonth('date_depense', now()->month)
+                ->whereYear('date_depense', now()->year)
+                ->sum('montant');
+            $impayes = (float) \App\Models\PaiementEleve::where('montant_restant', '>', 0)
+                ->sum('montant_restant');
+
+            // ─── Assiduité (taux de présence du jour) ────────────────────
+            $totalEleves = Eleve::count();
+            $absentsAujourdhui = \App\Models\Absence::whereDate('date', today())
+                ->where('type', 'absence')
+                ->distinct('eleve_id')
+                ->count('eleve_id');
+            $tauxPresence = $totalEleves > 0
+                ? max(0, 100 - (int) round(($absentsAujourdhui / $totalEleves) * 100))
+                : 100;
+
+            // ─── Alertes : incidents ouverts + sanctions du mois ─────────
+            $incidentsOuverts = \App\Models\Incident::whereIn('statut', ['ouvert', 'en_cours'])->count();
+            $sanctionsMois = \App\Models\Sanction::whereMonth('date', now()->month)
+                ->whereYear('date', now()->year)->count();
+
+            // ─── Messages récents adressés à l'établissement ─────────────
+            $messagesRecents = \App\Models\Message::latest()
+                ->take(5)
+                ->get()
+                ->map(fn ($m) => [
+                    'id'        => $m->id,
+                    'sujet'     => $m->sujet,
+                    'expediteur'=> $m->expediteur ?? 'École',
+                    'date'      => $m->created_at?->format('d/m/Y'),
+                ]);
+
             return [
                 'classes' => Classes::with('series')->get(),
                 'classes_effectif' => Classes::withCount('eleves')->get()->map(function ($c) {
@@ -77,7 +114,21 @@ class DashboardController extends Controller
                     'total_enseignants' => \App\Models\Enseignant::count(),
                     'evolution_effectifs' => $this->computeMonthlyEnrollment(),
                     'repartition_notes' => $this->computeGradeDistribution(),
-                ]
+                ],
+                'finances' => [
+                    'revenus_mois' => $revenusMois,
+                    'depenses_mois' => $depensesMois,
+                    'impayes' => $impayes,
+                ],
+                'assiduite' => [
+                    'taux_presence' => $tauxPresence,
+                    'absents_aujourdhui' => $absentsAujourdhui,
+                ],
+                'alertes' => [
+                    'incidents_ouverts' => $incidentsOuverts,
+                    'sanctions_mois' => $sanctionsMois,
+                ],
+                'messages_recents' => $messagesRecents,
             ];
         });
 
@@ -580,10 +631,9 @@ class DashboardController extends Controller
             return [
                 'stats' => [
                     ['title' => 'Utilisateurs Actifs', 'value' => number_format($activeUsers), 'trend' => $nouveautesSemaine, 'trendLabel' => 'nouveaux / 7j'],
-                    ['title' => 'Requêtes/minute', 'value' => '—', 'trend' => 0, 'trendLabel' => 'métrique à configurer'],
                     ['title' => 'Espace Disque', 'value' => $diskUsage . '%', 'trend' => 0, 'trendLabel' => 'utilisé'],
                     ['title' => 'Erreurs API', 'value' => (string) $erreursApi, 'trend' => 0, 'trendLabel' => 'dans le journal'],
-                    ['title' => 'Temps Réponse', 'value' => '—', 'trend' => 0, 'trendLabel' => 'utile après cache'],
+                    ['title' => 'Temps Réponse', 'value' => '—', 'trend' => 0, 'trendLabel' => 'endpoint'],
                     ['title' => 'Uptime', 'value' => $uptime ?? '—', 'trend' => 0, 'trendLabel' => 'serveur'],
                 ],
                 'traffic'         => $traffic,
@@ -602,10 +652,15 @@ class DashboardController extends Controller
             ];
         });
 
-        // Temps de réponse réel de l'endpoint (non cacheable) et erreurs
-        // comptées dans le journal — injectés après le cache.
+        // Temps de réponse réel de l'endpoint (non cacheable) — injecté après
+        // le cache. Recherche par titre : l'index varie selon les stats retenues.
         $elapsed = round((microtime(true) - $debut) * 1000);
-        $data['stats'][4]['value'] = $elapsed . ' ms';
+        foreach ($data['stats'] as $i => $stat) {
+            if ($stat['title'] === 'Temps Réponse') {
+                $data['stats'][$i]['value'] = $elapsed . ' ms';
+                break;
+            }
+        }
 
         return response()->json(['success' => true, 'data' => $data]);
     }
@@ -932,6 +987,39 @@ class DashboardController extends Controller
                     'echeance' => $p->date_paiement?->format('d/m/Y'),
                 ]);
 
+            // ─── Impayés : les comptes en cours de solde, les plus lourds en
+            // premier — c'est la liste d'action prioritaire de la comptabilité.
+            $impayes = \App\Models\PaiementEleve::with(['eleve.user', 'eleve.classe'])
+                ->where('montant_restant', '>', 0)
+                ->orderByDesc('montant_restant')
+                ->take(8)
+                ->get()
+                ->map(fn ($p) => [
+                    'id' => $p->id,
+                    'eleve' => $this->nomEleve($p->eleve),
+                    'classe' => $p->eleve?->classe?->nom_classe,
+                    'montant_restant' => (float) $p->montant_restant,
+                    'type' => $p->type_paiement ?? '—',
+                ]);
+
+            // ─── Trésorerie du mois : encaissé (réellement versé) − dépenses.
+            $encaissementsMois = (float) \App\Models\PaiementEleve::whereMonth('date_paiement', $moisActuel)
+                ->whereYear('date_paiement', $anneeActuelle)
+                ->sum('montant_paye');
+
+            // ─── Répartition des revenus par type (part du montant, pas du
+            // nombre de lignes comme `repartition`).
+            $montantParType = \App\Models\PaiementEleve::select('type_paiement')
+                ->whereNotNull('type_paiement')
+                ->get()
+                ->groupBy('type_paiement')
+                ->map(fn ($g) => (float) $g->sum('montant'));
+            $totalMontant = max($montantParType->sum(), 1);
+            $repartitionRevenus = $montantParType->map(fn ($montant, $nom) => [
+                'name' => $nom,
+                'value' => round(($montant / $totalMontant) * 100),
+            ])->values();
+
             return [
                 'stats' => [
                     ['title' => 'Revenus du Mois', 'value' => number_format($revenusMois, 0, ',', ' ') . ' F', 'trend' => 0, 'trendLabel' => 'ce mois'],
@@ -941,7 +1029,14 @@ class DashboardController extends Controller
                 ],
                 'donnes_ca' => $donneesMensuelles,
                 'repartition' => $repartition,
+                'repartition_revenus' => $repartitionRevenus,
                 'factures' => $dernieresPaiements,
+                'impayes' => $impayes,
+                'tresorerie' => [
+                    'encaissements_mois' => $encaissementsMois,
+                    'depenses_mois' => $depensesMois,
+                    'solde' => $encaissementsMois - $depensesMois,
+                ],
             ];
         });
 
@@ -1036,6 +1131,50 @@ class DashboardController extends Controller
                 ];
             });
 
+            // ─── Liste nominative des absents du jour (le compteur seul ne
+            // permet pas d'agir), incidents ouverts et absences non justifiées.
+            $absentsJour = \App\Models\Absence::with(['eleve.user', 'eleve.classe'])
+                ->whereDate('date', today())
+                ->where('type', 'absence')
+                ->latest()
+                ->take(10)
+                ->get()
+                ->map(fn ($a) => [
+                    'id' => $a->id,
+                    'eleve' => $this->nomEleve($a->eleve),
+                    'classe' => $a->eleve?->classe?->nom_classe,
+                    'motif' => $a->motif,
+                    'justifiee' => (bool) $a->justifiee,
+                ]);
+
+            $gravitesFR = ['mineure' => 'Mineure', 'moyenne' => 'Moyenne', 'majeure' => 'Majeure'];
+            $incidents = \App\Models\Incident::latest('date')
+                ->take(5)
+                ->get()
+                ->map(fn ($i) => [
+                    'id' => $i->id,
+                    'description' => $i->description,
+                    'date' => $i->date?->format('d/m/Y'),
+                    'gravite' => $gravitesFR[$i->gravite] ?? $i->gravite,
+                    'statut' => $i->statut,
+                ]);
+
+            $absencesNonJustifiees = \App\Models\Absence::with(['eleve.user', 'eleve.classe'])
+                ->where('type', 'absence')
+                ->where('justifiee', false)
+                ->whereMonth('date', now()->month)
+                ->whereYear('date', now()->year)
+                ->latest('date')
+                ->take(5)
+                ->get()
+                ->map(fn ($a) => [
+                    'id' => $a->id,
+                    'eleve' => $this->nomEleve($a->eleve),
+                    'classe' => $a->eleve?->classe?->nom_classe,
+                    'date' => $a->date?->format('d/m/Y'),
+                    'motif' => $a->motif,
+                ]);
+
             return [
                 'stats' => [
                     ['title' => 'Total Élèves', 'value' => (string) $totalEleves, 'trend' => 0],
@@ -1046,6 +1185,9 @@ class DashboardController extends Controller
                 'presences_semaine' => $presencesSemaine,
                 'points_surveillance' => $points,
                 'retards' => $derniersRetards,
+                'absents_jour' => $absentsJour,
+                'incidents' => $incidents,
+                'absences_non_justifiees' => $absencesNonJustifiees,
             ];
         });
 
@@ -1121,6 +1263,46 @@ class DashboardController extends Controller
                     'statut' => $statutsFR[$s->statut] ?? 'En cours',
                 ]);
 
+            // ─── Absences non justifiées par classe ce mois-ci (drill-down
+            // pour cibler les classes à problème).
+            $absencesParClasse = \App\Models\Absence::with('eleve.classe')
+                ->where('type', 'absence')
+                ->where('justifiee', false)
+                ->whereMonth('date', now()->month)
+                ->whereYear('date', now()->year)
+                ->get()
+                ->groupBy(fn ($a) => $a->eleve?->classe?->nom_classe ?? 'Sans classe')
+                ->map(fn ($g, $nom) => [
+                    'name' => $nom,
+                    'absences' => $g->count(),
+                ])->sortByDesc('absences')->values();
+
+            // ─── Sanctions encore à exécuter (à notifier / suivre).
+            $sanctionsAttente = \App\Models\Sanction::with(['eleve.user', 'eleve.classe'])
+                ->whereNotIn('statut', ['terminee', 'levee'])
+                ->latest('date')
+                ->take(5)
+                ->get()
+                ->map(fn ($s) => [
+                    'id' => $s->id,
+                    'eleve' => $this->nomEleve($s->eleve),
+                    'classe' => $s->eleve?->classe?->nom_classe,
+                    'sanction' => $s->type_sanction,
+                    'date' => $s->date?->format('d/m/Y'),
+                    'statut' => $statutsFR[$s->statut] ?? 'En cours',
+                ]);
+
+            // ─── Récidivistes : élèves ayant reçu au moins deux sanctions.
+            $recidivistes = \App\Models\Sanction::with(['eleve.user', 'eleve.classe'])
+                ->get()
+                ->groupBy('eleve_id')
+                ->filter(fn ($g) => $g->count() >= 2)
+                ->map(fn ($g) => [
+                    'eleve' => $this->nomEleve($g->first()->eleve),
+                    'classe' => $g->first()->eleve?->classe?->nom_classe,
+                    'sanctions' => $g->count(),
+                ])->sortByDesc('sanctions')->take(5)->values();
+
             return [
                 'stats' => [
                     ['title' => 'Total Élèves', 'value' => (string) $totalEleves, 'trend' => 0],
@@ -1131,6 +1313,9 @@ class DashboardController extends Controller
                 'evolution' => $evolution,
                 'types_sanctions' => $typesSanctions,
                 'sanctions' => $dernieresSanctions,
+                'absences_par_classe' => $absencesParClasse,
+                'sanctions_attente' => $sanctionsAttente,
+                'recidivistes' => $recidivistes,
             ];
         });
 
@@ -1197,6 +1382,49 @@ class DashboardController extends Controller
                     'heure' => $c->date?->format('H:i'),
                 ]);
 
+            // ─── Cas urgents du jour (liste prioritaire, pas seulement un
+            // compteur), alertes médicales portées par le dossier et élèves
+            // suivis de façon récurrente.
+            $urgencesJour = \App\Models\ConsultationMedicale::with(['eleve.user', 'eleve.classe'])
+                ->whereDate('date', today())
+                ->where('urgence', true)
+                ->latest()
+                ->take(10)
+                ->get()
+                ->map(fn ($c) => [
+                    'id' => $c->id,
+                    'eleve' => $this->nomEleve($c->eleve),
+                    'classe' => $c->eleve?->classe?->nom_classe,
+                    'motif' => $c->motif,
+                    'heure' => $c->date?->format('H:i'),
+                ]);
+
+            $alertesMedicales = \App\Models\DossierMedical::with('eleve.user', 'eleve.classe')
+                ->where(function ($q) {
+                    $q->whereNotNull('allergies')->where('allergies', '!=', '')
+                        ->orWhereNotNull('maladies_chroniques')->where('maladies_chroniques', '!=', '');
+                })
+                ->take(8)
+                ->get()
+                ->map(fn ($d) => [
+                    'id' => $d->id,
+                    'eleve' => $this->nomEleve($d->eleve),
+                    'classe' => $d->eleve?->classe?->nom_classe,
+                    'allergies' => $d->allergies,
+                    'maladie' => $d->maladies_chroniques,
+                ]);
+
+            $soinsRecurrents = \App\Models\ConsultationMedicale::with(['eleve.user', 'eleve.classe'])
+                ->get()
+                ->groupBy('eleve_id')
+                ->filter(fn ($g) => $g->count() >= 2)
+                ->map(fn ($g) => [
+                    'eleve' => $this->nomEleve($g->first()->eleve),
+                    'classe' => $g->first()->eleve?->classe?->nom_classe,
+                    'visites' => $g->count(),
+                    'dernier_motif' => $g->last()->motif,
+                ])->sortByDesc('visites')->take(5)->values();
+
             return [
                 'stats' => [
                     ['title' => 'Visites du Mois', 'value' => (string) $visitesMois, 'trend' => 0, 'trendLabel' => 'ce mois'],
@@ -1207,6 +1435,9 @@ class DashboardController extends Controller
                 'frequentation' => $frequentation,
                 'motifs' => $motifs,
                 'visites' => $dernieresVisites,
+                'urgences_jour' => $urgencesJour,
+                'alertes_medicales' => $alertesMedicales,
+                'soins_recurrents' => $soinsRecurrents,
             ];
         });
 
@@ -1285,6 +1516,42 @@ class DashboardController extends Controller
                     ];
                 });
 
+            // ─── Retards nominatifs (le compteur ne dit pas quel ouvrage ni
+            // quel élève), nouveautés au catalogue et ouvrages les plus lus.
+            $retardsListe = \App\Models\Emprunt::with(['eleve.user', 'eleve.classe', 'livre'])
+                ->whereNull('date_retour_effective')
+                ->where('date_retour_prevue', '<', today())
+                ->orderBy('date_retour_prevue')
+                ->take(8)
+                ->get()
+                ->map(fn ($e) => [
+                    'id' => $e->id,
+                    'eleve' => $this->nomEleve($e->eleve),
+                    'classe' => $e->eleve?->classe?->nom_classe,
+                    'ouvrage' => $e->livre?->titre,
+                    'dateRetour' => $e->date_retour_prevue?->format('d/m/Y'),
+                    'jours_retard' => (int) today()->diffInDays($e->date_retour_prevue),
+                ]);
+
+            $nouveautes = \App\Models\Livre::latest('created_at')
+                ->take(5)
+                ->get()
+                ->map(fn ($l) => [
+                    'id' => $l->id,
+                    'titre' => $l->titre,
+                    'auteur' => $l->auteur,
+                    'categorie' => $l->categorie,
+                ]);
+
+            $populaires = \App\Models\Emprunt::select('livre_id')
+                ->with('livre')
+                ->get()
+                ->groupBy('livre_id')
+                ->map(fn ($g) => [
+                    'titre' => $g->first()->livre?->titre ?? 'Inconnu',
+                    'emprunts' => $g->count(),
+                ])->sortByDesc('emprunts')->take(5)->values();
+
             return [
                 'stats' => [
                     ['title' => 'Total Ouvrages', 'value' => (string) $totalLivres, 'trend' => 0, 'trendLabel' => 'au catalogue'],
@@ -1295,6 +1562,9 @@ class DashboardController extends Controller
                 'activite' => $activite,
                 'categories' => $repartitionCategories,
                 'emprunts' => $derniersEmprunts,
+                'retards_liste' => $retardsListe,
+                'nouveautes' => $nouveautes,
+                'populaires' => $populaires,
             ];
         });
 
@@ -1374,6 +1644,43 @@ class DashboardController extends Controller
                     'statut' => 'Complété',
                 ]);
 
+            // ─── Planning complet des 7 prochains jours (le « Rendez-vous du
+            // jour » ne montrait que la journée) et certificats à délivrer.
+            $planningRendezVous = \App\Models\RendezVous::with(['parent.user', 'eleve.user', 'enseignant.user'])
+                ->whereBetween('date', [today(), today()->addDays(6)])
+                ->whereNotIn('statut', ['annulé', 'annule'])
+                ->orderBy('date')
+                ->orderBy('heure')
+                ->take(12)
+                ->get()
+                ->map(function ($r) {
+                    $visiteur = $r->parent?->user
+                        ?? $r->eleve?->user
+                        ?? $r->enseignant?->user;
+
+                    return [
+                        'id' => $r->id,
+                        'visiteur' => trim(($visiteur?->name ?? '') . ' ' . ($visiteur?->prenom ?? '')) ?: 'Visiteur',
+                        'motif' => $r->motif,
+                        'date' => $r->date?->format('d/m'),
+                        'heure' => $r->heure,
+                        'statut' => $statutsFR[$r->statut] ?? $r->statut,
+                    ];
+                });
+
+            $certificatsAttente = \App\Models\Certificat::with(['eleve.user', 'eleve.classe'])
+                ->where('delivre', false)
+                ->latest('date_emission')
+                ->take(8)
+                ->get()
+                ->map(fn ($c) => [
+                    'id' => $c->id,
+                    'eleve' => $this->nomEleve($c->eleve),
+                    'classe' => $c->eleve?->classe?->nom_classe,
+                    'type' => $c->type_certificat,
+                    'date' => $c->date_emission?->format('d/m/Y') ?? '—',
+                ]);
+
             return [
                 'stats' => [
                     ['title' => 'Inscriptions', 'value' => (string) $totalInscriptions, 'trend' => 0, 'trendLabel' => 'total'],
@@ -1384,6 +1691,8 @@ class DashboardController extends Controller
                 'flux_inscriptions' => $fluxInscriptions,
                 'rendez_vous' => $rendezVous,
                 'inscriptions' => $dernieresInscriptions,
+                'planning_rendez_vous' => $planningRendezVous,
+                'certificats_attente' => $certificatsAttente,
             ];
         });
 

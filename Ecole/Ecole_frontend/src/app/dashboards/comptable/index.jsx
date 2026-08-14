@@ -41,7 +41,7 @@ const STATS_META = [
   { title: 'Dépenses du Mois', icon: ArrowDownRight, color: 'red' },
 ];
 
-function ApercuSection({ stats, caData, repartition, factures }) {
+function ApercuSection({ stats, caData, repartition, factures, impayes, tresorerie }) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -127,6 +127,75 @@ function ApercuSection({ stats, caData, repartition, factures }) {
         </Card>
       </div>
 
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card>
+          <Card.Header>
+            <Card.Title>Trésorerie du Mois</Card.Title>
+            <Card.Description>Encaissé réellement versé</Card.Description>
+          </Card.Header>
+          <Card.Body className="space-y-4">
+            <div>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">Encaissements</p>
+              <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
+                {(tresorerie?.encaissements_mois || 0).toLocaleString()} F
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">Dépenses du mois</p>
+              <p className="text-xl font-bold text-red-600 dark:text-red-400">
+                {(tresorerie?.depenses_mois || 0).toLocaleString()} F
+              </p>
+            </div>
+            <div className="rounded-lg border border-neutral-100 bg-neutral-50 p-3 dark:border-neutral-800 dark:bg-neutral-900/50">
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">Solde</p>
+              <p className="text-2xl font-bold text-neutral-900 dark:text-white">
+                {(tresorerie?.solde || 0).toLocaleString()} F
+              </p>
+            </div>
+          </Card.Body>
+        </Card>
+
+        <Card className="lg:col-span-2">
+          <Card.Header>
+            <div className="flex items-center justify-between">
+              <Card.Title>Impayés Prioritaires</Card.Title>
+              {impayes.length > 0 && (
+                <Badge variant="danger" size="sm">{impayes.length} comptes à suivre</Badge>
+              )}
+            </div>
+          </Card.Header>
+          <Card.Body className="p-0">
+            {impayes.length > 0 ? (
+            <Table>
+              <Table.Header>
+                <Table.Head>Élève</Table.Head>
+                <Table.Head>Classe</Table.Head>
+                <Table.Head>Type</Table.Head>
+                <Table.Head>Reste Dû</Table.Head>
+              </Table.Header>
+              <Table.Body>
+                {impayes.map((f) => (
+                  <Table.Row key={f.id}>
+                    <Table.Cell><span className="font-medium text-neutral-900 dark:text-white">{f.eleve}</span></Table.Cell>
+                    <Table.Cell>{f.classe}</Table.Cell>
+                    <Table.Cell>{f.type}</Table.Cell>
+                    <Table.Cell>
+                      <span className="font-semibold text-red-600 dark:text-red-400">{f.montant_restant.toLocaleString()} F</span>
+                    </Table.Cell>
+                  </Table.Row>
+                ))}
+              </Table.Body>
+            </Table>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 text-[var(--text-tertiary)]">
+                <CheckCircle2 className="h-8 w-8 mb-2 opacity-30" />
+                <p className="text-sm">Aucun impayé — tous les comptes sont à jour</p>
+              </div>
+            )}
+          </Card.Body>
+        </Card>
+      </div>
+
       <Card>
         <Card.Header>
           <div className="flex items-center justify-between">
@@ -183,6 +252,8 @@ export default function ComptableDashboard() {
   const caData = data?.donnes_ca || [];
   const repartition = data?.repartition || [];
   const factures = data?.factures || [];
+  const impayes = data?.impayes || [];
+  const tresorerie = data?.tresorerie || { encaissements_mois: 0, depenses_mois: 0, solde: 0 };
 
   const handleTabClick = (tabId) => {
     if (tabId === 'apercu') { setActiveTab(tabId); return; }
@@ -192,8 +263,8 @@ export default function ComptableDashboard() {
 
   const renderSection = () => {
     switch (activeTab) {
-      case 'apercu': return <ApercuSection stats={stats} caData={caData} repartition={repartition} factures={factures} />;
-      default: return <ApercuSection stats={stats} caData={caData} repartition={repartition} factures={factures} />;
+      case 'apercu': return <ApercuSection stats={stats} caData={caData} repartition={repartition} factures={factures} impayes={impayes} tresorerie={tresorerie} />;
+      default: return <ApercuSection stats={stats} caData={caData} repartition={repartition} factures={factures} impayes={impayes} tresorerie={tresorerie} />;
  }
  };
 

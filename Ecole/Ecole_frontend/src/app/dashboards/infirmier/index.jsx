@@ -48,7 +48,7 @@ const MOTIF_COLORS = [
   'bg-[var(--purple)]',
 ];
 
-function ApercuSection({ stats, frequentation, visites, motifs }) {
+function ApercuSection({ stats, frequentation, visites, motifs, urgencesJour, alertesMedicales, soinsRecurrents }) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -148,6 +148,113 @@ function ApercuSection({ stats, frequentation, visites, motifs }) {
           </Table>
         </Card.Body>
       </Card>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card>
+          <Card.Header>
+            <div className="flex items-center justify-between">
+              <Card.Title>Urgences du Jour</Card.Title>
+              {urgencesJour.length > 0 && (
+                <Badge variant="danger" size="sm">{urgencesJour.length}</Badge>
+              )}
+            </div>
+          </Card.Header>
+          <Card.Body className="p-0">
+            {urgencesJour.length > 0 ? (
+            <Table>
+              <Table.Header>
+                <Table.Head>Élève</Table.Head>
+                <Table.Head>Motif</Table.Head>
+                <Table.Head>Heure</Table.Head>
+              </Table.Header>
+              <Table.Body>
+                {urgencesJour.map((u) => (
+                  <Table.Row key={u.id}>
+                    <Table.Cell><span className="font-medium text-neutral-900 dark:text-white">{u.eleve}</span></Table.Cell>
+                    <Table.Cell className="max-w-[160px] truncate">{u.motif}</Table.Cell>
+                    <Table.Cell className="text-neutral-400">{u.heure}</Table.Cell>
+                  </Table.Row>
+                ))}
+              </Table.Body>
+            </Table>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-[var(--text-tertiary)]">
+                <Heart className="h-8 w-8 mb-2 opacity-30" />
+                <p className="text-sm">Aucune urgence aujourd'hui</p>
+              </div>
+            )}
+          </Card.Body>
+        </Card>
+
+        <Card>
+          <Card.Header>
+            <div className="flex items-center justify-between">
+              <Card.Title>Alertes Médicales</Card.Title>
+              {alertesMedicales.length > 0 && (
+                <Badge variant="warning" size="sm">{alertesMedicales.length}</Badge>
+              )}
+            </div>
+          </Card.Header>
+          <Card.Body className="p-0">
+            {alertesMedicales.length > 0 ? (
+            <Table>
+              <Table.Header>
+                <Table.Head>Élève</Table.Head>
+                <Table.Head>Allergies / Maladie</Table.Head>
+              </Table.Header>
+              <Table.Body>
+                {alertesMedicales.map((a) => (
+                  <Table.Row key={a.id}>
+                    <Table.Cell><span className="font-medium text-neutral-900 dark:text-white">{a.eleve}</span></Table.Cell>
+                    <Table.Cell className="max-w-[180px] truncate">{a.allergies || a.maladie}</Table.Cell>
+                  </Table.Row>
+                ))}
+              </Table.Body>
+            </Table>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-[var(--text-tertiary)]">
+                <AlertTriangle className="h-8 w-8 mb-2 opacity-30" />
+                <p className="text-sm">Aucune alerte médicale signalée</p>
+              </div>
+            )}
+          </Card.Body>
+        </Card>
+
+        <Card>
+          <Card.Header>
+            <Card.Title>Soins Récurrents</Card.Title>
+            <Card.Description>Élèves suivis régulièrement</Card.Description>
+          </Card.Header>
+          <Card.Body className="p-0">
+            {soinsRecurrents.length > 0 ? (
+            <Table>
+              <Table.Header>
+                <Table.Head>Élève</Table.Head>
+                <Table.Head>Visites</Table.Head>
+              </Table.Header>
+              <Table.Body>
+                {soinsRecurrents.map((s) => (
+                  <Table.Row key={s.eleve}>
+                    <Table.Cell>
+                      <span className="font-medium text-neutral-900 dark:text-white">{s.eleve}</span>
+                      <span className="block text-xs text-neutral-400">{s.dernier_motif}</span>
+                    </Table.Cell>
+                    <Table.Cell>
+                      <Badge variant={s.visites >= 3 ? 'danger' : 'warning'} size="sm">{s.visites}</Badge>
+                    </Table.Cell>
+                  </Table.Row>
+                ))}
+              </Table.Body>
+            </Table>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-[var(--text-tertiary)]">
+                <Activity className="h-8 w-8 mb-2 opacity-30" />
+                <p className="text-sm">Aucun élève suivi de façon récurrente</p>
+              </div>
+            )}
+          </Card.Body>
+        </Card>
+      </div>
     </div>
   );
 }
@@ -161,6 +268,9 @@ export default function InfirmierDashboard() {
   const frequentation = data?.frequentation || [];
   const visites = data?.visites || [];
   const motifs = data?.motifs || [];
+  const urgencesJour = data?.urgences_jour || [];
+  const alertesMedicales = data?.alertes_medicales || [];
+  const soinsRecurrents = data?.soins_recurrents || [];
 
   const handleTabClick = (tabId) => {
     if (tabId === 'apercu') { setActiveTab(tabId); return; }
@@ -170,8 +280,8 @@ export default function InfirmierDashboard() {
 
   const renderSection = () => {
     switch (activeTab) {
-      case 'apercu': return <ApercuSection stats={stats} frequentation={frequentation} visites={visites} motifs={motifs} />;
-      default: return <ApercuSection stats={stats} frequentation={frequentation} visites={visites} motifs={motifs} />;
+      case 'apercu': return <ApercuSection stats={stats} frequentation={frequentation} visites={visites} motifs={motifs} urgencesJour={urgencesJour} alertesMedicales={alertesMedicales} soinsRecurrents={soinsRecurrents} />;
+      default: return <ApercuSection stats={stats} frequentation={frequentation} visites={visites} motifs={motifs} urgencesJour={urgencesJour} alertesMedicales={alertesMedicales} soinsRecurrents={soinsRecurrents} />;
  }
  };
 
