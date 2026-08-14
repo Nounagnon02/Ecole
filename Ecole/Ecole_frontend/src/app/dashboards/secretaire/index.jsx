@@ -41,7 +41,7 @@ const STATS_META = [
   { title: 'Documents Générés', icon: FileText, color: 'sky' },
 ];
 
-function ApercuSection({ stats, fluxInscriptions, rendezVous, inscriptions }) {
+function ApercuSection({ stats, fluxInscriptions, rendezVous, inscriptions, planningRendezVous, certificatsAttente }) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -132,6 +132,83 @@ function ApercuSection({ stats, fluxInscriptions, rendezVous, inscriptions }) {
           </Table>
         </Card.Body>
       </Card>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <Card.Header>
+            <div className="flex items-center justify-between">
+              <Card.Title>Planning à Venir</Card.Title>
+              <Card.Description>7 prochains jours</Card.Description>
+              {planningRendezVous.length > 0 && (
+                <Badge variant="primary" size="sm">{planningRendezVous.length}</Badge>
+              )}
+            </div>
+          </Card.Header>
+          <Card.Body className="p-0">
+            {planningRendezVous.length > 0 ? (
+            <Table>
+              <Table.Header>
+                <Table.Head>Visiteur</Table.Head>
+                <Table.Head>Motif</Table.Head>
+                <Table.Head>Date</Table.Head>
+                <Table.Head>Heure</Table.Head>
+              </Table.Header>
+              <Table.Body>
+                {planningRendezVous.map((rv) => (
+                  <Table.Row key={rv.id}>
+                    <Table.Cell><span className="font-medium text-neutral-900 dark:text-white">{rv.visiteur}</span></Table.Cell>
+                    <Table.Cell className="max-w-[180px] truncate">{rv.motif}</Table.Cell>
+                    <Table.Cell className="text-neutral-400">{rv.date}</Table.Cell>
+                    <Table.Cell className="text-neutral-400">{rv.heure}</Table.Cell>
+                  </Table.Row>
+                ))}
+              </Table.Body>
+            </Table>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-[var(--text-tertiary)]">
+                <Calendar className="h-8 w-8 mb-2 opacity-30" />
+                <p className="text-sm">Aucun rendez-vous prévu cette semaine</p>
+              </div>
+            )}
+          </Card.Body>
+        </Card>
+
+        <Card>
+          <Card.Header>
+            <div className="flex items-center justify-between">
+              <Card.Title>Certificats à Émettre</Card.Title>
+              {certificatsAttente.length > 0 && (
+                <Badge variant="warning" size="sm">{certificatsAttente.length}</Badge>
+              )}
+            </div>
+          </Card.Header>
+          <Card.Body className="p-0">
+            {certificatsAttente.length > 0 ? (
+            <Table>
+              <Table.Header>
+                <Table.Head>Élève</Table.Head>
+                <Table.Head>Type</Table.Head>
+                <Table.Head>Demande</Table.Head>
+              </Table.Header>
+              <Table.Body>
+                {certificatsAttente.map((c) => (
+                  <Table.Row key={c.id}>
+                    <Table.Cell><span className="font-medium text-neutral-900 dark:text-white">{c.eleve}</span></Table.Cell>
+                    <Table.Cell>{c.type}</Table.Cell>
+                    <Table.Cell className="text-neutral-400">{c.date}</Table.Cell>
+                  </Table.Row>
+                ))}
+              </Table.Body>
+            </Table>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-[var(--text-tertiary)]">
+                <FileText className="h-8 w-8 mb-2 opacity-30" />
+                <p className="text-sm">Aucun certificat en attente</p>
+              </div>
+            )}
+          </Card.Body>
+        </Card>
+      </div>
     </div>
   );
 }
@@ -145,6 +222,8 @@ export default function SecretaireDashboard() {
   const fluxInscriptions = data?.flux_inscriptions || [];
   const rendezVous = data?.rendez_vous || [];
   const inscriptions = data?.inscriptions || [];
+  const planningRendezVous = data?.planning_rendez_vous || [];
+  const certificatsAttente = data?.certificats_attente || [];
 
   const handleTabClick = (tabId) => {
     if (tabId === 'apercu') {
@@ -161,8 +240,8 @@ export default function SecretaireDashboard() {
 
   const renderSection = () => {
     switch (activeTab) {
-      case 'apercu': return <ApercuSection stats={stats} fluxInscriptions={fluxInscriptions} rendezVous={rendezVous} inscriptions={inscriptions} />;
-      default: return <ApercuSection stats={stats} fluxInscriptions={fluxInscriptions} rendezVous={rendezVous} inscriptions={inscriptions} />;
+      case 'apercu': return <ApercuSection stats={stats} fluxInscriptions={fluxInscriptions} rendezVous={rendezVous} inscriptions={inscriptions} planningRendezVous={planningRendezVous} certificatsAttente={certificatsAttente} />;
+      default: return <ApercuSection stats={stats} fluxInscriptions={fluxInscriptions} rendezVous={rendezVous} inscriptions={inscriptions} planningRendezVous={planningRendezVous} certificatsAttente={certificatsAttente} />;
  }
  };
 
