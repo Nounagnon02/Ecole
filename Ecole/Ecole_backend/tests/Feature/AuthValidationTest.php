@@ -2,10 +2,15 @@
 
 namespace Tests\Feature;
 
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class AuthValidationTest extends TestCase
 {
+    // Sans ce trait, aucune migration ne tourne et toute requête
+    // échoue sur « no such table ».
+    use RefreshDatabase;
+
     /**
      * Test that the login endpoint validates required fields.
      */

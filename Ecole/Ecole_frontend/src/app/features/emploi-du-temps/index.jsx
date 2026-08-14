@@ -11,22 +11,14 @@ import {
   ChevronRight,
   Plus,
   Download,
-  Clock,
-  BookOpen,
   MapPin,
-  Users,
   Edit,
-  Trash2,
-  Filter,
-  GraduationCap,
+  Trash2
 } from 'lucide-react';
 import { format, addWeeks, subWeeks, startOfWeek, eachDayOfInterval } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { cn } from '@/shared/lib/utils';
-import Card from '@/shared/components/ui/Card';
-import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
-import Table from '@/shared/components/ui/Table';
 
 const CLASSES = ['6ème A', '6ème B', '5ème A', '5ème B', '4ème A', '4ème B', '3ème A', '3ème B', '2nde A', '2nde B', '1ère A', '1ère B', 'Tle A', 'Tle B'];
 
@@ -55,7 +47,7 @@ const TYPE_COLORS = {
   'Cours': 'bg-[var(--primary-subtle)] border-[var(--accent)]/30 dark:border-[var(--accent)]/30 text-[var(--accent)] dark:text-[var(--accent)]',
   'TD': 'bg-emerald-100 dark:bg-emerald-500/15 border-emerald-300 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-300',
   'TP': 'bg-amber-100 dark:bg-amber-500/15 border-amber-300 dark:border-amber-500/30 text-amber-700 dark:text-amber-300',
-  'Sport': 'bg-sky-100 dark:bg-sky-500/15 border-sky-300 dark:border-sky-500/30 text-sky-700 dark:text-sky-300',
+  'Sport': 'bg-sky-100 dark:bg-sky-500/15 border-sky-300 dark:border-sky-500/30 text-sky-700 dark:text-sky-300'
 };
 
 export default function EmploiDuTemps() {

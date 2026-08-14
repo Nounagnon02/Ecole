@@ -8,8 +8,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
-  GraduationCap, Search, Filter, Plus, Download, Clock, CheckCircle,
-  AlertCircle, TrendingUp, Eye, FileText, Loader2,
+  GraduationCap, Search, Plus, Download, Clock, CheckCircle,
+  AlertCircle, TrendingUp, Eye, Loader2
 } from 'lucide-react';
 import { cn, formatDate } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
@@ -44,7 +44,7 @@ export default function NotesPage() {
           coefficient: n.coefficient || n.coef || 1,
           semestre: n.semestre || 'S1',
           date: n.date || n.created_at || null,
-          statut: n.statut || 'validee',
+          statut: n.statut || 'validee'
         })));
       } catch (e) {
         console.error('Erreur chargement notes:', e);
@@ -66,7 +66,7 @@ export default function NotesPage() {
       total: notes.length,
       validees: validees.length,
       enAttente: notes.filter((n) => n.statut === 'en_attente').length,
-      moyenne: moyenne.toFixed(1),
+      moyenne: moyenne.toFixed(1)
     };
   }, [notes]);
 

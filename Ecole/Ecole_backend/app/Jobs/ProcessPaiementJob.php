@@ -54,6 +54,8 @@ class ProcessPaiementJob implements ShouldQueue
             'error' => $e->getMessage(),
         ]);
 
-        $this->paiement->update(['statut' => 'erreur']);
+        // `statut` n'existe pas sur `paiements` : la colonne est
+        // `statut_global`. Marquer un paiement en échec n'avait aucun effet.
+        $this->paiement->update(['statut_global' => 'ERREUR']);
     }
 }

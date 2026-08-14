@@ -46,7 +46,7 @@ class SecretaireController extends Controller
     {
         $validated = $request->validate([
             'motif' => 'required|string',
-            'parent_id' => 'required|exists:parents,id',
+            'parent_id' => 'required|school_exists:parents,id',
             'date' => 'required|date',
             'heure' => 'required|string'
         ]);
@@ -58,7 +58,7 @@ class SecretaireController extends Controller
     {
         $validated = $request->validate([
             'type_certificat' => 'required|string',
-            'eleve_id' => 'required|exists:eleves,id',
+            'eleve_id' => 'required|school_exists:eleves,id',
             'date_emission' => 'required|date'
         ]);
 
@@ -117,11 +117,11 @@ class SecretaireController extends Controller
         $request->validate([
             'eleve_nom' => 'required|string',
             'eleve_prenom' => 'required|string',
-            'classe_id' => 'required|exists:classes,id',
+            'classe_id' => 'required|school_exists:classes,id',
             'type_dossier' => 'required|string'
         ]);
 
-        return response()->json(['message' => 'Dossier créé', 'id' => rand(1, 1000)]);
+        return response()->json(['message' => 'Fonctionnalité en cours de développement'], 501);
     }
 
     public function storeCourrier(Request $request)
@@ -134,7 +134,7 @@ class SecretaireController extends Controller
             'date_reception' => 'required|date'
         ]);
 
-        return response()->json(['message' => 'Courrier enregistré', 'id' => rand(1, 1000)]);
+        return response()->json(['message' => 'Fonctionnalité en cours de développement'], 501);
     }
 
     public function storeVisiteur(Request $request)
@@ -146,6 +146,6 @@ class SecretaireController extends Controller
             'date_visite' => 'required|date'
         ]);
 
-        return response()->json(['message' => 'Visiteur enregistré', 'id' => rand(1, 1000)]);
+        return response()->json(['message' => 'Fonctionnalité en cours de développement'], 501);
     }
 }

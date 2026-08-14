@@ -87,6 +87,14 @@ export async function processQueue() {
         duration: 4000,
       });
     }
+  } catch (err) {
+    // `processQueue` est volontairement appelé sans `await` (bootstrap de
+    // l'app, écouteur de l'événement `online`). Sans ce catch, toute
+    // indisponibilité du stockage — IndexedDB bloqué en navigation privée,
+    // quota refusé, environnement sans IDB — remontait en unhandled
+    // rejection à chaque démarrage. La file est un confort hors-ligne :
+    // son échec ne doit jamais faire de bruit dans l'application.
+    logger.error('Synchronisation hors-ligne impossible :', err);
   } finally {
     syncing = false;
   }

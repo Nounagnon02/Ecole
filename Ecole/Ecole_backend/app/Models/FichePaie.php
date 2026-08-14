@@ -2,13 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class FichePaie extends Model
 {
-    use HasFactory;
-
+    use HasFactory, BelongsToEcole;
     protected $table = 'fiches_paie';
 
     protected $fillable = [
@@ -19,7 +19,8 @@ class FichePaie extends Model
         'retenues',
         'salaire_net',
         'statut',
-        'date_paiement'
+        'date_paiement',
+        'ecole_id',
     ];
 
     public function user()

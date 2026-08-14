@@ -60,7 +60,8 @@ class PersonnelController extends Controller
                 return response()->json($personnel->load('user'), 201);
             });
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Erreur lors de la création', 'error' => $e->getMessage()], 500);
+            $this->rethrowIfMeaningful($e);
+            return response()->json(['message' => 'Erreur lors de la création', 'error' => $this->clientErrorMessage($e)], 500);
         }
     }
 

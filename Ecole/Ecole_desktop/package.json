@@ -3,9 +3,13 @@
   "version": "1.0.0",
   "description": "École — Application Desktop de Gestion Scolaire",
   "main": "main.js",
+  "author": "École — Système de Gestion Scolaire",
+  "license": "UNLICENSED",
   "scripts": {
     "start": "electron .",
     "dev": "NODE_ENV=development electron .",
+    "verify": "node verify.js",
+    "smoke": "electron smoke.js",
     "build:linux": "electron-builder --linux",
     "build:win": "electron-builder --win",
     "build:mac": "electron-builder --mac",
@@ -22,6 +26,12 @@
       "preload.js",
       "package.json",
       "icon.png"
+    ],
+    "extraResources": [
+      {
+        "from": "../Ecole_frontend/build",
+        "to": "Ecole_frontend/build"
+      }
     ],
     "linux": {
       "target": ["AppImage", "deb"],

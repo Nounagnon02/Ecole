@@ -13,7 +13,11 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth:sanctum')->prefix('dashboard')->group(function () {
     // ─── Directeur ───────────────────────────────────────────────────
-    Route::get('/directeur/data', [DashboardController::class, 'getDashboardData']);
+    // `getDashboardData` expose le référentiel complet de l'école : le
+    // middleware route doublonne le contrôle (cf. directoryRoles) — un
+    // oubli futur dans l'un ou l'autre ne peut pas ouvrir l'endpoint.
+    Route::get('/directeur/data', [DashboardController::class, 'getDashboardData'])
+        ->middleware('role:directeur,censeur,secretaire');
     Route::post('/directeur/invalidate-cache', [DashboardController::class, 'invalidateCache'])->middleware('role:directeur');
     Route::get('/directeur', [DashboardController::class, 'directeur'])->middleware('role:directeur');
 

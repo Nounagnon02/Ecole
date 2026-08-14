@@ -60,7 +60,7 @@ class AIController extends Controller
     public function predictiveAnalysis(Request $request)
     {
         $request->validate([
-            'periode_id' => 'nullable|exists:periodes,id',
+            'periode_id' => 'nullable|school_exists:periodes,id',
         ]);
 
         // Récupérer les données statistiques
@@ -154,12 +154,12 @@ class AIController extends Controller
     public function analyzeResults(Request $request)
     {
         $validated = $request->validate([
-            'classe_id' => 'required|exists:classes,id',
-            'periode_id' => 'nullable|exists:periodes,id',
+            'classe_id' => 'required|school_exists:classes,id',
+            'periode_id' => 'nullable|school_exists:periodes,id',
         ]);
 
         // Récupérer les notes
-        $notes = \App\Models\Note::whereHas('eleve', fn($q) => $q->where('classe_id', $validated['classe_id']))
+        $notes = \App\Models\Notes::whereHas('eleve', fn($q) => $q->where('class_id', $validated['classe_id']))
             ->when($validated['periode_id'], fn($q, $id) => $q->where('periode_id', $id))
             ->with(['eleve', 'matiere'])
             ->get()

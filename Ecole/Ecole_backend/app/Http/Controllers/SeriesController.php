@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Classes;
 use App\Models\Eleve;
+use App\Models\EnseignantsMaternellePrimaire;
 use App\Models\Matieres;
 use App\Models\Series;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class SeriesController extends Controller
 {
@@ -70,16 +72,23 @@ public function Classe_avec_series()
      */
     public function store(Request $request) {
         $validated = $request->validate([
-            'nom' => 'required|string|max:255|unique:series,nom'
+            'nom' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('series', 'nom')
+                    ->where('ecole_id', auth()->user()?->ecole_id)
+            ]
         ]);
 
         try {
             $serie = Series::create($validated);
             return response()->json($serie, 201);
         } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
             return response()->json([
                 'message' => "Erreur lors de la création de la série",
-                'error' => $e->getMessage()
+                'error' => $this->clientErrorMessage($e)
             ], 500);
         }
     }
@@ -197,7 +206,7 @@ public function Classe_avec_series()
             return response()->json(['message' => 'Serie non trouvée'], 404);
         }
 
-        $eleves = $serie->eleves()->where('class_id', $classe_id)->get();
+        $eleves = $serie->eleves()->where('classe_id', $classe_id)->get();
 
         return response()->json($eleves, 200);
     }
@@ -220,34 +229,6 @@ public function Classe_avec_series()
         return response()->json(['moyenne' => $moyenne], 200);
     }
 
-    // Récupère les élèves associés à une série spécifique
-    public function getElevesBySerie($id)
-    {
-        $serie = Series::find($id);
-
-        if (!$serie) {
-            return response()->json(['message' => 'Serie non trouvée'], 404);
-        }
-
-        $eleves = $serie->eleves;
-
-        return response()->json($eleves, 200);
-    }
-
-    // Récupère les matières associées à une série spécifique
-    public function getMatieresBySerie($id)
-    {
-        $serie = Series::find($id);
-
-        if (!$serie) {
-            return response()->json(['message' => 'Serie non trouvée'], 404);
-        }
-
-        $matieres = $serie->matieres;
-
-        return response()->json($matieres, 200);
-    }
-
     // Récupère les séries associées à un élève spécifique
     public function getSeriesByEleve($eleve_id)
     {
@@ -265,7 +246,7 @@ public function Classe_avec_series()
     // Récupère les séries associées à une classe spécifique
     public function getSeriesByClasse($classe_id)
     {
-        $eleves = Eleve::where('class_id', $classe_id)->get();
+        $eleves = Eleve::where('classe_id', $classe_id)->get();
 
         if ($eleves->isEmpty()) {
             return response()->json(['message' => 'Aucun élève trouvé dans cette classe'], 404);
@@ -300,7 +281,7 @@ public function Classe_avec_series()
         }
 
         $validated = $request->validate([
-            'matiere_id' => 'required|exists:matieres,id',
+            'matiere_id' => 'required|school_exists:matieres,id',
             'coefficient' => 'required|numeric|min:0.1|max:10'
         ]);
 
@@ -390,8 +371,8 @@ public function Classe_avec_series()
 
         $validated = $request->validate([
             'matieres' => 'required|array',
-            'matieres.*.matiere_id' => 'required|exists:matieres,id',
-            'matieres.*.classe_id' => 'required|exists:classes,id', // Ajout de la validation
+            'matieres.*.matiere_id' => 'required|school_exists:matieres,id',
+            'matieres.*.classe_id' => 'required|school_exists:classes,id', // Ajout de la validation
             'matieres.*.coefficient' => 'required|numeric|min:0.1|max:10'
         ]);
 
@@ -417,10 +398,11 @@ public function Classe_avec_series()
             ], 200);
 
         } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
             return response()->json([
                 'success' => false,
                 'message' => 'Erreur lors de la synchronisation',
-                'error' => $e->getMessage()
+                'error' => $this->clientErrorMessage($e)
             ], 500);
         }
     }
@@ -451,11 +433,12 @@ public function getMatieresWithCoefficients(Request $request, $id)
         // Récupère les matières d'une série dans une classe avec leurs enseignants
     public function getMatieresSC($classeId, $serieId)
     {
-        $classe = Classes::with(['series.matieres.enseignants' => function($query) use ($serieId) {
-            $query->where('series.id', $serieId);
+        $classe = Classes::with(['series' => function($query) use ($serieId) {
+            $query->where('series.id', $serieId)
+                ->with('matieres.enseignants');
         }])->findOrFail($classeId);
 
-        $serie = $classe->series->find($serieId);
+        $serie = $classe->series->first();
 
         if (!$serie) {
             return response()->json(['message' => 'Série non trouvée'], 404);
@@ -469,11 +452,11 @@ public function getMatieresWithCoefficients(Request $request, $id)
     {
         $request->validate([
             'matieres' => 'required|array',
-            'matieres.*.classe_id' => 'required|exists:classes,id',
-            'matieres.*.serie_id' => 'required|exists:series,id',
-            'matieres.*.matiere_id' => 'required|exists:matieres,id',
+            'matieres.*.classe_id' => 'required|school_exists:classes,id',
+            'matieres.*.serie_id' => 'required|school_exists:series,id',
+            'matieres.*.matiere_id' => 'required|school_exists:matieres,id',
             'matieres.*.enseignants' => 'array',
-            'matieres.*.enseignants.*' => 'exists:enseignants,id'
+            'matieres.*.enseignants.*' => 'school_exists:enseignants,id'
         ]);
 
         $classe = Classes::findOrFail($classeId);
@@ -506,9 +489,9 @@ public function getMatieresWithCoefficients(Request $request, $id)
     {
         $request->validate([
             'classes' => 'required|array',
-            'classes.*.classe_id' => 'required|exists:classes,id',
-            'classes.*.enseignants_martenel_primaire' => 'array',
-            'classes.*.enseignants.*' => 'exists:enseignants_martenel_primaire,id'
+            'classes.*.classe_id' => 'required|school_exists:classes,id',
+            'classes.*.enseignants' => 'array',
+            'classes.*.enseignants.*' => 'school_exists:enseignants_maternelle_primaire,id'
         ]);
 
         $classe = Classes::findOrFail($classeId);
@@ -517,7 +500,13 @@ public function getMatieresWithCoefficients(Request $request, $id)
         // On suppose qu'il n'y a qu'une entrée dans le tableau classes
         $enseignants = $request->classes[0]['enseignants'] ?? [];
 
-        $classe->enseignantsMP()->sync($enseignants);
+        // Source de vérité : `classe_id` du profil M/P. L'ancien pivot
+        // `enseignantmp_classe` pointe (migration défectueuse) vers la table
+        // `enseignants` et ne peut jamais contenir un enseignant M/P (même
+        // contrat que EnseignantsMaternellePrimaireController::storeAffectation).
+        EnseignantsMaternellePrimaire::whereKey($enseignants)
+            ->where('classe_id', '!=', $classe->id)
+            ->update(['classe_id' => $classe->id]);
 
         return response()->json([
             'success' => true,
@@ -534,8 +523,8 @@ public function getMatieresWithCoefficients(Request $request, $id)
         }
 
         $validated = $request->validate([
-            'matiere_id' => 'required|exists:matieres,id',
-            'classe_id' => 'required|exists:classes,id',
+            'matiere_id' => 'required|school_exists:matieres,id',
+            'classe_id' => 'required|school_exists:classes,id',
             'coefficient' => 'required|numeric|min:0.1|max:10'
         ]);
 
@@ -564,7 +553,7 @@ public function updateMatiereCoefficient(Request $request, $id, $matiere_id)
     }
 
     $validated = $request->validate([
-        'classe_id' => 'required|exists:classes,id',
+        'classe_id' => 'required|school_exists:classes,id',
         'coefficient' => 'required|numeric|min:0.1|max:10'
     ]);
 

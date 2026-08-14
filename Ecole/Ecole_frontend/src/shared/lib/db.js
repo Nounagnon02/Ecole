@@ -20,6 +20,14 @@ function openDB() {
   if (dbPromise) return dbPromise;
 
   dbPromise = new Promise((resolve, reject) => {
+    // IndexedDB peut être absent ou refusé (navigation privée, webview
+    // restreinte, stockage bloqué). On rejette proprement plutôt que de
+    // laisser filer une ReferenceError depuis un contexte asynchrone.
+    if (typeof indexedDB === 'undefined' || indexedDB === null) {
+      reject(new Error('IndexedDB indisponible dans cet environnement'));
+      return;
+    }
+
     const request = indexedDB.open(DB_NAME, DB_VERSION);
 
     request.onupgradeneeded = (event) => {

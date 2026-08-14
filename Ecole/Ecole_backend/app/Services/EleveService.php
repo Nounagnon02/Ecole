@@ -23,7 +23,7 @@ class EleveService extends BaseService
             'date_naissance' => 'required|date',
             'lieu_naissance' => 'nullable|string|max:255',
             'sexe' => 'required|in:M,F',
-            'classe_id' => 'required|exists:classes,id',
+            'classe_id' => 'required|school_exists:classes,id',
             'matricule' => 'required|string|unique:eleves,matricule',
             'email' => 'nullable|email|max:255',
             'telephone' => 'nullable|string|max:20',
@@ -53,9 +53,13 @@ class EleveService extends BaseService
      */
     public function getByClasse(int $classeId)
     {
+        // Colonnes réelles : la clé de classe est `classe_id`, et le nom vit
+        // sur `users` — on trie donc via la relation, pas sur `eleves.nom`.
         return Eleve::with($this->defaultRelations())
             ->where('classe_id', $classeId)
-            ->orderBy('nom')
+            ->join('users', 'users.id', '=', 'eleves.user_id')
+            ->orderBy('users.name')
+            ->select('eleves.*')
             ->get();
     }
 
@@ -64,11 +68,14 @@ class EleveService extends BaseService
      */
     public function getWithNotes(int $classeId, int $periodeId)
     {
+        // `notes` porte `periode` (libellé), pas `periode_id`.
         return Eleve::with(['classe', 'notes' => function ($q) use ($periodeId) {
-            $q->where('periode_id', $periodeId);
+            $q->where('periode', $periodeId);
         }])
             ->where('classe_id', $classeId)
-            ->orderBy('nom')
+            ->join('users', 'users.id', '=', 'eleves.user_id')
+            ->orderBy('users.name')
+            ->select('eleves.*')
             ->get();
     }
 

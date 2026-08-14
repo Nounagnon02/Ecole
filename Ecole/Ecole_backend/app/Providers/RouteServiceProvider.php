@@ -33,6 +33,14 @@ class RouteServiceProvider extends ServiceProvider
                 ->prefix('api')
                 ->group(base_path('routes/api.php'));
 
+            // Couche SaaS centrale (super-admin plateforme + onboarding public).
+            // Ce fichier n'était chargé nulle part : les ~25 endpoints de
+            // gestion des tenants, plans, abonnements, facturation, white-label
+            // et analytics étaient injoignables (cf. audit F1).
+            // Les préfixes /api/v1/... sont déclarés dans le fichier lui-même.
+            Route::middleware('api')
+                ->group(base_path('routes/central.php'));
+
             Route::middleware('web')
                 ->group(base_path('routes/web.php'));
         });
@@ -53,9 +61,17 @@ class RouteServiceProvider extends ServiceProvider
             return Limit::perMinute(60)->by($request->ip());
         });
 
-        // Auth endpoints : 5 req/min pour protéger du brute-force
+        // Auth endpoints : deux limites cumulées.
+        // Indexer uniquement sur l'email laissait passer une pulvérisation de
+        // mots de passe : un attaquant changeait de compte à chaque tentative
+        // et n'atteignait jamais le quota (cf. audit S16).
         RateLimiter::for('auth', function (Request $request) {
-            return Limit::perMinute(5)->by($request->input('email') ?: $request->ip());
+            $email = strtolower(trim((string) $request->input('email')));
+
+            return [
+                Limit::perMinute(5)->by('auth-id:' . $email . '|' . $request->ip()),
+                Limit::perMinute(20)->by('auth-ip:' . $request->ip()),
+            ];
         });
 
         // Paiements : 30 req/min sensibilité financière

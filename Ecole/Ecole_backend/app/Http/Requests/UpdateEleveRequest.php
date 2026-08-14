@@ -22,7 +22,7 @@ class UpdateEleveRequest extends FormRequest
             'date_naissance' => 'sometimes|date',
             'lieu_naissance' => 'nullable|string|max:255',
             'sexe' => 'sometimes|in:M,F',
-            'classe_id' => 'sometimes|exists:classes,id',
+            'classe_id' => 'sometimes|school_exists:classes,id',
             'matricule' => ['sometimes', 'string', Rule::unique('eleves', 'matricule')->ignore($eleveId)],
             'email' => 'nullable|email|max:255',
             'telephone' => 'nullable|string|max:20',

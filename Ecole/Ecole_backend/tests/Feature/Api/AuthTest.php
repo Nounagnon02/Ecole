@@ -54,8 +54,11 @@ class AuthTest extends TestCase
         $response = $this->actingAs($user)
                          ->getJson('/api/auth/me');
 
+        // Contrat retenu : {success, user:{…}} — les clients web, mobile et
+        // desktop lisent tous `.user`. Le champ d'identité est `name`.
         $response->assertStatus(200)
-                 ->assertJsonStructure(['id', 'nom', 'email', 'role']);
+                 ->assertJsonStructure(['success', 'user' => ['id', 'name', 'email', 'role']])
+                 ->assertJsonPath('user.id', $user->id);
     }
 
     /** @test */

@@ -22,6 +22,7 @@ Route::post('/auth/login', [AuthController::class, 'connexion'])->middleware('th
 // Routes protégées par authentification
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/auth/me', [AuthController::class, 'getProfile']);
+    Route::put('/auth/profile', [AuthController::class, 'updateProfile']);
     Route::post('/auth/logout', [AuthController::class, 'logout']);
 });
 

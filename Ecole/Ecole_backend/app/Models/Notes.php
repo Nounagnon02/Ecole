@@ -4,16 +4,21 @@ namespace App\Models;
 
 use App\Traits\Auditable;
 use App\Traits\BelongsToEcole;
+use App\Traits\ScopedToCycle;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Matieres;
-use App\Models\Eleve;
-use App\Models\Classes;
-use App\Models\Enseignant;
 
 class Notes extends Model
 {
-    use HasFactory, BelongsToEcole, Auditable;
+    use Auditable, BelongsToEcole, HasFactory, ScopedToCycle;
+
+    /**
+     * Une note porte la classe où l'évaluation a eu lieu.
+     */
+    protected static function cyclePath(): array
+    {
+        return ['class' => 'classe_id'];
+    }
 
     protected $fillable = [
         'eleve_id',
@@ -24,24 +29,24 @@ class Notes extends Model
         'type_evaluation',
         'date_evaluation',
         'periode',
+        'annee_scolaire',
         'observation',
         'locked',
         'created_by',
-        'ecole_id'
+        'ecole_id',
     ];
 
     protected $casts = [
         'date_evaluation' => 'date',
         'note' => 'decimal:2',
         'note_sur' => 'decimal:2',
-        'locked' => 'boolean'
+        'locked' => 'boolean',
     ];
 
     public function eleve()
     {
-        return $this->belongsTo(Eleve::class,'eleve_id');
+        return $this->belongsTo(Eleve::class, 'eleve_id');
     }
-
 
     public function classe()
     {
@@ -58,10 +63,4 @@ class Notes extends Model
         return $this->belongsTo(Enseignant::class);
     }*/
 
-
-
 }
-
-
-
-

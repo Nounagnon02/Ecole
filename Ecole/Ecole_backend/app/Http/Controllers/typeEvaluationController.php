@@ -6,6 +6,7 @@ use App\Models\TypeEvaluation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Support\Cycles;
 
 class typeEvaluationController extends Controller
 {
@@ -28,10 +29,10 @@ class typeEvaluationController extends Controller
     public function attach(Request $request)
     {
         $validated = $request->validate([
-            'classe_id' => 'required|exists:classes,id',
-            'serie_id' => 'required|exists:series,id',
-            'periode_id' => 'required|exists:periodes,id',
-            'typeevaluation_id' => 'required|exists:type_evaluations,id',
+            'classe_id' => 'required|school_exists:classes,id',
+            'serie_id' => 'required|school_exists:series,id',
+            'periode_id' => 'required|school_exists:periodes,id',
+            'typeevaluation_id' => 'required|school_exists:type_evaluations,id',
         ]);
 
         // Vérifier si la liaison existe déjà
@@ -50,15 +51,17 @@ class typeEvaluationController extends Controller
     public function attachMultiple(Request $request)
     {
         // Log incoming request for debugging
-        Log::info('Received attachMultiple request:', $request->all());
+        // `$request->all()` journalisait la charge utile brute, susceptible de
+        // contenir des données personnelles voire des identifiants (audit S21).
+        Log::debug('attachMultiple', ['keys' => array_keys($request->all())]);
 
         try {
             $validated = $request->validate([
                 'liaisons' => 'required|array',
-                'liaisons.*.classe_id' => 'required|integer|exists:classes,id',
-                'liaisons.*.periode_id' => 'required|integer|exists:periodes,id',
-                'liaisons.*.typeevaluation_id' => 'required|integer|exists:type_evaluations,id',
-                'liaisons.*.serie_id' => 'nullable|integer|exists:series,id',
+                'liaisons.*.classe_id' => 'required|integer|school_exists:classes,id',
+                'liaisons.*.periode_id' => 'required|integer|school_exists:periodes,id',
+                'liaisons.*.typeevaluation_id' => 'required|integer|school_exists:type_evaluations,id',
+                'liaisons.*.serie_id' => 'nullable|integer|school_exists:series,id',
             ]);
 
             $created = [];
@@ -102,15 +105,16 @@ class typeEvaluationController extends Controller
                     }
 
                 } catch (\Exception $e) {
+                    $this->rethrowIfMeaningful($e);
                     Log::error('Error creating liaison:', [
                         'liaison' => $liaison,
-                        'error' => $e->getMessage()
+                        'error' => $this->clientErrorMessage($e)
                     ]);
 
                     $errors[] = [
                         'index' => $index,
                         'liaison' => $liaison,
-                        'message' => 'Erreur lors de la création: ' . $e->getMessage()
+                        'message' => $this->clientErrorMessage($e, 'Erreur lors de la création')
                     ];
                 }
             }
@@ -141,11 +145,12 @@ class typeEvaluationController extends Controller
                 'errors' => $e->errors()
             ], 422);
         } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
             Log::error('Unexpected error:', ['error' => $e->getMessage()]);
             return response()->json([
                 'success' => false,
                 'message' => 'Une erreur inattendue est survenue',
-                'error' => $e->getMessage()
+                'error' => $this->clientErrorMessage($e)
             ], 500);
         }
     }
@@ -153,14 +158,14 @@ class typeEvaluationController extends Controller
 
     /*public function attachMultiple(Request $request)
     {
-        Log::info('Received request:', $request->all());
+        Log::debug('typeEvaluation request', ['keys' => array_keys($request->all())]);
 
         $validated = $request->validate([
             'liaisons' => 'required|array',
-            'liaisons.*.classe_id' => 'required|exists:classes,id',
-            'liaisons.*.periode_id' => 'required|exists:periodes,id',
-            'liaisons.*.typeevaluation_id' => 'required|exists:type_evaluations,id',
-            'liaisons.*.serie_id' => 'nullable|exists:series,id',
+            'liaisons.*.classe_id' => 'required|school_exists:classes,id',
+            'liaisons.*.periode_id' => 'required|school_exists:periodes,id',
+            'liaisons.*.typeevaluation_id' => 'required|school_exists:type_evaluations,id',
+            'liaisons.*.serie_id' => 'nullable|school_exists:series,id',
         ]);
 
         try {
@@ -192,17 +197,19 @@ class typeEvaluationController extends Controller
 
                 $created[] = $liaison;
             } catch (\Exception $e) {
+                $this->rethrowIfMeaningful($e);
                 $errors[] = [
                     'liaison' => $liaison,
-                    'message' => $e->getMessage()
+                    'message' => $this->clientErrorMessage($e)
                 ];
             }
         }
 
             return response()->json(['message' => 'Liaisons created successfully']);
         } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
             Log::error('Error creating liaisons:', ['error' => $e->getMessage()]);
-            return response()->json(['message' => $e->getMessage()], 400);
+            return response()->json(['message' => $this->clientErrorMessage($e)], 400);
         }
     }*/
 
@@ -211,7 +218,7 @@ class typeEvaluationController extends Controller
     public function getClassesWithPeriodesAndTypesM()
     {
         $data = DB::table('typeevaluation_classes')
-            ->where('categorie_classe','maternelle')
+            ->where('categorie_classe',Cycles::KINDERGARTEN)
             ->join('classes', 'typeevaluation_classes.classe_id', '=', 'classes.id')
             ->join('periodes', 'typeevaluation_classes.periode_id', '=', 'periodes.id')
             ->join('type_evaluations', 'typeevaluation_classes.typeevaluation_id', '=', 'type_evaluations.id')
@@ -235,7 +242,7 @@ class typeEvaluationController extends Controller
             ->join('periodes', 'typeevaluation_classes.periode_id', '=', 'periodes.id')
             ->join('type_evaluations', 'typeevaluation_classes.typeevaluation_id', '=', 'type_evaluations.id')
             ->leftJoin('series', 'typeevaluation_classes.serie_id', '=', 'series.id')
-            ->where('classes.categorie_classe', 'Primaire')
+            ->where('classes.categorie_classe', Cycles::PRIMARY)
             ->select(
                 'typeevaluation_classes.id as id',
                 'classes.id as classe_id',
@@ -275,7 +282,7 @@ public function getClassesWithPeriodesAndTypesS()
             ->join('periodes', 'typeevaluation_classes.periode_id', '=', 'periodes.id')
             ->join('type_evaluations', 'typeevaluation_classes.typeevaluation_id', '=', 'type_evaluations.id')
             ->leftJoin('series', 'typeevaluation_classes.serie_id', '=', 'series.id')
-            ->where('classes.categorie_classe', 'secondaire')
+            ->where('classes.categorie_classe', Cycles::SECONDARY)
             ->select(
                 'typeevaluation_classes.id as id',
                 'classes.id as classe_id',
@@ -350,10 +357,10 @@ public function getClassesWithPeriodesAndTypesS()
     public function update(Request $request, $id)
     {
         $validated = $request->validate([
-            'classe_id' => 'required|exists:classes,id',
-            'serie_id' => 'nullable|exists:series,id',
-            'periode_id' => 'required|exists:periodes,id',
-            'typeevaluation_id' => 'required|exists:type_evaluations,id',
+            'classe_id' => 'required|school_exists:classes,id',
+            'serie_id' => 'nullable|school_exists:series,id',
+            'periode_id' => 'required|school_exists:periodes,id',
+            'typeevaluation_id' => 'required|school_exists:type_evaluations,id',
         ]);
 
         $updated = DB::table('typeevaluation_classes')
@@ -408,7 +415,7 @@ public function getClassesWithPeriodesAndTypesS()
     {
         $types = TypeEvaluation::whereHas('periodes', function($query) {
             $query->whereHas('classes', function($q) {
-                $q->where('classes.categorie_classe', 'maternelle');
+                $q->where('classes.categorie_classe', Cycles::KINDERGARTEN);
             });
         })->get();
         return response()->json($types);
@@ -419,7 +426,7 @@ public function getClassesWithPeriodesAndTypesS()
     {
         $types = TypeEvaluation::whereHas('periodes', function($query) {
             $query->whereHas('classes', function($q) {
-                $q->where('classes.categorie_classe', 'Primaire');
+                $q->where('classes.categorie_classe', Cycles::PRIMARY);
             });
         })->get();
         return response()->json($types);
@@ -430,7 +437,7 @@ public function getClassesWithPeriodesAndTypesS()
     {
         $types = TypeEvaluation::whereHas('periodes', function($query) {
             $query->whereHas('classes', function($q) {
-                $q->where('classes.categorie_classe', 'secondaire');
+                $q->where('classes.categorie_classe', Cycles::SECONDARY);
             });
         })->get();
         return response()->json($types);
@@ -508,7 +515,7 @@ public function getClassesWithPeriodesAndTypesS()
             ->join('classes', 'typeevaluation_classes.classe_id', '=', 'classes.id')
             ->join('type_evaluations', 'typeevaluation_classes.typeevaluation_id', '=', 'type_evaluations.id')
             ->join('periodes', 'typeevaluation_classes.periode_id', '=', 'periodes.id')
-            ->where('classes.categorie_classe', 'maternelle')
+            ->where('classes.categorie_classe', Cycles::KINDERGARTEN)
             ->select(
                 'type_evaluations.id as type_id',
                 'type_evaluations.nom as type_nom',
@@ -530,7 +537,7 @@ public function getClassesWithPeriodesAndTypesS()
             ->join('classes', 'typeevaluation_classes.classe_id', '=', 'classes.id')
             ->join('type_evaluations', 'typeevaluation_classes.typeevaluation_id', '=', 'type_evaluations.id')
             ->join('periodes', 'typeevaluation_classes.periode_id', '=', 'periodes.id')
-            ->where('classes.categorie_classe', 'Primaire')
+            ->where('classes.categorie_classe', Cycles::PRIMARY)
             ->select(
                 'type_evaluations.id as type_id',
                 'type_evaluations.nom as type_nom',
@@ -553,7 +560,7 @@ public function getClassesWithPeriodesAndTypesS()
             ->join('classes', 'typeevaluation_classes.classe_id', '=', 'classes.id')
             ->join('type_evaluations', 'typeevaluation_classes.typeevaluation_id', '=', 'type_evaluations.id')
             ->join('periodes', 'typeevaluation_classes.periode_id', '=', 'periodes.id')
-            ->where('classes.categorie_classe', 'secondaire')
+            ->where('classes.categorie_classe', Cycles::SECONDARY)
             ->select(
                 'type_evaluations.id as type_id',
                 'type_evaluations.nom as type_nom',

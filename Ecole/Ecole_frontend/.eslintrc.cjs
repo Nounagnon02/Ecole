@@ -1,13 +1,19 @@
 /**
  * ESLint config — Ecole frontend (React 18 + Vite)
  *
- * ESLint 8.44, no external plugins installed (see package.json devDependencies).
- * Uses only built-in eslint:recommended + targeted rules so the `npm run lint`
- * script works out of the box and surfaces dead code (unused vars, unreachable
- * code) for the V5 engineering loop. React/JSX is parsed via ecmaFeatures.
+ * ESLint 8.44 + eslint-plugin-react (JSX awareness only).
  *
- * When this project adopts eslint-plugin-react / eslint-plugin-react-hooks
- * (Phase 14 CI/CD), extend them here rather than rewriting this file.
+ * IMPORTANT — pourquoi eslint-plugin-react est indispensable ici :
+ * le `no-unused-vars` du coeur d'ESLint ne sait pas qu'un identifiant employé
+ * en position JSX (`<Button />`) est une référence. Sans le plugin, chaque
+ * composant importé puis rendu en JSX était signalé « defined but never used »,
+ * soit ~1000 faux positifs qui noyaient les vrais. On active donc les deux
+ * seules règles « marqueurs » du plugin :
+ *   - react/jsx-uses-vars  : `<Foo />` marque `Foo` comme utilisé
+ *   - react/jsx-uses-react : `<div />` marque `React` comme utilisé (fichiers
+ *     encore en runtime JSX classique)
+ * On n'étend volontairement PAS `plugin:react/recommended` : ce projet n'utilise
+ * pas prop-types et n'a pas besoin des règles stylistiques du plugin.
  */
 module.exports = {
   root: true,
@@ -23,7 +29,12 @@ module.exports = {
     ecmaFeatures: { jsx: true },
   },
   extends: ['eslint:recommended'],
+  plugins: ['react'],
+  settings: { react: { version: 'detect' } },
   rules: {
+    // JSX = usage (voir l'en-tête). Sans ces deux règles, no-unused-vars ment.
+    'react/jsx-uses-vars': 'error',
+    'react/jsx-uses-react': 'error',
     // Dead code & unused imports — the core Phase 2 signal
     'no-unused-vars': ['warn', {
       vars: 'all',

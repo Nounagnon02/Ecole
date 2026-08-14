@@ -8,8 +8,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
-  ClipboardCheck, Users, Clock, AlertTriangle, CheckCircle, XCircle,
-  Search, Calendar, Download, Loader2,
+  Users, Clock, CheckCircle, XCircle,
+  Search, Download, Loader2
 } from 'lucide-react';
 import { cn, formatDate } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
@@ -77,7 +77,7 @@ export default function PresencesPage() {
               classe: e.classe?.nom_classe || e.classe_id || '—',
               statut: abs ? (abs.type === 'retard' ? 'retard' : 'absent') : 'present',
               heureArrivee: '—',
-              motif: abs?.motif || '',
+              motif: abs?.motif || ''
             };
           });
           setPresences(combined);
@@ -89,7 +89,7 @@ export default function PresencesPage() {
             classe: a.eleve?.classe?.nom_classe || '—',
             statut: a.type === 'retard' ? 'retard' : 'absent',
             heureArrivee: '—',
-            motif: a.motif || '',
+            motif: a.motif || ''
           })));
         }
       } catch (e) {
@@ -102,7 +102,7 @@ export default function PresencesPage() {
     total: presences.length,
     presents: presences.filter((p) => p.statut === 'present').length,
     retards: presences.filter((p) => p.statut === 'retard').length,
-    absents: presences.filter((p) => p.statut === 'absent').length,
+    absents: presences.filter((p) => p.statut === 'absent').length
   }), [presences]);
 
   const classesList = useMemo(() => {

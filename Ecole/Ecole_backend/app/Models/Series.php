@@ -71,7 +71,7 @@ public function calculMoyenneGenerale($eleve_id)
             
             if ($note) {
                 $coefficient = $matiere->pivot->coefficient;
-                $totalPoints += $note->valeur * $coefficient;
+                $totalPoints += $note->note * $coefficient;
                 $totalCoefficients += $coefficient;
             }
         }
@@ -83,6 +83,11 @@ public function calculMoyenneGenerale($eleve_id)
     public function eleves()
     {
         return $this->hasMany(Eleve::class, 'serie_id');
+    }
+
+    public function contributions()
+    {
+        return $this->hasMany(\App\Models\Contributions::class, 'id_serie');
     }
 
     

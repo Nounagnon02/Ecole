@@ -9,13 +9,13 @@ import { useNavigate } from 'react-router-dom';
 import { useDashboardStats } from '../hooks/useDashboardData';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Wallet, Receipt, ArrowUpRight, ArrowDownRight, TrendingUp,
-  AlertCircle, CheckCircle2, Clock, BarChart3, FileSpreadsheet,
-  Download, Printer, Plus,
+  Wallet, Receipt, ArrowDownRight, TrendingUp,
+  CheckCircle2, Clock, BarChart3, FileSpreadsheet
+  
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip,
-  ResponsiveContainer, PieChart, Pie, Cell,
+  ResponsiveContainer, PieChart, Pie, Cell
 } from 'recharts';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -25,6 +25,8 @@ import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Table from '@/shared/components/ui/Table';
+import { RefreshButton } from '@/shared/components/ui';
+import { ErrorDisplay } from '@/shared/components/ui/EmptyState';
 
 const TABS = [
   { id: 'apercu', label: 'Aperçu', icon: BarChart3 },
@@ -39,7 +41,7 @@ const STATS_META = [
   { title: 'Dépenses du Mois', icon: ArrowDownRight, color: 'red' },
 ];
 
-function ApercuSection({ stats, caData, repartition, factures }) {
+function ApercuSection({ stats, caData, repartition, factures, impayes, tresorerie }) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -125,6 +127,75 @@ function ApercuSection({ stats, caData, repartition, factures }) {
         </Card>
       </div>
 
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card>
+          <Card.Header>
+            <Card.Title>Trésorerie du Mois</Card.Title>
+            <Card.Description>Encaissé réellement versé</Card.Description>
+          </Card.Header>
+          <Card.Body className="space-y-4">
+            <div>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">Encaissements</p>
+              <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
+                {(tresorerie?.encaissements_mois || 0).toLocaleString()} F
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">Dépenses du mois</p>
+              <p className="text-xl font-bold text-red-600 dark:text-red-400">
+                {(tresorerie?.depenses_mois || 0).toLocaleString()} F
+              </p>
+            </div>
+            <div className="rounded-lg border border-neutral-100 bg-neutral-50 p-3 dark:border-neutral-800 dark:bg-neutral-900/50">
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">Solde</p>
+              <p className="text-2xl font-bold text-neutral-900 dark:text-white">
+                {(tresorerie?.solde || 0).toLocaleString()} F
+              </p>
+            </div>
+          </Card.Body>
+        </Card>
+
+        <Card className="lg:col-span-2">
+          <Card.Header>
+            <div className="flex items-center justify-between">
+              <Card.Title>Impayés Prioritaires</Card.Title>
+              {impayes.length > 0 && (
+                <Badge variant="danger" size="sm">{impayes.length} comptes à suivre</Badge>
+              )}
+            </div>
+          </Card.Header>
+          <Card.Body className="p-0">
+            {impayes.length > 0 ? (
+            <Table>
+              <Table.Header>
+                <Table.Head>Élève</Table.Head>
+                <Table.Head>Classe</Table.Head>
+                <Table.Head>Type</Table.Head>
+                <Table.Head>Reste Dû</Table.Head>
+              </Table.Header>
+              <Table.Body>
+                {impayes.map((f) => (
+                  <Table.Row key={f.id}>
+                    <Table.Cell><span className="font-medium text-neutral-900 dark:text-white">{f.eleve}</span></Table.Cell>
+                    <Table.Cell>{f.classe}</Table.Cell>
+                    <Table.Cell>{f.type}</Table.Cell>
+                    <Table.Cell>
+                      <span className="font-semibold text-red-600 dark:text-red-400">{f.montant_restant.toLocaleString()} F</span>
+                    </Table.Cell>
+                  </Table.Row>
+                ))}
+              </Table.Body>
+            </Table>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 text-[var(--text-tertiary)]">
+                <CheckCircle2 className="h-8 w-8 mb-2 opacity-30" />
+                <p className="text-sm">Aucun impayé — tous les comptes sont à jour</p>
+              </div>
+            )}
+          </Card.Body>
+        </Card>
+      </div>
+
       <Card>
         <Card.Header>
           <div className="flex items-center justify-between">
@@ -172,73 +243,30 @@ function ApercuSection({ stats, caData, repartition, factures }) {
   );
 }
 
-function FacturesSection() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Gestion des Factures</h2>
-          <p className="text-sm text-neutral-500 mt-1">Créer, suivre et gérer les factures</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="ghost" size="sm"><Download className="h-4 w-4 mr-1" /> Exporter</Button>
-          <Button><Plus className="h-4 w-4 mr-1" /> Nouvelle Facture</Button>
-        </div>
-      </div>
-      <Card>
-        <Card.Body>
-          <p className="text-neutral-500 text-center py-12">
-            Interface complète de gestion des factures — création, relances, remises
-          </p>
-        </Card.Body>
-      </Card>
-    </div>
-  );
-}
-
-function TransactionsSection() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Transactions</h2>
-          <p className="text-sm text-neutral-500 mt-1">Journal des transactions financières</p>
-        </div>
-        <Button variant="ghost" size="sm"><Printer className="h-4 w-4 mr-1" /> Imprimer</Button>
-      </div>
-      <Card>
-        <Card.Body>
-          <p className="text-neutral-500 text-center py-12">
-            Historique complet des transactions avec filtres et export
-          </p>
-        </Card.Body>
-      </Card>
-    </div>
-  );
-}
-
 export default function ComptableDashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('apercu');
-  const { data, loading } = useDashboardStats('comptable');
+  const { data, loading, error, refetch } = useDashboardStats('comptable');
 
   const stats = data?.stats?.map((s, i) => ({ ...s, icon: STATS_META[i]?.icon, color: STATS_META[i]?.color })) || [];
   const caData = data?.donnes_ca || [];
   const repartition = data?.repartition || [];
   const factures = data?.factures || [];
+  const impayes = data?.impayes || [];
+  const tresorerie = data?.tresorerie || { encaissements_mois: 0, depenses_mois: 0, solde: 0 };
 
   const handleTabClick = (tabId) => {
     if (tabId === 'apercu') { setActiveTab(tabId); return; }
     const routes = { factures: '/comptable/factures', transactions: '/comptable/transactions' };
     navigate(routes[tabId] || '/comptable/dashboard');
-  };
+ };
 
   const renderSection = () => {
     switch (activeTab) {
-      case 'apercu': return <ApercuSection stats={stats} caData={caData} repartition={repartition} factures={factures} />;
-      default: return <ApercuSection stats={stats} caData={caData} repartition={repartition} factures={factures} />;
-    }
-  };
+      case 'apercu': return <ApercuSection stats={stats} caData={caData} repartition={repartition} factures={factures} impayes={impayes} tresorerie={tresorerie} />;
+      default: return <ApercuSection stats={stats} caData={caData} repartition={repartition} factures={factures} impayes={impayes} tresorerie={tresorerie} />;
+ }
+ };
 
   return (
     <div className="space-y-6">
@@ -253,8 +281,15 @@ export default function ComptableDashboard() {
             Suivi financier — {format(new Date(), 'EEEE d MMMM yyyy', { locale: fr })}
           </p>
         </div>
-        <Button variant="ghost" size="sm"><Wallet className="h-4 w-4 mr-1" /> Synthèse</Button>
+        <div className="flex items-center gap-2">
+          <RefreshButton loading={loading} onRefresh={refetch} />
+          <Button variant="ghost" size="sm"><Wallet className="h-4 w-4 mr-1" /> Synthèse</Button>
+        </div>
       </div>
+
+      {error && (
+        <ErrorDisplay message={error} onRetry={refetch} />
+      )}
 
       <div className="border-b border-neutral-200 dark:border-neutral-800">
         <nav className="flex gap-1 overflow-x-auto -mb-px">
@@ -272,7 +307,7 @@ export default function ComptableDashboard() {
                 <Icon className="h-4 w-4" /> {tab.label}
               </button>
             );
-          })}
+ })}
         </nav>
       </div>
 

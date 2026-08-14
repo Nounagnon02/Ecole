@@ -26,7 +26,7 @@ class SurveillantController extends Controller
     public function storeAbsence(Request $request)
     {
         $validated = $request->validate([
-            'eleve_id' => 'required|exists:eleves,id',
+            'eleve_id' => 'required|school_exists:eleves,id',
             'date' => 'required|date',
             'type' => 'required|in:absence,retard',
             'motif' => 'nullable|string'
@@ -49,7 +49,7 @@ class SurveillantController extends Controller
     public function storeSanction(Request $request)
     {
         $validated = $request->validate([
-            'eleve_id' => 'required|exists:eleves,id',
+            'eleve_id' => 'required|school_exists:eleves,id',
             'type_sanction' => 'required|string',
             'motif' => 'required|string',
             'date' => 'required|date',

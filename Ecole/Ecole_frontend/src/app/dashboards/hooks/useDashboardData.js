@@ -4,9 +4,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '@/shared/services/api';
+import { dashboardCache as cache } from '@/shared/lib/dashboard-cache';
 
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
-const cache = new Map();
 
 export function useDashboardData(endpoint, options = {}) {
   const {

@@ -46,7 +46,11 @@ export default function TachesPage() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await get('/universite/taches');
+        // GET /api/universite/devoirs — la ressource s'appelle « devoirs » côté
+        // serveur (parité avec le `Devoir` scolaire) ; cette page en est la vue
+        // « tâches ». Un enseignant y reçoit les devoirs des matières qu'il
+        // assure, un étudiant ceux publiés pour sa filière.
+        const res = await get('/universite/devoirs');
         const items = Array.isArray(res?.data?.data) ? res.data.data
           : Array.isArray(res?.data) ? res.data
           : Array.isArray(res) ? res
@@ -72,7 +76,7 @@ export default function TachesPage() {
     total: taches.length,
     enCours: taches.filter((t) => t.statut === 'en_cours').length,
     termines: taches.filter((t) => t.statut === 'termine' || t.statut === 'terminé').length,
-    urgentes: taches.filter((t) => t.priorite === 'haute' && (t.statut === 'en_cours' || t.statut === 'à_faire')).length,
+    urgentes: taches.filter((t) => t.priorite === 'haute' && (t.statut === 'en_cours' || t.statut === 'a_faire')).length,
   }), [taches]);
 
   const filtered = useMemo(() =>
@@ -146,7 +150,10 @@ export default function TachesPage() {
             <option value="">Tous les statuts</option>
             <option value="en_cours">En cours</option>
             <option value="termine">Terminé</option>
-            <option value="à_faire">À faire</option>
+            {/* `a_faire` sans accent : la valeur est comparée telle quelle au
+                `statut` renvoyé par le serveur, qui stocke la forme ASCII.
+                Avec `à_faire` le filtre ne correspondait jamais. */}
+            <option value="a_faire">À faire</option>
           </select>
         </div>
       </Card>

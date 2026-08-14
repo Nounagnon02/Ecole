@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Support\Roles;
 use Closure;
 use Illuminate\Http\Request;
 
@@ -21,12 +22,19 @@ class CheckRole
             return response()->json(['message' => 'Unauthenticated'], 401);
         }
 
-        if (!in_array($request->user()->role, $roles)) {
-            // Optionnel: Autoriser les admins à tout voir
-            if ($request->user()->isAdmin()) {
-                return $next($request);
-            }
-            
+        $role = $request->user()->role;
+
+        // Le super-admin plateforme est le seul rôle transverse. `directeur` ne
+        // l'est PAS : sinon il contournerait role:comptable, role:infirmier,
+        // role:super-admin, etc. (cf. audit S1).
+        if ($role === Roles::SUPER_ADMIN) {
+            return $next($request);
+        }
+
+        // `role:directeur` admits the cycle heads (directeurM/P/S). They are
+        // provisioned for every school by SchoolProvision, and no route named
+        // them, so those accounts could not reach a single endpoint.
+        if (!Roles::satisfies($role, $roles)) {
             return response()->json(['message' => 'Unauthorized - Role required: ' . implode(', ', $roles)], 403);
         }
 

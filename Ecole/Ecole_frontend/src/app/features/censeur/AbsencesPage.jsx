@@ -8,10 +8,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Calendar, Users, Clock, CheckCircle, XCircle, AlertCircle,
-  Search, FileText, Loader2,
+  Calendar, Users, CheckCircle, XCircle, AlertCircle,
+  Search, FileText, Loader2
 } from 'lucide-react';
-import { cn, formatDate } from '@/shared/lib/utils';
+import { formatDate } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Avatar from '@/shared/components/ui/Avatar';
@@ -54,7 +54,7 @@ export default function AbsencesPage() {
   const stats = useMemo(() => ({
     total: absences.length,
     justifiees: absences.filter((a) => a.justifiee).length,
-    nonJustifiees: absences.filter((a) => !a.justifiee).length,
+    nonJustifiees: absences.filter((a) => !a.justifiee).length
   }), [absences]);
 
   // Extraire les classes uniques des absences pour le filtre

@@ -9,7 +9,6 @@ import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search,
-  Filter,
   Download,
   Plus,
   DollarSign,
@@ -19,19 +18,13 @@ import {
   CheckCircle2,
   Clock,
   FileText,
-  Eye,
   Printer,
   Send,
-  MoreHorizontal,
-  TrendingUp,
-  Users,
-  Wallet,
-  Loader2,
+  TrendingUp
 } from 'lucide-react';
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer,
-  LineChart, Line,
-} from 'recharts';
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer
+  } from 'recharts';
 import { cn, formatNumber } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
@@ -43,7 +36,7 @@ import StatsCard from '@/shared/components/ui/StatsCard';
 import { useApi } from '@/hooks/useApi';
 
 export default function GestionPaiements() {
-  const { loading, error, get, post, put } = useApi();
+  const { get } = useApi();
   const [activeTab, setActiveTab] = useState('apercu');
   const [search, setSearch] = useState('');
   const [statutFilter, setStatutFilter] = useState('Tous');
@@ -60,11 +53,11 @@ export default function GestionPaiements() {
       setIsLoading(true);
       try {
         const [paiementsRes, elevesRes, periodesRes, typesRes, revenusRes] = await Promise.allSettled([
-          get('/paiements'),
+          get('/comptable/paiements'),
           get('/eleves'),
           get('/periodes'),
-          get('/types-frais'),
-          get('/paiements/revenus-mensuels'),
+          get('/contributions'),
+          get('/comptable/finances'),
         ]);
 
         const paiementsData = paiementsRes.status === 'fulfilled'
@@ -140,7 +133,7 @@ export default function GestionPaiements() {
     tauxRecouvrement: paiements.length > 0
       ? Math.round((paiements.filter(p => p.statut === 'Payé').length / paiements.length) * 1000) / 10
       : 0,
-    echeancesVenir: paiements.filter(p => p.statut !== 'Payé' && p.echeance && new Date(p.echeance) >= new Date()).length,
+    echeancesVenir: paiements.filter(p => p.statut !== 'Payé' && p.echeance && new Date(p.echeance) >= new Date()).length
   }), [paiements]);
 
   const renderContent = () => {

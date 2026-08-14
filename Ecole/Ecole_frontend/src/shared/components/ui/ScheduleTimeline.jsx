@@ -18,7 +18,7 @@
 
 import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Clock, MapPin, User } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/shared/lib/utils';
 
 /* ─── Constantes ────────────────────────────────────────────────── */
@@ -46,7 +46,7 @@ const COLORS = [
 export default function ScheduleTimeline({
   sessions = [],
   onSessionClick,
-  className,
+  className
 }) {
   const [currentWeek, setCurrentWeek] = useState(0);
   const [filterMatiere, setFilterMatiere] = useState(null);

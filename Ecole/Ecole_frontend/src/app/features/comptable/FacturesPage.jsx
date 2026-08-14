@@ -9,9 +9,9 @@ import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   FileText, Plus, Download, Eye, Send, Printer,
-  Search, AlertCircle, CheckCircle, Clock, XCircle, Loader2,
+  Search, AlertCircle, CheckCircle, Loader2
 } from 'lucide-react';
-import { cn, formatCurrency, formatDate } from '@/shared/lib/utils';
+import { formatCurrency, formatDate } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
@@ -23,7 +23,8 @@ const getStatutVariant = (statut) => {
   switch (statut) {
     case 'paye':
     case 'payee': return 'primary';
-    case 'en_attente': return 'warning';
+    case 'en_attente':
+    case 'partiel': return 'warning';
     case 'impaye':
     case 'echec': return 'danger';
     default: return 'outline';
@@ -35,6 +36,7 @@ const getStatutLabel = (statut) => {
     case 'paye':
     case 'payee': return 'Payée';
     case 'en_attente': return 'En attente';
+    case 'partiel': return 'Partielle';
     case 'impaye':
     case 'echec': return 'Impayée';
     default: return statut || '—';
@@ -61,7 +63,7 @@ export default function FacturesPage() {
           client: p.eleve ? `${p.eleve.prenom || ''} ${p.eleve.nom || ''}`.trim() : 'N/A',
           motif: p.type_paiement || 'Frais',
           dateEmission: p.date_paiement || p.created_at,
-          dateEcheance: p.date_paiement || p.created_at,
+          dateEcheance: p.date_paiement || p.created_at
         })));
       } catch (e) {
         console.error('Erreur chargement factures:', e);

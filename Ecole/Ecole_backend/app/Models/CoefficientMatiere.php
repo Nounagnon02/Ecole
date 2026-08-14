@@ -2,14 +2,15 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class CoefficientMatiere extends Model
 {
-    use HasFactory;
-    
-    protected $fillable = ['matiere_id', 'classe_id', 'serie_id', 'coefficient'];
+    use HasFactory, BelongsToEcole;
+    protected $fillable = ['matiere_id', 'classe_id', 'serie_id', 'coefficient',
+        'ecole_id',];
     
     public function matiere()
     {

@@ -117,7 +117,7 @@ class BeninEducationSeeder extends Seeder
             $eleveIds[] = DB::table('eleves')->insertGetId([
                 'user_id' => $userId,
                 'numero_matricule' => $e['mat'],
-                'class_id' => $classeId,
+                'classe_id' => $classeId,
                 'ecole_id' => $ecole,
                 'created_at' => now(),
                 'updated_at' => now()
@@ -127,8 +127,8 @@ class BeninEducationSeeder extends Seeder
         // Parent-Eleve (Liaison via table pivot si nécessaire, sinon via parent_id dans eleves)
         // Dans mon schéma, j'utilise eleves_parents
         DB::table('eleves_parents')->insert([
-            ['parent_id' => $parentIds[0], 'eleve_id' => $eleveIds[0], 'created_at' => now(), 'updated_at' => now()],
-            ['parent_id' => $parentIds[1], 'eleve_id' => $eleveIds[1], 'created_at' => now(), 'updated_at' => now()],
+            ['parent_id' => $parentIds[0], 'eleve_id' => $eleveIds[0], 'ecole_id' => $ecole, 'role' => 'père', 'is_primary' => true, 'created_at' => now(), 'updated_at' => now()],
+            ['parent_id' => $parentIds[1], 'eleve_id' => $eleveIds[1], 'ecole_id' => $ecole, 'role' => 'mère', 'is_primary' => true, 'created_at' => now(), 'updated_at' => now()],
         ]);
 
         echo "✓ Données du système éducatif béninois créées avec succès!\n";

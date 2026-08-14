@@ -9,6 +9,7 @@ import { motion } from 'framer-motion';
 import {
   DollarSign, Search, Download, Plus, CreditCard,
   TrendingUp, TrendingDown, Receipt, RefreshCw, Calendar, Eye,
+  ExternalLink,
 } from 'lucide-react';
 import { cn } from '@/shared/lib/utils';
 import { formatCurrency } from '@/shared/lib/utils';
@@ -95,6 +96,20 @@ export default function PaiementsPage() {
       setEcheanceData(null);
     } finally {
       setEcheanceLoading(false);
+    }
+  };
+
+  const handlePaiement = async (echeanceId) => {
+    try {
+      const res = await api.post(`/comptable/echeancier/${echeanceId}/initier-paiement`);
+      if (res.data?.success && res.data?.payment_url) {
+        window.location.href = res.data.payment_url;
+      } else {
+        alert(res.data?.message || 'Impossible d\'initialiser le paiement');
+      }
+    } catch (err) {
+      console.error('Erreur initiation paiement:', err);
+      alert('Erreur lors de l\'initialisation du paiement');
     }
   };
 
@@ -359,7 +374,7 @@ export default function PaiementsPage() {
                       <Table.Head>Montant</Table.Head>
                       <Table.Head>Date</Table.Head>
                       <Table.Head>Statut</Table.Head>
-                      <Table.Head className="text-right">Reçu</Table.Head>
+                      <Table.Head className="text-right">Action</Table.Head>
                     </Table.Header>
                     <Table.Body>
                       {echeanceData.echeances.length === 0 && (
@@ -386,13 +401,25 @@ export default function PaiementsPage() {
                             </span>
                           </Table.Cell>
                           <Table.Cell className="text-right">
-                            <button
-                              onClick={() => handleRecu(e.id)}
-                              className="p-1.5 rounded-lg text-neutral-400 hover:text-[var(--accent)] hover:bg-[var(--accent-subtle)] transition-colors"
-                              title="Voir le reçu"
-                            >
-                              <Eye className="h-4 w-4" />
-                            </button>
+                            <div className="flex items-center justify-end gap-2">
+                              {['en_attente', 'partiel'].includes(e.statut) && (
+                                <Button
+                                  size="sm"
+                                  variant="primary"
+                                  icon={<ExternalLink className="h-3.5 w-3.5" />}
+                                  onClick={() => handlePaiement(e.id)}
+                                >
+                                  Payer
+                                </Button>
+                              )}
+                              <button
+                                onClick={() => handleRecu(e.id)}
+                                className="p-1.5 rounded-lg text-neutral-400 hover:text-[var(--accent)] hover:bg-[var(--accent-subtle)] transition-colors"
+                                title="Voir le reçu"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </button>
+                            </div>
                           </Table.Cell>
                         </Table.Row>
                       ))}

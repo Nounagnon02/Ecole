@@ -9,13 +9,12 @@ import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   BookOpen, FileText, Clock, Download, Eye,
-  Play, ChevronRight, Search, Filter, Calendar,
-  CheckCircle, AlertCircle, Loader2,
+  Play, Search, Calendar,
+  CheckCircle, AlertCircle, Loader2
 } from 'lucide-react';
-import { cn, formatDate, formatRelativeTime } from '@/shared/lib/utils';
+import { cn, formatDate } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
-import Avatar from '@/shared/components/ui/Avatar';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import { useApi } from '@/hooks/useApi';
@@ -30,7 +29,7 @@ export default function CoursPage() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await get('/eleve/cours');
+        const res = await get('/eleves/me/cours');
         const items = Array.isArray(res?.data?.data) ? res.data.data
           : Array.isArray(res?.data) ? res.data
           : Array.isArray(res) ? res
@@ -41,7 +40,7 @@ export default function CoursPage() {
           status: c.status || c.statut || 'prevue',
           duree: c.duree || '—',
           resume: c.resume || c.description || '',
-          ressources: c.ressources || c.documents || [],
+          ressources: c.ressources || c.documents || []
         })));
       } catch (e) {
         console.error('Erreur chargement cours:', e);

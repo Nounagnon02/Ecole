@@ -19,7 +19,7 @@ class FaculteController extends Controller
         $validated = $request->validate([
             'nom' => 'required|string|max:100',
             'sigle' => 'required|string|max:10',
-            'universite_id' => 'required|exists:universites,id'
+            'universite_id' => 'required|school_exists:universites,id'
         ]);
 
         $faculte = Faculte::create($validated);
@@ -36,7 +36,7 @@ class FaculteController extends Controller
         $validated = $request->validate([
             'nom' => 'sometimes|required|string|max:100',
             'sigle' => 'sometimes|required|string|max:10',
-            'universite_id' => 'sometimes|required|exists:universites,id'
+            'universite_id' => 'sometimes|required|school_exists:universites,id'
         ]);
 
         $faculte->update($validated);

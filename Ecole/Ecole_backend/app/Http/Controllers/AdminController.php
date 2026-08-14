@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Ecole;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 /**
  * AdminController — Gestion administrateur centralisée
@@ -27,7 +28,7 @@ class AdminController extends Controller
         $role = $request->input('role');
         $search = $request->input('search');
         $ecoleId = $request->input('ecole_id');
-        $actif = $request->input('actif');
+        $active = $request->input('active');
 
         $query = User::with('ecole:id,nom')
             ->orderBy('created_at', 'desc');
@@ -43,8 +44,8 @@ class AdminController extends Controller
         }
 
         // Filtre par statut
-        if ($actif !== null) {
-            $query->where('is_active', filter_var($actif, FILTER_VALIDATE_BOOLEAN));
+        if ($active !== null) {
+            $query->where('is_active', filter_var($active, FILTER_VALIDATE_BOOLEAN));
         }
 
         // Recherche textuelle
@@ -59,7 +60,7 @@ class AdminController extends Controller
 
         $users = $query->paginate($perPage);
 
-        // Transformer pour le mobile (nom → nom, is_active → actif)
+        // Transformer pour le mobile (nom → nom, is_active → active)
         $transformed = collect($users->items())->map(function ($user) {
             return [
                 'id'        => $user->id,
@@ -68,7 +69,7 @@ class AdminController extends Controller
                 'email'     => $user->email,
                 'telephone' => $user->telephone,
                 'role'      => $user->role,
-                'actif'     => $user->is_active,
+                'active'     => $user->is_active,
                 'ecole'     => $user->ecole ? ['id' => $user->ecole->id, 'nom' => $user->ecole->nom] : null,
                 'created_at' => $user->created_at?->toISOString(),
             ];
@@ -102,7 +103,7 @@ class AdminController extends Controller
                 'email'     => $user->email,
                 'telephone' => $user->telephone,
                 'role'      => $user->role,
-                'actif'     => $user->is_active,
+                'active'     => $user->is_active,
                 'ecole'     => $user->ecole ? ['id' => $user->ecole->id, 'nom' => $user->ecole->nom] : null,
                 'created_at' => $user->created_at?->toISOString(),
             ],
@@ -121,16 +122,24 @@ class AdminController extends Controller
         return response()->json([
             'success' => true,
             'message' => $user->is_active ? 'Utilisateur activé' : 'Utilisateur désactivé',
-            'data'    => ['actif' => $user->is_active],
+            'data'    => ['active' => $user->is_active],
         ]);
     }
 
     /**
      * Supprimer un utilisateur.
+     *
+     * Suppression douce (`deleted_at`) : le compte est privé d'accès et
+     * disparaît des listes, mais ses profils et son historique sont conservés
+     * (les FK `users.*` étant en cascade, une suppression dure effaçait tout).
      */
     public function destroy($id)
     {
         $user = User::findOrFail($id);
+        $user->is_active = false;
+        $user->save();
+        $user->tokens()->delete();
+        DB::table('sessions')->where('user_id', $user->id)->delete();
         $user->delete();
 
         return response()->json([

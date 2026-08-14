@@ -97,7 +97,7 @@ class CenseurController extends Controller
     public function storeConseilClasse(Request $request)
     {
         $validated = $request->validate([
-            'classe_id' => 'required|exists:classes,id',
+            'classe_id' => 'required|school_exists:classes,id',
             'date' => 'required|date',
             'trimestre' => 'required|string',
             'participants' => 'array',
@@ -121,7 +121,7 @@ class CenseurController extends Controller
         $conseil = ConseilClasse::findOrFail($id);
 
         $validated = $request->validate([
-            'classe_id' => 'sometimes|exists:classes,id',
+            'classe_id' => 'sometimes|school_exists:classes,id',
             'date' => 'sometimes|date',
             'trimestre' => 'sometimes|string',
             'participants' => 'sometimes|array',
@@ -293,17 +293,24 @@ class CenseurController extends Controller
      */
     public function rapportClasse($classeId)
     {
-        $classe = Classes::with(['eleves.note'])->findOrFail($classeId);
+        // La relation s'appelle `notes` (pluriel) : `eleves.note` levait
+        // « Call to undefined relationship ». Et l'identité de l'élève est sur
+        // `user`, pas sur `eleves`.
+        $classe = Classes::with(['eleves.notes', 'eleves.user:id,name,prenom'])
+            ->findOrFail($classeId);
 
         $elevesStats = $classe->eleves->map(function ($eleve) {
-            $notes = $eleve->note;
+            $notes = $eleve->notes;
+
             return [
                 'id' => $eleve->id,
-                'nom' => $eleve->nom,
-                'prenom' => $eleve->prenom,
-                'moyenne' => round($notes->avg('note'), 2) ?? 0,
+                'nom' => $eleve->user->name ?? '',
+                'prenom' => $eleve->user->prenom ?? '',
+                'moyenne' => $notes->isEmpty() ? 0 : round($notes->avg('note'), 2),
                 'total_notes' => $notes->count(),
-                'derniere_note' => $notes->latest('date_evaluation')->first()?->note ?? 0
+                // `latest()` est une méthode de query builder, pas de
+                // Collection : sur une relation préchargée elle lèverait.
+                'derniere_note' => $notes->sortByDesc('date_evaluation')->first()?->note ?? 0,
             ];
         });
 
@@ -327,7 +334,7 @@ class CenseurController extends Controller
     {
         return round(
             Notes::whereHas('eleve', function ($query) use ($classeId) {
-                $query->where('class_id', $classeId);
+                $query->where('classe_id', $classeId);
             })->avg('note') ?? 0,
             2
         );
@@ -339,7 +346,7 @@ class CenseurController extends Controller
     private function getAdmis($classeId)
     {
         return Notes::whereHas('eleve', function ($query) use ($classeId) {
-            $query->where('class_id', $classeId);
+            $query->where('classe_id', $classeId);
         })
         ->where('note', '>=', 10)
         ->distinct('eleve_id')
@@ -352,7 +359,7 @@ class CenseurController extends Controller
     private function getEchec($classeId)
     {
         return Notes::whereHas('eleve', function ($query) use ($classeId) {
-            $query->where('class_id', $classeId);
+            $query->where('classe_id', $classeId);
         })
         ->where('note', '<', 10)
         ->distinct('eleve_id')
@@ -364,7 +371,7 @@ class CenseurController extends Controller
      */
     private function getTauxReussiteClasse($classeId)
     {
-        $totalEleves = Eleve::where('class_id', $classeId)->count();
+        $totalEleves = Eleve::where('classe_id', $classeId)->count();
         if ($totalEleves == 0) return 0;
 
         $admis = $this->getAdmis($classeId);

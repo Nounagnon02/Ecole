@@ -17,30 +17,27 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Command,
   Users,
   BookOpen,
   DollarSign,
-  MessageSquare,
   Calendar,
-  Settings,
-  LayoutDashboard,
-  FileText,
-  GraduationCap,
   Search,
   Sparkles,
   BarChart3,
   CreditCard,
   ClipboardList,
-  School,
   ArrowRight,
-  Command as CommandIcon,
+  Command as CommandIcon
 } from 'lucide-react';
 import useAuthStore from '@/shared/stores/auth-store';
 import useUIStore from '@/shared/stores/ui-store';
 import { ROUTE_CONFIG } from '@/features/roles/route-config';
-import { ROLE_LABELS, ROLES } from '@/shared/types/roles';
-import { cn } from '@/shared/lib/utils';
+import { ROLES, normalizeRole } from '@/shared/types/roles';
+
+/* ─── Actions génériques proposées quand le rôle n'a aucune action ── */
+const DEFAULT_ACTIONS = [
+  { icon: Search, label: 'Rechercher dans l’application', action: 'none' },
+];
 
 /* ─── Mapping rôles ↔ icônes pour les actions rapides ──────────── */
 const ROLE_ACTIONS = {
@@ -69,18 +66,41 @@ const ROLE_ACTIONS = {
     { icon: BookOpen, label: 'Notes des enfants', action: 'navigate', path: '/notes' },
     { icon: Sparkles, label: 'Rapport hebdomadaire', action: 'navigate', path: '/parent/ai-report' },
   ],
+  [ROLES.COMPTABLE]: [
+    { icon: DollarSign, label: 'Enregistrer un paiement', action: 'navigate', path: '/paiements' },
+    { icon: BarChart3, label: 'Transactions', action: 'navigate', path: '/comptable/transactions' },
+  ],
+  [ROLES.CENSEUR]: [
+    { icon: Users, label: 'Discipline', action: 'navigate', path: '/censeur/discipline' },
+    { icon: ClipboardList, label: 'Absences', action: 'navigate', path: '/censeur/absences' },
+  ],
+  [ROLES.SURVEILLANT]: [
+    { icon: ClipboardList, label: 'Présences', action: 'navigate', path: '/surveillant/presences' },
+    { icon: Users, label: 'Surveillance', action: 'navigate', path: '/surveillant/surveillance' },
+  ],
+  [ROLES.SECRETAIRE]: [
+    { icon: Users, label: 'Inscriptions', action: 'navigate', path: '/secretaire/inscriptions' },
+    { icon: Calendar, label: 'Planning', action: 'navigate', path: '/secretaire/planning' },
+  ],
+  [ROLES.INFIRMIER]: [
+    { icon: ClipboardList, label: 'Soins', action: 'navigate', path: '/infirmier/soins' },
+  ],
+  [ROLES.BIBLIOTHECAIRE]: [
+    { icon: BookOpen, label: 'Catalogue', action: 'navigate', path: '/bibliothecaire/catalogue' },
+  ],
 };
 
 /* ─── Helper : extraire les pages du route config ───────────────── */
 function getAllRoutes(userRole) {
+  const effective = normalizeRole(userRole);
   return Object.entries(ROUTE_CONFIG)
-    .filter(([, cfg]) => cfg.roles === null || (userRole && cfg.roles?.includes(userRole)))
+    .filter(([, cfg]) => cfg.roles === null || (effective && cfg.roles.includes(effective)))
     .map(([key, cfg]) => ({
       key,
       label: cfg.label || key.charAt(0).toUpperCase() + key.slice(1),
       path: cfg.path,
       icon: cfg.icon || ArrowRight,
-      group: cfg.group || 'navigation',
+      group: cfg.group || 'navigation'
     }));
 }
 
@@ -98,7 +118,8 @@ export default function CommandPalette() {
   /* ─── Actions rapides pour le rôle ──────────────────────────────── */
   const actions = useMemo(() => {
     if (!user?.role) return [];
-    return ROLE_ACTIONS[user.role] || ROLE_ACTIONS[ROLES.DIRECTEUR] || [];
+    const effective = normalizeRole(user.role);
+    return ROLE_ACTIONS[user.role] || ROLE_ACTIONS[effective] || DEFAULT_ACTIONS;
   }, [user?.role]);
 
   /* ─── Filtrage fuzzy (basique) ──────────────────────────────────── */

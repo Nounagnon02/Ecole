@@ -22,14 +22,16 @@ class AIService
     protected string $apiKey;
     protected string $model;
     protected int $maxTokens;
-    protected float $temperature;
 
     public function __construct()
     {
-        $this->apiKey = config('services.anthropic.api_key', '');
-        $this->model = config('services.anthropic.model', 'claude-sonnet-4-20250514');
-        $this->maxTokens = config('services.anthropic.max_tokens', 4096);
-        $this->temperature = config('services.anthropic.temperature', 0.7);
+        // Le 2e argument de config() ne s'applique que si la CLÉ est absente,
+        // pas si sa valeur est null. `ANTHROPIC_API_KEY` non renseignée donnait
+        // donc `null` sur une propriété typée `string` → TypeError au boot du
+        // conteneur, ce qui faisait échouer jusqu'à `php artisan route:list`.
+        $this->apiKey = (string) (config('services.anthropic.api_key') ?? '');
+        $this->model = (string) (config('services.anthropic.model') ?? 'claude-sonnet-5');
+        $this->maxTokens = (int) (config('services.anthropic.max_tokens') ?? 4096);
     }
 
     /**
@@ -49,16 +51,24 @@ class AIService
             ])->post('https://api.anthropic.com/v1/messages', array_merge([
                 'model' => $options['model'] ?? $this->model,
                 'max_tokens' => $options['max_tokens'] ?? $this->maxTokens,
-                'temperature' => $options['temperature'] ?? $this->temperature,
+                // `temperature` retiré : les modèles courants rejettent une
+                // valeur non par défaut avec une 400. Le style se pilote par
+                // le prompt système.
+                //
+                // `thinking: disabled` conserve le comportement actuel : ces
+                // endpoints sont interactifs et limités à 20 req/min, et la
+                // réflexion est active par défaut sur les modèles récents.
+                'thinking' => ['type' => 'disabled'],
                 'system' => $systemPrompt,
                 'messages' => $messages,
             ], $options));
 
             if ($response->successful()) {
                 $data = $response->json();
+
                 return [
                     'success' => true,
-                    'content' => $data['content'][0]['text'] ?? '',
+                    'content' => $this->extractText($data['content'] ?? []),
                     'usage' => $data['usage'] ?? [],
                     'model' => $data['model'] ?? $this->model,
                 ];
@@ -75,6 +85,27 @@ class AIService
             Log::error('IA Service exception', ['error' => $e->getMessage()]);
             return $this->fallbackResponse('Service IA temporairement indisponible');
         }
+    }
+
+    /**
+     * Concatène les blocs de type `text` de la réponse.
+     *
+     * `$data['content'][0]['text']` était fragile : la réponse est une liste de
+     * blocs typés et le premier n'est pas nécessairement du texte.
+     *
+     * @param  array<int, array<string, mixed>>  $blocs
+     */
+    private function extractText(array $blocs): string
+    {
+        $textes = [];
+
+        foreach ($blocs as $bloc) {
+            if (($bloc['type'] ?? null) === 'text' && !empty($bloc['text'])) {
+                $textes[] = $bloc['text'];
+            }
+        }
+
+        return implode('', $textes);
     }
 
     /**

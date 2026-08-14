@@ -8,6 +8,7 @@ use App\Models\Eleve;
 use App\Models\Classes;
 use App\Models\Matieres;
 use App\Models\Series;
+use App\Support\AnneeScolaire;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -16,6 +17,8 @@ use Illuminate\Database\QueryException;
 use Smalot\PdfParser\Parser as PdfParser;
 use \Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use App\Support\Roles;
+use App\Support\Cycles;
 
 class NotesController extends Controller
 {
@@ -167,14 +170,15 @@ class NotesController extends Controller
 
             // Validation des données
             $validator = Validator::make($request->all(), [
-                'eleve_id' => 'required|exists:eleves,id',
-                'classe_id' => 'required|exists:classes,id',
-                'matiere_id' => 'required|exists:matieres,id',
+                'eleve_id' => 'required|school_exists:eleves,id',
+                'classe_id' => 'required|school_exists:classes,id',
+                'matiere_id' => 'required|school_exists:matieres,id',
                 'note' => 'required|numeric|min:0|max:20',
                 'note_sur' => 'required|numeric|min:1|max:20',
                 'type_evaluation' => 'required|in:Devoir1,Devoir2,Interrogation,1ère evaluation,2ème evaluation,3ème evaluation,4ème evaluation,5ème evaluation,6ème evaluation',
                 'date_evaluation' => 'required|date',
-                'periode' => 'required|in:Semestre 1,Semestre 2',
+                'periode' => 'required|in:Trimestre 1,Trimestre 2,Trimestre 3',
+                'annee_scolaire' => 'nullable|string|regex:/^\d{4}-\d{4}$/',
                 'observation' => 'nullable|string|max:500'
             ]);
 
@@ -191,7 +195,7 @@ class NotesController extends Controller
 
                 // Vérifier que l'élève appartient bien à la classe
                 $eleve = Eleve::find($request->eleve_id);
-                if ($eleve->class_id != $request->classe_id) {
+                if ($eleve->classe_id != $request->classe_id) {
                     return response()->json([
                         'success' => false,
                         'message' => 'L\'élève n\'appartient pas à cette classe'
@@ -226,6 +230,7 @@ class NotesController extends Controller
                     'type_evaluation' => $request->type_evaluation,
                     'date_evaluation' => $request->date_evaluation,
                     'periode' => $request->periode,
+                    'annee_scolaire' => $request->annee_scolaire ?? AnneeScolaire::courante(),
                     'observation' => $request->observation,
                     
                 ]);
@@ -239,12 +244,13 @@ class NotesController extends Controller
                 ], 201);
 
             } catch (\Exception $e) {
+                $this->rethrowIfMeaningful($e);
                 DB::rollBack();
                 
                 return response()->json([
                     'success' => false,
                     'message' => 'Erreur lors de l\'enregistrement de la note',
-                    'error' => $e->getMessage()
+                    'error' => $this->clientErrorMessage($e)
                 ], 500);
             }
         }
@@ -265,14 +271,14 @@ class NotesController extends Controller
 
         // Validation des données
         $validator = Validator::make($request->all(), [
-            'eleve_id' => 'required|exists:eleves,id',
-            'classe_id' => 'required|exists:classes,id',
-            'matiere_id' => 'required|exists:matieres,id',
+            'eleve_id' => 'required|school_exists:eleves,id',
+            'classe_id' => 'required|school_exists:classes,id',
+            'matiere_id' => 'required|school_exists:matieres,id',
             'note' => 'required|numeric|min:0|max:100',
             'note_sur' => 'required|numeric|min:1|max:100',
             'type_evaluation' => 'required|in:Devoir1,Devoir2,Interrogation',
             'date_evaluation' => 'required|date',
-            'periode' => 'required|in:Semestre 1,Semestre 2',
+            'periode' => 'required|in:Trimestre 1,Trimestre 2,Trimestre 3',
             'observation' => 'nullable|string|max:500'
         ]);
 
@@ -300,7 +306,7 @@ class NotesController extends Controller
 
             // Vérifier que l'élève appartient bien à la classe
             $eleve = Eleve::find($request->eleve_id);
-            if ($eleve->class_id != $request->classe_id) {
+            if ($eleve->classe_id != $request->classe_id) {
                 return response()->json([
                     'success' => false,
                     'message' => 'L\'élève n\'appartient pas à cette classe'
@@ -335,6 +341,7 @@ class NotesController extends Controller
                 'type_evaluation' => $request->type_evaluation,
                 'date_evaluation' => $request->date_evaluation,
                 'periode' => $request->periode,
+                'annee_scolaire' => $request->annee_scolaire ?? $note->annee_scolaire ?? AnneeScolaire::courante(),
                 'observation' => $request->observation
             ]);
 
@@ -347,12 +354,13 @@ class NotesController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
             DB::rollBack();
             
             return response()->json([
                 'success' => false,
                 'message' => 'Erreur lors de la mise à jour de la note',
-                'error' => $e->getMessage()
+                'error' => $this->clientErrorMessage($e)
             ], 500);
         }
     }
@@ -417,10 +425,11 @@ class NotesController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
             return response()->json([
                 'success' => false,
                 'message' => 'Erreur lors de la suppression de la note',
-                'error' => $e->getMessage()
+                'error' => $this->clientErrorMessage($e)
             ], 500);
         }
     }
@@ -492,10 +501,11 @@ class NotesController extends Controller
             ])->deleteFileAfterSend(true);
 
         } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
             \Illuminate\Support\Facades\Log::error('Export notes XLSX error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Erreur lors de l\'export: ' . $e->getMessage()
+                'message' => $this->clientErrorMessage($e, 'Erreur lors de l\'export')
             ], 500);
         }
     }
@@ -516,9 +526,10 @@ class NotesController extends Controller
                 'message' => 'Note verrouillée'
             ]);
         } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
             return response()->json([
                 'success' => false,
-                'message' => 'Erreur: ' . $e->getMessage()
+                'message' => $this->clientErrorMessage($e, 'Erreur')
             ], 500);
         }
     }
@@ -539,9 +550,10 @@ class NotesController extends Controller
                 'message' => 'Note déverrouillée'
             ]);
         } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
             return response()->json([
                 'success' => false,
-                'message' => 'Erreur: ' . $e->getMessage()
+                'message' => $this->clientErrorMessage($e, 'Erreur')
             ], 500);
         }
     }
@@ -554,32 +566,51 @@ class NotesController extends Controller
         $this->authorize('viewAny', Notes::class);
 
         try {
-            $eleves = DB::table('notes')
-                ->select(
-                    'eleve_id',
-                    DB::raw('AVG(note) as moyenne'),
-                    DB::raw('COUNT(*) as total_notes')
-                )
+            // `Notes::query()`, pas `DB::table('notes')` : la seconde forme
+            // contourne le scope `BelongsToEcole`, donc il suffisait de passer
+            // l'identifiant de classe d'un autre établissement pour obtenir son
+            // classement nominatif.
+            $marks = Notes::query()
                 ->where('classe_id', $classeId)
                 ->where('periode', $periode)
-                ->groupBy('eleve_id')
-                ->orderByDesc('moyenne')
-                ->get();
+                ->get(['eleve_id', 'note', 'note_sur']);
 
-            $elevesAvecInfos = $eleves->map(function ($item, $index) {
-                $eleve = \App\Models\Eleve::with('user')->find($item->eleve_id);
+            // Moyenne ramenée sur 20 : `AVG(note)` mélangeait des notes de
+            // barèmes différents, un 8/10 pesant comme un 8/20.
+            $averages = $marks
+                ->groupBy('eleve_id')
+                ->map(fn($pupilMarks) => $pupilMarks->avg(function ($mark) {
+                    $scale = (float) ($mark->note_sur ?: 20);
+
+                    return $scale > 0 ? ((float) $mark->note / $scale) * 20 : 0.0;
+                }))
+                ->sortDesc();
+
+            // Les élèves à égalité partagent leur rang, et le suivant est décalé
+            // d'autant. `$index + 1` attribuait 1, 2, 3 à trois moyennes
+            // identiques — et contredisait le rang calculé par BulletinService
+            // pour les mêmes élèves.
+            $eleves = Eleve::with('user:id,name,prenom')
+                ->whereIn('id', $averages->keys())
+                ->get()
+                ->keyBy('id');
+
+            $elevesAvecInfos = $averages->map(function ($moyenne, $eleveId) use ($averages, $eleves, $marks) {
+                $eleve = $eleves->get($eleveId);
+                $ahead = $averages->filter(fn($other) => $other > $moyenne + 0.001)->count();
+
                 return [
-                    'rang' => $index + 1,
-                    'eleve_id' => $item->eleve_id,
+                    'rang' => $ahead + 1,
+                    'eleve_id' => $eleveId,
                     'nom' => $eleve?->user?->name ?? 'Inconnu',
                     'prenom' => $eleve?->user?->prenom ?? '',
                     'matricule' => $eleve?->numero_matricule ?? '',
-                    'moyenne' => round((float) $item->moyenne, 2),
-                    'total_notes' => $item->total_notes,
+                    'moyenne' => round((float) $moyenne, 2),
+                    'total_notes' => $marks->where('eleve_id', $eleveId)->count(),
                 ];
-            });
+            })->values();
 
-            $classe = \App\Models\Classes::find($classeId);
+            $classe = Classes::find($classeId);
 
             return response()->json([
                 'success' => true,
@@ -591,9 +622,10 @@ class NotesController extends Controller
                 ]
             ]);
         } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
             return response()->json([
                 'success' => false,
-                'message' => 'Erreur lors du calcul du classement: ' . $e->getMessage()
+                'message' => $this->clientErrorMessage($e, 'Erreur lors du calcul du classement')
             ], 500);
         }
     }
@@ -606,14 +638,14 @@ class NotesController extends Controller
     public function import(Request $request)
     {
         try {
-            Log::info('Données reçues:', $request->all());
+            Log::debug('Import notes', ['keys' => array_keys($request->all())]);
             // 1. Validation des données reçues
             $validator = Validator::make($request->all(), [
-            'classe_id' => 'required|exists:classes,id',
-            'matiere_id' => 'required|exists:matieres,id',
+            'classe_id' => 'required|school_exists:classes,id',
+            'matiere_id' => 'required|school_exists:matieres,id',
             'type_evaluation' => 'required|in:Devoir1,Devoir2,Interrogation',
             'date_evaluation' => 'required|date',
-            'periode' => 'required|in:Semestre 1,Semestre 2',
+            'periode' => 'required|in:Trimestre 1,Trimestre 2,Trimestre 3',
             'notes' => 'required'
         ]);
 
@@ -646,9 +678,12 @@ class NotesController extends Controller
             foreach ($notesData as $noteData) {
                 try {
                     // Rechercher l'élève par matricule
-                    $eleve = DB::table('eleves')
-                        ->where('numero_matricule', $noteData['matricule'])
-                        ->where('class_id', $request->classe_id)
+                    // `Eleve::where(...)`, pas `DB::table('eleves')` : hors du
+                    // scope tenant, deux établissements ayant le même numéro de
+                    // matricule voyaient l'import rattacher la note à l'élève de
+                    // l'autre école.
+                    $eleve = Eleve::where('numero_matricule', $noteData['matricule'])
+                        ->where('classe_id', $request->classe_id)
                         ->first();
 
                     if (!$eleve) {
@@ -666,12 +701,14 @@ class NotesController extends Controller
                         'type_evaluation' => $request->type_evaluation,
                         'date_evaluation' => $request->date_evaluation,
                         'periode' => $request->periode,
+                        'annee_scolaire' => $request->annee_scolaire ?? AnneeScolaire::courante(),
                         
                     ]);
 
                     $importedCount++;
 
                 } catch (\Exception $e) {
+                    $this->rethrowIfMeaningful($e);
                     $errors[] = "Erreur pour l'élève {$noteData['matricule']}: " . $e->getMessage();
                 }
             }
@@ -697,13 +734,160 @@ class NotesController extends Controller
                 'warnings' => $errors
             ]);
 
-        } catch (\Exception $e) {
+} catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
             DB::rollBack();
             \Illuminate\Support\Facades\Log::error('Erreur import notes: ' . $e->getMessage());
             
             return response()->json([
                 'success' => false,
-                'message' => 'Erreur lors de l\'importation: ' . $e->getMessage()
+                'message' => $this->clientErrorMessage($e, 'Erreur lors de l\'importation')
+            ], 500);
+        }
+    }
+
+    /**
+     * Importer des notes depuis un fichier CSV
+     * 
+     * Format attendu : matricule,note,type_evaluation (optionnel)
+     * Le type_evaluation par défaut est 'Interrogation'
+     */
+    public function importCsv(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'classe_id' => 'required|school_exists:classes,id',
+                'matiere_id' => 'required|school_exists:matieres,id',
+                'periode' => 'required|in:Trimestre 1,Trimestre 2,Trimestre 3',
+                'type_evaluation' => 'nullable|in:Devoir1,Devoir2,Interrogation',
+                'date_evaluation' => 'nullable|date',
+                'file' => 'required|file|mimes:csv,txt|max:2048',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Données invalides',
+                    'errors' => $validator->errors()
+                ], 400);
+            }
+
+            $file = $request->file('file');
+            $handle = fopen($file->getRealPath(), 'r');
+            
+            if (!$handle) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Impossible de lire le fichier CSV'
+                ], 400);
+            }
+
+            // Lire l'en-tête
+            $header = fgetcsv($handle);
+            if (!$header) {
+                fclose($handle);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Fichier CSV vide'
+                ], 400);
+            }
+
+            // Normaliser les en-têtes
+            $header = array_map('strtolower', array_map('trim', $header));
+            
+            // Mapping des colonnes attendues
+            $colMatricule = array_search('matricule', $header);
+            $colNote = array_search('note', $header);
+            $colTypeEval = array_search('type_evaluation', $header);
+            $colDateEval = array_search('date_evaluation', $header);
+
+            if ($colMatricule === false || $colNote === false) {
+                fclose($handle);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Colonnes obligatoires manquantes : matricule, note'
+                ], 400);
+            }
+
+            $typeEvaluation = $request->input('type_evaluation', 'Interrogation');
+            $dateEvaluation = $request->input('date_evaluation', now()->format('Y-m-d'));
+            $importedCount = 0;
+            $errors = [];
+
+            DB::beginTransaction();
+
+            while (($row = fgetcsv($handle)) !== false) {
+                if (empty(array_filter($row))) continue; // Ligne vide
+
+                $matricule = trim($row[$colMatricule] ?? '');
+                $note = trim($row[$colNote] ?? '');
+
+                if (!$matricule || $note === '') {
+                    $errors[] = "Ligne ignorée : matricule ou note manquant";
+                    continue;
+                }
+
+                $noteValue = (float) $note;
+                if ($noteValue < 0 || $noteValue > 20) {
+                    $errors[] = "Note invalide pour matricule {$matricule} : {$noteValue}";
+                    continue;
+                }
+
+                $eleve = Eleve::where('numero_matricule', $matricule)
+                    ->where('classe_id', $request->classe_id)
+                    ->first();
+
+                if (!$eleve) {
+                    $errors[] = "Élève avec matricule {$matricule} non trouvé dans cette classe";
+                    continue;
+                }
+
+                $typeEval = $row[$colTypeEval] ?? $request->input('type_evaluation', 'Interrogation');
+                $dateEval = $row[$colDateEval] ?? $request->input('date_evaluation', now()->format('Y-m-d'));
+
+                Notes::create([
+                    'eleve_id' => $eleve->id,
+                    'classe_id' => $request->classe_id,
+                    'matiere_id' => $request->matiere_id,
+                    'note' => $noteValue,
+                    'note_sur' => 20,
+                    'type_evaluation' => $typeEval,
+                    'date_evaluation' => $dateEval,
+                    'periode' => $request->periode,
+                    'annee_scolaire' => $request->annee_scolaire ?? AnneeScolaire::courante(),
+                ]);
+
+                $importedCount++;
+            }
+
+            fclose($handle);
+
+            if ($importedCount === 0) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Aucune note n\'a pu être importée',
+                    'errors' => $errors
+                ], 400);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => "$importedCount notes ont été importées avec succès depuis CSV",
+                'count' => $importedCount,
+                'warnings' => $errors
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->rethrowIfMeaningful($e);
+            \Illuminate\Support\Facades\Log::error('Erreur import CSV notes: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => $this->clientErrorMessage($e, 'Erreur lors de l\'importation CSV')
             ], 500);
         }
     }
@@ -738,10 +922,11 @@ class NotesController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
             return response()->json([
                 'success' => false,
                 'message' => 'Erreur lors de la récupération des notes',
-                'error' => $e->getMessage()
+                'error' => $this->clientErrorMessage($e)
             ], 500);
         }
     }
@@ -785,10 +970,11 @@ class NotesController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
             return response()->json([
                 'success' => false,
                 'message' => 'Erreur lors du calcul des statistiques',
-                'error' => $e->getMessage()
+                'error' => $this->clientErrorMessage($e)
             ], 500);
         }
     }
@@ -826,10 +1012,11 @@ class NotesController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
             return response()->json([
                 'success' => false,
                 'message' => 'Erreur lors de la vérification',
-                'error' => $e->getMessage()
+                'error' => $this->clientErrorMessage($e)
             ], 500);
         }
     }
@@ -837,13 +1024,17 @@ class NotesController extends Controller
     private function findEleve($identifier, $classeId)
     {
         // Recherche par nom complet, prénom, nom ou numéro
+        // La clé de classe est `classe_id`, et nom/prénom vivent sur `users` —
+        // d'où la recherche via la relation plutôt que sur `eleves`.
         return Eleve::where('classe_id', $classeId)
-            ->where(function($query) use ($identifier) {
-                $query->where('nom', 'LIKE', "%{$identifier}%")
-                    ->orWhere('prenom', 'LIKE', "%{$identifier}%")
-                    ->orWhere('numero_eleve', $identifier)
-                    ->orWhereRaw("CONCAT(prenom, ' ', nom) LIKE ?", ["%{$identifier}%"])
-                    ->orWhereRaw("CONCAT(nom, ' ', prenom) LIKE ?", ["%{$identifier}%"]);
+            ->where(function ($query) use ($identifier) {
+                $query->where('numero_matricule', $identifier)
+                    ->orWhereHas('user', function ($u) use ($identifier) {
+                        $u->where('name', 'LIKE', "%{$identifier}%")
+                            ->orWhere('prenom', 'LIKE', "%{$identifier}%")
+                            ->orWhereRaw("CONCAT(prenom, ' ', name) LIKE ?", ["%{$identifier}%"])
+                            ->orWhereRaw("CONCAT(name, ' ', prenom) LIKE ?", ["%{$identifier}%"]);
+                    });
             })
             ->first();
     }
@@ -863,12 +1054,18 @@ class NotesController extends Controller
 
     public function getElevesByClasse($classeId)
     {
-        $eleves = Eleve::where('classe_id', $classeId)
-            ->select('id', 'nom', 'prenom', 'numero_eleve')
-            ->orderBy('nom')
-            ->orderBy('prenom')
-            ->get();
-        
+        $eleves = Eleve::with('user:id,name,prenom')
+            ->where('classe_id', $classeId)
+            ->get(['id', 'user_id', 'numero_matricule'])
+            ->map(fn($e) => [
+                'id' => $e->id,
+                'nom' => $e->user->name ?? '',
+                'prenom' => $e->user->prenom ?? '',
+                'numero_matricule' => $e->numero_matricule,
+            ])
+            ->sortBy([['nom', 'asc'], ['prenom', 'asc']])
+            ->values();
+
         return response()->json($eleves);
     }
 // Filtrer les notes selon les critères
@@ -907,9 +1104,10 @@ public function filter(Request $request)
             'data' => $notes
         ]);
     } catch (\Exception $e) {
+        $this->rethrowIfMeaningful($e);
         return response()->json([
             'success' => false,
-            'message' => 'Erreur lors du filtrage des notes: ' . $e->getMessage()
+            'message' => $this->clientErrorMessage($e, 'Erreur lors du filtrage des notes')
         ], 500);
     }
 }
@@ -955,9 +1153,10 @@ private function filterNotesByCategorie(Request $request, $categorie)
             'data' => $notes
         ]);
     } catch (\Exception $e) {
+        $this->rethrowIfMeaningful($e);
         return response()->json([
             'success' => false,
-            'message' => 'Erreur lors du filtrage des notes: ' . $e->getMessage()
+            'message' => $this->clientErrorMessage($e, 'Erreur lors du filtrage des notes')
         ], 500);
     }
 }
@@ -965,70 +1164,378 @@ private function filterNotesByCategorie(Request $request, $categorie)
 // Pour la maternelle
 public function filterMaternelle(Request $request)
 {
-    return $this->filterNotesByCategorie($request, 'maternelle');
+    return $this->filterNotesByCategorie($request, Cycles::KINDERGARTEN);
 }
 
 // Pour le primaire
 public function filterPrimaire(Request $request)
 {
-    return $this->filterNotesByCategorie($request, 'primaire');
+    return $this->filterNotesByCategorie($request, Cycles::PRIMARY);
 }
 
 // Pour le secondaire
 public function filterSecondaire(Request $request)
 {
-    return $this->filterNotesByCategorie($request, 'secondaire');
+    return $this->filterNotesByCategorie($request, Cycles::SECONDARY);
 }
 
-public function repartitionNotesMaternelle()
-{
-    // Regroupe les notes du secondaire par tranche
-    $data = [
-        ['name' => '0-5', 'value' => DB::table('notes')->join('classes', 'notes.classe_id', '=', 'classes.id')->where('categorie_classe','maternelle')->where('note', '>=', 0)->where('note', '<=', 5)->count()],
-        ['name' => '6-10', 'value' => DB::table('notes')->join('classes', 'notes.classe_id', '=', 'classes.id')->where('categorie_classe','maternelle')->where('note', '>=', 6)->where('note', '<=', 10)->count()],
-        ['name' => '11-15', 'value' => DB::table('notes')->join('classes', 'notes.classe_id', '=', 'classes.id')->where('categorie_classe','maternelle')->where('note', '>=', 11)->where('note', '<=', 15)->count()],
-        ['name' => '16-20', 'value' => DB::table('notes')->join('classes', 'notes.classe_id', '=', 'classes.id')->where('categorie_classe','maternelle')->where('note', '>=', 16)->where('note', '<=', 20)->count()],
-    ];
+/**
+     * Mark distribution by band, for a cycle or for the whole school.
+     *
+     * Rewritten from four near-identical methods that between them issued 16
+     * `DB::table('notes')` queries. Three defects, all in the same few lines:
+     *
+     *   - `DB::table()` sidesteps the `BelongsToEcole` global scope, so every
+     *     count aggregated the marks of *every* school on the platform into one
+     *     establishment's chart;
+     *   - the bands ignored `note_sur`, so a 5/10 — half marks — was counted in
+     *     the 0-5 band alongside a 5/20;
+     *   - the bands were `0-5`, `6-10`, `11-15`, `16-20` on a `decimal(5,2)`
+     *     column, so a 5.5 belonged to none of them and vanished from the
+     *     chart. They are contiguous now, each half-open except the last.
+     *
+     * Four counts became one pass over one query.
+     */
+    private function markDistribution(?string $cycle = null): array
+    {
+        $query = Notes::query();
 
-    return response()->json($data);
+        if ($cycle !== null) {
+            $query->whereHas('classe', fn($q) => $q->where('categorie_classe', $cycle));
+        }
+
+        $this->restrictToCallerScope($query);
+
+        $bands = [
+            ['name' => '0-5',   'from' => 0.0,  'to' => 5.0],
+            ['name' => '5-10',  'from' => 5.0,  'to' => 10.0],
+            ['name' => '10-15', 'from' => 10.0, 'to' => 15.0],
+            ['name' => '15-20', 'from' => 15.0, 'to' => 20.0],
+        ];
+
+        $counts = array_fill(0, count($bands), 0);
+
+        foreach ($query->get(['note', 'note_sur']) as $mark) {
+            $scale = (float) ($mark->note_sur ?: 20);
+            $onTwenty = $scale > 0 ? ((float) $mark->note / $scale) * 20 : 0.0;
+
+            foreach ($bands as $i => $band) {
+                $isLast = $i === count($bands) - 1;
+
+                if ($onTwenty >= $band['from'] && ($isLast ? $onTwenty <= $band['to'] : $onTwenty < $band['to'])) {
+                    $counts[$i]++;
+                    break;
+                }
+            }
+        }
+
+        return collect($bands)
+            ->map(fn($band, $i) => ['name' => $band['name'], 'value' => $counts[$i]])
+            ->all();
+    }
+
+    public function repartitionNotesMaternelle()
+    {
+        return response()->json($this->markDistribution(Cycles::KINDERGARTEN));
+    }
+
+    public function repartitionNotesPrimaire()
+    {
+        return response()->json($this->markDistribution(Cycles::PRIMARY));
+    }
+
+    public function repartitionNotesSecondaire()
+    {
+        return response()->json($this->markDistribution(Cycles::SECONDARY));
+    }
+
+    public function repartitionNotes()
+    {
+        return response()->json($this->markDistribution());
+    }
+
+
+    /**
+     * Headline grade statistics for the caller's scope.
+     *
+     * The frontend called `GET /notes/stats`, which did not exist, so the
+     * grades dashboard rendered empty tiles.
+     *
+     * A student sees their own figures, a parent their children's, and staff
+     * the whole school. The tenant scope bounds everything to one school.
+     */
+    public function stats(Request $request)
+    {
+        $this->authorize('viewAny', Notes::class);
+
+        $query = Notes::query()
+            ->when($request->filled('periode'), fn($q) => $q->where('periode', $request->periode))
+            ->when($request->filled('classe_id'), fn($q) => $q->where('classe_id', $request->classe_id));
+
+        $this->restrictToCallerScope($query);
+
+        // Ramené sur 20 : `note_sur` est saisissable, un 8/10 vaut 16/20.
+        $notes = $query->get(['note', 'note_sur']);
+        $normalized = $notes->map(function ($n) {
+            $scale = (float) ($n->note_sur ?: 20);
+
+            return $scale > 0 ? ((float) $n->note / $scale) * 20 : 0.0;
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'total_notes' => $normalized->count(),
+                'moyenne'     => $normalized->isEmpty() ? 0 : round($normalized->avg(), 2),
+                'note_min'    => $normalized->isEmpty() ? 0 : round($normalized->min(), 2),
+                'note_max'    => $normalized->isEmpty() ? 0 : round($normalized->max(), 2),
+                'repartition' => [
+                    'insuffisant' => $normalized->filter(fn($v) => $v < 10)->count(),
+                    'passable'    => $normalized->filter(fn($v) => $v >= 10 && $v < 12)->count(),
+                    'bien'        => $normalized->filter(fn($v) => $v >= 12 && $v < 16)->count(),
+                    'tres_bien'   => $normalized->filter(fn($v) => $v >= 16)->count(),
+                ],
+            ],
+        ]);
+    }
+
+    /**
+     * Per-subject averages for the caller's scope.
+     *
+     * GET /notes/moyennes-par-matiere
+     */
+    public function moyennesParMatiere(Request $request)
+    {
+        $this->authorize('viewAny', Notes::class);
+
+        $query = Notes::with('matiere:id,nom')
+            ->when($request->filled('periode'), fn($q) => $q->where('periode', $request->periode))
+            ->when($request->filled('classe_id'), fn($q) => $q->where('classe_id', $request->classe_id));
+
+        $this->restrictToCallerScope($query);
+
+        $rows = $query->get()
+            ->groupBy('matiere_id')
+            ->map(function ($group) {
+                $normalized = $group->map(function ($n) {
+                    $scale = (float) ($n->note_sur ?: 20);
+
+                    return $scale > 0 ? ((float) $n->note / $scale) * 20 : 0.0;
+                });
+
+                return [
+                    'matiere_id' => $group->first()->matiere_id,
+                    'matiere'    => $group->first()->matiere->nom ?? '—',
+                    'moyenne'    => round($normalized->avg(), 2),
+                    'nb_notes'   => $group->count(),
+                ];
+            })
+            ->sortByDesc('moyenne')
+            ->values();
+
+        return response()->json(['success' => true, 'data' => $rows]);
+    }
+
+    /**
+     * Saisie groupée : enregistre les notes de toute une classe en un appel.
+     *
+     * POST /notes/bulk
+     * Body : { "classe_id": 3, "matiere_id": 5, "type_evaluation": "Devoir1",
+     *          "date_evaluation": "2026-01-15", "periode": "Trimestre 1",
+     *          "notes": [{ "eleve_id": 10, "note": 14, "observation": null }, ...] }
+     */
+    public function bulkStore(Request $request)
+    {
+        $this->authorize('create', Notes::class);
+
+        $validator = Validator::make($request->all(), [
+            'classe_id' => 'required|school_exists:classes,id',
+            'matiere_id' => 'required|school_exists:matieres,id',
+            'type_evaluation' => 'required|in:Devoir1,Devoir2,Interrogation',
+            'date_evaluation' => 'required|date',
+            'periode' => 'required|in:Trimestre 1,Trimestre 2,Trimestre 3',
+            'notes' => 'required|array|min:1',
+            'notes.*.eleve_id' => 'required|school_exists:eleves,id',
+            'notes.*.note' => 'required|numeric|min:0|max:20',
+            'notes.*.note_sur' => 'nullable|numeric|min:1|max:20',
+            'notes.*.observation' => 'nullable|string|max:500',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Données invalides',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $imported = 0;
+            $errors = [];
+
+            foreach ($request->notes as $item) {
+                $eleve = Eleve::find($item['eleve_id']);
+
+                if (!$eleve || $eleve->classe_id != $request->classe_id) {
+                    $errors[] = "Élève #{$item['eleve_id']} absent de cette classe";
+                    continue;
+                }
+
+                $serieHasMatiere = $eleve->serie
+                    ? $eleve->serie->matieres()->where('matiere_id', $request->matiere_id)->exists()
+                    : true;
+
+                if (!$serieHasMatiere) {
+                    $errors[] = "Élève #{$item['eleve_id']} : matière absente de sa série";
+                    continue;
+                }
+
+                $check = $this->validateNoteByType(
+                    $request->merge([
+                        'eleve_id' => $item['eleve_id'],
+                        'note' => $item['note'],
+                    ]),
+                );
+
+                if (!$check['success']) {
+                    $errors[] = "Élève #{$item['eleve_id']} : {$check['message']}";
+                    continue;
+                }
+
+                Notes::create([
+                    'eleve_id' => $item['eleve_id'],
+                    'classe_id' => $request->classe_id,
+                    'matiere_id' => $request->matiere_id,
+                    'note' => $item['note'],
+                    'note_sur' => $item['note_sur'] ?? 20,
+                    'type_evaluation' => $request->type_evaluation,
+                    'date_evaluation' => $request->date_evaluation,
+                    'periode' => $request->periode,
+                    'annee_scolaire' => $request->annee_scolaire ?? AnneeScolaire::courante(),
+                    'observation' => $item['observation'] ?? null,
+                ]);
+
+                $imported++;
+            }
+
+            if ($imported === 0) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Aucune note n\'a pu être enregistrée',
+                    'errors' => $errors,
+                ], 400);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => "$imported notes enregistrées",
+                'count' => $imported,
+                'warnings' => $errors,
+            ], 201);
+
+        } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => $this->clientErrorMessage($e, 'Erreur lors de la saisie groupée'),
+            ], 500);
+        }
+    }
+
+    /**
+     * Données prêtes à remplir une grille de notes pour une classe :
+     * élèves de la classe + matières (avec coefficients) de ses séries.
+     *
+     * GET /notes/grille/{classeId}
+     */
+    public function grilleSaisie($classeId)
+    {
+        $this->authorize('viewAny', Notes::class);
+
+        $classe = Classes::find($classeId);
+        if (!$classe) {
+            return response()->json(['success' => false, 'message' => 'Classe non trouvée'], 404);
+        }
+
+        $eleves = Eleve::with('user:id,name,prenom')
+            ->where('classe_id', $classeId)
+            ->orderBy('numero_matricule')
+            ->get(['id', 'user_id', 'numero_matricule'])
+            ->map(fn($e) => [
+                'id' => $e->id,
+                'nom' => $e->user->name ?? '',
+                'prenom' => $e->user->prenom ?? '',
+                'matricule' => $e->numero_matricule,
+            ])
+            ->values();
+
+        // Matières de la classe via ses séries (coefficients du pivot), sinon
+        // via la liaison directe classe <-> matière.
+        $matieres = $classe->series()
+            ->with(['matieres' => fn($q) => $q->select('matieres.id', 'matieres.nom')->withPivot('coefficient')])
+            ->get()
+            ->flatMap(fn($serie) => $serie->matieres->map(fn($m) => [
+                'id' => $m->id,
+                'nom' => $m->nom,
+                'coefficient' => $m->pivot->coefficient,
+            ]))
+            ->unique('id')
+            ->values();
+
+        if ($matieres->isEmpty()) {
+            $matieres = $classe->matieres()->get(['matieres.id', 'matieres.nom'])
+                ->map(fn($m) => ['id' => $m->id, 'nom' => $m->nom, 'coefficient' => null]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'classe' => [
+                    'id' => $classe->id,
+                    'nom_classe' => $classe->nom_classe,
+                    'categorie_classe' => $classe->categorie_classe,
+                ],
+                'eleves' => $eleves,
+                'matieres' => $matieres,
+            ],
+        ]);
+    }
+
+    /**
+     * Narrow a grades query to what the caller is allowed to read.
+     *
+     * Whitelist, so an unexpected role gets nothing rather than everything.
+     */
+    private function restrictToCallerScope($query): void
+    {
+        $user = auth()->user();
+        $staff = Roles::expand([
+            Roles::DIRECTOR, Roles::TEACHER, 'censeur', 'secretaire', Roles::SUPER_ADMIN,
+        ]);
+
+        if (in_array($user?->role, $staff, true)) {
+            return; // périmètre de l'école, déjà borné par le scope tenant
+        }
+
+        if ($user?->role === 'eleve' && $user->eleve) {
+            $query->where('eleve_id', $user->eleve->id);
+
+            return;
+        }
+
+        if ($user?->role === 'parent' && $user->parent) {
+            $query->whereIn('eleve_id', $user->parent->eleves()->pluck('eleves.id'));
+
+            return;
+        }
+
+        $query->whereRaw('1 = 0');
+    }
 }
-public function repartitionNotesPrimaire()
-{
-    // Regroupe les notes du secondaire par tranche
-    $data = [
-        ['name' => '0-5', 'value' => DB::table('notes')->join('classes', 'notes.classe_id', '=', 'classes.id')->where('categorie_classe','primaire')->where('note', '>=', 0)->where('note', '<=', 5)->count()],
-        ['name' => '6-10', 'value' => DB::table('notes')->join('classes', 'notes.classe_id', '=', 'classes.id')->where('categorie_classe','primaire')->where('note', '>=', 6)->where('note', '<=', 10)->count()],
-        ['name' => '11-15', 'value' => DB::table('notes')->join('classes', 'notes.classe_id', '=', 'classes.id')->where('categorie_classe','primaire')->where('note', '>=', 11)->where('note', '<=', 15)->count()],
-        ['name' => '16-20', 'value' => DB::table('notes')->join('classes', 'notes.classe_id', '=', 'classes.id')->where('categorie_classe','primaire')->where('note', '>=', 16)->where('note', '<=', 20)->count()],
-    ];
-
-    return response()->json($data);
-}
-public function repartitionNotesSecondaire()
-{
-    // Regroupe les notes du secondaire par tranche
-    $data = [
-        ['name' => '0-5', 'value' => DB::table('notes')->join('classes', 'notes.classe_id', '=', 'classes.id')->where('categorie_classe','secondaire')->where('note', '>=', 0)->where('note', '<=', 5)->count()],
-        ['name' => '6-10', 'value' => DB::table('notes')->join('classes', 'notes.classe_id', '=', 'classes.id')->where('categorie_classe','secondaire')->where('note', '>=', 6)->where('note', '<=', 10)->count()],
-        ['name' => '11-15', 'value' => DB::table('notes')->join('classes', 'notes.classe_id', '=', 'classes.id')->where('categorie_classe','secondaire')->where('note', '>=', 11)->where('note', '<=', 15)->count()],
-        ['name' => '16-20', 'value' => DB::table('notes')->join('classes', 'notes.classe_id', '=', 'classes.id')->where('categorie_classe','secondaire')->where('note', '>=', 16)->where('note', '<=', 20)->count()],
-    ];
-
-    return response()->json($data);
-}
-
-public function repartitionNotes()
-{
-    // Regroupe les notes du secondaire par tranche
-    $data = [
-        ['name' => '0-5', 'value' => DB::table('notes')->join('classes', 'notes.classe_id', '=', 'classes.id')->where('note', '>=', 0)->where('note', '<=', 5)->count()],
-        ['name' => '6-10', 'value' => DB::table('notes')->join('classes', 'notes.classe_id', '=', 'classes.id')->where('note', '>=', 6)->where('note', '<=', 10)->count()],
-        ['name' => '11-15', 'value' => DB::table('notes')->join('classes', 'notes.classe_id', '=', 'classes.id')->where('note', '>=', 11)->where('note', '<=', 15)->count()],
-        ['name' => '16-20', 'value' => DB::table('notes')->join('classes', 'notes.classe_id', '=', 'classes.id')->where('note', '>=', 16)->where('note', '<=', 20)->count()],
-    ];
-
-    return response()->json($data);
-}
-
-}
-

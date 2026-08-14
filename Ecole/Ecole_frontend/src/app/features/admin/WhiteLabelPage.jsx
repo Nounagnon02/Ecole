@@ -2,14 +2,13 @@
  * WhiteLabelPage — Personnalisation de la marque (Super Admin)
  *
  * Configuration du branding par tenant : logo, couleurs, nom.
- * Données dynamiques via API /api/v1/admin/ecoles (tenants) et /api/v1/admin/white-label/:id
+ * Données dynamiques via /v1/admin/tenants et /v1/admin/tenants/:id/settings
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
 import {
   Palette, Image, Globe, Monitor, Save,
-  Type, Eye, Smartphone, Loader2, AlertCircle,
+  Type, Eye, Smartphone, Loader2, AlertCircle
 } from 'lucide-react';
 import Card from '@/shared/components/ui/Card';
 import Button from '@/shared/components/ui/Button';
@@ -26,7 +25,7 @@ const PRESET_COLORS = [
 ];
 
 export default function WhiteLabelPage() {
-  const { loading, error, get, put } = useApi();
+  const { loading, error, get, patch } = useApi();
   const [ecoles, setEcoles] = useState([]);
   const [selectedTenant, setSelectedTenant] = useState('');
   const [primaryColor, setPrimaryColor] = useState('#4F46E5');
@@ -41,14 +40,14 @@ export default function WhiteLabelPage() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await get('/api/v1/admin/ecoles');
+        const res = await get('/v1/admin/tenants');
         const items = Array.isArray(res?.data?.data) ? res.data.data
           : Array.isArray(res?.data) ? res.data
           : Array.isArray(res) ? res
           : [];
         setEcoles(items.map((e) => ({
           id: e.id,
-          nom: e.nom || e.name || `École ${e.id}`,
+          nom: e.nom || e.name || `École ${e.id}`
         })));
         if (items.length > 0 && !selectedTenant) {
           setSelectedTenant(String(items[0].id));
@@ -63,7 +62,10 @@ export default function WhiteLabelPage() {
   const loadConfig = useCallback(async () => {
     if (!selectedTenant) return;
     try {
-      const res = await get(`/api/v1/admin/white-label/${selectedTenant}`);
+      // Route réelle : GET /api/v1/admin/tenants/{tenant}/settings.
+      // `/admin/white-label/…` n'existe pas, et le préfixe /api était en
+      // double (le client axios a déjà baseURL '/api').
+      const res = await get(`/v1/admin/tenants/${selectedTenant}/settings`);
       const cfg = res?.data?.data || res?.data || res || {};
       setBrandName(cfg.nom_brand || cfg.brand_name || cfg.nom || '');
       setPrimaryColor(cfg.couleur_primaire || cfg.primary_color || '#4F46E5');
@@ -84,12 +86,10 @@ export default function WhiteLabelPage() {
     setSaving(true);
     setSaved(false);
     try {
-      await put(`/api/v1/admin/white-label/${selectedTenant}`, {
-        nom_brand: brandName,
-        couleur_primaire: primaryColor,
-        couleur_secondaire: secondaryColor,
-        logo_url: logoUrl,
-        favicon_url: faviconUrl,
+      await patch(`/v1/admin/tenants/${selectedTenant}/settings`, {
+        brand_name: brandName,
+        primary_color: primaryColor,
+        secondary_color: secondaryColor
       });
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);

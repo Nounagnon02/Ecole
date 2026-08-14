@@ -8,8 +8,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
-  BookOpen, Plus, Search, Users, Building2,
-  User, GraduationCap, Mail, Phone, Loader2, AlertCircle,
+  BookOpen, Plus, Search, Users,   User, GraduationCap, Mail, Phone, Loader2, AlertCircle
 } from 'lucide-react';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
@@ -39,7 +38,7 @@ export default function DepartementsPage() {
           enseignants: d.enseignants_count ?? d.enseignants ?? 0,
           etudiants: d.etudiants_count ?? d.etudiants ?? 0,
           cours: d.cours_count ?? d.cours ?? 0,
-          faculte_nom: d.faculte?.nom || d.faculte_nom || '—',
+          faculte_nom: d.faculte?.nom || d.faculte_nom || '—'
         })));
       } catch (e) {
         console.error('Erreur chargement départements:', e);
@@ -55,7 +54,7 @@ export default function DepartementsPage() {
   const stats = useMemo(() => ({
     total: departements.length,
     enseignants: departements.reduce((s, d) => s + Number(d.enseignants), 0),
-    etudiants: departements.reduce((s, d) => s + Number(d.etudiants), 0),
+    etudiants: departements.reduce((s, d) => s + Number(d.etudiants), 0)
   }), [departements]);
 
   const filtered = useMemo(() =>

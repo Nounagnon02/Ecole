@@ -21,30 +21,32 @@ export default defineConfig({
   build: {
     outDir: 'build',
     sourcemap: false,
+
+    // Pas de `manualChunks`. Il y en avait un, qui classait les paquets de
+    // `node_modules` par sous-chaîne du chemin — et la production affichait une
+    // page blanche :
+    //
+    //   Uncaught ReferenceError: Cannot access 'j' before initialization
+    //     (vendor-other-*.js)
+    //
+    // Deux défauts se cumulaient. D'abord le classement lui-même :
+    // `id.includes('react')` capturait aussi `@tanstack/react-query` et
+    // `react-pdf`, qui n'atteignaient donc jamais les branches écrites pour
+    // eux — les tests `@tanstack` et `pdfjs-dist` situés plus bas étaient
+    // inatteignables. Ensuite la conséquence : des paquets mutuellement
+    // dépendants se retrouvaient dans des chunks distincts, ce qui crée un
+    // cycle d'initialisation entre chunks. Le premier à s'exécuter lit une
+    // liaison `const` de l'autre avant qu'elle n'existe.
+    //
+    // Le découpage automatique de Rollup respecte l'ordre d'initialisation par
+    // construction. Des chunks plus gros valent mieux qu'une page blanche, et
+    // l'avertissement de taille ci-dessous reste le bon endroit pour en
+    // rediscuter — avec, cette fois, une vérification sur le bundle *construit*
+    // (voir `src/__tests__/production-bundle.test.js`).
     rollupOptions: {
-      output: {
-        manualChunks(id) {
-          if (id.includes('node_modules')) {
-            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
-              return 'vendor-react';
-            }
-            if (id.includes('framer-motion')) {
-              return 'vendor-animation';
-            }
-            if (id.includes('recharts') || id.includes('date-fns') || id.includes('xlsx') || id.includes('jspdf')) {
-              return 'vendor-data';
-            }
-            if (id.includes('@tanstack') || id.includes('zustand') || id.includes('axios')) {
-              return 'vendor-core';
-            }
-            if (id.includes('pdfjs-dist') || id.includes('react-pdf')) {
-              return 'vendor-pdf';
-            }
-            return 'vendor-other';
-          }
-        },
-      },
+      output: {},
     },
+
     chunkSizeWarningLimit: 250,
     cssCodeSplit: true,
     minify: 'esbuild',

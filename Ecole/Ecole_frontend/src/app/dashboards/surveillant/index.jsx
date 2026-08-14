@@ -9,12 +9,11 @@ import { useNavigate } from 'react-router-dom';
 import { useDashboardStats } from '../hooks/useDashboardData';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Shield, Users, Clock, AlertTriangle, CheckCircle2, XCircle,
-  BarChart3, UserCheck, UserX, Camera, MapPin,
+  Shield, Users, AlertTriangle, BarChart3, UserCheck, UserX, Camera, MapPin, Clock
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip,
-  ResponsiveContainer,
+  ResponsiveContainer
 } from 'recharts';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -24,6 +23,8 @@ import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Table from '@/shared/components/ui/Table';
 import Button from '@/shared/components/ui/Button';
+import { RefreshButton } from '@/shared/components/ui';
+import { ErrorDisplay } from '@/shared/components/ui/EmptyState';
 
 const TABS = [
   { id: 'apercu', label: 'Aperçu', icon: BarChart3 },
@@ -134,48 +135,118 @@ function ApercuSection({ stats, presences, retards, data }) {
           </Table>
         </Card.Body>
       </Card>
-    </div>
-  );
-}
 
-function PresencesSection() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Gestion des Présences</h2>
-          <p className="text-sm text-neutral-500 mt-1">Saisie et suivi des présences par classe</p>
-        </div>
-        <Badge variant="success" size="sm"><Clock className="h-3 w-3 mr-1" /> En cours</Badge>
-      </div>
-      <Card>
-        <Card.Body>
-          <p className="text-neutral-500 text-center py-12">
-            Interface de pointage — feuilles de présence par classe, import, et validation
-          </p>
-        </Card.Body>
-      </Card>
-    </div>
-  );
-}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card>
+          <Card.Header>
+            <div className="flex items-center justify-between">
+              <Card.Title>Absents du Jour</Card.Title>
+              {data?.absents_jour?.length > 0 && (
+                <Badge variant="danger" size="sm">{data.absents_jour.length}</Badge>
+              )}
+            </div>
+          </Card.Header>
+          <Card.Body className="p-0">
+            {data?.absents_jour?.length > 0 ? (
+            <Table>
+              <Table.Header>
+                <Table.Head>Élève</Table.Head>
+                <Table.Head>Classe</Table.Head>
+                <Table.Head>Justifié</Table.Head>
+              </Table.Header>
+              <Table.Body>
+                {data.absents_jour.map((a) => (
+                  <Table.Row key={a.id}>
+                    <Table.Cell><span className="font-medium text-neutral-900 dark:text-white">{a.eleve}</span></Table.Cell>
+                    <Table.Cell>{a.classe}</Table.Cell>
+                    <Table.Cell>
+                      {a.justifiee ? <Badge variant="success" size="sm">Oui</Badge> : <Badge variant="danger" size="sm">Non</Badge>}
+                    </Table.Cell>
+                  </Table.Row>
+                ))}
+              </Table.Body>
+            </Table>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-[var(--text-tertiary)]">
+                <UserCheck className="h-8 w-8 mb-2 opacity-30" />
+                <p className="text-sm">Aucun absent signalé aujourd'hui</p>
+              </div>
+            )}
+          </Card.Body>
+        </Card>
 
-function SurveillanceSection() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Surveillance</h2>
-          <p className="text-sm text-neutral-500 mt-1">Gestion des tours de garde et incidents</p>
-        </div>
-        <Button variant="ghost" size="sm"><Shield className="h-4 w-4 mr-1" /> Rapport</Button>
+        <Card>
+          <Card.Header>
+            <div className="flex items-center justify-between">
+              <Card.Title>Incidents Récents</Card.Title>
+              {data?.incidents?.length > 0 && (
+                <Badge variant="warning" size="sm">{data.incidents.length}</Badge>
+              )}
+            </div>
+          </Card.Header>
+          <Card.Body className="p-0">
+            {data?.incidents?.length > 0 ? (
+            <Table>
+              <Table.Header>
+                <Table.Head>Incident</Table.Head>
+                <Table.Head>Date</Table.Head>
+                <Table.Head>Gravité</Table.Head>
+              </Table.Header>
+              <Table.Body>
+                {data.incidents.map((i) => (
+                  <Table.Row key={i.id}>
+                    <Table.Cell className="max-w-[180px] truncate"><span className="font-medium text-neutral-900 dark:text-white">{i.description}</span></Table.Cell>
+                    <Table.Cell className="text-neutral-400">{i.date}</Table.Cell>
+                    <Table.Cell>
+                      <Badge variant={i.gravite === 'Majeure' ? 'danger' : i.gravite === 'Moyenne' ? 'warning' : 'neutral'} size="sm">{i.gravite}</Badge>
+                    </Table.Cell>
+                  </Table.Row>
+                ))}
+              </Table.Body>
+            </Table>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-[var(--text-tertiary)]">
+                <AlertTriangle className="h-8 w-8 mb-2 opacity-30" />
+                <p className="text-sm">Aucun incident récent</p>
+              </div>
+            )}
+          </Card.Body>
+        </Card>
+
+        <Card>
+          <Card.Header>
+            <div className="flex items-center justify-between">
+              <Card.Title>Absences Non Justifiées</Card.Title>
+              {data?.absences_non_justifiees?.length > 0 && (
+                <Badge variant="danger" size="sm">{data.absences_non_justifiees.length}</Badge>
+              )}
+            </div>
+          </Card.Header>
+          <Card.Body className="p-0">
+            {data?.absences_non_justifiees?.length > 0 ? (
+            <Table>
+              <Table.Header>
+                <Table.Head>Élève</Table.Head>
+                <Table.Head>Date</Table.Head>
+              </Table.Header>
+              <Table.Body>
+                {data.absences_non_justifiees.map((a) => (
+                  <Table.Row key={a.id}>
+                    <Table.Cell><span className="font-medium text-neutral-900 dark:text-white">{a.eleve}</span></Table.Cell>
+                    <Table.Cell className="text-neutral-400">{a.date}</Table.Cell>
+                  </Table.Row>
+                ))}
+              </Table.Body>
+            </Table>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-[var(--text-tertiary)]">
+                <Clock className="h-8 w-8 mb-2 opacity-30" />
+                <p className="text-sm">Toutes les absences sont justifiées</p>
+              </div>
+            )}
+          </Card.Body>
+        </Card>
       </div>
-      <Card>
-        <Card.Body>
-          <p className="text-neutral-500 text-center py-12">
-            Planning de surveillance, zones, et rapport d'incidents
-          </p>
-        </Card.Body>
-      </Card>
     </div>
   );
 }
@@ -183,7 +254,7 @@ function SurveillanceSection() {
 export default function SurveillantDashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('apercu');
-  const { data, loading } = useDashboardStats('surveillant');
+  const { data, loading, error, refetch } = useDashboardStats('surveillant');
 
   const stats = data?.stats?.map((s, i) => ({ ...s, icon: STATS_META[i]?.icon, color: STATS_META[i]?.color })) || [];
   const presences = data?.presences_semaine || [];
@@ -193,14 +264,14 @@ export default function SurveillantDashboard() {
     if (tabId === 'apercu') { setActiveTab(tabId); return; }
     const routes = { presences: '/surveillant/presences', surveillance: '/surveillant/surveillance' };
     navigate(routes[tabId] || '/surveillant/dashboard');
-  };
+ };
 
   const renderSection = () => {
     switch (activeTab) {
       case 'apercu': return <ApercuSection stats={stats} presences={presences} retards={retards} data={data} />;
       default: return <ApercuSection stats={stats} presences={presences} retards={retards} data={data} />;
-    }
-  };
+ }
+ };
 
   return (
     <div className="space-y-6">
@@ -215,8 +286,15 @@ export default function SurveillantDashboard() {
             Suivi des présences — {format(new Date(), 'EEEE d MMMM yyyy', { locale: fr })}
           </p>
         </div>
-        <Button variant="ghost" size="sm"><Shield className="h-4 w-4 mr-1" /> Mon Service</Button>
+        <div className="flex items-center gap-2">
+          <RefreshButton loading={loading} onRefresh={refetch} />
+          <Button variant="ghost" size="sm"><Shield className="h-4 w-4 mr-1" /> Mon Service</Button>
+        </div>
       </div>
+
+      {error && (
+        <ErrorDisplay message={error} onRetry={refetch} />
+      )}
 
       <div className="border-b border-neutral-200 dark:border-neutral-800">
         <nav className="flex gap-1 overflow-x-auto -mb-px">
@@ -234,7 +312,7 @@ export default function SurveillantDashboard() {
                 <Icon className="h-4 w-4" /> {tab.label}
               </button>
             );
-          })}
+ })}
         </nav>
       </div>
 

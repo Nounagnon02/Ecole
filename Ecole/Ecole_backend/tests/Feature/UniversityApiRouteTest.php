@@ -2,10 +2,15 @@
 
 namespace Tests\Feature;
 
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class UniversityApiRouteTest extends TestCase
 {
+    // Sans ce trait, aucune migration ne tourne et toute requête
+    // échoue sur « no such table ».
+    use RefreshDatabase;
+
     /**
      * Test that the university API returns 401 without auth token.
      * All university routes are protected by Sanctum.

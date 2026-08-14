@@ -3,12 +3,22 @@
 namespace App\Models;
 
 use App\Traits\BelongsToEcole;
+use App\Traits\ScopedToCycle;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class ConseilClasse extends Model
 {
-    use HasFactory, BelongsToEcole;
+    use HasFactory, BelongsToEcole, ScopedToCycle;
+
+    /**
+     * Un conseil de classe porte sur une classe précise.
+     */
+    protected static function cyclePath(): array
+    {
+        return ['class' => 'classe_id'];
+    }
+
 
     protected $table = 'conseils_classe';
 

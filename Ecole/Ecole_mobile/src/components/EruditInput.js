@@ -79,7 +79,8 @@ export default function EruditInput({
   ...props
 }) {
   const config = useInputConfig(size, variant);
-  const { s } = config;
+  // useInputConfig expose les métriques sous la clé `size`, pas `s`.
+  const { size: s } = config;
   const { colors } = useTheme();
   const [focused, setFocused] = useState(false);
   const [passwordVisible, setPasswordVisible] = useState(false);

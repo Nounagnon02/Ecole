@@ -6,13 +6,13 @@
  */
 
 import { motion } from 'framer-motion';
-import { Wrench, RefreshCw, Clock, Mail } from 'lucide-react';
+import { Wrench, RefreshCw, Mail } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 export default function MaintenancePage({
   titre = "Maintenance en cours",
   description = "Nous effectuons des améliorations sur notre plateforme. Le service sera de retour dans quelques instants.",
-  dateEstimee = null,
+  dateEstimee = null
 }) {
   const [timeLeft, setTimeLeft] = useState(null);
 
@@ -28,7 +28,7 @@ export default function MaintenancePage({
       setTimeLeft({
         hours: Math.floor(diff / (1000 * 60 * 60)),
         minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
-        seconds: Math.floor((diff % (1000 * 60)) / 1000),
+        seconds: Math.floor((diff % (1000 * 60)) / 1000)
       });
     }, 1000);
     return () => clearInterval(interval);

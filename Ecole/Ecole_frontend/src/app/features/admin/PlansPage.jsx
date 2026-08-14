@@ -9,7 +9,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Plus, Edit3, Trash2, CreditCard, CheckCircle2,
-  XCircle, Zap, Star, Users, Building2, Loader2, AlertCircle,
+  Zap, Users, Building2, Loader2, AlertCircle
 } from 'lucide-react';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
@@ -23,7 +23,7 @@ export default function PlansPage() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await get('/api/v1/admin/plans');
+        const res = await get('/v1/admin/plans');
         const items = Array.isArray(res?.data?.data) ? res.data.data
           : Array.isArray(res?.data) ? res.data
           : Array.isArray(res) ? res

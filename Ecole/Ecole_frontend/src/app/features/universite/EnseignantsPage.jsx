@@ -9,7 +9,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   Users, Plus, Search, BookOpen, GraduationCap,
-  Building2, Mail, Phone, MapPin, Loader2, AlertCircle,
+  Building2, Mail, Phone, Loader2, AlertCircle
 } from 'lucide-react';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
@@ -25,7 +25,7 @@ const GRADE_BADGE = {
   'maître-assistant': { variant: 'sky', label: 'MA' },
   'maitre assistant': { variant: 'sky', label: 'MA' },
   assistant: { variant: 'amber', label: 'Assistant' },
-  vacataire: { variant: 'neutral', label: 'Vacataire' },
+  vacataire: { variant: 'neutral', label: 'Vacataire' }
 };
 
 export default function EnseignantsPage() {
@@ -48,7 +48,7 @@ export default function EnseignantsPage() {
           faculte: e.faculte?.nom || e.faculte_nom || '—',
           specialite: e.specialite || e.discipline || '—',
           cours: e.cours_count ?? e.cours ?? 0,
-          etudiants: e.etudiants_count ?? e.etudiants ?? 0,
+          etudiants: e.etudiants_count ?? e.etudiants ?? 0
         })));
       } catch (e) {
         console.error('Erreur chargement enseignants:', e);
@@ -60,7 +60,7 @@ export default function EnseignantsPage() {
     total: enseignants.length,
     professeurs: enseignants.filter((e) => /professeur/i.test(e.grade)).length,
     maitresConferences: enseignants.filter((e) => /maître|maitre.*conf/i.test(e.grade)).length,
-    assistants: enseignants.filter((e) => /assistant/i.test(e.grade)).length,
+    assistants: enseignants.filter((e) => /assistant/i.test(e.grade)).length
   }), [enseignants]);
 
   const filtered = useMemo(() =>

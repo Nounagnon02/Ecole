@@ -8,8 +8,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Shield, Clock, AlertTriangle, CheckCircle,
-  Search, Plus, Calendar, Loader2, AlertCircle,
+  Shield, AlertTriangle, CheckCircle,
+  Plus, Calendar, Loader2, AlertCircle
 } from 'lucide-react';
 import { cn, formatDate } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
@@ -74,7 +74,7 @@ export default function SurveillancePage() {
     total: incidents.length,
     enCours: incidents.filter((s) => s.statut === 'en_cours' || s.statut === 'signalé' || s.statut === 'signale').length,
     termines: incidents.filter((s) => s.statut === 'termine' || s.statut === 'résolu').length,
-    graves: incidents.filter((s) => s.gravite === 'grave').length,
+    graves: incidents.filter((s) => s.gravite === 'grave').length
   }), [incidents]);
 
   const filtered = useMemo(() =>

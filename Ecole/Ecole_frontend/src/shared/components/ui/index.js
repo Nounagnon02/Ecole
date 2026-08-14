@@ -18,4 +18,5 @@ export { default as Combobox } from './Combobox';
 export { default as Breadcrumb } from './Breadcrumb';
 export { default as EmptyState, ErrorDisplay } from './EmptyState';
 export { default as ErrorBoundary } from './ErrorBoundary';
+export { default as RefreshButton } from './RefreshButton';
 export { default as LazyImage } from './LazyImage';

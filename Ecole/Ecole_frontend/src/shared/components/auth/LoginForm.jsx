@@ -7,14 +7,14 @@
 
 import { useState, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
   Lock,
   AlertCircle,
   ArrowRight,
   Mail,
   HelpCircle,
-  School,
+  School
 } from 'lucide-react';
 import useAuthStore from '@/shared/stores/auth-store';
 import { ROLE_REDIRECT_MAP, FALLBACK_REDIRECT } from '@/features/roles/route-config';
@@ -23,12 +23,12 @@ import { Button, Input } from '@/shared/components/ui';
 /* ─── Animation variants ────────────────────────────────────────────── */
 const fadeUp = {
   hidden: { opacity: 0, y: 16 },
-  visible: { opacity: 1, y: 0 },
+  visible: { opacity: 1, y: 0 }
 };
 
 const container = {
   hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.06, delayChildren: 0.05 } },
+  visible: { opacity: 1, transition: { staggerChildren: 0.06, delayChildren: 0.05 } }
 };
 
 /* ====================================================================
@@ -265,7 +265,7 @@ export default function LoginForm() {
     try {
       const result = await login({
         email: form.email,
-        password: form.password,
+        password: form.password
       });
 
       // Connexion directe (ecole unique) → redirection
@@ -292,7 +292,7 @@ export default function LoginForm() {
           _general:
             err.response?.data?.message ||
             err.message ||
-            'Erreur de connexion. Veuillez reessayer.',
+            'Erreur de connexion. Veuillez reessayer.'
         });
       }
     } finally {
@@ -309,7 +309,7 @@ export default function LoginForm() {
       navigate(path, { replace: true });
     } catch (err) {
       setErrors({
-        _general: err.response?.data?.message || 'Erreur lors de la selection de l\'ecole.',
+        _general: err.response?.data?.message || 'Erreur lors de la selection de l\'ecole.'
       });
       setSchoolLoading(false);
     }

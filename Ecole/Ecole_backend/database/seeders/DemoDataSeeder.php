@@ -157,6 +157,17 @@ class DemoDataSeeder extends Seeder
         $ensCount = DB::table('enseignants')->where('ecole_id', $ecoleId)->count();
         echo "✓ Enseignants: {$ensCount}\n";
 
+        // ─── 5b. Affectations enseignant → matière → classe ─────────────
+        //
+        // Le pivot `enseignant_matiere` restait vide, si bien que
+        // `Enseignant::classes()` renvoyait une collection vide pour tout le
+        // monde : le tableau de bord enseignant n'affichait rien, et
+        // `ElevePolicy::view` comme `AbsencePolicy::view` refusaient chaque
+        // élève à chaque enseignant — la policy est correcte, il n'y avait
+        // simplement rien à autoriser.
+        $affectations = $this->assignTeachers($ecoleId);
+        echo "✓ Affectations enseignant/matière/classe: {$affectations}\n";
+
         // ─── 6. More students (30+) ────────────────────────────────────
         $studentNames = [
             ['name' => 'ADJOVI', 'prenom' => 'Koffi', 'mat' => 'SCO2025001', 'sexe' => 'M'],
@@ -221,7 +232,7 @@ class DemoDataSeeder extends Seeder
                 'user_id' => $userId,
                 'numero_matricule' => $e['mat'],
                 'sexe' => $e['sexe'],
-                'class_id' => $classIds[$targetClass],
+                'classe_id' => $classIds[$targetClass],
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -310,11 +321,13 @@ class DemoDataSeeder extends Seeder
             if (!isset($newParentIds[$i])) continue;
 
             DB::table('eleves_parents')->insert([
-                'ecole_id' => $ecoleId,
-                'parent_id' => $newParentIds[$i],
-                'eleve_id' => $eleveId,
-                'created_at' => now(),
-                'updated_at' => now(),
+                'ecole_id'    => $ecoleId,
+                'parent_id'   => $newParentIds[$i],
+                'eleve_id'    => $eleveId,
+                'role'        => $i % 2 === 0 ? 'père' : 'mère',
+                'is_primary'  => true,
+                'created_at'  => now(),
+                'updated_at'  => now(),
             ]);
         }
         echo "✓ Parents liés aux élèves\n";
@@ -322,9 +335,9 @@ class DemoDataSeeder extends Seeder
         // ─── 9. Notes for all students ────────────────────────────────
         $allEleves = DB::table('eleves')
             ->where('ecole_id', $ecoleId)
-            ->get(['id', 'class_id']);
+            ->get(['id', 'classe_id']);
 
-        $periodes = ['Semestre 1', 'Semestre 2'];
+        $periodes = ['Trimestre 1', 'Trimestre 2', 'Trimestre 3'];
         $evalTypes = ['Devoir1', 'Devoir2', 'Interrogation', '1ère evaluation', '2ème evaluation'];
 
         // No existing notes to check on fresh seed
@@ -337,7 +350,7 @@ class DemoDataSeeder extends Seeder
         foreach ($allEleves as $eleve) {
             $classeMatieres = DB::table('classe_matieres')
                 ->where('ecole_id', $ecoleId)
-                ->where('classe_id', $eleve->class_id)
+                ->where('classe_id', $eleve->classe_id)
                 ->get();
 
             foreach ($classeMatieres as $cm) {
@@ -359,7 +372,7 @@ class DemoDataSeeder extends Seeder
                     $batchNotes[] = [
                         'ecole_id' => $ecoleId,
                         'eleve_id' => $eleve->id,
-                        'classe_id' => $eleve->class_id,
+                        'classe_id' => $eleve->classe_id,
                         'matiere_id' => $cm->matiere_id,
                         'note' => $note,
                         'note_sur' => $noteSur,
@@ -438,7 +451,7 @@ class DemoDataSeeder extends Seeder
 
             $contribution = DB::table('contributions')
                 ->where('ecole_id', $ecoleId)
-                ->where('id_classe', $eleve->class_id)
+                ->where('id_classe', $eleve->classe_id)
                 ->first();
 
             $montant = $contribution ? $contribution->montant : 150000;
@@ -501,5 +514,80 @@ class DemoDataSeeder extends Seeder
 
         $prio = ['Mathématiques' => 5, 'Français' => 4, 'Physique-Chimie' => 3, 'SVT' => 2];
         return $prio[$matiereNom] ?? 1;
+    }
+
+    /**
+     * Affecter chaque enseignant aux classes qui portent sa spécialité.
+     *
+     * L'affectation suit `classe_matieres` : une classe n'enseigne une matière
+     * que si le lien existe, donc croiser les deux évite d'inventer des
+     * affectations incohérentes. La série est reprise de la classe quand elle en
+     * a une — la colonne est NOT NULL sur le pivot.
+     *
+     * `insertOrIgnore` : rejouer le seeder ne doit pas échouer sur un doublon.
+     */
+    private function assignTeachers(int $ecoleId): int
+    {
+        $teachers = DB::table('enseignants')
+            ->where('ecole_id', $ecoleId)
+            ->select('id', 'specialite')
+            ->get();
+
+        if ($teachers->isEmpty()) {
+            return 0;
+        }
+
+        // Une série par classe, pour satisfaire la contrainte NOT NULL du pivot.
+        $serieParClasse = DB::table('classe_series')
+            ->where('ecole_id', $ecoleId)
+            ->pluck('serie_id', 'classe_id');
+
+        $serieDefaut = DB::table('series')->where('ecole_id', $ecoleId)->value('id');
+
+        $rows = [];
+
+        foreach ($teachers as $teacher) {
+            // La matière dont l'intitulé correspond à la spécialité, si elle existe.
+            $matiereId = DB::table('matieres')
+                ->where('ecole_id', $ecoleId)
+                ->where('nom', 'like', '%' . $teacher->specialite . '%')
+                ->value('id');
+
+            if (!$matiereId) {
+                continue;
+            }
+
+            $classeIds = DB::table('classe_matieres')
+                ->where('ecole_id', $ecoleId)
+                ->where('matiere_id', $matiereId)
+                ->limit(4)
+                ->pluck('classe_id');
+
+            foreach ($classeIds as $classeId) {
+                $serieId = $serieParClasse[$classeId] ?? $serieDefaut;
+
+                if (!$serieId) {
+                    continue;
+                }
+
+                $rows[] = [
+                    'enseignant_id' => $teacher->id,
+                    'matiere_id'    => $matiereId,
+                    'classe_id'     => $classeId,
+                    'serie_id'      => $serieId,
+                    'ecole_id'      => $ecoleId,
+                    'created_at'    => now(),
+                    'updated_at'    => now(),
+                ];
+            }
+        }
+
+        if ($rows === []) {
+            return 0;
+        }
+
+        DB::table('enseignant_matiere')->insertOrIgnore($rows);
+
+        return DB::table('enseignant_matiere')->where('ecole_id', $ecoleId)->count();
     }
 }

@@ -51,6 +51,7 @@ const ROLE_MENUS = {
   [ROLES.DIRECTEUR]: [
     { icon: LayoutDashboard, label: 'Tableau de bord', path: '/directeur/dashboard' },
     { icon: Users, label: 'Élèves', path: '/eleves' },
+    { icon: GraduationCap, label: 'Enseignants', path: '/affectations' },
     { icon: BookOpen, label: 'Notes', path: '/notes' },
     { icon: Calendar, label: 'Emploi du temps', path: '/emploi-du-temps' },
     { icon: DollarSign, label: 'Paiements', path: '/paiements' },

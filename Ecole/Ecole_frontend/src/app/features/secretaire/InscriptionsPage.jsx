@@ -8,8 +8,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
-  UserPlus, Search, Plus, FileText, Calendar, CheckCircle, XCircle,
-  Clock, Eye, UserCheck, Loader2, AlertCircle,
+  UserPlus, Search, Plus, Calendar, CheckCircle, XCircle,
+  Clock, Eye, UserCheck, Loader2, AlertCircle
 } from 'lucide-react';
 import { cn, formatDate } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
@@ -44,7 +44,7 @@ export default function InscriptionsPage() {
   const stats = useMemo(() => ({
     total: inscriptions.length,
     complets: inscriptions.filter((i) => i.dossier_complet).length,
-    incomplets: inscriptions.filter((i) => !i.dossier_complet).length,
+    incomplets: inscriptions.filter((i) => !i.dossier_complet).length
   }), [inscriptions]);
 
   const filtered = useMemo(() =>

@@ -3,9 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Enseignant;
+use App\Models\EnseignantMatiere;
 use App\Models\User;
 use App\Models\Classes;
 use App\Models\EmploiDuTemps;
+use App\Models\Notes;
+use App\Support\Roles;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -15,10 +18,14 @@ class EnseignantController extends Controller
 {
     /**
      * Liste des enseignants (Admin)
+     *
+     * `whereHas('user')` exclut les profils dont le compte a été supprimé
+     * (soft delete) : le user revient `null` via la relation, inutile de les
+     * exposer dans les listes de personnel actif.
      */
     public function index()
     {
-        return response()->json(Enseignant::with('user')->get());
+        return response()->json(Enseignant::with('user')->whereHas('user')->get());
     }
 
     /**
@@ -33,7 +40,7 @@ class EnseignantController extends Controller
             'identifiant' => 'required|string|unique:users,identifiant',
             'password' => 'required|string|min:6',
             'ecole_id' => 'required|exists:ecoles,id',
-            'role' => 'required|in:enseignant,enseignantM,enseignantP',
+            'role' => 'required|in:' . implode(',', Roles::teachers()),
         ]);
 
         try {
@@ -55,7 +62,8 @@ class EnseignantController extends Controller
                 return response()->json($enseignant->load('user'), 201);
             });
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Erreur lors de la création', 'error' => $e->getMessage()], 500);
+            $this->rethrowIfMeaningful($e);
+            return response()->json(['message' => 'Erreur lors de la création', 'error' => $this->clientErrorMessage($e)], 500);
         }
     }
 
@@ -103,8 +111,14 @@ class EnseignantController extends Controller
     }
 
     /**
-     * Espace Enseignant : Récupérer les notes saisies (via ses classes/matières)
+     * Espace Enseignant : Récupérer les notes saisies (via ses affectations)
      * GET /enseignant/notes
+     *
+     * Les notes sont filtrées sur les paires exactes (classe, matière) issues
+     * du pivot `enseignant_matiere`. L'ancien croisement de `classes` et
+     * `matieres` était un produit cartésien : un enseignant affecté à deux
+     * matières dans la même classe voyait les notes des deux matières pour
+     * chaque cours — et les notes de collègues partageant une classe.
      */
     public function notes()
     {
@@ -114,12 +128,30 @@ class EnseignantController extends Controller
         }
 
         $enseignant = $user->enseignant;
-        $classeIds = $enseignant->classes()->pluck('classes.id');
-        $matiereIds = $enseignant->matieres()->pluck('matieres.id');
+
+        // Paires exactes (classe_id, matiere_id) — source unique de vérité.
+        // `withoutGlobalScope('ecole')` : les anciennes lignes du pivot ont un
+        // ecole_id null (avant l'ajout de la colonne) et l'enseignant parent
+        // est déjà cloisonné par établissement.
+        $pairs = EnseignantMatiere::withoutGlobalScope('ecole')
+            ->where('enseignant_id', $enseignant->id)
+            ->select('classe_id', 'matiere_id')
+            ->distinct()
+            ->get();
 
         $notes = Notes::with(['eleve.user', 'matiere', 'classe'])
-            ->whereIn('classe_id', $classeIds)
-            ->whereIn('matiere_id', $matiereIds)
+            ->when($pairs->isNotEmpty(), function ($query) use ($pairs) {
+                $query->where(function ($sub) use ($pairs) {
+                    foreach ($pairs as $pair) {
+                        $sub->orWhere(function ($w) use ($pair) {
+                            $w->where('classe_id', $pair->classe_id)
+                              ->where('matiere_id', $pair->matiere_id);
+                        });
+                    }
+                });
+            }, function ($query) {
+                $query->whereRaw('1 = 0');
+            })
             ->latest()
             ->take(50)
             ->get();
@@ -128,5 +160,173 @@ class EnseignantController extends Controller
             'success' => true,
             'data'    => $notes,
         ]);
+    }
+
+    /**
+     * Affectations d'un enseignant (classe × série × matière)
+     * GET /enseignants/{id}/affectations
+     */
+    public function affectations($id)
+    {
+        $enseignant = Enseignant::find($id);
+        if (!$enseignant) {
+            return response()->json(['message' => 'Enseignant non trouvé'], 404);
+        }
+
+        $affectations = $this->affectationsQuery($id);
+
+        return response()->json([
+            'success' => true,
+            'data' => $affectations,
+        ]);
+    }
+
+    /**
+     * Enregistrer les affectations d'un enseignant
+     * POST /enseignants/{id}/affectations — body { affectations: [{classe_id, serie_id, matiere_id}] }
+     */
+    public function storeAffectations(Request $request, $id)
+    {
+        $enseignant = Enseignant::find($id);
+        if (!$enseignant) {
+            return response()->json(['message' => 'Enseignant non trouvé'], 404);
+        }
+
+        $validated = $request->validate([
+            'affectations' => 'required|array|min:1',
+            'affectations.*.classe_id' => 'required|school_exists:classes,id',
+            'affectations.*.serie_id' => 'required|school_exists:series,id',
+            'affectations.*.matiere_id' => 'required|school_exists:matieres,id',
+        ]);
+
+        $ecoleId = $enseignant->ecole_id ?: auth()->user()?->ecole_id;
+        if (!$ecoleId) {
+            return response()->json(['message' => 'Aucun établissement associé'], 422);
+        }
+
+        foreach ($validated['affectations'] as $item) {
+            // Règle de cohérence : la matière doit être rattachée à la série
+            // de cette classe (pivot serie_matieres).
+            $serieAttachee = DB::table('serie_matieres')
+                ->where('classe_id', $item['classe_id'])
+                ->where('serie_id', $item['serie_id'])
+                ->where('matiere_id', $item['matiere_id'])
+                ->exists();
+
+            if (!$serieAttachee) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "La matière sélectionnée n'est pas rattachée à la série de cette classe.",
+                    'classe_id' => $item['classe_id'],
+                    'serie_id' => $item['serie_id'],
+                    'matiere_id' => $item['matiere_id'],
+                ], 422);
+            }
+
+            // `withoutGlobalScope` : sans lui, la requête de correspondance
+            // filtrerait sur ecole_id et recréerait les lignes historiques
+            // (ecole_id null) au lieu de les réutiliser.
+            EnseignantMatiere::withoutGlobalScope('ecole')->updateOrCreate(
+                [
+                    'enseignant_id' => $id,
+                    'classe_id' => $item['classe_id'],
+                    'serie_id' => $item['serie_id'],
+                    'matiere_id' => $item['matiere_id'],
+                ],
+                ['ecole_id' => $ecoleId]
+            );
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Affectations enregistrées',
+            'data' => $this->affectationsQuery($id),
+        ], 201);
+    }
+
+    /**
+     * Retirer une affectation d'un enseignant
+     * DELETE /enseignants/{id}/affectations/{affectationId}
+     */
+    public function destroyAffectation($id, $affectationId)
+    {
+        $enseignant = Enseignant::find($id);
+        if (!$enseignant) {
+            return response()->json(['message' => 'Enseignant non trouvé'], 404);
+        }
+
+        $ligne = EnseignantMatiere::withoutGlobalScope('ecole')
+            ->where('enseignant_id', $id)
+            ->find($affectationId);
+
+        if (!$ligne) {
+            return response()->json(['message' => 'Affectation non trouvée'], 404);
+        }
+
+        $ligne->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Affectation retirée',
+            'data' => $this->affectationsQuery($id),
+        ]);
+    }
+
+    /**
+     * Liste des affectations avec libellés, tous cycles confondus.
+     */
+    private function affectationsQuery($id)
+    {
+        return EnseignantMatiere::withoutGlobalScope('ecole')
+            ->where('enseignant_id', $id)
+            ->with(['classe:id,nom_classe', 'matiere:id,nom', 'serie:id,nom'])
+            ->orderBy('classe_id')
+            ->get();
+    }
+
+    /**
+     * Mettre à jour un enseignant (Admin / Directeur)
+     * PUT /enseignants/update/{id}
+     */
+    public function update(Request $request, $id)
+    {
+        $enseignant = Enseignant::with('user')->findOrFail($id);
+        $user = $enseignant->user;
+
+        $validated = $request->validate([
+            'name'    => 'sometimes|string|max:255',
+            'prenom'  => 'sometimes|string|max:255',
+            'email'   => 'sometimes|nullable|email|unique:users,email,' . $user->id,
+            'role'    => 'sometimes|in:' . implode(',', Roles::teachers()),
+        ]);
+
+        $user->update(array_intersect_key($validated, array_flip(['name', 'prenom', 'email', 'role'])));
+
+        return response()->json($enseignant->fresh()->load('user'));
+    }
+
+    /**
+     * Supprimer un enseignant (Admin / Directeur)
+     * DELETE /enseignants/delete/{id}
+     *
+     * Suppression douce du compte : le profil `enseignants` (et son historique,
+     * emplois du temps, affectations…) est conservé, seul `users.deleted_at`
+     * est posé. Le compte est ainsi privé d'accès sans que ses données ne
+     * disparaissent en cascade.
+     */
+    public function destroy($id)
+    {
+        $enseignant = Enseignant::with('user')->findOrFail($id);
+        $user = $enseignant->user;
+
+        if ($user) {
+            $user->is_active = false;
+            $user->save();
+            $user->tokens()->delete();
+            DB::table('sessions')->where('user_id', $user->id)->delete();
+            $user->delete();
+        }
+
+        return response()->json(['message' => 'Enseignant supprimé'], 200);
     }
 }

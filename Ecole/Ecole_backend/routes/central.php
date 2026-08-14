@@ -83,7 +83,27 @@ Route::prefix('api/v1/onboarding')->middleware('throttle:10,1')->group(function 
 |
 */
 Route::prefix('api/v1/billing/webhook')->middleware('throttle:webhooks')->group(function () {
-    Route::post('cinetpay', 'App\Http\Controllers\Central\WebhookController@cinetpay');
-    Route::post('fedapay', 'App\Http\Controllers\Central\WebhookController@fedapay');
-    Route::post('stripe', 'App\Http\Controllers\Central\WebhookController@stripe');
+    // Noms requis : BillingService et les providers construisent leurs URL de
+    // retour via route('billing.*'). Sans nom, RouteNotFoundException (F7).
+    Route::post('cinetpay', 'App\Http\Controllers\Central\WebhookController@cinetpay')
+        ->name('billing.webhook.cinetpay');
+    Route::post('fedapay', 'App\Http\Controllers\Central\WebhookController@fedapay')
+        ->name('billing.webhook.fedapay');
+    Route::post('stripe', 'App\Http\Controllers\Central\WebhookController@stripe')
+        ->name('billing.webhook.stripe');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Retours navigateur après paiement d'abonnement
+|--------------------------------------------------------------------------
+|
+*/
+Route::prefix('api/v1/billing')->group(function () {
+    Route::get('callback', 'App\Http\Controllers\Central\BillingController@callback')
+        ->name('billing.callback');
+    // `cancelPayment` et non `cancel` : ce dernier canceled un abonnement et
+    // attend un modèle Subscription en paramètre.
+    Route::get('cancel', 'App\Http\Controllers\Central\BillingController@cancelPayment')
+        ->name('billing.cancel');
 });

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\periodes;
 use Illuminate\Http\Request;
+use App\Support\Cycles;
 
 class periodesController extends Controller
 {
@@ -74,7 +75,7 @@ class periodesController extends Controller
     {
         $periodes = periodes::whereHas('typeEvaluations', function($query) {
             $query->whereHas('classes', function($q) {
-                $q->where('classes.categorie_classe', 'maternelle');
+                $q->where('classes.categorie_classe', Cycles::KINDERGARTEN);
             });
         })->get();
         return response()->json($periodes);
@@ -84,7 +85,7 @@ class periodesController extends Controller
     {
         $periodes = periodes::whereHas('typeEvaluations', function($query) {
             $query->whereHas('classes', function($q) {
-                $q->where('classes.categorie_classe', 'primaire');
+                $q->where('classes.categorie_classe', Cycles::PRIMARY);
             });
         })->get();
         return response()->json($periodes);
@@ -94,7 +95,7 @@ class periodesController extends Controller
     {
         $periodes = periodes::whereHas('typeEvaluations', function($query) {
             $query->whereHas('classes', function($q) {
-                $q->where('classes.categorie_classe', 'secondaire');
+                $q->where('classes.categorie_classe', Cycles::SECONDARY);
             });
         })->get();
         return response()->json($periodes);

@@ -17,7 +17,14 @@ use App\Models\Universite\Paiement;
 use App\Models\Universite\Personnel;
 use App\Models\Universite\Diplome;
 use Illuminate\Database\Seeder;
+use App\Models\Ecole;
+use App\Models\User;
+use App\Support\Roles;
+use App\Support\SchoolContext;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class UniversiteSeeder extends Seeder
 {
@@ -26,8 +33,27 @@ class UniversiteSeeder extends Seeder
      */
     public function run(): void
     {
-        // Disable foreign key checks for smooth seeding across related tables
-        DB::statement('SET FOREIGN_KEY_CHECKS=0');
+        // `Schema::disableForeignKeyConstraints()`, pas `SET FOREIGN_KEY_CHECKS=0` :
+        // la seconde forme est du SQL MySQL brut et lève une erreur de syntaxe sur
+        // SQLite, si bien que ce seeder échouait dès sa première ligne. La méthode
+        // du schema builder émet l'instruction propre au pilote en cours.
+        Schema::disableForeignKeyConstraints();
+
+        // Sans contexte d'école, `BelongsToEcole` laissait `ecole_id` à null sur
+        // chaque ligne créée : ce seeder produisait 12 étudiants, 13 filières,
+        // 20 matières, 76 notes et 18 paiements qui n'appartenaient à aucun
+        // établissement et restaient invisibles pour tout le monde — un
+        // `Etudiant::count()` renvoyait 0 au directeur de l'école qui les
+        // possédait. Aucune erreur n'était levée.
+        $ecole = Ecole::orderBy('id')->first();
+
+        if (!$ecole) {
+            $this->command->warn('Aucune école en base : lancez BeninEducationSeeder ou EcoleSeeder d\'abord.');
+
+            return;
+        }
+
+        SchoolContext::bind($ecole);
 
         // ---- 1. UNIVERSITE ----
         $universite = Universite::create([
@@ -675,15 +701,162 @@ class UniversiteSeeder extends Seeder
             'mention' => 'Bien',
         ]);
 
-        // Re-enable foreign key checks
-        DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        // Un étudiant sans compte ne peut pas ouvrir son espace : `etudiants.user_id`
+        // est le prérequis de toute vue personnelle du module (cf.
+        // ECARTS_FRONT_BACK.md §4). Les 12 fiches naissaient sans lien, donc la
+        // fonctionnalité n'avait rien à exercer.
+        $comptes = $this->issueStudentAccounts($ecole);
+
+        // Même principe pour l'administration : sans comptes `recteur`, `doyen`,
+        // `professeur` et `personnel`, le module universitaire n'était pilotable
+        // par personne en base de test (cf. PLAN_CORRECTIONS_ROLES.md lot L2).
+        $staff = $this->issueStaffAccounts($ecole);
+
+        Schema::enableForeignKeyConstraints();
+        SchoolContext::forget();
 
         $this->command->info('✓ Module universitaire seedé avec succès !');
+        $this->command->info("  {$comptes} comptes étudiants délivrés (mot de passe : password1234)");
+        $this->command->info("  {$staff} comptes d'administration délivrés (mot de passe : password1234)");
         $this->command->info('  1 Université, 3 Facultés, 8 Départements, 13 Filières');
         $this->command->info('  6 Enseignants, 12 Étudiants, 4 Personnels');
         $this->command->info('  1 Année Académique, 2 Semestres');
         $this->command->info('  ' . count($matieres) . ' Matières');
         $this->command->info('  12 Inscriptions avec notes et paiements');
         $this->command->info('  1 Diplôme');
+    }
+
+    /**
+     * Délivrer un compte de connexion à chaque étudiant qui n'en a pas.
+     *
+     * L'inscription se fait au bureau du registraire et les identifiants
+     * arrivent après, donc une fiche sans compte est un état normal — mais
+     * aucune des 12 n'en avait, si bien que l'espace étudiant restait
+     * inatteignable même une fois construit.
+     *
+     * `firstOrCreate` sur l'email : rejouer le seeder ne doit pas échouer sur une
+     * contrainte d'unicité, et l'identité de connexion est unique à l'échelle de
+     * la plateforme, pas de l'école.
+     */
+    private function issueStudentAccounts(Ecole $ecole): int
+    {
+        $issued = 0;
+
+        foreach (Etudiant::whereNull('user_id')->get() as $etudiant) {
+            $email = $etudiant->email ?: Str::slug($etudiant->matricule) . '@etu.uac.bj';
+
+            $user = User::firstOrCreate(
+                ['email' => $email],
+                [
+                    'identifiant' => Str::lower($etudiant->matricule),
+                    'name'        => $etudiant->nom,
+                    'prenom'      => $etudiant->prenom,
+                    'telephone'   => $etudiant->telephone,
+                    'password'    => Hash::make('password1234'),
+                    'role'        => Roles::STUDENT,
+                    'ecole_id'    => $ecole->id,
+                ]
+            );
+
+            $etudiant->update(['user_id' => $user->id]);
+            $issued++;
+        }
+
+        return $issued;
+    }
+
+    /**
+     * Délivrer les comptes d'administration du module universitaire.
+     *
+     * Les routes du module exigent `role:recteur,doyen,professeur,personnel,...`
+     * (cf. `routes/api/universite.php`), mais personne ne possédait ces rôles en
+     * base de test : seule `etudiant` était provisionnée. Chaque retour correspond
+     * à un poste de l'organigramme UAC (1 recteur, 1 doyen par faculté, 1 compte
+     * par enseignant et par membre du personnel).
+     *
+     * `uni_enseignants` porte une colonne `user_id` (migration
+     * `link_university_profiles_to_accounts`), donc le hook professeur est
+     * réellement relié à sa fiche ; recteur/doyen/personnel n'ont pas de colonne
+     * de liaison (le contrôle se fait par rôle middleware), on se contente d'un
+     * compte avec le rôle adéquat.
+     */
+    private function issueStaffAccounts(Ecole $ecole): int
+    {
+        $issued = 0;
+
+        // ---- Recteur (1 par université : l'université seedée) ----
+        $universite = Universite::first();
+
+        if ($universite) {
+            User::firstOrCreate(
+                ['email' => 'recteur@uac.bj'],
+                [
+                    'identifiant' => 'recteur_universite',
+                    'name'        => 'Recteur',
+                    'prenom'      => $universite->nom,
+                    'password'    => Hash::make('password1234'),
+                    'role'        => Roles::CHANCELLOR,
+                    'ecole_id'    => $ecole->id,
+                ]
+            );
+            $issued++;
+        }
+
+        // ---- 2. Un doyen par faculté ----
+        foreach (Faculte::all() as $index => $faculte) {
+            User::firstOrCreate(
+                ['email' => 'doyen' . ($index + 1) . '@uac.bj'],
+                [
+                    'identifiant' => 'doyen_faculte' . ($index + 1),
+                    'name'        => $faculte->nom,
+                    'prenom'      => 'Doyen',
+                    'password'    => Hash::make('password1234'),
+                    'role'        => Roles::DEAN,
+                    'ecole_id'    => $ecole->id,
+                ]
+            );
+            $issued++;
+        }
+
+        // ---- 3. Un compte par professeur (relie à sa fiche `uni_enseignants`) ----
+        foreach (Enseignant::whereNull('user_id')->get() as $enseignant) {
+            $email = $enseignant->email ?: 'prof.' . Str::slug($enseignant->nom . '-' . $enseignant->prenom) . '@uac.bj';
+
+            $user = User::firstOrCreate(
+                ['email' => $email],
+                [
+                    'identifiant' => 'prof_' . Str::slug($enseignant->nom . '-' . $enseignant->prenom),
+                    'name'        => $enseignant->nom,
+                    'prenom'      => $enseignant->prenom,
+                    'telephone'   => $enseignant->telephone,
+                    'password'    => Hash::make('password1234'),
+                    'role'        => Roles::PROFESSOR,
+                    'ecole_id'    => $ecole->id,
+                ]
+            );
+
+            $enseignant->update(['user_id' => $user->id]);
+            $issued++;
+        }
+
+        // ---- 4. Un compte par personne du personnel ----
+        foreach (Personnel::all() as $personne) {
+            $email = $personne->email ?: 'personnel.' . Str::slug($personne->nom . '-' . $personne->prenom) . '@uac.bj';
+
+            User::firstOrCreate(
+                ['email' => $email],
+                [
+                    'identifiant' => 'perso_' . Str::slug($personne->nom . '-' . $personne->prenom),
+                    'name'        => $personne->nom,
+                    'prenom'      => $personne->prenom,
+                    'password'    => Hash::make('password1234'),
+                    'role'        => Roles::STAFF,
+                    'ecole_id'    => $ecole->id,
+                ]
+            );
+            $issued++;
+        }
+
+        return $issued;
     }
 }

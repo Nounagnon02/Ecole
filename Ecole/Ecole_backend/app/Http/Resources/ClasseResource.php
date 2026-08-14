@@ -10,9 +10,10 @@ class ClasseResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'nom' => $this->nom,
-            'niveau' => $this->niveau,
-            'section' => $this->section,
+            'nom' => $this->nom_classe,
+            // `classes` ne porte ni `niveau` ni `section` : le cycle est
+            // `categorie_classe`.
+            'cycle' => $this->categorie_classe,
             'effectif' => $this->eleves_count ?? $this->eleves?->count() ?? 0,
             'created_at' => $this->created_at?->isoFormat('LL'),
             // Relations
