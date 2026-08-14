@@ -53,7 +53,7 @@ Route::middleware([
             // étaient déclarées puis échouaient en 500 à l'appel. Et
             // `PaiementController` n'existe pas du tout — la ressource
             // 'paiements' pointait dans le vide (les paiements passent par
-            // PaymentController / FedaPayController, cf. routes/api/services.php).
+            // PaymentController / ComptableController, cf. routes/api/services.php).
             Route::apiResource('messages', 'App\Http\Controllers\MessageController')
                 ->only(['index', 'store']);
             Route::apiResource('notifications', 'App\Http\Controllers\NotificationController')

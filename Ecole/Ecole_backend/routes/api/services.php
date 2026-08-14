@@ -9,7 +9,6 @@ use App\Http\Controllers\{
     NotificationController,
     ExerciceController,
     EvenementController,
-    FedaPayController,
     PersonnelController,
     ExportController,
     TransportController
@@ -73,11 +72,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/mobile-money', [PaymentController::class, 'processMobileMoney']);
     });
 
-    // ============ FEDAPAY ============
-    Route::prefix('fedapay')->group(function () {
-        Route::post('/init/{id}', [FedaPayController::class, 'initier']);
-    });
-
     // ============ MESSAGERIE ============
     Route::prefix('messages')->group(function () {
         Route::get('/received', [MessageController::class, 'index']);
@@ -136,27 +130,27 @@ Route::middleware('auth:sanctum')->group(function () {
 |--------------------------------------------------------------------------
 |
 | Ces routes DOIVENT être nommées : le code appelle route('payment.callback')
-| et route('api.fedapay.callback') pour construire les URL de retour envoyées
-| au provider. Sans elles, `route()` levait une RouteNotFoundException et
-| l'initialisation de paiement échouait systématiquement en 500 (audit F7).
+| et route('comptable.fedapay.callback') pour construire les URL de retour
+| envoyées au provider. Sans elles, `route()` levait une RouteNotFoundException
+| et l'initialisation de paiement échouait systématiquement en 500 (audit F7).
 |
 */
 
 // Retour navigateur après paiement (le provider y redirige l'utilisateur)
+//
+// `payment.callback` sert à PaymentController (table `payments`).
+// Le retour de l'échéancier en ligne (ComptableController::paiementCallback,
+// route `comptable.fedapay.callback` déclarée dans users.php) passe par
+// FedaPayService. L'ancien FedaPayController qui partageait ce nom de route a
+// été supprimé (doublon cassé, audit F) : il lisait `?id=` et
+// `cinetpay_transaction_id`, des colonnes inexistantes.
 Route::get('/payments/callback', [PaymentController::class, 'callback'])
     ->name('payment.callback');
-
-Route::get('/fedapay/callback', [FedaPayController::class, 'callback'])
-    ->name('api.fedapay.callback');
 
 // Webhooks serveur-à-serveur (signature vérifiée dans le contrôleur)
 Route::post('/payments/webhook', [PaymentController::class, 'webhook'])
     ->middleware('throttle:webhooks')
     ->name('payment.webhook');
-
-Route::post('/fedapay/webhook', [FedaPayController::class, 'webhook'])
-    ->middleware('throttle:webhooks')
-    ->name('api.fedapay.webhook');
 
 // Sonde de santé. Exposée aussi sous /api/v1/ (déclaré dans routes/api.php),
 // les sondes d'infrastructure et les tests ciblant cette version.
