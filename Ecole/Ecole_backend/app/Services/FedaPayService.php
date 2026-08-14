@@ -29,7 +29,7 @@ class FedaPayService
                 'currency' => 'XOF',
                 'description' => $data['description'] ?? 'Paiement école',
                 'reference' => $reference,
-                'callback_url' => route('api.fedapay.callback'),
+                'callback_url' => route('comptable.fedapay.callback'),
                 'metadata' => [
                     'customer_firstname' => $data['customer_firstname'] ?? '',
                     'customer_lastname' => $data['customer_lastname'] ?? '',
