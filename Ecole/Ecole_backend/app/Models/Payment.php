@@ -12,6 +12,7 @@ class Payment extends Model
 
     protected $fillable = [
         'eleve_id',
+        'paiement_eleve_id',
         'ecole_id',
         'transaction_id',
         'amount',
@@ -36,6 +37,15 @@ class Payment extends Model
     public function eleve()
     {
         return $this->belongsTo(Eleve::class);
+    }
+
+    /**
+     * L'échéance de scolarité rapprochée par ce passage de passerelle, si la
+     * transaction lui est rattachée (cf. reconciliation à la confirmation).
+     */
+    public function paiementEleve()
+    {
+        return $this->belongsTo(PaiementEleve::class, 'paiement_eleve_id');
     }
 
     public function ecole()
