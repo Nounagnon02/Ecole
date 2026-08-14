@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\{User, Eleve, Classes, Notes, Matieres, Message};
+use App\Support\CalendrierOfficiel;
 use App\Support\Roles;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -354,9 +355,14 @@ class DashboardController extends Controller
                 ->whereYear('date', now()->year)
                 ->count()
             : 0;
-        $assiduite = $children->isNotEmpty()
-            ? max(0, 100 - (int) round(($absencesMois / ($children->count() * 22)) * 100))
-            : 100;
+        // Assiduité rapportée au nombre réel de jours de classe du mois
+        // (calendrier officiel : jours ouvrés moins jours fériés), au lieu de
+        // la division arbitraire par 22 jours. Hors période de classe (vacances
+        // de juillet/août) la référence est nulle → assiduité indéterminée.
+        $joursScolaires = CalendrierOfficiel::joursScolairesDuMois(now()->year, now()->month);
+        $assiduite = $children->isNotEmpty() && $joursScolaires > 0
+            ? max(0, 100 - (int) round(($absencesMois / ($children->count() * $joursScolaires)) * 100))
+            : null;
         $solde = \App\Models\PaiementEleve::whereIn('eleve_id', $children->pluck('id'))
             ->where('montant_restant', '>', 0)
             ->sum('montant_restant');
