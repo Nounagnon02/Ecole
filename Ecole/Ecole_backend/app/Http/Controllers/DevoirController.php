@@ -6,6 +6,7 @@ use App\Models\Devoir;
 use App\Models\Classe;
 use App\Models\Eleve;
 use App\Models\User;
+use App\Services\FileUploadService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -148,9 +149,15 @@ class DevoirController extends Controller
         ];
 
         if ($request->hasFile('fichier')) {
-            // Disque privé : le fichier n'est pas servi directement par le
-            // serveur web, il transite par une route authentifiée.
-            $path = $request->file('fichier')->store('devoirs/' . $id, 'local');
+            // Disque privé + FileUploadService : vérification MIME côté
+            // serveur via finfo + nom UUID pour éviter path traversal (audit S7).
+            $path = FileUploadService::store(
+                $request->file('fichier'),
+                'devoirs/' . $id,
+                'local',
+                allowedTypes: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.oasis.opendocument.text', 'text/plain', 'image/jpeg', 'image/png', 'image/webp', 'application/zip'],
+                maxSize: 10 * 1024 * 1024,
+            );
             $pivotData['fichier'] = $path;
         }
 
