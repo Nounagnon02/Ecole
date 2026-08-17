@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Middleware\AccountLockout;
 use App\Models\Eleve;
 use App\Models\Enseignant;
 use App\Models\User;
@@ -49,6 +50,9 @@ class AuthController extends Controller
         if (!$user || !Hash::check($request->password, $user->password)) {
             return response()->json(['message' => 'Identifiants incorrects'], 401);
         }
+
+        // Connexion réussie : réinitialiser le compteur de tentatives (AUTH-9).
+        AccountLockout::clearForLogin($login);
 
         if (!$user->is_active) {
             return response()->json(['message' => 'Votre compte est désactivé'], 403);
