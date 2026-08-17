@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\BulletinController;
+use App\Http\Controllers\Bulletin\BulletinController;
 use App\Http\Controllers\BulletinsController;
 use App\Http\Controllers\CahierDeTexteController;
 use App\Http\Controllers\ClassesController;
