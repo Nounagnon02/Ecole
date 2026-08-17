@@ -44,7 +44,7 @@ Route::middleware([
             Route::apiResource('matieres', 'App\Http\Controllers\MatieresController');
             Route::apiResource('classes', 'App\Http\Controllers\ClassesController');
             Route::apiResource('eleves', 'App\Http\Controllers\EleveController');
-            Route::apiResource('notes', 'App\Http\Controllers\NotesController');
+            Route::apiResource('notes', 'App\Http\Controllers\Notes\NotesCrudController');
 
             // Services
             //
