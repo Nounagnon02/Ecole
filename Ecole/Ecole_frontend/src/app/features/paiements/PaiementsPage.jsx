@@ -20,6 +20,7 @@ import Button from '@/shared/components/ui/Button';
 import Table from '@/shared/components/ui/Table';
 import Input from '@/shared/components/ui/Input';
 import { Skeleton } from '@/shared/components/ui/Skeleton';
+import { toast } from 'sonner';
 
 const STATUT_COLORS = {
   payee: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400',
@@ -112,11 +113,11 @@ export default function PaiementsPage() {
       if (res.data?.success && res.data?.payment_url) {
         window.location.href = res.data.payment_url;
       } else {
-        alert(res.data?.message || 'Impossible d\'initialiser le paiement');
+        toast.error(res.data?.message || 'Impossible d\'initialiser le paiement');
       }
     } catch (err) {
       console.error('Erreur initiation paiement:', err);
-      alert('Erreur lors de l\'initialisation du paiement');
+      toast.error('Erreur lors de l\'initialisation du paiement');
     }
   };
 

@@ -20,6 +20,7 @@ import Button from '@/shared/components/ui/Button';
 import Table from '@/shared/components/ui/Table';
 import Input from '@/shared/components/ui/Input';
 import { Skeleton } from '@/shared/components/ui/Skeleton';
+import { toast } from 'sonner';
 
 const STATUT_COLORS = {
   actif: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400',
@@ -47,7 +48,7 @@ export default function ElevesPage() {
       await apiClient.post(`/eleves/${eleve.id}/deactivate`);
       queryClient.invalidateQueries({ queryKey: ['eleves'] });
     } catch (e) {
-      window.alert(e?.response?.data?.message ?? 'Impossible de retirer l\'élève');
+      toast.error(e?.response?.data?.message ?? 'Impossible de retirer l\'élève');
     }
   };
 
