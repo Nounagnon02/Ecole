@@ -4,7 +4,8 @@ use App\Http\Controllers\{
     EcoleController,
     CommunicationsController,
     ContributionsController,
-    PaymentController,
+    Payment\PaymentController,
+    Payment\PaymentQueryController,
     MessageController,
     NotificationController,
     ExerciceController,
@@ -67,8 +68,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // ============ PAIEMENTS ============
     Route::prefix('payments')->middleware('throttle:paiements')->group(function () {
         Route::post('/initialize', [PaymentController::class, 'initializePayment']);
-        Route::get('/history', [PaymentController::class, 'getPaymentHistory']);
-        Route::get('/stats', [PaymentController::class, 'getPaymentStats'])->middleware('role:directeur,comptable');
+        Route::get('/history', [PaymentQueryController::class, 'getPaymentHistory']);
+        Route::get('/stats', [PaymentQueryController::class, 'getPaymentStats'])->middleware('role:directeur,comptable');
         Route::post('/mobile-money', [PaymentController::class, 'processMobileMoney']);
     });
 
