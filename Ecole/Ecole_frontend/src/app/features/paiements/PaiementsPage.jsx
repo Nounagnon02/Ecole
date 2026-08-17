@@ -22,8 +22,10 @@ import Input from '@/shared/components/ui/Input';
 import { Skeleton } from '@/shared/components/ui/Skeleton';
 
 const STATUT_COLORS = {
+  payee: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400',
   paye: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400',
   payé: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400',
+  partiel: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400',
   en_attente: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400',
   'en attente': 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400',
   echec: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400',
@@ -56,12 +58,17 @@ export default function PaiementsPage() {
     [paiements, search, filterStatut]
   );
 
+  // Slug du statut exposé par l'API (`payee`/`partiel`/`en_attente`), pas un
+  // libellé ni une variante historique (`paye`/`payé`) : les totaux retombaient
+  // à zéro tant que la page testait les mauvaises clés.
+  const paye = (p) => p.statut === 'payee';
+
   const totalPaye = paiements
-    .filter((p) => ['paye', 'payé'].includes(p.statut))
+    .filter(paye)
     .reduce((a, p) => a + parseFloat(p.montant ?? 0), 0);
 
   const totalTransactions = paiements.length;
-  const payes = paiements.filter((p) => ['paye', 'payé'].includes(p.statut)).length;
+  const payes = paiements.filter(paye).length;
   const tauxEncaisse = totalTransactions > 0 ? Math.round((payes / totalTransactions) * 100) : 0;
 
   const handleRecu = (id) => {
@@ -188,9 +195,9 @@ export default function PaiementsPage() {
                 className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
               >
                 <option value="">Tous les statuts</option>
-                <option value="paye">Payé</option>
+                <option value="payee">Payé</option>
+                <option value="partiel">Partiel</option>
                 <option value="en_attente">En attente</option>
-                <option value="echec">Échec</option>
               </select>
             </div>
           </Card>
@@ -252,7 +259,7 @@ export default function PaiementsPage() {
                         'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium',
                         STATUT_COLORS[p.statut] ?? STATUT_COLORS.en_attente
                       )}>
-                        {p.statut}
+                        {p.statut_label ?? p.statut}
                       </span>
                     </Table.Cell>
                     <Table.Cell className="text-right">
@@ -397,7 +404,7 @@ export default function PaiementsPage() {
                               'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium',
                               STATUT_COLORS[e.statut] ?? STATUT_COLORS.en_attente
                             )}>
-                              {e.statut}
+                              {e.statut_label ?? e.statut}
                             </span>
                           </Table.Cell>
                           <Table.Cell className="text-right">
