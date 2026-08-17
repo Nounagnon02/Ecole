@@ -47,5 +47,11 @@ return [
         'max_tokens' => env('ANTHROPIC_MAX_TOKENS', 4096),
         // `temperature` retiré : rejeté avec une 400 sur les modèles courants.
     ],
+
+    'africastalking' => [
+        'api_key' => env('AFRICASTALKING_API_KEY'),
+        'username' => env('AFRICASTALKING_USERNAME'),
+        'shortcode' => env('AFRICASTALKING_SHORTCODE'),
+    ],
 ];
 
