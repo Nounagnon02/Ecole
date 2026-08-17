@@ -6,31 +6,34 @@ use App\Models\User;
 use App\Models\Ecole;
 use App\Support\Roles;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
 
 class AdminUsersSeeder extends Seeder
 {
     public function run()
     {
+        $password = Str::random(16);
+
         $roles = [
-            Roles::ADMIN => "admin'spassword1234567@",
-            Roles::DIRECTOR => "director'spassword1234567@",
-            Roles::DIRECTOR_KINDERGARTEN => "directorM'spassword1234567@",
-            Roles::DIRECTOR_PRIMARY => "directorP'spassword1234567@",
-            Roles::DIRECTOR_SECONDARY => "directorS'spassword1234567@",
-            Roles::CENSEUR => "censeur'spassword1234567@",
-            Roles::SECRETAIRE => "secretaire'spassword1234567@",
-            Roles::COMPTABLE => "comptable'spassword1234567@",
-            Roles::SURVEILLANT => "surveillant'spassword1234567@",
-            Roles::INFIRMIER => "infirmier'spassword1234567@",
-            Roles::BIBLIOTHECAIRE => "bibliothecaire'spassword1234567@",
-            Roles::TEACHER => "enseignant'spassword1234567@",
+            Roles::ADMIN,
+            Roles::DIRECTOR,
+            Roles::DIRECTOR_KINDERGARTEN,
+            Roles::DIRECTOR_PRIMARY,
+            Roles::DIRECTOR_SECONDARY,
+            Roles::CENSEUR,
+            Roles::SECRETAIRE,
+            Roles::COMPTABLE,
+            Roles::SURVEILLANT,
+            Roles::INFIRMIER,
+            Roles::BIBLIOTHECAIRE,
+            Roles::TEACHER,
         ];
 
         $ecoles = Ecole::all();
 
         foreach ($ecoles as $ecole) {
-            foreach ($roles as $role => $password) {
+            foreach ($roles as $role) {
                 User::firstOrCreate(
                     ['identifiant' => $role . '_ecole' . $ecole->id],
                     [
@@ -46,6 +49,6 @@ class AdminUsersSeeder extends Seeder
             }
         }
 
-        $this->command->info('Comptes admin créés pour ' . $ecoles->count() . ' écoles');
+        $this->command->info('Comptes admin créés pour ' . $ecoles->count() . ' écoles (mot de passe aléatoire généré)');
     }
 }

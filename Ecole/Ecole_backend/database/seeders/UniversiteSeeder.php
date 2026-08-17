@@ -716,8 +716,8 @@ class UniversiteSeeder extends Seeder
         SchoolContext::forget();
 
         $this->command->info('✓ Module universitaire seedé avec succès !');
-        $this->command->info("  {$comptes} comptes étudiants délivrés (mot de passe : password1234)");
-        $this->command->info("  {$staff} comptes d'administration délivrés (mot de passe : password1234)");
+        $this->command->info("  {$comptes} comptes étudiants délivrés (mot de passe aléatoire généré)");
+        $this->command->info("  {$staff} comptes d'administration délivrés (mot de passe aléatoire généré)");
         $this->command->info('  1 Université, 3 Facultés, 8 Départements, 13 Filières');
         $this->command->info('  6 Enseignants, 12 Étudiants, 4 Personnels');
         $this->command->info('  1 Année Académique, 2 Semestres');
@@ -752,7 +752,7 @@ class UniversiteSeeder extends Seeder
                     'name'        => $etudiant->nom,
                     'prenom'      => $etudiant->prenom,
                     'telephone'   => $etudiant->telephone,
-                    'password'    => Hash::make('password1234'),
+                    'password'    => Hash::make(Str::random(16)),
                     'role'        => Roles::STUDENT,
                     'ecole_id'    => $ecole->id,
                 ]
@@ -794,7 +794,7 @@ class UniversiteSeeder extends Seeder
                     'identifiant' => 'recteur_universite',
                     'name'        => 'Recteur',
                     'prenom'      => $universite->nom,
-                    'password'    => Hash::make('password1234'),
+                    'password'    => Hash::make(Str::random(16)),
                     'role'        => Roles::CHANCELLOR,
                     'ecole_id'    => $ecole->id,
                 ]
@@ -810,7 +810,7 @@ class UniversiteSeeder extends Seeder
                     'identifiant' => 'doyen_faculte' . ($index + 1),
                     'name'        => $faculte->nom,
                     'prenom'      => 'Doyen',
-                    'password'    => Hash::make('password1234'),
+                    'password'    => Hash::make(Str::random(16)),
                     'role'        => Roles::DEAN,
                     'ecole_id'    => $ecole->id,
                 ]
@@ -829,7 +829,7 @@ class UniversiteSeeder extends Seeder
                     'name'        => $enseignant->nom,
                     'prenom'      => $enseignant->prenom,
                     'telephone'   => $enseignant->telephone,
-                    'password'    => Hash::make('password1234'),
+                    'password'    => Hash::make(Str::random(16)),
                     'role'        => Roles::PROFESSOR,
                     'ecole_id'    => $ecole->id,
                 ]
@@ -849,7 +849,7 @@ class UniversiteSeeder extends Seeder
                     'identifiant' => 'perso_' . Str::slug($personne->nom . '-' . $personne->prenom),
                     'name'        => $personne->nom,
                     'prenom'      => $personne->prenom,
-                    'password'    => Hash::make('password1234'),
+                    'password'    => Hash::make(Str::random(16)),
                     'role'        => Roles::STAFF,
                     'ecole_id'    => $ecole->id,
                 ]
