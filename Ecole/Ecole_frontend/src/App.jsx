@@ -12,7 +12,9 @@ import { Routes, Route, Navigate, Link, ScrollRestoration } from 'react-router-d
 import { AnimatePresence } from 'framer-motion';
 import { Toaster } from 'sonner';
 import useAuthStore from '@/shared/stores/auth-store';
+import useCommandK from '@/shared/hooks/useCommandK';
 import AppShell from '@/shared/components/layout/AppShell';
+import CommandPalette from '@/shared/components/ui/CommandPalette';
 import ProtectedRoute from '@/shared/components/auth/ProtectedRoute';
 import LoginForm from '@/shared/components/auth/LoginForm';
 import ForgotPassword from '@/app/features/auth/ForgotPassword';
@@ -108,6 +110,7 @@ function buildProtectedRoutes() {
 function App() {
   const initialize = useAuthStore((s) => s.initialize);
   const isLoading = useAuthStore((s) => s.isLoading);
+  useCommandK();
 
   useEffect(() => {
     initialize();
@@ -119,6 +122,7 @@ function App() {
 
   return (
     <Suspense fallback={<LoadingSpinner />}>
+      <CommandPalette />
       <Toaster
         position="top-right"
         aria-live="polite"

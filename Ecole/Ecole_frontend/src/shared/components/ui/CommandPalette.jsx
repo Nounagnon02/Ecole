@@ -6,14 +6,15 @@
  *
  * Features :
  * - Navigation vers n'importe quelle page
- * - Recherche d'élèves/enseignants/classes
+ * - Recherche API : élèves (/eleves?q=), classes (/classes), paiements (/payments/history?q=)
  * - Actions rapides contextuelles (selon rôle)
  * - Raccourcis clavier : ⌘K / Ctrl+K
- * - Filtrage intelligent avec fuzzy search
+ * - Filtrage intelligent avec debounce
  * - Groupes d'actions par catégorie
+ * - Navigation clavier (↑↓ Enter Esc)
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -27,16 +28,30 @@ import {
   CreditCard,
   ClipboardList,
   ArrowRight,
-  Command as CommandIcon
+  Command as CommandIcon,
+  Loader2,
 } from 'lucide-react';
 import useAuthStore from '@/shared/stores/auth-store';
 import useUIStore from '@/shared/stores/ui-store';
+import apiClient from '@/shared/lib/api-client';
 import { ROUTE_CONFIG } from '@/features/roles/route-config';
 import { ROLES, normalizeRole } from '@/shared/types/roles';
 
+/* ─── Debounce helper ────────────────────────────────────────────────── */
+function useDebouncedValue(value, delay = 300) {
+  const [debounced, setDebounced] = useState(value);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+
+  return debounced;
+}
+
 /* ─── Actions génériques proposées quand le rôle n'a aucune action ── */
 const DEFAULT_ACTIONS = [
-  { icon: Search, label: 'Rechercher dans l’application', action: 'none' },
+  { icon: Search, label: "Rechercher dans l\u2019application", action: 'none' },
 ];
 
 /* ─── Mapping rôles ↔ icônes pour les actions rapides ──────────── */
@@ -100,7 +115,7 @@ function getAllRoutes(userRole) {
       label: cfg.label || key.charAt(0).toUpperCase() + key.slice(1),
       path: cfg.path,
       icon: cfg.icon || ArrowRight,
-      group: cfg.group || 'navigation'
+      group: cfg.group || 'navigation',
     }));
 }
 
@@ -110,7 +125,15 @@ export default function CommandPalette() {
   const { commandPaletteOpen, closeCommandPalette } = useUIStore();
 
   const [query, setQuery] = useState('');
-  const [activeGroup, setActiveGroup] = useState('navigation');
+  const debouncedQuery = useDebouncedValue(query, 300);
+
+  /* ─── API search results ─────────────────────────────────────── */
+  const [apiResults, setApiResults] = useState({ eleves: [], classes: [], paiements: [] });
+  const [apiLoading, setApiLoading] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  const inputRef = useRef(null);
+  const listRef = useRef(null);
 
   /* ─── Pages accessibles à l'utilisateur ─────────────────────────── */
   const pages = useMemo(() => getAllRoutes(user?.role), [user?.role]);
@@ -122,23 +145,159 @@ export default function CommandPalette() {
     return ROLE_ACTIONS[user.role] || ROLE_ACTIONS[effective] || DEFAULT_ACTIONS;
   }, [user?.role]);
 
-  /* ─── Filtrage fuzzy (basique) ──────────────────────────────────── */
+  /* ─── Filtrage local (pages + actions) ──────────────────────────── */
   const filterItems = useCallback(
     (items) => {
-      if (!query.trim()) return items;
-      const q = query.toLowerCase().trim();
+      if (!debouncedQuery.trim()) return items;
+      const q = debouncedQuery.toLowerCase().trim();
       return items.filter(
         (item) =>
           item.label.toLowerCase().includes(q) ||
           item.path?.toLowerCase().includes(q)
       );
     },
-    [query]
+    [debouncedQuery]
   );
 
   const filteredPages = useMemo(() => filterItems(pages), [filterItems, pages]);
   const filteredActions = useMemo(() => filterItems(actions), [filterItems, actions]);
-  const hasResults = filteredPages.length > 0 || filteredActions.length > 0;
+
+  /* ─── API search with debounce ──────────────────────────────────── */
+  useEffect(() => {
+    if (!debouncedQuery.trim()) {
+      setApiResults({ eleves: [], classes: [], paiements: [] });
+      return;
+    }
+
+    let cancelled = false;
+
+    async function fetchResults() {
+      setApiLoading(true);
+      const q = debouncedQuery.trim();
+
+      const [elevesRes, classesRes, paiementsRes] = await Promise.allSettled([
+        apiClient.get('/eleves', { params: { q } }),
+        apiClient.get('/classes', { params: { q } }),
+        apiClient.get('/payments/history', { params: { q } }),
+      ]);
+
+      if (cancelled) return;
+
+      const extract = (res) => {
+        if (res.status !== 'fulfilled') return [];
+        const data = res.value?.data;
+        if (Array.isArray(data)) return data;
+        if (Array.isArray(data?.data)) return data.data;
+        if (Array.isArray(data?.eleves)) return data.eleves;
+        if (Array.isArray(data?.results)) return data.results;
+        return [];
+      };
+
+      setApiResults({
+        eleves: extract(elevesRes),
+        classes: extract(classesRes),
+        paiements: extract(paiementsRes),
+      });
+      setApiLoading(false);
+    }
+
+    fetchResults();
+    return () => { cancelled = true; };
+  }, [debouncedQuery]);
+
+  /* ─── Flatten all results for keyboard navigation ──────────────── */
+  const allResultItems = useMemo(() => {
+    const items = [];
+
+    filteredActions.forEach((action) => items.push({ ...action, _type: 'action' }));
+    apiResults.eleves.forEach((el) =>
+      items.push({
+        label: el.nom_complet || el.nom || `${el.prenom || ''} ${el.nom || ''}`.trim(),
+        sublabel: el.classe || el.classe_nom || '',
+        path: `/eleves/${el.id}`,
+        icon: Users,
+        _type: 'eleve',
+      })
+    );
+    apiResults.classes.forEach((cl) =>
+      items.push({
+        label: cl.nom || cl.nom_classe || `Classe ${cl.id}`,
+        sublabel: cl.niveau || cl.section || '',
+        path: `/classes/${cl.id}`,
+        icon: BookOpen,
+        _type: 'classe',
+      })
+    );
+    apiResults.paiements.forEach((p) =>
+      items.push({
+        label: p.eleve || p.eleve_nom || `Paiement #${p.id}`,
+        sublabel: p.montant ? `${p.montant} FCFA` : p.date || '',
+        path: `/paiements`,
+        icon: CreditCard,
+        _type: 'paiement',
+      })
+    );
+    filteredPages.forEach((page) => items.push({ ...page, _type: 'page' }));
+
+    return items;
+  }, [filteredActions, apiResults, filteredPages]);
+
+  const hasResults =
+    filteredActions.length > 0 ||
+    apiResults.eleves.length > 0 ||
+    apiResults.classes.length > 0 ||
+    apiResults.paiements.length > 0 ||
+    filteredPages.length > 0;
+
+  /* ─── Reset query + active index on open/close ──────────────────── */
+  useEffect(() => {
+    if (commandPaletteOpen) {
+      setQuery('');
+      setActiveIndex(0);
+      setApiResults({ eleves: [], classes: [], paiements: [] });
+    }
+  }, [commandPaletteOpen]);
+
+  useEffect(() => {
+    setActiveIndex(0);
+  }, [debouncedQuery]);
+
+  /* ─── Keyboard navigation ───────────────────────────────────────── */
+  const handleKeyDown = useCallback(
+    (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        closeCommandPalette();
+        return;
+      }
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setActiveIndex((prev) => (prev + 1) % Math.max(allResultItems.length, 1));
+      }
+
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setActiveIndex((prev) => (prev - 1 + allResultItems.length) % Math.max(allResultItems.length, 1));
+      }
+
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const item = allResultItems[activeIndex];
+        if (item) handleSelect(item);
+      }
+    },
+    [allResultItems, activeIndex, closeCommandPalette]
+  );
+
+  /* ─── Scroll active item into view ──────────────────────────────── */
+  useEffect(() => {
+    if (!listRef.current) return;
+    const activeEl = listRef.current.querySelector('[data-active="true"]');
+    if (activeEl) {
+      activeEl.scrollIntoView({ block: 'nearest' });
+    }
+  }, [activeIndex]);
 
   /* ─── Handler de sélection ──────────────────────────────────────── */
   const handleSelect = useCallback(
@@ -146,31 +305,65 @@ export default function CommandPalette() {
       closeCommandPalette();
       if (item.action === 'navigate' || item.path) {
         navigate(item.path);
-      } else if (item.action === 'url') {
-        window.open(item.path, '_blank');
       }
     },
     [closeCommandPalette, navigate]
   );
 
-  /* ─── Raccourci clavier ⌘K global ───────────────────────────────── */
-  useEffect(() => {
-    const handler = (e) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
-        useUIStore.getState().toggleCommandPalette();
-      }
-    };
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
-  }, []);
-
-  /* ─── Reset query à chaque ouverture ────────────────────────────── */
+  /* ─── Focus input on open ──────────────────────────────────────── */
   useEffect(() => {
     if (commandPaletteOpen) {
-      setQuery('');
+      requestAnimationFrame(() => inputRef.current?.focus());
     }
   }, [commandPaletteOpen]);
+
+  /* ─── Render helpers ────────────────────────────────────────────── */
+  let globalIndex = -1;
+
+  function renderItem(item, idx) {
+    globalIndex++;
+    const currentIndex = globalIndex;
+    const isActive = currentIndex === activeIndex;
+
+    return (
+      <button
+        key={`${item._type}-${item.key || item.label || idx}`}
+        data-active={isActive}
+        onClick={() => handleSelect(item)}
+        onMouseEnter={() => setActiveIndex(currentIndex)}
+        className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
+          isActive
+            ? 'bg-[var(--accent-subtle)] text-[var(--accent)]'
+            : 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]'
+        }`}
+      >
+        <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${
+          isActive ? 'bg-[var(--accent)] text-white' : 'bg-[var(--border-light)] text-[var(--text-tertiary)]'
+        }`}>
+          <item.icon className="h-3.5 w-3.5" />
+        </span>
+        <span className="flex-1 text-left truncate">{item.label}</span>
+        {item.sublabel && (
+          <span className="text-[11px] text-[var(--text-tertiary)] truncate max-w-[120px]">{item.sublabel}</span>
+        )}
+        {item.path && !item.sublabel && (
+          <span className="text-[11px] text-[var(--text-tertiary)]">{item.path}</span>
+        )}
+      </button>
+    );
+  }
+
+  function renderGroup(label, items) {
+    if (items.length === 0) return null;
+    return (
+      <div className="mb-2">
+        <div className="mb-1 px-2 py-1 text-xs font-medium text-[var(--text-tertiary)] uppercase tracking-wider">
+          {label}
+        </div>
+        {items.map((item, i) => renderItem(item, i))}
+      </div>
+    );
+  }
 
   return (
     <AnimatePresence>
@@ -189,6 +382,9 @@ export default function CommandPalette() {
 
           {/* Palette */}
           <motion.div
+            role="dialog"
+            aria-label="Palette de commandes"
+            aria-modal="true"
             initial={{ opacity: 0, scale: 0.96, y: -12 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: -12 }}
@@ -196,102 +392,114 @@ export default function CommandPalette() {
             className="fixed inset-0 z-50 flex items-start justify-center pt-[12vh]"
             onClick={(e) => e.target === e.currentTarget && closeCommandPalette()}
           >
-            <div className="w-full max-w-xl overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-2xl shadow-black/10 dark:border-neutral-800 dark:bg-neutral-900">
+            <div
+              className="w-full max-w-xl overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface-raised)] shadow-2xl shadow-black/10"
+              onKeyDown={handleKeyDown}
+            >
               {/* Search input */}
-              <div className="flex items-center gap-3 border-b border-neutral-200 px-4 dark:border-neutral-800">
-                <Search className="h-4 w-4 shrink-0 text-neutral-400" />
+              <div className="flex items-center gap-3 border-b border-[var(--border-light)] px-4">
+                <Search className="h-4 w-4 shrink-0 text-[var(--text-tertiary)]" />
                 <input
+                  ref={inputRef}
                   autoFocus
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Rechercher une page, un élève, une action..."
-                  className="h-12 w-full bg-transparent text-sm text-neutral-900 outline-none placeholder-neutral-400 dark:text-neutral-100"
+                  placeholder="Rechercher élèves, classes, paiements..."
+                  role="combobox"
+                  aria-expanded={hasResults}
+                  aria-autocomplete="list"
+                  aria-controls="command-palette-list"
+                  aria-activedescendant={allResultItems[activeIndex] ? `result-${activeIndex}` : undefined}
+                  className="h-12 w-full bg-transparent text-sm text-[var(--text-primary)] outline-none placeholder-[var(--text-tertiary)]"
                 />
-                <kbd className="hidden shrink-0 items-center gap-0.5 rounded-md border border-neutral-300 bg-neutral-100 px-1.5 py-0.5 text-[10px] font-medium text-neutral-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400 sm:flex">
+                {apiLoading && (
+                  <Loader2 className="h-4 w-4 shrink-0 animate-spin text-[var(--accent)]" />
+                )}
+                <kbd className="hidden shrink-0 items-center gap-0.5 rounded-md border border-[var(--border)] bg-[var(--surface-subtle)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--text-tertiary)] sm:flex">
                   <CommandIcon className="h-3 w-3" />
                   K
                 </kbd>
               </div>
 
               {/* Results */}
-              <div className="max-h-80 overflow-y-auto p-2">
-                {!hasResults && query.trim() && (
+              <div
+                ref={listRef}
+                id="command-palette-list"
+                role="listbox"
+                aria-label="Résultats de recherche"
+                className="max-h-80 overflow-y-auto p-2"
+              >
+                {!hasResults && debouncedQuery.trim() && !apiLoading && (
                   <div className="flex flex-col items-center gap-2 px-4 py-8 text-center">
-                    <Search className="h-8 w-8 text-neutral-300 dark:text-neutral-600" />
-                    <p className="text-sm text-neutral-500">
-                      Aucun résultat pour &ldquo;{query}&rdquo;
+                    <Search className="h-8 w-8 text-[var(--text-tertiary)]" />
+                    <p className="text-sm text-[var(--text-secondary)]">
+                      Aucun résultat pour &ldquo;{debouncedQuery}&rdquo;
                     </p>
-                    <p className="text-xs text-neutral-400">
-                      Essayez un nom de page, une fonctionnalité, ou une action
+                    <p className="text-xs text-[var(--text-tertiary)]">
+                      Essayez un nom d&apos;élève, de classe ou une action
                     </p>
                   </div>
                 )}
 
-                {!query.trim() && (
-                  <div className="mb-2 px-2 py-1.5 text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                {!debouncedQuery.trim() && (
+                  <div className="mb-2 px-2 py-1.5 text-xs font-medium text-[var(--text-tertiary)] uppercase tracking-wider">
                     Suggestions
                   </div>
                 )}
 
                 {/* Actions rapides */}
-                {filteredActions.length > 0 && (
-                  <div className="mb-2">
-                    {filteredActions.map((action, i) => (
-                      <button
-                        key={`action-${i}`}
-                        onClick={() => handleSelect(action)}
-                        className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-neutral-700 transition-colors hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800"
-                      >
-                        <span className="flex h-7 w-7 items-center justify-center rounded-md bg-[var(--accent-subtle)] text-[var(--accent)]">
-                          <action.icon className="h-3.5 w-3.5" />
-                        </span>
-                        <span className="flex-1 text-left">{action.label}</span>
-                        <ArrowRight className="h-3.5 w-3.5 text-neutral-400 opacity-0 transition-opacity group-hover:opacity-100" />
-                      </button>
-                    ))}
-                  </div>
-                )}
+                {renderGroup('Actions', filteredActions)}
+
+                {/* API Results: Élèves */}
+                {renderGroup('Élèves', apiResults.eleves.map((el) => ({
+                  label: el.nom_complet || el.nom || `${el.prenom || ''} ${el.nom || ''}`.trim(),
+                  sublabel: el.classe || el.classe_nom || '',
+                  path: `/eleves/${el.id}`,
+                  icon: Users,
+                  _type: 'eleve',
+                })))}
+
+                {/* API Results: Classes */}
+                {renderGroup('Classes', apiResults.classes.map((cl) => ({
+                  label: cl.nom || cl.nom_classe || `Classe ${cl.id}`,
+                  sublabel: cl.niveau || cl.section || '',
+                  path: `/classes/${cl.id}`,
+                  icon: BookOpen,
+                  _type: 'classe',
+                })))}
+
+                {/* API Results: Paiements */}
+                {renderGroup('Paiements', apiResults.paiements.map((p) => ({
+                  label: p.eleve || p.eleve_nom || `Paiement #${p.id}`,
+                  sublabel: p.montant ? `${p.montant} FCFA` : p.date || '',
+                  path: '/paiements',
+                  icon: CreditCard,
+                  _type: 'paiement',
+                })))}
 
                 {/* Navigation pages */}
-                {filteredPages.length > 0 && (
-                  <>
-                    <div className="mb-1 px-2 py-1 text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                      Pages
-                    </div>
-                    {filteredPages.slice(0, 8).map((page) => (
-                      <button
-                        key={page.key}
-                        onClick={() => handleSelect(page)}
-                        className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-neutral-700 transition-colors hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800"
-                      >
-                        <page.icon className="h-4 w-4 text-neutral-400" />
-                        <span className="flex-1 text-left">{page.label}</span>
-                        <span className="text-[11px] text-neutral-400">{page.path}</span>
-                      </button>
-                    ))}
-                  </>
-                )}
+                {renderGroup('Pages', filteredPages)}
 
-                {!query.trim() && filteredPages.length === 0 && filteredActions.length === 0 && (
-                  <div className="px-4 py-8 text-center text-sm text-neutral-500">
+                {!debouncedQuery.trim() && !hasResults && (
+                  <div className="px-4 py-8 text-center text-sm text-[var(--text-tertiary)]">
                     Tapez pour commencer à rechercher...
                   </div>
                 )}
               </div>
 
               {/* Footer */}
-              <div className="flex items-center gap-4 border-t border-neutral-200 px-4 py-2.5 dark:border-neutral-800">
-                <div className="flex items-center gap-1.5 text-[11px] text-neutral-400">
-                  <kbd className="rounded border border-neutral-300 bg-neutral-100 px-1 py-0.5 text-[10px] dark:border-neutral-700 dark:bg-neutral-800">↑↓</kbd>
+              <div className="flex items-center gap-4 border-t border-[var(--border-light)] px-4 py-2.5">
+                <div className="flex items-center gap-1.5 text-[11px] text-[var(--text-tertiary)]">
+                  <kbd className="rounded border border-[var(--border)] bg-[var(--surface-subtle)] px-1 py-0.5 text-[10px]">↑↓</kbd>
                   <span>Naviguer</span>
                 </div>
-                <div className="flex items-center gap-1.5 text-[11px] text-neutral-400">
-                  <kbd className="rounded border border-neutral-300 bg-neutral-100 px-1 py-0.5 text-[10px] dark:border-neutral-700 dark:bg-neutral-800">↵</kbd>
+                <div className="flex items-center gap-1.5 text-[11px] text-[var(--text-tertiary)]">
+                  <kbd className="rounded border border-[var(--border)] bg-[var(--surface-subtle)] px-1 py-0.5 text-[10px]">↵</kbd>
                   <span>Ouvrir</span>
                 </div>
-                <div className="flex items-center gap-1.5 text-[11px] text-neutral-400">
-                  <kbd className="rounded border border-neutral-300 bg-neutral-100 px-1 py-0.5 text-[10px] dark:border-neutral-700 dark:bg-neutral-800">Esc</kbd>
+                <div className="flex items-center gap-1.5 text-[11px] text-[var(--text-tertiary)]">
+                  <kbd className="rounded border border-[var(--border)] bg-[var(--surface-subtle)] px-1 py-0.5 text-[10px]">Esc</kbd>
                   <span>Fermer</span>
                 </div>
               </div>

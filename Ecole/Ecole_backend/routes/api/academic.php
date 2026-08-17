@@ -10,6 +10,7 @@ use App\Http\Controllers\EmploiDuTempsController;
 use App\Http\Controllers\MatieresController;
 use App\Http\Controllers\MoyennesController;
 use App\Http\Controllers\Notes\{
+    NotesAutoSaveController,
     NotesCrudController,
     NotesImportController,
     NotesStatsController,
@@ -80,6 +81,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('notes')->group(function () {
         Route::get('/eleve/{eleveId?}', [NotesCrudController::class, 'index']);
         Route::post('/store', [NotesCrudController::class, 'store'])->middleware('role:directeur,enseignant');
+        Route::post('/auto-save', [NotesAutoSaveController::class, 'save'])->middleware('role:directeur,enseignant');
         Route::post('/import', [NotesImportController::class, 'import'])->middleware(['role:directeur,enseignant', 'throttle:5,1']);
         Route::post('/import-csv', [NotesImportController::class, 'importCsv'])->middleware(['role:directeur,enseignant', 'throttle:5,1']);
         Route::post('/bulk', [NotesCrudController::class, 'bulkStore'])->middleware('role:directeur,enseignant');
