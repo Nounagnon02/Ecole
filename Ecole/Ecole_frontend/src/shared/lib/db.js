@@ -144,8 +144,12 @@ export async function cacheCleanup() {
  */
 export async function cacheClear() {
   const db = await openDB();
-  const tx = db.transaction('cache', 'readwrite');
-  tx.objectStore('cache').clear();
+  const names = Array.from(db.objectStoreNames);
+  if (names.length === 0) return;
+  const tx = db.transaction(names, 'readwrite');
+  for (const name of names) {
+    tx.objectStore(name).clear();
+  }
   return new Promise((resolve, reject) => {
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);

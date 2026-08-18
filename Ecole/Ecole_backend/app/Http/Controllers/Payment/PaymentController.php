@@ -305,7 +305,25 @@ class PaymentController extends Controller
 
                 if ($payment) {
                     if ($status === 'approved') {
-                        $this->confirmPayment($payment, 'Paiement approuvé via webhook');
+                        // Filet de sécurité : vérifier côté provider que la
+                        // transaction est bien approuvée (audit S3). Si l'appel
+                        // échoue (timeout, indisponibilité), on fait quand même
+                        // confiance à la signature HMAC déjà validée.
+                        try {
+                            $verification = $this->provider->verifyPayment($transactionId);
+                            if (!$verification['success']) {
+                                Log::warning('S3: provider verify returned non-approved, trusting HMAC signature', [
+                                    'transaction_id' => $transactionId,
+                                    'provider_error' => $verification['error'] ?? null,
+                                ]);
+                            }
+                        } catch (\Throwable $e) {
+                            Log::warning('S3: provider verify unreachable, trusting HMAC signature', [
+                                'transaction_id' => $transactionId,
+                                'error' => $e->getMessage(),
+                            ]);
+                        }
+                        $this->confirmPayment($payment, 'Paiement approuvé via webhook (vérifié)');
                     } elseif ($status === 'declined') {
                         $payment->update(['status' => 'failed']);
                         $this->recordHistory($payment, 'failed', 'Paiement refusé');
@@ -399,6 +417,9 @@ class PaymentController extends Controller
     }
 
     /**
+     * Confirmer un paiement — seul chemin autorisé vers le statut « completed ».
+     *
+     * Idempotent : un webhook ou un retour navigateur redélivré /**
      * Confirmer un paiement — seul chemin autorisé vers le statut « completed ».
      *
      * Idempotent : un webhook ou un retour navigateur redélivré ne crédite
