@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Middleware\AccountLockout;
 use App\Models\Eleve;
 use App\Models\Enseignant;
 use App\Models\User;
@@ -11,6 +12,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rules\Password;
 
 class AuthController extends Controller
 {
@@ -49,6 +52,9 @@ class AuthController extends Controller
         if (!$user || !Hash::check($request->password, $user->password)) {
             return response()->json(['message' => 'Identifiants incorrects'], 401);
         }
+
+        // Connexion réussie : réinitialiser le compteur de tentatives (AUTH-9).
+        AccountLockout::clearForLogin($login);
 
         if (!$user->is_active) {
             return response()->json(['message' => 'Votre compte est désactivé'], 403);
@@ -308,7 +314,7 @@ class AuthController extends Controller
             'role' => 'required|string',
             'email' => 'nullable|email|unique:users,email',
             'identifiant' => 'required|string|unique:users,identifiant',
-            'password' => 'required|string|min:6',
+            'password' => ['required', 'string', Password::defaults()],
             'ecole_id' => 'required|exists:ecoles,id',
             'telephone' => 'nullable|string',
         ]);
@@ -347,6 +353,14 @@ class AuthController extends Controller
             }
 
             \DB::commit();
+
+            // Traçabilité : qui a créé cet utilisateur (audit S28).
+            Log::info('Utilisateur créé', [
+                'created_by' => $request->user()->id,
+                'user_id'    => $user->id,
+                'role'       => $user->role,
+                'ecole_id'   => $user->ecole_id,
+            ]);
 
             return response()->json(['message' => 'Utilisateur créé avec succès', 'user' => $user], 201);
 

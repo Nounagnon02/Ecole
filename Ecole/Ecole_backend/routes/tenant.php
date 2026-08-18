@@ -37,14 +37,14 @@ Route::middleware([
             // l'URL dictait le rôle, pas le compte. Restreint aux rôles du
             // référentiel (directeur, censeur, secretaire) comme la route
             // moderne api/dashboard.php (cf. audit).
-            Route::get('/dashboard/{role}/data', 'App\Http\Controllers\DashboardController@getDashboardData')
+            Route::get('/dashboard/{role}/data', 'App\Http\Controllers\Dashboard\DirecteurDashboardController@getDashboardData')
                 ->middleware('role:directeur,censeur,secretaire');
 
             // Academic
             Route::apiResource('matieres', 'App\Http\Controllers\MatieresController');
             Route::apiResource('classes', 'App\Http\Controllers\ClassesController');
             Route::apiResource('eleves', 'App\Http\Controllers\EleveController');
-            Route::apiResource('notes', 'App\Http\Controllers\NotesController');
+            Route::apiResource('notes', 'App\Http\Controllers\Notes\NotesCrudController');
 
             // Services
             //
@@ -53,7 +53,7 @@ Route::middleware([
             // étaient déclarées puis échouaient en 500 à l'appel. Et
             // `PaiementController` n'existe pas du tout — la ressource
             // 'paiements' pointait dans le vide (les paiements passent par
-            // PaymentController / FedaPayController, cf. routes/api/services.php).
+            // PaymentController / ComptableController, cf. routes/api/services.php).
             Route::apiResource('messages', 'App\Http\Controllers\MessageController')
                 ->only(['index', 'store']);
             Route::apiResource('notifications', 'App\Http\Controllers\NotificationController')

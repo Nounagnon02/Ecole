@@ -161,11 +161,11 @@ class EnseignantDashboardTest extends TestCase
         $this->assertSame($classe->nom_classe, $data['emploi_temps'][0]['cours'][0]['classe']);
         $this->assertSame('S101', $data['emploi_temps'][0]['cours'][0]['salle']);
 
-        // ── Devoirs : uniquement l'échéance à venir ─────────────────────
+        // ── Devoirs : uniquement l'échéance atteinte (à préparer) ───────
         $this->assertCount(1, $data['devoirs']);
-        $this->assertSame('Exercices à venir', $data['devoirs'][0]['titre']);
+        $this->assertSame('Échéance passée', $data['devoirs'][0]['titre']);
         $this->assertSame($classe->nom_classe, $data['devoirs'][0]['classe']);
-        $this->assertSame('à venir', $data['devoirs'][0]['etat']);
+        $this->assertSame('à préparer', $data['devoirs'][0]['etat']);
 
         // ── Notes récentes : lignes plates, le contrat du frontend ──────
         $this->assertCount(2, $data['notes_recentes']);

@@ -15,7 +15,6 @@ import {
   HardDrive,
   AlertTriangle,
   CheckCircle2,
-  Clock,
   Download,
   RefreshCw,
   Bell,
@@ -23,7 +22,7 @@ import {
 } from 'lucide-react';
 import {
   XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer,
-  Line, Area, AreaChart
+  Area, AreaChart
 } from 'recharts';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -48,10 +47,8 @@ const TABS = [
 
 const STATS_META = [
   { title: 'Utilisateurs Actifs', icon: Users, color: 'primary' },
-  { title: 'Requêtes/minute', icon: Activity, color: 'emerald' },
   { title: 'Espace Disque', icon: HardDrive, color: 'sky' },
   { title: 'Erreurs API', icon: AlertTriangle, color: 'red' },
-  { title: 'Temps Réponse', icon: Clock, color: 'purple' },
   { title: 'Uptime', icon: CheckCircle2, color: 'emerald' },
 ];
 
@@ -66,7 +63,7 @@ function ApercuSection({ data, loading, onRefresh }) {
   return (
     <div className="space-y-6">
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {safeStats.map((stat, i) => (
           <motion.div
             key={stat.title}
@@ -80,13 +77,13 @@ function ApercuSection({ data, loading, onRefresh }) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Traffic chart */}
+        {/* Activité plateforme */}
         <Card className="lg:col-span-2">
           <Card.Header>
             <div className="flex items-center justify-between">
               <div>
-                <Card.Title>Trafic API</Card.Title>
-                <Card.Description>Requêtes et temps de réponse — 7 derniers jours</Card.Description>
+                <Card.Title>Activité Plateforme</Card.Title>
+                <Card.Description>Actions auditées — 7 derniers jours</Card.Description>
               </div>
               <Button variant="ghost" size="sm" onClick={onRefresh} disabled={loading}>
                 <RefreshCw className={cn('h-4 w-4 mr-1', loading && 'animate-spin')} /> Actualiser
@@ -106,10 +103,8 @@ function ApercuSection({ data, loading, onRefresh }) {
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                   <XAxis dataKey="jour" tick={{ fontSize: 12 }} stroke="var(--text-tertiary)" />
                   <YAxis yAxisId="left" tick={{ fontSize: 12 }} stroke="var(--text-tertiary)" />
-                  <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12 }} stroke="var(--text-tertiary)" />
                   <ReTooltip contentStyle={{ borderRadius: '8px', border: '1px solid var(--border)' }} />
-                  <Area yAxisId="left" type="monotone" dataKey="req" stroke="var(--accent)" fill="url(#reqGrad)" strokeWidth={2} name="Requêtes" />
-                  <Line yAxisId="right" type="monotone" dataKey="temps" stroke="var(--green)" strokeWidth={2} name="Temps (ms)" dot={{ r: 3 }} />
+                  <Area yAxisId="left" type="monotone" dataKey="req" stroke="var(--accent)" fill="url(#reqGrad)" strokeWidth={2} name="Actions" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>

@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\BulletinController;
+use App\Http\Controllers\Bulletin\BulletinController;
 use App\Http\Controllers\BulletinsController;
 use App\Http\Controllers\CahierDeTexteController;
 use App\Http\Controllers\ClassesController;
@@ -9,7 +9,13 @@ use App\Http\Controllers\EleveController;
 use App\Http\Controllers\EmploiDuTempsController;
 use App\Http\Controllers\MatieresController;
 use App\Http\Controllers\MoyennesController;
-use App\Http\Controllers\NotesController;
+use App\Http\Controllers\Notes\{
+    NotesAutoSaveController,
+    NotesCrudController,
+    NotesImportController,
+    NotesStatsController,
+    NotesQueryController,
+};
 use App\Http\Controllers\periodesController;
 use Illuminate\Support\Facades\Route;
 
@@ -73,20 +79,21 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ============ NOTES ============
     Route::prefix('notes')->group(function () {
-        Route::get('/eleve/{eleveId?}', [NotesController::class, 'index']);
-        Route::post('/store', [NotesController::class, 'store'])->middleware('role:directeur,enseignant');
-        Route::post('/import', [NotesController::class, 'import'])->middleware(['role:directeur,enseignant', 'throttle:5,1']);
-        Route::post('/import-csv', [NotesController::class, 'importCsv'])->middleware(['role:directeur,enseignant', 'throttle:5,1']);
-        Route::post('/bulk', [NotesController::class, 'bulkStore'])->middleware('role:directeur,enseignant');
-        Route::get('/grille/{classeId}', [NotesController::class, 'grilleSaisie'])->middleware('role:directeur,enseignant');
-        Route::get('/export', [NotesController::class, 'export'])->middleware('role:directeur,enseignant');
-        Route::post('/{id}/lock', [NotesController::class, 'lock'])->middleware('role:directeur,enseignant');
-        Route::post('/{id}/unlock', [NotesController::class, 'unlock'])->middleware('role:directeur,enseignant');
-        Route::get('/classement/{classeId}/{periode}', [NotesController::class, 'classement'])->middleware('role:directeur,enseignant');
+        Route::get('/eleve/{eleveId?}', [NotesCrudController::class, 'index']);
+        Route::post('/store', [NotesCrudController::class, 'store'])->middleware('role:directeur,enseignant');
+        Route::post('/auto-save', [NotesAutoSaveController::class, 'save'])->middleware('role:directeur,enseignant');
+        Route::post('/import', [NotesImportController::class, 'import'])->middleware(['role:directeur,enseignant', 'throttle:5,1']);
+        Route::post('/import-csv', [NotesImportController::class, 'importCsv'])->middleware(['role:directeur,enseignant', 'throttle:5,1']);
+        Route::post('/bulk', [NotesCrudController::class, 'bulkStore'])->middleware('role:directeur,enseignant');
+        Route::get('/grille/{classeId}', [NotesCrudController::class, 'grilleSaisie'])->middleware('role:directeur,enseignant');
+        Route::get('/export', [NotesImportController::class, 'export'])->middleware('role:directeur,enseignant');
+        Route::post('/{id}/lock', [NotesCrudController::class, 'lock'])->middleware('role:directeur,enseignant');
+        Route::post('/{id}/unlock', [NotesCrudController::class, 'unlock'])->middleware('role:directeur,enseignant');
+        Route::get('/classement/{classeId}/{periode}', [NotesStatsController::class, 'classement'])->middleware('role:directeur,enseignant');
         // Agrégats appelés par le tableau de bord des notes, jusqu'ici absents.
         // Le périmètre est restreint dans le contrôleur selon le rôle.
-        Route::get('/stats', [NotesController::class, 'stats']);
-        Route::get('/moyennes-par-matiere', [NotesController::class, 'moyennesParMatiere']);
+        Route::get('/stats', [NotesStatsController::class, 'stats']);
+        Route::get('/moyennes-par-matiere', [NotesStatsController::class, 'moyennesParMatiere']);
     });
 
     // ============ MOYENNES (instantané bulletin) ============

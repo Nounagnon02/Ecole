@@ -125,13 +125,13 @@ function ApercuSection({ stats, emploiTemps, devoirs, loading }) {
           </Card.Footer>
         </Card>
 
-        {/* Devoirs à venir */}
+        {/* Devoirs à corriger */}
         <Card>
           <Card.Header>
             <div className="flex items-center justify-between">
               <div>
                 <Card.Title>Devoirs & Évaluations</Card.Title>
-                <Card.Description>À venir cette semaine</Card.Description>
+                <Card.Description>Échéance atteinte — à corriger</Card.Description>
               </div>
               <Button variant="ghost" size="sm">
                 <PenLine className="h-4 w-4 mr-1" /> Nouveau
@@ -146,7 +146,7 @@ function ApercuSection({ stats, emploiTemps, devoirs, loading }) {
             ) : devoirs.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-8 text-[var(--text-tertiary)]">
                 <FileText className="h-8 w-8 mb-2 opacity-40" />
-                <p className="text-sm">Aucun devoir ou évaluation à venir</p>
+                <p className="text-sm">Aucun devoir à corriger</p>
               </div>
             ) : (
             <div className="divide-y divide-neutral-100 dark:divide-neutral-800">

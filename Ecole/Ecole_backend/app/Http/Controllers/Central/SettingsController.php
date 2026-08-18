@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Central;
 
 use App\Models\SaaS\Tenant;
+use App\Services\FileUploadService;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Storage;
@@ -105,9 +106,12 @@ class SettingsController extends Controller
             'logo' => 'required|image|mimes:png,jpg,jpeg,webp|max:2048',
         ]);
 
-        $path = $request->file('logo')->storePublicly(
+        $path = FileUploadService::store(
+            $request->file('logo'),
             "tenants/{$tenant->id}/branding",
-            'public'
+            'public',
+            allowedTypes: ['image/jpeg', 'image/png', 'image/webp'],
+            maxSize: 2 * 1024 * 1024,
         );
 
         $url = Storage::url($path);
@@ -128,9 +132,12 @@ class SettingsController extends Controller
             'favicon' => 'required|image|mimes:png,ico|max:1024',
         ]);
 
-        $path = $request->file('favicon')->storePublicly(
+        $path = FileUploadService::store(
+            $request->file('favicon'),
             "tenants/{$tenant->id}/branding",
-            'public'
+            'public',
+            allowedTypes: ['image/png', 'image/x-icon'],
+            maxSize: 1024 * 1024,
         );
 
         $url = Storage::url($path);

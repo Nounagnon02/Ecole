@@ -1,6 +1,19 @@
 <?php
 
-use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Dashboard\{
+    DirecteurDashboardController,
+    EnseignantDashboardController,
+    ParentDashboardController,
+    EleveDashboardController,
+    AdminDashboardController,
+    UniversiteDashboardController,
+    ComptableDashboardController,
+    SurveillantDashboardController,
+    CenseurDashboardController,
+    InfirmierDashboardController,
+    BibliothecaireDashboardController,
+    SecretaireDashboardController,
+};
 use App\Http\Controllers\DirecteurController;
 use Illuminate\Support\Facades\Route;
 
@@ -13,36 +26,33 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth:sanctum')->prefix('dashboard')->group(function () {
     // ─── Directeur ───────────────────────────────────────────────────
-    // `getDashboardData` expose le référentiel complet de l'école : le
-    // middleware route doublonne le contrôle (cf. directoryRoles) — un
-    // oubli futur dans l'un ou l'autre ne peut pas ouvrir l'endpoint.
-    Route::get('/directeur/data', [DashboardController::class, 'getDashboardData'])
+    Route::get('/directeur/data', [DirecteurDashboardController::class, 'getDashboardData'])
         ->middleware('role:directeur,censeur,secretaire');
-    Route::post('/directeur/invalidate-cache', [DashboardController::class, 'invalidateCache'])->middleware('role:directeur');
-    Route::get('/directeur', [DashboardController::class, 'directeur'])->middleware('role:directeur');
+    Route::post('/directeur/invalidate-cache', [DirecteurDashboardController::class, 'invalidateCache'])->middleware('role:directeur');
+    Route::get('/directeur', [DirecteurDashboardController::class, 'directeur'])->middleware('role:directeur');
 
     // ─── Enseignant ──────────────────────────────────────────────────
-    Route::get('/enseignant', [DashboardController::class, 'enseignant'])->middleware('role:enseignant');
+    Route::get('/enseignant', [EnseignantDashboardController::class, 'enseignant'])->middleware('role:enseignant');
 
     // ─── Élève ───────────────────────────────────────────────────────
-    Route::get('/eleve', [DashboardController::class, 'eleve'])->middleware('role:eleve');
+    Route::get('/eleve', [EleveDashboardController::class, 'eleve'])->middleware('role:eleve');
 
     // ─── Parent ──────────────────────────────────────────────────────
-    Route::get('/parent', [DashboardController::class, 'parent'])->middleware('role:parent');
+    Route::get('/parent', [ParentDashboardController::class, 'parent'])->middleware('role:parent');
 
     // ─── Admin ───────────────────────────────────────────────────────
-    Route::get('/admin', [DashboardController::class, 'admin'])->middleware('role:admin,super-admin');
+    Route::get('/admin', [AdminDashboardController::class, 'admin'])->middleware('role:admin,super-admin');
 
     // ─── Université ──────────────────────────────────────────────────
-    Route::get('/universite', [DashboardController::class, 'universite'])->middleware('role:recteur,doyen,professeur,etudiant,personnel');
+    Route::get('/universite', [UniversiteDashboardController::class, 'universite'])->middleware('role:recteur,doyen,professeur,etudiant,personnel');
 
     // ─── Staff (6 rôles — R4) ────────────────────────────────────────
-    Route::get('/comptable', [DashboardController::class, 'comptable'])->middleware('role:comptable');
-    Route::get('/surveillant', [DashboardController::class, 'surveillant'])->middleware('role:surveillant');
-    Route::get('/censeur', [DashboardController::class, 'censeur'])->middleware('role:censeur');
-    Route::get('/infirmier', [DashboardController::class, 'infirmier'])->middleware('role:infirmier');
-    Route::get('/bibliothecaire', [DashboardController::class, 'bibliothecaire'])->middleware('role:bibliothecaire');
-    Route::get('/secretaire', [DashboardController::class, 'secretaire'])->middleware('role:secretaire');
+    Route::get('/comptable', [ComptableDashboardController::class, 'comptable'])->middleware('role:comptable');
+    Route::get('/surveillant', [SurveillantDashboardController::class, 'surveillant'])->middleware('role:surveillant');
+    Route::get('/censeur', [CenseurDashboardController::class, 'censeur'])->middleware('role:censeur');
+    Route::get('/infirmier', [InfirmierDashboardController::class, 'infirmier'])->middleware('role:infirmier');
+    Route::get('/bibliothecaire', [BibliothecaireDashboardController::class, 'bibliothecaire'])->middleware('role:bibliothecaire');
+    Route::get('/secretaire', [SecretaireDashboardController::class, 'secretaire'])->middleware('role:secretaire');
 });
 
 // Routes spécifiques Directeur

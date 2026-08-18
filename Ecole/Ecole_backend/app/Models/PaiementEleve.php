@@ -65,6 +65,18 @@ class PaiementEleve extends Model
         'montant_restant' => 'decimal:2',
     ];
 
+    /*
+     * Sémantique des colonnes de montant (documentée, pas de doublon réel) :
+     *
+     *   - `montant`        : montant de la ligne — ce que ce règlement apporte
+     *                        (le seeder y inscrit le payé, `storePaiement` le
+     *                        montant encaissé).
+     *   - `montant_total`  : dû total de l'échéance (frais de scolarité, tranche).
+     *   - `montant_paye`   : somme encaissée à ce jour sur l'échéance.
+     *   - `montant_restant`: reste à payer (= total - paye, borné à 0 par
+     *                        PaiementEleve::credit()).
+     */
+
     public function eleve()
     {
         return $this->belongsTo(Eleve::class, 'eleve_id');
@@ -111,6 +123,30 @@ class PaiementEleve extends Model
         }
 
         return round(((float) $this->montant_paye / $due) * 100, 2);
+    }
+
+    /**
+     * Encaisser un versement sur cette échéance.
+     *
+     * Crédite `montant_paye`, débite `montant_restant` (borné à 0 en cas de
+     * trop-perçu) et fait basculer `statut_global` de `EN_ATTENTE` vers
+     * `PARTIEL` puis `PAYE`. C'est la seule écriture comptable autorisée sur
+     * les soldes : tout chemin d'encaissement (comptable, échéancier en ligne,
+     * rapprochement passerelle) doit passer par ici.
+     *
+     * La protection anti double-encaissement est du ressort de l'appelant
+     * (ex. un webhook ne crédite que lors du passage pending → completed).
+     */
+    public function credit(float $montant): void
+    {
+        if ($montant <= 0) {
+            return;
+        }
+
+        $this->montant_paye = (float) $this->montant_paye + $montant;
+        $this->montant_restant = max(0, (float) $this->montant_restant - $montant);
+        $this->statut_global = $this->montant_restant <= 0 ? self::PAID : self::PARTIAL;
+        $this->save();
     }
 }
 

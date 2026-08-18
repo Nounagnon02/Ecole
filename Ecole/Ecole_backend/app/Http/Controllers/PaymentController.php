@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use App\Models\Payment;
 use App\Models\PaymentHistory;
+use App\Models\PaiementEleve;
 use App\Models\Eleve;
 use App\Services\Billing\PaymentProvider;
 
@@ -78,6 +79,7 @@ class PaymentController extends Controller
     {
         $request->validate([
             'eleve_id' => 'required|school_exists:eleves,id',
+            'paiement_eleve_id' => 'nullable|school_exists:paiements,id',
             'amount' => 'required|numeric|min:100',
             'description' => 'required|string',
             'type' => 'required|in:scolarite,cantine,transport,autre',
@@ -93,9 +95,26 @@ class PaymentController extends Controller
                 return response()->json(['success' => false, 'message' => 'Accès refusé à cet élève'], 403);
             }
 
+            // L'échéance rattachée doit appartenir au même élève, sinon le
+            // rapprochement créditerait la scolarité d'un autre dossier.
+            if ($request->filled('paiement_eleve_id')) {
+                $echeanceAppartientAEleve = PaiementEleve::where('id', $request->paiement_eleve_id)
+                    ->where('eleve_id', $eleve->id)
+                    ->exists();
+
+                if (!$echeanceAppartientAEleve) {
+                    DB::rollBack();
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'L\'échéance indiquée n\'appartient pas à cet élève.',
+                    ], 422);
+                }
+            }
+
             // Créer l'enregistrement de paiement
             $payment = Payment::create([
                 'eleve_id' => $request->eleve_id,
+                'paiement_eleve_id' => $request->paiement_eleve_id,
                 'ecole_id' => $eleve->ecole_id,
                 'amount' => $request->amount,
                 'type' => $request->type,
@@ -179,12 +198,7 @@ class PaymentController extends Controller
             $verification = $this->provider->verifyPayment($payment->transaction_id);
 
             if ($verification['status'] === 'completed') {
-                $payment->update([
-                    'status'         => 'completed',
-                    'paid_at'        => now(),
-                    'payment_method' => 'mobile_money',
-                ]);
-                $this->recordHistory($payment, 'completed', 'Paiement Mobile Money confirmé par le provider');
+                $this->confirmPayment($payment, 'Paiement Mobile Money confirmé par le provider', 'mobile_money');
 
                 return response()->json(['success' => true, 'message' => 'Paiement confirmé']);
             }
@@ -392,8 +406,8 @@ class PaymentController extends Controller
         if ($payment->transaction_id) {
             try {
                 $result = $this->provider->verifyPayment($payment->transaction_id);
-                if ($result['success'] && $payment->status !== 'completed') {
-                    $payment->update(['status' => 'completed', 'paid_at' => now()]);
+                if ($result['success']) {
+                    $this->confirmPayment($payment, 'Paiement confirmé lors de la vérification de statut');
                 }
             } catch (\Exception $e) {
                 $this->rethrowIfMeaningful($e);
@@ -420,8 +434,7 @@ class PaymentController extends Controller
             $result = $this->provider->verifyPayment($transactionId);
 
             if ($result['success']) {
-                $payment->update(['status' => 'completed', 'paid_at' => now()]);
-                $this->recordHistory($payment, 'completed', 'Paiement approuvé');
+                $this->confirmPayment($payment, 'Paiement approuvé');
                 return redirect(config('app.frontend_url') . '/payment/success?id=' . $payment->id);
             }
 
@@ -458,8 +471,7 @@ class PaymentController extends Controller
 
                 if ($payment) {
                     if ($status === 'approved') {
-                        $payment->update(['status' => 'completed', 'paid_at' => now()]);
-                        $this->recordHistory($payment, 'completed', 'Paiement approuvé via webhook');
+                        $this->confirmPayment($payment, 'Paiement approuvé via webhook');
                     } elseif ($status === 'declined') {
                         $payment->update(['status' => 'failed']);
                         $this->recordHistory($payment, 'failed', 'Paiement refusé');
@@ -473,6 +485,49 @@ class PaymentController extends Controller
             $this->rethrowIfMeaningful($e);
             Log::error('Webhook error', ['error' => $e->getMessage()]);
             return response()->json(['error' => 'Processing failed'], 500);
+        }
+    }
+
+    /**
+     * Confirmer un paiement — seul chemin autorisé vers le statut « completed ».
+     *
+     * Idempotent : un webhook ou un retour navigateur redélivré ne crédite
+     * jamais deux fois l'échéance (le rapprochement n'est joué que lors du
+     * premier passage pending → completed).
+     */
+    private function confirmPayment(Payment $payment, string $note, ?string $paymentMethod = null): void
+    {
+        if ($payment->status === 'completed') {
+            return;
+        }
+
+        DB::transaction(function () use ($payment, $note, $paymentMethod) {
+            $payment->update([
+                'status'         => 'completed',
+                'paid_at'        => now(),
+                'payment_method' => $paymentMethod ?? $payment->payment_method,
+            ]);
+            $this->recordHistory($payment, 'completed', $note);
+            $this->reconcile($payment);
+        });
+    }
+
+    /**
+     * Rapporter le passage de passerelle sur l'échéance de scolarité, si elle
+     * est connue (`paiement_eleve_id`). Sans lien, l'encaissement reste dans le
+     * journal `payments` et n'a pas d'écriture comptable — c'est le contrat
+     * pour les types sans échéance (cantine, transport, autre).
+     */
+    private function reconcile(Payment $payment): void
+    {
+        if (!$payment->paiement_eleve_id) {
+            return;
+        }
+
+        $echeance = PaiementEleve::find($payment->paiement_eleve_id);
+
+        if ($echeance) {
+            $echeance->credit((float) $payment->amount);
         }
     }
 

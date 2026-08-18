@@ -87,8 +87,9 @@ class ComptableControllerTest extends TestCase
             'date_paiement' => '2026-08-04',
         ]);
 
-        // Valeur historique des seeders (accentuée, minuscule) : la
-        // normalisation doit la replier sur « payee » comme le reste.
+        // Valeur historique des seeders (accentuée, minuscule) : elle est
+        // normalisée par la migration de nettoyage. Ce test écrit désormais la
+        // constante du modèle, seule forme garantie depuis cette migration.
         PaiementEleve::factory()->create([
             'ecole_id' => $this->school->id,
             'eleve_id' => $eleve->id,
@@ -97,7 +98,7 @@ class ComptableControllerTest extends TestCase
             'montant_total' => 15000,
             'montant_paye' => 15000,
             'montant_restant' => 0,
-            'statut_global' => 'payé',
+            'statut_global' => PaiementEleve::PAID,
             'reference' => 'PAY-2026-0003',
             'date_paiement' => '2026-08-05',
         ]);
@@ -122,8 +123,9 @@ class ComptableControllerTest extends TestCase
         $this->assertSame('partiel', $partial['statut']);
         $this->assertSame('Partielle', $partial['statut_label']);
 
-        $legacy = collect($items)->firstWhere('reference', 'PAY-2026-0003');
-        $this->assertSame('payee', $legacy['statut'], 'Un statut accentué en minuscules doit être normalisé');
+        $third = collect($items)->firstWhere('reference', 'PAY-2026-0003');
+        $this->assertSame('payee', $third['statut']);
+        $this->assertSame('Payée', $third['statut_label']);
     }
 
     /** @test */
@@ -326,7 +328,7 @@ class ComptableControllerTest extends TestCase
         $this->assertDatabaseHas('transaction_paiements', [
             'id_paiement_eleve' => $paiement->id,
             'reference_transaction' => 'TX_TEST_123',
-            'statut' => 'EN_ATTENTE',
+            'statut' => TransactionPaiement::EN_ATTENTE,
         ]);
     }
 

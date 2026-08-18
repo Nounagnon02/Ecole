@@ -391,6 +391,14 @@ class StaffDashboardContractTest extends TestCase
             'numero_certificat' => 'CERT-001',
             'delivre'         => false,
         ]);
+        Certificat::create([
+            'ecole_id'        => $school->id,
+            'type_certificat' => 'Scolarité',
+            'eleve_id'        => $eleve->id,
+            'date_emission'   => now(),
+            'numero_certificat' => 'CERT-002',
+            'delivre'         => true,
+        ]);
 
         $parent = UserParent::factory()->forSchool($school)->create();
         RendezVous::create([
