@@ -8,9 +8,6 @@ use Illuminate\Support\Facades\Auth;
 
 class CahierDeTexteController extends Controller
 {
-    /**
-     * Liste des leçons pour l'école (Admin) ou l'enseignant connecté
-     */
     public function index(Request $request)
     {
         $user = Auth::user();
@@ -24,18 +21,12 @@ class CahierDeTexteController extends Controller
             $query->where('classe_id', $request->classe_id);
         }
 
-        return response()->json($query->latest('date')->get());
+        return response()->json($query->latest('date')->paginate(50));
     }
 
-    /**
-     * Saisir une nouvelle leçon
-     */
     public function store(Request $request)
     {
-        $user = Auth::user();
-        if ($user->role !== 'enseignant' && $user->role !== 'directeur') {
-            return response()->json(['message' => 'Non autorisé'], 403);
-        }
+        $this->authorize('create', CahierDeTexte::class);
 
         $validated = $request->validate([
             'classe_id' => 'required|school_exists:classes,id',
@@ -46,6 +37,7 @@ class CahierDeTexteController extends Controller
             'devoirs_donnes' => 'nullable|string',
         ]);
 
+        $user = Auth::user();
         $enseignantId = $user->role === 'enseignant' 
             ? $user->enseignant->id 
             : $request->input('enseignant_id');
@@ -54,16 +46,61 @@ class CahierDeTexteController extends Controller
             return response()->json(['message' => 'L\'enseignant est requis'], 422);
         }
 
-        $entry = CahierDeTexte::create(array_merge($validated, [
-            'enseignant_id' => $enseignantId
-        ]));
+        try {
+            $entry = CahierDeTexte::create(array_merge($validated, [
+                'enseignant_id' => $enseignantId
+            ]));
 
-        return response()->json($entry->load(['classe', 'matiere', 'enseignant.user']), 201);
+            return response()->json($entry->load(['classe', 'matiere', 'enseignant.user']), 201);
+        } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
+            return response()->json(['message' => 'Erreur lors de la création', 'error' => $this->clientErrorMessage($e)], 500);
+        }
     }
 
-    /**
-     * Voir les leçons d'une classe (pour les élèves/parents)
-     */
+    public function update(Request $request, $id)
+    {
+        $cahier = CahierDeTexte::find($id);
+        if (!$cahier) {
+            return response()->json(['message' => 'Leçon non trouvée'], 404);
+        }
+        $this->authorize('update', $cahier);
+
+        $validated = $request->validate([
+            'classe_id' => 'sometimes|school_exists:classes,id',
+            'matiere_id' => 'sometimes|school_exists:matieres,id',
+            'date' => 'sometimes|date',
+            'titre_lecon' => 'sometimes|string|max:255',
+            'contenu' => 'sometimes|string',
+            'devoirs_donnes' => 'nullable|string',
+        ]);
+
+        try {
+            $cahier->update($validated);
+            return response()->json($cahier->load(['classe', 'matiere', 'enseignant.user']));
+        } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
+            return response()->json(['message' => 'Erreur lors de la mise à jour', 'error' => $this->clientErrorMessage($e)], 500);
+        }
+    }
+
+    public function destroy($id)
+    {
+        $cahier = CahierDeTexte::find($id);
+        if (!$cahier) {
+            return response()->json(['message' => 'Leçon non trouvée'], 404);
+        }
+        $this->authorize('delete', $cahier);
+
+        try {
+            $cahier->delete();
+            return response()->json(['message' => 'Leçon supprimée']);
+        } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
+            return response()->json(['message' => 'Erreur lors de la suppression', 'error' => $this->clientErrorMessage($e)], 500);
+        }
+    }
+
     public function getByClasse($classeId)
     {
         $entries = CahierDeTexte::where('classe_id', $classeId)

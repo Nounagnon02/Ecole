@@ -23,7 +23,8 @@ class ParentsController extends Controller
      */
     public function index()
     {
-        return response()->json(UserParent::with('user', 'eleves.user')->whereHas('user')->get());
+        $this->authorize('viewAny', UserParent::class);
+        return response()->json(UserParent::with('user', 'eleves.user')->whereHas('user')->paginate(50));
     }
 
     /**

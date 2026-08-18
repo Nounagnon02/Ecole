@@ -25,7 +25,8 @@ class EnseignantController extends Controller
      */
     public function index()
     {
-        return response()->json(Enseignant::with('user')->whereHas('user')->get());
+        $this->authorize('viewAny', Enseignant::class);
+        return response()->json(Enseignant::with('user')->whereHas('user')->paginate(50));
     }
 
     /**
@@ -73,6 +74,7 @@ class EnseignantController extends Controller
         if (!$enseignant) {
             return response()->json(['message' => 'Enseignant non trouvé'], 404);
         }
+        $this->authorize('view', $enseignant);
         return response()->json($enseignant);
     }
 

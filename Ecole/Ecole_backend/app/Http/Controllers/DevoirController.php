@@ -128,6 +128,10 @@ class DevoirController extends Controller
             return response()->json(['success' => false, 'message' => 'Ce devoir n\'est pas publié'], 403);
         }
 
+        if ($devoir->date_limite && now()->greaterThan($devoir->date_limite)) {
+            return response()->json(['success' => false, 'message' => 'La date limite de soumission est dépassée'], 403);
+        }
+
         $validator = Validator::make($request->all(), [
             'reponse' => 'nullable|string|max:20000',
             // Whitelist stricte : sans `mimes`, un élève pouvait déposer un
