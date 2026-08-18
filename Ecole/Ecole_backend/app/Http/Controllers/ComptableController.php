@@ -14,21 +14,15 @@ class ComptableController extends Controller
     private const PAYMENT_MODES = ['ESPECES', 'MOBILE_MONEY', 'VIREMENT', 'CHEQUE', 'CARTE'];
 
     /**
-     * Normalisation insensible à la casse et aux accents de `statut_global`.
+     * Statut en slug et en libellé à partir de `statut_global`.
      *
-     * Les seeders historiques écrivent `'payé'` (accentué, minuscule),
-     * `'impayé'`, etc. — `strtoupper('payé')` donne `PAYÉ`, qui ne
-     * correspond à aucune constante du modèle. On replie les accents avant
-     * de comparer.
+     * La table porte les constantes du modèle depuis la migration de
+     * normalisation : l'ancien repli d'accents (`'payé'` → `PAYE`) n'a plus de
+     * raison d'être.
      */
-    private function normaliseStatut(?string $global): string
-    {
-        return str_replace('É', 'E', mb_strtoupper((string) $global));
-    }
-
     private function statutSlug(?string $global): string
     {
-        return match ($this->normaliseStatut($global)) {
+        return match ($global) {
             PaiementEleve::PAID => 'payee',
             PaiementEleve::PARTIAL => 'partiel',
             default => 'en_attente',
@@ -37,7 +31,7 @@ class ComptableController extends Controller
 
     private function statutLabel(?string $global): string
     {
-        return match ($this->normaliseStatut($global)) {
+        return match ($global) {
             PaiementEleve::PAID => 'Payée',
             PaiementEleve::PARTIAL => 'Partielle',
             default => 'En attente',
@@ -265,7 +259,7 @@ class ComptableController extends Controller
         // `statut_global`. Lire `$paiement->statut` renvoyait null : le
         // badge et le libellé étaient « En attente »/vide sur chaque reçu.
         $statutGlobal = $paiement->statut_global;
-        $estPaye = $this->normaliseStatut($statutGlobal) === PaiementEleve::PAID;
+        $estPaye = $statutGlobal === PaiementEleve::PAID;
         $statutLabel = $this->statutLabel($statutGlobal);
 
         $html = '<!DOCTYPE html>
@@ -359,7 +353,7 @@ class ComptableController extends Controller
                     'solde' => $solde,
                     'nb_echeances' => $paiements->count(),
                     'nb_payees' => $paiements
-                        ->filter(fn ($p) => $this->normaliseStatut($p->statut_global) === PaiementEleve::PAID)
+                        ->filter(fn ($p) => $p->statut_global === PaiementEleve::PAID)
                         ->count(),
                 ],
                 'echeances' => $paiements->map(function ($p) {
@@ -391,8 +385,7 @@ class ComptableController extends Controller
         $paiement = PaiementEleve::with('eleve.user')->findOrFail($paiementId);
 
         // L'échéance doit être en attente ou partielle
-        $statutNorm = $this->normaliseStatut($paiement->statut_global);
-        if ($statutNorm === PaiementEleve::PAID) {
+        if ($paiement->statut_global === PaiementEleve::PAID) {
             return response()->json([
                 'success' => false,
                 'message' => 'Cette échéance est déjà payée.',
@@ -429,7 +422,7 @@ class ComptableController extends Controller
                 'tranche' => $paiement->type_paiement,
                 'montant_paye' => $montantDu,
                 'date_paiement' => now(),
-                'statut' => 'EN_ATTENTE',
+                'statut' => TransactionPaiement::EN_ATTENTE,
                 'methode_paiement' => 'FEDAPAY',
                 'reference_transaction' => $result['transaction']->id,
                 'recu_par' => auth()->id(),
@@ -476,21 +469,17 @@ class ComptableController extends Controller
                 $tx = TransactionPaiement::where('reference_transaction', $transactionId)->first();
                 if ($tx) {
                     $tx->update([
-                        'statut' => 'APPROUVE',
+                        'statut' => TransactionPaiement::APPROUVE,
                         'date_paiement' => now(),
                         'observation' => $tx->observation . ' | Confirmé via callback Fedapay (' . now()->format('d/m/Y H:i') . ')',
                     ]);
 
-                    // Recalculer le paiement élève
+                    // Recalculer le paiement élève — écriture comptable unique
+                    // (crédite le payé, débite le restant borné à 0, bascule
+                    // le statut global) : voir PaiementEleve::credit().
                     $paiement = PaiementEleve::find($tx->id_paiement_eleve);
                     if ($paiement) {
-                        $paiement->increment('montant_paye', $tx->montant_paye);
-                        $paiement->decrement('montant_restant', $tx->montant_paye);
-                        if ((float) $paiement->montant_restant <= 0) {
-                            $paiement->update(['statut_global' => \App\Models\PaiementEleve::PAID]);
-                        } elseif ((float) $paiement->montant_paye > 0) {
-                            $paiement->update(['statut_global' => \App\Models\PaiementEleve::PARTIAL]);
-                        }
+                        $paiement->credit((float) $tx->montant_paye);
                     }
                 }
 

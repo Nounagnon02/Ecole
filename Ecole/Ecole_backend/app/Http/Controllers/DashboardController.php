@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\{User, Eleve, Classes, Notes, Matieres, Message};
+use App\Support\CalendrierOfficiel;
 use App\Support\Roles;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -247,25 +248,6 @@ class DashboardController extends Controller
             'etat'   => 'à préparer',
         ]);
 
-        // Devoirs à venir cette semaine pour la carte « Devoirs & Évaluations »
-        $devoirsAVenir = $classeIds->isEmpty()
-            ? collect()
-            : \App\Models\Devoir::with(['classe:id,nom_classe'])
-                ->where('enseignant_id', $enseignant->id)
-                ->whereIn('classe_id', $classeIds)
-                ->where('publie', true)
-                ->where('date_limite', '>', now())
-                ->orderBy('date_limite')
-                ->take(5)
-                ->get()
-                ->map(fn ($d) => [
-                    'id'     => $d->id,
-                    'titre'  => $d->titre,
-                    'classe' => $d->classe?->nom_classe ?? '—',
-                    'date'   => $d->date_limite?->format('d/m/Y') ?? '—',
-                    'etat'   => 'à venir',
-                ]);
-
         $coursSemaineCount = $coursSemaine->flatten(1)->count();
 
         return response()->json([
@@ -278,7 +260,7 @@ class DashboardController extends Controller
                     ['title' => 'Devoirs à Corriger', 'value' => (string) $devoirs->count(), 'trend' => 0, 'trendLabel' => 'échéance atteinte'],
                 ],
                 'emploi_temps' => $emploiTemps,
-                'devoirs' => $devoirsAVenir,
+                'devoirs' => $devoirs,
                 'notes_recentes' => $notesRecentees,
                 'classes' => $enseignant->classes()->with('eleves')->get(),
                 'matieres' => $enseignant->matieres,
@@ -354,9 +336,14 @@ class DashboardController extends Controller
                 ->whereYear('date', now()->year)
                 ->count()
             : 0;
-        $assiduite = $children->isNotEmpty()
-            ? max(0, 100 - (int) round(($absencesMois / ($children->count() * 22)) * 100))
-            : 100;
+        // Assiduité rapportée au nombre réel de jours de classe du mois
+        // (calendrier officiel : jours ouvrés moins jours fériés), au lieu de
+        // la division arbitraire par 22 jours. Hors période de classe (vacances
+        // de juillet/août) la référence est nulle → assiduité indéterminée.
+        $joursScolaires = CalendrierOfficiel::joursScolairesDuMois(now()->year, now()->month);
+        $assiduite = $children->isNotEmpty() && $joursScolaires > 0
+            ? max(0, 100 - (int) round(($absencesMois / ($children->count() * $joursScolaires)) * 100))
+            : null;
         $solde = \App\Models\PaiementEleve::whereIn('eleve_id', $children->pluck('id'))
             ->where('montant_restant', '>', 0)
             ->sum('montant_restant');
@@ -364,7 +351,7 @@ class DashboardController extends Controller
         $stats = [
             ['title' => 'Enfants Scolarisés', 'value' => $children->count()],
             ['title' => 'Moyenne Générale', 'value' => $moyenneGenerale !== null ? round($moyenneGenerale, 2) : '—'],
-            ['title' => 'Assiduité', 'value' => $assiduite . '%'],
+            ['title' => 'Assiduité', 'value' => $assiduite !== null ? $assiduite . '%' : '—'],
             ['title' => 'Solde', 'value' => $solde > 0 ? number_format($solde, 0, ',', ' ') . ' FCFA' : '0 FCFA'],
         ];
 
@@ -521,7 +508,6 @@ class DashboardController extends Controller
     {
         $ecoleId = \App\Models\Eleve::currentEcoleId() ?? 'global';
 
-        $debut = microtime(true);
         $data = \Illuminate\Support\Facades\Cache::remember('dashboard_admin_' . $ecoleId, 120, function () {
             // ─── Utilisateurs & plateforme ───────────────────────────
             $totalEcoles = \App\Models\Ecole::count();
@@ -558,16 +544,15 @@ class DashboardController extends Controller
                 });
             }
 
-            // ─── Trafic API (7 derniers jours) ───────────────────────
+            // ─── Activité plateforme (7 derniers jours) ──────────────
             // Aucune table de journalisation HTTP n'existe ; on proxifie le
-            // trafic par les actions auditées du jour, et le temps de réponse
-            // de l'endpoint lui-même est mesuré hors cache (voir ci-dessous).
+            // trafic par les actions auditées du jour (cf. audit P4).
             $traffic = collect(range(6, 0))->map(function ($offset) {
                 $jour = now()->subDays($offset)->format('Y-m-d');
                 $req = class_exists(\App\Models\AuditLog::class)
                     ? \App\Models\AuditLog::whereDate('created_at', $jour)->count()
                     : 0;
-                return ['jour' => $jour, 'req' => $req, 'temps' => 0];
+                return ['jour' => $jour, 'req' => $req];
             })->values();
 
             // ─── Santé système (valeurs réelles du serveur PHP) ──────
@@ -633,7 +618,6 @@ class DashboardController extends Controller
                     ['title' => 'Utilisateurs Actifs', 'value' => number_format($activeUsers), 'trend' => $nouveautesSemaine, 'trendLabel' => 'nouveaux / 7j'],
                     ['title' => 'Espace Disque', 'value' => $diskUsage . '%', 'trend' => 0, 'trendLabel' => 'utilisé'],
                     ['title' => 'Erreurs API', 'value' => (string) $erreursApi, 'trend' => 0, 'trendLabel' => 'dans le journal'],
-                    ['title' => 'Temps Réponse', 'value' => '—', 'trend' => 0, 'trendLabel' => 'endpoint'],
                     ['title' => 'Uptime', 'value' => $uptime ?? '—', 'trend' => 0, 'trendLabel' => 'serveur'],
                 ],
                 'traffic'         => $traffic,
@@ -651,16 +635,6 @@ class DashboardController extends Controller
                 'activites_recentes' => $activitesRecentes,
             ];
         });
-
-        // Temps de réponse réel de l'endpoint (non cacheable) — injecté après
-        // le cache. Recherche par titre : l'index varie selon les stats retenues.
-        $elapsed = round((microtime(true) - $debut) * 1000);
-        foreach ($data['stats'] as $i => $stat) {
-            if ($stat['title'] === 'Temps Réponse') {
-                $data['stats'][$i]['value'] = $elapsed . ' ms';
-                break;
-            }
-        }
 
         return response()->json(['success' => true, 'data' => $data]);
     }
@@ -839,7 +813,7 @@ class DashboardController extends Controller
 
             return [
                 'stats' => [
-                    ['title' => 'Facultés', 'value' => (string) $facultesCount, 'trend' => 0, 'trendLabel' => 'ce semestre'],
+                    ['title' => 'Facultés', 'value' => (string) $facultesCount, 'trend' => 0, 'trendLabel' => 'total'],
                     ['title' => 'Départements', 'value' => (string) $departementsCount, 'trend' => 0, 'trendLabel' => 'total'],
                     ['title' => 'Enseignants', 'value' => number_format($enseignantsCount), 'trend' => 0, 'trendLabel' => 'en activité'],
                     ['title' => 'Étudiants', 'value' => number_format($etudiantsCount), 'trend' => 0, 'trendLabel' => 'inscrits'],
@@ -1583,7 +1557,7 @@ class DashboardController extends Controller
             $nouveauxMois = \App\Models\Eleve::whereMonth('created_at', now()->month)
                 ->whereYear('created_at', now()->year)->count();
             $dossiersEnCours = \App\Models\Certificat::where('delivre', false)->count();
-            $documentsGeneres = \App\Models\Certificat::count();
+            $documentsGeneres = \App\Models\Certificat::where('delivre', true)->count();
 
             // Flux d'inscriptions — 6 derniers mois, agrégé en SQL (cf. audit
             // P4). `transferts` a été retiré : aucune table, colonne ni signal ne

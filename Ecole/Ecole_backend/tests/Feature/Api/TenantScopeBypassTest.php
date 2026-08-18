@@ -230,31 +230,29 @@ class TenantScopeBypassTest extends TestCase
     }
 
     /** @test */
-    public function two_schools_can_each_have_their_own_devoir1_and_mobile_money()
+    public function two_schools_can_each_have_their_own_devoir1()
     {
         $a = Ecole::factory()->create(['status' => 'active']);
         $b = Ecole::factory()->create(['status' => 'active']);
 
         // Both were platform-wide UNIQUE, so the second school to be set up
-        // could not have an evaluation type named `Devoir1` nor a payment method
-        // named `Mobile Money`. Onboarding school number two failed on a
-        // constraint the operator could do nothing about.
-        foreach ([['type_evaluations', 'nom', 'Devoir1'], ['paiement_methods', 'method_name', 'Mobile Money']] as [$table, $column, $value]) {
-            foreach ([$a, $b] as $school) {
-                DB::table($table)->insert([
-                    $column      => $value,
-                    'ecole_id'   => $school->id,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            }
-
-            $this->assertSame(
-                2,
-                DB::table($table)->where($column, $value)->count(),
-                "{$table}.{$column} devrait être unique par école, pas par plateforme"
-            );
+        // could not have an evaluation type named `Devoir1`. Onboarding school
+        // number two failed on a constraint the operator could do nothing about.
+        // (Un second exemple, `paiement_methods`, est tombé avec la table morte.)
+        foreach ([$a, $b] as $school) {
+            DB::table('type_evaluations')->insert([
+                'nom'        => 'Devoir1',
+                'ecole_id'   => $school->id,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
         }
+
+        $this->assertSame(
+            2,
+            DB::table('type_evaluations')->where('nom', 'Devoir1')->count(),
+            'type_evaluations.nom devrait être unique par école, pas par plateforme'
+        );
     }
 
     /** @test */

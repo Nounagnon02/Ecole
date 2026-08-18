@@ -1,6 +1,9 @@
 <?php
 
-use App\Http\Controllers\SeriesController;
+use App\Http\Controllers\Series\{
+    SeriesController,
+    SeriesMatieresController,
+};
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -24,17 +27,17 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // ===== Consultations globales (statiques, avant `/{id}`) =====
         Route::get('/classes', [SeriesController::class, 'Classe_avec_series']);
-        Route::get('/classes-matieres', [SeriesController::class, 'getAllClassesWithSeriesAndMatieres']);
+        Route::get('/classes-matieres', [SeriesMatieresController::class, 'getAllClassesWithSeriesAndMatieres']);
 
         Route::get('/eleve/{eleve_id}', [SeriesController::class, 'getSeriesByEleve']);
         Route::get('/matiere/{matiere_id}', [SeriesController::class, 'getSeriesByMatiere']);
 
         // Séries / matières d'une classe, et affectations enseignants par classe × série
         Route::get('/classe/{classe_id}', [SeriesController::class, 'getSeriesByClasse']);
-        Route::get('/classe/{classeId}/serie/{serieId}/matieres', [SeriesController::class, 'getMatieresSC']);
-        Route::post('/classe/{classeId}/serie/{serieId}/enseignants', [SeriesController::class, 'updateEnseignants'])
+        Route::get('/classe/{classeId}/serie/{serieId}/matieres', [SeriesMatieresController::class, 'getMatieresSC']);
+        Route::post('/classe/{classeId}/serie/{serieId}/enseignants', [SeriesMatieresController::class, 'updateEnseignants'])
             ->middleware('role:directeur,admin');
-        Route::post('/classe/{classeId}/enseignants-mp', [SeriesController::class, 'updateEnseignantsMP'])
+        Route::post('/classe/{classeId}/enseignants-mp', [SeriesMatieresController::class, 'updateEnseignantsMP'])
             ->middleware('role:directeur,admin');
 
         // ===== CRUD =====
@@ -56,18 +59,18 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::get('/{id}/matieres', [SeriesController::class, 'getMatieres']);
         Route::get('/{id}/matieres-serie', [SeriesController::class, 'getMatieres']);
-        Route::get('/{id}/matieres/coefficients', [SeriesController::class, 'getMatieresWithCoefficients']);
+        Route::get('/{id}/matieres/coefficients', [SeriesMatieresController::class, 'getMatieresWithCoefficients']);
         Route::get('/{id}/matieres/eleve/{eleve_id}', [SeriesController::class, 'getMatieresByEleve']);
 
         Route::get('/{id}/moyenne/{eleve_id}', [SeriesController::class, 'getMoyenneGeneraleByEleve'])
             ->middleware('role:directeur,enseignant,censeur,secretaire');
 
         // ===== Coefficient et composition des matières =====
-        Route::post('/{id}/matieres', [SeriesController::class, 'attachMatiere'])->middleware('role:directeur,admin');
-        Route::post('/{id}/matieres/sync', [SeriesController::class, 'syncMatieres'])->middleware('role:directeur,admin');
-        Route::put('/{id}/matieres/{matiere_id}/coefficient', [SeriesController::class, 'updateMatiereCoefficient'])
+        Route::post('/{id}/matieres', [SeriesMatieresController::class, 'attachMatiere'])->middleware('role:directeur,admin');
+        Route::post('/{id}/matieres/sync', [SeriesMatieresController::class, 'syncMatieres'])->middleware('role:directeur,admin');
+        Route::put('/{id}/matieres/{matiere_id}/coefficient', [SeriesMatieresController::class, 'updateMatiereCoefficient'])
             ->middleware('role:directeur,admin');
-        Route::delete('/{id}/matieres/{matiere_id}', [SeriesController::class, 'detachMatiere'])
+        Route::delete('/{id}/matieres/{matiere_id}', [SeriesMatieresController::class, 'detachMatiere'])
             ->middleware('role:directeur,admin');
     });
 });

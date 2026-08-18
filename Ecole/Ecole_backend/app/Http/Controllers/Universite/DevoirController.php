@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Universite\Devoir;
 use App\Models\Universite\Etudiant;
 use App\Models\Universite\Matiere;
+use App\Services\FileUploadService;
 use App\Support\Roles;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -198,9 +199,15 @@ class DevoirController extends Controller
         ];
 
         if ($request->hasFile('fichier')) {
-            // Private disk: the file is never served directly by the web server,
-            // only through an authenticated route.
-            $pivot['fichier'] = $request->file('fichier')->store('uni-devoirs/' . $id, 'local');
+            // Private disk + FileUploadService: server-side MIME check via
+            // finfo + UUID name to prevent path traversal (audit S7).
+            $pivot['fichier'] = FileUploadService::store(
+                $request->file('fichier'),
+                'uni-devoirs/' . $id,
+                'local',
+                allowedTypes: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.oasis.opendocument.text', 'text/plain', 'image/jpeg', 'image/png', 'image/webp', 'application/zip'],
+                maxSize: 10 * 1024 * 1024,
+            );
         }
 
         $devoir->etudiants()->syncWithoutDetaching([$student->id => $pivot]);

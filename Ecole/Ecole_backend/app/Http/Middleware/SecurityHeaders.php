@@ -65,6 +65,10 @@ class SecurityHeaders
         // Permissions Policy — désactive les API sensibles
         $response->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), fullscreen=(self)');
 
+        // Cross-Origin Isolation (cf. audit SEC-5)
+        $response->headers->set('Cross-Origin-Opener-Policy', 'same-origin');
+        $response->headers->set('Cross-Origin-Embedder-Policy', 'credentialless');
+
         return $response;
     }
 }

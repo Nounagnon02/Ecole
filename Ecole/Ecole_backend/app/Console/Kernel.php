@@ -15,7 +15,8 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('inspire')->hourly();
+        // Nettoyage des sessions expirées (AUTH-18) — toutes les heures
+        $schedule->job(new \App\Jobs\CleanupExpiredSessions)->hourly();
     }
 
     /**

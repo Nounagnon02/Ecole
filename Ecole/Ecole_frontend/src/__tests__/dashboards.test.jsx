@@ -423,7 +423,7 @@ describe('EnseignantDashboard', () => {
       },
     ],
     devoirs: [
-      { id: 1, titre: 'Exercices à venir', classe: '6e A', date: '15/08/2026', etat: 'à venir' },
+      { id: 1, titre: 'Exercices à corriger', classe: '6e A', date: '12/08/2026', etat: 'à préparer' },
     ],
     notes_recentes: [
       { id: 1, eleve: 'Aho Kossi', classe: '6e A', matiere: 'Mathématiques', note: 16, date: '12/08/2026', appreciation: 'Excellent' },
@@ -453,7 +453,7 @@ describe('EnseignantDashboard', () => {
     expect(screen.getByText('14,00')).toBeInTheDocument();
   });
 
-  it('affiche les cours du jour et les devoirs à venir', async () => {
+  it('affiche les cours du jour et les devoirs à corriger', async () => {
     http.onGet(ENSEIGNANT_ENDPOINT).reply(200, { data: ENSEIGNANT_PAYLOAD });
 
     renderDashboard(<EnseignantDashboard />);
@@ -461,7 +461,7 @@ describe('EnseignantDashboard', () => {
     // « Aujourd'hui » = emploi_temps[0] ; ses cours sont rendus.
     await waitFor(() => expect(screen.getByText('Mathématiques')).toBeInTheDocument());
     expect(screen.getByText(/6e A · S101/)).toBeInTheDocument();
-    expect(screen.getByText('Exercices à venir')).toBeInTheDocument();
+    expect(screen.getByText('Exercices à corriger')).toBeInTheDocument();
   });
 
   it('liste les dernières notes dans l’onglet Notes, avec appréciation', async () => {
@@ -485,7 +485,7 @@ describe('EnseignantDashboard', () => {
     renderDashboard(<EnseignantDashboard />);
 
     await waitFor(() => expect(screen.getByText(/Aucun cours prévu aujourd/)).toBeInTheDocument());
-    expect(screen.getByText(/Aucun devoir ou évaluation à venir/)).toBeInTheDocument();
+    expect(screen.getByText(/Aucun devoir à corriger/)).toBeInTheDocument();
   });
 
   it('signale l’erreur de chargement sans afficher de fausses données', async () => {
@@ -503,15 +503,13 @@ describe('AdminDashboard', () => {
   const ADMIN_PAYLOAD = {
     stats: [
       { title: 'Utilisateurs Actifs', value: '1 240', trend: 12, trendLabel: 'nouveaux / 7j' },
-      { title: 'Requêtes/minute', value: '—', trend: 0, trendLabel: 'métrique à configurer' },
       { title: 'Espace Disque', value: '62%', trend: 0, trendLabel: 'utilisé' },
       { title: 'Erreurs API', value: '3', trend: 0, trendLabel: 'dans le journal' },
-      { title: 'Temps Réponse', value: '85 ms', trend: 0, trendLabel: 'utile après cache' },
       { title: 'Uptime', value: '12j 4h', trend: 0, trendLabel: 'serveur' },
     ],
     traffic: [
-      { jour: '2026-08-01', req: 120, temps: 40 },
-      { jour: '2026-08-02', req: 200, temps: 55 },
+      { jour: '2026-08-01', req: 120 },
+      { jour: '2026-08-02', req: 200 },
     ],
     health: [
       { label: 'Disque', value: '62%', width: '62%', color: 'bg-[var(--accent)]' },
@@ -542,7 +540,7 @@ describe('AdminDashboard', () => {
 
     await waitFor(() => expect(screen.getByText('Utilisateurs Actifs')).toBeInTheDocument());
     expect(screen.getByText('1 240')).toBeInTheDocument();
-    expect(screen.getByText('Trafic API')).toBeInTheDocument();
+    expect(screen.getByText('Activité Plateforme')).toBeInTheDocument();
     expect(screen.getByText('Disque')).toBeInTheDocument();
     expect(screen.getByText('1 erreurs')).toBeInTheDocument();
     expect(screen.getByText('Faille SQL')).toBeInTheDocument();

@@ -54,8 +54,11 @@ class ProcessPaiementJob implements ShouldQueue
             'error' => $e->getMessage(),
         ]);
 
-        // `statut` n'existe pas sur `paiements` : la colonne est
-        // `statut_global`. Marquer un paiement en échec n'avait aucun effet.
-        $this->paiement->update(['statut_global' => 'ERREUR']);
+        // Ne pas écrire `statut_global` ici : la colonne n'accepte que les trois
+        // constantes `PaiementEleve::PENDING/PARTIAL/PAID`. Un statut
+        // « ERREUR » n'est pas reconnu par les KPI ni par l'affichage (il
+        // retomberait silencieusement sur « En attente »). L'échec du job est
+        // déjà tracé dans les logs ci-dessus ; l'échéance garde son statut
+        // comptable intact.
     }
 }
