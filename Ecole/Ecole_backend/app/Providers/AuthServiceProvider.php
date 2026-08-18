@@ -6,9 +6,11 @@ namespace App\Providers;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use App\Models\Notes;
 use App\Models\Absence;
+use App\Models\CahierDeTexte;
 use App\Models\Communication;
 use App\Models\Eleve;
 use App\Models\EmploiDuTemps;
+use App\Models\Enseignant;
 use App\Models\Matieres;
 use App\Models\Personnel;
 use App\Models\PaiementEleve;
@@ -17,9 +19,11 @@ use App\Models\UserParent;
 use App\Models\Universite\Devoir as UniversiteDevoir;
 use App\Policies\NotePolicy;
 use App\Policies\AbsencePolicy;
+use App\Policies\CahierDeTextePolicy;
 use App\Policies\CommunicationPolicy;
 use App\Policies\ElevePolicy;
 use App\Policies\EmploiDuTempsPolicy;
+use App\Policies\EnseignantPolicy;
 use App\Policies\MatieresPolicy;
 use App\Policies\PersonnelPolicy;
 use App\Policies\PaiementPolicy;
@@ -37,10 +41,12 @@ class AuthServiceProvider extends ServiceProvider
     protected $policies = [
         Notes::class => NotePolicy::class,
         Absence::class => AbsencePolicy::class,
+        CahierDeTexte::class => CahierDeTextePolicy::class,
         Eleve::class => ElevePolicy::class,
         PaiementEleve::class => PaiementPolicy::class,
         Series::class => SeriesPolicy::class,
         Communication::class => CommunicationPolicy::class,
+        Enseignant::class => EnseignantPolicy::class,
         EmploiDuTemps::class => EmploiDuTempsPolicy::class,
         Matieres::class => MatieresPolicy::class,
         Personnel::class => PersonnelPolicy::class,

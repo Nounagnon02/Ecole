@@ -74,9 +74,9 @@ class UserSoftDeleteTest extends TestCase
 
         $this->getJson('/api/enseignants')
             ->assertStatus(200)
-            ->assertJsonCount(1)
-            ->assertJsonPath('0.id', $reste->id)
-            ->assertJsonPath('0.user.name', $reste->user->name);
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $reste->id)
+            ->assertJsonPath('data.0.user.name', $reste->user->name);
     }
 
     /** @test */
