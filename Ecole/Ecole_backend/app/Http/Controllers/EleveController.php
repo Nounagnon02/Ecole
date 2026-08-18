@@ -65,12 +65,13 @@ class EleveController extends Controller
      */
     public function store(Request $request)
     {
+        $this->authorize('create', Eleve::class);
+
         $validated = $request->validate([
             'name' => 'required|string',
             'prenom' => 'required|string',
             'identifiant' => 'required|string|unique:users,identifiant',
             'password' => 'required|string|min:6',
-            'ecole_id' => 'required|exists:ecoles,id',
             'numero_matricule' => 'required|string|unique:eleves,numero_matricule',
             'classe_id' => 'required|school_exists:classes,id',
             'serie_id' => 'nullable|school_exists:series,id',
@@ -79,13 +80,15 @@ class EleveController extends Controller
 
         try {
             return DB::transaction(function () use ($validated) {
+                $ecoleId = auth()->user()->ecole_id;
+
                 $user = User::create([
                     'name' => $validated['name'],
                     'prenom' => $validated['prenom'],
                     'identifiant' => $validated['identifiant'],
                     'password' => Hash::make($validated['password']),
                     'role' => 'eleve',
-                    'ecole_id' => $validated['ecole_id'],
+                    'ecole_id' => $ecoleId,
                     'email' => $validated['email'],
                 ]);
 
