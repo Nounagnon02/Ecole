@@ -85,26 +85,27 @@ class ParentsController extends Controller
         if (!$parent) {
             return response()->json(['message' => 'Parent non trouvé'], 404);
         }
+        $this->authorize('view', $parent);
         return response()->json($parent);
     }
 
     public function update(Request $request, $id)
     {
         $parent = UserParent::findOrFail($id);
+        $this->authorize('update', $parent);
+
         $user = $parent->user;
 
         $validated = $request->validate([
             'name' => 'sometimes|string',
             'prenom' => 'sometimes|string',
+            'email' => 'sometimes|nullable|email|unique:users,email,' . $user->id,
             'telephone' => 'sometimes|string',
             'eleve_ids' => 'sometimes|array',
-            // Comme dans store() et updateEleves() : sans cette règle, un admin
-            // liait n'importe quel élève (d'une autre école) à ce parent — le
-            // lien de filiation traverse les établissements.
             'eleve_ids.*' => 'school_exists:eleves,id',
         ]);
 
-        $user->update($request->only(['name', 'prenom', 'email', 'telephone']));
+        $user->update(array_intersect_key($validated, array_flip(['name', 'prenom', 'email', 'telephone'])));
         
         if ($request->has('liens')) {
             $parent->setEleves($request->input('liens'));
@@ -157,6 +158,8 @@ class ParentsController extends Controller
     public function destroy($id)
     {
         $parent = UserParent::with('user')->findOrFail($id);
+        $this->authorize('delete', $parent);
+
         $user = $parent->user;
 
         if ($user) {
