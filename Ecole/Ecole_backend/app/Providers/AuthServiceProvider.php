@@ -9,8 +9,10 @@ use App\Models\Absence;
 use App\Models\Communication;
 use App\Models\Eleve;
 use App\Models\EmploiDuTemps;
+use App\Models\Matieres;
 use App\Models\Personnel;
 use App\Models\PaiementEleve;
+use App\Models\Series;
 use App\Models\UserParent;
 use App\Models\Universite\Devoir as UniversiteDevoir;
 use App\Policies\NotePolicy;
@@ -18,8 +20,10 @@ use App\Policies\AbsencePolicy;
 use App\Policies\CommunicationPolicy;
 use App\Policies\ElevePolicy;
 use App\Policies\EmploiDuTempsPolicy;
+use App\Policies\MatieresPolicy;
 use App\Policies\PersonnelPolicy;
 use App\Policies\PaiementPolicy;
+use App\Policies\SeriesPolicy;
 use App\Policies\UserParentPolicy;
 use App\Policies\Universite\DevoirPolicy as UniversiteDevoirPolicy;
 
@@ -35,8 +39,10 @@ class AuthServiceProvider extends ServiceProvider
         Absence::class => AbsencePolicy::class,
         Eleve::class => ElevePolicy::class,
         PaiementEleve::class => PaiementPolicy::class,
+        Series::class => SeriesPolicy::class,
         Communication::class => CommunicationPolicy::class,
         EmploiDuTemps::class => EmploiDuTempsPolicy::class,
+        Matieres::class => MatieresPolicy::class,
         Personnel::class => PersonnelPolicy::class,
         UserParent::class => UserParentPolicy::class,
 
