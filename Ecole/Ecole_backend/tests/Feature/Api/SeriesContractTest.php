@@ -58,8 +58,8 @@ class SeriesContractTest extends TestCase
 
         $this->getJson('/api/series')
             ->assertStatus(200)
-            ->assertJsonCount(2)
-            ->assertJsonPath('0.nom', '6ème');
+            ->assertJsonCount(2, 'data')
+            ->assertJsonPath('data.0.nom', '6ème');
     }
 
     /** @test */

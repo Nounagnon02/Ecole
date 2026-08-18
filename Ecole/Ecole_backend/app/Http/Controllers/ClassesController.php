@@ -263,18 +263,24 @@ class ClassesController extends Controller
         return response()->json($classe, 200);
     }
 
-    // Supprime une matiere spécifique
+    // Supprime une classe spécifique
     public function destroy($id)
     {
         $classe = Classes::find($id);
-        // Vérifie si la matière existe
         if (!$classe) {
             return response()->json(['message' => 'Classe non trouvée'], 404);
         }
 
+        $elevesCount = $classe->eleves()->count();
+        if ($elevesCount > 0) {
+            return response()->json([
+                'message' => "Impossible de supprimer : {$elevesCount} élève(s) inscrit(s) dans cette classe"
+            ], 422);
+        }
+
         $classe->delete();
 
-        return response()->json(['message' => 'Matière supprimée'], 200);
+        return response()->json(['message' => 'Classe supprimée']);
     }
 
     // Nouvelle méthode pour lier les matières aux séries d'une classe

@@ -194,23 +194,29 @@ class NotesCrudController extends Controller
      */
     public function update(Request $request, $id)
     {
-        // Vérifier que la note n'est pas verrouillée
         $note = Notes::find($id);
-        if ($note && $note->locked) {
+        if (!$note) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Note non trouvée'
+            ], 404);
+        }
+        $this->authorize('update', $note);
+
+        if ($note->locked) {
             return response()->json([
                 'success' => false,
                 'message' => 'Impossible de modifier une note verrouillée'
             ], 403);
         }
 
-        // Validation des données
         $validator = Validator::make($request->all(), [
             'eleve_id' => 'required|school_exists:eleves,id',
             'classe_id' => 'required|school_exists:classes,id',
             'matiere_id' => 'required|school_exists:matieres,id',
-            'note' => 'required|numeric|min:0|max:100',
-            'note_sur' => 'required|numeric|min:1|max:100',
-            'type_evaluation' => 'required|in:Devoir1,Devoir2,Interrogation',
+            'note' => 'required|numeric|min:0|max:20',
+            'note_sur' => 'required|numeric|min:1|max:20',
+            'type_evaluation' => 'required|in:Devoir1,Devoir2,Interrogation,1ère evaluation,2ème evaluation,3ème evaluation,4ème evaluation,5ème evaluation,6ème evaluation',
             'date_evaluation' => 'required|date',
             'periode' => 'required|in:Trimestre 1,Trimestre 2,Trimestre 3',
             'observation' => 'nullable|string|max:500'
@@ -227,18 +233,6 @@ class NotesCrudController extends Controller
         try {
             DB::beginTransaction();
 
-            // Trouver la note à modifier
-            $note = Notes::find($id);
-            if (!$note) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Note non trouvée'
-                ], 404);
-            }
-
-            $this->authorize('update', $note);
-
-            // Vérifier que l'élève appartient bien à la classe
             $eleve = Eleve::find($request->eleve_id);
             if ($eleve->classe_id != $request->classe_id) {
                 return response()->json([
@@ -247,7 +241,6 @@ class NotesCrudController extends Controller
                 ], 400);
             }
 
-            // Vérifier que la matière existe pour la série de l'élève
             $serieHasMatiere = $eleve->serie
                 ? $eleve->serie->matieres()->where('matiere_id', $request->matiere_id)->exists()
                 : true;
@@ -259,25 +252,12 @@ class NotesCrudController extends Controller
                 ], 400);
             }
 
-            // Validation spécifique selon le type d'évaluation (en excluant la note actuelle)
             $validationResult = $this->validateNoteByType($request, $id);
             if (!$validationResult['success']) {
                 return response()->json($validationResult, 400);
             }
 
-            // Mettre à jour la note
-            $note->update([
-                'eleve_id' => $request->eleve_id,
-                'classe_id' => $request->classe_id,
-                'matiere_id' => $request->matiere_id,
-                'note' => $request->note,
-                'note_sur' => $request->note_sur,
-                'type_evaluation' => $request->type_evaluation,
-                'date_evaluation' => $request->date_evaluation,
-                'periode' => $request->periode,
-                'annee_scolaire' => $request->annee_scolaire ?? $note->annee_scolaire ?? AnneeScolaire::courante(),
-                'observation' => $request->observation
-            ]);
+            $note->update($validator->validated());
 
             DB::commit();
 
@@ -404,7 +384,7 @@ class NotesCrudController extends Controller
         $validator = Validator::make($request->all(), [
             'classe_id' => 'required|school_exists:classes,id',
             'matiere_id' => 'required|school_exists:matieres,id',
-            'type_evaluation' => 'required|in:Devoir1,Devoir2,Interrogation',
+            'type_evaluation' => 'required|in:Devoir1,Devoir2,Interrogation,1ère evaluation,2ème evaluation,3ème evaluation,4ème evaluation,5ème evaluation,6ème evaluation',
             'date_evaluation' => 'required|date',
             'periode' => 'required|in:Trimestre 1,Trimestre 2,Trimestre 3',
             'notes' => 'required|array|min:1',

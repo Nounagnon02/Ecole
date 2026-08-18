@@ -16,8 +16,9 @@ class MatieresController extends Controller
         'secondaire' => ['6ème', '5ème', '4ème', '3ème', '2nde', '1ère', 'Terminale', 'Tle'],
     ];
 
-    public function index(){
-        return Matieres::all();
+    public function index()
+    {
+        return Matieres::paginate(50);
     }
 
     public function Serie_avec_matieres()
@@ -25,11 +26,6 @@ class MatieresController extends Controller
         return Series::with('matieres')->get();
     }
 
-    /**
-     * Affiche toutes les matières avec leurs séries et coefficients.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function indexWithSeries()
     {
         $matieres = Matieres::with(['series' => function($query) {
@@ -53,17 +49,24 @@ class MatieresController extends Controller
         }));
     }
 
-    public function store(Request $request){
+    public function store(Request $request)
+    {
+        $this->authorize('create', Matieres::class);
+
         $validated = $request->validate([
-            'nom' => 'string|required',
+            'nom' => 'required|string|unique:matieres,nom',
             'volume_horaire' => 'nullable|integer|min:1'
         ]);
-        $matieres = Matieres::create($validated);
 
-        return response()->json($matieres, 201);
+        try {
+            $matiere = Matieres::create($validated);
+            return response()->json($matiere, 201);
+        } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
+            return response()->json(['message' => 'Erreur lors de la création', 'error' => $this->clientErrorMessage($e)], 500);
+        }
     }
 
-    // Affiche une matiere spécifique
     public function show($id)
     {
         $matiere = Matieres::find($id);
@@ -72,10 +75,9 @@ class MatieresController extends Controller
             return response()->json(['message' => 'Matière non trouvée'], 404);
         }
 
-        return response()->json($matiere, 200);
+        return response()->json($matiere);
     }
 
-    // Met à jour une matiere spécifique
     public function update(Request $request, $id)
     {
         $matiere = Matieres::find($id);
@@ -84,17 +86,22 @@ class MatieresController extends Controller
             return response()->json(['message' => 'Matière non trouvée'], 404);
         }
 
-        $validatedData = $request->validate([
-            'nom'=>'string|required',
-            'volume_horaire'=>'nullable|integer|min:1'
+        $this->authorize('update', $matiere);
+
+        $validated = $request->validate([
+            'nom' => 'required|string|unique:matieres,nom,' . $id,
+            'volume_horaire' => 'nullable|integer|min:1'
         ]);
 
-        $matiere->update($validatedData);
-
-        return response()->json($matiere, 200);
+        try {
+            $matiere->update($validated);
+            return response()->json($matiere);
+        } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
+            return response()->json(['message' => 'Erreur lors de la mise à jour', 'error' => $this->clientErrorMessage($e)], 500);
+        }
     }
 
-    // Supprime une matiere spécifique
     public function destroy($id)
     {
         $matiere = Matieres::find($id);
@@ -103,9 +110,24 @@ class MatieresController extends Controller
             return response()->json(['message' => 'Matière non trouvée'], 404);
         }
 
-        $matiere->delete();
+        $this->authorize('delete', $matiere);
 
-        return response()->json(['message' => 'Matière supprimée'], 200);
+        $hasCoefficients = Coefficients::where('matiere_id', $id)->exists();
+        $hasSeries = $matiere->series()->exists();
+
+        if ($hasCoefficients || $hasSeries) {
+            return response()->json([
+                'message' => 'Impossible de supprimer : la matière a des coefficients ou des séries associées'
+            ], 422);
+        }
+
+        try {
+            $matiere->delete();
+            return response()->json(['message' => 'Matière supprimée']);
+        } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
+            return response()->json(['message' => 'Erreur lors de la suppression', 'error' => $this->clientErrorMessage($e)], 500);
+        }
     }
 
     public function getSeries($id)
@@ -124,13 +146,9 @@ class MatieresController extends Controller
             ];
         });
 
-        return response()->json($series, 200);
+        return response()->json($series);
     }
 
-    /**
-     * Logique commune aux trois niveaux (maternelle/primaire/secondaire).
-     * Regroupe les matières des séries d'un niveau, sans doublons.
-     */
     private function matieresParNiveau(string $niveau, bool $flatten = false)
     {
         if (!isset(self::SERIES_MAP[$niveau])) {
@@ -172,31 +190,24 @@ class MatieresController extends Controller
         return response()->json([
             'success' => true,
             'data' => $data
-        ], 200);
+        ]);
     }
 
-    // Matières des classes de la maternelle
     public function getMatieresM()
     {
         return $this->matieresParNiveau('maternelle', flatten: true);
     }
 
-    // Matières des classes du primaire
     public function getMatieresP()
     {
         return $this->matieresParNiveau('primaire');
     }
 
-    // Matières des classes du secondaire
     public function getMatieresS()
     {
         return $this->matieresParNiveau('secondaire');
     }
 
-    /**
-     * Get subjects filtered by education level (niveau).
-     * GET /matieres/niveaux/{niveau}
-     */
     public function getByNiveau($niveau)
     {
         $niveau = strtolower($niveau);
@@ -212,13 +223,6 @@ class MatieresController extends Controller
         return response()->json(['success' => true, 'data' => $matieres]);
     }
 
-    /**
-     * Affecte une matière à une série/classe avec un coefficient.
-     * Ligne pivot `serie_matieres` + ligne `coefficient_matieres` (si coefficient fourni).
-     *
-     * POST /matieres/{id}/series
-     * Body : { "series": [{ "serie_id": 1, "coefficient": 3, "classe_id": 4 }] }
-     */
     public function attachSeries(Request $request, $id)
     {
         $matiere = Matieres::find($id);
@@ -258,13 +262,9 @@ class MatieresController extends Controller
             'success' => true,
             'message' => 'Matières affectées',
             'data' => $matiere->series()->withPivot('coefficient', 'classe_id')->get()
-        ], 200);
+        ]);
     }
 
-    /**
-     * Retire une matière d'une série.
-     * DELETE /matieres/{id}/series/{serieId}
-     */
     public function detachSeries($id, $serieId)
     {
         $matiere = Matieres::find($id);
@@ -276,13 +276,9 @@ class MatieresController extends Controller
         $matiere->series()->detach($serieId);
         Coefficients::where('matiere_id', $id)->where('serie_id', $serieId)->delete();
 
-        return response()->json(['success' => true, 'message' => 'Matière retirée de la série'], 200);
+        return response()->json(['success' => true, 'message' => 'Matière retirée de la série']);
     }
 
-    /**
-     * Coefficients (par classe/série) d'une matière.
-     * GET /matieres/{id}/coefficients
-     */
     public function getCoefficients($id)
     {
         $matiere = Matieres::find($id);
@@ -295,6 +291,6 @@ class MatieresController extends Controller
             ->with(['matiere'])
             ->get(['id', 'serie_id', 'classe_id', 'coefficient']);
 
-        return response()->json(['success' => true, 'data' => $coefficients], 200);
+        return response()->json(['success' => true, 'data' => $coefficients]);
     }
 }
