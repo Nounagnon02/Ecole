@@ -3,6 +3,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Support\Cycles;
 use App\Traits\BelongsToEcole;
 use App\Traits\ScopedToCycle;
@@ -14,7 +15,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Classes extends Model
 {
-    use HasFactory, BelongsToEcole, ScopedToCycle;
+    use HasFactory, BelongsToEcole, ScopedToCycle, SoftDeletes;
 
     /**
      * La classe *est* le porteur du cycle : c'est l'ancre de toute la frontière.

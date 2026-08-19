@@ -108,15 +108,18 @@ class CenseurDashboardController extends Controller
                 ]);
 
             // ─── Récidivistes : élèves ayant reçu au moins deux sanctions.
-            $recidivistes = \App\Models\Sanction::with(['eleve.user', 'eleve.classe'])
-                ->get()
+            $recidivistes = \App\Models\Sanction::select('eleve_id', \DB::raw('COUNT(*) as sanctions'))
+                ->with(['eleve.user', 'eleve.classe'])
                 ->groupBy('eleve_id')
-                ->filter(fn ($g) => $g->count() >= 2)
-                ->map(fn ($g) => [
-                    'eleve' => $this->nomEleve($g->first()->eleve),
-                    'classe' => $g->first()->eleve?->classe?->nom_classe,
-                    'sanctions' => $g->count(),
-                ])->sortByDesc('sanctions')->take(5)->values();
+                ->having('sanctions', '>=', 2)
+                ->orderByDesc('sanctions')
+                ->limit(5)
+                ->get()
+                ->map(fn ($row) => [
+                    'eleve' => $this->nomEleve($row->eleve),
+                    'classe' => $row->eleve?->classe?->nom_classe,
+                    'sanctions' => $row->sanctions,
+                ]);
 
             return [
                 'stats' => [

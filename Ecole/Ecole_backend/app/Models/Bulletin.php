@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Traits\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -15,7 +16,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Bulletin extends Model
 {
-    use BelongsToEcole, HasFactory;
+    use BelongsToEcole, HasFactory, SoftDeletes;
 
     protected $fillable = [
         'eleve_id',

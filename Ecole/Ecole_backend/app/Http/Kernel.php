@@ -61,6 +61,7 @@ class Kernel extends HttpKernel
     protected $routeMiddleware = [
         'role' => \App\Http\Middleware\CheckRole::class,
         'account.lockout' => \App\Http\Middleware\AccountLockout::class,
+        '2fa.verify' => \App\Http\Middleware\VerifyTwoFactor::class,
         'auth' => \App\Http\Middleware\Authenticate::class,
         'auth.basic' => \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,
         'auth.session' => \Illuminate\Session\Middleware\AuthenticateSession::class,

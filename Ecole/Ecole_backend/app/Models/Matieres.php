@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Traits\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Matieres extends Model
 {
-    use HasFactory, BelongsToEcole;
+    use HasFactory, BelongsToEcole, SoftDeletes;
     protected $fillable=['nom', 'volume_horaire', 'ecole_id'];
 
 

@@ -108,14 +108,16 @@ class BibliothecaireDashboardController extends Controller
                     'categorie' => $l->categorie,
                 ]);
 
-            $populaires = \App\Models\Emprunt::select('livre_id')
+            $populaires = \App\Models\Emprunt::select('livre_id', \DB::raw('COUNT(*) as emprunts'))
                 ->with('livre')
-                ->get()
                 ->groupBy('livre_id')
-                ->map(fn ($g) => [
-                    'titre' => $g->first()->livre?->titre ?? 'Inconnu',
-                    'emprunts' => $g->count(),
-                ])->sortByDesc('emprunts')->take(5)->values();
+                ->orderByDesc('emprunts')
+                ->limit(5)
+                ->get()
+                ->map(fn ($row) => [
+                    'titre' => $row->livre?->titre ?? 'Inconnu',
+                    'emprunts' => $row->emprunts,
+                ]);
 
             return [
                 'stats' => [

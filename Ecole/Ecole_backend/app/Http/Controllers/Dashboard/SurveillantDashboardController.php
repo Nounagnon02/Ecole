@@ -51,7 +51,8 @@ class SurveillantDashboardController extends Controller
             // Une seule agrégation pour toutes les zones, au lieu d'un comptage
             // d'enseignants par catégorie (N+1, cf. audit P4) — les deux requêtes
             // restent scopées à l'école résolue.
-            $personnelsParCategorie = \App\Models\Enseignant::with('classes:id,categorie_classe')
+            $personnelsParCategorie = \App\Models\Enseignant::select('id')
+                ->with('classes:id,categorie_classe')
                 ->get()
                 ->flatMap(fn ($e) => $e->classes->pluck('categorie_classe'))
                 ->countBy()

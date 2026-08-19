@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Traits\BelongsToEcole;
 
 class Depense extends Model
 {
-    use HasFactory, BelongsToEcole;
+    use HasFactory, BelongsToEcole, SoftDeletes;
 
     protected $fillable = [
         'ecole_id',
