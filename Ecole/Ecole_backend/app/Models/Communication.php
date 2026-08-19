@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Support\CycleAccess;
 use App\Support\Roles;
 use App\Traits\BelongsToEcole;
@@ -24,7 +25,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class Communication extends Model
 {
-    use HasFactory, BelongsToEcole;
+    use HasFactory, BelongsToEcole, SoftDeletes;
 
     /* ─── Audiences ───────────────────────────────────────────────────── */
 

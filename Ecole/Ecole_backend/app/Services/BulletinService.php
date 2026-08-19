@@ -485,7 +485,7 @@ class BulletinService
             Bulletin::where('classe_id', $classeId)
                 ->where('periode', $periode)
                 ->where('annee_scolaire', $anneeScolaire)
-                ->delete();
+                ->forceDelete();
 
             Bulletin::insert($bulletins);
 

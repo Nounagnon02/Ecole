@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Traits\Auditable;
 use App\Traits\BelongsToEcole;
 use App\Traits\ScopedToCycle;
@@ -12,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Devoir extends Model
 {
-    use HasFactory, BelongsToEcole, Auditable, ScopedToCycle;
+    use HasFactory, BelongsToEcole, Auditable, ScopedToCycle, SoftDeletes;
 
     /**
      * Un devoir est donné à une classe.

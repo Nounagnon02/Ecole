@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Traits\BelongsToEcole;
 use App\Traits\ScopedToCycle;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -9,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class EmploiDuTemps extends Model
 {
-    use HasFactory, BelongsToEcole, ScopedToCycle;
+    use HasFactory, BelongsToEcole, ScopedToCycle, SoftDeletes;
 
     /**
      * Un créneau appartient à une classe, donc à son cycle.

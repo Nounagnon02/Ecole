@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 
 class AuthController extends Controller
@@ -66,6 +68,19 @@ class AuthController extends Controller
         // à travailler normalement.
         if ($message = $this->schoolAccessDenied($user)) {
             return response()->json(['message' => $message], 403);
+        }
+
+        // 2FA : si activée, on émet un token temporaire et on demande le code TOTP.
+        if ($user->two_factor_enabled) {
+            $device = $request->input('device_name', 'mobile');
+            $tempToken = $user->createToken('2fa-pending')->plainTextToken;
+
+            return response()->json([
+                'requires_2fa' => true,
+                'token' => $tempToken,
+                'token_type' => 'Bearer',
+                'message' => 'Vérification 2FA requise',
+            ]);
         }
 
         $payload = [
@@ -460,5 +475,58 @@ class AuthController extends Controller
         ];
 
         return $routes[$role] ?? '/dashboard';
+    }
+
+    /**
+     * Envoyer un email de vérification (opt-in).
+     */
+    public function sendVerificationEmail(Request $request)
+    {
+        $user = $request->user();
+
+        if (!$user->email) {
+            return response()->json(['message' => 'Aucune adresse email configurée'], 422);
+        }
+
+        if ($user->email_verified_at) {
+            return response()->json(['message' => 'Email déjà vérifié']);
+        }
+
+        $token = Str::random(64);
+        DB::table('email_verification_tokens')->insert([
+            'email' => $user->email,
+            'token' => sha1($token),
+            'created_at' => now(),
+        ]);
+
+        Mail::raw("Vérifiez votre adresse email en visitant : " . url("/api/v1/auth/verify-email/{$token}"), function ($message) use ($user) {
+            $message->to($user->email)
+                ->subject('Vérification de votre adresse email - ' . config('app.name'));
+        });
+
+        return response()->json(['message' => 'Email de vérification envoyé']);
+    }
+
+    /**
+     * Vérifier l'email via le token.
+     */
+    public function verifyEmail($token)
+    {
+        $record = DB::table('email_verification_tokens')
+            ->where('token', sha1($token))
+            ->first();
+
+        if (!$record || now()->diffInMinutes($record->created_at) > 60) {
+            return response()->json(['message' => 'Token invalide ou expiré'], 422);
+        }
+
+        User::where('email', $record->email)
+            ->update(['email_verified_at' => now()]);
+
+        DB::table('email_verification_tokens')
+            ->where('email', $record->email)
+            ->delete();
+
+        return response()->json(['message' => 'Email vérifié avec succès']);
     }
 }

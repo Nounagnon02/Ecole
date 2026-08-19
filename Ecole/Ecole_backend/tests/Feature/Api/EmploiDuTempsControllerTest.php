@@ -167,7 +167,7 @@ class EmploiDuTempsControllerTest extends TestCase
 
         $this->deleteJson("/api/emploi-du-temps/delete/{$emploi->id}")->assertOk();
 
-        $this->assertDatabaseMissing('emplois_du_temps', ['id' => $emploi->id]);
+        $this->assertSoftDeleted('emplois_du_temps', ['id' => $emploi->id]);
     }
 
     /** @test */

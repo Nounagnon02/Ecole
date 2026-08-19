@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Traits\Auditable;
 use App\Traits\BelongsToEcole;
 use App\Traits\ScopedToCycle;
@@ -22,7 +23,7 @@ class PaiementEleve extends Model
     public const PARTIAL = 'PARTIEL';
     public const PAID    = 'PAYE';
 
-    use HasFactory, BelongsToEcole, Auditable, ScopedToCycle;
+    use HasFactory, BelongsToEcole, Auditable, ScopedToCycle, SoftDeletes;
 
     /**
      * La scolarité d'un élève relève du cycle où il est inscrit ;

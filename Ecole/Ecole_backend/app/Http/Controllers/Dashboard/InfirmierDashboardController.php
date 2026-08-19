@@ -101,16 +101,19 @@ class InfirmierDashboardController extends Controller
                     'maladie' => $d->maladies_chroniques,
                 ]);
 
-            $soinsRecurrents = \App\Models\ConsultationMedicale::with(['eleve.user', 'eleve.classe'])
-                ->get()
+            $soinsRecurrents = \App\Models\ConsultationMedicale::select('eleve_id', \DB::raw('COUNT(*) as visites'))
+                ->with(['eleve.user', 'eleve.classe'])
                 ->groupBy('eleve_id')
-                ->filter(fn ($g) => $g->count() >= 2)
-                ->map(fn ($g) => [
-                    'eleve' => $this->nomEleve($g->first()->eleve),
-                    'classe' => $g->first()->eleve?->classe?->nom_classe,
-                    'visites' => $g->count(),
-                    'dernier_motif' => $g->last()->motif,
-                ])->sortByDesc('visites')->take(5)->values();
+                ->having('visites', '>=', 2)
+                ->orderByDesc('visites')
+                ->limit(5)
+                ->get()
+                ->map(fn ($row) => [
+                    'eleve' => $this->nomEleve($row->eleve),
+                    'classe' => $row->eleve?->classe?->nom_classe,
+                    'visites' => $row->visites,
+                    'dernier_motif' => $row->eleve?->consultations?->last()?->motif,
+                ]);
 
             return [
                 'stats' => [

@@ -255,7 +255,7 @@ class ComptableControllerTest extends TestCase
             ->assertJsonValidationErrors(['categorie', 'montant', 'date_depense']);
 
         $this->deleteJson('/api/comptable/depenses/' . $created['id'])->assertOk();
-        $this->assertDatabaseMissing('depenses', ['id' => $created['id']]);
+        $this->assertSoftDeleted('depenses', ['id' => $created['id']]);
     }
 
     /** @test */
