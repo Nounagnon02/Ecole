@@ -37,161 +37,163 @@ import useAuthStore from '@/shared/stores/auth-store';
 import useUIStore from '@/shared/stores/ui-store';
 import { ROLES, ROLE_LABELS, ROLE_NORMALIZATION } from '@/shared/types/roles';
 import { cn } from '@/shared/lib/utils';
+import { useTranslation } from '@/shared/i18n';
 
 /* ─── Menu items par rôle ──────────────────────────────────────────────────── */
 
 const ENSEIGNANT_COMMON = [
-  { icon: Users, label: 'Élèves', path: '/eleves' },
-  { icon: ClipboardList, label: 'Notes', path: '/notes' },
-  { icon: Calendar, label: 'Emploi du temps', path: '/emploi-du-temps' },
-  { icon: MessageSquare, label: 'Communications', path: '/communications' },
+  { icon: Users, label: 'nav.eleves', path: '/eleves' },
+  { icon: ClipboardList, label: 'nav.notes', path: '/notes' },
+  { icon: Calendar, label: 'nav.emploi_du_temps', path: '/emploi-du-temps' },
+  { icon: MessageSquare, label: 'nav.messagerie', path: '/communications' },
 ];
 
 const ROLE_MENUS = {
   [ROLES.DIRECTEUR]: [
-    { icon: LayoutDashboard, label: 'Tableau de bord', path: '/directeur/dashboard' },
-    { icon: Users, label: 'Élèves', path: '/eleves' },
-    { icon: GraduationCap, label: 'Enseignants', path: '/affectations' },
-    { icon: BookOpen, label: 'Notes', path: '/notes' },
-    { icon: Calendar, label: 'Emploi du temps', path: '/emploi-du-temps' },
-    { icon: DollarSign, label: 'Paiements', path: '/paiements' },
-    { icon: MessageSquare, label: 'Communications', path: '/communications' },
-    { icon: Settings, label: 'Paramètres', path: '/parametres' },
+    { icon: LayoutDashboard, label: 'nav.dashboard', path: '/directeur/dashboard' },
+    { icon: Users, label: 'nav.eleves', path: '/eleves' },
+    { icon: GraduationCap, label: 'nav.enseignants', path: '/affectations' },
+    { icon: BookOpen, label: 'nav.notes', path: '/notes' },
+    { icon: Calendar, label: 'nav.emploi_du_temps', path: '/emploi-du-temps' },
+    { icon: DollarSign, label: 'nav.paiements', path: '/paiements' },
+    { icon: MessageSquare, label: 'nav.messagerie', path: '/communications' },
+    { icon: Settings, label: 'nav.parametres', path: '/parametres' },
   ],
   [ROLES.ENSEIGNANT]: [
-    { icon: LayoutDashboard, label: 'Tableau de bord', path: '/enseignant/dashboard' },
-    { icon: BookOpen, label: 'Mes classes', path: '/enseignant/classes' },
+    { icon: LayoutDashboard, label: 'nav.dashboard', path: '/enseignant/dashboard' },
+    { icon: BookOpen, label: 'nav.classes', path: '/enseignant/classes' },
     ...ENSEIGNANT_COMMON,
-    { icon: Settings, label: 'Paramètres', path: '/parametres' },
+    { icon: Settings, label: 'nav.parametres', path: '/parametres' },
   ],
   [ROLES.ELEVE]: [
-    { icon: LayoutDashboard, label: 'Tableau de bord', path: '/eleve/dashboard' },
-    { icon: BookOpen, label: 'Mes cours', path: '/eleve/cours' },
-    { icon: Calendar, label: 'Emploi du temps', path: '/emploi-du-temps' },
-    { icon: BarChart3, label: 'Notes', path: '/notes' },
-    { icon: CreditCard, label: 'Paiements', path: '/paiements' },
-    { icon: MessageSquare, label: 'Communications', path: '/communications' },
-    { icon: Settings, label: 'Paramètres', path: '/parametres' },
+    { icon: LayoutDashboard, label: 'nav.dashboard', path: '/eleve/dashboard' },
+    { icon: BookOpen, label: 'nav.matieres', path: '/eleve/cours' },
+    { icon: Calendar, label: 'nav.emploi_du_temps', path: '/emploi-du-temps' },
+    { icon: BarChart3, label: 'nav.notes', path: '/notes' },
+    { icon: CreditCard, label: 'nav.paiements', path: '/paiements' },
+    { icon: MessageSquare, label: 'nav.messagerie', path: '/communications' },
+    { icon: Settings, label: 'nav.parametres', path: '/parametres' },
   ],
   [ROLES.PARENT]: [
-    { icon: LayoutDashboard, label: 'Tableau de bord', path: '/parent/dashboard' },
-    { icon: UserCheck, label: 'Mes enfants', path: '/parent/enfants' },
-    { icon: BookOpen, label: 'Suivi scolaire', path: '/notes' },
-    { icon: CreditCard, label: 'Paiements', path: '/paiements' },
-    { icon: MessageSquare, label: 'Communications', path: '/communications' },
-    { icon: Settings, label: 'Paramètres', path: '/parametres' },
+    { icon: LayoutDashboard, label: 'nav.dashboard', path: '/parent/dashboard' },
+    { icon: UserCheck, label: 'nav.parents', path: '/parent/enfants' },
+    { icon: BookOpen, label: 'nav.notes', path: '/notes' },
+    { icon: CreditCard, label: 'nav.paiements', path: '/paiements' },
+    { icon: MessageSquare, label: 'nav.messagerie', path: '/communications' },
+    { icon: Settings, label: 'nav.parametres', path: '/parametres' },
   ],
   [ROLES.COMPTABLE]: [
-    { icon: Calculator, label: 'Tableau de bord', path: '/comptable/dashboard' },
-    { icon: DollarSign, label: 'Transactions', path: '/comptable/transactions' },
-    { icon: FileSpreadsheet, label: 'Factures', path: '/comptable/factures' },
-    { icon: CreditCard, label: 'Paiements', path: '/paiements' },
-    { icon: MessageSquare, label: 'Communications', path: '/communications' },
-    { icon: Settings, label: 'Paramètres', path: '/parametres' },
+    { icon: Calculator, label: 'nav.dashboard', path: '/comptable/dashboard' },
+    { icon: DollarSign, label: 'nav.paiements', path: '/comptable/transactions' },
+    { icon: FileSpreadsheet, label: 'nav.bulletins', path: '/comptable/factures' },
+    { icon: CreditCard, label: 'nav.paiements', path: '/paiements' },
+    { icon: MessageSquare, label: 'nav.messagerie', path: '/communications' },
+    { icon: Settings, label: 'nav.parametres', path: '/parametres' },
   ],
   [ROLES.SURVEILLANT]: [
-    { icon: Shield, label: 'Tableau de bord', path: '/surveillant/dashboard' },
-    { icon: Users, label: 'Surveillance', path: '/surveillant/surveillance' },
-    { icon: Calendar, label: 'Présences', path: '/surveillant/presences' },
-    { icon: Calendar, label: 'Emploi du temps', path: '/emploi-du-temps' },
-    { icon: MessageSquare, label: 'Communications', path: '/communications' },
+    { icon: Shield, label: 'nav.dashboard', path: '/surveillant/dashboard' },
+    { icon: Users, label: 'nav.eleves', path: '/surveillant/surveillance' },
+    { icon: Calendar, label: 'nav.emploi_du_temps', path: '/surveillant/presences' },
+    { icon: Calendar, label: 'nav.emploi_du_temps', path: '/emploi-du-temps' },
+    { icon: MessageSquare, label: 'nav.messagerie', path: '/communications' },
   ],
   [ROLES.CENSEUR]: [
-    { icon: ClipboardList, label: 'Tableau de bord', path: '/censeur/dashboard' },
-    { icon: Users, label: 'Discipline', path: '/censeur/discipline' },
-    { icon: Calendar, label: 'Absences', path: '/censeur/absences' },
-    { icon: Calendar, label: 'Emploi du temps', path: '/emploi-du-temps' },
-    { icon: MessageSquare, label: 'Communications', path: '/communications' },
+    { icon: ClipboardList, label: 'nav.dashboard', path: '/censeur/dashboard' },
+    { icon: Users, label: 'nav.eleves', path: '/censeur/discipline' },
+    { icon: Calendar, label: 'nav.emploi_du_temps', path: '/censeur/absences' },
+    { icon: Calendar, label: 'nav.emploi_du_temps', path: '/emploi-du-temps' },
+    { icon: MessageSquare, label: 'nav.messagerie', path: '/communications' },
   ],
   [ROLES.INFIRMIER]: [
-    { icon: Stethoscope, label: 'Tableau de bord', path: '/infirmier/dashboard' },
-    { icon: Heart, label: 'Soins', path: '/infirmier/soins' },
-    { icon: FileText, label: 'Dossiers', path: '/infirmier/dossiers' },
-    { icon: Calendar, label: 'Emploi du temps', path: '/emploi-du-temps' },
-    { icon: MessageSquare, label: 'Communications', path: '/communications' },
+    { icon: Stethoscope, label: 'nav.dashboard', path: '/infirmier/dashboard' },
+    { icon: Heart, label: 'nav.infirmerie', path: '/infirmier/soins' },
+    { icon: FileText, label: 'nav.bibliotheque', path: '/infirmier/dossiers' },
+    { icon: Calendar, label: 'nav.emploi_du_temps', path: '/emploi-du-temps' },
+    { icon: MessageSquare, label: 'nav.messagerie', path: '/communications' },
   ],
   [ROLES.BIBLIOTHECAIRE]: [
-    { icon: Library, label: 'Tableau de bord', path: '/bibliothecaire/dashboard' },
-    { icon: BookOpen, label: 'Catalogue', path: '/bibliothecaire/catalogue' },
-    { icon: UserCheck, label: 'Emprunts', path: '/bibliothecaire/emprunts' },
-    { icon: Calendar, label: 'Emploi du temps', path: '/emploi-du-temps' },
-    { icon: MessageSquare, label: 'Communications', path: '/communications' },
+    { icon: Library, label: 'nav.dashboard', path: '/bibliothecaire/dashboard' },
+    { icon: BookOpen, label: 'nav.bibliotheque', path: '/bibliothecaire/catalogue' },
+    { icon: UserCheck, label: 'nav.eleves', path: '/bibliothecaire/emprunts' },
+    { icon: Calendar, label: 'nav.emploi_du_temps', path: '/emploi-du-temps' },
+    { icon: MessageSquare, label: 'nav.messagerie', path: '/communications' },
   ],
   [ROLES.SECRETAIRE]: [
-    { icon: FileText, label: 'Tableau de bord', path: '/secretaire/dashboard' },
-    { icon: Users, label: 'Inscriptions', path: '/secretaire/inscriptions' },
-    { icon: Users, label: 'Élèves', path: '/eleves' },
-    { icon: Calendar, label: 'Planning', path: '/secretaire/planning' },
-    { icon: FileSpreadsheet, label: 'Documents', path: '/secretaire/documents' },
-    { icon: MessageSquare, label: 'Communications', path: '/communications' },
-    { icon: Settings, label: 'Paramètres', path: '/parametres' },
+    { icon: FileText, label: 'nav.dashboard', path: '/secretaire/dashboard' },
+    { icon: Users, label: 'nav.eleves', path: '/secretaire/inscriptions' },
+    { icon: Users, label: 'nav.eleves', path: '/eleves' },
+    { icon: Calendar, label: 'nav.emploi_du_temps', path: '/secretaire/planning' },
+    { icon: FileSpreadsheet, label: 'nav.bibliotheque', path: '/secretaire/documents' },
+    { icon: MessageSquare, label: 'nav.messagerie', path: '/communications' },
+    { icon: Settings, label: 'nav.parametres', path: '/parametres' },
   ],
   [ROLES.RECTEUR]: [
-    { icon: School, label: 'Tableau de bord', path: '/universite/dashboard' },
-    { icon: GraduationCap, label: 'Facultés', path: '/universite/facultes' },
-    { icon: Users, label: 'Étudiants', path: '/universite/etudiants' },
-    { icon: BookOpen, label: 'Cours', path: '/universite/cours' },
-    { icon: Calendar, label: 'Emploi du temps', path: '/emploi-du-temps' },
-    { icon: MessageSquare, label: 'Communications', path: '/communications' },
-    { icon: Settings, label: 'Paramètres', path: '/parametres' },
+    { icon: School, label: 'nav.dashboard', path: '/universite/dashboard' },
+    { icon: GraduationCap, label: 'nav.enseignants', path: '/universite/facultes' },
+    { icon: Users, label: 'nav.eleves', path: '/universite/etudiants' },
+    { icon: BookOpen, label: 'nav.matieres', path: '/universite/cours' },
+    { icon: Calendar, label: 'nav.emploi_du_temps', path: '/emploi-du-temps' },
+    { icon: MessageSquare, label: 'nav.messagerie', path: '/communications' },
+    { icon: Settings, label: 'nav.parametres', path: '/parametres' },
   ],
   [ROLES.DOYEN]: [
-    { icon: School, label: 'Tableau de bord', path: '/universite/dashboard' },
-    { icon: GraduationCap, label: 'Départements', path: '/universite/departements' },
-    { icon: Users, label: 'Étudiants', path: '/universite/etudiants' },
-    { icon: BookOpen, label: 'Cours', path: '/universite/cours' },
-    { icon: Calendar, label: 'Emploi du temps', path: '/emploi-du-temps' },
-    { icon: MessageSquare, label: 'Communications', path: '/communications' },
+    { icon: School, label: 'nav.dashboard', path: '/universite/dashboard' },
+    { icon: GraduationCap, label: 'nav.enseignants', path: '/universite/departements' },
+    { icon: Users, label: 'nav.eleves', path: '/universite/etudiants' },
+    { icon: BookOpen, label: 'nav.matieres', path: '/universite/cours' },
+    { icon: Calendar, label: 'nav.emploi_du_temps', path: '/emploi-du-temps' },
+    { icon: MessageSquare, label: 'nav.messagerie', path: '/communications' },
   ],
   [ROLES.PROFESSEUR]: [
-    { icon: LayoutDashboard, label: 'Tableau de bord', path: '/universite/dashboard' },
-    { icon: BookOpen, label: 'Mes cours', path: '/universite/mes-cours' },
-    { icon: Users, label: 'Étudiants', path: '/universite/etudiants' },
-    { icon: ClipboardList, label: 'Notes', path: '/universite/notes' },
-    { icon: Calendar, label: 'Emploi du temps', path: '/emploi-du-temps' },
-    { icon: MessageSquare, label: 'Communications', path: '/communications' },
+    { icon: LayoutDashboard, label: 'nav.dashboard', path: '/universite/dashboard' },
+    { icon: BookOpen, label: 'nav.matieres', path: '/universite/mes-cours' },
+    { icon: Users, label: 'nav.eleves', path: '/universite/etudiants' },
+    { icon: ClipboardList, label: 'nav.notes', path: '/universite/notes' },
+    { icon: Calendar, label: 'nav.emploi_du_temps', path: '/emploi-du-temps' },
+    { icon: MessageSquare, label: 'nav.messagerie', path: '/communications' },
   ],
   [ROLES.ETUDIANT]: [
-    { icon: LayoutDashboard, label: 'Tableau de bord', path: '/universite/dashboard' },
-    { icon: BookOpen, label: 'Mes cours', path: '/universite/mes-cours' },
-    { icon: BarChart3, label: 'Notes', path: '/universite/notes' },
-    { icon: Calendar, label: 'Emploi du temps', path: '/emploi-du-temps' },
-    { icon: MessageSquare, label: 'Communications', path: '/communications' },
+    { icon: LayoutDashboard, label: 'nav.dashboard', path: '/universite/dashboard' },
+    { icon: BookOpen, label: 'nav.matieres', path: '/universite/mes-cours' },
+    { icon: BarChart3, label: 'nav.notes', path: '/universite/notes' },
+    { icon: Calendar, label: 'nav.emploi_du_temps', path: '/emploi-du-temps' },
+    { icon: MessageSquare, label: 'nav.messagerie', path: '/communications' },
   ],
   [ROLES.PERSONNEL]: [
-    { icon: LayoutDashboard, label: 'Tableau de bord', path: '/universite/dashboard' },
-    { icon: FileText, label: 'Tâches', path: '/universite/taches' },
-    { icon: Calendar, label: 'Planning', path: '/universite/planning' },
-    { icon: Calendar, label: 'Emploi du temps', path: '/emploi-du-temps' },
-    { icon: MessageSquare, label: 'Communications', path: '/communications' },
+    { icon: LayoutDashboard, label: 'nav.dashboard', path: '/universite/dashboard' },
+    { icon: FileText, label: 'nav.bibliotheque', path: '/universite/taches' },
+    { icon: Calendar, label: 'nav.emploi_du_temps', path: '/universite/planning' },
+    { icon: Calendar, label: 'nav.emploi_du_temps', path: '/emploi-du-temps' },
+    { icon: MessageSquare, label: 'nav.messagerie', path: '/communications' },
   ],
   [ROLES.SUPER_ADMIN]: [
-    { icon: Shield, label: 'Écoles', path: '/admin/ecoles' },
-    { icon: School, label: 'Tableau de bord', path: '/admin/dashboard' },
-    { icon: Users, label: 'Utilisateurs', path: '/admin/utilisateurs' },
-    { icon: BarChart3, label: 'Statistiques', path: '/admin/statistiques' },
-    { icon: BookMarked, label: 'Plans', path: '/admin/plans' },
-    { icon: DollarSign, label: 'Facturation', path: '/admin/billing' },
-    { icon: ClipboardList, label: 'Modules', path: '/admin/modules' },
-    { icon: Shield, label: 'White-Label', path: '/admin/white-label' },
-    { icon: Settings, label: 'Configuration', path: '/admin/configuration' },
+    { icon: Shield, label: 'nav.eleves', path: '/admin/ecoles' },
+    { icon: School, label: 'nav.dashboard', path: '/admin/dashboard' },
+    { icon: Users, label: 'nav.eleves', path: '/admin/utilisateurs' },
+    { icon: BarChart3, label: 'nav.notes', path: '/admin/statistiques' },
+    { icon: BookMarked, label: 'nav.bibliotheque', path: '/admin/plans' },
+    { icon: DollarSign, label: 'nav.paiements', path: '/admin/billing' },
+    { icon: ClipboardList, label: 'nav.matieres', path: '/admin/modules' },
+    { icon: Shield, label: 'nav.parametres', path: '/admin/white-label' },
+    { icon: Settings, label: 'nav.parametres', path: '/admin/configuration' },
   ],
   [ROLES.ADMIN]: [
-    { icon: LayoutDashboard, label: 'Tableau de bord', path: '/admin/dashboard' },
-    { icon: Users, label: 'Utilisateurs', path: '/admin/utilisateurs' },
-    { icon: Settings, label: 'Configuration', path: '/admin/configuration' },
+    { icon: LayoutDashboard, label: 'nav.dashboard', path: '/admin/dashboard' },
+    { icon: Users, label: 'nav.eleves', path: '/admin/utilisateurs' },
+    { icon: Settings, label: 'nav.parametres', path: '/admin/configuration' },
   ],
 };
 
 const COMMON_ITEMS = [
-  { icon: MessageSquare, label: 'Messagerie', path: '/messagerie' },
-  { icon: Settings, label: 'Paramètres', path: '/parametres' },
+  { icon: MessageSquare, label: 'nav.messagerie', path: '/messagerie' },
+  { icon: Settings, label: 'nav.parametres', path: '/parametres' },
 ];
 
 export default function Sidebar() {
   const { user } = useAuthStore();
   const { sidebarCollapsed, setSidebarCollapsed, sidebarOpen, toggleSidebar } = useUIStore();
   const location = useLocation();
+  const { t } = useTranslation();
 
   const menuItems = useMemo(() => {
     if (!user?.role) return COMMON_ITEMS;
@@ -289,7 +291,7 @@ export default function Sidebar() {
                         ? 'bg-[var(--accent-subtle)] text-[var(--accent)]'
                         : 'text-[var(--sidebar-text)] hover:bg-[var(--sidebar-bg-hover)] hover:text-[var(--text-primary)]'
                     )}
-                    title={sidebarCollapsed ? item.label : undefined}
+                    title={sidebarCollapsed ? t(item.label) : undefined}
                   >
                     <span className="flex h-4 w-4 shrink-0 items-center justify-center">
                       <Icon className="h-4 w-4" />
@@ -297,7 +299,7 @@ export default function Sidebar() {
 
                     <AnimatePresence>
                       {!sidebarCollapsed && (
-                        <span className="truncate">{item.label}</span>
+                        <span className="truncate">{t(item.label)}</span>
                       )}
                     </AnimatePresence>
                   </NavLink>

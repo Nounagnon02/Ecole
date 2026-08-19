@@ -50,7 +50,7 @@ function ApercuSection({ stats, presences, retards, data }) {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <Card.Header>
             <Card.Title>Présences de la Semaine</Card.Title>
@@ -136,7 +136,7 @@ function ApercuSection({ stats, presences, retards, data }) {
         </Card.Body>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card>
           <Card.Header>
             <div className="flex items-center justify-between">

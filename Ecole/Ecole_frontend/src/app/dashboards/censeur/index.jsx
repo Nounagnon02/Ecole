@@ -52,7 +52,7 @@ function ApercuSection({ stats, evolution, types_sanctions, sanctions, absencesP
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2">
           <Card.Header>
             <Card.Title>Évolution Disciplinaire</Card.Title>
@@ -144,7 +144,7 @@ function ApercuSection({ stats, evolution, types_sanctions, sanctions, absencesP
         </Card.Body>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card>
           <Card.Header>
             <Card.Title>Absences par Classe</Card.Title>

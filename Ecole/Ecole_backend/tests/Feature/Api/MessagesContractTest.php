@@ -176,9 +176,8 @@ class MessagesContractTest extends TestCase
         $mine = Notification::create([
             'user_id' => $this->me->id,
             'type' => 'info',
-            'titre' => 'Mon annonce',
+            'title' => 'Mon annonce',
             'message' => 'Voir la suite',
-            'lu' => false,
             'ecole_id' => $this->school->id,
         ]);
 
@@ -186,16 +185,15 @@ class MessagesContractTest extends TestCase
         $foreign = Notification::create([
             'user_id' => $this->me->id,
             'type' => 'info',
-            'titre' => 'Intrusion',
+            'title' => 'Intrusion',
             'message' => 'Ne doit pas apparaître',
-            'lu' => false,
             'ecole_id' => $otherSchool->id,
         ]);
 
         $items = $this->getJson('/api/notifications')->assertOk()->json('data');
 
         $this->assertCount(1, $items);
-        $this->assertSame('Mon annonce', $items[0]['titre']);
+        $this->assertSame('Mon annonce', $items[0]['title']);
 
         $this->putJson('/api/notifications/' . $mine->id . '/read')->assertOk();
 

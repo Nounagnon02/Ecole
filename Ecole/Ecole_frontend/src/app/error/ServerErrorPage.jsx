@@ -6,8 +6,11 @@
  */
 
 import { motion } from 'framer-motion';
+import { useTranslation } from '@/shared/i18n';
 
 export function ErrorBoundaryFallback({ error, onReset }) {
+  const { t } = useTranslation();
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-neutral-50 px-6 text-center dark:bg-neutral-950">
       <motion.div
@@ -25,10 +28,10 @@ export function ErrorBoundaryFallback({ error, onReset }) {
         </div>
 
         <h1 className="mb-2 text-2xl font-bold text-neutral-900 dark:text-neutral-100">
-          Une erreur est survenue
+          {t('error.500.title')}
         </h1>
         <p className="mb-2 text-sm text-neutral-500 dark:text-neutral-400">
-          Désolé, un problème technique est survenu. L'équipe technique a été informée.
+          {t('error.500.description')}
         </p>
         {process.env.NODE_ENV === 'development' && error && (
           <pre className="mb-6 max-w-full overflow-auto rounded-lg bg-neutral-100 p-4 text-left text-xs text-red-600 dark:bg-neutral-900 dark:text-red-400">
@@ -43,13 +46,13 @@ export function ErrorBoundaryFallback({ error, onReset }) {
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" />
             </svg>
-            Réessayer
+            {t('common.retry')}
           </button>
           <a
             href="/"
             className="inline-flex items-center gap-2 rounded-lg border border-[var(--border)] bg-white px-6 py-2.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-[var(--border)] dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
           >
-            Accueil
+            {t('error.go_home')}
           </a>
         </div>
       </motion.div>

@@ -58,7 +58,7 @@ function ApercuSection({ stats, caData, repartition, factures, impayes, tresorer
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2">
           <Card.Header>
             <Card.Title>Évolution des Finances</Card.Title>
@@ -127,7 +127,7 @@ function ApercuSection({ stats, caData, repartition, factures, impayes, tresorer
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card>
           <Card.Header>
             <Card.Title>Trésorerie du Mois</Card.Title>

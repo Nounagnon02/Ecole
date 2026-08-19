@@ -20,8 +20,10 @@ import {
 } from 'lucide-react';
 import useAuthStore from '@/shared/stores/auth-store';
 import useUIStore from '@/shared/stores/ui-store';
+import useRealtimeStore from '@/shared/stores/realtime-store';
 import { ROLE_LABELS } from '@/shared/types/roles';
 import { cn } from '@/shared/lib/utils';
+import { useTranslation } from '@/shared/i18n';
 
 /* ─── Animation variants ────────────────────────────────────────────────── */
 const dropdownVariants = {
@@ -30,8 +32,23 @@ const dropdownVariants = {
   exit: { opacity: 0, y: 8, scale: 0.96, transition: { duration: 0.1 } },
 };
 
+function timeAgo(dateStr) {
+  if (!dateStr) return '';
+  const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
+  if (seconds < 60) return "à l'instant";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `il y a ${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `il y a ${hours}h`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `il y a ${days}j`;
+  return new Date(dateStr).toLocaleDateString('fr-FR');
+}
+
 export default function Header() {
   const { user, logout } = useAuthStore();
+  const listenForNotifications = useRealtimeStore((s) => s.listenForNotifications);
+  const notifications = useRealtimeStore((s) => s.notifications);
   const {
     sidebarCollapsed,
     setSidebarCollapsed,
@@ -41,6 +58,7 @@ export default function Header() {
     setTheme,
   } = useUIStore();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
@@ -74,18 +92,17 @@ export default function Header() {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  // Subscribe to real-time notifications
+  useEffect(() => {
+    if (user?.id) listenForNotifications(user.id);
+  }, [user?.id, listenForNotifications]);
+
   const handleLogout = useCallback(async () => {
     await logout();
     navigate('/connexion');
   }, [logout, navigate]);
 
-  const notifications = [
-    { id: '1', text: 'Nouvel élève inscrit en 6ème A', time: 'Il y a 5 min', unread: true },
-    { id: '2', text: 'Paiement de 50 000 FCFA reçu', time: 'Il y a 1h', unread: true },
-    { id: '3', text: 'Réunion parents-professeurs demain', time: 'Il y a 3h', unread: false },
-  ];
-
-  const unreadCount = notifications.filter((n) => n.unread).length;
+  const unreadCount = notifications.filter((n) => !n.read_at).length;
 
   return (
     <header
@@ -100,7 +117,7 @@ export default function Header() {
         <button
           onClick={toggleSidebar}
           className="flex h-9 w-9 items-center justify-center rounded-lg text-[var(--text-tertiary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] md:hidden"
-          aria-label="Rechercher"
+          aria-label={t('header.toggle_menu')}
         >
           <Menu className="h-5 w-5" />
         </button>
@@ -111,7 +128,7 @@ export default function Header() {
           className={cn(
             'hidden h-9 w-9 items-center justify-center rounded-lg text-[var(--text-tertiary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] lg:flex'
           )}
-          aria-label={sidebarCollapsed ? 'Étendre' : 'Réduire'}
+          aria-label={sidebarCollapsed ? t('header.toggle_menu') : t('header.toggle_menu')}
         >
           <Menu className="h-5 w-5" />
         </button>
@@ -131,7 +148,7 @@ export default function Header() {
           className="relative hidden h-8 w-56 items-center gap-2 rounded-lg border border-[var(--border-light)] bg-[var(--surface-subtle)] px-3 text-sm text-[var(--text-tertiary)] transition-all duration-200 hover:border-[var(--border)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-secondary)] lg:flex lg:w-56"
         >
           <Search className="h-3.5 w-3.5 shrink-0" />
-          <span className="flex-1 text-left">Rechercher...</span>
+          <span className="flex-1 text-left">{t('common.search')}...</span>
           <kbd className="flex items-center gap-0.5 rounded border border-[var(--border)] bg-[var(--surface-subtle)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--text-tertiary)]">⌘K
           </kbd>
         </button>
@@ -172,7 +189,7 @@ export default function Header() {
           <button
             onClick={() => setNotifOpen(!notifOpen)}
             className="relative flex h-9 w-9 items-center justify-center rounded-lg text-[var(--text-tertiary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
-            aria-label="Notifications"
+            aria-label={t('header.notifications')}
           >
             <Bell className="h-4 w-4" />
             {unreadCount > 0 && (
@@ -196,13 +213,13 @@ export default function Header() {
                 className="absolute right-0 top-full mt-2 w-80 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface-raised)] shadow-[var(--shadow-4)]"
               >
                 <div className="flex items-center justify-between border-b border-[var(--border-light)] px-4 py-3">
-                  <span className="text-sm font-semibold text-[var(--text-primary)]">Notifications</span>
-                  <span className="text-xs text-[var(--accent)]">{unreadCount} non lue(s)</span>
+                  <span className="text-sm font-semibold text-[var(--text-primary)]">{t('header.notifications')}</span>
+                  <span className="text-xs text-[var(--accent)]">{unreadCount} {t('header.unread')}</span>
                 </div>
                 <div className="max-h-72 overflow-y-auto">
                   {notifications.map((notif, i) => (
                     <motion.button
-                      key={notif.id}
+                      key={notif.id ?? notif.created_at ?? i}
                       initial={{ opacity: 0, x: -8 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: i * 0.03 }}
@@ -211,26 +228,26 @@ export default function Header() {
                       <div
                         className={cn(
                           'mt-1.5 h-2 w-2 shrink-0 rounded-full',
-                          notif.unread ? 'bg-[var(--accent)]' : 'bg-[var(--text-tertiary)]'
+                          !notif.read_at ? 'bg-[var(--accent)]' : 'bg-[var(--text-tertiary)]'
                         )}
                       />
                       <div className="min-w-0 flex-1">
                         <p
                           className={cn(
                             'text-sm',
-                            notif.unread ? 'font-medium text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'
+                            !notif.read_at ? 'font-medium text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'
                           )}
                         >
-                          {notif.text}
+                          {notif.title || notif.message}
                         </p>
-                        <p className="mt-0.5 text-xs text-[var(--text-tertiary)]">{notif.time}</p>
+                        <p className="mt-0.5 text-xs text-[var(--text-tertiary)]">{timeAgo(notif.created_at)}</p>
                       </div>
                     </motion.button>
                   ))}
                 </div>
                 <div className="border-t border-[var(--border-light)] p-2">
                   <button className="flex w-full items-center justify-center rounded-lg px-4 py-2 text-sm font-medium text-[var(--accent)] transition-colors hover:bg-[var(--accent-subtle)]">
-                    Voir toutes les notifications
+                    {t('header.view_all')}
                   </button>
                 </div>
               </motion.div>
@@ -313,7 +330,7 @@ export default function Header() {
       <button
         onClick={toggleCommandPalette}
         className="flex h-9 w-9 items-center justify-center rounded-lg text-[var(--text-tertiary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] lg:hidden"
-        aria-label="Rechercher"
+        aria-label={t('header.search')}
       >
         <Search className="h-4 w-4" />
       </button>

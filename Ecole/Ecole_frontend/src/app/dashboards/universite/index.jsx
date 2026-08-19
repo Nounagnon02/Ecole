@@ -63,7 +63,7 @@ function ApercuSection({ stats, inscriptions, facultes, activites, loading }) {
       </div>
       {loading && <Skeleton className="h-[300px] rounded-2xl" />}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Inscriptions */}
         <Card>
           <Card.Header>

@@ -153,12 +153,24 @@ const useRealtimeStore = create(
       listenForPaiements: (userId) => {
         const { subscriptions } = get();
         const ch = `notifications.${userId}`;
-        if (subscriptions[ch]) return; // already listening for notifications
 
         const echo = getEcho();
         if (!echo) return;
 
+        // If the channel is already subscribed, just add the listener on it
+        if (subscriptions[ch]) {
+          subscriptions[ch].listen('.paiement.confirmed', (data) => {
+            set({ latestPaiement: data });
+          });
+          return;
+        }
+
         const channel = echo.private(ch);
+        channel.listen('.notification.pushed', (data) => {
+          set((state) => ({
+            notifications: [data, ...state.notifications].slice(0, 50),
+          }));
+        });
         channel.listen('.paiement.confirmed', (data) => {
           set({ latestPaiement: data });
         });

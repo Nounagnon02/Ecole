@@ -80,7 +80,8 @@
     "transfert": "تحويل",
     "bulletin": "كشف الدرجات",
     "paiements": "المدفوعات",
-    "assiduite": "الحضور"
+    "assiduite": "الحضور",
+    "statistiques": "الإحصائيات"
   },
   "notes": {
     "title": "الدرجات",
@@ -92,6 +93,9 @@
     "rang": "الترتيب",
     "appreciation": "ملاحظة",
     "coefficient": "المعامل",
+    "credit": "الائتمان",
+    "validation": "التحقق",
+    "export": "تصدير الدرجات",
     "import_mass": "استيراد جماعي",
     "saisie": "إدخال الدرجات",
     "bulletin": {
@@ -165,6 +169,14 @@
     "brouillons": "المسودات",
     "pieces_jointes": "المرفقات"
   },
+  "header": {
+    "notifications": "الإشعارات",
+    "unread": "غير مقروءة",
+    "mark_all_read": "تحديد الكل كمقروء",
+    "view_all": "عرض جميع الإشعارات",
+    "toggle_menu": "فتح القائمة",
+    "search": "بحث"
+  },
   "securite": {
     "title": "الأمان",
     "connected_as": "متصل باسم",
@@ -189,6 +201,9 @@
     "maintenance": {
       "title": "الصيانة جارية",
       "description": "نقوم بإجراء تحسينات. سيعود الخدمة قريباً."
-    }
+    },
+    "unauthorized": "وصول غير مصرح به",
+    "go_home": "الذهاب إلى الصفحة الرئيسية",
+    "go_back": "العودة"
   }
 }
