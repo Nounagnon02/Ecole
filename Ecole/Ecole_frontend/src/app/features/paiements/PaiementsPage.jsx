@@ -14,6 +14,7 @@ import {
 import { cn } from '@/shared/lib/utils';
 import { formatCurrency } from '@/shared/lib/utils';
 import { useApiQuery, api } from '@/shared/lib/api-client';
+import logger from '@/shared/lib/logger';
 import StatsCard from '@/shared/components/ui/StatsCard';
 import Card from '@/shared/components/ui/Card';
 import Button from '@/shared/components/ui/Button';
@@ -73,7 +74,7 @@ export default function PaiementsPage() {
   const tauxEncaisse = totalTransactions > 0 ? Math.round((payes / totalTransactions) * 100) : 0;
 
   const handleRecu = (id) => {
-    window.open(`/api/comptable/paiements/${id}/recu`, '_blank');
+    window.open(`/api/comptable/paiements/${id}/recu`, '_blank', 'noopener,noreferrer');
   };
 
   // Liste unique des élèves pour l'échéancier
@@ -111,12 +112,23 @@ export default function PaiementsPage() {
     try {
       const res = await api.post(`/comptable/echeancier/${echeanceId}/initier-paiement`);
       if (res.data?.success && res.data?.payment_url) {
+        const ALLOWED_HOSTS = ['fedapay.com', 'checkout.fedapay.com'];
+        try {
+          const url = new URL(res.data.payment_url);
+          if (!ALLOWED_HOSTS.some(h => url.hostname.endsWith(h))) {
+            toast.error('URL de paiement invalide');
+            return;
+          }
+        } catch {
+          toast.error('URL de paiement invalide');
+          return;
+        }
         window.location.href = res.data.payment_url;
       } else {
         toast.error(res.data?.message || 'Impossible d\'initialiser le paiement');
       }
     } catch (err) {
-      console.error('Erreur initiation paiement:', err);
+      logger.error('Erreur initiation paiement:', err);
       toast.error('Erreur lors de l\'initialisation du paiement');
     }
   };

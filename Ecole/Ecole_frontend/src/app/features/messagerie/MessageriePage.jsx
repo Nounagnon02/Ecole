@@ -32,6 +32,7 @@ import Input from '@/shared/components/ui/Input';
 import { useApi } from '@/hooks/useApi';
 import useAuthStore from '@/shared/stores/auth-store';
 import { unwrapList } from '@/shared/lib/unwrap';
+import logger from '@/shared/lib/logger';
 
 /**
  * Normalise une ligne de conversation en objet UI. Le backend expose
@@ -77,7 +78,7 @@ export default function MessageriePage() {
       setConversations(mapped);
       return mapped;
     } catch (e) {
-      console.error('Erreur chargement conversations:', e);
+      logger.error('Erreur chargement conversations:', e);
       return [];
     } finally {
       setLoadingConv(false);
@@ -117,7 +118,7 @@ export default function MessageriePage() {
         put(`/messages/conversation/${selectedConv.id}/read`).catch(() => {});
         refreshConversations().catch(() => {});
       } catch (e) {
-        console.error('Erreur chargement messages:', e);
+        logger.error('Erreur chargement messages:', e);
         setMessages([]);
       } finally {
         setLoadingMsg(false);
@@ -132,7 +133,7 @@ export default function MessageriePage() {
       const res = await get('/messages/contacts');
       setContacts(unwrapList(res?.data ?? res));
     } catch (e) {
-      console.error('Erreur chargement contacts:', e);
+      logger.error('Erreur chargement contacts:', e);
     } finally {
       setLoadingContacts(false);
     }
@@ -183,7 +184,7 @@ export default function MessageriePage() {
         c.id === selectedConv.id ? { ...c, lastMessage: text, date: new Date().toISOString(), unread: 0 } : c
       ));
     } catch (e) {
-      console.error('Erreur envoi message:', e);
+      logger.error('Erreur envoi message:', e);
       setMessageText(text);
     }
   };

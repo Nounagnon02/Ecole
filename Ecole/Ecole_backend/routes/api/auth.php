@@ -22,17 +22,17 @@ Route::post('/auth/login', [AuthController::class, 'connexion'])->middleware(['t
 
 // Routes protégées par authentification
 Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/auth/me', [AuthController::class, 'getProfile']);
-    Route::put('/auth/profile', [AuthController::class, 'updateProfile']);
-    Route::post('/auth/logout', [AuthController::class, 'logout']);
+    Route::get('/auth/me', [AuthController::class, 'getProfile'])->middleware('throttle:60,1');
+    Route::put('/auth/profile', [AuthController::class, 'updateProfile'])->middleware('throttle:60,1');
+    Route::post('/auth/logout', [AuthController::class, 'logout'])->middleware('throttle:60,1');
 
     // 2FA
-    Route::post('/auth/2fa/setup', [TwoFactorController::class, 'showSetup']);
-    Route::post('/auth/2fa/verify', [TwoFactorController::class, 'verify']);
-    Route::post('/auth/2fa/disable', [TwoFactorController::class, 'disable']);
+    Route::post('/auth/2fa/setup', [TwoFactorController::class, 'showSetup'])->middleware('throttle:60,1');
+    Route::post('/auth/2fa/verify', [TwoFactorController::class, 'verify'])->middleware('throttle:60,1');
+    Route::post('/auth/2fa/disable', [TwoFactorController::class, 'disable'])->middleware('throttle:60,1');
 
     // Email verification
-    Route::post('/auth/send-verification-email', [AuthController::class, 'sendVerificationEmail']);
+    Route::post('/auth/send-verification-email', [AuthController::class, 'sendVerificationEmail'])->middleware('throttle:60,1');
 });
 
 // Vérification 2FA après login

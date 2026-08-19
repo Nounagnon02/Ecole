@@ -392,6 +392,41 @@ function NotificationsSection() {
 
 /* ─── Sécurité ────────────────────────────────────────────────────── */
 function SecuriteSection() {
+  const { loading, post } = useApi();
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+
+  const handleChangePassword = async () => {
+    setPasswordError('');
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setPasswordError('Tous les champs sont requis.');
+      return;
+    }
+    if (newPassword.length < 8) {
+      setPasswordError('Le nouveau mot de passe doit faire au moins 8 caractères.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError('Les mots de passe ne correspondent pas.');
+      return;
+    }
+    try {
+      await post('/auth/change-password', {
+        current_password: currentPassword,
+        password: newPassword,
+        password_confirmation: confirmPassword,
+      });
+      toast.success('Mot de passe mis à jour avec succès.');
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (e) {
+      setPasswordError(e.response?.data?.message || 'Erreur lors du changement de mot de passe.');
+    }
+  };
+
   return (
     <div className="space-y-4">
       <Card>
@@ -399,20 +434,23 @@ function SecuriteSection() {
         <div className="space-y-4">
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Mot de passe actuel</label>
-            <Input type="password" placeholder="••••••••" />
+            <Input type="password" placeholder="••••••••" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Nouveau mot de passe</label>
-              <Input type="password" placeholder="••••••••" />
+              <Input type="password" placeholder="••••••••" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
             </div>
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Confirmer</label>
-              <Input type="password" placeholder="••••••••" />
+              <Input type="password" placeholder="••••••••" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
             </div>
           </div>
+          {passwordError && <p className="text-sm text-red-600">{passwordError}</p>}
           <div className="flex justify-end">
-            <Button>Mettre à jour</Button>
+            <Button onClick={handleChangePassword} disabled={loading}>
+              {loading ? 'Mise à jour...' : 'Mettre à jour'}
+            </Button>
           </div>
         </div>
       </Card>

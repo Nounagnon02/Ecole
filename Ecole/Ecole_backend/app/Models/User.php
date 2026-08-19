@@ -32,8 +32,15 @@ class User extends Authenticatable
     ];
 
     protected $guarded = [
+        'id',
         'is_active',
         'two_factor_secret',
+        'two_factor_verified_at',
+        'created_at',
+        'updated_at',
+        'deleted_at',
+        'email_verified_at',
+        'remember_token',
     ];
 
     /**

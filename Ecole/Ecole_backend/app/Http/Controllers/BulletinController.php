@@ -13,6 +13,37 @@ use App\Models\Classes;
 
 class BulletinController extends Controller
 {
+    /** @var \Illuminate\Support\Collection|null Cache of all notes for a class+period (keyed by eleve_id then matiere_id). */
+    private ?\Illuminate\Support\Collection $_cachedNotes = null;
+
+    /**
+     * Load ALL notes for a given class, period, and annee_scolaire in ONE query.
+     * Results are cached per instance so repeated calls during rank computation
+     * do not hit the database again.
+     *
+     * @return \Illuminate\Support\Collection  notes grouped by eleve_id → matiere_id
+     */
+    private function loadAllNotesForClass($classeId, $periode, $anneeScolaire = null): \Illuminate\Support\Collection
+    {
+        if ($this->_cachedNotes !== null) {
+            return $this->_cachedNotes;
+        }
+
+        $query = Notes::where('classe_id', $classeId)
+            ->where('periode', $periode)
+            ->with('matiere');
+
+        if ($anneeScolaire) {
+            $query->where('annee_scolaire', $anneeScolaire);
+        }
+
+        $this->_cachedNotes = $query->get()->groupBy('eleve_id')->map(
+            fn($notesEleve) => $notesEleve->groupBy('matiere_id')
+        );
+
+        return $this->_cachedNotes;
+    }
+
     // Calcul de la moyenne des interrogations
     private function calculerMoyenneInterrogations($eleveId, $matiereId, $periode)
     {
@@ -152,6 +183,69 @@ class BulletinController extends Controller
         return $data;
     }
 
+
+    /**
+     * Compute a student's general average from pre-loaded cached notes.
+     * Avoids N+1 queries that `calculerMoyenneGenerale` would cause.
+     */
+    private function calculerMoyenneGeneraleFromCache($eleve, $notesEleve, $periode): float
+    {
+        if (!$eleve->serie || !$eleve->serie->matieres) {
+            return 0;
+        }
+
+        $moyenneGenerale = 0;
+        $totalCoefficients = 0;
+
+        foreach ($eleve->serie->matieres as $matiere) {
+            $notesMat = $notesEleve->get($matiere->id, collect());
+            $moyenne = $this->calculerMoyenneMatiereFromNotes($notesMat);
+            $coefficient = $this->getCoefficientMatiere($eleve->serie->id, $matiere->id);
+            $moyenneGenerale += ($moyenne * $coefficient);
+            $totalCoefficients += $coefficient;
+        }
+
+        return $totalCoefficients > 0 ? round($moyenneGenerale / $totalCoefficients, 2) : 0;
+    }
+
+    /**
+     * Compute a subject average from a pre-loaded collection of notes.
+     * Replaces per-student per-subject DB queries in rank calculation.
+     */
+    private function calculerMoyenneMatiereFromNotes($notes): float
+    {
+        if ($notes->isEmpty()) {
+            return 0;
+        }
+
+        $grouped = $notes->groupBy('type_evaluation');
+
+        $composantes = [];
+        foreach (['Devoir1', 'Devoir2'] as $type) {
+            if ($grouped->has($type)) {
+                $composantes[] = $this->normalizeToTwenty($grouped->get($type)->take(1));
+            }
+        }
+        if ($grouped->has('Interrogation')) {
+            $composantes[] = $this->normalizeToTwenty($grouped->get('Interrogation'));
+        }
+        if (!empty($composantes)) {
+            return round(array_sum($composantes) / count($composantes), 2);
+        }
+
+        $evalTypes = [
+            '1ère evaluation', '2ème evaluation', '3ème evaluation',
+            '4ème evaluation', '5ème evaluation', '6ème evaluation',
+        ];
+        $evalMoyennes = [];
+        foreach ($evalTypes as $type) {
+            if ($grouped->has($type)) {
+                $evalMoyennes[] = $this->normalizeToTwenty($grouped->get($type));
+            }
+        }
+
+        return !empty($evalMoyennes) ? round(array_sum($evalMoyennes) / count($evalMoyennes), 2) : 0;
+    }
 
     public function getNotesDevoirs($eleveId, $matiereId, $periode)
     {
@@ -602,24 +696,26 @@ class BulletinController extends Controller
     private function calculateRank($eleveId, $classeId,$serieId, $periode)
     {
         try {
-            $eleves = Eleve::where('classe_id', $classeId)->where('serie_id',$serieId)->get();
+            $allNotesByEleve = $this->loadAllNotesForClass($classeId, $periode);
+
+            $eleves = Eleve::with('serie.matieres')
+                ->where('classe_id', $classeId)
+                ->where('serie_id', $serieId)
+                ->get();
+
             $moyennes = [];
-            
+
             foreach ($eleves as $eleve) {
-                $moyenneEleve = $this->calculerMoyenneGenerale($eleve->id, $periode);
-                // Include all students, even those with 0 average
+                $notesEleve = $allNotesByEleve->get($eleve->id, collect());
+                $moyenneEleve = $this->calculerMoyenneGeneraleFromCache($eleve, $notesEleve, $periode);
                 $moyennes[] = [
                     'id' => $eleve->id,
                     'moyenne' => $moyenneEleve
                 ];
             }
-            
-            // Sort by descending average
-            usort($moyennes, function($a, $b) {
-                return $b['moyenne'] <=> $a['moyenne'];
-            });
-            
-            // Find position
+
+            usort($moyennes, fn($a, $b) => $b['moyenne'] <=> $a['moyenne']);
+
             $position = null;
             foreach ($moyennes as $index => $item) {
                 if ($item['id'] == $eleveId) {
@@ -627,7 +723,7 @@ class BulletinController extends Controller
                     break;
                 }
             }
-            
+
             return [
                 'position' => $position,
                 'total_eleves' => count($moyennes)
@@ -647,27 +743,27 @@ class BulletinController extends Controller
     private function calculateRankEvaluation($eleveId, $classeId, $periode)
     {
         try {
-            // Récupérer tous les élèves de la classe
-            $eleves = Eleve::where('classe_id', $classeId)->get();
-            
+            $allNotesByEleve = $this->loadAllNotesForClass($classeId, $periode);
+
+            $eleves = Eleve::with('serie.matieres')
+                ->where('classe_id', $classeId)
+                ->get();
+
             $moyennes = [];
-            
+
             foreach ($eleves as $eleve) {
-                $moyenneEleve = $this->calculerMoyenneGenerale($eleve->id, $periode);
-                if ($moyenneEleve > 0) { // Seulement si l'élève a des notes
+                $notesEleve = $allNotesByEleve->get($eleve->id, collect());
+                $moyenneEleve = $this->calculerMoyenneGeneraleFromCache($eleve, $notesEleve, $periode);
+                if ($moyenneEleve > 0) {
                     $moyennes[] = [
                         'id' => $eleve->id,
                         'moyenne' => $moyenneEleve
                     ];
                 }
             }
-            
-            // Trier par moyenne décroissante
-            usort($moyennes, function($a, $b) {
-                return $b['moyenne'] <=> $a['moyenne'];
-            });
-            
-            // Trouver la position de l'élève
+
+            usort($moyennes, fn($a, $b) => $b['moyenne'] <=> $a['moyenne']);
+
             $position = null;
             foreach ($moyennes as $index => $item) {
                 if ($item['id'] == $eleveId) {
@@ -675,7 +771,7 @@ class BulletinController extends Controller
                     break;
                 }
             }
-            
+
             return [
                 'position' => $position,
                 'total_eleves' => count($moyennes)
@@ -696,11 +792,17 @@ class BulletinController extends Controller
     private function calculateRankMatiere($eleveId, $matiereId, $classeId,$serieId, $periode)
     {
         try {
-            $eleves = \App\Models\Eleve::where('classe_id', $classeId)->where('serie_id', $serieId)->get();
+            $allNotesByEleve = $this->loadAllNotesForClass($classeId, $periode);
+
+            $eleves = Eleve::with('user:id,name,prenom')
+                ->where('classe_id', $classeId)
+                ->where('serie_id', $serieId)
+                ->get();
             $moyennes = [];
-    
+
             foreach ($eleves as $eleve) {
-                $moyenne = $this->calculerMoyenneMatiere($eleve->id, $matiereId, $periode);
+                $notesMat = ($allNotesByEleve->get($eleve->id, collect()))->get($matiereId, collect());
+                $moyenne = $this->calculerMoyenneMatiereFromNotes($notesMat);
                 if ($moyenne > 0) {
                     $moyennes[] = [
                         'id' => $eleve->id,
@@ -708,11 +810,9 @@ class BulletinController extends Controller
                     ];
                 }
             }
-    
-            usort($moyennes, function($a, $b) {
-                return $b['moyenne'] <=> $a['moyenne'];
-            });
-    
+
+            usort($moyennes, fn($a, $b) => $b['moyenne'] <=> $a['moyenne']);
+
             $position = null;
             foreach ($moyennes as $index => $item) {
                 if ($item['id'] == $eleveId) {
@@ -720,7 +820,7 @@ class BulletinController extends Controller
                     break;
                 }
             }
-    
+
             return [
                 'position' => $position,
                 'total_eleves' => count($moyennes)

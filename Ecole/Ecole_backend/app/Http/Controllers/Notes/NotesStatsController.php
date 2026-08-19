@@ -114,7 +114,7 @@ class NotesStatsController extends Controller
                 $query->where('periode', $request->periode);
             }
 
-            $notes = $query->orderBy('date_evaluation', 'desc')->get();
+            $notes = $query->orderBy('date_evaluation', 'desc')->paginate(50);
 
             return response()->json([
                 'success' => true,
@@ -163,7 +163,7 @@ class NotesStatsController extends Controller
                 $query->where('periode', $request->periode);
             }
 
-            $notes = $query->orderBy('date_evaluation', 'desc')->get();
+            $notes = $query->orderBy('date_evaluation', 'desc')->paginate(50);
 
             return response()->json([
                 'success' => true,

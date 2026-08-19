@@ -15,6 +15,8 @@ const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api',
   timeout: 15000,
   withCredentials: true,
+  xsrfCookieName: 'XSRF-TOKEN',
+  xsrfHeaderName: 'X-XSRF-TOKEN',
   headers: {
     Accept: 'application/json',
     'Content-Type': 'application/json'
@@ -113,6 +115,16 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       useAuthStore.getState().clearSession();
+      const apiError = {
+        status: 401,
+        code: 'UNAUTHORIZED',
+        message: 'Session expirée',
+        details: [],
+        errors: null,
+        response: error.response,
+        isApiError: true
+      };
+      return Promise.reject(apiError);
     }
 
     // 429 — Rate limit

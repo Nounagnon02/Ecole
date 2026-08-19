@@ -4,12 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\{Eleve, RendezVous, Certificat};
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class SecretaireController extends Controller
 {
     public function dossiersEleves()
     {
-        return Eleve::with(['classe', 'parents'])->get()->map(function ($eleve) {
+        $paginator = Eleve::with(['classe', 'parents'])->paginate(50);
+        $items = $paginator->getCollection()->map(function ($eleve) {
             $parent = $eleve->parents->first();
             return [
                 'id' => $eleve->id,
@@ -20,16 +22,24 @@ class SecretaireController extends Controller
                 'dossier_complet' => $this->isDossierComplet($eleve->id)
             ];
         });
+
+        return new LengthAwarePaginator(
+            $items,
+            $paginator->total(),
+            $paginator->perPage(),
+            $paginator->currentPage(),
+            ['path' => request()->url()]
+        );
     }
 
     public function rendezVous()
     {
-        return RendezVous::with(['parent', 'eleve', 'enseignant'])->latest()->get();
+        return RendezVous::with(['parent', 'eleve', 'enseignant'])->latest()->paginate(50);
     }
 
     public function certificats()
     {
-        return Certificat::with(['eleve.classe'])->latest()->get();
+        return Certificat::with(['eleve.classe'])->latest()->paginate(50);
     }
 
     public function statistiques()

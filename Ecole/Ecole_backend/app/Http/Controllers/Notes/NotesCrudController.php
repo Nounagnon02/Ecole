@@ -48,7 +48,7 @@ class NotesCrudController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $query->latest('date_evaluation')->get(),
+            'data' => $query->latest('date_evaluation')->paginate(50),
         ]);
     }
 

@@ -107,7 +107,8 @@ class DashboardController extends Controller
                 // `coefficient` vit sur le pivot serie_matieres et `code`
                 // n'existe pas : le select d'origine levait une erreur SQL.
                 'matieres' => Matieres::select('id', 'nom', 'ecole_id')->get(),
-                'matieres_series' => Matieres::with('series')->get(),
+                // `matieres_series` was redundant with `series` — both load the
+                // same pivot data from opposite sides of the relationship.
                 'series' => \App\Models\Series::with('matieres')->get(),
                 'stats' => [
                     'total_eleves' => Eleve::count(),

@@ -18,6 +18,7 @@ import Avatar from '@/shared/components/ui/Avatar';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import { useApi } from '@/hooks/useApi';
+import logger from '@/shared/lib/logger';
 
 export default function ClassesPage() {
   const { loading, error, get } = useApi();
@@ -38,7 +39,7 @@ export default function ClassesPage() {
         setClasses(items);
         if (items.length > 0 && !selectedClasse) setSelectedClasse(items[0]);
       } catch (e) {
-        console.error('Erreur chargement classes:', e);
+        logger.error('Erreur chargement classes:', e);
       }
     })();
   }, [get, selectedClasse]);
@@ -54,7 +55,7 @@ export default function ClassesPage() {
           : [];
         setElevesByClasse(prev => ({ ...prev, [selectedClasse.id]: items }));
       } catch (e) {
-        console.error('Erreur chargement élèves:', e);
+        logger.error('Erreur chargement élèves:', e);
       }
     })();
   }, [selectedClasse, get]);
