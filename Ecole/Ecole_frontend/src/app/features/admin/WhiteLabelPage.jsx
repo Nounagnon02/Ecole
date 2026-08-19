@@ -14,6 +14,7 @@ import Card from '@/shared/components/ui/Card';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import { useApi } from '@/hooks/useApi';
+import logger from '@/shared/lib/logger';
 
 const PRESET_COLORS = [
   { name: 'Indigo', primary: '#4F46E5', secondary: '#7C3AED' },
@@ -53,7 +54,7 @@ export default function WhiteLabelPage() {
           setSelectedTenant(String(items[0].id));
         }
       } catch (e) {
-        console.error('Erreur chargement établissements:', e);
+        logger.error('Erreur chargement établissements:', e);
       }
     })();
   }, [get]);
@@ -73,7 +74,7 @@ export default function WhiteLabelPage() {
       setLogoUrl(cfg.logo_url || cfg.logo || '');
       setFaviconUrl(cfg.favicon_url || cfg.favicon || '');
     } catch (e) {
-      console.error('Erreur chargement config white-label:', e);
+      logger.error('Erreur chargement config white-label:', e);
     }
   }, [get, selectedTenant]);
 
@@ -94,7 +95,7 @@ export default function WhiteLabelPage() {
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (e) {
-      console.error('Erreur sauvegarde white-label:', e);
+      logger.error('Erreur sauvegarde white-label:', e);
     } finally {
       setSaving(false);
     }

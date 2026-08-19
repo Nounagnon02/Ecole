@@ -111,7 +111,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // ============ COMPTABLE ============
-    Route::prefix('comptable')->middleware('role:directeur,comptable')->group(function () {
+    Route::prefix('comptable')->middleware(['role:directeur,comptable', 'throttle:60,1'])->group(function () {
         Route::get('/paiements', [ComptableController::class, 'paiements']);
         Route::get('/finances', [ComptableController::class, 'finances']);
         Route::get('/bourses', [ComptableController::class, 'bourses']);

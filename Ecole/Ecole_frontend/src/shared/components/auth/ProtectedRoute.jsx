@@ -6,7 +6,7 @@
  * Redirige vers /connexion si non auth, /unauthorized si mauvais rôle.
  */
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import useAuthStore, { SESSION_CHECK_INTERVAL } from '@/shared/stores/auth-store';
 import { LoadingSpinner } from '@/shared/components/ui/Skeleton';
@@ -16,6 +16,7 @@ export default function ProtectedRoute({ children, allowedRoles, role }) {
     useAuthStore();
   const location = useLocation();
   const checkingRef = useRef(false);
+  const [isChecking, setIsChecking] = useState(true);
 
   /* ─── Re-validation silencieuse de la session ──────────────────────── */
   useEffect(() => {
@@ -23,15 +24,21 @@ export default function ProtectedRoute({ children, allowedRoles, role }) {
       const elapsed = Date.now() - (sessionLastVerified || 0);
       if (elapsed > SESSION_CHECK_INTERVAL) {
         checkingRef.current = true;
+        setIsChecking(true);
         checkSession().finally(() => {
           checkingRef.current = false;
+          setIsChecking(false);
         });
+      } else {
+        setIsChecking(false);
       }
+    } else if (!isAuthenticated) {
+      setIsChecking(false);
     }
   }, [location.pathname, isAuthenticated, sessionLastVerified, checkSession]);
 
   /* ─── Chargement en cours ────────────────────────────────────────── */
-  if (isLoading) {
+  if (isLoading || isChecking) {
     return <LoadingSpinner message="Vérification des permissions…" />;
   }
 

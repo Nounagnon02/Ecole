@@ -78,7 +78,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // ============ NOTES ============
-    Route::prefix('notes')->group(function () {
+    Route::prefix('notes')->middleware('throttle:60,1')->group(function () {
         Route::get('/eleve/{eleveId?}', [NotesCrudController::class, 'index']);
         Route::post('/store', [NotesCrudController::class, 'store'])->middleware('role:directeur,enseignant');
         Route::post('/auto-save', [NotesAutoSaveController::class, 'save'])->middleware('role:directeur,enseignant');
@@ -134,7 +134,8 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // ============ BULLETINS ============
-    Route::get('/bulletins/eleve/{eleveId}/{periode}', [BulletinController::class, 'getBulletin'])->middleware('role:directeur,parent,eleve');
+    Route::get('/bulletins/eleve/{eleveId}/{periode}', [BulletinController::class, 'getBulletin'])
+        ->middleware(['role:directeur,parent,eleve', 'throttle:60,1']);
 
     // ============ CAHIER DE TEXTE ============
     Route::prefix('cahier-texte')->group(function () {

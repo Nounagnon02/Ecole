@@ -282,73 +282,26 @@ class NotesImportController extends Controller
     {
         $this->authorize('viewAny', Notes::class);
 
-        $query = Notes::with(['eleve.user', 'matiere', 'classe']);
+        $filters = collect([
+            'classe_id',
+            'periode',
+            'matiere_id',
+        ])
+            ->filter(fn($key) => $request->filled($key))
+            ->mapWithKeys(fn($key) => [$key => $request->input($key)])
+            ->toArray();
 
-        if ($request->filled('classe_id')) {
-            $query->where('classe_id', $request->classe_id);
-        }
-        if ($request->filled('periode')) {
-            $query->where('periode', $request->periode);
-        }
-        if ($request->filled('matiere_id')) {
-            $query->where('matiere_id', $request->matiere_id);
-        }
+        $job = new \App\Jobs\ExportReportJob(
+            auth()->user(),
+            'notes',
+            $filters,
+            'csv',
+        );
+        dispatch($job);
 
-        $notes = $query->orderBy('classe_id')->orderBy('eleve_id')->orderBy('date_evaluation')->get();
-
-        try {
-            $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
-            $sheet = $spreadsheet->getActiveSheet();
-
-            // En-têtes
-            $headers = ['N°', 'Élève', 'Classe', 'Matière', 'Note', 'Note sur', 'Type', 'Période', 'Date', 'Observation', 'Verrouillée'];
-            $col = 'A';
-            foreach ($headers as $header) {
-                $sheet->setCellValue($col . '1', $header);
-                $sheet->getStyle($col . '1')->getFont()->setBold(true);
-                $col++;
-            }
-
-            $row = 2;
-            foreach ($notes as $i => $n) {
-                $sheet->setCellValue('A' . $row, $i + 1);
-                $sheet->setCellValue('B' . $row, ($n->eleve->user->name ?? '') . ' ' . ($n->eleve->user->prenom ?? ''));
-                $sheet->setCellValue('C' . $row, $n->classe->nom_classe ?? '');
-                $sheet->setCellValue('D' . $row, $n->matiere->nom ?? '');
-                $sheet->setCellValue('E' . $row, (float) $n->note);
-                $sheet->setCellValue('F' . $row, (float) ($n->note_sur ?? 20));
-                $sheet->setCellValue('G' . $row, $n->type_evaluation);
-                $sheet->setCellValue('H' . $row, $n->periode);
-                $sheet->setCellValue('I' . $row, $n->date_evaluation?->format('d/m/Y'));
-                $sheet->setCellValue('J' . $row, $n->observation ?? '');
-                $sheet->setCellValue('K' . $row, $n->locked ? 'Oui' : 'Non');
-                $row++;
-            }
-
-            // Ajuster la largeur des colonnes
-            foreach (range('A', 'K') as $c) {
-                $sheet->getColumnDimension($c)->setAutoSize(true);
-            }
-
-            $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
-            $filename = 'notes_export_' . now()->format('Ymd_His') . '.xlsx';
-            $tempPath = storage_path('app/temp/' . $filename);
-            if (!is_dir(storage_path('app/temp'))) {
-                mkdir(storage_path('app/temp'), 0755, true);
-            }
-            $writer->save($tempPath);
-
-            return response()->download($tempPath, $filename, [
-                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            ])->deleteFileAfterSend(true);
-
-        } catch (\Exception $e) {
-            $this->rethrowIfMeaningful($e);
-            \Illuminate\Support\Facades\Log::error('Export notes XLSX error: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => $this->clientErrorMessage($e, 'Erreur lors de l\'export')
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Export en cours, vous serez notifié',
+        ]);
     }
 }

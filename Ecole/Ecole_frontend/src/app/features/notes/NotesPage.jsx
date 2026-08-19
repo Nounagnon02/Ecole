@@ -90,7 +90,7 @@ export default function NotesPage() {
     if (filterClasseId) params.set('classe_id', filterClasseId);
     if (filterMatiereId) params.set('matiere_id', filterMatiereId);
     const qs = params.toString();
-    window.open(`/api/notes/export${qs ? `?${qs}` : ''}`, '_blank');
+    window.open(`/api/notes/export${qs ? `?${qs}` : ''}`, '_blank', 'noopener,noreferrer');
   };
 
   const handleLock = async (id, currentlyLocked) => {

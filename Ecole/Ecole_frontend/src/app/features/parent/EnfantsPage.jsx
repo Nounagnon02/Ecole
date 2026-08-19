@@ -17,6 +17,7 @@ import Badge from '@/shared/components/ui/Badge';
 import Avatar from '@/shared/components/ui/Avatar';
 import StatsCard from '@/shared/components/ui/StatsCard';
 import { useApi } from '@/hooks/useApi';
+import logger from '@/shared/lib/logger';
 
 export default function EnfantsPage() {
   const { loading, error, get } = useApi();
@@ -46,7 +47,7 @@ export default function EnfantsPage() {
         })));
         if (items.length > 0 && !selectedEnfant) setSelectedEnfant(items[0]);
       } catch (e) {
-        console.error('Erreur chargement enfants:', e);
+        logger.error('Erreur chargement enfants:', e);
       }
     })();
   }, [get]);
@@ -80,7 +81,7 @@ export default function EnfantsPage() {
             : Array.isArray(payRes.value) ? payRes.value : [])
           : []);
       } catch (e) {
-        console.error('Erreur chargement détails enfant:', e);
+        logger.error('Erreur chargement détails enfant:', e);
       }
     })();
   }, [selectedEnfant, get]);

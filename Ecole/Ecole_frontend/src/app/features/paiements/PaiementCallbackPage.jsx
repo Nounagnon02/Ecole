@@ -14,6 +14,7 @@ import { CheckCircle, XCircle, Loader2, ArrowRight } from 'lucide-react';
 import { cn } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
 import Button from '@/shared/components/ui/Button';
+import apiClient from '@/shared/lib/api-client';
 
 export default function PaiementCallbackPage() {
   const [searchParams] = useSearchParams();
@@ -31,10 +32,7 @@ export default function PaiementCallbackPage() {
 
     const verify = async () => {
       try {
-        const res = await fetch(`/api/comptable/paiement/verifier/${transactionId}`, {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` },
-        });
-        const data = await res.json();
+        const { data } = await apiClient.get(`/comptable/paiement/verifier/${transactionId}`);
         if (data.success) {
           setStatus(data.status === 'approved' ? 'approved' : data.status === 'pending' ? 'pending' : 'failed');
           setMessage(data.status === 'approved'

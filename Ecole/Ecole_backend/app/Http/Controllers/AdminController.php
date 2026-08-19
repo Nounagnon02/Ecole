@@ -16,6 +16,16 @@ use Illuminate\Support\Facades\DB;
  */
 class AdminController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(function ($request, $next) {
+            if (!auth()->user()?->isAdmin()) {
+                return response()->json(['error' => 'Forbidden'], 403);
+            }
+            return $next($request);
+        });
+    }
+
     /**
      * Liste paginée de tous les utilisateurs (tous rôles, toutes écoles).
      *

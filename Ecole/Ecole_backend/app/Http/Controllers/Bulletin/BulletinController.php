@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Notes;
 use App\Models\Eleve;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class BulletinController extends Controller
@@ -127,153 +128,132 @@ class BulletinController extends Controller
                 })->toArray()
             ]);
 
-            
+            // Clé de cache basée sur l'élève, la période et l'année scolaire
+            $anneeScolaire = now()->year;
+            $cacheKey = "bulletin_{$eleveId}_{$periode}_{$anneeScolaire}";
 
+            $result = Cache::remember($cacheKey, 300, function () use ($eleve, $eleveId, $periode) {
+                // Récupérer la catégorie de la classe
+                $categorie = $eleve->classe->categorie_classe ?? '';
 
-            // Récupérer la catégorie de la classe
-            $categorie = $eleve->classe->categorie_classe ?? '';
+                // --- Bloc d'adaptation selon la catégorie ---
+                if ($categorie === 'maternelle') {
+                    
+                    $evaluations = [];
+                    $types = ['1ère évaluation','2ème évaluation','3ème évaluation','4ème évaluation','5ème évaluation'];
+                    foreach ($eleve->serie->matieres as $matiere) {
+                        $evals = [];
+                        foreach ($types as $type) {
+                            $note = $this->getNote($eleveId, $matiere->id, $periode, $type);
+                            $moye = $this->calculerMoyenneMatiere($eleveId, $matiere->id, $periode);
+                            // Rang par matière pour cette évaluation
+                            $rangEval = $this->calculateRankEvaluation($eleveId, $matiere->id, $eleve->classe_id, $periode, $type);
+                            // Rang général pour cette évaluation (toutes matières confondues)
+                            //$rangGeneralEval = $this->calculateRankGeneralEvaluation($eleveId, $eleve->classe_id, $periode, $type, $eleve->serie->matieres);
 
-            // --- Bloc d'adaptation selon la catégorie ---
-            if ($categorie === 'maternelle') {
-                
-                $evaluations = [];
-                $types = ['1ère évaluation','2ème évaluation','3ème évaluation','4ème évaluation','5ème évaluation'];
-                foreach ($eleve->serie->matieres as $matiere) {
-                    $evals = [];
-                    foreach ($types as $type) {
-                        $note = $this->getNote($eleveId, $matiere->id, $periode, $type);
-                        $moye = $this->calculerMoyenneMatiere($eleveId, $matiere->id, $periode);
-                        // Rang par matière pour cette évaluation
-                        $rangEval = $this->calculateRankEvaluation($eleveId, $matiere->id, $eleve->classe_id, $periode, $type);
-                        // Rang général pour cette évaluation (toutes matières confondues)
-                        //$rangGeneralEval = $this->calculateRankGeneralEvaluation($eleveId, $eleve->classe_id, $periode, $type, $eleve->serie->matieres);
-
-                        $evals[] = [
-                            'type' => $type,
-                            'note' => $note,
-                            'rang' => $rangEval,
-                            //'rang_general' => $rangGeneralEval
+                            $evals[] = [
+                                'type' => $type,
+                                'note' => $note,
+                                'rang' => $rangEval,
+                                //'rang_general' => $rangGeneralEval
+                            ];
+                        }
+                        $evaluations[] = [
+                            'matiere' => $matiere->nom,
+                            'evaluations' => $evals
                         ];
                     }
-                    $evaluations[] = [
-                        'matiere' => $matiere->nom,
-                        'evaluations' => $evals
-                    ];
+                    return response()->json([
+                        'success' => true,
+                        'data' => [
+                            'eleve' => $this->formatEleveData($eleve, $categorie),
+                            'periode' => $periode,
+                            'evaluations' => $evaluations,
+                            'rang' => $this->calculateRank($eleveId, $eleve->classe_id,$eleve->serie_id, $periode),
+                        ]
+                    ]);
                 }
-                return response()->json([
-                    'success' => true,
-                    'data' => [
-                        'eleve' => $this->formatEleveData($eleve, $categorie),
-                        'periode' => $periode,
-                        'evaluations' => $evaluations,
-                        'rang' => $this->calculateRank($eleveId, $eleve->classe_id,$eleve->serie_id, $periode),
-                    ]
-                ]);
-            }
 
 
-            // Fin bloc maternelle
+                // Fin bloc maternelle
 
-            // Bloc Primaire 
-            if ($categorie === 'primaire') {
-                
-                $evaluations = [];
-                $types = ['1ère évaluation','2ème évaluation','3ème évaluation','4ème évaluation','5ème évaluation'];
-                foreach ($eleve->serie->matieres as $matiere) {
-                    $evals = [];
-                    foreach ($types as $type) {
-                        $note = $this->getNote($eleveId, $matiere->id, $periode, $type);
-                        $moye = $this->calculerMoyenneMatiere($eleveId, $matiere->id, $periode);
-                        // Rang par matière pour cette évaluation
-                        $rangEval = $this->calculateRankEvaluation($eleveId, $matiere->id, $eleve->classe_id, $periode, $type);
-                        // Rang général pour cette évaluation (toutes matières confondues)
-                        //$rangGeneralEval = $this->calculateRankGeneralEvaluation($eleveId, $eleve->classe_id, $periode, $type, $eleve->serie->matieres);
+                // Bloc Primaire 
+                if ($categorie === 'primaire') {
+                    
+                    $evaluations = [];
+                    $types = ['1ère évaluation','2ème évaluation','3ème évaluation','4ème évaluation','5ème évaluation'];
+                    foreach ($eleve->serie->matieres as $matiere) {
+                        $evals = [];
+                        foreach ($types as $type) {
+                            $note = $this->getNote($eleveId, $matiere->id, $periode, $type);
+                            $moye = $this->calculerMoyenneMatiere($eleveId, $matiere->id, $periode);
+                            // Rang par matière pour cette évaluation
+                            $rangEval = $this->calculateRankEvaluation($eleveId, $matiere->id, $eleve->classe_id, $periode, $type);
+                            // Rang général pour cette évaluation (toutes matières confondues)
+                            //$rangGeneralEval = $this->calculateRankGeneralEvaluation($eleveId, $eleve->classe_id, $periode, $type, $eleve->serie->matieres);
 
-                        $evals[] = [
-                            'type' => $type,
-                            'note' => $note,
-                            'rang' => $rangEval,
-                            //'rang_general' => $rangGeneralEval
+                            $evals[] = [
+                                'type' => $type,
+                                'note' => $note,
+                                'rang' => $rangEval,
+                                //'rang_general' => $rangGeneralEval
+                            ];
+                        }
+                        $evaluations[] = [
+                            'matiere' => $matiere->nom,
+                            'evaluations' => $evals
                         ];
                     }
-                    $evaluations[] = [
-                        'matiere' => $matiere->nom,
-                        'evaluations' => $evals
-                    ];
+                    return response()->json([
+                        'success' => true,
+                        'data' => [
+                            'eleve' => $this->formatEleveData($eleve, $categorie),
+                            'periode' => $periode,
+                            'evaluations' => $evaluations,
+                            'rang' => $this->calculateRank($eleveId, $eleve->classe_id,$eleve->serie_id, $periode),
+                        ]
+                    ]);
                 }
-                return response()->json([
-                    'success' => true,
-                    'data' => [
-                        'eleve' => $this->formatEleveData($eleve, $categorie),
-                        'periode' => $periode,
-                        'evaluations' => $evaluations,
-                        'rang' => $this->calculateRank($eleveId, $eleve->classe_id,$eleve->serie_id, $periode),
-                    ]
-                ]);
-            }
-            //  Fin bloc primaire 
-            // Calcul des moyennes
-            $moyennesParMatiere = [];
-            $moyenneGenerale = 0;
-            $totalCoefficients = 0;
-            $rangsParMatiere = [];
+                //  Fin bloc primaire 
+                // Calcul des moyennes
+                $moyennesParMatiere = [];
+                $moyenneGenerale = 0;
+                $totalCoefficients = 0;
+                $rangsParMatiere = [];
 
-            foreach ($eleve->serie->matieres as $matiere) {
-                $moyenne = $this->calculerMoyenneMatiere($eleveId, $matiere->id, $periode);
+                foreach ($eleve->serie->matieres as $matiere) {
+                    $moyenne = $this->calculerMoyenneMatiere($eleveId, $matiere->id, $periode);
+                    
+                    // Utiliser le coefficient spécifique à la classe
+                    $coefficient = $matiere->pivot->coefficient;
+                    $rangMatiere = $this->calculateRankMatiere($eleveId, $matiere->id, $eleve->classe_id,$eleve->serie_id, $periode);
+
+                    
+                    $moyennesParMatiere[] = [
+                        'matiere' => $matiere->nom,
+                        'coefficient' => $coefficient,
+                        'moyenne' => $moyenne,
+                        'moyenne_ponderee' => round($moyenne * $coefficient, 2),
+                        'details' => [
+                            'moyenne_interrogations' => $this->calculerMoyenneInterrogations($eleveId, $matiere->id, $periode),
+                            'devoir1' => $this->getNote($eleveId, $matiere->id, $periode, 'Devoir1'),
+                            'devoir2' => $this->getNote($eleveId, $matiere->id, $periode, 'Devoir2')
+                        ],
+                        'rang' => $rangMatiere
+                    ];
+                    
+                    $moyenneGenerale += ($moyenne * $coefficient);
+                    $totalCoefficients += $coefficient;
+                }
+
                 
-                // Utiliser le coefficient spécifique à la classe
-                $coefficient = $matiere->pivot->coefficient;
-                $rangMatiere = $this->calculateRankMatiere($eleveId, $matiere->id, $eleve->classe_id,$eleve->serie_id, $periode);
 
-                
-                $moyennesParMatiere[] = [
-                    'matiere' => $matiere->nom,
-                    'coefficient' => $coefficient,
-                    'moyenne' => $moyenne,
-                    'moyenne_ponderee' => round($moyenne * $coefficient, 2),
-                    'details' => [
-                        'moyenne_interrogations' => $this->calculerMoyenneInterrogations($eleveId, $matiere->id, $periode),
-                        'devoir1' => $this->getNote($eleveId, $matiere->id, $periode, 'Devoir1'),
-                        'devoir2' => $this->getNote($eleveId, $matiere->id, $periode, 'Devoir2')
-                    ],
-                    'rang' => $rangMatiere
-                ];
-                
-                $moyenneGenerale += ($moyenne * $coefficient);
-                $totalCoefficients += $coefficient;
-            }
+                // Calcul de la moyenne générale
+                $moyenneGenerale = $totalCoefficients > 0 ? round($moyenneGenerale / $totalCoefficients, 2) : 0;
+                // Calcul du rang général
+                $rangGeneral = $this->calculateRank($eleveId, $eleve->classe_id,$eleve->serie_id, $periode);
 
-            
-
-            // Calcul de la moyenne générale
-            $moyenneGenerale = $totalCoefficients > 0 ? round($moyenneGenerale / $totalCoefficients, 2) : 0;
-            // Calcul du rang général
-            $rangGeneral = $this->calculateRank($eleveId, $eleve->classe_id,$eleve->serie_id, $periode);
-
-            /*return response()->json([
-                'success' => true,
-                'data' => [
-                    'eleve' => [
-                        'nom' => $eleve->nom,
-                        'prenom' => $eleve->prenom,
-                        'matricule' => $eleve->numero_matricule,
-                        'classe' => $eleve->classe->nom_classe,
-                        'serie' => $eleve->serie->nom
-                    ],
-                    'rang' => $this->calculateRank($eleveId,$eleve->classe_id,$periode),
-                    'periode' => $periode,
-                    'moyennes_par_matiere' => $moyennesParMatiere,
-                    'moyenne_generale' => $moyenneGenerale,
-                    'debug_info' => [
-                        'total_matieres' => count($moyennesParMatiere),
-                        'total_coefficients' => $totalCoefficients
-                    ]
-                ]
-            ]);*/
-
-            return response()->json([
-                'success' => true,
-                'data' => [
+                return [
                     'eleve' => [
                         'nom' => $eleve->user->name ?? '',
                         'prenom' => $eleve->user->prenom ?? '',
@@ -292,7 +272,17 @@ class BulletinController extends Controller
                         'total_coefficients' => $totalCoefficients,
                         //'calculation_details' => $calculationDetails // Add any specific calculation details
                     ]
-                ]
+                ];
+            });
+
+            // Si le cache retourne déjà une réponse (maternelle/primaire), la renvoyer directement
+            if ($result instanceof \Illuminate\Http\JsonResponse) {
+                return $result;
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => $result,
             ]);
 
         } catch (\Exception $e) {
