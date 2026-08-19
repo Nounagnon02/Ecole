@@ -21,6 +21,7 @@ import ForgotPassword from '@/app/features/auth/ForgotPassword';
 import ResetPassword from '@/app/features/auth/ResetPassword';
 import ErrorBoundary from '@/shared/components/ui/ErrorBoundary';
 import { LoadingSpinner } from '@/shared/components/ui/Skeleton';
+import { useTranslation } from '@/shared/i18n';
 import NotFoundPage from '@/app/error/NotFoundPage';
 import ForbiddenPage from '@/app/error/ForbiddenPage';
 import {
@@ -30,6 +31,8 @@ import {
 
 /* ─── Page non autorisée ─────────────────────────────────────────────── */
 function UnauthorizedPage() {
+  const { t } = useTranslation();
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[var(--surface)] px-6 text-center">
       <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-[var(--red-subtle)] text-[var(--red)]">
@@ -38,16 +41,16 @@ function UnauthorizedPage() {
         </svg>
       </div>
       <h1 className="font-fraunces text-2xl font-semibold text-[var(--text-primary)]">
-        Accès non autorisé
+        {t('error.unauthorized')}
       </h1>
       <p className="max-w-sm text-sm text-[var(--text-secondary)]">
-        Vous n&apos;avez pas les permissions nécessaires pour accéder à cette page.
+        {t('error.403.description')}
       </p>
       <Link
         to="/connexion"
         className="mt-2 rounded-lg bg-[var(--accent)] px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[var(--accent-hover)]"
       >
-        Retour à la connexion
+        {t('error.go_home')}
       </Link>
     </div>
   );

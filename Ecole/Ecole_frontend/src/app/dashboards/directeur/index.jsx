@@ -219,7 +219,7 @@ function ApercuSection({ data, loading }) {
   return (
     <div className="space-y-6">
       <StatCardsGrid stats={stats} loading={loading} />
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <PerformanceChart data={stats} loading={loading} />
         <RepartitionPie data={stats} loading={loading} />
       </div>

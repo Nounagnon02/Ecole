@@ -52,7 +52,7 @@ function ApercuSection({ stats, fluxInscriptions, rendezVous, inscriptions, plan
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2">
           <Card.Header>
             <Card.Title>Flux d'Inscriptions</Card.Title>
@@ -133,7 +133,7 @@ function ApercuSection({ stats, fluxInscriptions, rendezVous, inscriptions, plan
         </Card.Body>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <Card.Header>
             <div className="flex items-center justify-between">

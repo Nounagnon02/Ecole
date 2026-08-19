@@ -95,8 +95,8 @@
     "coefficient": "Coefficient",
     "credit": "Crédit",
     "validation": "Validation",
-    "import_mass": "Import en masse",
     "export": "Export des notes",
+    "import_mass": "Import en masse",
     "saisie": "Saisie de notes",
     "bulletin": {
       "title": "Bulletin",
@@ -169,6 +169,14 @@
     "brouillons": "Brouillons",
     "pieces_jointes": "Pièces jointes"
   },
+  "header": {
+    "notifications": "Notifications",
+    "unread": "non lue(s)",
+    "mark_all_read": "Tout marquer comme lu",
+    "view_all": "Voir toutes les notifications",
+    "toggle_menu": "Ouvrir le menu",
+    "search": "Rechercher"
+  },
   "securite": {
     "title": "Sécurité",
     "connected_as": "Connecté en tant que",
@@ -193,6 +201,9 @@
     "maintenance": {
       "title": "Maintenance en cours",
       "description": "Nous effectuons des améliorations. Le service sera de retour dans quelques instants."
-    }
+    },
+    "unauthorized": "Accès non autorisé",
+    "go_home": "Retour à l'accueil",
+    "go_back": "Retour en arrière"
   }
 }

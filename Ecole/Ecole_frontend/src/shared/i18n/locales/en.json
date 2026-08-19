@@ -80,7 +80,8 @@
     "transfert": "Transfer",
     "bulletin": "Report Card",
     "paiements": "Payments",
-    "assiduite": "Attendance"
+    "assiduite": "Attendance",
+    "statistiques": "Statistics"
   },
   "notes": {
     "title": "Grades",
@@ -92,6 +93,9 @@
     "rang": "Rank",
     "appreciation": "Comment",
     "coefficient": "Coefficient",
+    "credit": "Credit",
+    "validation": "Validation",
+    "export": "Export grades",
     "import_mass": "Bulk import",
     "saisie": "Grade entry",
     "bulletin": {
@@ -165,6 +169,14 @@
     "brouillons": "Drafts",
     "pieces_jointes": "Attachments"
   },
+  "header": {
+    "notifications": "Notifications",
+    "unread": "unread",
+    "mark_all_read": "Mark all as read",
+    "view_all": "View all notifications",
+    "toggle_menu": "Toggle menu",
+    "search": "Search"
+  },
   "securite": {
     "title": "Security",
     "connected_as": "Logged in as",
@@ -189,6 +201,9 @@
     "maintenance": {
       "title": "Under maintenance",
       "description": "We are making improvements. The service will be back shortly."
-    }
+    },
+    "unauthorized": "Unauthorized access",
+    "go_home": "Go to homepage",
+    "go_back": "Go back"
   }
 }

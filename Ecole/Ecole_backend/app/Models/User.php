@@ -107,6 +107,11 @@ class User extends Authenticatable
         return $this->hasOne(\App\Models\Universite\Enseignant::class);
     }
 
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class);
+    }
+
     /**
      * Does this account satisfy a role gate?
      *

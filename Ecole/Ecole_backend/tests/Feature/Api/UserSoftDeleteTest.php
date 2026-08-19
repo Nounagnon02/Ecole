@@ -38,9 +38,8 @@ class UserSoftDeleteTest extends TestCase
         Notification::create([
             'user_id'  => $user->id,
             'type'     => 'info',
-            'titre'    => 'Bienvenue',
+            'title'    => 'Bienvenue',
             'message'  => 'Compte créé',
-            'lu'       => false,
             'ecole_id' => $school->id,
         ]);
 
@@ -56,7 +55,7 @@ class UserSoftDeleteTest extends TestCase
         $this->assertDatabaseHas('enseignants', ['id' => $enseignant->id]);
         $this->assertDatabaseHas('notifications', [
             'user_id' => $user->id,
-            'titre'   => 'Bienvenue',
+            'title'   => 'Bienvenue',
         ]);
         // Les tokens sont révoqués : plus aucun accès via l'ancien jeton.
         $this->assertDatabaseCount('personal_access_tokens', 0);

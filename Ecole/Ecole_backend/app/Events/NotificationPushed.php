@@ -35,8 +35,8 @@ class NotificationPushed implements ShouldBroadcast
             'id' => $this->notification->id,
             'type' => $this->notification->type,
             'title' => $this->notification->title,
-            'body' => $this->notification->body,
-            'action_url' => $this->notification->action_url,
+            'message' => $this->notification->message,
+            'data' => $this->notification->data,
             'created_at' => $this->notification->created_at->toISOString(),
         ];
     }

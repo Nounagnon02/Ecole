@@ -8,8 +8,11 @@
 
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { useTranslation } from '@/shared/i18n';
 
 export default function ForbiddenPage() {
+  const { t } = useTranslation();
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -42,14 +45,12 @@ export default function ForbiddenPage() {
 
         {/* Titre */}
         <h1 className="mb-2 text-2xl font-bold text-neutral-900 dark:text-neutral-100">
-          Accès refusé
+          {t('error.403.title')}
         </h1>
 
         {/* Description */}
         <p className="mb-8 text-sm leading-relaxed text-neutral-500 dark:text-neutral-400">
-          Vous n'avez pas les autorisations nécessaires pour accéder à cette page.
-          Si vous pensez qu'il s'agit d'une erreur, veuillez contacter votre
-          administrateur.
+          {t('error.403.description')}
         </p>
 
         {/* Actions */}
@@ -58,14 +59,14 @@ export default function ForbiddenPage() {
             to="/"
             className="inline-flex items-center gap-2 rounded-lg bg-[var(--accent)] px-6 py-2.5 text-sm font-medium text-white transition-all hover:bg-[var(--accent-hover)] motion-safe:active:scale-95"
           >
-            Retour à l'accueil
+            {t('error.go_home')}
           </Link>
           <button
             type="button"
             onClick={() => window.history.back()}
             className="inline-flex items-center gap-2 rounded-lg border border-[var(--border)] bg-white px-6 py-2.5 text-sm font-medium text-neutral-700 transition-all hover:bg-neutral-50 motion-safe:active:scale-95 dark:border-[var(--border)] dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
           >
-            Page précédente
+            {t('error.go_back')}
           </button>
         </div>
       </div>
@@ -80,6 +81,8 @@ export default function ForbiddenPage() {
  * Peut être utilisé par ProtectedRoute comme fallback visuel.
  */
 export function ForbiddenError() {
+  const { t } = useTranslation();
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-neutral-50 px-6 text-center dark:bg-neutral-950">
       <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-red-50 text-red-600 dark:bg-red-950/30 dark:text-red-400">
@@ -92,16 +95,16 @@ export function ForbiddenError() {
         </svg>
       </div>
       <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
-        Accès non autorisé
+        {t('error.unauthorized')}
       </h1>
       <p className="max-w-sm text-sm text-neutral-500">
-        Vous n'avez pas les permissions nécessaires pour accéder à cette page.
+        {t('error.403.description')}
       </p>
       <Link
         to="/"
         className="mt-2 rounded-lg bg-[var(--accent)] px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[var(--accent-hover)]"
       >
-        Retour à l'accueil
+        {t('error.go_home')}
       </Link>
     </div>
   );
