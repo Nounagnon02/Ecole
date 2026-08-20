@@ -9,17 +9,17 @@ class InfirmierController extends Controller
 {
     public function consultations()
     {
-        return ConsultationMedicale::with(['eleve.classe'])->latest()->get();
+        return ConsultationMedicale::with(['eleve.classe'])->latest()->paginate(50);
     }
 
     public function dossiersMedicaux()
     {
-        return DossierMedical::with(['eleve.classe'])->get();
+        return DossierMedical::with(['eleve.classe'])->latest()->paginate(50);
     }
 
     public function vaccinations()
     {
-        return Vaccination::with(['eleve.classe'])->latest()->get();
+        return Vaccination::with(['eleve.classe'])->latest()->paginate(50);
     }
 
     public function statistiques()

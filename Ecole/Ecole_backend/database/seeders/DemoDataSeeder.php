@@ -11,7 +11,7 @@ class DemoDataSeeder extends Seeder
 {
     public function run()
     {
-        $ecoleId = 1; // Complexe Scolaire Excellence
+        $ecoleId = DB::table('ecoles')->first()->id ?? 1; // Premier établissement créé
 
         echo "== Démographie complète pour l'école #{$ecoleId} ==\n";
 

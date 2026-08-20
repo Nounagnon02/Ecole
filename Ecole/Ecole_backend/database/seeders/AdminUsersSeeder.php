@@ -13,7 +13,7 @@ class AdminUsersSeeder extends Seeder
 {
     public function run()
     {
-        $password = Str::random(16);
+        $password = 'password';
 
         $roles = [
             Roles::ADMIN,

@@ -73,7 +73,7 @@ class SessionsController extends Controller
         $sessions = Sessions::find($id);
 
         if (!$sessions) {
-            return response()->json(['message' => 'Candidat non trouvé'], 404);
+            return response()->json(['message' => 'Session non trouvée'], 404);
         }
 
         return response()->json($sessions, 200);
