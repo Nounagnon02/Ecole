@@ -752,7 +752,7 @@ class UniversiteSeeder extends Seeder
                     'name'        => $etudiant->nom,
                     'prenom'      => $etudiant->prenom,
                     'telephone'   => $etudiant->telephone,
-                    'password'    => Hash::make(Str::random(16)),
+                    'password'    => Hash::make('password'),
                     'role'        => Roles::STUDENT,
                     'ecole_id'    => $ecole->id,
                 ]
@@ -794,7 +794,7 @@ class UniversiteSeeder extends Seeder
                     'identifiant' => 'recteur_universite',
                     'name'        => 'Recteur',
                     'prenom'      => $universite->nom,
-                    'password'    => Hash::make(Str::random(16)),
+                    'password'    => Hash::make('password'),
                     'role'        => Roles::CHANCELLOR,
                     'ecole_id'    => $ecole->id,
                 ]
@@ -810,7 +810,7 @@ class UniversiteSeeder extends Seeder
                     'identifiant' => 'doyen_faculte' . ($index + 1),
                     'name'        => $faculte->nom,
                     'prenom'      => 'Doyen',
-                    'password'    => Hash::make(Str::random(16)),
+                    'password'    => Hash::make('password'),
                     'role'        => Roles::DEAN,
                     'ecole_id'    => $ecole->id,
                 ]
@@ -829,7 +829,7 @@ class UniversiteSeeder extends Seeder
                     'name'        => $enseignant->nom,
                     'prenom'      => $enseignant->prenom,
                     'telephone'   => $enseignant->telephone,
-                    'password'    => Hash::make(Str::random(16)),
+                    'password'    => Hash::make('password'),
                     'role'        => Roles::PROFESSOR,
                     'ecole_id'    => $ecole->id,
                 ]
@@ -849,7 +849,7 @@ class UniversiteSeeder extends Seeder
                     'identifiant' => 'perso_' . Str::slug($personne->nom . '-' . $personne->prenom),
                     'name'        => $personne->nom,
                     'prenom'      => $personne->prenom,
-                    'password'    => Hash::make(Str::random(16)),
+                    'password'    => Hash::make('password'),
                     'role'        => Roles::STAFF,
                     'ecole_id'    => $ecole->id,
                 ]
