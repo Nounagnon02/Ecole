@@ -19,6 +19,7 @@ import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
 import { useApi } from '@/hooks/useApi';
+import logger from '@/shared/lib/logger';
 
 export default function InscriptionsPage() {
   const { loading, error, get } = useApi();
@@ -36,7 +37,7 @@ export default function InscriptionsPage() {
           : [];
         setInscriptions(items);
       } catch (e) {
-        console.error('Erreur chargement inscriptions:', e);
+        logger.error('Erreur chargement inscriptions:', e);
       }
     })();
   }, []);
@@ -111,6 +112,7 @@ export default function InscriptionsPage() {
           <select
             value={filterStatut}
             onChange={(e) => setFilterStatut(e.target.value)}
+            aria-label="Filtrer par statut"
             className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
           >
             <option value="">Tous les statuts</option>

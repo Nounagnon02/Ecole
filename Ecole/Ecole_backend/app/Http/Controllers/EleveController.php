@@ -99,6 +99,8 @@ class EleveController extends Controller
                     'serie_id' => $validated['serie_id'],
                 ]);
 
+                \Cache::forget('dashboard_directeur_' . (auth()->user()->ecole_id ?? 'global'));
+
                 return response()->json($eleve->load('user'), 201);
             });
         } catch (\Exception $e) {
@@ -138,6 +140,8 @@ class EleveController extends Controller
         // On n'écrit que les champs effectivement validés et présents.
         $user->update(array_intersect_key($validated, array_flip(['name', 'prenom', 'email'])));
         $eleve->update(array_intersect_key($validated, array_flip(['classe_id', 'serie_id', 'numero_matricule'])));
+
+        \Cache::forget('dashboard_directeur_' . (auth()->user()->ecole_id ?? 'global'));
 
         return response()->json($eleve->load('user'));
     }
@@ -185,6 +189,8 @@ class EleveController extends Controller
         // silence et la désactivation ne coupait rien.
         $this->setAccountAccess($eleve, false);
 
+        \Cache::forget('dashboard_directeur_' . (auth()->user()->ecole_id ?? 'global'));
+
         return response()->json([
             'success' => true,
             'message' => 'Élève retiré des effectifs. Son dossier reste consultable.',
@@ -201,6 +207,8 @@ class EleveController extends Controller
 
         $eleve->update(['statut' => Eleve::ACTIVE]);
         $this->setAccountAccess($eleve, true);
+
+        \Cache::forget('dashboard_directeur_' . (auth()->user()->ecole_id ?? 'global'));
 
         return response()->json([
             'success' => true,

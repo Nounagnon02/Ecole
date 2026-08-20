@@ -252,6 +252,7 @@ export default function NotesPage() {
               <select
                 value={filterClasse}
                 onChange={(e) => setFilterClasse(e.target.value)}
+                aria-label="Filtrer par classe"
                 className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm text-neutral-700 outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
               >
                 <option value="">Toutes les classes</option>
@@ -260,6 +261,7 @@ export default function NotesPage() {
               <select
                 value={filterMatiere}
                 onChange={(e) => setFilterMatiere(e.target.value)}
+                aria-label="Filtrer par matière"
                 className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm text-neutral-700 outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
               >
                 <option value="">Toutes les matières</option>
@@ -370,6 +372,7 @@ export default function NotesPage() {
                 <select
                   value={classementClasse}
                   onChange={(e) => setClassementClasse(e.target.value)}
+                  aria-label="Sélectionner une classe"
                   className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm text-neutral-700 outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
                 >
                   <option value="">Sélectionner une classe</option>
@@ -378,6 +381,7 @@ export default function NotesPage() {
                 <select
                   value={classementPeriode}
                   onChange={(e) => setClassementPeriode(e.target.value)}
+                  aria-label="Filtrer par période"
                   className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm text-neutral-700 outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
                 >
                   <option value="Trimestre 1">Trimestre 1</option>
@@ -483,6 +487,7 @@ export default function NotesPage() {
                 <select
                   value={bulletinClasse}
                   onChange={(e) => setBulletinClasse(e.target.value)}
+                  aria-label="Sélectionner une classe"
                   className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm text-neutral-700 outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
                 >
                   <option value="">Sélectionner une classe</option>
@@ -491,6 +496,7 @@ export default function NotesPage() {
                 <select
                   value={bulletinPeriode}
                   onChange={(e) => setBulletinPeriode(e.target.value)}
+                  aria-label="Filtrer par période"
                   className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm text-neutral-700 outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
                 >
                   <option value="Trimestre 1">Trimestre 1</option>
@@ -500,6 +506,7 @@ export default function NotesPage() {
                 <select
                   value={bulletinAnnee}
                   onChange={(e) => setBulletinAnnee(e.target.value)}
+                  aria-label="Sélectionner une année"
                   className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm text-neutral-700 outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
                 >
                   {annees.map((a) => <option key={a} value={a}>{a}</option>)}

@@ -16,6 +16,7 @@ import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
 import { useApi } from '@/hooks/useApi';
+import logger from '@/shared/lib/logger';
 
 export default function FacultesPage() {
   const { loading, error, get } = useApi();
@@ -39,7 +40,7 @@ export default function FacultesPage() {
           etudiants: f.etudiants_count ?? f.etudiants ?? 0
         })));
       } catch (e) {
-        console.error('Erreur chargement facultés:', e);
+        logger.error('Erreur chargement facultés:', e);
       }
     })();
   }, []);

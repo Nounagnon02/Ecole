@@ -17,6 +17,7 @@ import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import StatsCard from '@/shared/components/ui/StatsCard';
 import { useApi } from '@/hooks/useApi';
+import logger from '@/shared/lib/logger';
 
 const getStatutVariant = (statut) => {
   switch (statut) {
@@ -65,7 +66,7 @@ export default function SurveillancePage() {
           : [];
         setIncidents(items);
       } catch (e) {
-        console.error('Erreur chargement incidents:', e);
+        logger.error('Erreur chargement incidents:', e);
       }
     })();
   }, []);
@@ -130,6 +131,7 @@ export default function SurveillancePage() {
             <select
               value={filterGravite}
               onChange={(e) => setFilterGravite(e.target.value)}
+              aria-label="Filtrer par gravité"
               className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
             >
               <option value="">Toutes les gravités</option>

@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\Classes;
 use App\Models\EmploiDuTemps;
 use App\Models\Notes;
+use App\Services\UserService;
 use App\Support\Roles;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -59,6 +60,8 @@ class EnseignantController extends Controller
                 $enseignant = Enseignant::create([
                     'user_id' => $user->id,
                 ]);
+
+                \Cache::forget('dashboard_directeur_' . (auth()->user()->ecole_id ?? 'global'));
 
                 return response()->json($enseignant->load('user'), 201);
             });
@@ -304,6 +307,8 @@ class EnseignantController extends Controller
 
         $user->update(array_intersect_key($validated, array_flip(['name', 'prenom', 'email', 'role'])));
 
+        \Cache::forget('dashboard_directeur_' . (auth()->user()->ecole_id ?? 'global'));
+
         return response()->json($enseignant->fresh()->load('user'));
     }
 
@@ -322,12 +327,10 @@ class EnseignantController extends Controller
         $user = $enseignant->user;
 
         if ($user) {
-            $user->is_active = false;
-            $user->save();
-            $user->tokens()->delete();
-            DB::table('sessions')->where('user_id', $user->id)->delete();
-            $user->delete();
+            UserService::softDeleteUser($user);
         }
+
+        \Cache::forget('dashboard_directeur_' . (auth()->user()->ecole_id ?? 'global'));
 
         return response()->json(['message' => 'Enseignant supprimé'], 200);
     }

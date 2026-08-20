@@ -6,6 +6,7 @@
  */
 
 import { create } from 'zustand';
+import logger from '@/shared/lib/logger';
 import { devtools } from 'zustand/middleware';
 import { getEcho } from '@/shared/lib/echo';
 
@@ -54,7 +55,7 @@ const useRealtimeStore = create(
         });
 
         echo.connector.pusher.connection.bind('error', (err) => {
-          console.warn('[Realtime] Error:', err);
+          logger.warn('[Realtime] Error:', err);
           set({ error: err.message || 'Connection error' });
         });
       },

@@ -196,12 +196,12 @@ export default function ClassesPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-neutral-200 dark:border-neutral-700 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                    <th className="pb-3 pr-4">Élève</th>
-                    <th className="pb-3 pr-4">Moyenne</th>
-                    <th className="pb-3 pr-4">Absences</th>
-                    <th className="pb-3 pr-4">Rang</th>
-                    <th className="pb-3 pr-4">Appréciation</th>
-                    <th className="pb-3 text-right">Actions</th>
+                    <th scope="col" className="pb-3 pr-4">Élève</th>
+                    <th scope="col" className="pb-3 pr-4">Moyenne</th>
+                    <th scope="col" className="pb-3 pr-4">Absences</th>
+                    <th scope="col" className="pb-3 pr-4">Rang</th>
+                    <th scope="col" className="pb-3 pr-4">Appréciation</th>
+                    <th scope="col" className="pb-3 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody>

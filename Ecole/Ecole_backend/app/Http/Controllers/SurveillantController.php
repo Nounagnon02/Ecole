@@ -32,7 +32,11 @@ class SurveillantController extends Controller
             'motif' => 'nullable|string'
         ]);
 
-        return Absence::create($validated);
+        $absence = Absence::create($validated);
+
+        \Cache::forget('dashboard_directeur_' . (auth()->user()->ecole_id ?? 'global'));
+
+        return $absence;
     }
 
     public function storeIncident(Request $request)
@@ -43,7 +47,11 @@ class SurveillantController extends Controller
             'gravite' => 'required|in:faible,moyenne,grave'
         ]);
 
-        return Incident::create($validated);
+        $incident = Incident::create($validated);
+
+        \Cache::forget('dashboard_directeur_' . (auth()->user()->ecole_id ?? 'global'));
+
+        return $incident;
     }
 
     public function storeSanction(Request $request)

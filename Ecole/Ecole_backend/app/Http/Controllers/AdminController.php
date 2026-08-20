@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Ecole;
+use App\Services\UserService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -146,11 +147,7 @@ class AdminController extends Controller
     public function destroy($id)
     {
         $user = User::findOrFail($id);
-        $user->is_active = false;
-        $user->save();
-        $user->tokens()->delete();
-        DB::table('sessions')->where('user_id', $user->id)->delete();
-        $user->delete();
+        UserService::softDeleteUser($user);
 
         return response()->json([
             'success' => true,

@@ -6,7 +6,7 @@ use App\Models\periodes;
 use Illuminate\Http\Request;
 use App\Support\Cycles;
 
-class periodesController extends Controller
+class PeriodesController extends Controller
 {
     //
     public function store(Request $request){
@@ -40,7 +40,7 @@ class periodesController extends Controller
         return response()->json($periode);
     }
 
-    public function Index()
+    public function index()
     {
         $periodes = periodes::all();
         return response()->json($periodes);

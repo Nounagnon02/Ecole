@@ -280,7 +280,7 @@ export default function LoginForm() {
         setShowSchoolPicker(true);
       }
     } catch (err) {
-      const serverErrors = err.response?.data?.errors;
+      const serverErrors = err.errors;
       if (serverErrors && typeof serverErrors === 'object') {
         const mapped = {};
         Object.entries(serverErrors).forEach(([field, msgs]) => {
@@ -290,7 +290,6 @@ export default function LoginForm() {
       } else {
         setErrors({
           _general:
-            err.response?.data?.message ||
             err.message ||
             'Erreur de connexion. Veuillez reessayer.'
         });
@@ -309,7 +308,7 @@ export default function LoginForm() {
       navigate(path, { replace: true });
     } catch (err) {
       setErrors({
-        _general: err.response?.data?.message || 'Erreur lors de la selection de l\'ecole.'
+        _general: err.message || 'Erreur lors de la selection de l\'ecole.'
       });
       setSchoolLoading(false);
     }

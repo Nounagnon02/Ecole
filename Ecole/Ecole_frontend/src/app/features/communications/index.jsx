@@ -147,9 +147,9 @@ export default function Communications() {
                   </div>
                 </div>
                 <div className="flex items-center gap-1">
-                  <button className="p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400"><Reply className="h-4 w-4" /></button>
-                  <button className="p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400"><Trash2 className="h-4 w-4" /></button>
-                  <button className="p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400"><MoreHorizontal className="h-4 w-4" /></button>
+                  <button aria-label="Répondre" className="p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400"><Reply className="h-4 w-4" /></button>
+                  <button aria-label="Supprimer" className="p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400"><Trash2 className="h-4 w-4" /></button>
+                  <button aria-label="Plus d'options" className="p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400"><MoreHorizontal className="h-4 w-4" /></button>
                 </div>
               </div>
 

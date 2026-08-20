@@ -18,6 +18,7 @@ import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
 import { useApi } from '@/hooks/useApi';
+import logger from '@/shared/lib/logger';
 
 const TYPE_CONFIG = {
   cours: { label: 'Cours', color: 'text-blue-500 bg-blue-100 dark:bg-blue-900/20', icon: BookOpen },
@@ -66,7 +67,7 @@ export default function PlanningPage() {
           statut: e.statut || 'planifie',
         })));
       } catch (e) {
-        console.error('Erreur chargement planning:', e);
+        logger.error('Erreur chargement planning:', e);
       }
     })();
   }, [get]);

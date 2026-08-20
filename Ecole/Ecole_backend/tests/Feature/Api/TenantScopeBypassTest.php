@@ -161,7 +161,7 @@ class TenantScopeBypassTest extends TestCase
         $this->actingAs($head);
 
         $distribution = collect(
-            app(\App\Http\Controllers\NotesController::class)
+            app(\App\Http\Controllers\Notes\NotesStatsController::class)
                 ->repartitionNotesSecondaire()
                 ->getData(true)
         )->keyBy('name');
@@ -189,7 +189,7 @@ class TenantScopeBypassTest extends TestCase
         $head = User::factory()->create(['role' => 'directeur', 'ecole_id' => $school->id]);
         $this->actingAs($head);
 
-        $distribution = app(\App\Http\Controllers\NotesController::class)
+        $distribution = app(\App\Http\Controllers\Notes\NotesStatsController::class)
             ->repartitionNotes()
             ->getData(true);
 

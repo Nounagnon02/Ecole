@@ -19,6 +19,7 @@ import Avatar from '@/shared/components/ui/Avatar';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import { useApi } from '@/hooks/useApi';
+import logger from '@/shared/lib/logger';
 
 const CATEGORY_CONFIG = {
   all: { label: 'Tout', icon: MessageSquare },
@@ -97,7 +98,7 @@ export default function CommunicationsPage() {
           : [];
         setPosts(items.map(normalizePost));
       } catch (e) {
-        console.error('Erreur chargement communications:', e);
+        logger.error('Erreur chargement communications:', e);
       } finally {
         setLoadingPosts(false);
       }

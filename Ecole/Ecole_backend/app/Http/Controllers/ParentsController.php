@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\ParentEleve;
 use App\Models\ParentInvitation;
 use App\Models\Eleve;
+use App\Services\UserService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -72,6 +73,8 @@ class ParentsController extends Controller
                     $parent->setEleves($validated['eleve_ids']);
                 }
 
+                \Cache::forget('dashboard_directeur_' . (auth()->user()->ecole_id ?? 'global'));
+
                 return response()->json($parent->load('user', 'eleves.user'), 201);
             });
         } catch (\Exception $e) {
@@ -113,6 +116,8 @@ class ParentsController extends Controller
         } elseif ($request->has('eleve_ids')) {
             $parent->setEleves($request->input('eleve_ids'));
         }
+
+        \Cache::forget('dashboard_directeur_' . (auth()->user()->ecole_id ?? 'global'));
 
         return response()->json($parent->load('user', 'eleves.user'));
     }
@@ -164,12 +169,10 @@ class ParentsController extends Controller
         $user = $parent->user;
 
         if ($user) {
-            $user->is_active = false;
-            $user->save();
-            $user->tokens()->delete();
-            DB::table('sessions')->where('user_id', $user->id)->delete();
-            $user->delete();
+            UserService::softDeleteUser($user);
         }
+
+        \Cache::forget('dashboard_directeur_' . (auth()->user()->ecole_id ?? 'global'));
 
         return response()->json(['message' => 'Parent supprimé']);
     }
@@ -220,9 +223,11 @@ class ParentsController extends Controller
             'expires_at' => now()->addDays($validated['expires_in_days'] ?? 7),
         ]);
 
-        // TODO: Envoyer email avec lien d'acceptation
-        // $acceptUrl = config('app.frontend_url') . "/parent/accept-invitation/{$invitation->token}";
-        // Mail::to($validated['email'])->send(new ParentInvitationMail($invitation, $acceptUrl));
+        // Envoyer email avec lien d'acceptation
+        $acceptUrl = config('app.frontend_url', 'http://localhost:5173') . "/parent/accept-invitation/{$invitation->token}";
+        \Mail::to($validated['email'])->queue(new \App\Mail\ParentInvitationMail($invitation, $acceptUrl));
+
+        \Cache::forget('dashboard_directeur_' . (auth()->user()->ecole_id ?? 'global'));
 
         return response()->json([
             'success' => true,
@@ -336,6 +341,8 @@ class ParentsController extends Controller
                     'is_accepted' => true,
                     'accepted_at' => now(),
                 ]);
+
+                \Cache::forget('dashboard_directeur_' . (auth()->user()->ecole_id ?? 'global'));
 
                 return response()->json([
                     'success' => true,

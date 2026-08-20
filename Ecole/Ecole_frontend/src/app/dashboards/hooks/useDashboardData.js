@@ -36,7 +36,7 @@ export function useDashboardData(endpoint, options = {}) {
       cache.set(cacheKey_, { data: result, timestamp: Date.now() });
       setData(result);
     } catch (err) {
-      setError(err.response?.data?.message || err.message || 'Une erreur est survenue');
+      setError(err.message || 'Une erreur est survenue');
       setData(null);
     } finally {
       setLoading(false);

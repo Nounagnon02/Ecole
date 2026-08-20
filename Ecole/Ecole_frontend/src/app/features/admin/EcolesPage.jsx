@@ -127,7 +127,7 @@ export default function EcolesPage() {
       // `/ecoles` est paginé : res.data.data est le paginateur, pas le tableau.
       setEcoles(unwrapList(res.data));
     } catch (err) {
-      setError(err.response?.data?.message || 'Erreur de chargement');
+      setError(err.message || 'Erreur de chargement');
     } finally {
       setLoading(false);
     }
@@ -171,7 +171,7 @@ export default function EcolesPage() {
       setCreateForm({ nom: '', email: '', telephone: '', adresse: '', ville: '' });
       fetchEcoles();
     } catch (err) {
-      const serverErrors = err.response?.data?.errors;
+      const serverErrors = err.errors;
       if (serverErrors) {
         const mapped = {};
         Object.entries(serverErrors).forEach(([field, msgs]) => {
@@ -179,7 +179,7 @@ export default function EcolesPage() {
         });
         setCreateErrors(mapped);
       } else {
-        setCreateErrors({ _general: err.response?.data?.message || 'Erreur de création' });
+        setCreateErrors({ _general: err.message || 'Erreur de création' });
       }
     } finally {
       setCreating(false);
@@ -202,7 +202,7 @@ export default function EcolesPage() {
       setProvResult(res.data?.data);
       setProvForm({ nom: '', email: '', adresse: '', telephone: '', ville: '', password: '' });
     } catch (err) {
-      const serverErrors = err.response?.data?.errors;
+      const serverErrors = err.errors;
       if (serverErrors) {
         const mapped = {};
         Object.entries(serverErrors).forEach(([field, msgs]) => {
@@ -210,7 +210,7 @@ export default function EcolesPage() {
         });
         setProvErrors(mapped);
       } else {
-        setProvErrors({ _general: err.response?.data?.message || 'Erreur de provisionnement' });
+        setProvErrors({ _general: err.message || 'Erreur de provisionnement' });
       }
     } finally {
       setProvisioning(false);
@@ -269,6 +269,7 @@ export default function EcolesPage() {
             <select
               value={filterStatut}
               onChange={(e) => setFilterStatut(e.target.value)}
+              aria-label="Filtrer par statut"
               className="h-10 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 text-[var(--text-primary)]"
             >
               <option value="">Tous les statuts</option>

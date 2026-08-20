@@ -74,7 +74,7 @@ export default function EmploiDuTemps() {
           </p>
         </motion.div>
         <div className="flex items-center gap-2">
-          <select value={selectedClasse} onChange={e => setSelectedClasse(e.target.value)}
+          <select value={selectedClasse} onChange={e => setSelectedClasse(e.target.value)} aria-label="Sélectionner une classe"
             className="h-10 px-4 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-sm appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)]">
             {CLASSES.map(c => <option key={c}>{c}</option>)}
           </select>
@@ -138,8 +138,8 @@ export default function EmploiDuTemps() {
                           <span>{cours.salle}</span>
                         </div>
                         <div className="absolute top-1 right-1 hidden group-hover:flex items-center gap-0.5">
-                          <button className="p-0.5 rounded hover:bg-black/10"><Edit className="h-3 w-3" /></button>
-                          <button className="p-0.5 rounded hover:bg-black/10 text-red-500"><Trash2 className="h-3 w-3" /></button>
+                          <button aria-label="Modifier" className="p-0.5 rounded hover:bg-black/10"><Edit className="h-3 w-3" /></button>
+                          <button aria-label="Supprimer" className="p-0.5 rounded hover:bg-black/10 text-red-500"><Trash2 className="h-3 w-3" /></button>
                         </div>
                       </div>
                     ))}

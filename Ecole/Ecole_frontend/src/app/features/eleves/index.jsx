@@ -183,6 +183,7 @@ export default function GestionÉlèves() {
               <select
                 value={classeFilter}
                 onChange={e => setClasseFilter(e.target.value)}
+                aria-label="Filtrer par classe"
                 className="h-10 px-4 pr-10 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-sm text-neutral-700 dark:text-neutral-300 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)]"
               >
                 {classes.map(c => (
@@ -260,13 +261,13 @@ export default function GestionÉlèves() {
                   </Table.Cell>
                   <Table.Cell className="text-right">
                     <div className="flex items-center justify-end gap-1">
-                      <button className="p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors">
+                      <button aria-label="Voir les détails" className="p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors">
                         <Eye className="h-4 w-4" />
                       </button>
-                      <button className="p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors">
+                      <button aria-label="Modifier" className="p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors">
                         <Edit className="h-4 w-4" />
                       </button>
-                      <button className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 text-neutral-400 hover:text-red-500 transition-colors">
+                      <button aria-label="Supprimer" className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 text-neutral-400 hover:text-red-500 transition-colors">
                         <Trash2 className="h-4 w-4" />
                       </button>
                     </div>

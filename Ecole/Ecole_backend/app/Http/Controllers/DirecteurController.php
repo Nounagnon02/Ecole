@@ -34,15 +34,6 @@ class DirecteurController extends Controller
 
     public function enseignants()
     {
-        return Enseignant::with(['user', 'matieres'])->get()->map(function ($enseignant) {
-            return [
-                'id' => $enseignant->id,
-                'nom' => $enseignant->user?->name,
-                'prenom' => $enseignant->user?->prenom,
-                'email' => $enseignant->user?->email,
-                'telephone' => $enseignant->user?->telephone,
-                'matieres' => $enseignant->matieres
-            ];
-        });
+        return Enseignant::with(['user', 'matieres'])->paginate(50);
     }
 }

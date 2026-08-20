@@ -19,6 +19,7 @@ import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
 import { useApi } from '@/hooks/useApi';
+import logger from '@/shared/lib/logger';
 
 const getGraviteVariant = (g) => {
   switch (g) {
@@ -82,7 +83,7 @@ export default function DisciplinePage() {
 
         setStats(statsRes?.data?.data ?? null);
       } catch (e) {
-        console.error('Erreur chargement discipline:', e);
+        logger.error('Erreur chargement discipline:', e);
       } finally {
         setStatsLoading(false);
       }
@@ -262,6 +263,7 @@ export default function DisciplinePage() {
             <select
               value={filterGravite}
               onChange={(e) => setFilterGravite(e.target.value)}
+              aria-label="Filtrer par gravité"
               className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
             >
               <option value="">Toutes les gravités</option>
@@ -272,6 +274,7 @@ export default function DisciplinePage() {
             <select
               value={filterStatut}
               onChange={(e) => setFilterStatut(e.target.value)}
+              aria-label="Filtrer par statut"
               className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
             >
               <option value="">Tous les statuts</option>

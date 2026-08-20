@@ -188,6 +188,7 @@ export default function EmploiDuTempsPage() {
             <select
               value={filterMatiere}
               onChange={(e) => setFilterMatiere(e.target.value)}
+              aria-label="Filtrer par matière"
               className="h-9 rounded-lg border border-neutral-300 bg-white px-2.5 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
             >
               {matieresList.map((m) => <option key={m} value={m}>{m}</option>)}
@@ -195,6 +196,7 @@ export default function EmploiDuTempsPage() {
             <select
               value={filterClasse}
               onChange={(e) => setFilterClasse(e.target.value)}
+              aria-label="Filtrer par classe"
               className="h-9 rounded-lg border border-neutral-300 bg-white px-2.5 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
             >
               {classesList.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -202,6 +204,7 @@ export default function EmploiDuTempsPage() {
             <select
               value={filterEnseignant}
               onChange={(e) => setFilterEnseignant(e.target.value)}
+              aria-label="Filtrer par enseignant"
               className="h-9 rounded-lg border border-neutral-300 bg-white px-2.5 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
             >
               {enseignantsList.map((e) => <option key={e} value={e}>{e}</option>)}

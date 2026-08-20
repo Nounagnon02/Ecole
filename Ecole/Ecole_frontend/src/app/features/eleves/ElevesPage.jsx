@@ -115,6 +115,7 @@ export default function ElevesPage() {
           <select
             value={filterClasse}
             onChange={(e) => setFilterClasse(e.target.value)}
+            aria-label="Filtrer par classe"
             className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm text-neutral-700 outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
           >
             <option value="">Toutes les classes</option>

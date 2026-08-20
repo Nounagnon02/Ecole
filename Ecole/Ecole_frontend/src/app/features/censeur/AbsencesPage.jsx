@@ -19,6 +19,7 @@ import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
 import { useApi } from '@/hooks/useApi';
+import logger from '@/shared/lib/logger';
 
 const getTypeLabel = (type) => {
   switch (type) {
@@ -46,7 +47,7 @@ export default function AbsencesPage() {
           : [];
         setAbsences(items);
       } catch (e) {
-        console.error('Erreur chargement absences:', e);
+        logger.error('Erreur chargement absences:', e);
       }
     })();
   }, []);
@@ -134,6 +135,7 @@ export default function AbsencesPage() {
             <select
               value={filterStatut}
               onChange={(e) => setFilterStatut(e.target.value)}
+              aria-label="Filtrer par statut"
               className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
             >
               <option value="">Toutes les absences</option>
@@ -150,13 +152,13 @@ export default function AbsencesPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-neutral-200 dark:border-neutral-700 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                <th className="pb-3 pr-4">Élève</th>
-                <th className="pb-3 pr-4">Classe</th>
-                <th className="pb-3 pr-4">Date</th>
-                <th className="pb-3 pr-4">Type</th>
-                <th className="pb-3 pr-4">Justifiée</th>
-                <th className="pb-3 pr-4">Motif</th>
-                <th className="pb-3 text-right">Actions</th>
+                <th scope="col" className="pb-3 pr-4">Élève</th>
+                <th scope="col" className="pb-3 pr-4">Classe</th>
+                <th scope="col" className="pb-3 pr-4">Date</th>
+                <th scope="col" className="pb-3 pr-4">Type</th>
+                <th scope="col" className="pb-3 pr-4">Justifiée</th>
+                <th scope="col" className="pb-3 pr-4">Motif</th>
+                <th scope="col" className="pb-3 text-right">Actions</th>
               </tr>
             </thead>
             <tbody>

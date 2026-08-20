@@ -60,6 +60,9 @@ class MatieresController extends Controller
 
         try {
             $matiere = Matieres::create($validated);
+
+            \Cache::forget('dashboard_directeur_' . (auth()->user()->ecole_id ?? 'global'));
+
             return response()->json($matiere, 201);
         } catch (\Exception $e) {
             $this->rethrowIfMeaningful($e);
@@ -95,6 +98,9 @@ class MatieresController extends Controller
 
         try {
             $matiere->update($validated);
+
+            \Cache::forget('dashboard_directeur_' . (auth()->user()->ecole_id ?? 'global'));
+
             return response()->json($matiere);
         } catch (\Exception $e) {
             $this->rethrowIfMeaningful($e);
@@ -123,6 +129,9 @@ class MatieresController extends Controller
 
         try {
             $matiere->delete();
+
+            \Cache::forget('dashboard_directeur_' . (auth()->user()->ecole_id ?? 'global'));
+
             return response()->json(['message' => 'Matière supprimée']);
         } catch (\Exception $e) {
             $this->rethrowIfMeaningful($e);

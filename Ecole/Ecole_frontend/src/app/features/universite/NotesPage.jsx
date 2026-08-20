@@ -19,6 +19,7 @@ import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
 import { useApi } from '@/hooks/useApi';
+import logger from '@/shared/lib/logger';
 
 export default function NotesPage() {
   const { loading, error, get } = useApi();
@@ -47,7 +48,7 @@ export default function NotesPage() {
           statut: n.statut || 'validee'
         })));
       } catch (e) {
-        console.error('Erreur chargement notes:', e);
+        logger.error('Erreur chargement notes:', e);
       }
     })();
   }, [get]);
@@ -130,6 +131,7 @@ export default function NotesPage() {
           <select
             value={filterStatut}
             onChange={(e) => setFilterStatut(e.target.value)}
+            aria-label="Filtrer par statut"
             className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
           >
             <option value="">Tous les statuts</option>
@@ -144,15 +146,15 @@ export default function NotesPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-neutral-200 dark:border-neutral-700 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                <th className="pb-3 pr-4">Étudiant</th>
-                <th className="pb-3 pr-4">Matricule</th>
-                <th className="pb-3 pr-4">Cours</th>
-                <th className="pb-3 pr-4">Note</th>
-                <th className="pb-3 pr-4">Coefficient</th>
-                <th className="pb-3 pr-4">Semestre</th>
-                <th className="pb-3 pr-4">Date</th>
-                <th className="pb-3 pr-4">Statut</th>
-                <th className="pb-3 text-right">Actions</th>
+                <th scope="col" className="pb-3 pr-4">Étudiant</th>
+                <th scope="col" className="pb-3 pr-4">Matricule</th>
+                <th scope="col" className="pb-3 pr-4">Cours</th>
+                <th scope="col" className="pb-3 pr-4">Note</th>
+                <th scope="col" className="pb-3 pr-4">Coefficient</th>
+                <th scope="col" className="pb-3 pr-4">Semestre</th>
+                <th scope="col" className="pb-3 pr-4">Date</th>
+                <th scope="col" className="pb-3 pr-4">Statut</th>
+                <th scope="col" className="pb-3 text-right">Actions</th>
               </tr>
             </thead>
             <tbody>

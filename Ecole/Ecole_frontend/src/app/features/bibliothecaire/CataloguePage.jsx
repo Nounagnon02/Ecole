@@ -18,6 +18,7 @@ import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
 import { useApi } from '@/hooks/useApi';
+import logger from '@/shared/lib/logger';
 
 export default function CataloguePage() {
   const { loading, error, get } = useApi();
@@ -35,7 +36,7 @@ export default function CataloguePage() {
           : [];
         setOuvrages(items);
       } catch (e) {
-        console.error('Erreur chargement catalogue:', e);
+        logger.error('Erreur chargement catalogue:', e);
       }
     })();
   }, []);
