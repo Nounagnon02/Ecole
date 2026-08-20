@@ -70,6 +70,8 @@ class PersonnelController extends Controller
                     'type_contrat' => $validated['type_contrat'],
                 ]);
 
+                \Cache::forget('dashboard_directeur_' . (auth()->user()->ecole_id ?? 'global'));
+
                 return response()->json($personnel->load('user'), 201);
             });
         } catch (\Exception $e) {

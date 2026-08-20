@@ -205,6 +205,7 @@ export default function PaiementsPage() {
               <select
                 value={filterStatut}
                 onChange={(e) => setFilterStatut(e.target.value)}
+                aria-label="Filtrer par statut"
                 className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
               >
                 <option value="">Tous les statuts</option>

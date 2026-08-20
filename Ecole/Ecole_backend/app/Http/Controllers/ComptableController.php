@@ -154,6 +154,8 @@ class ComptableController extends Controller
 
         $depense = Depense::create($validated);
 
+        \Cache::forget('dashboard_directeur_' . (auth()->user()->ecole_id ?? 'global'));
+
         return response()->json(['success' => true, 'data' => $depense], 201);
     }
 
@@ -219,6 +221,8 @@ class ComptableController extends Controller
             'statut_global'   => PaiementEleve::PAID,
             'reference'       => $validated['reference'] ?? $this->nextReference(),
         ]);
+
+        \Cache::forget('dashboard_directeur_' . (auth()->user()->ecole_id ?? 'global'));
 
         return response()->json(['success' => true, 'data' => $paiement], 201);
     }
@@ -436,10 +440,11 @@ class ComptableController extends Controller
                 'transaction_id' => $result['transaction']->id,
             ]);
         } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
             Log::error('Init paiement echeance failed: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Erreur lors de l\'initialisation du paiement : ' . $e->getMessage(),
+                'message' => 'Erreur lors de l\'initialisation du paiement : ' . $this->clientErrorMessage($e),
             ], 500);
         }
     }

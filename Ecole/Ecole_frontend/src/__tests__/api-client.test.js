@@ -50,9 +50,9 @@ describe('normalisation des erreurs', () => {
   });
 
   it('conserve les erreurs de validation par champ', async () => {
-    // Toute la couche formulaire lit `err.response.data.errors` pour
-    // marquer les champs fautifs. Sans cette conservation, la branche
-    // ne s'exécute jamais et l'utilisateur ne sait pas quel champ corriger.
+    // Toute la couche formulaire lit `err.errors` pour marquer les champs
+    // fautifs. Sans cette conservation, la branche ne s'exécute jamais et
+    // l'utilisateur ne sait pas quel champ corriger.
     http.onPost('/auth/login').reply(422, {
       message: 'Les données fournies sont invalides.',
       errors: { email: ['Le champ email est obligatoire.'] },
@@ -61,8 +61,7 @@ describe('normalisation des erreurs', () => {
     const err = await api.post('/auth/login', {}).catch((e) => e);
 
     expect(err.errors).toEqual({ email: ['Le champ email est obligatoire.'] });
-    expect(err.response?.data?.errors).toEqual({ email: ['Le champ email est obligatoire.'] });
-    expect(err.response?.status).toBe(422);
+    expect(err.status).toBe(422);
   });
 
   it('laisse `errors` à null quand le serveur n’envoie pas de validation', async () => {

@@ -303,8 +303,8 @@ describe('useForm', () => {
   });
 
   it('mappe les erreurs de validation du serveur sur les champs', async () => {
-    // Ce chemin dépend de la présence de `err.response.data.errors` :
-    // l'intercepteur doit conserver la réponse brute.
+    // Ce chemin dépend de la présence de `err.errors` dans l'objet d'erreur
+    // standardisé retourné par l'intercepteur API.
     http.onPost('/eleves').reply(422, {
       message: 'Invalide',
       errors: { nom: ['Le nom est obligatoire.'] },

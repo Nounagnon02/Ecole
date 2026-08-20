@@ -31,6 +31,7 @@ import Avatar from '@/shared/components/ui/Avatar';
 import Table from '@/shared/components/ui/Table';
 import StatsCard from '@/shared/components/ui/StatsCard';
 import { useApi } from '@/hooks/useApi';
+import logger from '@/shared/lib/logger';
 
 export default function GestionNotes() {
   const { get } = useApi();
@@ -97,7 +98,7 @@ export default function GestionNotes() {
           setMoyennesMatieres(moyennesRes.value?.data || moyennesRes.value || []);
         }
       } catch (e) {
-        console.error('Erreur chargement notes:', e);
+        logger.error('Erreur chargement notes:', e);
       } finally {
         setIsLoading(false);
       }
@@ -136,13 +137,13 @@ export default function GestionNotes() {
                   <p className="text-xs text-neutral-500">Sélectionnez une classe et une matière pour saisir les notes</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <select className="h-9 px-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-sm">
+                  <select aria-label="Sélectionner une classe" className="h-9 px-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-sm">
                     <option value="">Sélectionner une classe</option>
                     {classes.filter(c => c !== 'Toutes').map(c => (
                       <option key={c} value={c}>{c}</option>
                     ))}
                   </select>
-                  <select className="h-9 px-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-sm">
+                  <select aria-label="Sélectionner une matière" className="h-9 px-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-sm">
                     <option value="">Sélectionner une matière</option>
                     {matieres.filter(m => m !== 'Toutes').map(m => (
                       <option key={m} value={m}>{m}</option>
@@ -177,6 +178,7 @@ export default function GestionNotes() {
                   <select
                     value={classeFilter}
                     onChange={e => setClasseFilter(e.target.value)}
+                    aria-label="Filtrer par classe"
                     className="h-10 px-4 pr-10 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-sm appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)]"
                   >
                     {classes.map(c => (
@@ -186,6 +188,7 @@ export default function GestionNotes() {
                   <select
                     value={matiereFilter}
                     onChange={e => setMatiereFilter(e.target.value)}
+                    aria-label="Filtrer par matière"
                     className="h-10 px-4 pr-10 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-sm appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)]"
                   >
                     {matieres.map(m => (
@@ -195,6 +198,7 @@ export default function GestionNotes() {
                   <select
                     value={periodeFilter}
                     onChange={e => setPeriodeFilter(e.target.value)}
+                    aria-label="Filtrer par période"
                     className="h-10 px-4 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-sm appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)]"
                   >
                     {periodes.map(p => (
@@ -265,10 +269,10 @@ export default function GestionNotes() {
                         <Table.Cell className="text-neutral-500 text-xs max-w-[150px] truncate">{note.appreciation || '—'}</Table.Cell>
                         <Table.Cell className="text-right">
                           <div className="flex items-center justify-end gap-1">
-                            <button className="p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400 hover:text-neutral-600 transition-colors">
+                            <button aria-label="Modifier" className="p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400 hover:text-neutral-600 transition-colors">
                               <Edit className="h-4 w-4" />
                             </button>
-                            <button className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 text-neutral-400 hover:text-red-500 transition-colors">
+                            <button aria-label="Supprimer" className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 text-neutral-400 hover:text-red-500 transition-colors">
                               <Trash2 className="h-4 w-4" />
                             </button>
                           </div>

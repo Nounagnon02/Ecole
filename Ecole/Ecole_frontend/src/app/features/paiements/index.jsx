@@ -34,6 +34,7 @@ import Avatar from '@/shared/components/ui/Avatar';
 import Table from '@/shared/components/ui/Table';
 import StatsCard from '@/shared/components/ui/StatsCard';
 import { useApi } from '@/hooks/useApi';
+import logger from '@/shared/lib/logger';
 
 export default function GestionPaiements() {
   const { get } = useApi();
@@ -95,7 +96,7 @@ export default function GestionPaiements() {
           : [];
         setRevenusMensuels(revenusData);
       } catch (e) {
-        console.error('Erreur chargement paiements:', e);
+        logger.error('Erreur chargement paiements:', e);
       } finally {
         setIsLoading(false);
       }
@@ -228,11 +229,11 @@ export default function GestionPaiements() {
               <div className="flex-1">
                 <Input placeholder="Rechercher par élève ou matricule..." value={search} onChange={e => setSearch(e.target.value)} icon={Search} />
               </div>
-              <select value={statutFilter} onChange={e => setStatutFilter(e.target.value)}
+              <select value={statutFilter} onChange={e => setStatutFilter(e.target.value)} aria-label="Filtrer par statut"
                 className="h-10 px-4 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-sm appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)]">
                 {STATUTS_PAIEMENT.map(s => <option key={s}>{s}</option>)}
               </select>
-              <select value={periodeFilter} onChange={e => setPeriodeFilter(e.target.value)}
+              <select value={periodeFilter} onChange={e => setPeriodeFilter(e.target.value)} aria-label="Filtrer par période"
                 className="h-10 px-4 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-sm appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)]">
                 <option value="">Toutes les périodes</option>
                 {PERIODES_DISPLAY.map(p => <option key={p}>{p}</option>)}
@@ -288,8 +289,8 @@ export default function GestionPaiements() {
                         <Table.Cell><Badge variant={badgeForStatus(p.statut)} size="sm">{p.statut}</Badge></Table.Cell>
                         <Table.Cell className="text-right">
                           <div className="flex items-center justify-end gap-1">
-                            <button className="p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400 hover:text-neutral-600 transition-colors"><Receipt className="h-4 w-4" /></button>
-                            <button className="p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400 hover:text-neutral-600 transition-colors"><Printer className="h-4 w-4" /></button>
+                            <button aria-label="Reçu" className="p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400 hover:text-neutral-600 transition-colors"><Receipt className="h-4 w-4" /></button>
+                            <button aria-label="Imprimer" className="p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400 hover:text-neutral-600 transition-colors"><Printer className="h-4 w-4" /></button>
                           </div>
                         </Table.Cell>
                       </Table.Row>

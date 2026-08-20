@@ -171,6 +171,8 @@ class NotesCrudController extends Controller
 
                 DB::commit();
 
+                \Cache::forget('dashboard_directeur_' . (auth()->user()->ecole_id ?? 'global'));
+
                 return response()->json([
                     'success' => true,
                     'message' => 'Note enregistrée avec succès',
@@ -261,6 +263,8 @@ class NotesCrudController extends Controller
 
             DB::commit();
 
+            \Cache::forget('dashboard_directeur_' . (auth()->user()->ecole_id ?? 'global'));
+
             return response()->json([
                 'success' => true,
                 'message' => 'Note mise à jour avec succès',
@@ -306,6 +310,8 @@ class NotesCrudController extends Controller
 
             $note->delete();
 
+            \Cache::forget('dashboard_directeur_' . (auth()->user()->ecole_id ?? 'global'));
+
             return response()->json([
                 'success' => true,
                 'message' => 'Note supprimée avec succès'
@@ -332,6 +338,8 @@ class NotesCrudController extends Controller
 
             $note->update(['locked' => true]);
 
+            \Cache::forget('dashboard_directeur_' . (auth()->user()->ecole_id ?? 'global'));
+
             return response()->json([
                 'success' => true,
                 'message' => 'Note verrouillée'
@@ -355,6 +363,8 @@ class NotesCrudController extends Controller
             $this->authorize('update', $note);
 
             $note->update(['locked' => false]);
+
+            \Cache::forget('dashboard_directeur_' . (auth()->user()->ecole_id ?? 'global'));
 
             return response()->json([
                 'success' => true,
@@ -463,6 +473,8 @@ class NotesCrudController extends Controller
             }
 
             DB::commit();
+
+            \Cache::forget('dashboard_directeur_' . (auth()->user()->ecole_id ?? 'global'));
 
             return response()->json([
                 'success' => true,

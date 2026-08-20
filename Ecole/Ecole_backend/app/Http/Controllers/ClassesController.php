@@ -26,6 +26,8 @@ class ClassesController extends Controller
             // pas importée (Error fatale non rattrapée par catch(\Exception) →
             // 500 systématique), et Registered est un événement d'inscription
             // d'utilisateur, sans rapport avec la création d'une classe (F4).
+            \Cache::forget('dashboard_directeur_' . (auth()->user()->ecole_id ?? 'global'));
+
             return response()->json($classe, 201);
 
         } catch (\Exception $e) {

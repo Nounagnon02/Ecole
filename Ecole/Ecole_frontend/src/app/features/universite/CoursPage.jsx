@@ -18,6 +18,7 @@ import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
 import { useApi } from '@/hooks/useApi';
+import logger from '@/shared/lib/logger';
 
 export default function CoursPage() {
   const { loading, error, get } = useApi();
@@ -41,7 +42,7 @@ export default function CoursPage() {
           statut: c.statut || 'actif'
         })));
       } catch (e) {
-        console.error('Erreur chargement cours:', e);
+        logger.error('Erreur chargement cours:', e);
       }
     })();
   }, [get]);

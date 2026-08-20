@@ -18,6 +18,7 @@ import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import { useApi } from '@/hooks/useApi';
+import logger from '@/shared/lib/logger';
 
 export default function CoursPage() {
   const { loading, error, get } = useApi();
@@ -43,7 +44,7 @@ export default function CoursPage() {
           ressources: c.ressources || c.documents || []
         })));
       } catch (e) {
-        console.error('Erreur chargement cours:', e);
+        logger.error('Erreur chargement cours:', e);
       }
     })();
   }, [get]);
@@ -125,6 +126,7 @@ export default function CoursPage() {
           <select
             value={filterMatiere}
             onChange={(e) => setFilterMatiere(e.target.value)}
+            aria-label="Filtrer par matière"
             className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
           >
             <option value="">Toutes les matières</option>
@@ -133,6 +135,7 @@ export default function CoursPage() {
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
+            aria-label="Filtrer par type"
             className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
           >
             <option value="">Tous les types</option>

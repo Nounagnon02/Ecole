@@ -18,6 +18,7 @@ import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
 import { useApi } from '@/hooks/useApi';
+import logger from '@/shared/lib/logger';
 
 export default function EtudiantsPage() {
   const { loading, error, get } = useApi();
@@ -43,7 +44,7 @@ export default function EtudiantsPage() {
           statut: e.statut || 'actif',
         })));
       } catch (e) {
-        console.error('Erreur chargement étudiants:', e);
+        logger.error('Erreur chargement étudiants:', e);
       }
     })();
   }, []);
@@ -139,15 +140,15 @@ export default function EtudiantsPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-neutral-200 dark:border-neutral-700 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                <th className="pb-3 pr-4">Étudiant</th>
-                <th className="pb-3 pr-4">Matricule</th>
-                <th className="pb-3 pr-4">Niveau</th>
-                <th className="pb-3 pr-4">Filière</th>
-                <th className="pb-3 pr-4">Faculté</th>
-                <th className="pb-3 pr-4">Contact</th>
-                <th className="pb-3 pr-4">Inscription</th>
-                <th className="pb-3 pr-4">Statut</th>
-                <th className="pb-3 text-right">Actions</th>
+                <th scope="col" className="pb-3 pr-4">Étudiant</th>
+                <th scope="col" className="pb-3 pr-4">Matricule</th>
+                <th scope="col" className="pb-3 pr-4">Niveau</th>
+                <th scope="col" className="pb-3 pr-4">Filière</th>
+                <th scope="col" className="pb-3 pr-4">Faculté</th>
+                <th scope="col" className="pb-3 pr-4">Contact</th>
+                <th scope="col" className="pb-3 pr-4">Inscription</th>
+                <th scope="col" className="pb-3 pr-4">Statut</th>
+                <th scope="col" className="pb-3 text-right">Actions</th>
               </tr>
             </thead>
             <tbody>

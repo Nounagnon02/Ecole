@@ -70,6 +70,14 @@ export default function AppShell({ children }) {
 
   return (
     <div className="relative min-h-screen bg-[var(--surface)] text-[var(--text-primary)]">
+      {/* Skip link for keyboard users */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[9999] focus:rounded-md focus:bg-[var(--primary)] focus:px-4 focus:py-2 focus:text-[var(--text-on-primary)] focus:shadow-lg"
+      >
+        Aller au contenu principal
+      </a>
+
       {/* Sidebar */}
       <Sidebar />
 
@@ -85,7 +93,7 @@ export default function AppShell({ children }) {
         <Header />
 
         {/* Page content */}
-        <main className="flex-1 p-4 lg:p-6 2xl:p-8">
+        <main id="main-content" className="flex-1 p-4 lg:p-6 2xl:p-8">
           <AnimatePresence mode="wait">
             {globalLoading ? (
               <motion.div

@@ -22,6 +22,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer
 } from 'recharts';
 import { useApi } from '@/hooks/useApi';
+import logger from '@/shared/lib/logger';
 
 const STATUS_BADGE = {
   paid: { variant: 'success', label: 'Payé' },
@@ -57,7 +58,7 @@ export default function BillingPage() {
           : [];
         setRevenusMensuels(revenusData);
       } catch (e) {
-        console.error('Erreur chargement facturation:', e);
+        logger.error('Erreur chargement facturation:', e);
       }
     })();
   }, [get]);

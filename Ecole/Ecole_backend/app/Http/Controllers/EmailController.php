@@ -14,9 +14,9 @@ class EmailController extends Controller
         })->get();
 
         foreach ($eleves as $eleve) {
-            Mail::to($eleve->user->email)->send(new \App\Mail\NumeroMatriculeMail($eleve));
+            Mail::to($eleve->user->email)->queue(new \App\Mail\NumeroMatriculeMail($eleve));
         }
 
-        return response()->json(['message' => 'Emails envoyés avec succès !'], 200);
+        return response()->json(['message' => 'Emails en cours d\'envoi !'], 202);
     }
 }

@@ -147,6 +147,8 @@ class PaymentController extends Controller
 
             DB::commit();
 
+            \Cache::forget('dashboard_directeur_' . (auth()->user()->ecole_id ?? 'global'));
+
             return response()->json([
                 'success' => $result['success'],
                 'data' => [
@@ -200,6 +202,8 @@ class PaymentController extends Controller
 
             if ($verification['status'] === 'completed') {
                 $this->confirmPayment($payment, 'Paiement Mobile Money confirmé par le provider', 'mobile_money');
+
+                \Cache::forget('dashboard_directeur_' . (auth()->user()->ecole_id ?? 'global'));
 
                 return response()->json(['success' => true, 'message' => 'Paiement confirmé']);
             }

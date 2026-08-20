@@ -118,20 +118,22 @@ apiClient.interceptors.response.use(
       const apiError = {
         status: 401,
         code: 'UNAUTHORIZED',
-        message: 'Session expirée',
+        message: error.response?.data?.message || 'Session expirée',
         details: [],
         errors: null,
-        response: error.response,
         isApiError: true
       };
       return Promise.reject(apiError);
     }
 
-    // 429 — Rate limit
+    // 429 — Rate limit (max 3 retries to avoid infinite loops)
     if (error.response?.status === 429) {
-      const retryAfter = error.response.headers['retry-after'] || 2;
-      await new Promise((resolve) => setTimeout(resolve, retryAfter * 1000));
-      return apiClient(originalRequest);
+      originalRequest._retryCount = (originalRequest._retryCount || 0) + 1;
+      if (originalRequest._retryCount <= 3) {
+        const retryAfter = error.response.headers['retry-after'] || 2;
+        await new Promise((resolve) => setTimeout(resolve, retryAfter * 1000));
+        return apiClient(originalRequest);
+      }
     }
 
     // Network error + GET → try cache fallback
@@ -150,23 +152,25 @@ apiClient.interceptors.response.use(
 
     // Mapping d'erreurs API vers un format standard.
     //
-    // `response` et `errors` sont conservés volontairement : toute la
-    // couche formulaire (LoginForm, ForgotPassword, ResetPassword,
-    // EcolesPage, useApi/useForm…) mappe les erreurs de validation via
-    // `err.response.data.errors`. En ne rejetant qu'un objet nu, cette
-    // branche ne s'exécutait jamais : un 422 Laravel n'affichait que le
-    // message général et aucun champ n'était marqué en erreur.
+    // `errors` est conservé volontairement : toute la couche formulaire
+    // (LoginForm, ForgotPassword, ResetPassword, EcolesPage, useApi/useForm…)
+    // mappe les erreurs de validation via `err.errors`. Le champ `response`
+    // brut d'Axios n'est pas propagé pour éviter de fuiter les internals.
+    //
+    // Le champ `error` peut être un objet `{ code, message, details }` ou
+    // une chaîne nue `{ error: 'message' }` — on gère les deux cas.
+    const rawError = error.response?.data?.error;
     const apiError = {
       status: error.response?.status || 0,
-      code: error.response?.data?.error?.code || 'UNKNOWN_ERROR',
+      code: (typeof rawError === 'object' ? rawError?.code : null) || 'UNKNOWN_ERROR',
       message:
-        error.response?.data?.error?.message ||
+        (typeof rawError === 'object' ? rawError?.message : null) ||
+        (typeof rawError === 'string' ? rawError : null) ||
         error.response?.data?.message ||
         error.message ||
         'Une erreur est survenue',
-      details: error.response?.data?.error?.details || [],
+      details: (typeof rawError === 'object' ? rawError?.details : null) || [],
       errors: error.response?.data?.errors || null,
-      response: error.response,
       isApiError: true
     };
 

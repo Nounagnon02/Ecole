@@ -15,6 +15,7 @@ import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import { useApi } from '@/hooks/useApi';
+import logger from '@/shared/lib/logger';
 
 export default function PlansPage() {
   const { loading, error, get } = useApi();
@@ -30,7 +31,7 @@ export default function PlansPage() {
           : [];
         setPlans(items);
       } catch (e) {
-        console.error('Erreur chargement plans:', e);
+        logger.error('Erreur chargement plans:', e);
       }
     })();
   }, []);

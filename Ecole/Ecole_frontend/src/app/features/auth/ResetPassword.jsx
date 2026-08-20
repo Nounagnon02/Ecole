@@ -13,39 +13,12 @@ import { motion } from 'framer-motion';
 import { Lock, ArrowLeft, AlertCircle, CheckCircle2, KeyRound } from 'lucide-react';
 import { Button, Input } from '@/shared/components/ui';
 import { api } from '@/shared/services/api';
-
-/* ─── Composants décoratifs ──────────────────────────────────────── */
-function TopDecorativeBand() {
-  return (
-    <div className="absolute top-0 left-0 right-0 h-1 flex pointer-events-none">
-      <div className="flex-1 bg-[var(--primary)]" />
-      <div className="w-24 bg-[var(--accent)]" />
-      <div className="flex-1 bg-[var(--primary)]" />
-    </div>
-  );
-}
-
-function DividerOrnament({ className }) {
-  return (
-    <svg className={className} viewBox="0 0 120 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M0 8h40" stroke="currentColor" strokeWidth="0.5" />
-      <path d="M80 8h40" stroke="currentColor" strokeWidth="0.5" />
-      <path d="M48 8c0-4 4-8 12-8s12 4 12 8-4 8-12 8-12-4-12-8z" stroke="currentColor" strokeWidth="0.5" />
-      <path d="M54 8c0-3 2.5-5 6-5s6 2 6 5-2.5 5-6 5-6-2-6-5z" stroke="currentColor" strokeWidth="0.5" />
-      <path d="M57 8c0-1.5 1.5-3 3-3s3 1.5 3 3-1.5 3-3 3-3-1.5-3-3z" stroke="currentColor" strokeWidth="0.5" fill="currentColor" />
-    </svg>
-  );
-}
-
-/* ─── Variants d'animation ───────────────────────────────────────── */
-const fadeUp = {
-  hidden: { opacity: 0, y: 16 },
-  visible: { opacity: 1, y: 0 },
-};
-const container = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.06, delayChildren: 0.05 } },
-};
+import {
+  TopDecorativeBand,
+  DividerOrnament,
+  fadeUp,
+  container,
+} from '@/shared/components/auth/AuthDecorations';
 
 /* ═══════════════════════════════════════════════════════════════════
  *  COMPOSANT PRINCIPAL
@@ -117,7 +90,7 @@ export default function ResetPassword() {
       });
       setSuccess(true);
     } catch (err) {
-      const serverErrors = err.response?.data?.errors;
+      const serverErrors = err.errors;
       if (serverErrors && typeof serverErrors === 'object') {
         const mapped = {};
         Object.entries(serverErrors).forEach(([field, msgs]) => {
@@ -127,7 +100,7 @@ export default function ResetPassword() {
       } else {
         setErrors({
           _general:
-            err.response?.data?.message ||
+            err.message ||
             'Erreur lors de la réinitialisation. Veuillez réessayer.',
         });
       }

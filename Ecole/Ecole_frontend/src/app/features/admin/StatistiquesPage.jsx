@@ -17,6 +17,7 @@ import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import StatsCard from '@/shared/components/ui/StatsCard';
 import { useApi } from '@/hooks/useApi';
+import logger from '@/shared/lib/logger';
 
 const ACTIVITE_CONFIG = {
   inscription: { icon: Users, color: 'text-emerald-500 bg-emerald-100 dark:bg-emerald-900/20' },
@@ -37,7 +38,7 @@ export default function StatistiquesPage() {
         const res = await get('/v1/admin/analytics/overview');
         setStats(res?.data || res);
       } catch (e) {
-        console.error('Erreur chargement statistiques:', e);
+        logger.error('Erreur chargement statistiques:', e);
       }
     })();
   }, []);

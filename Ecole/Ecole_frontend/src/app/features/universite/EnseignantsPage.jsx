@@ -17,6 +17,7 @@ import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
 import { useApi } from '@/hooks/useApi';
+import logger from '@/shared/lib/logger';
 
 const GRADE_BADGE = {
   professeur: { variant: 'primary', label: 'Professeur' },
@@ -51,7 +52,7 @@ export default function EnseignantsPage() {
           etudiants: e.etudiants_count ?? e.etudiants ?? 0
         })));
       } catch (e) {
-        console.error('Erreur chargement enseignants:', e);
+        logger.error('Erreur chargement enseignants:', e);
       }
     })();
   }, []);

@@ -11,18 +11,9 @@ export const useApi = () => {
   }, []);
 
   const handleError = useCallback((err) => {
-    const data = err.response?.data;
-
-    // `error` n'est pas toujours une chaîne : la surface /api/v1 répond
-    // `{ error: { code, message } }`. Renvoyer cet objet dans `error`
-    // faisait lever à React « Objects are not valid as a React child »
-    // dès que la page le rendait — l'écran blanchissait au lieu
-    // d'afficher l'échec, ce qui est pire qu'un message imparfait. On ne
-    // retient donc que du texte, quelle que soit l'enveloppe.
+    // On ne retient que du texte pour éviter « Objects are not valid
+    // as a React child » si la page rendait un objet.
     const errorMessage =
-      data?.message ||
-      data?.error?.message ||
-      (typeof data?.error === 'string' ? data.error : null) ||
       err.message ||
       'Une erreur est survenue';
 
@@ -180,8 +171,8 @@ export const useForm = (initialData = {}, onSubmit) => {
       setErrors({});
       await onSubmit(formData);
     } catch (err) {
-      if (err.response?.data?.errors) {
-        setErrors(err.response.data.errors);
+      if (err.errors) {
+        setErrors(err.errors);
       }
       throw err;
     } finally {

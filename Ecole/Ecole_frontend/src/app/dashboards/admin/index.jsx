@@ -237,6 +237,7 @@ function LogsSection({ data, loading }) {
             value={recherche}
             onChange={(e) => setRecherche(e.target.value)}
             placeholder="Rechercher dans les logs…"
+            aria-label="Rechercher dans les logs"
             className="w-full pl-9 pr-4 py-2 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
           />
         </div>

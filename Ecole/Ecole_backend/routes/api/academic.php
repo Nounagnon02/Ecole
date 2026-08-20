@@ -16,7 +16,7 @@ use App\Http\Controllers\Notes\{
     NotesStatsController,
     NotesQueryController,
 };
-use App\Http\Controllers\periodesController;
+use App\Http\Controllers\PeriodesController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -124,13 +124,13 @@ Route::middleware('auth:sanctum')->group(function () {
     // existent : deux pages du frontend appelaient GET /periodes dans le vide
     // (cf. ECARTS_FRONT_BACK.md).
     Route::prefix('periodes')->group(function () {
-        Route::get('/', [periodesController::class, 'Index']);
-        Route::get('/active', [periodesController::class, 'getActive']);
-        Route::get('/classe/{classeId}', [periodesController::class, 'getPeriodesByClasse']);
-        Route::get('/categorie/{categorie}', [periodesController::class, 'getPeriodesByCategorie']);
-        Route::get('/categorie/{categorie}/active', [periodesController::class, 'getActivePeriodesByCategorie']);
-        Route::post('/store', [periodesController::class, 'store'])->middleware('role:directeur');
-        Route::post('/{id}/active', [periodesController::class, 'setActive'])->middleware('role:directeur');
+        Route::get('/', [PeriodesController::class, 'index']);
+        Route::get('/active', [PeriodesController::class, 'getActive']);
+        Route::get('/classe/{classeId}', [PeriodesController::class, 'getPeriodesByClasse']);
+        Route::get('/categorie/{categorie}', [PeriodesController::class, 'getPeriodesByCategorie']);
+        Route::get('/categorie/{categorie}/active', [PeriodesController::class, 'getActivePeriodesByCategorie']);
+        Route::post('/store', [PeriodesController::class, 'store'])->middleware('role:directeur');
+        Route::post('/{id}/active', [PeriodesController::class, 'setActive'])->middleware('role:directeur');
     });
 
     // ============ BULLETINS ============

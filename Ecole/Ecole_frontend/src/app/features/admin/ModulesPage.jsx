@@ -16,6 +16,7 @@ import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import { useApi } from '@/hooks/useApi';
+import logger from '@/shared/lib/logger';
 
 const MODULE_ICONS = {
   core: Shield,
@@ -57,7 +58,7 @@ export default function ModulesPage() {
           : [];
         setModules(items);
       } catch (e) {
-        console.error('Erreur chargement modules:', e);
+        logger.error('Erreur chargement modules:', e);
       }
     })();
   }, []);
