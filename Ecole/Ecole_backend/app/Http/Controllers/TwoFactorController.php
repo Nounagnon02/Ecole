@@ -63,6 +63,13 @@ class TwoFactorController extends Controller
         $user->two_factor_verified_at = now();
         $user->save();
 
+        // Client stateful : marquer la session comme validée pour le
+        // middleware VerifyTwoFactor (les clients à token passent par les
+        // abilities Sanctum).
+        if ($request->hasSession()) {
+            $request->session()->put('two_factor_verified', true);
+        }
+
         return response()->json(['message' => '2FA activée avec succès']);
     }
 
@@ -126,6 +133,11 @@ class TwoFactorController extends Controller
 
         $user->two_factor_verified_at = now();
         $user->save();
+
+        // Client stateful : marquer la session comme validée (cf. verify).
+        if ($request->hasSession()) {
+            $request->session()->put('two_factor_verified', true);
+        }
 
         // Émettre le vrai token
         $device = 'auth-token';

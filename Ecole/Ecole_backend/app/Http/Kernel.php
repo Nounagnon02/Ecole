@@ -47,6 +47,11 @@ class Kernel extends HttpKernel
             \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
             'throttle:api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            // 2FA : un token en attente de vérification (« 2fa:pending ») ne
+            // doit atteindre que l'endpoint d'échange, jamais les routes
+            // métier. Placé avant EcoleScope pour court-circuiter sans
+            // résoudre de contexte d'établissement.
+            '2fa.verify',
             \App\Http\Middleware\EcoleScope::class,
         ],
     ];
