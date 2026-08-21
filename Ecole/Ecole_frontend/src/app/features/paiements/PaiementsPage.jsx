@@ -48,7 +48,8 @@ export default function PaiementsPage() {
     '/comptable/paiements',
   );
 
-  const paiements = paiementsData?.data ?? paiementsData ?? [];
+  const paiements = Array.isArray(paiementsData?.data) ? paiementsData.data
+    : Array.isArray(paiementsData) ? paiementsData : [];
 
   const filtered = useMemo(() =>
     paiements.filter((p) => {
@@ -398,14 +399,14 @@ export default function PaiementsPage() {
                       <Table.Head className="text-right">Action</Table.Head>
                     </Table.Header>
                     <Table.Body>
-                      {echeanceData.echeances.length === 0 && (
+                      {(Array.isArray(echeanceData?.echeances) ? echeanceData.echeances : []).length === 0 && (
                         <Table.Row>
                           <td colSpan={6} className="p-8 text-center text-sm text-neutral-500">
                             Aucune échéance
                           </td>
                         </Table.Row>
                       )}
-                      {echeanceData.echeances.map((e) => (
+                      {(Array.isArray(echeanceData?.echeances) ? echeanceData.echeances : []).map((e) => (
                         <Table.Row key={e.id}>
                           <Table.Cell className="text-xs font-mono text-neutral-500">{e.reference}</Table.Cell>
                           <Table.Cell>{e.type}</Table.Cell>

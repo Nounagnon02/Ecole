@@ -70,7 +70,7 @@ export default function FacturesPage() {
         logger.error('Erreur chargement factures:', e);
       }
     })();
-  }, []);
+  }, [get]);
 
   const stats = useMemo(() => {
     const total = factures.reduce((s, f) => s + Number(f.montant || 0), 0);

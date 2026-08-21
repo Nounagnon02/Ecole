@@ -97,7 +97,7 @@ export default function PresencesPage() {
         logger.error('Erreur chargement présences:', e);
       }
     })();
-  }, []);
+  }, [get]);
 
   const stats = useMemo(() => ({
     total: presences.length,

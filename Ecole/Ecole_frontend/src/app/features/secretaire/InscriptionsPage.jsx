@@ -40,7 +40,7 @@ export default function InscriptionsPage() {
         logger.error('Erreur chargement inscriptions:', e);
       }
     })();
-  }, []);
+  }, [get]);
 
   const stats = useMemo(() => ({
     total: inscriptions.length,

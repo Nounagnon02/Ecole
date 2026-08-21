@@ -45,7 +45,7 @@ export default function DepartementsPage() {
         logger.error('Erreur chargement départements:', e);
       }
     })();
-  }, []);
+  }, [get]);
 
   const facultes = useMemo(() =>
     [...new Set(departements.map((d) => d.faculte_nom).filter(Boolean))],

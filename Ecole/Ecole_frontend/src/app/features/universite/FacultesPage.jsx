@@ -43,7 +43,7 @@ export default function FacultesPage() {
         logger.error('Erreur chargement facultés:', e);
       }
     })();
-  }, []);
+  }, [get]);
 
   const stats = useMemo(() => ({
     total: facultes.length,

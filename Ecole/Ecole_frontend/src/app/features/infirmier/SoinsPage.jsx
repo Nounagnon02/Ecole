@@ -53,7 +53,7 @@ export default function SoinsPage() {
         logger.error('Erreur chargement soins:', e);
       }
     })();
-  }, []);
+  }, [get]);
 
   const stats = useMemo(() => {
     const today = new Date().toDateString();

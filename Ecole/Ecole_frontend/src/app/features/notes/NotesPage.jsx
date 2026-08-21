@@ -33,15 +33,8 @@ export default function NotesPage() {
     '/notes/eleve',
   );
 
-  const classementClasseId = classementClasse ? classMap.get(classementClasse) : null;
-
-  const { data: classementData, isLoading: classementLoading, refetch: refetchClassement } = useApiQuery(
-    ['classement', classementClasseId, classementPeriode],
-    classementClasseId ? `/notes/classement/${classementClasseId}/${classementPeriode}` : null,
-    { queryOptions: { enabled: !!classementClasseId } },
-  );
-
-  const notes = notesData?.data ?? notesData ?? [];
+  const notes = Array.isArray(notesData?.data) ? notesData.data
+    : Array.isArray(notesData) ? notesData : [];
 
   const matiereMap = useMemo(() => {
     const map = new Map();
@@ -63,6 +56,14 @@ export default function NotesPage() {
     return map;
   }, [notes]);
   const classes = useMemo(() => [...classMap.keys()], [classMap]);
+
+  const classementClasseId = classementClasse ? classMap.get(classementClasse) : null;
+
+  const { data: classementData, isLoading: classementLoading, refetch: refetchClassement } = useApiQuery(
+    ['classement', classementClasseId, classementPeriode],
+    classementClasseId ? `/notes/classement/${classementClasseId}/${classementPeriode}` : null,
+    { queryOptions: { enabled: !!classementClasseId } },
+  );
 
   const filtered = useMemo(() =>
     notes.filter((n) => {
@@ -156,8 +157,8 @@ export default function NotesPage() {
     verrouillerMutation.mutate({ classe_id: bulletinClasseId, periode: bulletinPeriode, annee_scolaire: bulletinAnnee });
   };
 
-  const moyennesGenerales = (moyennesData?.data ?? []).filter((r) => !r.matiere_id);
-  const bulletins = bulletinsData?.data ?? [];
+  const moyennesGenerales = (Array.isArray(moyennesData?.data) ? moyennesData.data : []).filter((r) => !r.matiere_id);
+  const bulletins = Array.isArray(bulletinsData?.data) ? bulletinsData.data : [];
 
   const mentionColor = (m) =>
     m === 'Très Bien' ? 'text-emerald-600'

@@ -18,7 +18,7 @@ const variantStyles = {
   flat: 'bg-[var(--surface-subtle)]',
 };
 
-function Card({ children, className, variant = 'default', hover = false, ...props }) {
+function Card({ children, className, variant = 'default', hover = false, padding, ...props }) {
   return (
     <div
       className={cn(
