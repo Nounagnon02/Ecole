@@ -21,6 +21,13 @@ class Enseignant extends Model
         'ecole_id',
     ];
 
+    protected $casts = [
+        'date_naissance' => 'date',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'deleted_at' => 'datetime',
+    ];
+
     public function user()
     {
         return $this->belongsTo(User::class);

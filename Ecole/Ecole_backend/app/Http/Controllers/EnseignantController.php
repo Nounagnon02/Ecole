@@ -40,7 +40,7 @@ class EnseignantController extends Controller
             'prenom' => 'required|string',
             'email' => 'required|email|unique:users,email',
             'identifiant' => 'required|string|unique:users,identifiant',
-            'password' => 'required|string|min:6',
+            'password' => 'required|string|min:8',
             'ecole_id' => 'required|exists:ecoles,id',
             'role' => 'required|in:' . implode(',', Roles::teachers()),
         ]);

@@ -15,6 +15,8 @@ class Message extends Model
     ];
 
     protected $casts = [
-        'lu' => 'boolean'
+        'lu' => 'boolean',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 }

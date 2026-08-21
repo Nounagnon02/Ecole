@@ -38,7 +38,7 @@ class ParentsController extends Controller
             'prenom' => 'required|string',
             'email' => 'required|email|unique:users,email',
             'identifiant' => 'required|string|unique:users,identifiant',
-            'password' => 'required|string|min:6',
+            'password' => 'required|string|min:8',
             'ecole_id' => 'required|exists:ecoles,id',
             'telephone' => 'nullable|string',
             'eleve_ids' => 'sometimes|array',
@@ -281,7 +281,7 @@ class ParentsController extends Controller
     {
         $validated = $request->validate([
             'token' => 'required|string',
-            'password' => 'required|string|min:6|confirmed',
+            'password' => 'required|string|min:8|confirmed',
             'name' => 'required|string',
             'prenom' => 'required|string',
             'telephone' => 'nullable|string',
@@ -371,7 +371,7 @@ class ParentsController extends Controller
     {
         $validated = $request->validate([
             'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:6|confirmed',
+            'password' => 'required|string|min:8|confirmed',
             'name' => 'required|string',
             'prenom' => 'required|string',
             'telephone' => 'nullable|string',

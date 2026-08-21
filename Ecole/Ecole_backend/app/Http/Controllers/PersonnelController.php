@@ -43,7 +43,7 @@ class PersonnelController extends Controller
             'prenom' => 'required|string',
             'email' => 'required|email|unique:users,email',
             'identifiant' => 'required|string|unique:users,identifiant',
-            'password' => 'required|string|min:6',
+            'password' => 'required|string|min:8',
             'poste' => 'required|string',
             'salaire_base' => 'required|numeric',
             'date_embauche' => 'required|date',

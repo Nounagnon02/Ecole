@@ -40,7 +40,7 @@ test('authenticated user can read their own profile', function () {
 /* ─── Health endpoint ──────────────────────────────────────────────────── */
 
 test('health endpoint returns ok', function () {
-    $response = $this->getJson('/api/v1/health');
+    $response = $this->getJson('/api/health');
     $response->assertStatus(200)
         ->assertJsonStructure(['status', 'timestamp']);
 });
@@ -48,7 +48,7 @@ test('health endpoint returns ok', function () {
 /* ─── API Structure ────────────────────────────────────────────────────── */
 
 test('api response format is consistent', function () {
-    $response = $this->getJson('/api/v1/health');
+    $response = $this->getJson('/api/health');
     $response->assertJsonStructure([
         'status',
         'timestamp',

@@ -40,6 +40,13 @@ class Eleve extends Model
         'statut',
     ];
 
+    protected $casts = [
+        'date_naissance' => 'date',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'deleted_at' => 'datetime',
+    ];
+
     /**
      * Rangs (ex æquo possible) de tous les élèves d'une classe, calculés sur
      * la moyenne de leurs notes : `[eleve_id => rang]`. Une seule requête par
