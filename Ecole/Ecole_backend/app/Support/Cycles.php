@@ -7,8 +7,8 @@ namespace App\Support;
  *
  * `classes.categorie_classe` is a free-text column written in two different
  * casings across the codebase: `ClassesController` and the seeders store
- * `Maternelle`/`Primaire`/`Secondaire`, while `NotesController`,
- * `TypeEvaluationController` and `PeriodesController` query for
+ * `Maternelle`/`Primaire`/`Secondaire`, while `NotesController` and
+ * `PeriodesController` query for
  * `maternelle`/`primaire`/`secondaire`. That survived only because MySQL's
  * default collation is case-insensitive — the same queries return nothing on
  * SQLite, which is what the test suite runs on.

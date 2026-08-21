@@ -10,12 +10,6 @@ use App\Http\Controllers\Universite\{
     EnseignantController as UnivEnseignantController,
     MatiereController as UnivMatiereController,
     NoteController as UnivNoteController,
-    InscriptionController,
-    SemestreController,
-    AnneeAcademiqueController,
-    PersonnelController,
-    PaiementController as UnivPaiementController,
-    DiplomeController,
     MyCoursesController,
     PlanningController,
     DevoirController as UnivDevoirController
