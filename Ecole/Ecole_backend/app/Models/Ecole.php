@@ -16,6 +16,12 @@ class Ecole extends Model
         'status', 'pays', 'ville', 'code_postal', 'slug', 'domain'
     ];
 
+    protected $casts = [
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'deleted_at' => 'datetime',
+    ];
+
     /**
      * EcoleScope caches each school's active state to avoid a query per
      * request. Clearing it here means a deactivation takes effect on the next

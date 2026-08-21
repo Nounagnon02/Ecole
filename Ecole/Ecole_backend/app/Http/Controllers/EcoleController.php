@@ -222,7 +222,7 @@ class EcoleController extends Controller
             'adresse' => 'required|string',
             'telephone' => 'nullable|string',
             'ville' => 'nullable|string',
-            'password' => 'nullable|string|min:6',
+            'password' => 'nullable|string|min:8',
         ]);
 
         $password = $validated['password'] ?? Str::password(16);

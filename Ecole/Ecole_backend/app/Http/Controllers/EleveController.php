@@ -71,7 +71,7 @@ class EleveController extends Controller
             'name' => 'required|string',
             'prenom' => 'required|string',
             'identifiant' => 'required|string|unique:users,identifiant',
-            'password' => 'required|string|min:6',
+            'password' => 'required|string|min:8',
             'numero_matricule' => 'required|string|unique:eleves,numero_matricule',
             'classe_id' => 'required|school_exists:classes,id',
             'serie_id' => 'nullable|school_exists:series,id',

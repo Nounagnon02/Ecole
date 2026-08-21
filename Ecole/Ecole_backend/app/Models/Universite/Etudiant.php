@@ -34,6 +34,13 @@ class Etudiant extends Model
         'statut',
     ];
 
+    protected $casts = [
+        'date_naissance' => 'date',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'deleted_at' => 'datetime',
+    ];
+
     /**
      * The login account this academic record belongs to, if one was issued.
      *

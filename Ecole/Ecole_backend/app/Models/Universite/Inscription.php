@@ -18,6 +18,13 @@ class Inscription extends Model
         'ecole_id',
     ];
 
+    protected $casts = [
+        'date_inscription' => 'date',
+        'montant_frais' => 'decimal:2',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
+
     public function etudiant()
     {
         return $this->belongsTo(Etudiant::class);
