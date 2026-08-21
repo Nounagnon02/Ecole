@@ -15,6 +15,7 @@ class SurveillantDashboardController extends Controller
     public function surveillant()
     {
         $data = Cache::remember('dashboard_surveillant_' . (\App\Models\Eleve::currentEcoleId() ?? 'global'), 60, function () {
+            try {
             $totalEleves = \App\Models\Eleve::count();
 
             // Un élève absent compte une fois, même avec plusieurs lignes dans
@@ -32,9 +33,9 @@ class SurveillantDashboardController extends Controller
             $joursSemaine = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
             $absencesSemaine = \App\Models\Absence::where('type', 'absence')
                 ->whereBetween('date', [now()->startOfWeek(), now()->endOfWeek()])
-                ->get()
-                ->groupBy(fn ($a) => $a->date?->format('Y-m-d'))
-                ->map(fn ($jour) => $jour->pluck('eleve_id')->unique()->count());
+                ->selectRaw('DATE(date) as jour, COUNT(DISTINCT eleve_id) as total')
+                ->groupBy('jour')
+                ->pluck('total', 'jour');
 
             $presencesSemaine = [];
             foreach (range(0, 6) as $i) {
@@ -156,6 +157,23 @@ class SurveillantDashboardController extends Controller
                 'incidents' => $incidents,
                 'absences_non_justifiees' => $absencesNonJustifiees,
             ];
+            } catch (\Exception $e) {
+                \Log::error('Dashboard Surveillant error: ' . $e->getMessage());
+                return [
+                    'stats' => [
+                        ['title' => 'Total Élèves', 'value' => '0', 'trend' => 0],
+                        ['title' => 'Présents Aujourd\'hui', 'value' => '0', 'trend' => 0],
+                        ['title' => 'Absents', 'value' => '0', 'trend' => 0],
+                        ['title' => 'Alertes', 'value' => '0', 'trend' => 0],
+                    ],
+                    'presences_semaine' => [],
+                    'points_surveillance' => [],
+                    'retards' => [],
+                    'absents_jour' => [],
+                    'incidents' => [],
+                    'absences_non_justifiees' => [],
+                ];
+            }
         });
 
         return response()->json(['success' => true, 'data' => $data]);

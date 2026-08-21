@@ -16,13 +16,13 @@ class ParentDashboardController extends Controller
         $user = $request->user();
 
         if (!$user || $user->role !== 'parent') {
-            return response()->json(['message' => 'Non autorisé'], 403);
+            return response()->json(['success' => false, 'message' => 'Non autorisé'], 403);
         }
 
         $parent = $user->parent;
 
         if (!$parent) {
-            return response()->json(['success' => true, 'data' => ['parent' => $user, 'enfants' => [], 'children' => [], 'stats' => [], 'evolution' => [], 'communications' => []]]);
+            return response()->json(['success' => true, 'data' => ['parent' => null, 'enfants' => [], 'children' => [], 'stats' => [], 'evolution' => [], 'communications' => []]]);
         }
 
         // `user` doit être préchargé : il est lu dans le map ci-dessous, ce qui
@@ -111,7 +111,15 @@ class ParentDashboardController extends Controller
         return response()->json([
             'success' => true,
             'data' => [
-                'parent'         => $user,
+                'parent'         => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'prenom' => $user->prenom,
+                    'email' => $user->email,
+                    'telephone' => $user->telephone,
+                    'role' => $user->role,
+                    'ecole_id' => $user->ecole_id,
+                ],
                 // Contrat frontend (cf. C4) : `enfants` est la clé attendue,
                 // `children` reste en alias pour l'application mobile.
                 'enfants'        => $enfants,

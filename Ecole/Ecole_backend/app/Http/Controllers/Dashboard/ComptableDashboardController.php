@@ -15,6 +15,7 @@ class ComptableDashboardController extends Controller
     public function comptable()
     {
         $data = Cache::remember('dashboard_comptable_' . (\App\Models\Eleve::currentEcoleId() ?? 'global'), 120, function () {
+            try {
             $moisActuel = now()->month;
             $anneeActuelle = now()->year;
 
@@ -62,15 +63,15 @@ class ComptableDashboardController extends Controller
             }
 
             // Répartition par type de paiement (en %)
-            $types = \App\Models\PaiementEleve::select('type_paiement')
+            $typesRows = \App\Models\PaiementEleve::select('type_paiement', \DB::raw('COUNT(*) as total'))
                 ->whereNotNull('type_paiement')
-                ->get()
-                ->groupBy('type_paiement');
+                ->groupBy('type_paiement')
+                ->get();
 
-            $totalTypes = max($types->flatten()->count(), 1);
-            $repartition = $types->map(fn ($g, $nom) => [
-                'name' => $nom,
-                'value' => round(($g->count() / $totalTypes) * 100),
+            $totalTypes = max($typesRows->sum('total'), 1);
+            $repartition = $typesRows->map(fn ($row) => [
+                'name' => $row->type_paiement,
+                'value' => round(($row->total / $totalTypes) * 100),
             ])->values();
 
             $statutsFR = [
@@ -114,15 +115,14 @@ class ComptableDashboardController extends Controller
 
             // ─── Répartition des revenus par type (part du montant, pas du
             // nombre de lignes comme `repartition`).
-            $montantParType = \App\Models\PaiementEleve::select('type_paiement')
+            $montantRows = \App\Models\PaiementEleve::select('type_paiement', \DB::raw('SUM(montant) as total_montant'))
                 ->whereNotNull('type_paiement')
-                ->get()
                 ->groupBy('type_paiement')
-                ->map(fn ($g) => (float) $g->sum('montant'));
-            $totalMontant = max($montantParType->sum(), 1);
-            $repartitionRevenus = $montantParType->map(fn ($montant, $nom) => [
-                'name' => $nom,
-                'value' => round(($montant / $totalMontant) * 100),
+                ->get();
+            $totalMontant = max($montantRows->sum('total_montant'), 1);
+            $repartitionRevenus = $montantRows->map(fn ($row) => [
+                'name' => $row->type_paiement,
+                'value' => round(((float) $row->total_montant / $totalMontant) * 100),
             ])->values();
 
             return [
@@ -143,6 +143,27 @@ class ComptableDashboardController extends Controller
                     'solde' => $encaissementsMois - $depensesMois,
                 ],
             ];
+            } catch (\Exception $e) {
+                \Log::error('Dashboard Comptable error: ' . $e->getMessage());
+                return [
+                    'stats' => [
+                        ['title' => 'Revenus du Mois', 'value' => '0 F', 'trend' => 0, 'trendLabel' => 'ce mois'],
+                        ['title' => 'Factures en Attente', 'value' => '0', 'trend' => 0, 'trendLabel' => 'non soldées'],
+                        ['title' => 'Taux Recouvrement', 'value' => '0%', 'trend' => 0, 'trendLabel' => 'ce mois'],
+                        ['title' => 'Dépenses du Mois', 'value' => '0 F', 'trend' => 0, 'trendLabel' => 'ce mois'],
+                    ],
+                    'donnes_ca' => [],
+                    'repartition' => [],
+                    'repartition_revenus' => [],
+                    'factures' => [],
+                    'impayes' => [],
+                    'tresorerie' => [
+                        'encaissements_mois' => 0,
+                        'depenses_mois' => 0,
+                        'solde' => 0,
+                    ],
+                ];
+            }
         });
 
         return response()->json(['success' => true, 'data' => $data]);

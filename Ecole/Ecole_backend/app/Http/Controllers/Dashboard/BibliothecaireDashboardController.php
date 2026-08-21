@@ -15,6 +15,7 @@ class BibliothecaireDashboardController extends Controller
     public function bibliothecaire()
     {
         $data = Cache::remember('dashboard_bibliothecaire_' . (\App\Models\Eleve::currentEcoleId() ?? 'global'), 120, function () {
+            try {
             $totalLivres = \App\Models\Livre::count();
             $empruntsEnCours = \App\Models\Emprunt::whereNull('date_retour_effective')->count();
             $retards = \App\Models\Emprunt::whereNull('date_retour_effective')
@@ -53,12 +54,13 @@ class BibliothecaireDashboardController extends Controller
             }
 
             // Répartition par catégorie d'ouvrage (en %)
-            $categories = \App\Models\Livre::select('categorie')
-                ->get()->groupBy('categorie');
-            $totalCategories = max($categories->flatten()->count(), 1);
-            $repartitionCategories = $categories->map(fn ($g, $nom) => [
-                'name' => $nom,
-                'value' => round(($g->count() / $totalCategories) * 100),
+            $categoriesRows = \App\Models\Livre::select('categorie', \DB::raw('COUNT(*) as total'))
+                ->groupBy('categorie')
+                ->get();
+            $totalCategories = max($categoriesRows->sum('total'), 1);
+            $repartitionCategories = $categoriesRows->map(fn ($row) => [
+                'name' => $row->categorie,
+                'value' => round(($row->total / $totalCategories) * 100),
             ])->values();
 
             $derniersEmprunts = \App\Models\Emprunt::with(['eleve.user', 'eleve.classe', 'livre'])
@@ -133,6 +135,23 @@ class BibliothecaireDashboardController extends Controller
                 'nouveautes' => $nouveautes,
                 'populaires' => $populaires,
             ];
+            } catch (\Exception $e) {
+                \Log::error('Dashboard Bibliothecaire error: ' . $e->getMessage());
+                return [
+                    'stats' => [
+                        ['title' => 'Total Ouvrages', 'value' => '0', 'trend' => 0, 'trendLabel' => 'au catalogue'],
+                        ['title' => 'Emprunts en Cours', 'value' => '0', 'trend' => 0],
+                        ['title' => 'Retards', 'value' => '0', 'trend' => 0],
+                        ['title' => 'Membres Actifs', 'value' => '0', 'trend' => 0, 'trendLabel' => 'emprunteurs'],
+                    ],
+                    'activite' => [],
+                    'categories' => [],
+                    'emprunts' => [],
+                    'retards_liste' => [],
+                    'nouveautes' => [],
+                    'populaires' => [],
+                ];
+            }
         });
 
         return response()->json(['success' => true, 'data' => $data]);

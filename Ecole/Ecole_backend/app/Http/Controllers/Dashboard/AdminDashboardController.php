@@ -18,6 +18,7 @@ class AdminDashboardController extends Controller
         $ecoleId = \App\Models\Eleve::currentEcoleId() ?? 'global';
 
         $data = Cache::remember('dashboard_admin_' . $ecoleId, 120, function () {
+            try {
             // ─── Utilisateurs & plateforme ───────────────────────────
             $totalEcoles = \App\Models\Ecole::count();
             $totalUsers = User::count();
@@ -143,6 +144,30 @@ class AdminDashboardController extends Controller
                 'nouveautes_semaine' => $nouveautesSemaine,
                 'activites_recentes' => $activitesRecentes,
             ];
+            } catch (\Exception $e) {
+                \Log::error('Dashboard Admin error: ' . $e->getMessage());
+                return [
+                    'stats' => [
+                        ['title' => 'Utilisateurs Actifs', 'value' => '0', 'trend' => 0, 'trendLabel' => 'nouveaux / 7j'],
+                        ['title' => 'Espace Disque', 'value' => '0%', 'trend' => 0, 'trendLabel' => 'utilisé'],
+                        ['title' => 'Erreurs API', 'value' => '0', 'trend' => 0, 'trendLabel' => 'dans le journal'],
+                        ['title' => 'Uptime', 'value' => '—', 'trend' => 0, 'trendLabel' => 'serveur'],
+                    ],
+                    'traffic'         => [],
+                    'health'          => [],
+                    'logs'            => [],
+                    'utilisateurs'    => [],
+                    'repartition_roles' => [],
+                    'ecoles'            => 0,
+                    'utilisateurs_total' => 0,
+                    'taux_activite'     => 0,
+                    'plans_actifs'      => 0,
+                    'modules_actifs'    => 0,
+                    'revenus'           => 0,
+                    'nouveautes_semaine' => 0,
+                    'activites_recentes' => [],
+                ];
+            }
         });
 
         return response()->json(['success' => true, 'data' => $data]);
