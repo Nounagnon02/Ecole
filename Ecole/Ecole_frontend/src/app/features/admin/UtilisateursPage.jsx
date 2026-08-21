@@ -69,7 +69,7 @@ export default function UtilisateursPage() {
         logger.error('Erreur chargement utilisateurs:', e);
       }
     })();
-  }, []);
+  }, [get]);
 
   const stats = useMemo(() => ({
     total: utilisateurs.length,

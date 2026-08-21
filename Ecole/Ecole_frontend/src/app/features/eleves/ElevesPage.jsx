@@ -52,7 +52,8 @@ export default function ElevesPage() {
     }
   };
 
-  const eleves = elevesData?.data ?? elevesData ?? [];
+  const eleves = Array.isArray(elevesData?.data) ? elevesData.data
+    : Array.isArray(elevesData) ? elevesData : [];
 
   const classes = useMemo(() => [...new Set(eleves.map((e) => e.classe?.nom_classe).filter(Boolean))], [eleves]);
 

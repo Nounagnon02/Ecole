@@ -69,7 +69,7 @@ export default function SurveillancePage() {
         logger.error('Erreur chargement incidents:', e);
       }
     })();
-  }, []);
+  }, [get]);
 
   const stats = useMemo(() => ({
     total: incidents.length,

@@ -41,7 +41,7 @@ export default function StatistiquesPage() {
         logger.error('Erreur chargement statistiques:', e);
       }
     })();
-  }, []);
+  }, [get]);
 
   if (loading) {
     return (

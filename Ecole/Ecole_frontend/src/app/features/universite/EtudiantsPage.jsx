@@ -47,7 +47,7 @@ export default function EtudiantsPage() {
         logger.error('Erreur chargement étudiants:', e);
       }
     })();
-  }, []);
+  }, [get]);
 
   const niveaux = useMemo(() =>
     ['Tous', ...new Set(etudiants.map((e) => e.niveau).filter(Boolean))],

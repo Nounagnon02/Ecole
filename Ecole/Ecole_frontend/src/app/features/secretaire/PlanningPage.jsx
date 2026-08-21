@@ -56,7 +56,7 @@ export default function PlanningPage() {
         logger.error('Erreur chargement événements:', e);
       }
     })();
-  }, []);
+  }, [get]);
 
   const stats = useMemo(() => {
     const now = new Date();

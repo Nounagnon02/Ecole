@@ -34,7 +34,7 @@ export default function PlansPage() {
         logger.error('Erreur chargement plans:', e);
       }
     })();
-  }, []);
+  }, [get]);
 
   if (loading) {
     return (

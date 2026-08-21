@@ -86,7 +86,7 @@ function ApercuSection({ stats, fluxInscriptions, rendezVous, inscriptions, plan
               {rendezVous.map((rv) => (
                 <div key={rv.id} className="flex items-start gap-3 rounded-lg border border-neutral-100 bg-neutral-50 p-3 dark:border-neutral-800 dark:bg-neutral-900/50">
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent-subtle)] text-xs font-semibold text-[var(--accent)]">
-                    {rv.heure.split(':')[0]}
+                    {rv.heure?.split(':')[0] ?? '--'}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-neutral-900 dark:text-white">{rv.visiteur}</p>

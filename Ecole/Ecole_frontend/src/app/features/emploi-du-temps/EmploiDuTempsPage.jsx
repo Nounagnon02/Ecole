@@ -19,7 +19,8 @@ import Button from '@/shared/components/ui/Button';
 import { useApi } from '@/hooks/useApi';
 
 /* ─── Jours et créneaux ───────────────────────────────────────────── */
-const JOURS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+const JOURS = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+const JOURS_LABELS = { lundi: 'Lundi', mardi: 'Mardi', mercredi: 'Mercredi', jeudi: 'Jeudi', vendredi: 'Vendredi', samedi: 'Samedi' };
 const CRENEAUX = [
   { heure: '08h00 - 09h00', label: '1ère heure' },
   { heure: '09h00 - 10h00', label: '2ème heure' },
@@ -52,9 +53,17 @@ export default function EmploiDuTempsPage() {
         JOURS.forEach(j => { structure[j] = []; });
 
         items.forEach(cours => {
-          const jour = cours.jour || cours.jour_semaine;
+          const jour = (cours.jour || cours.jour_semaine || '').toLowerCase();
           if (!structure[jour]) structure[jour] = [];
-          structure[jour].push(cours);
+          structure[jour].push({
+            ...cours,
+            matiere: typeof cours.matiere === 'object' ? cours.matiere?.nom : (cours.matiere || ''),
+            professeur: typeof cours.enseignant === 'object'
+              ? (cours.enseignant?.user?.name || cours.enseignant?.specialite || '')
+              : (cours.enseignant_nom || cours.professeur || ''),
+            salle: cours.salle || '',
+            groupe: typeof cours.classe === 'object' ? cours.classe?.nom_classe : (cours.classe_nom || cours.groupe || ''),
+          });
         });
 
         // Trier par heure de début
@@ -68,10 +77,6 @@ export default function EmploiDuTempsPage() {
 
         setEdt(structure);
 
-        // Extraire les valeurs uniques pour les filtres
-        const matieres = ['Toutes', ...new Set(items.map(c => c.matiere?.nom || c.matiere).filter(Boolean))];
-        const classes = ['Toutes', ...new Set(items.map(c => c.classe?.nom || c.classe_nom).filter(Boolean))];
-        const enseignants = ['Toutes', ...new Set(items.map(c => c.enseignant?.nom || c.enseignant_nom).filter(Boolean))];
       } catch (e) {
         logger.error('Erreur chargement EDT:', e);
       }
@@ -221,7 +226,7 @@ export default function EmploiDuTempsPage() {
             <div className="bg-neutral-100 dark:bg-neutral-800 p-3" />
             {JOURS.map((jour) => (
               <div key={jour} className="bg-neutral-100 dark:bg-neutral-800 p-3 text-center">
-                <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">{jour}</span>
+                <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">{JOURS_LABELS[jour]}</span>
               </div>
             ))}
           </div>

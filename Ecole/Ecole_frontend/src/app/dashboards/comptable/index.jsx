@@ -180,7 +180,7 @@ function ApercuSection({ stats, caData, repartition, factures, impayes, tresorer
                     <Table.Cell>{f.classe}</Table.Cell>
                     <Table.Cell>{f.type}</Table.Cell>
                     <Table.Cell>
-                      <span className="font-semibold text-red-600 dark:text-red-400">{f.montant_restant.toLocaleString()} F</span>
+                      <span className="font-semibold text-red-600 dark:text-red-400">{(f.montant_restant ?? 0).toLocaleString()} F</span>
                     </Table.Cell>
                   </Table.Row>
                 ))}
@@ -220,7 +220,7 @@ function ApercuSection({ stats, caData, repartition, factures, impayes, tresorer
                 <Table.Row key={f.id}>
                   <Table.Cell><span className="font-medium text-neutral-900 dark:text-white">{f.eleve}</span></Table.Cell>
                   <Table.Cell>{f.classe}</Table.Cell>
-                  <Table.Cell>{f.montant.toLocaleString()} F</Table.Cell>
+                  <Table.Cell>{(f.montant ?? 0).toLocaleString()} F</Table.Cell>
                   <Table.Cell>
                     <Badge variant={f.statut === 'Payée' ? 'success' : f.statut === 'En attente' ? 'warning' : 'danger'} size="sm">
                       {f.statut}

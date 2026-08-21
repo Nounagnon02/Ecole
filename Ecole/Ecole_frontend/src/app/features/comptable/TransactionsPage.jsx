@@ -26,8 +26,8 @@ const getStatutColor = (statut) => {
     case 'en_attente':
     case 'partiel': return 'warning';
     case 'echec': return 'danger';
-    case 'rembourse': return 'ghost';
-    default: return 'outline';
+    case 'rembourse': return 'info';
+    default: return 'default';
   }
 };
 
@@ -63,7 +63,7 @@ export default function TransactionsPage() {
         logger.error('Erreur chargement transactions:', e);
       }
     })();
-  }, []);
+  }, [get]);
 
   const stats = useMemo(() => {
     const recettes = transactions.filter((t) => t.statut === 'paye' || t.statut === 'payee');

@@ -61,7 +61,7 @@ export default function ModulesPage() {
         logger.error('Erreur chargement modules:', e);
       }
     })();
-  }, []);
+  }, [get]);
 
   if (loading) {
     return (

@@ -50,7 +50,7 @@ export default function AbsencesPage() {
         logger.error('Erreur chargement absences:', e);
       }
     })();
-  }, []);
+  }, [get]);
 
   const stats = useMemo(() => ({
     total: absences.length,

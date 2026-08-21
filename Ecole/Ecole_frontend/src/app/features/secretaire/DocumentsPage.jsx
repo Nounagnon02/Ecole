@@ -48,7 +48,7 @@ export default function DocumentsPage() {
         logger.error('Erreur chargement documents:', e);
       }
     })();
-  }, []);
+  }, [get]);
 
   const stats = useMemo(() => ({
     total: documents.length,

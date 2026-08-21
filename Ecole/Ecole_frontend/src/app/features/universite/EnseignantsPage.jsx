@@ -55,7 +55,7 @@ export default function EnseignantsPage() {
         logger.error('Erreur chargement enseignants:', e);
       }
     })();
-  }, []);
+  }, [get]);
 
   const stats = useMemo(() => ({
     total: enseignants.length,

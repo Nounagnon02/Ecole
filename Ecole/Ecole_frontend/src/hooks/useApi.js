@@ -77,11 +77,18 @@ export const useCrud = (baseUrl) => {
   const [data, setData] = useState([]);
   const [item, setItem] = useState(null);
 
+  const unwrap = (res) => {
+    const body = res?.data;
+    if (body?.data !== undefined) return body.data;
+    return body;
+  };
+
   const fetchAll = useCallback(async (params = {}) => {
     try {
       const response = await get(baseUrl, { params });
-      setData(response.data);
-      return response.data;
+      const result = unwrap(response);
+      setData(Array.isArray(result) ? result : []);
+      return result;
     } catch (err) {
       setData([]);
       throw err;
@@ -91,8 +98,9 @@ export const useCrud = (baseUrl) => {
   const fetchOne = useCallback(async (id) => {
     try {
       const response = await get(`${baseUrl}/${id}`);
-      setItem(response.data);
-      return response.data;
+      const result = unwrap(response);
+      setItem(result);
+      return result;
     } catch (err) {
       setItem(null);
       throw err;
@@ -101,19 +109,21 @@ export const useCrud = (baseUrl) => {
 
   const create = useCallback(async (newData) => {
     const response = await post(baseUrl, newData);
-    setData(prev => [...prev, response.data]);
-    return response.data;
+    const created = unwrap(response);
+    setData(prev => Array.isArray(prev) ? [...prev, created] : [created]);
+    return created;
   }, [baseUrl, post]);
 
   const update = useCallback(async (id, updatedData) => {
     const response = await put(`${baseUrl}/${id}`, updatedData);
-    setData(prev => prev.map(item =>
-      item.id === id ? response.data : item
-    ));
+    const updated = unwrap(response);
+    setData(prev => Array.isArray(prev) ? prev.map(item =>
+      item.id === id ? updated : item
+    ) : prev);
     if (item && item.id === id) {
-      setItem(response.data);
+      setItem(updated);
     }
-    return response.data;
+    return updated;
   }, [baseUrl, put, item]);
 
   const remove = useCallback(async (id) => {

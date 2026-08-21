@@ -39,7 +39,7 @@ export default function CataloguePage() {
         logger.error('Erreur chargement catalogue:', e);
       }
     })();
-  }, []);
+  }, [get]);
 
   const stats = useMemo(() => ({
     total: ouvrages.length,
