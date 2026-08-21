@@ -70,10 +70,13 @@ class AuthController extends Controller
             return response()->json(['message' => $message], 403);
         }
 
-        // 2FA : si activée, on émet un token temporaire et on demande le code TOTP.
+        // 2FA : si activée, on émet un token temporaire AVANT vérification du
+        // code TOTP. Il doit être restreint par une ability dédiée : créé sans
+        // abilities explicites, un token Sanctum porte « * » et donnerait un
+        // accès complet à quiconque ne détient que le mot de passe. Ce token
+        // n'est bon que pour appeler l'endpoint d'échange (VerifyTwoFactor).
         if ($user->two_factor_enabled) {
-            $device = $request->input('device_name', 'mobile');
-            $tempToken = $user->createToken('2fa-pending')->plainTextToken;
+            $tempToken = $user->createToken('2fa-pending', ['2fa:pending'])->plainTextToken;
 
             return response()->json([
                 'requires_2fa' => true,
