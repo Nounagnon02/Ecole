@@ -38,7 +38,7 @@ class UniversiteDashboardController extends Controller
                 ->map(fn($a) => [
                     'annee' => $a->libelle ?? $a->annee,
                     'inscriptions' => $a->inscriptions_count,
-                    'diplomes' => $a->diplomes_count ?? null,
+                    'diplomes' => null,
                 ]);
 
             // Stats par faculté
@@ -92,6 +92,6 @@ class UniversiteDashboardController extends Controller
             ];
         });
 
-        return response()->json(['success' => true, 'data' => $data, 'cached' => true]);
+        return response()->json(['success' => true, 'data' => $data]);
     }
 }

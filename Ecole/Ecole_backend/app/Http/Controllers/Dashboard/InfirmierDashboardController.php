@@ -15,6 +15,7 @@ class InfirmierDashboardController extends Controller
     public function infirmier()
     {
         $data = Cache::remember('dashboard_infirmier_' . (\App\Models\Eleve::currentEcoleId() ?? 'global'), 60, function () {
+            try {
             // Le filtre année manquait sur ces deux compteurs : le même mois
             // était additionné sur toutes les années (cf. audit P3).
             $visitesMois = \App\Models\ConsultationMedicale::whereMonth('date', now()->month)
@@ -107,12 +108,22 @@ class InfirmierDashboardController extends Controller
                 ->having('visites', '>=', 2)
                 ->orderByDesc('visites')
                 ->limit(5)
+                ->get();
+
+            $eleveIds = $soinsRecurrents->pluck('eleve_id')->toArray();
+            $derniersMotifs = \App\Models\ConsultationMedicale::whereIn('eleve_id', $eleveIds)
+                ->select('eleve_id', 'motif')
+                ->orderByDesc('date')
                 ->get()
-                ->map(fn ($row) => [
+                ->unique('eleve_id')
+                ->pluck('motif', 'eleve_id')
+                ->toArray();
+
+            $soinsRecurrents = $soinsRecurrents->map(fn ($row) => [
                     'eleve' => $this->nomEleve($row->eleve),
                     'classe' => $row->eleve?->classe?->nom_classe,
                     'visites' => $row->visites,
-                    'dernier_motif' => $row->eleve?->consultations?->last()?->motif,
+                    'dernier_motif' => $derniersMotifs[$row->eleve_id] ?? null,
                 ]);
 
             return [
@@ -129,6 +140,23 @@ class InfirmierDashboardController extends Controller
                 'alertes_medicales' => $alertesMedicales,
                 'soins_recurrents' => $soinsRecurrents,
             ];
+            } catch (\Exception $e) {
+                \Log::error('Dashboard Infirmier error: ' . $e->getMessage());
+                return [
+                    'stats' => [
+                        ['title' => 'Visites du Mois', 'value' => '0', 'trend' => 0, 'trendLabel' => 'ce mois'],
+                        ['title' => 'En Cours', 'value' => '0', 'trend' => 0, 'trendLabel' => 'aujourd\'hui'],
+                        ['title' => 'Cas Urgents', 'value' => '0', 'trend' => 0, 'trendLabel' => 'ce mois'],
+                        ['title' => 'Consultations', 'value' => '0', 'trend' => 0, 'trendLabel' => 'total'],
+                    ],
+                    'frequentation' => [],
+                    'motifs' => [],
+                    'visites' => [],
+                    'urgences_jour' => [],
+                    'alertes_medicales' => [],
+                    'soins_recurrents' => [],
+                ];
+            }
         });
 
         return response()->json(['success' => true, 'data' => $data]);

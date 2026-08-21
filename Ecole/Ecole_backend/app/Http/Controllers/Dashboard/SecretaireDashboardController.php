@@ -15,6 +15,7 @@ class SecretaireDashboardController extends Controller
     public function secretaire()
     {
         $data = Cache::remember('dashboard_secretaire_' . (\App\Models\Eleve::currentEcoleId() ?? 'global'), 120, function () {
+            try {
             $totalInscriptions = \App\Models\Eleve::count();
             // Filtre année manquant : le même mois était additionné sur toutes
             // les années (cf. audit P3).
@@ -132,6 +133,22 @@ class SecretaireDashboardController extends Controller
                 'planning_rendez_vous' => $planningRendezVous,
                 'certificats_attente' => $certificatsAttente,
             ];
+            } catch (\Exception $e) {
+                \Log::error('Dashboard Secretaire error: ' . $e->getMessage());
+                return [
+                    'stats' => [
+                        ['title' => 'Inscriptions', 'value' => '0', 'trend' => 0, 'trendLabel' => 'total'],
+                        ['title' => 'Nouveaux ce Mois', 'value' => '0', 'trend' => 0],
+                        ['title' => 'Dossiers en Cours', 'value' => '0', 'trend' => 0, 'trendLabel' => 'certificats'],
+                        ['title' => 'Documents Générés', 'value' => '0', 'trend' => 0, 'trendLabel' => 'émis'],
+                    ],
+                    'flux_inscriptions' => [],
+                    'rendez_vous' => [],
+                    'inscriptions' => [],
+                    'planning_rendez_vous' => [],
+                    'certificats_attente' => [],
+                ];
+            }
         });
 
         return response()->json(['success' => true, 'data' => $data]);

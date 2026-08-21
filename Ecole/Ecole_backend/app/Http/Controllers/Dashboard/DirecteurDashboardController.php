@@ -119,7 +119,6 @@ class DirecteurDashboardController extends Controller
         return response()->json([
             'success' => true,
             'data' => $data,
-            'cached' => true
         ]);
     }
 
