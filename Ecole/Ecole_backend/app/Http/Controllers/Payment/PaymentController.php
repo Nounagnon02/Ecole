@@ -11,6 +11,7 @@ use App\Models\PaymentHistory;
 use App\Models\PaiementEleve;
 use App\Models\Eleve;
 use App\Services\Billing\PaymentProvider;
+use App\Support\SchoolContext;
 
 class PaymentController extends Controller
 {
@@ -286,15 +287,31 @@ class PaymentController extends Controller
     }
 
     /**
-     * Webhook
+     * Webhook de la passerelle de paiement.
+     *
+     * Seul point d'entrée du contrôleur qui s'exécute sans utilisateur
+     * authentifié : la passerelle rappelle le serveur, elle ne se connecte pas.
+     * `Payment`, `PaymentHistory` et `PaiementEleve` portent tous le scope
+     * `ecole`, qui se résout depuis l'utilisateur courant ou la session — ni
+     * l'un ni l'autre n'existe ici. La recherche retombait donc sur
+     * `whereRaw('1 = 0')` : `$payment` était systématiquement null, le webhook
+     * répondait 200 et n'encaissait rien (audit A1).
+     *
+     * D'où les deux temps ci-dessous : lever le scope pour retrouver la
+     * transaction — c'est son identifiant, émis par la passerelle, qui fait
+     * autorité, pas une école ambiante — puis lier l'école de ce paiement pour
+     * tout le traitement, afin que l'historique et la réconciliation de
+     * l'échéance s'écrivent dans le bon établissement.
      */
     public function webhook(Request $request)
     {
         $signature = $request->header('X-FedaPay-Signature');
         $payload = $request->getContent();
-        $expectedSignature = hash_hmac('sha256', $payload, config('services.fedapay.webhook_secret'));
+        $expectedSignature = hash_hmac('sha256', $payload, (string) config('services.fedapay.webhook_secret'));
 
-        if (!hash_equals($expectedSignature, $signature)) {
+        // Un en-tête absent donne null, que `hash_equals` n'accepte pas : le
+        // comparer tel quel émet une dépréciation avant de retomber sur false.
+        if (!is_string($signature) || !hash_equals($expectedSignature, $signature)) {
             return response()->json(['error' => 'Invalid signature'], 401);
         }
 
@@ -305,33 +322,27 @@ class PaymentController extends Controller
                 $transactionId = $data['entity']['transaction']['id'];
                 $status = $data['entity']['transaction']['status'];
 
-                $payment = Payment::where('transaction_id', $transactionId)->first();
+                $payment = Payment::withoutGlobalScope('ecole')
+                    ->where('transaction_id', $transactionId)
+                    ->first();
+
+                if ($payment && !$payment->ecole_id) {
+                    // Rattacher un encaissement à un établissement inconnu
+                    // écrirait un historique orphelin, invisible de tous.
+                    // Mieux vaut un échec bruyant que ce silence.
+                    Log::error('Webhook: paiement sans école, traitement abandonné', [
+                        'transaction_id' => $transactionId,
+                        'payment_id'     => $payment->id,
+                    ]);
+
+                    return response()->json(['error' => 'Payment has no school'], 422);
+                }
 
                 if ($payment) {
-                    if ($status === 'approved') {
-                        // Filet de sécurité : vérifier côté provider que la
-                        // transaction est bien approuvée (audit S3). Si l'appel
-                        // échoue (timeout, indisponibilité), on fait quand même
-                        // confiance à la signature HMAC déjà validée.
-                        try {
-                            $verification = $this->provider->verifyPayment($transactionId);
-                            if (!$verification['success']) {
-                                Log::warning('S3: provider verify returned non-approved, trusting HMAC signature', [
-                                    'transaction_id' => $transactionId,
-                                    'provider_error' => $verification['error'] ?? null,
-                                ]);
-                            }
-                        } catch (\Throwable $e) {
-                            Log::warning('S3: provider verify unreachable, trusting HMAC signature', [
-                                'transaction_id' => $transactionId,
-                                'error' => $e->getMessage(),
-                            ]);
-                        }
-                        $this->confirmPayment($payment, 'Paiement approuvé via webhook (vérifié)');
-                    } elseif ($status === 'declined') {
-                        $payment->update(['status' => 'failed']);
-                        $this->recordHistory($payment, 'failed', 'Paiement refusé');
-                    }
+                    SchoolContext::for(
+                        (int) $payment->ecole_id,
+                        fn () => $this->applyGatewayOutcome($payment, $status, $transactionId),
+                    );
                 }
             }
 
@@ -430,6 +441,45 @@ class PaymentController extends Controller
      * jamais deux fois l'échéance (le rapprochement n'est joué que lors du
      * premier passage pending → completed).
      */
+    /**
+     * Appliquer le verdict de la passerelle à un paiement.
+     *
+     * Appelé sous `SchoolContext` : l'historique et la réconciliation écrivent
+     * donc dans l'école du paiement, sans utilisateur authentifié.
+     */
+    private function applyGatewayOutcome(Payment $payment, string $status, $transactionId): void
+    {
+        if ($status === 'approved') {
+            // Filet de sécurité : vérifier côté provider que la transaction est
+            // bien approuvée (audit S3). Si l'appel échoue (timeout,
+            // indisponibilité), on fait quand même confiance à la signature
+            // HMAC déjà validée.
+            try {
+                $verification = $this->provider->verifyPayment($transactionId);
+                if (!$verification['success']) {
+                    Log::warning('S3: provider verify returned non-approved, trusting HMAC signature', [
+                        'transaction_id' => $transactionId,
+                        'provider_error' => $verification['error'] ?? null,
+                    ]);
+                }
+            } catch (\Throwable $e) {
+                Log::warning('S3: provider verify unreachable, trusting HMAC signature', [
+                    'transaction_id' => $transactionId,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
+            $this->confirmPayment($payment, 'Paiement approuvé via webhook (vérifié)');
+
+            return;
+        }
+
+        if ($status === 'declined') {
+            $payment->update(['status' => 'failed']);
+            $this->recordHistory($payment, 'failed', 'Paiement refusé');
+        }
+    }
+
     private function confirmPayment(Payment $payment, string $note, ?string $paymentMethod = null): void
     {
         if ($payment->status === 'completed') {
