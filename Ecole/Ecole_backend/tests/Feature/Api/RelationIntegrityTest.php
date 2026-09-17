@@ -77,7 +77,9 @@ class RelationIntegrityTest extends TestCase
         $this->assertNotNull($contribution->classe);
         $this->assertSame($classe->id, $contribution->classe->id);
         // L'inverse déclaré sur Classes doit pointer sur la même colonne.
-        $this->assertSame($classe->id, $classe->contributions()->first()->id);
+        // On compare l'id de la contribution, pas celui de la classe : les deux
+        // ne coïncidaient que parce que SQLite repartait de 1 sur chaque table.
+        $this->assertSame($contribution->id, $classe->contributions()->first()->id);
     }
 
     /** @test */
