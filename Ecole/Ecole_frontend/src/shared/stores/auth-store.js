@@ -28,9 +28,17 @@ const initialState = {
 
 /**
  * Récupère l'URL racine (sans /api) pour les appels hors API.
+ *
+ * Le repli doit être celui d'`api-client.js` (`/api`), pas une adresse en dur.
+ * Avec `http://localhost:8000/api`, un build de production dont
+ * `VITE_API_URL` n'est pas défini allait chercher son cookie CSRF sur le poste
+ * du visiteur : la connexion échouait sans que rien ne le dise. Le repli
+ * relatif donne une origine vide, donc une requête same-origin — correcte
+ * derrière le proxy Vite en développement comme derrière le même domaine en
+ * production.
  */
 function getBackendOrigin() {
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+  const apiUrl = import.meta.env.VITE_API_URL || '/api';
   // Supprime /api, /api/v1 ou trailing slash pour obtenir l'origine nue
   return apiUrl.replace(/\/api(\/v1)?$/, '').replace(/\/$/, '');
 }
