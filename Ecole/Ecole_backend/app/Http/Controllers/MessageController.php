@@ -235,6 +235,10 @@ class MessageController extends Controller
 
             $c->id = (int) $c->contact_id;
             $c->contact_id = (int) $c->contact_id;
+            // `SUM(...)` revient en chaîne sur MySQL et en entier sur SQLite :
+            // l'API livrait « 1 » en production et 1 en test. Le compte est un
+            // entier, ici comme là (cf. audit P2.1).
+            $c->non_lus = (int) $c->non_lus;
             $c->contact_nom = $contact['nom'];
             $c->role = $contact['role'];
             $c->dernier_message = $dernier ? mb_strimwidth($dernier->contenu, 0, 120, '…') : null;
