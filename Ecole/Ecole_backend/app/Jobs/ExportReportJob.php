@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\User;
+use App\Support\SchoolContext;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -33,15 +34,30 @@ class ExportReportJob implements ShouldQueue
 
     public function handle(): void
     {
+        // Un worker n'a pas d'utilisateur authentifié : sans école liée, le
+        // scope `ecole` des modèles interrogés plus bas retombe sur
+        // `whereRaw('1 = 0')` et l'export sortait réduit à sa ligne d'en-tête —
+        // puis l'utilisateur était notifié que son fichier était « prêt »
+        // (audit A2). `$this->user` est sérialisé avec le job, l'école en
+        // découle.
+        if (!$this->user->ecole_id) {
+            Log::error('Export annulé : utilisateur sans école', [
+                'user_id' => $this->user->id,
+                'type'    => $this->type,
+            ]);
+
+            return;
+        }
+
         $filename = "exports/{$this->type}_{$this->user->id}_{$this->user->ecole_id}.{$this->format}";
 
         // Logique d'export selon le type
-        $data = match ($this->type) {
+        $data = SchoolContext::for((int) $this->user->ecole_id, fn () => match ($this->type) {
             'eleves' => $this->exportEleves(),
             'notes' => $this->exportNotes(),
             'paiements' => $this->exportPaiements(),
             default => throw new \InvalidArgumentException("Type d'export invalide: {$this->type}"),
-        };
+        });
 
         Storage::disk('local')->put($filename, $data);
 

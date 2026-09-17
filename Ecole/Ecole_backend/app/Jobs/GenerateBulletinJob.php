@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\Classe;
 use App\Models\Periode;
 use App\Services\BulletinService;
+use App\Support\SchoolContext;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -34,11 +35,33 @@ class GenerateBulletinJob implements ShouldQueue
 
     public function handle(BulletinService $bulletinService): void
     {
-        $classe = Classe::find($this->classeId);
+        // Un worker n'a pas d'utilisateur authentifié. `Classe` porte le scope
+        // `ecole`, qui retombe alors sur `whereRaw('1 = 0')` : la classe était
+        // introuvable et le job s'arrêtait sur un « not found » trompeur, la
+        // classe existant parfaitement (audit A2).
+        //
+        // La classe est retrouvée hors scope — c'est l'identifiant fourni par
+        // le code appelant qui fait autorité — puis son école cadre tout le
+        // reste du traitement.
+        $classe = Classe::withoutGlobalScope('ecole')->find($this->classeId);
+
+        if (!$classe || !$classe->ecole_id) {
+            Log::error('Bulletin generation failed: classe introuvable ou sans école', [
+                'classe_id' => $this->classeId,
+            ]);
+
+            return;
+        }
+
+        SchoolContext::for((int) $classe->ecole_id, fn () => $this->generate($bulletinService, $classe));
+    }
+
+    private function generate(BulletinService $bulletinService, Classe $classe): void
+    {
         $periode = Periode::find($this->periodeId);
 
-        if (!$classe || !$periode) {
-            Log::error('Bulletin generation failed: classe or periode not found', [
+        if (!$periode) {
+            Log::error('Bulletin generation failed: periode not found', [
                 'classe_id' => $this->classeId,
                 'periode_id' => $this->periodeId,
             ]);
