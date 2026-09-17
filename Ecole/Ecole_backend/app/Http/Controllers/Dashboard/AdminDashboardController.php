@@ -15,17 +15,25 @@ class AdminDashboardController extends Controller
      */
     public function admin()
     {
-        $ecoleId = \App\Models\Eleve::currentEcoleId() ?? 'global';
+        // `admin` est un rôle d'établissement ; `super-admin` sans école ciblée
+        // est le seul à voir la plateforme entière. `currentEcoleId()` donne la
+        // même valeur que le scope `ecole` — y compris pour un super-admin qui
+        // cible un établissement via `X-Ecole-Id`.
+        $ecoleId = \App\Models\Eleve::currentEcoleId();
 
-        $data = Cache::remember('dashboard_admin_' . $ecoleId, 120, function () {
+        $data = Cache::remember('dashboard_admin_' . ($ecoleId ?? 'global'), 120, function () use ($ecoleId) {
             try {
             // ─── Utilisateurs & plateforme ───────────────────────────
-            $totalEcoles = \App\Models\Ecole::count();
-            $totalUsers = User::count();
-            $activeUsers = User::where('is_active', true)->count();
+            // `User` est exempté du scope `ecole` (la connexion doit trouver un
+            // compte avant de connaître son école), donc le filtrage est ici
+            // manuel et obligatoire : sans lui, l'administrateur de l'école A
+            // comptait les utilisateurs de toutes les écoles (cf. audit A3).
+            $totalEcoles = $ecoleId ? 1 : \App\Models\Ecole::count();
+            $totalUsers = $this->usersInScope($ecoleId)->count();
+            $activeUsers = $this->usersInScope($ecoleId)->where('is_active', true)->count();
             $tauxActivite = $totalUsers > 0 ? round(($activeUsers / $totalUsers) * 100) : 0;
 
-            $nouveautesSemaine = User::where('created_at', '>=', now()->subWeek())->count();
+            $nouveautesSemaine = $this->usersInScope($ecoleId)->where('created_at', '>=', now()->subWeek())->count();
             $plansActifs = class_exists(\App\Models\SaaS\Plan::class) ? \App\Models\SaaS\Plan::where('is_active', true)->count() : 0;
             $modulesActifs = class_exists(\App\Models\SaaS\Module::class) ? \App\Models\SaaS\Module::where('is_active', true)->count() : 0;
 
@@ -36,7 +44,8 @@ class AdminDashboardController extends Controller
                     ->sum('montant');
             }
 
-            $repartitionRoles = User::selectRaw('role, COUNT(*) as total')
+            $repartitionRoles = $this->usersInScope($ecoleId)
+                ->selectRaw('role, COUNT(*) as total')
                 ->groupBy('role')
                 ->pluck('total', 'role')
                 ->map(fn($v, $k) => ['name' => ucfirst($k), 'value' => $v])
@@ -98,7 +107,8 @@ class AdminDashboardController extends Controller
             $erreursApi = $this->countLogErrors();
 
             // ─── Utilisateurs récents ─────────────────────────────────
-            $utilisateurs = User::with('ecole:id,nom')
+            $utilisateurs = $this->usersInScope($ecoleId)
+                ->with('ecole:id,nom')
                 ->latest()
                 ->take(8)
                 ->get(['id', 'name', 'prenom', 'email', 'role', 'ecole_id', 'is_active', 'created_at'])
@@ -171,5 +181,19 @@ class AdminDashboardController extends Controller
         });
 
         return response()->json(['success' => true, 'data' => $data]);
+    }
+
+    /**
+     * Requête `users` limitée à l'école courante.
+     *
+     * Une école résolue borne la requête ; son absence signifie un super-admin
+     * qui n'a ciblé aucun établissement, seul cas où la vue plateforme est
+     * légitime. Renvoyer une requête neuve à chaque appel, plutôt qu'une
+     * instance partagée, évite que les `where` d'un compteur ne fuient dans le
+     * suivant.
+     */
+    private function usersInScope(?int $ecoleId): \Illuminate\Database\Eloquent\Builder
+    {
+        return User::query()->when($ecoleId, fn ($q) => $q->where('ecole_id', $ecoleId));
     }
 }
