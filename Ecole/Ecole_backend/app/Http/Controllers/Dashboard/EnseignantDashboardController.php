@@ -85,8 +85,16 @@ class EnseignantDashboardController extends Controller
         // passée ou sans échéance, encore publiés.
         $devoirsACorriger = $classeIds->isEmpty()
             ? collect()
+            // `devoirs.enseignant_id` référence `users`, pas `enseignants` —
+            // seule table du schéma dans ce cas, les huit autres pointent sur
+            // `enseignants`. `DevoirController` écrit bien un id de compte
+            // (`$request->user()->id`) ; ce tableau de bord filtrait sur
+            // `$enseignant->id`, un identifiant d'un autre espace. Le compte
+            // « Devoirs à corriger » était donc faux, et pouvait remonter les
+            // devoirs d'un autre enseignant par simple collision de numéro
+            // (cf. audit P2.1).
             : \App\Models\Devoir::with(['classe:id,nom_classe'])
-                ->where('enseignant_id', $enseignant->id)
+                ->where('enseignant_id', $enseignant->user_id)
                 ->whereIn('classe_id', $classeIds)
                 ->where('publie', true)
                 ->where(function ($q) {
