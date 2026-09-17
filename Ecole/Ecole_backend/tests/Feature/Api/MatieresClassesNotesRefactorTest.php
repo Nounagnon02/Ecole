@@ -85,7 +85,9 @@ class MatieresClassesNotesRefactorTest extends TestCase
             ->assertStatus(200)
             ->assertJsonPath('success', true)
             ->assertJsonCount(1, 'data')
-            ->assertJsonPath('data.0.coefficient', 3);
+            // `decimal:2` rend une chaîne — même forme que `Notes::note` et
+            // les montants. C'est le contrat, sur MySQL comme sur SQLite.
+            ->assertJsonPath('data.0.coefficient', '3.00');
     }
 
     /** @test */

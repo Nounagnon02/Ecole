@@ -199,6 +199,15 @@ class MessagesContractTest extends TestCase
 
         // La notification d'un autre établissement, même adressée à moi,
         // reste inchangée : le scope école empêche l'update.
-        $this->assertSame(0, (int) DB::table('notifications')->where('id', $foreign->id)->value('lu'));
+        //
+        // La colonne est `read_at` depuis `align_notifications_with_frontend` ;
+        // ce test interrogeait encore `lu`. Sur SQLite, un identifiant inconnu
+        // entre guillemets devient une chaîne littérale : la requête rendait
+        // « lu », `(int) 'lu'` valait 0, et l'assertion passait sans rien
+        // vérifier. MySQL rejette la colonne et a révélé le trou.
+        $this->assertNull(
+            DB::table('notifications')->where('id', $foreign->id)->value('read_at'),
+            "La notification d'une autre école ne doit pas avoir été marquée lue."
+        );
     }
 }
