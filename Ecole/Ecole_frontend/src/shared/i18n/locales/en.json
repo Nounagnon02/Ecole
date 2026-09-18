@@ -398,5 +398,41 @@
         "etudiants": "Students"
       }
     }
+  },
+  "pages": {
+    "admin": {
+      "ecoles": {
+        "title": "Schools",
+        "subtitle": "School management"
+      },
+      "plans": {
+        "title": "Subscription Plans",
+        "subtitle": "Manage offers and pricing"
+      },
+      "modules": {
+        "title": "Modules",
+        "subtitle": "Feature marketplace"
+      },
+      "utilisateurs": {
+        "title": "Users",
+        "subtitle": "Account and access management"
+      },
+      "billing": {
+        "title": "Billing",
+        "subtitle": "Transactions, subscriptions and revenue"
+      },
+      "statistiques": {
+        "title": "Statistics",
+        "subtitle": "Key indicators and system analytics"
+      },
+      "white_label": {
+        "title": "White Label",
+        "subtitle": "Branding customization per school"
+      },
+      "configuration": {
+        "title": "Configuration",
+        "subtitle": "Global system settings"
+      }
+    }
   }
 }

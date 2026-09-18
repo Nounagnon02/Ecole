@@ -7,6 +7,7 @@
 
 import { useMemo } from 'react';
 import { useApiQuery } from '@/shared/lib/api-client';
+import { useTranslation } from '@/shared/i18n';
 import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
@@ -18,6 +19,7 @@ import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 
 export default function PlansPage() {
+  const { t } = useTranslation();
 
   const requete = useApiQuery(['plans'], '/v1/admin/plans');
 
@@ -50,8 +52,8 @@ export default function PlansPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Plans d'abonnement</h1>
-          <p className="text-sm text-neutral-500 mt-1">Gérez les offres et tarifs</p>
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.admin.plans.title')}</h1>
+          <p className="text-sm text-neutral-500 mt-1">{t('pages.admin.plans.subtitle')}</p>
         </div>
         <Button icon={<Plus className="h-4 w-4" />}>Nouveau plan</Button>
       </div>

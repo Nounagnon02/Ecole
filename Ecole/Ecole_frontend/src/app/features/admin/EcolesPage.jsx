@@ -23,6 +23,7 @@ import StatsCard from '@/shared/components/ui/StatsCard';
 import { Skeleton } from '@/shared/components/ui/Skeleton';
 import { api } from '@/shared/services/api';
 import { useApiQuery } from '@/shared/lib/api-client';
+import { useTranslation } from '@/shared/i18n';
 
 const STATUT_CONFIG = {
   active: { variant: 'primary', label: 'Actif' },
@@ -101,6 +102,7 @@ function EcoleForm({ form, onChange, errors }) {
 }
 
 export default function EcolesPage() {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [filterStatut, setFilterStatut] = useState('');
 
@@ -228,8 +230,8 @@ export default function EcolesPage() {
       {/* ─── Header ────────────────────────────────────────────── */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[var(--text-primary)]">Écoles</h1>
-          <p className="text-sm text-[var(--text-secondary)]">Gestion des établissements scolaires</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)]">{t('pages.admin.ecoles.title')}</h1>
+          <p className="text-sm text-[var(--text-secondary)]">{t('pages.admin.ecoles.subtitle')}</p>
         </div>
         <div className="flex items-center gap-2">
           <Button size="sm" variant="secondary" onClick={() => setShowProvisionModal(true)} icon={<KeyRound className="h-4 w-4" />}>

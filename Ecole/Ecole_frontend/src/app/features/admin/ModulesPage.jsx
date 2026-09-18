@@ -7,6 +7,7 @@
 
 import { useMemo } from 'react';
 import { useApiQuery } from '@/shared/lib/api-client';
+import { useTranslation } from '@/shared/i18n';
 import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
@@ -45,6 +46,7 @@ const MODULE_COLORS = {
 };
 
 export default function ModulesPage() {
+  const { t } = useTranslation();
 
   const requete = useApiQuery(['modules'], '/v1/admin/modules');
 
@@ -77,8 +79,8 @@ export default function ModulesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Modules</h1>
-          <p className="text-sm text-neutral-500 mt-1">Marketplace de fonctionnalités</p>
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.admin.modules.title')}</h1>
+          <p className="text-sm text-neutral-500 mt-1">{t('pages.admin.modules.subtitle')}</p>
         </div>
         <Button icon={<Puzzle className="h-4 w-4" />}>Nouveau module</Button>
       </div>

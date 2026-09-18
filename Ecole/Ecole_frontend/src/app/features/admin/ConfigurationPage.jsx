@@ -11,6 +11,7 @@ import {
 import { cn } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
 import Button from '@/shared/components/ui/Button';
+import { useTranslation } from '@/shared/i18n';
 
 const CONFIG_SECTIONS = [
   {
@@ -84,14 +85,15 @@ const SECTION_COLORS = {
 };
 
 export default function ConfigurationPage() {
+  const { t } = useTranslation();
   const [activeSection, setActiveSection] = useState(CONFIG_SECTIONS[0].id);
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Configuration</h1>
-          <p className="text-sm text-neutral-500">Paramètres globaux du système</p>
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.admin.configuration.title')}</h1>
+          <p className="text-sm text-neutral-500">{t('pages.admin.configuration.subtitle')}</p>
         </div>
         <Button size="sm" icon={<Save />}>Enregistrer</Button>
       </div>

@@ -6,6 +6,7 @@
  */
 
 import { useApiQuery } from '@/shared/lib/api-client';
+import { useTranslation } from '@/shared/i18n';
 import { motion } from 'framer-motion';
 import {
   TrendingUp, Users, Building2, BookOpen,
@@ -27,6 +28,7 @@ const ACTIVITE_CONFIG = {
 };
 
 export default function StatistiquesPage() {
+  const { t } = useTranslation();
 
   const requete = useApiQuery(['analytics', 'overview'], '/v1/admin/analytics/overview');
 
@@ -74,8 +76,8 @@ export default function StatistiquesPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Statistiques</h1>
-          <p className="text-sm text-neutral-500">Indicateurs clés et analytics du système</p>
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.admin.statistiques.title')}</h1>
+          <p className="text-sm text-neutral-500">{t('pages.admin.statistiques.subtitle')}</p>
         </div>
         <Badge variant="primary" size="sm">
           <Clock className="h-3 w-3 mr-1" />
