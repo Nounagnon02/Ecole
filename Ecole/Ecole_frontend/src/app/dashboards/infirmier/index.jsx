@@ -22,6 +22,7 @@ import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Table from '@/shared/components/ui/Table';
+import { useTranslation } from '@/shared/i18n';
 
 const TABS = [
   { id: 'apercu', label: 'Aperçu', icon: BarChart3 },
@@ -30,10 +31,10 @@ const TABS = [
 ];
 
 const STATS_META = [
-  { title: 'Visites du Mois', icon: Activity, color: 'primary' },
-  { title: 'En Cours', icon: Clock, color: 'amber' },
-  { title: 'Cas Urgents', icon: AlertTriangle, color: 'red' },
-  { title: 'Consultations', icon: Stethoscope, color: 'emerald' },
+  { title: 'Visites du Mois', key: 'visites_du_mois', icon: Activity, color: 'primary' },
+  { title: 'En Cours', key: 'en_cours', icon: Clock, color: 'amber' },
+  { title: 'Cas Urgents', key: 'cas_urgents', icon: AlertTriangle, color: 'red' },
+  { title: 'Consultations', key: 'consultations', icon: Stethoscope, color: 'emerald' },
 ];
 
 const MOTIF_COLORS = [
@@ -257,10 +258,16 @@ function ApercuSection({ stats, frequentation, visites, motifs, urgencesJour, al
 
 export default function InfirmierDashboard() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('apercu');
   const { data, loading, error, refetch } = useDashboardStats('infirmier');
 
-  const stats = data?.stats?.map((s, i) => ({ ...s, icon: STATS_META[i]?.icon, color: STATS_META[i]?.color })) || [];
+  const stats = data?.stats?.map((s, i) => ({
+    ...s,
+    title: STATS_META[i]?.key ? t(`dashboards.infirmier.stats.${STATS_META[i].key}`) : s.title,
+    icon: STATS_META[i]?.icon,
+    color: STATS_META[i]?.color,
+  })) || [];
   const frequentation = data?.frequentation || [];
   const visites = data?.visites || [];
   const motifs = data?.motifs || [];
@@ -283,9 +290,9 @@ export default function InfirmierDashboard() {
 
   return (
     <DashboardShell
-      title="Infirmerie"
-      subtitle="Soins et santé"
-      tabs={TABS}
+      title={t('dashboards.infirmier.title')}
+      subtitle={t('dashboards.infirmier.subtitle')}
+      tabs={TABS.map((tab) => ({ ...tab, label: t(`dashboards.infirmier.tabs.${tab.id}`) }))}
       activeTab={activeTab}
       onTabChange={handleTabClick}
       loading={loading}

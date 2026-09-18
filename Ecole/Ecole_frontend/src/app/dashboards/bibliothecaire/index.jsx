@@ -20,6 +20,7 @@ import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Table from '@/shared/components/ui/Table';
+import { useTranslation } from '@/shared/i18n';
 
 const TABS = [
   { id: 'apercu', label: 'Aperçu', icon: BarChart3 },
@@ -28,10 +29,10 @@ const TABS = [
 ];
 
 const STATS_META = [
-  { title: 'Total Ouvrages', icon: BookOpen, color: 'primary' },
-  { title: 'Emprunts en Cours', icon: Bookmark, color: 'emerald' },
-  { title: 'Retards', icon: Clock, color: 'red' },
-  { title: 'Membres Actifs', icon: Users, color: 'sky' },
+  { title: 'Total Ouvrages', key: 'total_ouvrages', icon: BookOpen, color: 'primary' },
+  { title: 'Emprunts en Cours', key: 'emprunts_en_cours', icon: Bookmark, color: 'emerald' },
+  { title: 'Retards', key: 'retards', icon: Clock, color: 'red' },
+  { title: 'Membres Actifs', key: 'membres_actifs', icon: Users, color: 'sky' },
 ];
 
 const CAT_COLORS = ['var(--accent)', 'var(--green)', 'var(--amber)', 'var(--red)', 'var(--primary)'];
@@ -251,10 +252,16 @@ function ApercuSection({ stats, activite, categories, emprunts, retardsListe, no
 
 export default function BibliothecaireDashboard() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('apercu');
   const { data, loading, error, refetch } = useDashboardStats('bibliothecaire');
 
-  const stats = data?.stats?.map((s, i) => ({ ...s, icon: STATS_META[i]?.icon, color: STATS_META[i]?.color })) || [];
+  const stats = data?.stats?.map((s, i) => ({
+    ...s,
+    title: STATS_META[i]?.key ? t(`dashboards.bibliothecaire.stats.${STATS_META[i].key}`) : s.title,
+    icon: STATS_META[i]?.icon,
+    color: STATS_META[i]?.color,
+  })) || [];
   const activite = data?.activite || [];
   const categories = data?.categories || [];
   const emprunts = data?.emprunts || [];
@@ -277,9 +284,9 @@ export default function BibliothecaireDashboard() {
 
   return (
     <DashboardShell
-      title="Bibliothèque"
-      subtitle="Gestion des ouvrages"
-      tabs={TABS}
+      title={t('dashboards.bibliothecaire.title')}
+      subtitle={t('dashboards.bibliothecaire.subtitle')}
+      tabs={TABS.map((tab) => ({ ...tab, label: t(`dashboards.bibliothecaire.tabs.${tab.id}`) }))}
       activeTab={activeTab}
       onTabChange={handleTabClick}
       loading={loading}

@@ -205,5 +205,198 @@
     "unauthorized": "Accès non autorisé",
     "go_home": "Retour à l'accueil",
     "go_back": "Retour en arrière"
+  },
+  "dashboards": {
+    "admin": {
+      "title": "Administration Système",
+      "subtitle": "Gestion de la plateforme",
+      "tabs": {
+        "apercu": "Aperçu",
+        "utilisateurs": "Utilisateurs",
+        "configuration": "Configuration",
+        "logs": "Logs Système",
+        "sauvegardes": "Sauvegardes"
+      },
+      "stats": {
+        "utilisateurs_actifs": "Utilisateurs Actifs",
+        "espace_disque": "Espace Disque",
+        "erreurs_api": "Erreurs API",
+        "uptime": "Uptime"
+      }
+    },
+    "bibliothecaire": {
+      "title": "Bibliothèque",
+      "subtitle": "Gestion des ouvrages",
+      "tabs": {
+        "apercu": "Aperçu",
+        "catalogue": "Catalogue",
+        "emprunts": "Emprunts"
+      },
+      "stats": {
+        "total_ouvrages": "Total Ouvrages",
+        "emprunts_en_cours": "Emprunts en Cours",
+        "retards": "Retards",
+        "membres_actifs": "Membres Actifs"
+      }
+    },
+    "censeur": {
+      "title": "Censeur",
+      "subtitle": "Discipline et absences",
+      "tabs": {
+        "apercu": "Aperçu",
+        "discipline": "Discipline",
+        "absences": "Absences"
+      },
+      "stats": {
+        "total_eleves": "Total Élèves",
+        "sanctions_du_mois": "Sanctions du Mois",
+        "absences_non_justifiees": "Absences Non Justifiées",
+        "avertissements": "Avertissements"
+      }
+    },
+    "comptable": {
+      "title": "Comptabilité",
+      "subtitle": "Suivi financier",
+      "tabs": {
+        "apercu": "Aperçu",
+        "factures": "Factures",
+        "transactions": "Transactions"
+      },
+      "stats": {
+        "revenus_du_mois": "Revenus du Mois",
+        "factures_en_attente": "Factures en Attente",
+        "taux_recouvrement": "Taux Recouvrement",
+        "depenses_du_mois": "Dépenses du Mois"
+      }
+    },
+    "directeur": {
+      "title": "Tableau de Bord",
+      "tabs": {
+        "apercu": "Aperçu",
+        "eleves": "Élèves",
+        "performances": "Performances",
+        "finances": "Finances",
+        "messages": "Messages",
+        "calendrier": "Calendrier"
+      },
+      "stats": {
+        "total_eleves": "Total Élèves",
+        "enseignants": "Enseignants",
+        "classes": "Classes"
+      }
+    },
+    "eleve": {
+      "title": "Mon Espace Élève",
+      "subtitle_classe": "Classe de {classe}",
+      "tabs": {
+        "apercu": "Aperçu",
+        "notes": "Mes Notes",
+        "emploi": "Emploi du Temps",
+        "paiements": "Paiements"
+      },
+      "stats": {
+        "moyenne_generale": "Moyenne Générale",
+        "total_notes": "Total Notes",
+        "absences_ce_mois": "Absences ce Mois"
+      }
+    },
+    "enseignant": {
+      "title": "Mon Espace Enseignant",
+      "subtitle": "Bon retour",
+      "tabs": {
+        "apercu": "Aperçu",
+        "classe": "Ma Classe",
+        "notes": "Notes",
+        "cahier": "Cahier de Textes",
+        "emploi": "Emploi du Temps",
+        "messages": "Messages"
+      },
+      "stats": {
+        "mes_eleves": "Mes Élèves",
+        "cours_semaine": "Cours Cette Semaine",
+        "moyenne_classe": "Moyenne Classe",
+        "devoirs_a_corriger": "Devoirs à Corriger"
+      }
+    },
+    "infirmier": {
+      "title": "Infirmerie",
+      "subtitle": "Soins et santé",
+      "tabs": {
+        "apercu": "Aperçu",
+        "soins": "Soins",
+        "dossiers": "Dossiers"
+      },
+      "stats": {
+        "visites_du_mois": "Visites du Mois",
+        "en_cours": "En Cours",
+        "cas_urgents": "Cas Urgents",
+        "consultations": "Consultations"
+      }
+    },
+    "parent": {
+      "title": "Espace Parent",
+      "subtitle": "Suivi de vos enfants",
+      "tabs": {
+        "apercu": "Aperçu",
+        "notes": "Notes",
+        "emploi": "Emploi du Temps",
+        "paiements": "Paiements",
+        "communications": "Échanges"
+      },
+      "stats": {
+        "enfants_scolarises": "Enfants Scolarisés",
+        "moyenne_generale": "Moyenne Générale",
+        "assiduite": "Assiduité",
+        "solde": "Solde"
+      }
+    },
+    "secretaire": {
+      "title": "Secrétariat",
+      "subtitle": "Gestion administrative",
+      "tabs": {
+        "apercu": "Aperçu",
+        "inscriptions": "Inscriptions",
+        "planning": "Planning",
+        "documents": "Documents"
+      },
+      "stats": {
+        "inscriptions": "Inscriptions",
+        "nouveaux_ce_mois": "Nouveaux ce Mois",
+        "dossiers_en_cours": "Dossiers en Cours",
+        "documents_generes": "Documents Générés"
+      }
+    },
+    "surveillant": {
+      "title": "Surveillance",
+      "subtitle": "Suivi des présences",
+      "tabs": {
+        "apercu": "Aperçu",
+        "presences": "Présences",
+        "surveillance": "Surveillance"
+      },
+      "stats": {
+        "total_eleves": "Total Élèves",
+        "presents_aujourdhui": "Présents Aujourd'hui",
+        "absents": "Absents",
+        "alertes": "Alertes"
+      }
+    },
+    "universite": {
+      "title": "Université",
+      "subtitle": "Tableau de bord",
+      "tabs": {
+        "apercu": "Aperçu",
+        "facultes": "Facultés",
+        "etudiants": "Étudiants",
+        "cours": "Cours",
+        "planning": "Planning"
+      },
+      "stats": {
+        "facultes": "Facultés",
+        "departements": "Départements",
+        "enseignants": "Enseignants",
+        "etudiants": "Étudiants"
+      }
+    }
   }
 }

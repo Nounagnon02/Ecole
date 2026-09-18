@@ -21,6 +21,7 @@ import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Table from '@/shared/components/ui/Table';
 import Button from '@/shared/components/ui/Button';
+import { useTranslation } from '@/shared/i18n';
 
 const TABS = [
   { id: 'apercu', label: 'Aperçu', icon: BarChart3 },
@@ -29,10 +30,10 @@ const TABS = [
 ];
 
 const STATS_META = [
-  { title: 'Total Élèves', icon: Users, color: 'primary' },
-  { title: 'Présents Aujourd\'hui', icon: UserCheck, color: 'emerald' },
-  { title: 'Absents', icon: UserX, color: 'red' },
-  { title: 'Alertes', icon: AlertTriangle, color: 'amber' },
+  { title: 'Total Élèves', key: 'total_eleves', icon: Users, color: 'primary' },
+  { title: 'Présents Aujourd\'hui', key: 'presents_aujourdhui', icon: UserCheck, color: 'emerald' },
+  { title: 'Absents', key: 'absents', icon: UserX, color: 'red' },
+  { title: 'Alertes', key: 'alertes', icon: AlertTriangle, color: 'amber' },
 ];
 
 function ApercuSection({ stats, presences, retards, data }) {
@@ -249,10 +250,16 @@ function ApercuSection({ stats, presences, retards, data }) {
 
 export default function SurveillantDashboard() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('apercu');
   const { data, loading, error, refetch } = useDashboardStats('surveillant');
 
-  const stats = data?.stats?.map((s, i) => ({ ...s, icon: STATS_META[i]?.icon, color: STATS_META[i]?.color })) || [];
+  const stats = data?.stats?.map((s, i) => ({
+    ...s,
+    title: STATS_META[i]?.key ? t(`dashboards.surveillant.stats.${STATS_META[i].key}`) : s.title,
+    icon: STATS_META[i]?.icon,
+    color: STATS_META[i]?.color,
+  })) || [];
   const presences = data?.presences_semaine || [];
   const retards = data?.retards || [];
 
@@ -271,9 +278,9 @@ export default function SurveillantDashboard() {
 
   return (
     <DashboardShell
-      title="Surveillance"
-      subtitle="Suivi des présences"
-      tabs={TABS}
+      title={t('dashboards.surveillant.title')}
+      subtitle={t('dashboards.surveillant.subtitle')}
+      tabs={TABS.map((tab) => ({ ...tab, label: t(`dashboards.surveillant.tabs.${tab.id}`) }))}
       activeTab={activeTab}
       onTabChange={handleTabClick}
       loading={loading}

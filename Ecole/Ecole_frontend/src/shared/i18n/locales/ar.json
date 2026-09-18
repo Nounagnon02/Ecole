@@ -205,5 +205,198 @@
     "unauthorized": "وصول غير مصرح به",
     "go_home": "الذهاب إلى الصفحة الرئيسية",
     "go_back": "العودة"
+  },
+  "dashboards": {
+    "admin": {
+      "title": "إدارة النظام",
+      "subtitle": "إدارة المنصة",
+      "tabs": {
+        "apercu": "نظرة عامة",
+        "utilisateurs": "المستخدمون",
+        "configuration": "الإعدادات",
+        "logs": "سجلات النظام",
+        "sauvegardes": "النسخ الاحتياطية"
+      },
+      "stats": {
+        "utilisateurs_actifs": "المستخدمون النشطون",
+        "espace_disque": "مساحة القرص",
+        "erreurs_api": "أخطاء الواجهة البرمجية",
+        "uptime": "مدة التشغيل"
+      }
+    },
+    "bibliothecaire": {
+      "title": "المكتبة",
+      "subtitle": "إدارة الكتب",
+      "tabs": {
+        "apercu": "نظرة عامة",
+        "catalogue": "الفهرس",
+        "emprunts": "الاستعارات"
+      },
+      "stats": {
+        "total_ouvrages": "إجمالي الكتب",
+        "emprunts_en_cours": "الاستعارات الجارية",
+        "retards": "المتأخرات",
+        "membres_actifs": "الأعضاء النشطون"
+      }
+    },
+    "censeur": {
+      "title": "مراقب الانضباط",
+      "subtitle": "الانضباط والغيابات",
+      "tabs": {
+        "apercu": "نظرة عامة",
+        "discipline": "الانضباط",
+        "absences": "الغيابات"
+      },
+      "stats": {
+        "total_eleves": "إجمالي الطلاب",
+        "sanctions_du_mois": "عقوبات هذا الشهر",
+        "absences_non_justifiees": "غيابات غير مبررة",
+        "avertissements": "الإنذارات"
+      }
+    },
+    "comptable": {
+      "title": "المحاسبة",
+      "subtitle": "المتابعة المالية",
+      "tabs": {
+        "apercu": "نظرة عامة",
+        "factures": "الفواتير",
+        "transactions": "المعاملات"
+      },
+      "stats": {
+        "revenus_du_mois": "إيرادات الشهر",
+        "factures_en_attente": "فواتير معلقة",
+        "taux_recouvrement": "معدل التحصيل",
+        "depenses_du_mois": "مصاريف الشهر"
+      }
+    },
+    "directeur": {
+      "title": "لوحة القيادة",
+      "tabs": {
+        "apercu": "نظرة عامة",
+        "eleves": "الطلاب",
+        "performances": "الأداء",
+        "finances": "المالية",
+        "messages": "الرسائل",
+        "calendrier": "التقويم"
+      },
+      "stats": {
+        "total_eleves": "إجمالي الطلاب",
+        "enseignants": "المعلمون",
+        "classes": "الأقسام"
+      }
+    },
+    "eleve": {
+      "title": "فضائي كطالب",
+      "subtitle_classe": "قسم {classe}",
+      "tabs": {
+        "apercu": "نظرة عامة",
+        "notes": "درجاتي",
+        "emploi": "الجدول الزمني",
+        "paiements": "المدفوعات"
+      },
+      "stats": {
+        "moyenne_generale": "المعدل العام",
+        "total_notes": "إجمالي الدرجات",
+        "absences_ce_mois": "غيابات هذا الشهر"
+      }
+    },
+    "enseignant": {
+      "title": "فضائي كمعلم",
+      "subtitle": "مرحبًا بعودتك",
+      "tabs": {
+        "apercu": "نظرة عامة",
+        "classe": "قسمي",
+        "notes": "الدرجات",
+        "cahier": "دفتر النصوص",
+        "emploi": "الجدول الزمني",
+        "messages": "الرسائل"
+      },
+      "stats": {
+        "mes_eleves": "طلابي",
+        "cours_semaine": "الحصص هذا الأسبوع",
+        "moyenne_classe": "معدل القسم",
+        "devoirs_a_corriger": "واجبات للتصحيح"
+      }
+    },
+    "infirmier": {
+      "title": "المستوصف",
+      "subtitle": "الرعاية والصحة",
+      "tabs": {
+        "apercu": "نظرة عامة",
+        "soins": "الرعاية",
+        "dossiers": "الملفات"
+      },
+      "stats": {
+        "visites_du_mois": "زيارات الشهر",
+        "en_cours": "قيد التنفيذ",
+        "cas_urgents": "حالات طارئة",
+        "consultations": "الاستشارات"
+      }
+    },
+    "parent": {
+      "title": "فضاء ولي الأمر",
+      "subtitle": "متابعة أبنائك",
+      "tabs": {
+        "apercu": "نظرة عامة",
+        "notes": "الدرجات",
+        "emploi": "الجدول الزمني",
+        "paiements": "المدفوعات",
+        "communications": "المراسلات"
+      },
+      "stats": {
+        "enfants_scolarises": "الأبناء المسجلون",
+        "moyenne_generale": "المعدل العام",
+        "assiduite": "المواظبة",
+        "solde": "الرصيد"
+      }
+    },
+    "secretaire": {
+      "title": "الأمانة",
+      "subtitle": "الإدارة",
+      "tabs": {
+        "apercu": "نظرة عامة",
+        "inscriptions": "التسجيلات",
+        "planning": "الجدولة",
+        "documents": "الوثائق"
+      },
+      "stats": {
+        "inscriptions": "التسجيلات",
+        "nouveaux_ce_mois": "جدد هذا الشهر",
+        "dossiers_en_cours": "ملفات قيد المعالجة",
+        "documents_generes": "وثائق مُصدرة"
+      }
+    },
+    "surveillant": {
+      "title": "المراقبة",
+      "subtitle": "متابعة الحضور",
+      "tabs": {
+        "apercu": "نظرة عامة",
+        "presences": "الحضور",
+        "surveillance": "المراقبة"
+      },
+      "stats": {
+        "total_eleves": "إجمالي الطلاب",
+        "presents_aujourdhui": "الحاضرون اليوم",
+        "absents": "الغائبون",
+        "alertes": "التنبيهات"
+      }
+    },
+    "universite": {
+      "title": "الجامعة",
+      "subtitle": "لوحة القيادة",
+      "tabs": {
+        "apercu": "نظرة عامة",
+        "facultes": "الكليات",
+        "etudiants": "الطلاب",
+        "cours": "المقررات",
+        "planning": "الجدولة"
+      },
+      "stats": {
+        "facultes": "الكليات",
+        "departements": "الأقسام",
+        "enseignants": "المعلمون",
+        "etudiants": "الطلاب"
+      }
+    }
   }
 }

@@ -23,6 +23,7 @@ import DashboardShell from '@/app/dashboards/DashboardShell';
 import StatsCard from '@/shared/components/ui/StatsCard';
 import Card from '@/shared/components/ui/Card';
 import Button from '@/shared/components/ui/Button';
+import { useTranslation } from '@/shared/i18n';
 import { Skeleton } from '@/shared/components/ui/Skeleton';
 
 /* ─── Constantes ─────────────────────────────────────────────── */
@@ -37,10 +38,10 @@ const TABS = [
 ];
 
 const STATS_META = [
-  { title: 'Facultés', icon: Building2, color: 'primary' },
-  { title: 'Départements', icon: School, color: 'sky' },
-  { title: 'Enseignants', icon: Users, color: 'emerald' },
-  { title: 'Étudiants', icon: GraduationCap, color: 'violet' },
+  { title: 'Facultés', key: 'facultes', icon: Building2, color: 'primary' },
+  { title: 'Départements', key: 'departements', icon: School, color: 'sky' },
+  { title: 'Enseignants', key: 'enseignants', icon: Users, color: 'emerald' },
+  { title: 'Étudiants', key: 'etudiants', icon: GraduationCap, color: 'violet' },
 ];
 
 /* ─── Sections ────────────────────────────────────────────────── */
@@ -169,10 +170,16 @@ function ApercuSection({ stats, inscriptions, facultes, activites, loading }) {
 /* ─── Dashboard principal ──────────────────────────────────────── */
 export default function UniversiteDashboard() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('apercu');
   const { data, loading, error, refetch } = useDashboardStats('universite');
 
-  const stats = data?.stats?.map((s, i) => ({ ...s, icon: STATS_META[i]?.icon, color: STATS_META[i]?.color })) || [];
+  const stats = data?.stats?.map((s, i) => ({
+    ...s,
+    title: STATS_META[i]?.key ? t(`dashboards.universite.stats.${STATS_META[i].key}`) : s.title,
+    icon: STATS_META[i]?.icon,
+    color: STATS_META[i]?.color,
+  })) || [];
   const inscriptions = data?.inscriptions || [];
   const facultes = data?.facultes || [];
   const activites = data?.activites || [];
@@ -197,9 +204,9 @@ export default function UniversiteDashboard() {
 
   return (
     <DashboardShell
-      title="Université"
-      subtitle="Tableau de bord"
-      tabs={TABS}
+      title={t('dashboards.universite.title')}
+      subtitle={t('dashboards.universite.subtitle')}
+      tabs={TABS.map((tab) => ({ ...tab, label: t(`dashboards.universite.tabs.${tab.id}`) }))}
       activeTab={activeTab}
       onTabChange={handleTabClick}
       loading={loading}

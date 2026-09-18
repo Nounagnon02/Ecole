@@ -205,5 +205,198 @@
     "unauthorized": "Unauthorized access",
     "go_home": "Go to homepage",
     "go_back": "Go back"
+  },
+  "dashboards": {
+    "admin": {
+      "title": "System Administration",
+      "subtitle": "Platform management",
+      "tabs": {
+        "apercu": "Overview",
+        "utilisateurs": "Users",
+        "configuration": "Configuration",
+        "logs": "System Logs",
+        "sauvegardes": "Backups"
+      },
+      "stats": {
+        "utilisateurs_actifs": "Active Users",
+        "espace_disque": "Disk Space",
+        "erreurs_api": "API Errors",
+        "uptime": "Uptime"
+      }
+    },
+    "bibliothecaire": {
+      "title": "Library",
+      "subtitle": "Book management",
+      "tabs": {
+        "apercu": "Overview",
+        "catalogue": "Catalog",
+        "emprunts": "Loans"
+      },
+      "stats": {
+        "total_ouvrages": "Total Books",
+        "emprunts_en_cours": "Active Loans",
+        "retards": "Overdue",
+        "membres_actifs": "Active Members"
+      }
+    },
+    "censeur": {
+      "title": "Dean of Discipline",
+      "subtitle": "Discipline and absences",
+      "tabs": {
+        "apercu": "Overview",
+        "discipline": "Discipline",
+        "absences": "Absences"
+      },
+      "stats": {
+        "total_eleves": "Total Students",
+        "sanctions_du_mois": "Sanctions This Month",
+        "absences_non_justifiees": "Unexcused Absences",
+        "avertissements": "Warnings"
+      }
+    },
+    "comptable": {
+      "title": "Accounting",
+      "subtitle": "Financial overview",
+      "tabs": {
+        "apercu": "Overview",
+        "factures": "Invoices",
+        "transactions": "Transactions"
+      },
+      "stats": {
+        "revenus_du_mois": "Monthly Revenue",
+        "factures_en_attente": "Pending Invoices",
+        "taux_recouvrement": "Collection Rate",
+        "depenses_du_mois": "Monthly Expenses"
+      }
+    },
+    "directeur": {
+      "title": "Dashboard",
+      "tabs": {
+        "apercu": "Overview",
+        "eleves": "Students",
+        "performances": "Performance",
+        "finances": "Finance",
+        "messages": "Messages",
+        "calendrier": "Calendar"
+      },
+      "stats": {
+        "total_eleves": "Total Students",
+        "enseignants": "Teachers",
+        "classes": "Classes"
+      }
+    },
+    "eleve": {
+      "title": "My Student Space",
+      "subtitle_classe": "Class {classe}",
+      "tabs": {
+        "apercu": "Overview",
+        "notes": "My Grades",
+        "emploi": "Schedule",
+        "paiements": "Payments"
+      },
+      "stats": {
+        "moyenne_generale": "Overall Average",
+        "total_notes": "Total Grades",
+        "absences_ce_mois": "Absences This Month"
+      }
+    },
+    "enseignant": {
+      "title": "My Teacher Space",
+      "subtitle": "Welcome back",
+      "tabs": {
+        "apercu": "Overview",
+        "classe": "My Class",
+        "notes": "Grades",
+        "cahier": "Class Log",
+        "emploi": "Schedule",
+        "messages": "Messages"
+      },
+      "stats": {
+        "mes_eleves": "My Students",
+        "cours_semaine": "Classes This Week",
+        "moyenne_classe": "Class Average",
+        "devoirs_a_corriger": "Assignments to Grade"
+      }
+    },
+    "infirmier": {
+      "title": "Infirmary",
+      "subtitle": "Care and health",
+      "tabs": {
+        "apercu": "Overview",
+        "soins": "Care",
+        "dossiers": "Records"
+      },
+      "stats": {
+        "visites_du_mois": "Visits This Month",
+        "en_cours": "In Progress",
+        "cas_urgents": "Urgent Cases",
+        "consultations": "Consultations"
+      }
+    },
+    "parent": {
+      "title": "Parent Space",
+      "subtitle": "Tracking your children",
+      "tabs": {
+        "apercu": "Overview",
+        "notes": "Grades",
+        "emploi": "Schedule",
+        "paiements": "Payments",
+        "communications": "Messages"
+      },
+      "stats": {
+        "enfants_scolarises": "Enrolled Children",
+        "moyenne_generale": "Overall Average",
+        "assiduite": "Attendance",
+        "solde": "Balance"
+      }
+    },
+    "secretaire": {
+      "title": "Secretariat",
+      "subtitle": "Administrative management",
+      "tabs": {
+        "apercu": "Overview",
+        "inscriptions": "Enrollments",
+        "planning": "Planning",
+        "documents": "Documents"
+      },
+      "stats": {
+        "inscriptions": "Enrollments",
+        "nouveaux_ce_mois": "New This Month",
+        "dossiers_en_cours": "Files in Progress",
+        "documents_generes": "Documents Generated"
+      }
+    },
+    "surveillant": {
+      "title": "Supervision",
+      "subtitle": "Attendance tracking",
+      "tabs": {
+        "apercu": "Overview",
+        "presences": "Attendance",
+        "surveillance": "Supervision"
+      },
+      "stats": {
+        "total_eleves": "Total Students",
+        "presents_aujourdhui": "Present Today",
+        "absents": "Absent",
+        "alertes": "Alerts"
+      }
+    },
+    "universite": {
+      "title": "University",
+      "subtitle": "Dashboard",
+      "tabs": {
+        "apercu": "Overview",
+        "facultes": "Faculties",
+        "etudiants": "Students",
+        "cours": "Courses",
+        "planning": "Planning"
+      },
+      "stats": {
+        "facultes": "Faculties",
+        "departements": "Departments",
+        "enseignants": "Teachers",
+        "etudiants": "Students"
+      }
+    }
   }
 }

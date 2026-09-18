@@ -32,6 +32,7 @@ import Badge from '@/shared/components/ui/Badge';
 import Avatar from '@/shared/components/ui/Avatar';
 import Button from '@/shared/components/ui/Button';
 import Table from '@/shared/components/ui/Table';
+import { useTranslation } from '@/shared/i18n';
 import Input from '@/shared/components/ui/Input';
 import { Skeleton } from '@/shared/components/ui/Skeleton';
 
@@ -47,10 +48,10 @@ const TABS = [
 ];
 
 const STATS_META = [
-  { title: 'Mes Élèves', icon: Users, color: 'primary' },
-  { title: 'Cours Cette Semaine', icon: Clock, color: 'emerald' },
-  { title: 'Moyenne Classe', icon: TrendingUp, color: 'sky' },
-  { title: 'Devoirs à Corriger', icon: ClipboardList, color: 'amber' },
+  { title: 'Mes Élèves', key: 'mes_eleves', icon: Users, color: 'primary' },
+  { title: 'Cours Cette Semaine', key: 'cours_semaine', icon: Clock, color: 'emerald' },
+  { title: 'Moyenne Classe', key: 'moyenne_classe', icon: TrendingUp, color: 'sky' },
+  { title: 'Devoirs à Corriger', key: 'devoirs_a_corriger', icon: ClipboardList, color: 'amber' },
 ];
 
 // ─── Sections ─────────────────────────────────────────────────
@@ -330,10 +331,16 @@ function EmploiSection({ emploiTemps }) {
 
 export default function EnseignantDashboard() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('apercu');
   const { data, loading, error, refetch } = useDashboardStats('enseignant');
 
-  const stats = data?.stats?.map((s, i) => ({ ...s, icon: STATS_META[i]?.icon, color: STATS_META[i]?.color })) || [];
+  const stats = data?.stats?.map((s, i) => ({
+    ...s,
+    title: STATS_META[i]?.key ? t(`dashboards.enseignant.stats.${STATS_META[i].key}`) : s.title,
+    icon: STATS_META[i]?.icon,
+    color: STATS_META[i]?.color,
+  })) || [];
   const emploiTemps = data?.emploi_temps || [];
   const notes = data?.notes_recentes || [];
   const devoirs = data?.devoirs || [];
@@ -357,9 +364,9 @@ export default function EnseignantDashboard() {
 
   return (
     <DashboardShell
-      title="Mon Espace Enseignant"
-      subtitle="Bon retour"
-      tabs={TABS}
+      title={t('dashboards.enseignant.title')}
+      subtitle={t('dashboards.enseignant.subtitle')}
+      tabs={TABS.map((tab) => ({ ...tab, label: t(`dashboards.enseignant.tabs.${tab.id}`) }))}
       activeTab={activeTab}
       onTabChange={handleTabClick}
       loading={loading}

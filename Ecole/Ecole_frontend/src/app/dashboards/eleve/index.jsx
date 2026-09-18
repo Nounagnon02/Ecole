@@ -21,6 +21,7 @@ import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Table from '@/shared/components/ui/Table';
 import { Skeleton } from '@/shared/components/ui/Skeleton';
+import { useTranslation } from '@/shared/i18n';
 
 const TABS = [
   { id: 'apercu', label: 'Aperçu', icon: BarChart3 },
@@ -30,6 +31,7 @@ const TABS = [
 ];
 
 function ApercuSection({ data, loading }) {
+  const { t } = useTranslation();
   const eleve = data?.eleve ?? {};
   const stats = data?.stats ?? {};
   const matieres = data?.matieres ?? [];
@@ -37,19 +39,19 @@ function ApercuSection({ data, loading }) {
 
   const statsCards = [
     {
-      title: 'Moyenne Générale',
+      title: t('dashboards.eleve.stats.moyenne_generale'),
       value: stats.moyenne_generale ? `${stats.moyenne_generale}/20` : '—',
       icon: TrendingUp,
       color: 'emerald'
     },
     {
-      title: 'Total Notes',
+      title: t('dashboards.eleve.stats.total_notes'),
       value: String(stats.total_notes ?? 0),
       icon: Award,
       color: 'primary'
     },
     {
-      title: 'Absences ce Mois',
+      title: t('dashboards.eleve.stats.absences_ce_mois'),
       value: String(stats.absences_mois ?? 0),
       icon: AlertCircle,
       color: 'amber'
@@ -182,6 +184,7 @@ function NotesSection({ data, loading }) {
 
 export default function EleveDashboard() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('apercu');
   const { data, loading, error, refetch } = useDashboardStats('eleve');
 
@@ -204,9 +207,9 @@ export default function EleveDashboard() {
 
   return (
     <DashboardShell
-      title="Mon Espace Élève"
-      subtitle={eleve.classe ? `Classe de ${eleve.classe}` : null}
-      tabs={TABS}
+      title={t('dashboards.eleve.title')}
+      subtitle={eleve.classe ? t('dashboards.eleve.subtitle_classe', { classe: eleve.classe }) : null}
+      tabs={TABS.map((tab) => ({ ...tab, label: t(`dashboards.eleve.tabs.${tab.id}`) }))}
       activeTab={activeTab}
       onTabChange={handleTabClick}
       loading={loading}
