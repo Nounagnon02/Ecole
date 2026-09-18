@@ -408,31 +408,31 @@ export default function AffectationsPage() {
               {mpTeachers.length === 0 ? (
                 <div className="py-10 text-center text-sm text-neutral-500">
                   <Users className="mx-auto h-8 w-8 mb-2" />
-                  Aucun enseignant Maternelle / Primaire
+                  {t('pages.affectations.affectations.aucun_enseignant_mp')}
                 </div>
               ) : (
                 <ul className="divide-y divide-neutral-100 dark:divide-neutral-800">
-                  {mpTeachers.map((t) => (
-                    <li key={t.id} className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center">
+                  {mpTeachers.map((enseignant) => (
+                    <li key={enseignant.id} className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center">
                       <div className="flex items-center gap-3">
                         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--accent-subtle)] text-[var(--accent)]">
                           <GraduationCap className="h-4 w-4" />
                         </div>
                         <div>
                           <p className="text-sm font-medium text-neutral-900 dark:text-white">
-                            {NOM_ENSEIGNANT(t)}
+                            {NOM_ENSEIGNANT(enseignant)}
                           </p>
                           <p className="text-xs text-neutral-500">
-                            {t.classe?.categorie_classe || 'Maternelle / Primaire'}
+                            {enseignant.classe?.categorie_classe || t('pages.affectations.affectations.maternelle_primaire')}
                           </p>
                         </div>
                       </div>
                       <Select
-                        aria-label={`Classe de ${NOM_ENSEIGNANT(t)}`}
-                        label="Classe"
+                        aria-label={`${t('pages.affectations.affectations.classe_de')} ${NOM_ENSEIGNANT(enseignant)}`}
+                        label={t('common.class')}
                         options={classeOptions}
-                        value={t.classe?.id ? String(t.classe.id) : ''}
-                        onChange={(e) => handleMpChange(t.id, e.target.value)}
+                        value={enseignant.classe?.id ? String(enseignant.classe.id) : ''}
+                        onChange={(e) => handleMpChange(enseignant.id, e.target.value)}
                         className="sm:ml-auto sm:w-72"
                       />
                     </li>

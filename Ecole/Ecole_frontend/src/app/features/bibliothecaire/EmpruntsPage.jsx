@@ -30,17 +30,15 @@ const getStatutVariant = (statut) => {
   }
 };
 
-const getStatutLabel = (statut) => {
-  switch (statut) {
-    case 'en_cours': return 'En cours';
-    case 'en_retard': return 'En retard';
-    case 'termine': return 'Terminé';
-    default: return statut || '—';
-  }
+const STATUT_LABEL_KEYS = {
+  en_cours: 'common.status.in_progress',
+  en_retard: 'pages.bibliothecaire.emprunts.en_retard',
+  termine: 'pages.bibliothecaire.emprunts.termine',
 };
 
 export default function EmpruntsPage() {
   const { t } = useTranslation();
+  const statutLabel = (v) => (STATUT_LABEL_KEYS[v] ? t(STATUT_LABEL_KEYS[v]) : (v || '—'));
   const [search, setSearch] = useState('');
   const [filterStatut, setFilterStatut] = useState('');
 
@@ -196,7 +194,7 @@ export default function EmpruntsPage() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-sm font-semibold text-neutral-900 dark:text-white">{e.livre?.titre || t('pages.bibliothecaire.emprunts.ouvrage')}</span>
-                    <Badge variant={getStatutVariant(statut)} size="sm">{getStatutLabel(statut)}</Badge>
+                    <Badge variant={getStatutVariant(statut)} size="sm">{statutLabel(statut)}</Badge>
                     {penalite > 0 && (
                       <span className="inline-flex items-center gap-1 rounded-full bg-red-50 dark:bg-red-500/10 px-2 py-0.5 text-xs font-medium text-red-600">
                         <Coins className="h-3 w-3" />

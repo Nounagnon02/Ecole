@@ -32,17 +32,6 @@ const getStatutVariant = (statut) => {
   }
 };
 
-const getStatutLabel = (statut) => {
-  switch (statut) {
-    case 'termine':
-    case 'terminee': return 'Terminé';
-    case 'en_cours': return 'En cours';
-    case 'signalé':
-    case 'signale': return 'Signalé';
-    default: return statut || '—';
-  }
-};
-
 const getGraviteColor = (gravite) => {
   switch (gravite) {
     case 'grave': return 'text-red-500 bg-red-100 dark:bg-red-900/20';
@@ -52,8 +41,17 @@ const getGraviteColor = (gravite) => {
   }
 };
 
+const STATUT_LABEL_KEYS = {
+  termine: 'pages.bibliothecaire.emprunts.termine',
+  terminee: 'pages.bibliothecaire.emprunts.termine',
+  en_cours: 'common.status.in_progress',
+  signalé: 'pages.surveillant.surveillance.signale',
+  signale: 'pages.surveillant.surveillance.signale',
+};
+
 export default function SurveillancePage() {
   const { t } = useTranslation();
+  const statutLabel = (v) => (STATUT_LABEL_KEYS[v] ? t(STATUT_LABEL_KEYS[v]) : (v || '—'));
   const [filterGravite, setFilterGravite] = useState('');
 
   // Le chargement passait par un `useState` doublé d'un `useEffect` de
@@ -169,7 +167,7 @@ export default function SurveillancePage() {
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-sm font-semibold text-neutral-900 dark:text-white">{s.description}</span>
-                  <Badge variant={getStatutVariant(s.statut)} size="sm">{getStatutLabel(s.statut)}</Badge>
+                  <Badge variant={getStatutVariant(s.statut)} size="sm">{statutLabel(s.statut)}</Badge>
                 </div>
                 <div className="mt-2 flex items-center gap-4 text-sm text-neutral-600 dark:text-neutral-400">
                   <span className={cn('inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium', getGraviteColor(s.gravite))}>

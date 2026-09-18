@@ -32,14 +32,11 @@ const getGraviteVariant = (g) => {
   }
 };
 
-const getGraviteLabel = (g) => {
-  switch (g) {
-    case 'legere':
-    case 'faible': return 'Légère';
-    case 'moyenne': return 'Moyenne';
-    case 'grave': return 'Grave';
-    default: return g || '--';
-  }
+const GRAVITE_LABEL_KEYS = {
+  legere: 'pages.censeur.discipline.legere',
+  faible: 'pages.censeur.discipline.legere',
+  moyenne: 'pages.censeur.discipline.moyenne',
+  grave: 'pages.censeur.discipline.grave',
 };
 
 const ALERT_ICONS = {
@@ -56,6 +53,7 @@ const ALERT_COLORS = {
 
 export default function DisciplinePage() {
   const { t } = useTranslation();
+  const getGraviteLabel = (g) => (GRAVITE_LABEL_KEYS[g] ? t(GRAVITE_LABEL_KEYS[g]) : (g || '--'));
   const [search, setSearch] = useState('');
   const [filterGravite, setFilterGravite] = useState('');
   const [filterStatut, setFilterStatut] = useState('');

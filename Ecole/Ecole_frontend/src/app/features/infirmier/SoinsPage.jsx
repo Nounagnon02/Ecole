@@ -32,10 +32,9 @@ const getTypeColor = (urgence) => {
   return 'text-emerald-500 bg-emerald-100 dark:bg-emerald-900/20';
 };
 
-const getTypeLabel = (urgence) => urgence ? 'Urgence' : 'Consultation';
-
 export default function SoinsPage() {
   const { t } = useTranslation();
+  const getTypeLabel = (urgence) => t(urgence ? 'pages.infirmier.soins.urgence' : 'pages.infirmier.soins.consultation');
   const [search, setSearch] = useState('');
   const [filterUrgence, setFilterUrgence] = useState('');
   const [filterStatut, setFilterStatut] = useState('');

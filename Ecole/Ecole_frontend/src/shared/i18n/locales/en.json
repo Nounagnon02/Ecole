@@ -90,7 +90,8 @@
     "subject": "Subject",
     "load_error": "Loading error",
     "user": "User",
-    "payments": "Payments"
+    "payments": "Payments",
+    "manage": "Manage"
   },
   "auth": {
     "login": "Log in",
@@ -121,7 +122,13 @@
       "veuillez_entrer_votre_mot_de_passe": "Please enter your password",
       "erreur_de_connexion_veuillez_reessayer": "Login error. Please try again.",
       "erreur_lors_de_la_selection_de_l_ecole": "Error while selecting the school.",
-      "emploi_du_temps": "Schedule"
+      "emploi_du_temps": "Schedule",
+      "eleves": "Students",
+      "gestion_des_notes": "Grade management",
+      "tresorerie": "Accounting",
+      "communication": "Communication",
+      "planning": "Planning",
+      "droits": "École. All rights reserved."
     }
   },
   "eleve": {
@@ -825,7 +832,12 @@
         "toutes_les_absences": "All absences",
         "justifiee": "Justified",
         "aucune_absence_trouvee": "No absence found",
-        "non_justifiee": "Unjustified"
+        "non_justifiee": "Unjustified",
+        "absence": "Absence",
+        "retard": "Lateness",
+        "maladie": "Illness",
+        "familial": "Family",
+        "autres": "Other"
       },
       "discipline": {
         "title": "Discipline",
@@ -849,7 +861,9 @@
         "grave": "Serious",
         "traitee": "Handled",
         "nouvel_incident": "New incident",
-        "aucun_incident_trouve": "No incident found"
+        "aucun_incident_trouve": "No incident found",
+        "legere": "Minor",
+        "moyenne": "Medium"
       }
     },
     "communications": {
@@ -887,7 +901,8 @@
         "aucune_facture_trouvee": "No invoice found",
         "envoyer": "Send",
         "imprimer": "Print",
-        "frais": "Fees"
+        "frais": "Fees",
+        "partielle": "Partial"
       },
       "transactions": {
         "title": "Transactions",
@@ -907,7 +922,9 @@
         "reference": "Reference",
         "methode": "Method",
         "aucune_transaction_trouvee": "No transaction found",
-        "paiement": "Payment"
+        "paiement": "Payment",
+        "partielle": "Partial",
+        "rembourse": "Refunded"
       }
     },
     "eleve": {
@@ -916,7 +933,10 @@
         "subtitle": "View your courses, assignments and resources",
         "toutes_les_matieres": "All subjects",
         "filtrer_par_type": "Filter by type",
-        "devoir": "Assignment"
+        "devoir": "Assignment",
+        "rendu": "Submitted",
+        "a_venir": "Upcoming",
+        "a_rendre": "To submit"
       }
     },
     "eleves": {
@@ -1269,7 +1289,8 @@
         "grave": "Serious",
         "nouvel_incident": "New incident",
         "aucun_incident_trouve": "No incident found",
-        "non_definie": "Not defined"
+        "non_definie": "Not defined",
+        "signale": "Reported"
       },
       "presences": {
         "title": "Attendance",
@@ -1381,7 +1402,13 @@
         "rechercher_une_tache": "Search for a task...",
         "termine": "Completed",
         "a_faire": "To do",
-        "aucune_tache_trouvee": "No task found"
+        "aucune_tache_trouvee": "No task found",
+        "depassee": "Overdue",
+        "aujourdhui": "Today",
+        "demain": "Tomorrow",
+        "dans_x_jours": "In {n} days",
+        "tache": "Task",
+        "terminee": "Completed"
       }
     },
     "affectations": {
@@ -1395,7 +1422,10 @@
         "choisissez_d_abord_une_classe": "Choose a class first",
         "choisir_une_matiere": "Choose a subject",
         "choisissez_d_abord_une_serie": "Choose a track first",
-        "l_enseignant": "the teacher"
+        "l_enseignant": "the teacher",
+        "maternelle_primaire": "Nursery / Primary",
+        "classe_de": "Class of",
+        "aucun_enseignant_mp": "No Nursery / Primary teacher"
       }
     },
     "ai": {
@@ -1496,14 +1526,40 @@
       "forgot_password": {
         "veuillez_entrer_votre_adresse_email": "Please enter your email address",
         "adresse_email_invalide": "Invalid email address",
-        "erreur_lors_de_l_envoi_veuillez_reessayer": "Error while sending. Please try again."
+        "erreur_lors_de_l_envoi_veuillez_reessayer": "Error while sending. Please try again.",
+        "email_envoye": "Email sent",
+        "verifiez_votre_boite_de_reception_et_vos_spams": "Check your inbox and your spam folder. The link expires in 60 minutes.",
+        "retour_a_la_connexion": "Back to login",
+        "mot_de_passe_oublie": "Forgot password",
+        "saisissez_votre_adresse_email_et_nous_vous": "Enter your email address and we will send you a link to reset your password.",
+        "adresse_email": "Email address",
+        "vous_exemple_com": "you@example.com",
+        "envoyer_le_lien": "Send the link",
+        "connectez_vous": "Log in",
+        "sent_before": "If an account exists with the address ",
+        "sent_after": ", you will receive an email containing a link to reset your password.",
+        "have_account": "Already have an account?"
       },
       "reset_password": {
         "veuillez_entrer_un_mot_de_passe": "Please enter a password",
         "le_mot_de_passe_doit_contenir_au_moins_6": "The password must contain at least 6 characters",
         "les_mots_de_passe_ne_correspondent_pas": "Passwords do not match",
         "lien_de_reinitialisation_invalide_ou_incomplet": "Invalid or incomplete reset link.",
-        "erreur_lors_de_la_reinitialisation_veuillez": "Error while resetting. Please try again."
+        "erreur_lors_de_la_reinitialisation_veuillez": "Error while resetting. Please try again.",
+        "lien_invalide": "Invalid link",
+        "le_lien_de_reinitialisation_est_invalide_ou_a": "The reset link is invalid or has expired. Please make a new request.",
+        "nouvelle_demande": "New request",
+        "mot_de_passe_reinitialise": "Password reset",
+        "votre_mot_de_passe_a_ete_modifie_avec_succes": "Your password has been changed successfully. You can now log in with your new password.",
+        "se_connecter": "Log in",
+        "nouveau_mot_de_passe": "New password",
+        "choisissez_un_mot_de_passe_securise_d_au_moins": "Choose a secure password of at least 6 characters.",
+        "reinitialiser": "Reset",
+        "au_moins_6_caracteres": "At least 6 characters",
+        "confirmer_le_mot_de_passe": "Confirm password",
+        "repetez_le_mot_de_passe": "Repeat the password",
+        "retour_a_la_connexion": "Back to login",
+        "for": "For"
       }
     }
   },

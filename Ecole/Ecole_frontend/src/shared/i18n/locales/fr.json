@@ -90,7 +90,8 @@
     "subject": "Matière",
     "load_error": "Erreur de chargement",
     "user": "Utilisateur",
-    "payments": "Paiements"
+    "payments": "Paiements",
+    "manage": "Gérer"
   },
   "auth": {
     "login": "Connexion",
@@ -121,7 +122,13 @@
       "veuillez_entrer_votre_mot_de_passe": "Veuillez entrer votre mot de passe",
       "erreur_de_connexion_veuillez_reessayer": "Erreur de connexion. Veuillez réessayer.",
       "erreur_lors_de_la_selection_de_l_ecole": "Erreur lors de la sélection de l'école.",
-      "emploi_du_temps": "Emploi du temps"
+      "emploi_du_temps": "Emploi du temps",
+      "eleves": "Élèves",
+      "gestion_des_notes": "Gestion des notes",
+      "tresorerie": "Trésorerie",
+      "communication": "Communication",
+      "planning": "Planning",
+      "droits": "École. Tous droits réservés."
     }
   },
   "eleve": {
@@ -825,7 +832,12 @@
         "toutes_les_absences": "Toutes les absences",
         "justifiee": "Justifiée",
         "aucune_absence_trouvee": "Aucune absence trouvée",
-        "non_justifiee": "Non justifiée"
+        "non_justifiee": "Non justifiée",
+        "absence": "Absence",
+        "retard": "Retard",
+        "maladie": "Maladie",
+        "familial": "Familial",
+        "autres": "Autres"
       },
       "discipline": {
         "title": "Discipline",
@@ -849,7 +861,9 @@
         "grave": "Grave",
         "traitee": "Traitée",
         "nouvel_incident": "Nouvel incident",
-        "aucun_incident_trouve": "Aucun incident trouvé"
+        "aucun_incident_trouve": "Aucun incident trouvé",
+        "legere": "Légère",
+        "moyenne": "Moyenne"
       }
     },
     "communications": {
@@ -887,7 +901,8 @@
         "aucune_facture_trouvee": "Aucune facture trouvée",
         "envoyer": "Envoyer",
         "imprimer": "Imprimer",
-        "frais": "Frais"
+        "frais": "Frais",
+        "partielle": "Partielle"
       },
       "transactions": {
         "title": "Transactions",
@@ -907,7 +922,9 @@
         "reference": "Référence",
         "methode": "Méthode",
         "aucune_transaction_trouvee": "Aucune transaction trouvée",
-        "paiement": "Paiement"
+        "paiement": "Paiement",
+        "partielle": "Partielle",
+        "rembourse": "Remboursé"
       }
     },
     "eleve": {
@@ -916,7 +933,10 @@
         "subtitle": "Consultez vos cours, devoirs et ressources",
         "toutes_les_matieres": "Toutes les matières",
         "filtrer_par_type": "Filtrer par type",
-        "devoir": "Devoir"
+        "devoir": "Devoir",
+        "rendu": "Rendu",
+        "a_venir": "À venir",
+        "a_rendre": "À rendre"
       }
     },
     "eleves": {
@@ -1269,7 +1289,8 @@
         "grave": "Grave",
         "nouvel_incident": "Nouvel incident",
         "aucun_incident_trouve": "Aucun incident trouvé",
-        "non_definie": "Non définie"
+        "non_definie": "Non définie",
+        "signale": "Signalé"
       },
       "presences": {
         "title": "Présences",
@@ -1381,7 +1402,13 @@
         "rechercher_une_tache": "Rechercher une tâche...",
         "termine": "Terminé",
         "a_faire": "À faire",
-        "aucune_tache_trouvee": "Aucune tâche trouvée"
+        "aucune_tache_trouvee": "Aucune tâche trouvée",
+        "depassee": "Dépassée",
+        "aujourdhui": "Aujourd'hui",
+        "demain": "Demain",
+        "dans_x_jours": "Dans {n} jours",
+        "tache": "Tâche",
+        "terminee": "Terminée"
       }
     },
     "affectations": {
@@ -1395,7 +1422,10 @@
         "choisissez_d_abord_une_classe": "Choisissez d’abord une classe",
         "choisir_une_matiere": "Choisir une matière",
         "choisissez_d_abord_une_serie": "Choisissez d’abord une série",
-        "l_enseignant": "l’enseignant"
+        "l_enseignant": "l’enseignant",
+        "maternelle_primaire": "Maternelle / Primaire",
+        "classe_de": "Classe de",
+        "aucun_enseignant_mp": "Aucun enseignant Maternelle / Primaire"
       }
     },
     "ai": {
@@ -1496,14 +1526,40 @@
       "forgot_password": {
         "veuillez_entrer_votre_adresse_email": "Veuillez entrer votre adresse email",
         "adresse_email_invalide": "Adresse email invalide",
-        "erreur_lors_de_l_envoi_veuillez_reessayer": "Erreur lors de l'envoi. Veuillez réessayer."
+        "erreur_lors_de_l_envoi_veuillez_reessayer": "Erreur lors de l'envoi. Veuillez réessayer.",
+        "email_envoye": "Email envoyé",
+        "verifiez_votre_boite_de_reception_et_vos_spams": "Vérifiez votre boîte de réception et vos spams. Le lien expire dans 60 minutes.",
+        "retour_a_la_connexion": "Retour à la connexion",
+        "mot_de_passe_oublie": "Mot de passe oublié",
+        "saisissez_votre_adresse_email_et_nous_vous": "Saisissez votre adresse email et nous vous enverrons un lien pour réinitialiser votre mot de passe.",
+        "adresse_email": "Adresse email",
+        "vous_exemple_com": "vous@exemple.com",
+        "envoyer_le_lien": "Envoyer le lien",
+        "connectez_vous": "Connectez-vous",
+        "sent_before": "Si un compte existe avec l'adresse ",
+        "sent_after": ", vous recevrez un email contenant un lien pour réinitialiser votre mot de passe.",
+        "have_account": "Vous avez déjà un compte ?"
       },
       "reset_password": {
         "veuillez_entrer_un_mot_de_passe": "Veuillez entrer un mot de passe",
         "le_mot_de_passe_doit_contenir_au_moins_6": "Le mot de passe doit contenir au moins 6 caractères",
         "les_mots_de_passe_ne_correspondent_pas": "Les mots de passe ne correspondent pas",
         "lien_de_reinitialisation_invalide_ou_incomplet": "Lien de réinitialisation invalide ou incomplet.",
-        "erreur_lors_de_la_reinitialisation_veuillez": "Erreur lors de la réinitialisation. Veuillez réessayer."
+        "erreur_lors_de_la_reinitialisation_veuillez": "Erreur lors de la réinitialisation. Veuillez réessayer.",
+        "lien_invalide": "Lien invalide",
+        "le_lien_de_reinitialisation_est_invalide_ou_a": "Le lien de réinitialisation est invalide ou a expiré. Veuillez refaire une demande.",
+        "nouvelle_demande": "Nouvelle demande",
+        "mot_de_passe_reinitialise": "Mot de passe réinitialisé",
+        "votre_mot_de_passe_a_ete_modifie_avec_succes": "Votre mot de passe a été modifié avec succès. Vous pouvez maintenant vous connecter avec votre nouveau mot de passe.",
+        "se_connecter": "Se connecter",
+        "nouveau_mot_de_passe": "Nouveau mot de passe",
+        "choisissez_un_mot_de_passe_securise_d_au_moins": "Choisissez un mot de passe sécurisé d'au moins 6 caractères.",
+        "reinitialiser": "Réinitialiser",
+        "au_moins_6_caracteres": "Au moins 6 caractères",
+        "confirmer_le_mot_de_passe": "Confirmer le mot de passe",
+        "repetez_le_mot_de_passe": "Répétez le mot de passe",
+        "retour_a_la_connexion": "Retour à la connexion",
+        "for": "Pour"
       }
     }
   },
