@@ -101,15 +101,15 @@ export default function SoinsPage() {
           <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.infirmier.soins.title')}</h1>
           <p className="text-sm text-neutral-500">{t('pages.infirmier.soins.subtitle')}</p>
         </div>
-        <Button size="sm" icon={<Plus />}>Nouveau soin</Button>
+        <Button size="sm" icon={<Plus />}>{t('pages.infirmier.soins.nouveau_soin')}</Button>
       </div>
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-4">
-        <StatsCard title="Total Soins" value={String(stats.total)} icon={Heart} color="primary" />
-        <StatsCard title="Aujourd'hui" value={String(stats.aujourdhui)} icon={Clock} color="amber" />
-        <StatsCard title="Urgences" value={String(stats.urgences)} icon={AlertTriangle} color="red" />
-        <StatsCard title="Traités" value={String(stats.traites)} icon={CheckCircle} color="emerald" />
+        <StatsCard title={t('pages.infirmier.soins.total_soins')} value={String(stats.total)} icon={Heart} color="primary" />
+        <StatsCard title={t('common.today')} value={String(stats.aujourdhui)} icon={Clock} color="amber" />
+        <StatsCard title={t('pages.infirmier.soins.urgences')} value={String(stats.urgences)} icon={AlertTriangle} color="red" />
+        <StatsCard title={t('pages.infirmier.soins.traites')} value={String(stats.traites)} icon={CheckCircle} color="emerald" />
       </div>
 
       {/* Filtres */}
@@ -118,7 +118,7 @@ export default function SoinsPage() {
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
             <Input
-              placeholder="Rechercher un élève..."
+              placeholder={t('common.search_student')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
@@ -128,22 +128,22 @@ export default function SoinsPage() {
             <select
               value={filterUrgence}
               onChange={(e) => setFilterUrgence(e.target.value)}
-              aria-label="Filtrer par type d'urgence"
+              aria-label={t('pages.infirmier.soins.filtrer_par_type_d_urgence')}
               className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
             >
-              <option value="">Tous les types</option>
-              <option value="urgence">Urgence</option>
-              <option value="consultation">Consultation</option>
+              <option value="">{t('common.all_types')}</option>
+              <option value="urgence">{t('pages.infirmier.soins.urgence')}</option>
+              <option value="consultation">{t('pages.infirmier.soins.consultation')}</option>
             </select>
             <select
               value={filterStatut}
               onChange={(e) => setFilterStatut(e.target.value)}
-              aria-label="Filtrer par statut"
+              aria-label={t('common.filter_by_status')}
               className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
             >
-              <option value="">Tous les statuts</option>
-              <option value="traite">Traité</option>
-              <option value="en_cours">En cours</option>
+              <option value="">{t('common.all_statuses')}</option>
+              <option value="traite">{t('pages.infirmier.soins.traite')}</option>
+              <option value="en_cours">{t('common.status.in_progress')}</option>
             </select>
           </div>
         </div>
@@ -155,7 +155,7 @@ export default function SoinsPage() {
           <Card>
             <div className="text-center py-8 text-neutral-500">
               <Heart className="mx-auto h-8 w-8 mb-2" />
-              <p className="text-sm">Aucun soin trouvé</p>
+              <p className="text-sm">{t('pages.infirmier.soins.aucun_soin_trouve')}</p>
             </div>
           </Card>
         )}
@@ -189,7 +189,7 @@ export default function SoinsPage() {
                   </span>
                 </div>
               </div>
-              <Button variant="ghost" size="sm">Détails</Button>
+              <Button variant="ghost" size="sm">{t('common.details')}</Button>
             </div>
           </Card>
         ))}

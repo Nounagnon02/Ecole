@@ -82,7 +82,7 @@ export default function ClassesPage() {
           onClick={() => window.location.reload()}
           className="mt-4 inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors"
         >
-          Réessayer
+          {t('common.retry')}
         </button>
       </div>
     );
@@ -104,7 +104,7 @@ export default function ClassesPage() {
           <Card className="sm:col-span-2 lg:col-span-4">
             <div className="text-center py-8 text-neutral-500">
               <Users className="mx-auto h-8 w-8 mb-2" />
-              <p className="text-sm">Aucune classe assignée</p>
+              <p className="text-sm">{t('pages.enseignant.classes.aucune_classe_assignee')}</p>
             </div>
           </Card>
         ) : (
@@ -159,7 +159,7 @@ export default function ClassesPage() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
                 <Input
-                  placeholder="Rechercher un élève..."
+                  placeholder={t('common.search_student')}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="pl-9 h-9 text-sm"
@@ -172,7 +172,7 @@ export default function ClassesPage() {
                     viewMode === 'liste' ? 'bg-[var(--accent)] text-white' : 'text-neutral-600 dark:text-neutral-400'
                   )}
                 >
-                  Liste
+                  {t('pages.enseignant.classes.liste')}
                 </button>
                 <button
                   onClick={() => setViewMode('grille')}
@@ -180,7 +180,7 @@ export default function ClassesPage() {
                     viewMode === 'grille' ? 'bg-[var(--accent)] text-white' : 'text-neutral-600 dark:text-neutral-400'
                   )}
                 >
-                  Grille
+                  {t('pages.enseignant.classes.grille')}
                 </button>
               </div>
             </div>
@@ -191,19 +191,19 @@ export default function ClassesPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-neutral-200 dark:border-neutral-700 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                    <th scope="col" className="pb-3 pr-4">Élève</th>
-                    <th scope="col" className="pb-3 pr-4">Moyenne</th>
-                    <th scope="col" className="pb-3 pr-4">Absences</th>
-                    <th scope="col" className="pb-3 pr-4">Rang</th>
-                    <th scope="col" className="pb-3 pr-4">Appréciation</th>
-                    <th scope="col" className="pb-3 text-right">Actions</th>
+                    <th scope="col" className="pb-3 pr-4">{t('common.student')}</th>
+                    <th scope="col" className="pb-3 pr-4">{t('common.average')}</th>
+                    <th scope="col" className="pb-3 pr-4">{t('pages.enseignant.classes.absences')}</th>
+                    <th scope="col" className="pb-3 pr-4">{t('common.rank')}</th>
+                    <th scope="col" className="pb-3 pr-4">{t('pages.enseignant.classes.appreciation')}</th>
+                    <th scope="col" className="pb-3 text-right">{t('common.actions')}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredEleves.length === 0 && (
                     <tr>
                       <td colSpan={6} className="py-8 text-center text-sm text-neutral-500">
-                        Aucun élève trouvé
+                        {t('common.no_student_found')}
                       </td>
                     </tr>
                   )}
@@ -264,7 +264,7 @@ export default function ClassesPage() {
                     </div>
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-neutral-500">Moyenne:</span>
+                    <span className="text-neutral-500">{t('pages.enseignant.classes.moyenne')}</span>
                     <span className={cn(
                       'font-semibold',
                       eleve.moyenne >= 14 ? 'text-emerald-600' : eleve.moyenne >= 10 ? 'text-amber-600' : 'text-red-600'
@@ -273,7 +273,7 @@ export default function ClassesPage() {
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-sm mt-1">
-                    <span className="text-neutral-500">Absences:</span>
+                    <span className="text-neutral-500">{t('pages.enseignant.classes.absences_2')}</span>
                     <span className="text-neutral-900 dark:text-white">{eleve.absences || 0}</span>
                   </div>
                 </div>

@@ -116,7 +116,7 @@ export default function CoursPage() {
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
             <Input
-              placeholder="Rechercher un cours..."
+              placeholder={t('common.search_course')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
@@ -125,21 +125,21 @@ export default function CoursPage() {
           <select
             value={filterMatiere}
             onChange={(e) => setFilterMatiere(e.target.value)}
-            aria-label="Filtrer par matière"
+            aria-label={t('common.filter_by_subject')}
             className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
           >
-            <option value="">Toutes les matières</option>
+            <option value="">{t('pages.eleve.cours.toutes_les_matieres')}</option>
             {matieres.map((m) => <option key={m} value={m}>{m}</option>)}
           </select>
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            aria-label="Filtrer par type"
+            aria-label={t('pages.eleve.cours.filtrer_par_type')}
             className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
           >
-            <option value="">Tous les types</option>
-            <option value="cours">Cours</option>
-            <option value="devoir">Devoir</option>
+            <option value="">{t('common.all_types')}</option>
+            <option value="cours">{t('common.courses')}</option>
+            <option value="devoir">{t('pages.eleve.cours.devoir')}</option>
             <option value="tp">TP</option>
           </select>
         </div>
@@ -151,7 +151,7 @@ export default function CoursPage() {
           <Card>
             <div className="text-center py-8 text-neutral-500">
               <BookOpen className="mx-auto h-8 w-8 mb-2" />
-              <p className="text-sm">Aucun cours trouvé</p>
+              <p className="text-sm">{t('common.no_course_found')}</p>
             </div>
           </Card>
         )}
@@ -230,7 +230,7 @@ export default function CoursPage() {
                     <span className="text-lg font-bold text-[var(--accent)]">{c.note}/20</span>
                   )}
                   <Button variant="ghost" size="sm" icon={<Eye />}>
-                    Voir
+                    {t('common.view')}
                   </Button>
                 </div>
               </div>

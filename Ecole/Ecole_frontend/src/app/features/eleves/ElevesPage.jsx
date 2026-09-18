@@ -93,8 +93,8 @@ export default function ElevesPage() {
           <Button variant="ghost" size="sm" onClick={refetch} disabled={isLoading}>
             <RefreshCw className={cn('h-4 w-4 mr-1', isLoading && 'animate-spin')} />
           </Button>
-          <Button variant="outline" size="sm" icon={<Download />}>Exporter</Button>
-          <Button size="sm" icon={<Plus />}>Nouvel Élève</Button>
+          <Button variant="outline" size="sm" icon={<Download />}>{t('common.export')}</Button>
+          <Button size="sm" icon={<Plus />}>{t('pages.eleves.eleves.nouvel_eleve')}</Button>
         </div>
       </div>
 
@@ -109,7 +109,7 @@ export default function ElevesPage() {
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
             <Input
-              placeholder="Rechercher un élève..."
+              placeholder={t('common.search_student')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
@@ -118,10 +118,10 @@ export default function ElevesPage() {
           <select
             value={filterClasse}
             onChange={(e) => setFilterClasse(e.target.value)}
-            aria-label="Filtrer par classe"
+            aria-label={t('common.filter_by_class')}
             className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm text-neutral-700 outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
           >
-            <option value="">Toutes les classes</option>
+            <option value="">{t('common.all_classes')}</option>
             {classes.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
         </div>
@@ -135,11 +135,11 @@ export default function ElevesPage() {
         )}
         <Table>
           <Table.Header>
-            <Table.Head>Élève</Table.Head>
-            <Table.Head>Classe</Table.Head>
-            <Table.Head>Matricule</Table.Head>
-            <Table.Head>Statut</Table.Head>
-            <Table.Head className="text-right">Actions</Table.Head>
+            <Table.Head>{t('common.student')}</Table.Head>
+            <Table.Head>{t('common.class')}</Table.Head>
+            <Table.Head>{t('common.matricule')}</Table.Head>
+            <Table.Head>{t('common.status_label')}</Table.Head>
+            <Table.Head className="text-right">{t('common.actions')}</Table.Head>
           </Table.Header>
           <Table.Body>
             {isLoading && Array.from({ length: 5 }).map((_, i) => (
@@ -152,7 +152,7 @@ export default function ElevesPage() {
             {!isLoading && filtered.length === 0 && (
               <Table.Row>
                 <td colSpan={5} className="p-8 text-center text-sm text-neutral-500">
-                  Aucun élève trouvé
+                  {t('common.no_student_found')}
                 </td>
               </Table.Row>
             )}
@@ -185,12 +185,12 @@ export default function ElevesPage() {
                 </Table.Cell>
                 <Table.Cell className="text-right">
                   <div className="flex justify-end gap-1">
-                    <Button variant="ghost" size="sm" icon={<MoreHorizontal />} title="Plus d'actions" />
+                    <Button variant="ghost" size="sm" icon={<MoreHorizontal />} title={t('pages.eleves.eleves.plus_d_actions')} />
                     <Button
                       variant="ghost"
                       size="sm"
                       icon={<Trash2 />}
-                      title="Retirer des effectifs"
+                      title={t('pages.eleves.eleves.retirer_des_effectifs')}
                       className="text-red-500 hover:text-red-600"
                       onClick={() => handleRetirer(eleve)}
                     />

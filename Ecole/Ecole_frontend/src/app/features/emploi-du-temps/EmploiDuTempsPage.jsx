@@ -157,10 +157,10 @@ export default function EmploiDuTempsPage() {
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" icon={<Download />}>
-            Exporter
+            {t('common.export')}
           </Button>
           <Button size="sm" icon={<Plus />}>
-            Ajouter un Cours
+            {t('pages.emploi_du_temps.emploi_du_temps.ajouter_un_cours')}
           </Button>
         </div>
       </div>
@@ -177,7 +177,7 @@ export default function EmploiDuTempsPage() {
             </button>
             <div className="text-center">
               <p className="text-sm font-medium text-neutral-900 dark:text-white">{semaineLabel}</p>
-              <p className="text-xs text-neutral-500">Année scolaire 2025-2026</p>
+              <p className="text-xs text-neutral-500">{t('pages.emploi_du_temps.emploi_du_temps.annee_scolaire_2025_2026')}</p>
             </div>
             <button
               onClick={() => setSemaine(Math.min(4, semaine + 1))}
@@ -191,7 +191,7 @@ export default function EmploiDuTempsPage() {
             <select
               value={filterMatiere}
               onChange={(e) => setFilterMatiere(e.target.value)}
-              aria-label="Filtrer par matière"
+              aria-label={t('common.filter_by_subject')}
               className="h-9 rounded-lg border border-neutral-300 bg-white px-2.5 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
             >
               {matieresList.map((m) => <option key={m} value={m}>{m}</option>)}
@@ -199,7 +199,7 @@ export default function EmploiDuTempsPage() {
             <select
               value={filterClasse}
               onChange={(e) => setFilterClasse(e.target.value)}
-              aria-label="Filtrer par classe"
+              aria-label={t('common.filter_by_class')}
               className="h-9 rounded-lg border border-neutral-300 bg-white px-2.5 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
             >
               {classesList.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -207,7 +207,7 @@ export default function EmploiDuTempsPage() {
             <select
               value={filterEnseignant}
               onChange={(e) => setFilterEnseignant(e.target.value)}
-              aria-label="Filtrer par enseignant"
+              aria-label={t('pages.emploi_du_temps.emploi_du_temps.filtrer_par_enseignant')}
               className="h-9 rounded-lg border border-neutral-300 bg-white px-2.5 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
             >
               {enseignantsList.map((e) => <option key={e} value={e}>{e}</option>)}
@@ -244,7 +244,7 @@ export default function EmploiDuTempsPage() {
                 creneau.pause && 'bg-amber-50 dark:bg-amber-900/10'
               )}>
                 <span className="text-[11px] font-medium text-neutral-800 dark:text-neutral-200">{creneau.heure}</span>
-                {creneau.pause && <span className="text-[10px] text-amber-600 mt-0.5">Pause</span>}
+                {creneau.pause && <span className="text-[10px] text-amber-600 mt-0.5">{t('pages.emploi_du_temps.emploi_du_temps.pause')}</span>}
               </div>
 
               {/* Colonnes jours */}
@@ -257,7 +257,7 @@ export default function EmploiDuTempsPage() {
                 if (creneau.pause) {
                   return (
                     <div key={jIdx} className="bg-amber-50 dark:bg-amber-900/10 flex items-center justify-center">
-                      <span className="text-xs text-amber-500 italic">Pause</span>
+                      <span className="text-xs text-amber-500 italic">{t('pages.emploi_du_temps.emploi_du_temps.pause')}</span>
                     </div>
                   );
                 }
@@ -294,14 +294,14 @@ export default function EmploiDuTempsPage() {
       <div className="flex flex-wrap gap-4 text-xs text-neutral-500">
         <div className="flex items-center gap-1.5">
           <div className="h-2.5 w-2.5 rounded bg-white dark:bg-neutral-900 border border-neutral-300" />
-          <span>Disponible</span>
+          <span>{t('pages.emploi_du_temps.emploi_du_temps.disponible')}</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="h-2.5 w-2.5 rounded bg-amber-50 dark:bg-amber-900/10 border border-amber-200" />
-          <span>Pause</span>
+          <span>{t('pages.emploi_du_temps.emploi_du_temps.pause')}</span>
         </div>
-        {hasData && <span className="text-amber-500 text-xs">Données chargées depuis l'API</span>}
-        {!hasData && <span className="text-neutral-400 text-xs">Mode démo (API indisponible)</span>}
+        {hasData && <span className="text-amber-500 text-xs">{t('pages.emploi_du_temps.emploi_du_temps.donnees_chargees_depuis_l_api')}</span>}
+        {!hasData && <span className="text-neutral-400 text-xs">{t('pages.emploi_du_temps.emploi_du_temps.mode_demo_api_indisponible')}</span>}
       </div>
     </motion.div>
   );

@@ -64,7 +64,23 @@
     "date": "التاريخ",
     "type": "النوع",
     "reason": "السبب",
-    "average": "المعدل"
+    "average": "المعدل",
+    "amount": "المبلغ",
+    "status_label": "الحالة",
+    "view": "عرض",
+    "balance": "الرصيد",
+    "all_types": "جميع الأنواع",
+    "search_course": "ابحث عن مقرر...",
+    "filter_by_subject": "تصفية حسب المادة",
+    "courses": "المقررات",
+    "no_course_found": "لم يتم العثور على أي مقرر",
+    "filter_by_class": "تصفية حسب القسم",
+    "all_classes": "جميع الأقسام",
+    "matricule": "رقم التسجيل",
+    "no_student_found": "لم يتم العثور على أي طالب",
+    "rank": "الترتيب",
+    "today": "اليوم",
+    "grade": "الدرجة"
   },
   "auth": {
     "login": "تسجيل الدخول",
@@ -532,45 +548,126 @@
     "comptable": {
       "factures": {
         "title": "الفواتير",
-        "subtitle": "إدارة الفواتير والمدفوعات"
+        "subtitle": "إدارة الفواتير والمدفوعات",
+        "total_facture": "مجموع الفواتير",
+        "paye": "مدفوع",
+        "impaye": "غير مدفوع",
+        "taux_recouvrement": "نسبة التحصيل",
+        "rechercher_une_facture": "ابحث عن فاتورة...",
+        "payee": "مدفوعة",
+        "impayee": "غير مدفوعة",
+        "nouvelle_facture": "فاتورة جديدة",
+        "n_facture": "رقم الفاتورة",
+        "client": "العميل",
+        "aucune_facture_trouvee": "لم يتم العثور على أي فاتورة",
+        "envoyer": "إرسال",
+        "imprimer": "طباعة"
       },
       "transactions": {
         "title": "المعاملات",
-        "subtitle": "جميع المعاملات المالية للمؤسسة"
+        "subtitle": "جميع المعاملات المالية للمؤسسة",
+        "recettes": "الإيرادات",
+        "depenses": "المصروفات",
+        "transactions": "المعاملات",
+        "rechercher_une_transaction": "ابحث عن معاملة...",
+        "filtrer_par_type": "تصفية حسب النوع",
+        "scolarite": "الرسوم الدراسية",
+        "cantine": "المطعم المدرسي",
+        "transport": "النقل",
+        "inscription": "التسجيل",
+        "bibliotheque": "المكتبة",
+        "payee": "مدفوعة",
+        "echec": "فشل",
+        "reference": "المرجع",
+        "methode": "الطريقة",
+        "aucune_transaction_trouvee": "لم يتم العثور على أي معاملة"
       }
     },
     "eleve": {
       "cours": {
         "title": "مقرراتي",
-        "subtitle": "اطّلع على مقرراتك وواجباتك ومصادرك"
+        "subtitle": "اطّلع على مقرراتك وواجباتك ومصادرك",
+        "toutes_les_matieres": "جميع المواد",
+        "filtrer_par_type": "تصفية حسب النوع",
+        "devoir": "واجب"
       }
     },
     "eleves": {
       "eleves": {
         "title": "الطلاب",
-        "subtitle": "إدارة جميع الطلاب المسجلين"
+        "subtitle": "إدارة جميع الطلاب المسجلين",
+        "nouvel_eleve": "طالب جديد",
+        "plus_d_actions": "المزيد من الإجراءات",
+        "retirer_des_effectifs": "الحذف من قوائم التلاميذ"
       }
     },
     "emploi_du_temps": {
       "emploi_du_temps": {
         "title": "الجدول الزمني",
-        "subtitle": "اطّلع على الجداول الزمنية حسب القسم"
+        "subtitle": "اطّلع على الجداول الزمنية حسب القسم",
+        "ajouter_un_cours": "إضافة مقرر",
+        "annee_scolaire_2025_2026": "السنة الدراسية 2025-2026",
+        "filtrer_par_enseignant": "تصفية حسب الأستاذ",
+        "pause": "استراحة",
+        "disponible": "متاح",
+        "donnees_chargees_depuis_l_api": "بيانات محمّلة من الواجهة البرمجية",
+        "mode_demo_api_indisponible": "الوضع التجريبي (الواجهة البرمجية غير متاحة)"
       }
     },
     "enseignant": {
       "classes": {
         "title": "أقسامي",
-        "subtitle": "أدر أقسامك وتابع طلابك"
+        "subtitle": "أدر أقسامك وتابع طلابك",
+        "aucune_classe_assignee": "لا يوجد قسم مسند",
+        "liste": "قائمة",
+        "grille": "شبكة",
+        "absences": "الغيابات",
+        "appreciation": "التقدير",
+        "moyenne": "المعدل:",
+        "absences_2": "الغيابات:"
       }
     },
     "infirmier": {
       "soins": {
         "title": "الرعاية التمريضية",
-        "subtitle": "سجل الرعاية المقدمة للطلاب"
+        "subtitle": "سجل الرعاية المقدمة للطلاب",
+        "nouveau_soin": "رعاية جديدة",
+        "total_soins": "مجموع الرعايات",
+        "urgences": "حالات الاستعجال",
+        "traites": "المعالجة",
+        "filtrer_par_type_d_urgence": "تصفية حسب نوع الاستعجال",
+        "urgence": "استعجال",
+        "consultation": "استشارة",
+        "traite": "تمت المعالجة",
+        "aucun_soin_trouve": "لم يتم العثور على أي رعاية"
       },
       "dossiers": {
         "title": "الملفات الطبية",
-        "subtitle": "إدارة الملفات الطبية للطلاب"
+        "subtitle": "إدارة الملفات الطبية للطلاب",
+        "dossiers_medicaux": "الملفات الطبية",
+        "vaccinations": "التطعيمات",
+        "total_dossiers": "مجموع الملفات",
+        "allergies_connues": "الحساسيات المعروفة",
+        "vaccins_non_a_jour": "لقاحات غير محدّثة",
+        "visites_recentes": "الزيارات الأخيرة",
+        "filtrer_par_allergie": "تصفية حسب الحساسية",
+        "toutes_les_allergies": "جميع الحساسيات",
+        "avec_allergies": "مع حساسية",
+        "sans_allergies": "بدون حساسية",
+        "aucun_dossier_trouve": "لم يتم العثور على أي ملف",
+        "groupe_sanguin": "فصيلة الدم",
+        "allergies": "الحساسية",
+        "vaccins": "اللقاحات",
+        "derniere_visite": "آخر زيارة",
+        "maladies_chroniques": "الأمراض المزمنة:",
+        "consulter": "اطلاع",
+        "total_vaccins": "مجموع اللقاحات",
+        "rappels_planifies": "تذكيرات مجدولة",
+        "rappels_en_retard": "تذكيرات متأخرة",
+        "effets_secondaires": "الآثار الجانبية",
+        "aucune_vaccination_enregistree": "لا يوجد تطعيم مسجَّل",
+        "rappel": "تذكير",
+        "effets_secondaires_signales": "(آثار جانبية مُبلَّغ عنها)"
       },
       "vaccinations": {
         "title": "سجل التطعيم",
@@ -580,7 +677,41 @@
     "notes": {
       "notes": {
         "title": "الدرجات",
-        "subtitle": "اطّلع على درجات الطلاب وأدرها"
+        "subtitle": "اطّلع على درجات الطلاب وأدرها",
+        "importer": "استيراد",
+        "nouvelle_note": "درجة جديدة",
+        "moyenne_generale": "المعدل العام",
+        "total_evaluations": "مجموع التقييمات",
+        "taux_de_reussite": "نسبة النجاح",
+        "echecs": "حالات الفشل",
+        "notes": "الدرجات",
+        "classement": "الترتيب",
+        "bulletins": "النشرات",
+        "toutes_les_matieres": "جميع المواد",
+        "matiere": "المادة",
+        "periode": "الفترة",
+        "action": "الإجراء",
+        "aucune_note_trouvee": "لم يتم العثور على أي درجة",
+        "verrouillee": "مقفلة",
+        "deverrouillee": "غير مقفلة",
+        "classement_des_eleves": "ترتيب الطلاب",
+        "selectionner_une_classe": "اختر قسماً",
+        "filtrer_par_periode": "تصفية حسب الفترة",
+        "trimestre_1": "الفصل 1",
+        "trimestre_2": "الفصل 2",
+        "trimestre_3": "الفصل 3",
+        "selectionnez_une_classe_et_une_periode_pour": "اختر قسماً وفترة لعرض الترتيب",
+        "selectionner_une_annee": "اختر سنة",
+        "recalculer_l_instantane": "إعادة احتساب اللقطة",
+        "verrouiller_le_bulletin": "إقفال النشرة",
+        "moyennes_de_la_classe": "معدلات القسم",
+        "selectionnez_une_classe_pour_consulter_les": "اختر قسماً للاطلاع على المعدلات",
+        "aucun_instantane_pour_cette_classe_et_cette": "لا توجد لقطة لهذا القسم وهذه الفترة. انقر على «إعادة احتساب اللقطة».",
+        "effectif": "العدد",
+        "bulletins_verrouilles": "النشرات المقفلة",
+        "selectionnez_une_classe_pour_consulter_les_2": "اختر قسماً للاطلاع على النشرات",
+        "aucun_bulletin_verrouille_recalculez_l": "لا توجد نشرة مقفلة. أعد احتساب اللقطة ثم أقفل النشرة.",
+        "mention": "التقدير"
       }
     },
     "paiements": {
