@@ -83,14 +83,14 @@ export default function InscriptionsPage() {
           <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.secretaire.inscriptions.title')}</h1>
           <p className="text-sm text-neutral-500">{t('pages.secretaire.inscriptions.subtitle')}</p>
         </div>
-        <Button size="sm" icon={<Plus />}>Nouvelle inscription</Button>
+        <Button size="sm" icon={<Plus />}>{t('pages.secretaire.inscriptions.nouvelle_inscription')}</Button>
       </div>
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-3">
-        <StatsCard title="Total" value={String(stats.total)} icon={UserPlus} color="primary" />
-        <StatsCard title="Complets" value={String(stats.complets)} icon={CheckCircle} color="emerald" />
-        <StatsCard title="Incomplets" value={String(stats.incomplets)} icon={Clock} color="amber" />
+        <StatsCard title={t('common.total')} value={String(stats.total)} icon={UserPlus} color="primary" />
+        <StatsCard title={t('pages.secretaire.inscriptions.complets')} value={String(stats.complets)} icon={CheckCircle} color="emerald" />
+        <StatsCard title={t('pages.secretaire.inscriptions.incomplets')} value={String(stats.incomplets)} icon={Clock} color="amber" />
       </div>
 
       {/* Filtres */}
@@ -99,7 +99,7 @@ export default function InscriptionsPage() {
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
             <Input
-              placeholder="Rechercher un élève..."
+              placeholder={t('common.search_student')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
@@ -108,12 +108,12 @@ export default function InscriptionsPage() {
           <select
             value={filterStatut}
             onChange={(e) => setFilterStatut(e.target.value)}
-            aria-label="Filtrer par statut"
+            aria-label={t('common.filter_by_status')}
             className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
           >
-            <option value="">Tous les statuts</option>
-            <option value="complete">Complet</option>
-            <option value="incomplete">Incomplet</option>
+            <option value="">{t('common.all_statuses')}</option>
+            <option value="complete">{t('pages.secretaire.inscriptions.complet')}</option>
+            <option value="incomplete">{t('pages.secretaire.inscriptions.incomplet')}</option>
           </select>
         </div>
       </Card>
@@ -124,7 +124,7 @@ export default function InscriptionsPage() {
           <Card>
             <div className="text-center py-8 text-neutral-500">
               <UserPlus className="mx-auto h-8 w-8 mb-2" />
-              <p className="text-sm">Aucune inscription trouvée</p>
+              <p className="text-sm">{t('pages.secretaire.inscriptions.aucune_inscription_trouvee')}</p>
             </div>
           </Card>
         )}
@@ -176,9 +176,9 @@ export default function InscriptionsPage() {
                 </div>
               </div>
               <div className="flex gap-1">
-                <Button variant="ghost" size="sm" icon={<Eye />} title="Voir" />
+                <Button variant="ghost" size="sm" icon={<Eye />} title={t('common.view')} />
                 {!ins.dossier_complet && (
-                  <Button variant="outline" size="sm">Compléter</Button>
+                  <Button variant="outline" size="sm">{t('pages.secretaire.inscriptions.completer')}</Button>
                 )}
               </div>
             </div>

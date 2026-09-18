@@ -80,7 +80,11 @@
     "no_student_found": "لم يتم العثور على أي طالب",
     "rank": "الترتيب",
     "today": "اليوم",
-    "grade": "الدرجة"
+    "grade": "الدرجة",
+    "search_ellipsis": "بحث...",
+    "school": "المؤسسة",
+    "late": "تأخر",
+    "time": "الوقت"
   },
   "auth": {
     "login": "تسجيل الدخول",
@@ -717,7 +721,27 @@
     "paiements": {
       "paiements": {
         "title": "المدفوعات",
-        "subtitle": "إدارة المعاملات المالية"
+        "subtitle": "إدارة المعاملات المالية",
+        "factures": "الفواتير",
+        "nouveau_paiement": "دفعة جديدة",
+        "revenus_encaisses": "الإيرادات المحصَّلة",
+        "transactions": "المعاملات",
+        "taux_d_encaisse": "نسبة التحصيل",
+        "impayes": "غير المدفوعة",
+        "paiements": "المدفوعات",
+        "echeancier": "جدول الدفعات",
+        "paye": "مدفوع",
+        "partiel": "جزئي",
+        "reference": "المرجع",
+        "recu": "الإيصال",
+        "aucun_paiement_trouve": "لم يتم العثور على أي دفعة",
+        "voir_le_recu": "عرض الإيصال",
+        "selectionnez_un_eleve_pour_voir_son_echeancier": "اختر طالباً لعرض جدول دفعاته",
+        "total_du": "المجموع المستحق",
+        "echeances": "الاستحقاقات",
+        "action": "الإجراء",
+        "aucune_echeance": "لا يوجد استحقاق",
+        "payer": "دفع"
       },
       "callback": {
         "status": {
@@ -742,37 +766,131 @@
     "parametres": {
       "parametres": {
         "title": "الإعدادات",
-        "subtitle": "أدر تفضيلاتك وإعدادات حسابك"
+        "subtitle": "أدر تفضيلاتك وإعدادات حسابك",
+        "photo_de_profil": "صورة الملف الشخصي",
+        "changer_la_photo": "تغيير الصورة",
+        "png_jpg_max_2_mo": "PNG أو JPG. الحد الأقصى 2 ميغابايت.",
+        "informations_personnelles": "المعلومات الشخصية",
+        "prenom": "الاسم",
+        "nom": "اللقب",
+        "email": "البريد الإلكتروني",
+        "telephone": "الهاتف",
+        "specialite": "التخصص",
+        "grade": "الرتبة",
+        "matieres_maitrisees": "المواد التي يدرّسها",
+        "chargement_des_matieres": "جارٍ تحميل المواد…",
+        "experiences_professionnelles": "الخبرات المهنية",
+        "ajouter": "إضافة",
+        "aucune_experience_renseignee": "لم تتم إضافة أي خبرة.",
+        "poste": "المنصب",
+        "professeur_de_mathematiques": "أستاذ الرياضيات",
+        "lycee_public": "ثانوية عمومية",
+        "debut": "البداية",
+        "fin_optionnel": "النهاية (اختياري)",
+        "description_optionnel": "الوصف (اختياري)",
+        "missions_classes_encadrees": "المهام، الأقسام المؤطَّرة…",
+        "retirer": "إزالة",
+        "enregistrer": "حفظ",
+        "enregistre": "تم الحفظ",
+        "preferences_de_notifications": "تفضيلات الإشعارات",
+        "mot_de_passe": "كلمة المرور",
+        "mot_de_passe_actuel": "كلمة المرور الحالية",
+        "nouveau_mot_de_passe": "كلمة مرور جديدة",
+        "confirmer": "تأكيد",
+        "sessions_actives": "الجلسات النشطة",
+        "chrome_sur_windows": "Chrome على Windows",
+        "ip_192_168_1_42_derniere_activite_il_y_a_2_min": "IP: 192.168.1.42 · آخر نشاط: منذ دقيقتين",
+        "active": "نشطة",
+        "safari_sur_macos": "Safari على macOS",
+        "ip_10_0_0_15_derniere_activite_il_y_a_3_jours": "IP: 10.0.0.15 · آخر نشاط: منذ 3 أيام",
+        "revoquer": "إلغاء",
+        "theme": "السمة",
+        "police": "الخط",
+        "inter_par_defaut": "Inter (الافتراضي)",
+        "normale": "عادي",
+        "grande": "كبير",
+        "tres_grande": "كبير جداً",
+        "preferences_generales": "التفضيلات العامة",
+        "langue": "اللغة",
+        "langue_de_l_interface": "لغة الواجهة",
+        "fuseau_horaire": "المنطقة الزمنية",
+        "format_de_date": "صيغة التاريخ",
+        "devise": "العملة",
+        "format_d_affichage_des_montants": "صيغة عرض المبالغ"
       }
     },
     "parent": {
       "enfants": {
         "title": "أبنائي",
-        "subtitle": "تابع مسار أبنائك الدراسي"
+        "subtitle": "تابع مسار أبنائك الدراسي",
+        "aucun_enfant_lie_a_votre_compte": "لا يوجد ابن مرتبط بحسابك",
+        "moyenne_generale": "المعدل العام",
+        "absences": "الغيابات",
+        "frais_scolarite": "الرسوم الدراسية",
+        "aucune_note_disponible": "لا توجد درجات متاحة",
+        "aucune_absence": "لا يوجد غياب",
+        "frais_de_scolarite": "الرسوم الدراسية"
       }
     },
     "secretaire": {
       "documents": {
         "title": "المراسلات",
-        "subtitle": "إدارة المراسلات والوثائق الإدارية"
+        "subtitle": "إدارة المراسلات والوثائق الإدارية",
+        "dossiers": "المجلدات",
+        "nouveau_courrier": "مراسلة جديدة",
+        "entrants": "الواردة",
+        "sortants": "الصادرة",
+        "rechercher_un_courrier": "ابحث عن مراسلة...",
+        "filtrer_par_categorie": "تصفية حسب الفئة",
+        "entrant": "وارد",
+        "sortant": "صادر",
+        "objet": "الموضوع",
+        "expediteur": "المرسِل",
+        "destinataire": "المرسَل إليه",
+        "aucun_courrier_trouve": "لم يتم العثور على أي مراسلة",
+        "telecharger": "تنزيل"
       },
       "inscriptions": {
         "title": "التسجيلات",
-        "subtitle": "إدارة تسجيلات الطلاب الجدد"
+        "subtitle": "إدارة تسجيلات الطلاب الجدد",
+        "nouvelle_inscription": "تسجيل جديد",
+        "complets": "المكتملة",
+        "incomplets": "غير المكتملة",
+        "complet": "مكتمل",
+        "incomplet": "غير مكتمل",
+        "aucune_inscription_trouvee": "لم يتم العثور على أي تسجيل",
+        "completer": "استكمال"
       },
       "planning": {
         "title": "الجدولة",
-        "subtitle": "تخطيط الفعاليات والمواعيد"
+        "subtitle": "تخطيط الفعاليات والمواعيد",
+        "nouvel_evenement": "فعالية جديدة",
+        "planifies": "المجدولة",
+        "rechercher_un_evenement": "ابحث عن فعالية...",
+        "aucun_evenement_trouve": "لم يتم العثور على أي فعالية"
       }
     },
     "surveillant": {
       "surveillance": {
         "title": "المراقبة",
-        "subtitle": "سجل الحوادث والبلاغات"
+        "subtitle": "سجل الحوادث والبلاغات",
+        "graves": "الخطيرة",
+        "filtrer_par_gravite": "تصفية حسب الخطورة",
+        "toutes_les_gravites": "جميع مستويات الخطورة",
+        "faible": "منخفضة",
+        "grave": "خطيرة",
+        "nouvel_incident": "حادثة جديدة",
+        "aucun_incident_trouve": "لم يتم العثور على أي حادثة"
       },
       "presences": {
         "title": "الحضور",
-        "subtitle": "متابعة الحضور بتاريخ {date}"
+        "subtitle": "متابعة الحضور بتاريخ {date}",
+        "presents": "الحاضرون",
+        "retards": "حالات التأخر",
+        "absents": "الغائبون",
+        "present": "حاضر",
+        "absent": "غائب",
+        "aucune_presence_trouvee": "لم يتم العثور على أي سجل حضور"
       }
     },
     "universite": {
@@ -894,6 +1012,18 @@
         "performance": "متوسط الأداء",
         "alerts": "التنبيهات النشطة",
         "recommendations": "التوصيات"
+      }
+    },
+    "messagerie": {
+      "messagerie": {
+        "aucune_conversation": "لا توجد محادثة",
+        "nouvelle_conversation": "محادثة جديدة",
+        "fermer": "إغلاق",
+        "aucun_contact_disponible": "لا توجد جهة اتصال متاحة",
+        "aucun_message_pour_cette_conversation": "لا توجد رسائل في هذه المحادثة",
+        "ecrivez_votre_message": "اكتب رسالتك...",
+        "envoyer": "إرسال",
+        "selectionnez_une_conversation": "اختر محادثة"
       }
     }
   }

@@ -89,7 +89,7 @@ export default function EnfantsPage() {
           onClick={() => window.location.reload()}
           className="mt-4 inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors"
         >
-          Réessayer
+          {t('common.retry')}
         </button>
       </div>
     );
@@ -108,7 +108,7 @@ export default function EnfantsPage() {
           <Card className="flex-1">
             <div className="text-center py-8 text-neutral-500">
               <User className="mx-auto h-8 w-8 mb-2" />
-              <p className="text-sm">Aucun enfant lié à votre compte</p>
+              <p className="text-sm">{t('pages.parent.enfants.aucun_enfant_lie_a_votre_compte')}</p>
             </div>
           </Card>
         ) : (
@@ -140,11 +140,11 @@ export default function EnfantsPage() {
       {/* Stats rapides */}
       {selectedEnfant && (
         <div className="grid gap-4 sm:grid-cols-4">
-          <StatsCard title="Moyenne Générale" value={selectedEnfant.moyenne?.toFixed(1) || '—'} icon={TrendingUp} color="primary" />
-          <StatsCard title="Rang" value={`${selectedEnfant.rang || '—'}e`} icon={GraduationCap} color="emerald" />
-          <StatsCard title="Absences" value={String(selectedEnfant.absences || 0)} icon={AlertTriangle} color={selectedEnfant.absences > 0 ? 'red' : 'emerald'} />
+          <StatsCard title={t('pages.parent.enfants.moyenne_generale')} value={selectedEnfant.moyenne?.toFixed(1) || '—'} icon={TrendingUp} color="primary" />
+          <StatsCard title={t('common.rank')} value={`${selectedEnfant.rang || '—'}e`} icon={GraduationCap} color="emerald" />
+          <StatsCard title={t('pages.parent.enfants.absences')} value={String(selectedEnfant.absences || 0)} icon={AlertTriangle} color={selectedEnfant.absences > 0 ? 'red' : 'emerald'} />
           <StatsCard
-            title="Frais Scolarité"
+            title={t('pages.parent.enfants.frais_scolarite')}
             value={selectedEnfant.frais?.total > 0 ? `${((selectedEnfant.frais.paye / selectedEnfant.frais.total) * 100).toFixed(0)}%` : '—'}
             icon={FileText}
             color="sky"
@@ -183,7 +183,7 @@ export default function EnfantsPage() {
               {notes.length === 0 ? (
                 <div className="text-center py-8 text-neutral-500">
                   <BookOpen className="mx-auto h-8 w-8 mb-2" />
-                  <p className="text-sm">Aucune note disponible</p>
+                  <p className="text-sm">{t('pages.parent.enfants.aucune_note_disponible')}</p>
                 </div>
               ) : (
                 notes.map((n, i) => (
@@ -237,7 +237,7 @@ export default function EnfantsPage() {
               {absences.length === 0 ? (
                 <div className="text-center py-8 text-neutral-500">
                   <AlertTriangle className="mx-auto h-8 w-8 mb-2" />
-                  <p className="text-sm">Aucune absence</p>
+                  <p className="text-sm">{t('pages.parent.enfants.aucune_absence')}</p>
                 </div>
               ) : (
                 absences.map((a) => (
@@ -269,7 +269,7 @@ export default function EnfantsPage() {
               {paiements.length === 0 ? (
                 <div className="rounded-xl bg-neutral-50 dark:bg-neutral-800/50 p-4">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Frais de scolarité</span>
+                    <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">{t('pages.parent.enfants.frais_de_scolarite')}</span>
                     <Badge variant={selectedEnfant.frais.paye >= selectedEnfant.frais.total ? 'primary' : 'warning'}>
                       {selectedEnfant.frais.paye >= selectedEnfant.frais.total ? 'Payé' : 'Partiel'}
                     </Badge>

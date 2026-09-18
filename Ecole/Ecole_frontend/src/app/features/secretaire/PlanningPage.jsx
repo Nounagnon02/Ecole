@@ -106,15 +106,15 @@ export default function PlanningPage() {
           <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.secretaire.planning.title')}</h1>
           <p className="text-sm text-neutral-500">{t('pages.secretaire.planning.subtitle')}</p>
         </div>
-        <Button size="sm" icon={<Plus />}>Nouvel événement</Button>
+        <Button size="sm" icon={<Plus />}>{t('pages.secretaire.planning.nouvel_evenement')}</Button>
       </div>
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-4">
-        <StatsCard title="Total" value={String(stats.total)} icon={CalendarDays} color="primary" />
-        <StatsCard title="Planifiés" value={String(stats.planifies)} icon={Clock} color="sky" />
-        <StatsCard title="Terminés" value={String(stats.termines)} icon={CheckCircle} color="emerald" />
-        <StatsCard title="Aujourd'hui" value={String(stats.aujourdhui)} icon={AlertCircle} color="amber" />
+        <StatsCard title={t('common.total')} value={String(stats.total)} icon={CalendarDays} color="primary" />
+        <StatsCard title={t('pages.secretaire.planning.planifies')} value={String(stats.planifies)} icon={Clock} color="sky" />
+        <StatsCard title={t('common.finished')} value={String(stats.termines)} icon={CheckCircle} color="emerald" />
+        <StatsCard title={t('common.today')} value={String(stats.aujourdhui)} icon={AlertCircle} color="amber" />
       </div>
 
       {/* Filtres */}
@@ -123,7 +123,7 @@ export default function PlanningPage() {
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
             <Input
-              placeholder="Rechercher un événement..."
+              placeholder={t('pages.secretaire.planning.rechercher_un_evenement')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
@@ -154,7 +154,7 @@ export default function PlanningPage() {
           <Card>
             <div className="text-center py-8 text-neutral-500">
               <CalendarDays className="mx-auto h-8 w-8 mb-2" />
-              <p className="text-sm">Aucun événement trouvé</p>
+              <p className="text-sm">{t('pages.secretaire.planning.aucun_evenement_trouve')}</p>
             </div>
           </Card>
         )}
@@ -207,7 +207,7 @@ export default function PlanningPage() {
                     )}
                   </div>
 
-                  <Button variant="ghost" size="sm">Détails</Button>
+                  <Button variant="ghost" size="sm">{t('common.details')}</Button>
                 </div>
               </Card>
             );
