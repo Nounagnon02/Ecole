@@ -13,3 +13,28 @@ Thumbs.db
 .claude/
 CLAUDE.md
 AGENTS.md
+
+# Dépendances — la racine n'en avait aucune, ce qui a laissé committer un
+# `vendor/` PHP orphelin de ~750 fichiers (45 % des fichiers suivis).
+node_modules/
+vendor/
+.pnp
+.pnp.js
+
+# Environnement — jamais de valeur de secret dans le dépôt.
+.env
+.env.local
+.env.*.local
+
+# Artefacts de build et de test
+build/
+dist/
+coverage/
+playwright-report/
+test-results/
+.expo/
+release/
+
+# Outils d'agents (copies complètes du dépôt, .env inclus)
+.kilo/
+.qodo/
