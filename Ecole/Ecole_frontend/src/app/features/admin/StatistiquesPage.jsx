@@ -5,7 +5,7 @@
  * Données dynamiques via API /api/v1/admin/analytics/overview
  */
 
-import { useState, useEffect } from 'react';
+import { useApiQuery } from '@/shared/lib/api-client';
 import { motion } from 'framer-motion';
 import {
   TrendingUp, Users, Building2, BookOpen,
@@ -16,8 +16,6 @@ import { cn, formatNumber } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import StatsCard from '@/shared/components/ui/StatsCard';
-import { useApi } from '@/hooks/useApi';
-import logger from '@/shared/lib/logger';
 
 const ACTIVITE_CONFIG = {
   inscription: { icon: Users, color: 'text-emerald-500 bg-emerald-100 dark:bg-emerald-900/20' },
@@ -29,19 +27,15 @@ const ACTIVITE_CONFIG = {
 };
 
 export default function StatistiquesPage() {
-  const { loading, error, get } = useApi();
-  const [stats, setStats] = useState(null);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await get('/v1/admin/analytics/overview');
-        setStats(res?.data || res);
-      } catch (e) {
-        logger.error('Erreur chargement statistiques:', e);
-      }
-    })();
-  }, [get]);
+  const requete = useApiQuery(['analytics', 'overview'], '/v1/admin/analytics/overview');
+
+  // `useState` + `useEffect` de premier rendu, sans cache ni déduplication —
+  // le motif répété sur trente-neuf pages (cf. audit P4.1). L'enveloppe
+  // `{ data }` n'est pas systématique côté contrôleurs, d'où le repli.
+  const stats = requete.data?.data ?? requete.data ?? null;
+  const loading = requete.isPending;
+  const error = requete.isError ? (requete.error?.message ?? 'Erreur de chargement') : null;
 
   if (loading) {
     return (

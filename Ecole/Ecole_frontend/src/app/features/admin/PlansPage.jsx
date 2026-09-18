@@ -5,7 +5,9 @@
  * Données dynamiques via API /api/v1/admin/plans
  */
 
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
+import { useApiQuery } from '@/shared/lib/api-client';
+import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
   Plus, Edit3, Trash2, CreditCard, CheckCircle2,
@@ -14,27 +16,18 @@ import {
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
-import { useApi } from '@/hooks/useApi';
-import logger from '@/shared/lib/logger';
 
 export default function PlansPage() {
-  const { loading, error, get } = useApi();
-  const [plans, setPlans] = useState([]);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await get('/v1/admin/plans');
-        const items = Array.isArray(res?.data?.data) ? res.data.data
-          : Array.isArray(res?.data) ? res.data
-          : Array.isArray(res) ? res
-          : [];
-        setPlans(items);
-      } catch (e) {
-        logger.error('Erreur chargement plans:', e);
-      }
-    })();
-  }, [get]);
+  const requete = useApiQuery(['plans'], '/v1/admin/plans');
+
+  // La page tenait un `useState` de données doublé d'un `useEffect` de premier
+  // rendu — le motif répété sur trente-neuf pages, sans cache ni
+  // déduplication (cf. audit P4.1). `unwrapList` traverse les trois formes
+  // d'enveloppe que renvoient les contrôleurs.
+  const plans = useMemo(() => unwrapList(requete.data) ?? [], [requete.data]);
+  const loading = requete.isPending;
+  const error = requete.isError ? (requete.error?.message ?? 'Erreur de chargement') : null;
 
   if (loading) {
     return (

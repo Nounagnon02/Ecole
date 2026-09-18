@@ -5,7 +5,9 @@
  * Données dynamiques via API /api/v1/admin/billing/invoices
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import { useApiQuery } from '@/shared/lib/api-client';
+import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
 import {
@@ -21,8 +23,6 @@ import StatsCard from '@/shared/components/ui/StatsCard';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer
 } from 'recharts';
-import { useApi } from '@/hooks/useApi';
-import logger from '@/shared/lib/logger';
 
 const STATUS_BADGE = {
   paid: { variant: 'success', label: 'Payé' },
@@ -31,37 +31,27 @@ const STATUS_BADGE = {
 };
 
 export default function BillingPage() {
-  const { loading, error, get } = useApi();
-  const [invoices, setInvoices] = useState([]);
   const [search, setSearch] = useState('');
-  const [revenusMensuels, setRevenusMensuels] = useState([]);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const [invoicesRes, revenusRes] = await Promise.allSettled([
-          get('/v1/admin/billing/invoices'),
-          get('/v1/admin/analytics/revenue'),
-        ]);
+  // Deux requêtes indépendantes, et c'est le point.
+  //
+  // `Promise.allSettled` isolait bien les deux appels, mais `useApi()` expose
+  // un `error` partagé : un 500 sur les revenus — une donnée d'appoint —
+  // faisait basculer toute la page en écran d'erreur et effaçait les factures
+  // déjà reçues. Chaque requête react-query porte son propre état, donc
+  // l'échec de l'une ne dit plus rien de l'autre (cf. audit P4.1).
+  const requeteFactures = useApiQuery(['billing', 'invoices'], '/v1/admin/billing/invoices');
+  const requeteRevenus = useApiQuery(['billing', 'revenue'], '/v1/admin/analytics/revenue');
 
-        const invoicesData = invoicesRes.status === 'fulfilled'
-          ? (Array.isArray(invoicesRes.value?.data?.data) ? invoicesRes.value.data.data
-            : Array.isArray(invoicesRes.value?.data) ? invoicesRes.value.data
-            : Array.isArray(invoicesRes.value) ? invoicesRes.value : [])
-          : [];
-        setInvoices(invoicesData);
+  const invoices = useMemo(() => unwrapList(requeteFactures.data) ?? [], [requeteFactures.data]);
+  const revenusMensuels = useMemo(() => unwrapList(requeteRevenus.data) ?? [], [requeteRevenus.data]);
 
-        const revenusData = revenusRes.status === 'fulfilled'
-          ? (Array.isArray(revenusRes.value?.data?.data) ? revenusRes.value.data.data
-            : Array.isArray(revenusRes.value?.data) ? revenusRes.value.data
-            : Array.isArray(revenusRes.value) ? revenusRes.value : [])
-          : [];
-        setRevenusMensuels(revenusData);
-      } catch (e) {
-        logger.error('Erreur chargement facturation:', e);
-      }
-    })();
-  }, [get]);
+  // Les factures commandent l'écran : sans elles, il n'y a rien à montrer.
+  // Les revenus manquants dégradent un graphique, ils ne cachent pas la page.
+  const loading = requeteFactures.isPending;
+  const error = requeteFactures.isError
+    ? (requeteFactures.error?.message ?? 'Erreur de chargement')
+    : null;
 
   const stats = useMemo(() => ({
     total: invoices.length,
