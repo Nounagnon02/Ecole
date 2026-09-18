@@ -17,6 +17,7 @@ import { ChevronRight, LayoutDashboard } from 'lucide-react';
 import useAuthStore from '@/shared/stores/auth-store';
 import { ROUTE_CONFIG, ROLE_REDIRECT_MAP } from '@/features/roles/route-config';
 import { cn } from '@/shared/lib/utils';
+import { useTranslation } from '@/shared/i18n';
 
 /* ─── Mapping route-key → label lisible ──────────────────────────── */
 const ROUTE_KEY_LABELS = {
@@ -108,6 +109,7 @@ function segmentToLabel(seg) {
 }
 
 export default function Breadcrumb({ items: propItems, className }) {
+  const { t } = useTranslation();
   const location = useLocation();
   const user = useAuthStore((s) => s.user);
 
@@ -151,7 +153,7 @@ export default function Breadcrumb({ items: propItems, className }) {
   if (items.length === 0) return null;
 
   return (
-    <nav aria-label="Fil d'Ariane" className={cn('mb-4', className)}>
+    <nav aria-label={t('components.breadcrumb.fil_d_ariane')} className={cn('mb-4', className)}>
       <motion.ol
         initial={{ opacity: 0, y: -6 }}
         animate={{ opacity: 1, y: 0 }}

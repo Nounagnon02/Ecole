@@ -19,6 +19,7 @@ import {
 import useAuthStore from '@/shared/stores/auth-store';
 import { ROLE_REDIRECT_MAP, FALLBACK_REDIRECT } from '@/features/roles/route-config';
 import { Button, Input } from '@/shared/components/ui';
+import { useTranslation } from '@/shared/i18n';
 
 /* ─── Animation variants ────────────────────────────────────────────── */
 const fadeUp = {
@@ -216,6 +217,7 @@ function MarginDoodles({ className }) {
  *  COMPOSANT PRINCIPAL
  * ═══════════════════════════════════════════════════════════════════════ */
 export default function LoginForm() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const login = useAuthStore((s) => s.login);
   const selectSchool = useAuthStore((s) => s.selectSchool);
@@ -338,11 +340,11 @@ export default function LoginForm() {
                   <AcademicSeal className="h-16 w-16 text-[var(--primary)] opacity-40" />
                 </div>
                 <h2 className="font-fraunces text-2xl font-semibold text-[var(--text-primary)]">
-                  Votre ecole
+                  {t('auth.login_form.votre_ecole')}
                 </h2>
                 <p className="mt-2 text-sm text-[var(--text-secondary)]">
-                  Vous etes associe a plusieurs etablissements.
-                  <br />Choisissez celui auquel acceder.
+                  {t('auth.login_form.vous_etes_associe_a_plusieurs_etablissements')}
+                  <br />{t('auth.login_form.choisissez_celui_auquel_acceder')}
                 </p>
               </motion.div>
 
@@ -398,7 +400,7 @@ export default function LoginForm() {
                   }}
                   className="underline hover:text-[var(--accent)] transition-colors"
                 >
-                  Changer d'identifiant
+                  {t('auth.login_form.changer_d_identifiant')}
                 </button>
               </motion.p>
             </div>
@@ -467,7 +469,7 @@ export default function LoginForm() {
                 transition={{ delay: 0.15, duration: 0.5 }}
                 className="text-[10px] font-medium tracking-[0.3em] uppercase text-[var(--text-tertiary)] mb-2"
               >
-                Annee scolaire 2025 — 2026
+                {t('auth.login_form.annee_scolaire_2025_2026')}
               </motion.p>
 
               <motion.h1
@@ -488,8 +490,8 @@ export default function LoginForm() {
                 transition={{ delay: 0.35, duration: 0.5 }}
                 className="font-fraunces text-base italic leading-relaxed text-[var(--text-secondary)] mt-3 max-w-xs"
               >
-                Systeme de gestion scolaire
-                <br />pense pour l'excellence.
+                {t('auth.login_form.systeme_de_gestion_scolaire')}
+                <br />{t('auth.login_form.pense_pour_l_excellence')}
               </motion.p>
             </div>
           </div>
@@ -560,16 +562,16 @@ export default function LoginForm() {
 
               <motion.div variants={fadeUp} className="text-center lg:hidden px-10 pt-6">
                 <h1 className="font-fraunces text-3xl font-bold text-[var(--text-primary)]">Ecole</h1>
-                <p className="mt-1 text-sm text-[var(--text-secondary)]">Connectez-vous a votre espace</p>
+                <p className="mt-1 text-sm text-[var(--text-secondary)]">{t('auth.login_form.connectez_vous_a_votre_espace')}</p>
               </motion.div>
 
               <div className="px-10 pt-8 pb-6">
                 <motion.div variants={fadeUp}>
                   <h2 className="font-fraunces text-2xl font-semibold text-[var(--text-primary)]">
-                    Connexion
+                    {t('auth.login')}
                   </h2>
                   <p className="mt-1 text-sm text-[var(--text-secondary)]">
-                    Accedez a votre tableau de bord
+                    {t('auth.login_form.accedez_a_votre_tableau_de_bord')}
                   </p>
                 </motion.div>
 
@@ -585,13 +587,13 @@ export default function LoginForm() {
                   </motion.div>
                 )}
 
-                <form onSubmit={handleSubmit} className="mt-6 space-y-4" noValidate aria-label="Connexion">
+                <form onSubmit={handleSubmit} className="mt-6 space-y-4" noValidate aria-label={t('auth.login')}>
                   <motion.div variants={fadeUp}>
                     <Input
                       id="login-email"
                       type="text"
-                      label="Email ou identifiant"
-                      placeholder="vous@exemple.com ou ELEVE-2024-001"
+                      label={t('auth.login_form.email_ou_identifiant')}
+                      placeholder={t('auth.login_form.vous_exemple_com_ou_eleve_2024_001')}
                       value={form.email}
                       onChange={setField('email')}
                       error={errors.email}
@@ -604,14 +606,14 @@ export default function LoginForm() {
                   <motion.div variants={fadeUp}>
                     <div className="mb-1.5 flex items-center justify-between">
                       <label htmlFor="login-password" className="text-sm font-medium text-[var(--text-primary)]">
-                        Mot de passe
+                        {t('auth.password')}
                         <span className="ml-0.5 text-[var(--red)]">*</span>
                       </label>
                       <Link
                         to="/forgot-password"
                         className="text-xs font-medium text-[var(--accent)] transition-colors hover:text-[var(--accent-hover)]"
                       >
-                        Mot de passe oublie ?
+                        {t('auth.forgot_password')}
                       </Link>
                     </div>
                     <Input
@@ -637,7 +639,7 @@ export default function LoginForm() {
                     >
                       {!loading && (
                         <span className="flex items-center gap-2">
-                          Se connecter
+                          {t('auth.login_form.se_connecter')}
                           <ArrowRight className="h-4 w-4" />
                         </span>
                       )}
@@ -649,7 +651,7 @@ export default function LoginForm() {
                     className="text-center text-xs text-[var(--text-tertiary)]"
                   >
                     <HelpCircle className="mr-1 inline h-3 w-3" />
-                    Besoin d'aide ? Contactez votre administrateur
+                    {t('auth.login_form.besoin_d_aide_contactez_votre_administrateur')}
                   </motion.p>
                 </form>
               </div>

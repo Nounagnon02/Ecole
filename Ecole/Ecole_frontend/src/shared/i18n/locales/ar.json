@@ -99,7 +99,22 @@
     "no_account": "ليس لديك حساب؟",
     "register": "إنشاء حساب",
     "login_title": "مرحباً بعودتك",
-    "login_subtitle": "أدخل بيانات الدخول للوصول إلى حسابك"
+    "login_subtitle": "أدخل بيانات الدخول للوصول إلى حسابك",
+    "login_form": {
+      "votre_ecole": "مدرستك",
+      "vous_etes_associe_a_plusieurs_etablissements": "أنت مرتبط بعدة مؤسسات.",
+      "choisissez_celui_auquel_acceder": "اختر المؤسسة التي تريد الدخول إليها.",
+      "changer_d_identifiant": "تغيير المعرّف",
+      "annee_scolaire_2025_2026": "السنة الدراسية 2025 — 2026",
+      "systeme_de_gestion_scolaire": "نظام إدارة مدرسية",
+      "pense_pour_l_excellence": "مصمَّم من أجل التميّز.",
+      "connectez_vous_a_votre_espace": "سجّل الدخول إلى فضائك",
+      "accedez_a_votre_tableau_de_bord": "ادخل إلى لوحة القيادة الخاصة بك",
+      "email_ou_identifiant": "البريد الإلكتروني أو المعرّف",
+      "vous_exemple_com_ou_eleve_2024_001": "you@example.com أو ELEVE-2024-001",
+      "se_connecter": "تسجيل الدخول",
+      "besoin_d_aide_contactez_votre_administrateur": "هل تحتاج إلى مساعدة؟ تواصل مع المسؤول"
+    }
   },
   "eleve": {
     "title": "الطلاب",
@@ -212,7 +227,9 @@
     "toggle_menu": "فتح القائمة",
     "search": "بحث",
     "language": "اللغة",
-    "toggle_theme": "تبديل السمة"
+    "toggle_theme": "تبديل السمة",
+    "mon_profil": "ملفي الشخصي",
+    "parametres": "الإعدادات"
   },
   "securite": {
     "title": "الأمان",
@@ -1361,6 +1378,43 @@
         "envoyer": "إرسال",
         "selectionnez_une_conversation": "اختر محادثة"
       }
+    }
+  },
+  "app_shell": {
+    "aller_au_contenu_principal": "الانتقال إلى المحتوى الرئيسي"
+  },
+  "sidebar": {
+    "navigation_principale": "التنقل الرئيسي"
+  },
+  "components": {
+    "breadcrumb": {
+      "fil_d_ariane": "مسار التنقل"
+    },
+    "command_palette": {
+      "palette_de_commandes": "لوحة الأوامر",
+      "rechercher_eleves_classes_paiements": "ابحث عن طلاب وأقسام ومدفوعات...",
+      "resultats_de_recherche": "نتائج البحث",
+      "essayez_un_nom_d_eleve_de_classe_ou_une_action": "جرّب اسم طالب أو قسم أو إجراء",
+      "suggestions": "اقتراحات",
+      "tapez_pour_commencer_a_rechercher": "اكتب لبدء البحث...",
+      "naviguer": "تنقّل",
+      "ouvrir": "فتح"
+    },
+    "data_table": {
+      "page_precedente": "الصفحة السابقة",
+      "page_suivante": "الصفحة التالية",
+      "rechercher": "بحث…",
+      "rechercher_dans_le_tableau": "البحث في الجدول"
+    },
+    "refresh_button": {
+      "actualiser_les_donnees": "تحديث البيانات",
+      "actualiser": "تحديث"
+    },
+    "skeleton": {
+      "chargement": "جارٍ التحميل",
+      "chargement_en_cours": "جارٍ التحميل…",
+      "contenu_en_chargement": "المحتوى قيد التحميل",
+      "tableau_en_chargement": "الجدول قيد التحميل"
     }
   }
 }

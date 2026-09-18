@@ -10,6 +10,7 @@
  */
 
 import { cn } from '@/shared/lib/utils';
+import { useTranslation } from '@/shared/i18n';
 
 const sizes = {
   sm: { icon: 'h-8 w-8', title: 'text-base', wrapper: 'py-8' },
@@ -66,6 +67,7 @@ function EmptyState({
  * ErrorDisplay — Message d'erreur inline
  */
 function ErrorDisplay({ message = 'Une erreur est survenue', onRetry, className }) {
+  const { t } = useTranslation();
   return (
     <div
       className={cn(
@@ -81,7 +83,7 @@ function ErrorDisplay({ message = 'Une erreur est survenue', onRetry, className 
           onClick={onRetry}
           className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500/50"
         >
-          Réessayer
+          {t('common.retry')}
         </button>
       )}
     </div>

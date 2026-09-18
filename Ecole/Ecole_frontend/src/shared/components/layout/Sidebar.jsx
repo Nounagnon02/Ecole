@@ -264,14 +264,14 @@ export default function Sidebar() {
           <button
             onClick={toggleSidebar}
             className="ml-auto flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[var(--text-tertiary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] lg:hidden"
-            aria-label="Fermer"
+            aria-label={t('common.close')}
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-3 scrollbar-hide" aria-label="Navigation principale">
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-3 scrollbar-hide" aria-label={t('sidebar.navigation_principale')}>
           <ul className="space-y-0.5">
             {menuItems.map((item) => {
               const active = isActive(item.path);

@@ -303,14 +303,14 @@ export default function Header() {
                     className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
                   >
                     <User className="h-4 w-4" />
-                    Mon profil
+                    {t('header.mon_profil')}
                   </button>
                   <button
                     onClick={() => { setUserMenuOpen(false); navigate('/parametres'); }}
                     className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
                   >
                     <Settings className="h-4 w-4" />
-                    Paramètres
+                    {t('header.parametres')}
                   </button>
 
                   <div className="my-1 border-t border-[var(--border-light)]" />
@@ -320,7 +320,7 @@ export default function Header() {
                     className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-[var(--red)] transition-colors hover:bg-[var(--red-subtle)]"
                   >
                     <LogOut className="h-4 w-4" />
-                    Déconnexion
+                    {t('auth.logout')}
                   </button>
                 </div>
               </motion.div>
