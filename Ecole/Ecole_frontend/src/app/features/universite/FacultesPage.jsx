@@ -5,7 +5,9 @@
  * Données dynamiques via API /api/universite/facultes
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import { useApiQuery } from '@/shared/lib/api-client';
+import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
   Building2, Plus, Search, Users, BookOpen,   Phone, Mail, Loader2, AlertCircle
@@ -15,35 +17,30 @@ import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
-import { useApi } from '@/hooks/useApi';
-import logger from '@/shared/lib/logger';
 
 export default function FacultesPage() {
-  const { loading, error, get } = useApi();
-  const [facultes, setFacultes] = useState([]);
   const [search, setSearch] = useState('');
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await get('/universite/facultes');
-        const items = Array.isArray(res?.data?.data) ? res.data.data
-          : Array.isArray(res?.data) ? res.data
-          : Array.isArray(res) ? res
-          : [];
-        setFacultes(items.map((f) => ({
+  // Le chargement passait par un `useState` doublé d'un `useEffect` de
+  // premier rendu, sans cache ni déduplication : deux composants montés
+  // ensemble lançaient deux requêtes, et un retour sur la page rechargeait
+  // tout (cf. audit P4.1). `unwrapList` traverse les trois formes
+  // d'enveloppe que renvoient les contrôleurs.
+  const requete = useApiQuery(['universite-facultes'], '/universite/facultes');
+
+  const facultes = useMemo(
+    () => (unwrapList(requete.data) ?? []).map((f) => ({
           ...f,
           doyen: f.doyen || f.chef || '—',
           code: f.sigle || f.code || '—',
           departements: f.departements_count ?? f.departements ?? 0,
           enseignants: f.enseignants_count ?? f.enseignants ?? 0,
           etudiants: f.etudiants_count ?? f.etudiants ?? 0
-        })));
-      } catch (e) {
-        logger.error('Erreur chargement facultés:', e);
-      }
-    })();
-  }, [get]);
+        })),
+    [requete.data],
+  );
+  const loading = requete.isPending;
+  const error = requete.isError ? (requete.error?.message ?? 'Erreur de chargement') : null;
 
   const stats = useMemo(() => ({
     total: facultes.length,

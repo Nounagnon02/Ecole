@@ -5,7 +5,9 @@
  * Données dynamiques via API /api/universite/cours
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import { useApiQuery } from '@/shared/lib/api-client';
+import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
   BookOpen, Plus, Search, Clock, Users,
@@ -17,35 +19,30 @@ import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
-import { useApi } from '@/hooks/useApi';
-import logger from '@/shared/lib/logger';
 
 export default function CoursPage() {
-  const { loading, error, get } = useApi();
-  const [cours, setCours] = useState([]);
   const [search, setSearch] = useState('');
   const [filterNiveau, setFilterNiveau] = useState('');
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await get('/universite/matieres');
-        const items = Array.isArray(res?.data?.data) ? res.data.data
-          : Array.isArray(res?.data) ? res.data
-          : Array.isArray(res) ? res
-          : [];
-        setCours(items.map(c => ({
+  // Le chargement passait par un `useState` doublé d'un `useEffect` de
+  // premier rendu, sans cache ni déduplication : deux composants montés
+  // ensemble lançaient deux requêtes, et un retour sur la page rechargeait
+  // tout (cf. audit P4.1). `unwrapList` traverse les trois formes
+  // d'enveloppe que renvoient les contrôleurs.
+  const requete = useApiQuery(['universite-matieres'], '/universite/matieres');
+
+  const cours = useMemo(
+    () => (unwrapList(requete.data) ?? []).map(c => ({
           ...c,
           credits: c.credits || c.ects || 0,
           heures: c.heures || c.volume_horaire || 0,
           etudiants: c.etudiants_count || c.etudiants || 0,
           statut: c.statut || 'actif'
-        })));
-      } catch (e) {
-        logger.error('Erreur chargement cours:', e);
-      }
-    })();
-  }, [get]);
+        })),
+    [requete.data],
+  );
+  const loading = requete.isPending;
+  const error = requete.isError ? (requete.error?.message ?? 'Erreur de chargement') : null;
 
   const stats = useMemo(() => ({
     total: cours.length,

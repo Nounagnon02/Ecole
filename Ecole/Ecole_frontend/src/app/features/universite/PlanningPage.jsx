@@ -5,20 +5,20 @@
  * Données dynamiques via API /api/universite/planning
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import { useApiQuery } from '@/shared/lib/api-client';
+import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
-  CalendarDays, Plus, Search, Filter, Clock, Users, MapPin, BookOpen,
+  CalendarDays, Plus, Search, Clock, Users, MapPin, BookOpen,
   CheckCircle, AlertCircle, GraduationCap, Loader2,
 } from 'lucide-react';
-import { cn, formatDate } from '@/shared/lib/utils';
+import { cn } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
-import { useApi } from '@/hooks/useApi';
-import logger from '@/shared/lib/logger';
 
 const TYPE_CONFIG = {
   cours: { label: 'Cours', color: 'text-blue-500 bg-blue-100 dark:bg-blue-900/20', icon: BookOpen },
@@ -32,23 +32,21 @@ const TYPE_CONFIG = {
 };
 
 export default function PlanningPage() {
-  const { loading, error, get } = useApi();
-  const [evenements, setEvenements] = useState([]);
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState('');
 
-  useEffect(() => {
-    (async () => {
-      try {
-        // GET /api/universite/planning — séances datées. Un étudiant n'y reçoit
-        // que sa filière et les séances communes (filiere_id null), le personnel
-        // reçoit tout le calendrier.
-        const res = await get('/universite/planning');
-        const items = Array.isArray(res?.data?.data) ? res.data.data
-          : Array.isArray(res?.data) ? res.data
-          : Array.isArray(res) ? res
-          : [];
-        setEvenements(items.map((e) => ({
+  // GET /api/universite/planning — séances datées. Un étudiant n'y reçoit
+  // que sa filière et les séances communes (filiere_id null), le personnel
+  // reçoit tout le calendrier.
+  // Le chargement passait par un `useState` doublé d'un `useEffect` de
+  // premier rendu, sans cache ni déduplication : deux composants montés
+  // ensemble lançaient deux requêtes, et un retour sur la page rechargeait
+  // tout (cf. audit P4.1). `unwrapList` traverse les trois formes
+  // d'enveloppe que renvoient les contrôleurs.
+  const requete = useApiQuery(['universite-planning'], '/universite/planning');
+
+  const evenements = useMemo(
+    () => (unwrapList(requete.data) ?? []).map((e) => ({
           ...e,
           titre: e.titre || e.intitule || 'Événement',
           type: e.type || 'evenement',
@@ -65,12 +63,11 @@ export default function PlanningPage() {
             (e.enseignant ? `${e.enseignant.prenom || ''} ${e.enseignant.nom || ''}`.trim() : '') ||
             '—',
           statut: e.statut || 'planifie',
-        })));
-      } catch (e) {
-        logger.error('Erreur chargement planning:', e);
-      }
-    })();
-  }, [get]);
+        })),
+    [requete.data],
+  );
+  const loading = requete.isPending;
+  const error = requete.isError ? (requete.error?.message ?? 'Erreur de chargement') : null;
 
   const stats = useMemo(() => ({
     total: evenements.length,

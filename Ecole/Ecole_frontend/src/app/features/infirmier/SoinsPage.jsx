@@ -5,7 +5,9 @@
  * Données dynamiques via API /infirmier/consultations
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import { useApiQuery } from '@/shared/lib/api-client';
+import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
   Heart, Plus, Search, Clock, AlertTriangle, CheckCircle,
@@ -18,8 +20,6 @@ import Avatar from '@/shared/components/ui/Avatar';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
-import { useApi } from '@/hooks/useApi';
-import logger from '@/shared/lib/logger';
 
 const getTypeIcon = (urgence) => {
   if (urgence) return <Activity className="h-4 w-4" />;
@@ -34,26 +34,20 @@ const getTypeColor = (urgence) => {
 const getTypeLabel = (urgence) => urgence ? 'Urgence' : 'Consultation';
 
 export default function SoinsPage() {
-  const { loading, error, get } = useApi();
-  const [soins, setSoins] = useState([]);
   const [search, setSearch] = useState('');
   const [filterUrgence, setFilterUrgence] = useState('');
   const [filterStatut, setFilterStatut] = useState('');
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await get('/infirmier/consultations');
-        const items = Array.isArray(res?.data?.data) ? res.data.data
-          : Array.isArray(res?.data) ? res.data
-          : Array.isArray(res) ? res
-          : [];
-        setSoins(items);
-      } catch (e) {
-        logger.error('Erreur chargement soins:', e);
-      }
-    })();
-  }, [get]);
+  // Le chargement passait par un `useState` doublé d'un `useEffect` de
+  // premier rendu, sans cache ni déduplication : deux composants montés
+  // ensemble lançaient deux requêtes, et un retour sur la page rechargeait
+  // tout (cf. audit P4.1). `unwrapList` traverse les trois formes
+  // d'enveloppe que renvoient les contrôleurs.
+  const requete = useApiQuery(['infirmier-consultations'], '/infirmier/consultations');
+
+  const soins = useMemo(() => unwrapList(requete.data) ?? [], [requete.data]);
+  const loading = requete.isPending;
+  const error = requete.isError ? (requete.error?.message ?? 'Erreur de chargement') : null;
 
   const stats = useMemo(() => {
     const today = new Date().toDateString();

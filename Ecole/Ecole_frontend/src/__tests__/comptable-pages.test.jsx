@@ -12,6 +12,8 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { makeQueryClient } from './helpers/render';
 import FacturesPage from '@/app/features/comptable/FacturesPage';
 import TransactionsPage from '@/app/features/comptable/TransactionsPage';
 import { installHttpMock } from './helpers/http-mock';
@@ -57,6 +59,14 @@ const PAIEMENTS = [
 
 let http;
 
+/** Ces pages passent par react-query : un QueryClient neuf par test. */
+function renderPage(element) {
+  return render(
+    <QueryClientProvider client={makeQueryClient()}>{element}</QueryClientProvider>,
+  );
+}
+
+
 beforeEach(() => {
   http = installHttpMock();
   vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -75,7 +85,7 @@ describe('FacturesPage', () => {
   it('calcule les totaux et affiche le statut réel des paiements', async () => {
     mockPaiements();
 
-    render(<FacturesPage />);
+    renderPage(<FacturesPage />);
 
     await waitFor(() => expect(screen.getByText('Rose Adjovi')).toBeInTheDocument());
 
@@ -97,7 +107,7 @@ describe('FacturesPage', () => {
   it('filtre par recherche sur le nom du client', async () => {
     mockPaiements();
 
-    render(<FacturesPage />);
+    renderPage(<FacturesPage />);
 
     await waitFor(() => expect(screen.getByText('Rose Adjovi')).toBeInTheDocument());
 
@@ -112,7 +122,7 @@ describe('FacturesPage', () => {
   it('filtre par statut', async () => {
     mockPaiements();
 
-    render(<FacturesPage />);
+    renderPage(<FacturesPage />);
 
     await waitFor(() => expect(screen.getByText('Rose Adjovi')).toBeInTheDocument());
 
@@ -130,7 +140,7 @@ describe('TransactionsPage', () => {
   it('affiche les recettes et les lignes de transaction du contrat', async () => {
     mockPaiements();
 
-    render(<TransactionsPage />);
+    renderPage(<TransactionsPage />);
 
     await waitFor(() => expect(screen.getByText('Rose Adjovi')).toBeInTheDocument());
 
@@ -150,7 +160,7 @@ describe('TransactionsPage', () => {
   it('cherche dans la référence, le nom ou le motif', async () => {
     mockPaiements();
 
-    render(<TransactionsPage />);
+    renderPage(<TransactionsPage />);
 
     await waitFor(() => expect(screen.getByText('Rose Adjovi')).toBeInTheDocument());
 

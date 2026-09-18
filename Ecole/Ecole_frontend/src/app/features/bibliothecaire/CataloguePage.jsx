@@ -5,7 +5,9 @@
  * Données dynamiques via API /bibliothecaire/livres
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import { useApiQuery } from '@/shared/lib/api-client';
+import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
   BookOpen, Plus, Search, BookMarked, Book, BookX,
@@ -17,29 +19,21 @@ import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
-import { useApi } from '@/hooks/useApi';
-import logger from '@/shared/lib/logger';
 
 export default function CataloguePage() {
-  const { loading, error, get } = useApi();
-  const [ouvrages, setOuvrages] = useState([]);
   const [search, setSearch] = useState('');
   const [filterCategorie, setFilterCategorie] = useState('');
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await get('/bibliothecaire/livres');
-        const items = Array.isArray(res?.data?.data) ? res.data.data
-          : Array.isArray(res?.data) ? res.data
-          : Array.isArray(res) ? res
-          : [];
-        setOuvrages(items);
-      } catch (e) {
-        logger.error('Erreur chargement catalogue:', e);
-      }
-    })();
-  }, [get]);
+  // Le chargement passait par un `useState` doublé d'un `useEffect` de
+  // premier rendu, sans cache ni déduplication : deux composants montés
+  // ensemble lançaient deux requêtes, et un retour sur la page rechargeait
+  // tout (cf. audit P4.1). `unwrapList` traverse les trois formes
+  // d'enveloppe que renvoient les contrôleurs.
+  const requete = useApiQuery(['bibliothecaire-livres'], '/bibliothecaire/livres');
+
+  const ouvrages = useMemo(() => unwrapList(requete.data) ?? [], [requete.data]);
+  const loading = requete.isPending;
+  const error = requete.isError ? (requete.error?.message ?? 'Erreur de chargement') : null;
 
   const stats = useMemo(() => ({
     total: ouvrages.length,
