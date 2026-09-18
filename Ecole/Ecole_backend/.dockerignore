@@ -1,0 +1,31 @@
+# Sans ce fichier, `COPY . .` embarquait le `.env` local dans l'image — donc
+# les identifiants de base réels — en plus de 184 Mo de contexte inutile.
+
+.env
+.env.*
+!.env.example
+
+vendor/
+node_modules/
+
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/app/public/*
+bootstrap/cache/*
+
+tests/
+phpunit.xml
+.phpunit.result.cache
+
+.git/
+.github/
+.gitignore
+.idea/
+.vscode/
+
+*.md
+docker-compose*.yml
+Dockerfile
+.dockerignore
