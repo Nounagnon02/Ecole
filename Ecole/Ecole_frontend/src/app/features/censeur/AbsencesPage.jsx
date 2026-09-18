@@ -94,7 +94,7 @@ export default function AbsencesPage() {
           onClick={() => window.location.reload()}
           className="mt-4 inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors"
         >
-          Réessayer
+          {t('common.retry')}
         </button>
       </div>
     );
@@ -109,10 +109,10 @@ export default function AbsencesPage() {
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-4">
-        <StatsCard title="Total Absences" value={String(stats.total)} icon={Calendar} color="primary" />
-        <StatsCard title="Justifiées" value={String(stats.justifiees)} icon={CheckCircle} color="emerald" />
-        <StatsCard title="Non justifiées" value={String(stats.nonJustifiees)} icon={XCircle} color="red" />
-        <StatsCard title="Élèves concernés" value={String(new Set(absences.map((a) => a.eleve_id)).size)} icon={Users} color="sky" />
+        <StatsCard title={t('pages.censeur.absences.total_absences')} value={String(stats.total)} icon={Calendar} color="primary" />
+        <StatsCard title={t('pages.censeur.absences.justifiees')} value={String(stats.justifiees)} icon={CheckCircle} color="emerald" />
+        <StatsCard title={t('pages.censeur.absences.non_justifiees')} value={String(stats.nonJustifiees)} icon={XCircle} color="red" />
+        <StatsCard title={t('pages.censeur.absences.eleves_concernes')} value={String(new Set(absences.map((a) => a.eleve_id)).size)} icon={Users} color="sky" />
       </div>
 
       {/* Filtres */}
@@ -121,7 +121,7 @@ export default function AbsencesPage() {
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
             <Input
-              placeholder="Rechercher un élève..."
+              placeholder={t('common.search_student')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
@@ -131,12 +131,12 @@ export default function AbsencesPage() {
             <select
               value={filterStatut}
               onChange={(e) => setFilterStatut(e.target.value)}
-              aria-label="Filtrer par statut"
+              aria-label={t('common.filter_by_status')}
               className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
             >
-              <option value="">Toutes les absences</option>
-              <option value="justifiee">Justifiées</option>
-              <option value="non_justifiee">Non justifiées</option>
+              <option value="">{t('pages.censeur.absences.toutes_les_absences')}</option>
+              <option value="justifiee">{t('pages.censeur.absences.justifiees')}</option>
+              <option value="non_justifiee">{t('pages.censeur.absences.non_justifiees')}</option>
             </select>
           </div>
         </div>
@@ -148,20 +148,20 @@ export default function AbsencesPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-neutral-200 dark:border-neutral-700 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                <th scope="col" className="pb-3 pr-4">Élève</th>
-                <th scope="col" className="pb-3 pr-4">Classe</th>
-                <th scope="col" className="pb-3 pr-4">Date</th>
-                <th scope="col" className="pb-3 pr-4">Type</th>
-                <th scope="col" className="pb-3 pr-4">Justifiée</th>
-                <th scope="col" className="pb-3 pr-4">Motif</th>
-                <th scope="col" className="pb-3 text-right">Actions</th>
+                <th scope="col" className="pb-3 pr-4">{t('common.student')}</th>
+                <th scope="col" className="pb-3 pr-4">{t('common.class')}</th>
+                <th scope="col" className="pb-3 pr-4">{t('common.date')}</th>
+                <th scope="col" className="pb-3 pr-4">{t('common.type')}</th>
+                <th scope="col" className="pb-3 pr-4">{t('pages.censeur.absences.justifiee')}</th>
+                <th scope="col" className="pb-3 pr-4">{t('common.reason')}</th>
+                <th scope="col" className="pb-3 text-right">{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 && (
                 <tr>
                   <td colSpan={7} className="py-8 text-center text-sm text-neutral-500">
-                    Aucune absence trouvée
+                    {t('pages.censeur.absences.aucune_absence_trouvee')}
                   </td>
                 </tr>
               )}
@@ -188,16 +188,16 @@ export default function AbsencesPage() {
                   </td>
                   <td className="py-3 pr-4">
                     {a.justifiee ? (
-                      <Badge variant="primary" size="sm">Justifiée</Badge>
+                      <Badge variant="primary" size="sm">{t('pages.censeur.absences.justifiee')}</Badge>
                     ) : (
-                      <Badge variant="danger" size="sm">Non justifiée</Badge>
+                      <Badge variant="danger" size="sm">{t('pages.censeur.absences.non_justifiee')}</Badge>
                     )}
                   </td>
                   <td className="py-3 pr-4">
                     <span className="text-sm text-neutral-600 dark:text-neutral-400">{a.motif || '—'}</span>
                   </td>
                   <td className="py-3 text-right">
-                    <Button variant="ghost" size="sm" icon={<FileText />} title="Détails" />
+                    <Button variant="ghost" size="sm" icon={<FileText />} title={t('common.details')} />
                   </td>
                 </tr>
               ))}

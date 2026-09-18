@@ -51,8 +51,20 @@
       "pending": "Pending",
       "suspended": "Suspended",
       "paid": "Paid",
-      "unpaid": "Unpaid"
-    }
+      "unpaid": "Unpaid",
+      "in_progress": "In progress"
+    },
+    "details": "Details",
+    "finished": "Completed",
+    "filter_by_status": "Filter by status",
+    "all_statuses": "All statuses",
+    "search_student": "Search for a student...",
+    "student": "Student",
+    "class": "Class",
+    "date": "Date",
+    "type": "Type",
+    "reason": "Reason",
+    "average": "Average"
   },
   "auth": {
     "login": "Log in",
@@ -439,27 +451,82 @@
     "bibliothecaire": {
       "catalogue": {
         "title": "Catalog",
-        "subtitle": "Management of the library's books and resources"
+        "subtitle": "Management of the library's books and resources",
+        "ajouter_un_ouvrage": "Add a book",
+        "total_ouvrages": "Total Books",
+        "disponibles": "Available",
+        "empruntes": "Borrowed",
+        "categories": "Categories",
+        "rechercher_un_titre_ou_un_auteur": "Search for a title or an author...",
+        "aucun_ouvrage_trouve": "No book found",
+        "emprunter": "Borrow"
       },
       "emprunts": {
         "title": "Loans",
-        "subtitle": "Tracking of loans, returns and penalties"
+        "subtitle": "Tracking of loans, returns and penalties",
+        "nouvel_emprunt": "New loan",
+        "total_emprunts": "Total Loans",
+        "en_retard": "Overdue",
+        "penalites": "Penalties",
+        "rechercher_un_eleve_ou_un_ouvrage": "Search for a student or a book...",
+        "termine": "Completed",
+        "aucun_emprunt_trouve": "No loan found",
+        "marquer_retour": "Mark as returned"
       }
     },
     "censeur": {
       "absences": {
         "title": "Absences",
-        "subtitle": "Tracking and justification of absences"
+        "subtitle": "Tracking and justification of absences",
+        "total_absences": "Total Absences",
+        "justifiees": "Justified",
+        "non_justifiees": "Unjustified",
+        "eleves_concernes": "Students concerned",
+        "toutes_les_absences": "All absences",
+        "justifiee": "Justified",
+        "aucune_absence_trouvee": "No absence found",
+        "non_justifiee": "Unjustified"
       },
       "discipline": {
         "title": "Discipline",
-        "subtitle": "Management of incidents, sanctions and disciplinary trends"
+        "subtitle": "Management of incidents, sanctions and disciplinary trends",
+        "total_incidents": "Total Incidents",
+        "traites": "Handled",
+        "cas_graves": "Serious cases",
+        "tendances_du_mois": "Trends of the month",
+        "statistiques_non_disponibles": "Statistics not available",
+        "incidents_ce_mois": "Incidents this month",
+        "evolution_vs_mois_dernier": "Change vs last month",
+        "total_sanctions": "Total sanctions",
+        "total_absences": "Total absences",
+        "repartition_par_gravite": "Breakdown by severity",
+        "alertes_automatiques": "Automatic alerts",
+        "aucune_alerte_pour_le_moment": "No alerts at the moment",
+        "rechercher_un_incident": "Search for an incident...",
+        "filtrer_par_gravite": "Filter by severity",
+        "toutes_les_gravites": "All severities",
+        "faible": "Low",
+        "grave": "Serious",
+        "traitee": "Handled",
+        "nouvel_incident": "New incident",
+        "aucun_incident_trouve": "No incident found"
       }
     },
     "communications": {
       "communications": {
         "title": "Communications",
-        "subtitle": "Stay informed about school news"
+        "subtitle": "Stay informed about school news",
+        "nouvelle_publication": "New Publication",
+        "nouvelle_publication_2": "New publication",
+        "titre": "Title",
+        "titre_de_la_publication": "Publication title",
+        "contenu": "Content",
+        "que_souhaitez_vous_annoncer": "What would you like to announce?",
+        "categorie": "Category",
+        "publier": "Publish",
+        "aucune_communication_trouvee": "No communication found",
+        "epingle": "Pinned",
+        "partager": "Share"
       }
     },
     "comptable": {

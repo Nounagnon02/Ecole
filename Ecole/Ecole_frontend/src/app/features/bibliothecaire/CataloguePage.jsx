@@ -83,15 +83,15 @@ export default function CataloguePage() {
           <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.bibliothecaire.catalogue.title')}</h1>
           <p className="text-sm text-neutral-500">{t('pages.bibliothecaire.catalogue.subtitle')}</p>
         </div>
-        <Button size="sm" icon={<Plus />}>Ajouter un ouvrage</Button>
+        <Button size="sm" icon={<Plus />}>{t('pages.bibliothecaire.catalogue.ajouter_un_ouvrage')}</Button>
       </div>
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-4">
-        <StatsCard title="Total Ouvrages" value={String(stats.total)} icon={BookOpen} color="primary" />
-        <StatsCard title="Disponibles" value={String(stats.disponibles)} icon={Book} color="emerald" />
-        <StatsCard title="Empruntés" value={String(stats.empruntes)} icon={BookMarked} color="amber" />
-        <StatsCard title="Catégories" value={String(stats.categories)} icon={BookX} color="sky" />
+        <StatsCard title={t('pages.bibliothecaire.catalogue.total_ouvrages')} value={String(stats.total)} icon={BookOpen} color="primary" />
+        <StatsCard title={t('pages.bibliothecaire.catalogue.disponibles')} value={String(stats.disponibles)} icon={Book} color="emerald" />
+        <StatsCard title={t('pages.bibliothecaire.catalogue.empruntes')} value={String(stats.empruntes)} icon={BookMarked} color="amber" />
+        <StatsCard title={t('pages.bibliothecaire.catalogue.categories')} value={String(stats.categories)} icon={BookX} color="sky" />
       </div>
 
       {/* Filtres */}
@@ -100,7 +100,7 @@ export default function CataloguePage() {
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
             <Input
-              placeholder="Rechercher un titre ou un auteur..."
+              placeholder={t('pages.bibliothecaire.catalogue.rechercher_un_titre_ou_un_auteur')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
@@ -132,7 +132,7 @@ export default function CataloguePage() {
             <Card>
               <div className="text-center py-8 text-neutral-500">
                 <BookOpen className="mx-auto h-8 w-8 mb-2" />
-                <p className="text-sm">Aucun ouvrage trouvé</p>
+                <p className="text-sm">{t('pages.bibliothecaire.catalogue.aucun_ouvrage_trouve')}</p>
               </div>
             </Card>
           </div>
@@ -161,9 +161,9 @@ export default function CataloguePage() {
               {o.isbn && <span className="text-neutral-400">ISBN: {o.isbn.slice(-8)}</span>}
             </div>
             <div className="mt-3 pt-3 border-t border-neutral-100 dark:border-neutral-800 flex gap-2">
-              <Button variant="outline" size="sm" icon={<Eye />}>Détails</Button>
+              <Button variant="outline" size="sm" icon={<Eye />}>{t('common.details')}</Button>
               <Button variant="ghost" size="sm" disabled={!o.disponible}>
-                Emprunter
+                {t('pages.bibliothecaire.catalogue.emprunter')}
               </Button>
             </div>
           </Card>
