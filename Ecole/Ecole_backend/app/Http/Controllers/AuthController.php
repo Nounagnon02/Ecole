@@ -8,6 +8,7 @@ use App\Models\Enseignant;
 use App\Models\User;
 use App\Models\UserParent;
 use App\Support\Roles;
+use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -30,20 +31,9 @@ class AuthController extends Controller
      * part —, si bien que l'application mobile n'obtenait jamais de token et
      * recevait 401 sur toutes les routes protégées (cf. audit F2).
      */
-    public function connexion(Request $request)
+    public function connexion(LoginRequest $request)
     {
-        // Le contrat était ambigu : le champ s'appelait `email` mais acceptait
-        // aussi un identifiant (l'interface le libelle « Email ou identifiant »),
-        // et beaucoup de comptes n'ont pas d'adresse — la colonne est nullable.
-        // Les deux noms de champ sont désormais acceptés, l'un ou l'autre suffit.
-        $request->validate([
-            'email'       => 'required_without:identifiant|nullable|string',
-            'identifiant' => 'required_without:email|nullable|string',
-            'password'    => 'required|string',
-            'device_name' => 'nullable|string|max:255',
-        ]);
-
-        $login = $request->input('identifiant') ?: $request->input('email');
+        $login = $request->login();
 
         // Parenthèses explicites : sans le groupement, un `orWhere` se
         // combinerait mal avec toute condition ajoutée par la suite.
