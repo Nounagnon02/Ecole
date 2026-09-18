@@ -5,7 +5,9 @@
  * Données dynamiques via API /parent/enfants
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { useApiQuery } from '@/shared/lib/api-client';
+import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
   User, GraduationCap, BookOpen, TrendingUp, Calendar,
@@ -16,75 +18,57 @@ import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Avatar from '@/shared/components/ui/Avatar';
 import StatsCard from '@/shared/components/ui/StatsCard';
-import { useApi } from '@/hooks/useApi';
-import logger from '@/shared/lib/logger';
 
 export default function EnfantsPage() {
-  const { loading, error, get } = useApi();
-  const [enfants, setEnfants] = useState([]);
   const [selectedEnfant, setSelectedEnfant] = useState(null);
   const [activeTab, setActiveTab] = useState('notes');
-  const [notes, setNotes] = useState([]);
-  const [absences, setAbsences] = useState([]);
-  const [edt, setEdt] = useState({});
-  const [paiements, setPaiements] = useState([]);
+
+  // Les enfants rattachés au compte, puis le détail de celui consulté.
+  // `useApi()` exposait un `loading` et un `error` partagés par les cinq
+  // chargements : l'échec d'un détail d'appoint masquait l'état des autres
+  // (cf. audit P4.1).
+  const requeteEnfants = useApiQuery(['parent-enfants'], '/parent/enfants');
+
+  const enfants = useMemo(
+    () => (unwrapList(requeteEnfants.data) ?? []).map((e) => ({
+      ...e,
+      nom: e.nom || `${e.prenom} ${e.nom_famille || ''}`.trim() || e.user?.name || 'Enfant',
+      frais: e.frais || { total: 0, paye: 0 },
+      moyenne: e.moyenne ?? 0,
+      rang: e.rang ?? 0,
+      absences: e.absences ?? 0,
+    })),
+    [requeteEnfants.data],
+  );
+
+  const loading = requeteEnfants.isPending;
+  const error = requeteEnfants.isError
+    ? (requeteEnfants.error?.message ?? 'Erreur de chargement')
+    : null;
 
   useEffect(() => {
-    (async () => {
-      try {
-        const res = await get('/parent/enfants');
-        const items = Array.isArray(res?.data?.data) ? res.data.data
-          : Array.isArray(res?.data) ? res.data
-          : Array.isArray(res) ? res
-          : [];
-        setEnfants(items.map(e => ({
-          ...e,
-          nom: e.nom || `${e.prenom} ${e.nom_famille || ''}`.trim() || e.user?.name || 'Enfant',
-          frais: e.frais || { total: 0, paye: 0 },
-          moyenne: e.moyenne ?? 0,
-          rang: e.rang ?? 0,
-          absences: e.absences ?? 0
-        })));
-        if (items.length > 0 && !selectedEnfant) setSelectedEnfant(items[0]);
-      } catch (e) {
-        logger.error('Erreur chargement enfants:', e);
-      }
-    })();
-  }, [get]);
+    if (!selectedEnfant && enfants.length > 0) setSelectedEnfant(enfants[0]);
+  }, [enfants, selectedEnfant]);
 
-  useEffect(() => {
-    if (!selectedEnfant) return;
-    (async () => {
-      try {
-        const [notesRes, absRes, edtRes, payRes] = await Promise.allSettled([
-          get(`/parent/enfants/${selectedEnfant.id}/notes`),
-          get(`/parent/enfants/${selectedEnfant.id}/absences`),
-          get(`/parent/enfants/${selectedEnfant.id}/emploi-du-temps`),
-          get(`/parent/enfants/${selectedEnfant.id}/paiements`),
-        ]);
-        setNotes(notesRes.status === 'fulfilled'
-          ? (Array.isArray(notesRes.value?.data?.data) ? notesRes.value.data.data
-            : Array.isArray(notesRes.value?.data) ? notesRes.value.data
-            : Array.isArray(notesRes.value) ? notesRes.value : [])
-          : []);
-        setAbsences(absRes.status === 'fulfilled'
-          ? (Array.isArray(absRes.value?.data?.data) ? absRes.value.data.data
-            : Array.isArray(absRes.value?.data) ? absRes.value.data
-            : Array.isArray(absRes.value) ? absRes.value : [])
-          : []);
-        setEdt(edtRes.status === 'fulfilled'
-          ? (edtRes.value?.data?.data || edtRes.value?.data || edtRes.value || {})
-          : {});
-        setPaiements(payRes.status === 'fulfilled'
-          ? (Array.isArray(payRes.value?.data?.data) ? payRes.value.data.data
-            : Array.isArray(payRes.value?.data) ? payRes.value.data
-            : Array.isArray(payRes.value) ? payRes.value : [])
-          : []);
-      } catch (e) {
-        logger.error('Erreur chargement détails enfant:', e);
-      }
-    })();
-  }, [selectedEnfant, get]);
+  // Quatre détails indépendants, chacun avec sa clé et son état : un relevé
+  // d'absences indisponible ne doit pas vider les notes.
+  const idEnfant = selectedEnfant?.id;
+  const activeSiEnfant = { queryOptions: { enabled: !!idEnfant } };
+
+  const requeteNotes = useApiQuery(['enfant-notes', idEnfant], `/parent/enfants/${idEnfant}/notes`, activeSiEnfant);
+  const requeteAbsences = useApiQuery(['enfant-absences', idEnfant], `/parent/enfants/${idEnfant}/absences`, activeSiEnfant);
+  const requeteEdt = useApiQuery(['enfant-edt', idEnfant], `/parent/enfants/${idEnfant}/emploi-du-temps`, activeSiEnfant);
+  const requetePaiements = useApiQuery(['enfant-paiements', idEnfant], `/parent/enfants/${idEnfant}/paiements`, activeSiEnfant);
+
+  const notes = useMemo(() => unwrapList(requeteNotes.data) ?? [], [requeteNotes.data]);
+  const absences = useMemo(() => unwrapList(requeteAbsences.data) ?? [], [requeteAbsences.data]);
+  const paiements = useMemo(() => unwrapList(requetePaiements.data) ?? [], [requetePaiements.data]);
+
+  // L'emploi du temps est un objet indexé par jour, pas une liste.
+  const edt = useMemo(
+    () => requeteEdt.data?.data ?? requeteEdt.data ?? {},
+    [requeteEdt.data],
+  );
 
   if (loading && !selectedEnfant) {
     return (

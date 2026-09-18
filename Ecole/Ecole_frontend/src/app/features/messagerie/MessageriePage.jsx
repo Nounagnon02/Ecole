@@ -18,6 +18,8 @@
  */
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useApiQuery } from '@/shared/lib/api-client';
+import { useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import {
   Search, Send, Paperclip, Trash2, Star, MessageSquare, Users,
@@ -54,90 +56,110 @@ function mapConversations(items) {
 }
 
 export default function MessageriePage() {
-  const { loading, error, get, post, put } = useApi();
+  const { post, put } = useApi();
   // Nécessaire pour distinguer les messages envoyés de ceux reçus : l'API
   // renvoie l'identifiant de l'auteur dans `expediteur`.
   const currentUserId = useAuthStore((s) => s.user?.id);
-  const [conversations, setConversations] = useState([]);
   const [selectedConv, setSelectedConv] = useState(null);
-  const [messages, setMessages] = useState([]);
   const [search, setSearch] = useState('');
   const [messageText, setMessageText] = useState('');
   const [filter, setFilter] = useState('inbox');
-  const [loadingConv, setLoadingConv] = useState(false);
-  const [loadingMsg, setLoadingMsg] = useState(false);
   const [showContacts, setShowContacts] = useState(false);
-  const [contacts, setContacts] = useState([]);
-  const [loadingContacts, setLoadingContacts] = useState(false);
 
-  const refreshConversations = useCallback(async () => {
-    setLoadingConv(true);
-    try {
-      const res = await get('/messages/conversations');
-      const mapped = mapConversations(unwrapList(res?.data ?? res));
-      setConversations(mapped);
-      return mapped;
-    } catch (e) {
-      logger.error('Erreur chargement conversations:', e);
-      return [];
-    } finally {
-      setLoadingConv(false);
-    }
-  }, [get]);
+  const queryClient = useQueryClient();
 
-  // Chargement initial : la première conversation est sélectionnée — la
-  // version MAPPÉE (avec `id`/`name`), jamais la ligne brute de l'API.
+  // ─── Conversations ───────────────────────────────────────────
+  //
+  // La liste vivait dans un `useState` alimenté par un `useEffect`, avec un
+  // `refreshConversations` appelé à la main depuis trois endroits. react-query
+  // la tient : une clé, un cache, une invalidation (cf. audit P4.1).
+  const requeteConversations = useApiQuery(['messages', 'conversations'], '/messages/conversations');
+
+  const conversations = useMemo(
+    () => mapConversations(unwrapList(requeteConversations.data) ?? []),
+    [requeteConversations.data],
+  );
+  const loadingConv = requeteConversations.isPending;
+  const loading = requeteConversations.isPending;
+  const error = requeteConversations.isError
+    ? (requeteConversations.error?.message ?? 'Erreur de chargement')
+    : null;
+
+  const refreshConversations = useCallback(
+    () => queryClient.invalidateQueries({ queryKey: ['messages', 'conversations'] }),
+    [queryClient],
+  );
+
+  // Première conversation sélectionnée d'office — la version MAPPÉE (avec
+  // `id`/`name`), jamais la ligne brute de l'API.
   useEffect(() => {
-    (async () => {
-      const mapped = await refreshConversations();
-      if (mapped.length > 0) {
-        setSelectedConv((prev) => prev ?? mapped[0]);
-      }
-    })();
-  }, [refreshConversations]);
+    if (!selectedConv && conversations.length > 0) {
+      setSelectedConv(conversations[0]);
+    }
+  }, [conversations, selectedConv]);
 
-  // Chargement du fil, puis marquage lu et rafraîchissement des badges.
+  // ─── Fil de la conversation ──────────────────────────────────
+  //
+  // Requête dépendante : la clé porte la conversation, donc en changer change
+  // d'entrée de cache au lieu d'écraser la précédente.
+  const requeteFil = useApiQuery(
+    ['messages', 'conversation', selectedConv?.id],
+    `/messages/conversation/${selectedConv?.id}`,
+    { queryOptions: { enabled: !!selectedConv } },
+  );
+
+  const messages = useMemo(() => {
+    if (!selectedConv) return [];
+    return (unwrapList(requeteFil.data) ?? []).map((m) => ({
+      id: m.id,
+      from: String(m.expediteur) === String(currentUserId) ? 'me' : 'them',
+      text: m.contenu || '',
+      time: m.created_at || new Date().toISOString(),
+    }));
+  }, [requeteFil.data, selectedConv, currentUserId]);
+
+  const loadingMsg = !!selectedConv && requeteFil.isPending;
+
+  /** Ajoute un message au fil en cache, sans aller-retour. */
+  const appendMessage = useCallback((brut) => {
+    queryClient.setQueryData(['messages', 'conversation', selectedConv?.id], (ancien) => {
+      const liste = unwrapList(ancien) ?? [];
+      return { data: [...liste, brut] };
+    });
+  }, [queryClient, selectedConv]);
+
+  // À l'ouverture d'un fil, il est marqué lu côté serveur, et le badge
+  // correspondant descend à zéro dans le cache.
+  //
+  // Mise à jour directe plutôt qu'invalidation : recharger toute la liste pour
+  // un compteur la fait clignoter le temps de l'aller-retour, alors que la
+  // valeur est connue d'avance.
   useEffect(() => {
-    if (!selectedConv) {
-      setMessages([]);
-      return;
-    }
-    setLoadingMsg(true);
-    (async () => {
-      try {
-        const res = await get(`/messages/conversation/${selectedConv.id}`);
-        const items = unwrapList(res?.data ?? res);
-        setMessages(items.map((m) => ({
-          id: m.id,
-          from: String(m.expediteur) === String(currentUserId) ? 'me' : 'them',
-          text: m.contenu || '',
-          time: m.created_at || new Date().toISOString()
-        })));
-        // À l'ouverture, le fil est marqué lu : les badges non-lus doivent
-        // redescendre côté serveur et dans la liste.
-        put(`/messages/conversation/${selectedConv.id}/read`).catch(() => {});
-        refreshConversations().catch(() => {});
-      } catch (e) {
-        logger.error('Erreur chargement messages:', e);
-        setMessages([]);
-      } finally {
-        setLoadingMsg(false);
-      }
-    })();
-  }, [selectedConv, get, put, currentUserId, refreshConversations]);
+    if (!selectedConv || !requeteFil.isSuccess) return;
 
-  const openContacts = useCallback(async () => {
-    setShowContacts(true);
-    setLoadingContacts(true);
-    try {
-      const res = await get('/messages/contacts');
-      setContacts(unwrapList(res?.data ?? res));
-    } catch (e) {
-      logger.error('Erreur chargement contacts:', e);
-    } finally {
-      setLoadingContacts(false);
-    }
-  }, [get]);
+    put(`/messages/conversation/${selectedConv.id}/read`).catch(() => {});
+
+    queryClient.setQueryData(['messages', 'conversations'], (ancien) => {
+      const liste = unwrapList(ancien) ?? [];
+      return {
+        data: liste.map((c) =>
+          String(c.contact_id ?? c.id) === String(selectedConv.id) ? { ...c, non_lus: 0 } : c,
+        ),
+      };
+    });
+  }, [selectedConv, requeteFil.isSuccess, put, queryClient]);
+
+  // ─── Contacts ────────────────────────────────────────────────
+  //
+  // Chargés seulement quand le contacteur s'ouvre.
+  const requeteContacts = useApiQuery(['messages', 'contacts'], '/messages/contacts', {
+    queryOptions: { enabled: showContacts },
+  });
+
+  const contacts = useMemo(() => unwrapList(requeteContacts.data) ?? [], [requeteContacts.data]);
+  const loadingContacts = showContacts && requeteContacts.isPending;
+
+  const openContacts = useCallback(() => setShowContacts(true), []);
 
   const startConversation = useCallback((contact) => {
     setShowContacts(false);
@@ -151,11 +173,16 @@ export default function MessageriePage() {
       online: false,
       avatar: null,
     };
-    setConversations((prev) =>
-      prev.some((c) => c.id === contact.id) ? prev : [thread, ...prev]
-    );
+    // Conversation locale, pas encore connue du serveur : on la pose en tête
+    // du cache pour qu'elle apparaisse immédiatement dans la liste.
+    queryClient.setQueryData(['messages', 'conversations'], (ancien) => {
+      const liste = unwrapList(ancien) ?? [];
+      return liste.some((c) => String(c.contact_id ?? c.id) === String(contact.id))
+        ? ancien
+        : { data: [{ id: contact.id, contact_id: contact.id, contact_nom: thread.name, role: thread.role, dernier_message: '', non_lus: 0 }, ...liste] };
+    });
     setSelectedConv(thread);
-  }, []);
+  }, [queryClient]);
 
   const filtered = useMemo(() =>
     conversations.filter((c) =>
@@ -173,16 +200,15 @@ export default function MessageriePage() {
         contenu: text
       });
       const newMsg = res?.data?.data || res?.data || res;
-      setMessages((prev) => [...prev, {
+      appendMessage({
         id: newMsg.id || Date.now(),
-        from: 'me',
-        text,
-        time: newMsg.created_at || new Date().toISOString()
-      }]);
-      // Met à jour la liste des conversations localement, sans recharger.
-      setConversations((prev) => prev.map((c) =>
-        c.id === selectedConv.id ? { ...c, lastMessage: text, date: new Date().toISOString(), unread: 0 } : c
-      ));
+        expediteur: currentUserId,
+        contenu: text,
+        created_at: newMsg.created_at || new Date().toISOString(),
+      });
+      // Les badges et l'aperçu viennent du serveur : on invalide plutôt
+      // que de recopier l'état à la main.
+      refreshConversations();
     } catch (e) {
       logger.error('Erreur envoi message:', e);
       setMessageText(text);

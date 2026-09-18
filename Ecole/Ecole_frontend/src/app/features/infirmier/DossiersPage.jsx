@@ -5,7 +5,9 @@
  * Données via API /infirmier/dossiers-medicaux et /infirmier/vaccinations
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import { useApiQuery } from '@/shared/lib/api-client';
+import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
   FileText, Search, Plus, AlertCircle, Calendar,
@@ -18,42 +20,26 @@ import Avatar from '@/shared/components/ui/Avatar';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
-import { useApi } from '@/hooks/useApi';
-import logger from '@/shared/lib/logger';
 
 export default function DossiersPage() {
-  const { loading, error, get } = useApi();
-  const [dossiers, setDossiers] = useState([]);
-  const [vaccinations, setVaccinations] = useState([]);
   const [search, setSearch] = useState('');
   const [filterAllergie, setFilterAllergie] = useState('');
   const [tab, setTab] = useState('dossiers'); // 'dossiers' | 'vaccinations'
   const [expandedEleve, setExpandedEleve] = useState(null);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const [dosRes, vacRes] = await Promise.all([
-          get('/infirmier/dossiers-medicaux'),
-          get('/infirmier/vaccinations'),
-        ]);
+  // Deux requêtes indépendantes plutôt qu'un `Promise.all` derrière un
+  // `useApi()` à l'état partagé : l'échec de l'une ne dit plus rien de
+  // l'autre, et chacune a son entrée de cache (cf. audit P4.1).
+  const requeteDossiers = useApiQuery(['infirmier-dossiers'], '/infirmier/dossiers-medicaux');
+  const requeteVaccinations = useApiQuery(['infirmier-vaccinations'], '/infirmier/vaccinations');
 
-        const items = Array.isArray(dosRes?.data?.data) ? dosRes.data.data
-          : Array.isArray(dosRes?.data) ? dosRes.data
-          : Array.isArray(dosRes) ? dosRes
-          : [];
-        setDossiers(items);
+  const dossiers = useMemo(() => unwrapList(requeteDossiers.data) ?? [], [requeteDossiers.data]);
+  const vaccinations = useMemo(() => unwrapList(requeteVaccinations.data) ?? [], [requeteVaccinations.data]);
 
-        const vacItems = Array.isArray(vacRes?.data?.data) ? vacRes.data.data
-          : Array.isArray(vacRes?.data) ? vacRes.data
-          : Array.isArray(vacRes) ? vacRes
-          : [];
-        setVaccinations(vacItems);
-      } catch (e) {
-        logger.error('Erreur chargement dossiers:', e);
-      }
-    })();
-  }, [get]);
+  const loading = requeteDossiers.isPending;
+  const error = requeteDossiers.isError
+    ? (requeteDossiers.error?.message ?? 'Erreur de chargement')
+    : null;
 
   const stats = useMemo(() => {
     const now = new Date();

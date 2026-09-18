@@ -12,7 +12,7 @@
  * rattachée à la série de la classe (cascade classe -> série -> matière).
  */
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { GraduationCap, Trash2, Plus, Users, Loader2, RefreshCw, BookOpen } from 'lucide-react';
 import Card from '@/shared/components/ui/Card';
@@ -21,27 +21,28 @@ import Button from '@/shared/components/ui/Button';
 import Select from '@/shared/components/ui/Select';
 import { Tabs } from '@/shared/components/ui/Tabs';
 import { useApi } from '@/hooks/useApi';
+import { useApiQuery } from '@/shared/lib/api-client';
+import { unwrapList } from '@/shared/lib/unwrap';
+import { useQueryClient } from '@tanstack/react-query';
 
-/** Normalise { success, data } | tableau nu | tableau. */
-function unwrap(res) {
-  return Array.isArray(res?.data?.data) ? res.data.data
-    : Array.isArray(res?.data) ? res.data
-    : Array.isArray(res) ? res
-    : [];
+/**
+ * Normalise { success, data } | paginateur | tableau nu.
+ *
+ * `unwrap` prenait une réponse axios ; react-query livre déjà `response.data`,
+ * d'où ce nom distinct et l'appui sur le helper partagé.
+ */
+function unwrapPayload(payload) {
+  return unwrapList(payload);
 }
 
 const NOM_ENSEIGNANT = (e) =>
   [e?.user?.name, e?.user?.prenom].filter(Boolean).join(' ').trim() || 'Enseignant';
 
 export default function AffectationsPage() {
-  const { loading, error, clearError, get, post, delete: del } = useApi();
+  const { post, delete: del } = useApi();
 
-  const [teachers, setTeachers] = useState([]);
-  const [classes, setClasses] = useState([]);
-  const [mpTeachers, setMpTeachers] = useState([]);
 
   const [selectedTeacherId, setSelectedTeacherId] = useState('');
-  const [affectations, setAffectations] = useState([]);
 
   const [classeId, setClasseId] = useState('');
   const [serieId, setSerieId] = useState('');
@@ -50,47 +51,68 @@ export default function AffectationsPage() {
   const [saving, setSaving] = useState(false);
   const [actionError, setActionError] = useState(null);
 
-  const loadAll = useCallback(async () => {
-    clearError();
-    try {
-      const [tRes, cRes, mRes] = await Promise.all([
-        get('/enseignants'),
-        get('/classes', { params: { with_matieres: 1 } }),
-        get('/enseignants-mp'),
-      ]);
-      setTeachers(unwrap(tRes));
-      setClasses(unwrap(cRes));
-      setMpTeachers(unwrap(mRes));
-    } catch (e) {
-      /* l'erreur est déjà exposée par useApi */
-    }
-  }, [get, clearError]);
+  // Trois référentiels indépendants, puis les affectations de l'enseignant
+  // sélectionné. `useApi()` exposait un `loading` et un `error` partagés :
+  // l'échec de l'un masquait l'état des autres, et rien n'était mis en cache
+  // entre deux visites (cf. audit P4.1).
+  const requeteEnseignants = useApiQuery(['enseignants'], '/enseignants');
+  const requeteClasses = useApiQuery(['classes', 'avec-matieres'], '/classes', {
+    config: { params: { with_matieres: 1 } },
+  });
+  const requeteMp = useApiQuery(['enseignants-mp'], '/enseignants-mp');
 
-  useEffect(() => {
-    loadAll();
-  }, [loadAll]);
+  const teachers = useMemo(() => unwrapPayload(requeteEnseignants.data), [requeteEnseignants.data]);
+  const classes = useMemo(() => unwrapPayload(requeteClasses.data), [requeteClasses.data]);
+  const mpTeachers = useMemo(() => unwrapPayload(requeteMp.data), [requeteMp.data]);
+
+  const loading = requeteEnseignants.isPending || requeteClasses.isPending;
+  const error = requeteEnseignants.isError
+    ? (requeteEnseignants.error?.message ?? 'Erreur de chargement')
+    : requeteClasses.isError
+      ? (requeteClasses.error?.message ?? 'Erreur de chargement')
+      : null;
 
   const selectedTeacher = useMemo(
     () => teachers.find((t) => String(t.id) === String(selectedTeacherId)) || null,
     [teachers, selectedTeacherId]
   );
 
-  const loadAffectations = useCallback(async (teacherId) => {
-    try {
-      const res = await get(`/enseignants/${teacherId}/affectations`);
-      setAffectations(unwrap(res));
-    } catch (e) {
-      setAffectations([]);
-    }
-  }, [get]);
+  // Requête dépendante : `enabled` remplace le garde impératif, et la clé
+  // porte l'enseignant — changer de sélection change d'entrée de cache au
+  // lieu d'écraser la précédente.
+  const requeteAffectations = useApiQuery(
+    ['affectations', selectedTeacherId],
+    `/enseignants/${selectedTeacherId}/affectations`,
+    { queryOptions: { enabled: !!selectedTeacherId } },
+  );
 
-  useEffect(() => {
-    if (!selectedTeacherId) {
-      setAffectations([]);
-      return;
-    }
-    loadAffectations(selectedTeacherId);
-  }, [selectedTeacherId, loadAffectations]);
+  const affectations = useMemo(
+    () => (selectedTeacherId ? unwrapPayload(requeteAffectations.data) : []),
+    [requeteAffectations.data, selectedTeacherId],
+  );
+
+  const queryClient = useQueryClient();
+
+  /** Relance les trois référentiels — le bouton « Réessayer ». */
+  const loadAll = () => {
+    queryClient.invalidateQueries({ queryKey: ['enseignants'] });
+    queryClient.invalidateQueries({ queryKey: ['classes'] });
+    queryClient.invalidateQueries({ queryKey: ['enseignants-mp'] });
+  };
+
+  /**
+   * `clearError` vidait l'erreur partagée de `useApi()`. Chaque requête porte
+   * désormais la sienne ; seule l'erreur d'action reste à effacer.
+   */
+  const clearError = () => setActionError(null);
+
+  /**
+   * Les écritures renvoient la liste à jour : on la pose directement dans le
+   * cache plutôt que de relancer un aller-retour.
+   */
+  const setAffectations = (liste) => {
+    queryClient.setQueryData(['affectations', selectedTeacherId], { data: liste });
+  };
 
   /* Cascade classe -> série -> matière */
   const currentClasse = useMemo(
@@ -126,7 +148,7 @@ export default function AffectationsPage() {
           },
         ],
       });
-      setAffectations(unwrap(res));
+      setAffectations(unwrapPayload(res?.data));
       setClasseId('');
       setSerieId('');
       setMatiereId('');
@@ -143,7 +165,7 @@ export default function AffectationsPage() {
     setActionError(null);
     try {
       const res = await del(`/enseignants/${selectedTeacherId}/affectations/${affectationId}`);
-      setAffectations(unwrap(res));
+      setAffectations(unwrapPayload(res?.data));
     } catch (e) {
       clearError();
       setActionError(e.response?.data?.message || e.message || 'Le retrait a échoué');
@@ -157,10 +179,15 @@ export default function AffectationsPage() {
       const res = await post(`/enseignants-mp/${mpTeacherId}/affectation`, {
         classe_id: Number(newClassId),
       });
-      const updated = res?.data?.data ?? unwrap(res);
-      setMpTeachers((prev) =>
-        prev.map((t) => (String(t.id) === String(mpTeacherId) ? { ...t, ...updated } : t))
-      );
+      const updated = res?.data?.data ?? res?.data ?? {};
+      // Le serveur renvoie l'enseignant mis à jour : on l'insère dans le
+      // cache plutôt que de relancer un aller-retour (cf. audit P4.1).
+      queryClient.setQueryData(['enseignants-mp'], (ancien) => {
+        const liste = unwrapPayload(ancien);
+        return {
+          data: liste.map((t) => (String(t.id) === String(mpTeacherId) ? { ...t, ...updated } : t)),
+        };
+      });
     } catch (e) {
       clearError();
       setActionError(e.response?.data?.message || e.message || "L'affectation a été refusée");
