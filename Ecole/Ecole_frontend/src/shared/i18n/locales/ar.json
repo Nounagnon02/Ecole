@@ -51,8 +51,20 @@
       "pending": "قيد الانتظار",
       "suspended": "موقوف",
       "paid": "مدفوع",
-      "unpaid": "غير مدفوع"
-    }
+      "unpaid": "غير مدفوع",
+      "in_progress": "قيد التنفيذ"
+    },
+    "details": "التفاصيل",
+    "finished": "المنتهية",
+    "filter_by_status": "تصفية حسب الحالة",
+    "all_statuses": "جميع الحالات",
+    "search_student": "ابحث عن طالب...",
+    "student": "الطالب",
+    "class": "القسم",
+    "date": "التاريخ",
+    "type": "النوع",
+    "reason": "السبب",
+    "average": "المعدل"
   },
   "auth": {
     "login": "تسجيل الدخول",
@@ -439,27 +451,82 @@
     "bibliothecaire": {
       "catalogue": {
         "title": "الفهرس",
-        "subtitle": "إدارة كتب ومصادر المكتبة"
+        "subtitle": "إدارة كتب ومصادر المكتبة",
+        "ajouter_un_ouvrage": "إضافة كتاب",
+        "total_ouvrages": "مجموع الكتب",
+        "disponibles": "المتاحة",
+        "empruntes": "المستعارة",
+        "categories": "الفئات",
+        "rechercher_un_titre_ou_un_auteur": "ابحث عن عنوان أو مؤلف...",
+        "aucun_ouvrage_trouve": "لم يتم العثور على أي كتاب",
+        "emprunter": "استعارة"
       },
       "emprunts": {
         "title": "الاستعارات",
-        "subtitle": "متابعة الاستعارات والإرجاع والغرامات"
+        "subtitle": "متابعة الاستعارات والإرجاع والغرامات",
+        "nouvel_emprunt": "استعارة جديدة",
+        "total_emprunts": "مجموع الاستعارات",
+        "en_retard": "متأخرة",
+        "penalites": "الغرامات",
+        "rechercher_un_eleve_ou_un_ouvrage": "ابحث عن طالب أو كتاب...",
+        "termine": "منتهٍ",
+        "aucun_emprunt_trouve": "لم يتم العثور على أي استعارة",
+        "marquer_retour": "تسجيل الإرجاع"
       }
     },
     "censeur": {
       "absences": {
         "title": "الغيابات",
-        "subtitle": "متابعة الغيابات وتبريرها"
+        "subtitle": "متابعة الغيابات وتبريرها",
+        "total_absences": "مجموع الغيابات",
+        "justifiees": "المبررة",
+        "non_justifiees": "غير المبررة",
+        "eleves_concernes": "الطلاب المعنيون",
+        "toutes_les_absences": "جميع الغيابات",
+        "justifiee": "مبررة",
+        "aucune_absence_trouvee": "لم يتم العثور على أي غياب",
+        "non_justifiee": "غير مبررة"
       },
       "discipline": {
         "title": "الانضباط",
-        "subtitle": "إدارة الحوادث والعقوبات والاتجاهات التأديبية"
+        "subtitle": "إدارة الحوادث والعقوبات والاتجاهات التأديبية",
+        "total_incidents": "مجموع الحوادث",
+        "traites": "المعالجة",
+        "cas_graves": "الحالات الخطيرة",
+        "tendances_du_mois": "اتجاهات الشهر",
+        "statistiques_non_disponibles": "الإحصائيات غير متاحة",
+        "incidents_ce_mois": "حوادث هذا الشهر",
+        "evolution_vs_mois_dernier": "التغيّر مقارنة بالشهر الماضي",
+        "total_sanctions": "مجموع العقوبات",
+        "total_absences": "مجموع الغيابات",
+        "repartition_par_gravite": "التوزيع حسب الخطورة",
+        "alertes_automatiques": "تنبيهات تلقائية",
+        "aucune_alerte_pour_le_moment": "لا توجد تنبيهات حالياً",
+        "rechercher_un_incident": "ابحث عن حادثة...",
+        "filtrer_par_gravite": "تصفية حسب الخطورة",
+        "toutes_les_gravites": "جميع مستويات الخطورة",
+        "faible": "منخفضة",
+        "grave": "خطيرة",
+        "traitee": "تمت معالجتها",
+        "nouvel_incident": "حادثة جديدة",
+        "aucun_incident_trouve": "لم يتم العثور على أي حادثة"
       }
     },
     "communications": {
       "communications": {
         "title": "الإعلانات",
-        "subtitle": "ابقَ على اطلاع بأخبار المؤسسة"
+        "subtitle": "ابقَ على اطلاع بأخبار المؤسسة",
+        "nouvelle_publication": "منشور جديد",
+        "nouvelle_publication_2": "منشور جديد",
+        "titre": "العنوان",
+        "titre_de_la_publication": "عنوان المنشور",
+        "contenu": "المحتوى",
+        "que_souhaitez_vous_annoncer": "ماذا تودّ أن تعلن؟",
+        "categorie": "الفئة",
+        "publier": "نشر",
+        "aucune_communication_trouvee": "لم يتم العثور على أي إعلان",
+        "epingle": "مثبّت",
+        "partager": "مشاركة"
       }
     },
     "comptable": {

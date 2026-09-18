@@ -196,7 +196,7 @@ export default function CommunicationsPage() {
           onClick={() => window.location.reload()}
           className="mt-4 inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors"
         >
-          Réessayer
+          {t('common.retry')}
         </button>
       </div>
     );
@@ -210,21 +210,21 @@ export default function CommunicationsPage() {
           <p className="text-sm text-neutral-500">{t('pages.communications.communications.subtitle')}</p>
         </div>
         <Button size="sm" icon={<Plus />} onClick={toggleForm} aria-expanded={formOpen}>
-          Nouvelle Publication
+          {t('pages.communications.communications.nouvelle_publication')}
         </Button>
       </div>
 
       {/* Rédaction */}
       {formOpen && (
         <Card>
-          <form onSubmit={handleCreatePost} aria-label="Nouvelle publication" className="space-y-4">
+          <form onSubmit={handleCreatePost} aria-label={t('pages.communications.communications.nouvelle_publication_2')} className="space-y-4">
             <Input
-              label="Titre"
+              label={t('pages.communications.communications.titre')}
               name="titre"
               value={form.titre}
               onChange={handleField}
               error={fieldError('titre')}
-              placeholder="Titre de la publication"
+              placeholder={t('pages.communications.communications.titre_de_la_publication')}
             />
 
             <div className="space-y-1.5">
@@ -232,7 +232,7 @@ export default function CommunicationsPage() {
                 htmlFor="communication-contenu"
                 className="block text-sm font-medium text-[var(--text-primary)]"
               >
-                Contenu
+                {t('pages.communications.communications.contenu')}
               </label>
               <textarea
                 id="communication-contenu"
@@ -240,7 +240,7 @@ export default function CommunicationsPage() {
                 rows={4}
                 value={form.contenu}
                 onChange={handleField}
-                placeholder="Que souhaitez-vous annoncer ?"
+                placeholder={t('pages.communications.communications.que_souhaitez_vous_annoncer')}
                 aria-invalid={fieldError('contenu') ? 'true' : undefined}
                 className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface-raised)] p-3 text-sm text-[var(--text-primary)] outline-none focus-visible:border-[var(--accent)] focus-visible:ring-2 focus-visible:ring-[var(--accent-ring)]"
               />
@@ -256,7 +256,7 @@ export default function CommunicationsPage() {
                 htmlFor="communication-categorie"
                 className="block text-sm font-medium text-[var(--text-primary)]"
               >
-                Catégorie
+                {t('pages.communications.communications.categorie')}
               </label>
               <select
                 id="communication-categorie"
@@ -287,10 +287,10 @@ export default function CommunicationsPage() {
 
             <div className="flex items-center gap-2">
               <Button type="submit" size="sm" icon={<Send />} loading={submitting}>
-                Publier
+                {t('pages.communications.communications.publier')}
               </Button>
               <Button type="button" variant="ghost" size="sm" onClick={toggleForm}>
-                Annuler
+                {t('common.cancel')}
               </Button>
             </div>
           </form>
@@ -339,7 +339,7 @@ export default function CommunicationsPage() {
           <Card>
             <div className="text-center py-8 text-neutral-500">
               <MessageSquare className="mx-auto h-8 w-8 mb-2" />
-              <p className="text-sm">Aucune communication trouvée</p>
+              <p className="text-sm">{t('pages.communications.communications.aucune_communication_trouvee')}</p>
             </div>
           </Card>
         )}
@@ -353,7 +353,7 @@ export default function CommunicationsPage() {
               {post.pinned && (
                 <div className="mb-3 flex items-center gap-2 text-xs font-medium text-[var(--accent)]">
                   <Pin className="h-3 w-3" />
-                  Épinglé
+                  {t('pages.communications.communications.epingle')}
                 </div>
               )}
               <div className="flex items-start gap-4">
@@ -390,7 +390,7 @@ export default function CommunicationsPage() {
                     </button>
                     <button className="inline-flex items-center gap-1.5 hover:text-[var(--accent)] transition-colors">
                       <Share2 className="h-4 w-4" />
-                      Partager
+                      {t('pages.communications.communications.partager')}
                     </button>
                   </div>
                 </div>

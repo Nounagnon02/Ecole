@@ -51,8 +51,20 @@
       "pending": "En attente",
       "suspended": "Suspendu",
       "paid": "Payé",
-      "unpaid": "Impayé"
-    }
+      "unpaid": "Impayé",
+      "in_progress": "En cours"
+    },
+    "details": "Détails",
+    "finished": "Terminés",
+    "filter_by_status": "Filtrer par statut",
+    "all_statuses": "Tous les statuts",
+    "search_student": "Rechercher un élève...",
+    "student": "Élève",
+    "class": "Classe",
+    "date": "Date",
+    "type": "Type",
+    "reason": "Motif",
+    "average": "Moyenne"
   },
   "auth": {
     "login": "Connexion",
@@ -439,27 +451,82 @@
     "bibliothecaire": {
       "catalogue": {
         "title": "Catalogue",
-        "subtitle": "Gestion des ouvrages et ressources de la bibliothèque"
+        "subtitle": "Gestion des ouvrages et ressources de la bibliothèque",
+        "ajouter_un_ouvrage": "Ajouter un ouvrage",
+        "total_ouvrages": "Total Ouvrages",
+        "disponibles": "Disponibles",
+        "empruntes": "Empruntés",
+        "categories": "Catégories",
+        "rechercher_un_titre_ou_un_auteur": "Rechercher un titre ou un auteur...",
+        "aucun_ouvrage_trouve": "Aucun ouvrage trouvé",
+        "emprunter": "Emprunter"
       },
       "emprunts": {
         "title": "Emprunts",
-        "subtitle": "Suivi des emprunts, retours et pénalités"
+        "subtitle": "Suivi des emprunts, retours et pénalités",
+        "nouvel_emprunt": "Nouvel emprunt",
+        "total_emprunts": "Total Emprunts",
+        "en_retard": "En retard",
+        "penalites": "Pénalités",
+        "rechercher_un_eleve_ou_un_ouvrage": "Rechercher un élève ou un ouvrage...",
+        "termine": "Terminé",
+        "aucun_emprunt_trouve": "Aucun emprunt trouvé",
+        "marquer_retour": "Marquer retour"
       }
     },
     "censeur": {
       "absences": {
         "title": "Absences",
-        "subtitle": "Suivi et justification des absences"
+        "subtitle": "Suivi et justification des absences",
+        "total_absences": "Total Absences",
+        "justifiees": "Justifiées",
+        "non_justifiees": "Non justifiées",
+        "eleves_concernes": "Élèves concernés",
+        "toutes_les_absences": "Toutes les absences",
+        "justifiee": "Justifiée",
+        "aucune_absence_trouvee": "Aucune absence trouvée",
+        "non_justifiee": "Non justifiée"
       },
       "discipline": {
         "title": "Discipline",
-        "subtitle": "Gestion des incidents, sanctions et tendances disciplinaires"
+        "subtitle": "Gestion des incidents, sanctions et tendances disciplinaires",
+        "total_incidents": "Total Incidents",
+        "traites": "Traités",
+        "cas_graves": "Cas graves",
+        "tendances_du_mois": "Tendances du mois",
+        "statistiques_non_disponibles": "Statistiques non disponibles",
+        "incidents_ce_mois": "Incidents ce mois",
+        "evolution_vs_mois_dernier": "Évolution vs mois dernier",
+        "total_sanctions": "Total sanctions",
+        "total_absences": "Total absences",
+        "repartition_par_gravite": "Répartition par gravité",
+        "alertes_automatiques": "Alertes automatiques",
+        "aucune_alerte_pour_le_moment": "Aucune alerte pour le moment",
+        "rechercher_un_incident": "Rechercher un incident...",
+        "filtrer_par_gravite": "Filtrer par gravité",
+        "toutes_les_gravites": "Toutes les gravités",
+        "faible": "Faible",
+        "grave": "Grave",
+        "traitee": "Traitée",
+        "nouvel_incident": "Nouvel incident",
+        "aucun_incident_trouve": "Aucun incident trouvé"
       }
     },
     "communications": {
       "communications": {
         "title": "Communications",
-        "subtitle": "Restez informé des actualités de l'établissement"
+        "subtitle": "Restez informé des actualités de l'établissement",
+        "nouvelle_publication": "Nouvelle Publication",
+        "nouvelle_publication_2": "Nouvelle publication",
+        "titre": "Titre",
+        "titre_de_la_publication": "Titre de la publication",
+        "contenu": "Contenu",
+        "que_souhaitez_vous_annoncer": "Que souhaitez-vous annoncer ?",
+        "categorie": "Catégorie",
+        "publier": "Publier",
+        "aucune_communication_trouvee": "Aucune communication trouvée",
+        "epingle": "Épinglé",
+        "partager": "Partager"
       }
     },
     "comptable": {
