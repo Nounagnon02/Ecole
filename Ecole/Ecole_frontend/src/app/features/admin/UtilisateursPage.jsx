@@ -7,6 +7,7 @@
 
 import { useState, useMemo } from 'react';
 import { useApiQuery } from '@/shared/lib/api-client';
+import { useTranslation } from '@/shared/i18n';
 import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
@@ -41,6 +42,7 @@ const ROLE_ICONS = {
 };
 
 export default function UtilisateursPage() {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [filterRole, setFilterRole] = useState('');
   const [filterStatut, setFilterStatut] = useState('');
@@ -105,8 +107,8 @@ export default function UtilisateursPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Utilisateurs</h1>
-          <p className="text-sm text-neutral-500">Gestion des comptes et accès</p>
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.admin.utilisateurs.title')}</h1>
+          <p className="text-sm text-neutral-500">{t('pages.admin.utilisateurs.subtitle')}</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" icon={<Ban />}>Désactiver</Button>

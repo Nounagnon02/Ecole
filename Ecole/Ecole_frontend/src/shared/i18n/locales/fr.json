@@ -398,5 +398,41 @@
         "etudiants": "Étudiants"
       }
     }
+  },
+  "pages": {
+    "admin": {
+      "ecoles": {
+        "title": "Écoles",
+        "subtitle": "Gestion des établissements scolaires"
+      },
+      "plans": {
+        "title": "Plans d'abonnement",
+        "subtitle": "Gérez les offres et tarifs"
+      },
+      "modules": {
+        "title": "Modules",
+        "subtitle": "Marketplace de fonctionnalités"
+      },
+      "utilisateurs": {
+        "title": "Utilisateurs",
+        "subtitle": "Gestion des comptes et accès"
+      },
+      "billing": {
+        "title": "Facturation",
+        "subtitle": "Transactions, abonnements et revenus"
+      },
+      "statistiques": {
+        "title": "Statistiques",
+        "subtitle": "Indicateurs clés et analytics du système"
+      },
+      "white_label": {
+        "title": "White-Label",
+        "subtitle": "Personnalisation de la marque par établissement"
+      },
+      "configuration": {
+        "title": "Configuration",
+        "subtitle": "Paramètres globaux du système"
+      }
+    }
   }
 }

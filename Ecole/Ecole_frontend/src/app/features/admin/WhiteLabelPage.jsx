@@ -7,6 +7,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { api, useApiQuery } from '@/shared/lib/api-client';
+import { useTranslation } from '@/shared/i18n';
 import { unwrapList } from '@/shared/lib/unwrap';
 import {
   Palette, Image, Globe, Monitor, Save,
@@ -27,6 +28,7 @@ const PRESET_COLORS = [
 ];
 
 export default function WhiteLabelPage() {
+  const { t } = useTranslation();
   const [selectedTenant, setSelectedTenant] = useState('');
   const [primaryColor, setPrimaryColor] = useState('#4F46E5');
   const [secondaryColor, setSecondaryColor] = useState('#7C3AED');
@@ -130,8 +132,8 @@ export default function WhiteLabelPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">White-Label</h1>
-          <p className="text-sm text-neutral-500 mt-1">Personnalisation de la marque par établissement</p>
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.admin.white_label.title')}</h1>
+          <p className="text-sm text-neutral-500 mt-1">{t('pages.admin.white_label.subtitle')}</p>
         </div>
         <Button onClick={handleSave} disabled={saving || !selectedTenant}>
           {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}

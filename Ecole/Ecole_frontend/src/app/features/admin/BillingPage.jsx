@@ -7,6 +7,7 @@
 
 import { useState, useMemo } from 'react';
 import { useApiQuery } from '@/shared/lib/api-client';
+import { useTranslation } from '@/shared/i18n';
 import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
@@ -31,6 +32,7 @@ const STATUS_BADGE = {
 };
 
 export default function BillingPage() {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
 
   // Deux requêtes indépendantes, et c'est le point.
@@ -88,8 +90,8 @@ export default function BillingPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Facturation</h1>
-        <p className="text-sm text-neutral-500 mt-1">Transactions, abonnements et revenus</p>
+        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.admin.billing.title')}</h1>
+        <p className="text-sm text-neutral-500 mt-1">{t('pages.admin.billing.subtitle')}</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
