@@ -6,6 +6,8 @@
  */
 
 import { useState, useEffect, useMemo } from 'react';
+import { useApiQuery } from '@/shared/lib/api-client';
+import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
   BookOpen, Users, Search, GraduationCap,
@@ -17,48 +19,39 @@ import Badge from '@/shared/components/ui/Badge';
 import Avatar from '@/shared/components/ui/Avatar';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
-import { useApi } from '@/hooks/useApi';
-import logger from '@/shared/lib/logger';
 
 export default function ClassesPage() {
-  const { loading, error, get } = useApi();
-  const [classes, setClasses] = useState([]);
-  const [elevesByClasse, setElevesByClasse] = useState({});
   const [selectedClasse, setSelectedClasse] = useState(null);
   const [search, setSearch] = useState('');
   const [viewMode, setViewMode] = useState('liste');
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await get('/enseignant/classes');
-        const items = Array.isArray(res?.data?.data) ? res.data.data
-          : Array.isArray(res?.data) ? res.data
-          : Array.isArray(res) ? res
-          : [];
-        setClasses(items);
-        if (items.length > 0 && !selectedClasse) setSelectedClasse(items[0]);
-      } catch (e) {
-        logger.error('Erreur chargement classes:', e);
-      }
-    })();
-  }, [get, selectedClasse]);
+  // Les classes de l'enseignant, puis les élèves de celle qu'il consulte.
+  // `useApi()` exposait un `loading` et un `error` partagés par les deux
+  // chargements, et rien n'était mis en cache (cf. audit P4.1).
+  const requeteClasses = useApiQuery(['enseignant-classes'], '/enseignant/classes');
+
+  const classes = useMemo(() => unwrapList(requeteClasses.data) ?? [], [requeteClasses.data]);
+  const loading = requeteClasses.isPending;
+  const error = requeteClasses.isError
+    ? (requeteClasses.error?.message ?? 'Erreur de chargement')
+    : null;
 
   useEffect(() => {
-    if (!selectedClasse) return;
-    (async () => {
-      try {
-        const res = await get(`/classes/${selectedClasse.id}/eleves`);
-        const items = Array.isArray(res?.data?.data) ? res.data.data
-          : Array.isArray(res?.data) ? res.data
-          : Array.isArray(res) ? res
-          : [];
-        setElevesByClasse(prev => ({ ...prev, [selectedClasse.id]: items }));
-      } catch (e) {
-        logger.error('Erreur chargement élèves:', e);
-      }
-    })();
-  }, [selectedClasse, get]);
+    if (!selectedClasse && classes.length > 0) setSelectedClasse(classes[0]);
+  }, [classes, selectedClasse]);
+
+  // Requête dépendante : la clé porte la classe, donc en changer change
+  // d'entrée de cache au lieu d'écraser la précédente.
+  const requeteEleves = useApiQuery(
+    ['classe-eleves', selectedClasse?.id],
+    `/classes/${selectedClasse?.id}/eleves`,
+    { queryOptions: { enabled: !!selectedClasse } },
+  );
+
+  const elevesByClasse = useMemo(
+    () => (selectedClasse ? { [selectedClasse.id]: unwrapList(requeteEleves.data) ?? [] } : {}),
+    [requeteEleves.data, selectedClasse],
+  );
 
   const eleves = useMemo(() => elevesByClasse[selectedClasse?.id] || [], [elevesByClasse, selectedClasse]);
 

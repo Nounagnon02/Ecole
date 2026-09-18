@@ -5,7 +5,9 @@
  * Données dynamiques via API /surveillant/absences
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import { useApiQuery } from '@/shared/lib/api-client';
+import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
   Users, Clock, CheckCircle, XCircle,
@@ -18,86 +20,63 @@ import Avatar from '@/shared/components/ui/Avatar';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
-import { useApi } from '@/hooks/useApi';
-import logger from '@/shared/lib/logger';
 
 export default function PresencesPage() {
-  const { loading, error, get } = useApi();
-  const [presences, setPresences] = useState([]);
-  const [eleves, setEleves] = useState([]);
   const [search, setSearch] = useState('');
   const [filterClasse, setFilterClasse] = useState('');
   const [filterStatut, setFilterStatut] = useState('');
   const today = new Date();
 
-  useEffect(() => {
-    (async () => {
-      try {
-        // Fetch absences for status, and all students
-        const [absRes, eleveRes] = await Promise.allSettled([
-          get('/surveillant/absences'),
-          get('/eleves'),
-        ]);
+  // Deux requêtes indépendantes remplacent le `Promise.allSettled` derrière un
+  // `useApi()` à l'état partagé : chacune porte son erreur, et le roster
+  // d'élèves reste en cache entre les visites (cf. audit P4.1).
+  const requeteAbsences = useApiQuery(['surveillant-absences'], '/surveillant/absences');
+  const requeteEleves = useApiQuery(['eleves'], '/eleves');
 
-        const absences = absRes.value
-          ? (Array.isArray(absRes.value?.data?.data) ? absRes.value.data.data
-            : Array.isArray(absRes.value?.data) ? absRes.value.data
-            : Array.isArray(absRes.value) ? absRes.value
-            : [])
-          : [];
+  const loading = requeteAbsences.isPending;
+  const error = requeteAbsences.isError
+    ? (requeteAbsences.error?.message ?? 'Erreur de chargement')
+    : null;
 
-        const elevesList = eleveRes.value
-          ? (Array.isArray(eleveRes.value?.data?.data) ? eleveRes.value.data.data
-            : Array.isArray(eleveRes.value?.data) ? eleveRes.value.data
-            : Array.isArray(eleveRes.value) ? eleveRes.value
-            : [])
-          : [];
+  // La liste de présence est dérivée, pas stockée : les absences du jour
+  // reportées sur le roster. Sans roster, on retombe sur les seules absences.
+  const presences = useMemo(() => {
+    const absences = unwrapList(requeteAbsences.data) ?? [];
+    const elevesList = unwrapList(requeteEleves.data) ?? [];
 
-        setEleves(elevesList);
+    const todayAbsences = absences.filter((a) => {
+      if (!a.date) return false;
+      return new Date(a.date).toDateString() === today.toDateString();
+    });
 
-        // Build presence list: students with today's absence status
-        const todayStr = today.toISOString().split('T')[0];
-        const todayAbsences = absences.filter((a) => {
-          if (!a.date) return false;
-          const d = new Date(a.date);
-          return d.toDateString() === today.toDateString();
-        });
+    const absenceMap = new Map();
+    todayAbsences.forEach((a) => {
+      absenceMap.set(a.eleve_id || a.eleve?.id, a);
+    });
 
-        const absenceMap = new Map();
-        todayAbsences.forEach((a) => {
-          absenceMap.set(a.eleve_id || a.eleve?.id, a);
-        });
+    if (elevesList.length > 0) {
+      return elevesList.map((e) => {
+        const abs = absenceMap.get(e.id);
+        return {
+          id: e.id,
+          nom: `${e.prenom || ''} ${e.nom || ''}`.trim(),
+          classe: e.classe?.nom_classe || e.classe_id || '—',
+          statut: abs ? (abs.type === 'retard' ? 'retard' : 'absent') : 'present',
+          heureArrivee: '—',
+          motif: abs?.motif || '',
+        };
+      });
+    }
 
-        // If we have student list, combine with absences
-        if (elevesList.length > 0) {
-          const combined = elevesList.map((e) => {
-            const abs = absenceMap.get(e.id);
-            return {
-              id: e.id,
-              nom: `${e.prenom || ''} ${e.nom || ''}`.trim(),
-              classe: e.classe?.nom_classe || e.classe_id || '—',
-              statut: abs ? (abs.type === 'retard' ? 'retard' : 'absent') : 'present',
-              heureArrivee: '—',
-              motif: abs?.motif || ''
-            };
-          });
-          setPresences(combined);
-        } else {
-          // Fallback: just show the absences
-          setPresences(absences.map((a) => ({
-            id: a.id,
-            nom: `${a.eleve?.prenom || ''} ${a.eleve?.nom || ''}`.trim() || 'Élève',
-            classe: a.eleve?.classe?.nom_classe || '—',
-            statut: a.type === 'retard' ? 'retard' : 'absent',
-            heureArrivee: '—',
-            motif: a.motif || ''
-          })));
-        }
-      } catch (e) {
-        logger.error('Erreur chargement présences:', e);
-      }
-    })();
-  }, [get]);
+    return absences.map((a) => ({
+      id: a.id,
+      nom: `${a.eleve?.prenom || ''} ${a.eleve?.nom || ''}`.trim() || 'Élève',
+      classe: a.eleve?.classe?.nom_classe || '—',
+      statut: a.type === 'retard' ? 'retard' : 'absent',
+      heureArrivee: '—',
+      motif: a.motif || '',
+    }));
+  }, [requeteAbsences.data, requeteEleves.data]);
 
   const stats = useMemo(() => ({
     total: presences.length,

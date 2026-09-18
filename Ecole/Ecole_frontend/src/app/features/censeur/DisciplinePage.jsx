@@ -5,7 +5,9 @@
  * Données via API /surveillant/incidents et /surveillant/statistiques
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import { useApiQuery } from '@/shared/lib/api-client';
+import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
   Scale, AlertTriangle, Search, Plus,
@@ -18,8 +20,6 @@ import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
-import { useApi } from '@/hooks/useApi';
-import logger from '@/shared/lib/logger';
 
 const getGraviteVariant = (g) => {
   switch (g) {
@@ -54,41 +54,36 @@ const ALERT_COLORS = {
 };
 
 export default function DisciplinePage() {
-  const { loading, error, get } = useApi();
-  const [incidents, setIncidents] = useState([]);
-  const [stats, setStats] = useState(null);
-  const [statsLoading, setStatsLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filterGravite, setFilterGravite] = useState('');
   const [filterStatut, setFilterStatut] = useState('');
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const [incRes, statsRes] = await Promise.all([
-          get('/surveillant/incidents'),
-          get('/surveillant/statistiques'),
-        ]);
+  // Deux requêtes indépendantes plutôt qu'un `Promise.all` derrière un
+  // `useApi()` à l'état partagé : l'échec de l'une ne dit plus rien de
+  // l'autre, et chacune a son entrée de cache (cf. audit P4.1).
+  const requeteIncidents = useApiQuery(['surveillant-incidents'], '/surveillant/incidents');
+  const requeteStats = useApiQuery(['surveillant-statistiques'], '/surveillant/statistiques');
 
-        const items = Array.isArray(incRes?.data?.data) ? incRes.data.data
-          : Array.isArray(incRes?.data) ? incRes.data
-          : Array.isArray(incRes) ? incRes
-          : [];
-        setIncidents(items.map((inc) => ({
-          ...inc,
-          type: inc.description || inc.type || 'Incident',
-          statut: inc.statut || 'en_cours',
-          rapportePar: '--'
-        })));
+  // La projection d'origine est conservée : la page affiche `type`, que le
+  // serveur ne renvoie pas toujours — il faut retomber sur la description.
+  const incidents = useMemo(
+    () => (unwrapList(requeteIncidents.data) ?? []).map((inc) => ({
+      ...inc,
+      type: inc.description || inc.type || 'Incident',
+      statut: inc.statut || 'en_cours',
+      rapportePar: '--',
+    })),
+    [requeteIncidents.data],
+  );
+  // `/surveillant/statistiques` renvoie un objet, pas une liste : pas de
+  // `unwrapList` ici, seulement le déballage de l'enveloppe.
+  const stats = requeteStats.data?.data ?? requeteStats.data ?? null;
+  const statsLoading = requeteStats.isPending;
 
-        setStats(statsRes?.data?.data ?? null);
-      } catch (e) {
-        logger.error('Erreur chargement discipline:', e);
-      } finally {
-        setStatsLoading(false);
-      }
-    })();
-  }, [get]);
+  const loading = requeteIncidents.isPending;
+  const error = requeteIncidents.isError
+    ? (requeteIncidents.error?.message ?? 'Erreur de chargement')
+    : null;
 
   const incidentStats = useMemo(() => ({
     total: incidents.length,

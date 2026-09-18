@@ -5,21 +5,23 @@
  * Données dynamiques via API /api/communications
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import { useApiQuery } from '@/shared/lib/api-client';
+import { unwrapList } from '@/shared/lib/unwrap';
+import { useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import {
   MessageSquare, Send, Bell, Megaphone, Calendar,
-  Pin, Clock, Eye, Heart, MessageCircle, Share2,
-  Plus, Filter, Loader2, AlertCircle,
+  Pin, Heart, MessageCircle, Share2,
+  Plus, Loader2, AlertCircle,
 } from 'lucide-react';
-import { formatDate, formatRelativeTime } from '@/shared/lib/utils';
+import { formatRelativeTime } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Avatar from '@/shared/components/ui/Avatar';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import { useApi } from '@/hooks/useApi';
-import logger from '@/shared/lib/logger';
 
 const CATEGORY_CONFIG = {
   all: { label: 'Tout', icon: MessageSquare },
@@ -69,42 +71,47 @@ function normalizePost(p) {
 }
 
 export default function CommunicationsPage() {
-  const { loading, error, get } = useApi();
   // Deuxième instance, volontairement : `useApi` porte un `loading` et un
   // `error` uniques. Partagée avec la lecture, une écriture qui échoue
   // remplacerait tout le fil par l'écran d'erreur — un champ mal rempli
   // ferait donc disparaître les annonces déjà affichées.
   const { post, loading: submitting } = useApi();
-  const [posts, setPosts] = useState([]);
   const [activeCategory, setActiveCategory] = useState('all');
-  const [loadingPosts, setLoadingPosts] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
   const [fieldErrors, setFieldErrors] = useState({});
   const [submitError, setSubmitError] = useState(null);
 
-  useEffect(() => {
-    const loadPosts = async () => {
-      setLoadingPosts(true);
-      try {
-        // GET /api/communications — le serveur ne renvoie que les annonces qui
-        // s'adressent au lecteur (école, cycle, classe ou rôle) et qui sont dans
-        // leur fenêtre de validité. Le tri épinglé-puis-récent vient aussi du
-        // serveur ; le tri local ci-dessous n'est qu'un filet.
-        const res = await get('/communications');
-        const items = Array.isArray(res?.data?.data) ? res.data.data
-          : Array.isArray(res?.data) ? res.data
-          : Array.isArray(res) ? res
-          : [];
-        setPosts(items.map(normalizePost));
-      } catch (e) {
-        logger.error('Erreur chargement communications:', e);
-      } finally {
-        setLoadingPosts(false);
-      }
-    };
-    loadPosts();
-  }, [get]);
+  // GET /api/communications — le serveur ne renvoie que les annonces qui
+  // s'adressent au lecteur (école, cycle, classe ou rôle) et qui sont dans
+  // leur fenêtre de validité. Le tri épinglé-puis-récent vient aussi du
+  // serveur ; le tri local plus bas n'est qu'un filet.
+  //
+  // Le chargement passait par un `useState` doublé d'un `useEffect`, sans
+  // cache ni déduplication (cf. audit P4.1).
+  const requete = useApiQuery(['communications'], '/communications');
+  const queryClient = useQueryClient();
+
+  const posts = useMemo(
+    () => (unwrapList(requete.data) ?? []).map(normalizePost),
+    [requete.data],
+  );
+  const loadingPosts = requete.isPending;
+  const loading = requete.isPending;
+  const error = requete.isError ? (requete.error?.message ?? 'Erreur de chargement') : null;
+
+  /**
+   * Insérer l'annonce créée en tête du cache, sans recharger le fil.
+   *
+   * Le serveur renvoie l'objet créé ; le fil n'a pas besoin d'un aller-retour
+   * pour l'afficher.
+   */
+  const prependPost = (brut) => {
+    queryClient.setQueryData(['communications'], (ancien) => {
+      const liste = unwrapList(ancien) ?? [];
+      return { data: [brut, ...liste] };
+    });
+  };
 
   const filtered = useMemo(() =>
     activeCategory === 'all' ? posts : posts.filter((p) => p.category === activeCategory),
@@ -158,7 +165,7 @@ export default function CommunicationsPage() {
       // recharger le fil, mais normalisée comme les autres.
       const created = res?.data?.data ?? res?.data ?? null;
       if (created && typeof created === 'object' && !Array.isArray(created)) {
-        setPosts((prev) => [normalizePost(created), ...prev]);
+        prependPost(created);
       }
       setForm(EMPTY_FORM);
       setFormOpen(false);

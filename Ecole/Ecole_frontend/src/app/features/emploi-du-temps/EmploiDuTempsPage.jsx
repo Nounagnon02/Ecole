@@ -5,18 +5,18 @@
  * Données dynamiques via API /api/emploi-du-temps
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import { useApiQuery } from '@/shared/lib/api-client';
+import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
   Clock, ChevronLeft, ChevronRight, Filter,
   MapPin, User, Download, Plus, Loader2
 } from 'lucide-react';
 import { cn } from '@/shared/lib/utils';
-import logger from '@/shared/lib/logger';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
-import { useApi } from '@/hooks/useApi';
 
 /* ─── Jours et créneaux ───────────────────────────────────────────── */
 const JOURS = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
@@ -34,54 +34,50 @@ const CRENEAUX = [
 ];
 
 export default function EmploiDuTempsPage() {
-  const { loading, error, get } = useApi();
-  const [edt, setEdt] = useState({});
   const [semaine, setSemaine] = useState(0);
   const [filterMatiere, setFilterMatiere] = useState('Toutes');
   const [filterClasse, setFilterClasse] = useState('Toutes');
   const [filterEnseignant, setFilterEnseignant] = useState('Toutes');
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await get('/emploi-du-temps');
-        const raw = res?.data?.data || res?.data || res || [];
-        const items = Array.isArray(raw) ? raw : [];
+  // Le chargement passait par un `useState` doublé d'un `useEffect`, sans
+  // cache ni déduplication (cf. audit P4.1). La grille est dérivée de la
+  // réponse, pas stockée à côté d'elle.
+  const requete = useApiQuery(['emploi-du-temps'], '/emploi-du-temps');
+  const loading = requete.isPending;
+  const error = requete.isError ? (requete.error?.message ?? 'Erreur de chargement') : null;
 
-        // Construire la structure EDT par jour et créneau
-        const structure = {};
-        JOURS.forEach(j => { structure[j] = []; });
+  const edt = useMemo(() => {
+    const items = unwrapList(requete.data) ?? [];
 
-        items.forEach(cours => {
-          const jour = (cours.jour || cours.jour_semaine || '').toLowerCase();
-          if (!structure[jour]) structure[jour] = [];
-          structure[jour].push({
-            ...cours,
-            matiere: typeof cours.matiere === 'object' ? cours.matiere?.nom : (cours.matiere || ''),
-            professeur: typeof cours.enseignant === 'object'
-              ? (cours.enseignant?.user?.name || cours.enseignant?.specialite || '')
-              : (cours.enseignant_nom || cours.professeur || ''),
-            salle: cours.salle || '',
-            groupe: typeof cours.classe === 'object' ? cours.classe?.nom_classe : (cours.classe_nom || cours.groupe || ''),
-          });
-        });
+    // Construire la structure EDT par jour et créneau
+    const structure = {};
+    JOURS.forEach(j => { structure[j] = []; });
 
-        // Trier par heure de début
-        Object.keys(structure).forEach(j => {
-          structure[j].sort((a, b) => {
-            const ha = (a.heure_debut || '00:00').split(':')[0];
-            const hb = (b.heure_debut || '00:00').split(':')[0];
-            return parseInt(ha) - parseInt(hb);
-          });
-        });
+    items.forEach(cours => {
+      const jour = (cours.jour || cours.jour_semaine || '').toLowerCase();
+      if (!structure[jour]) structure[jour] = [];
+      structure[jour].push({
+        ...cours,
+        matiere: typeof cours.matiere === 'object' ? cours.matiere?.nom : (cours.matiere || ''),
+        professeur: typeof cours.enseignant === 'object'
+          ? (cours.enseignant?.user?.name || cours.enseignant?.specialite || '')
+          : (cours.enseignant_nom || cours.professeur || ''),
+        salle: cours.salle || '',
+        groupe: typeof cours.classe === 'object' ? cours.classe?.nom_classe : (cours.classe_nom || cours.groupe || ''),
+      });
+    });
 
-        setEdt(structure);
+    // Trier par heure de début
+    Object.keys(structure).forEach(j => {
+      structure[j].sort((a, b) => {
+        const ha = (a.heure_debut || '00:00').split(':')[0];
+        const hb = (b.heure_debut || '00:00').split(':')[0];
+        return parseInt(ha) - parseInt(hb);
+      });
+    });
 
-      } catch (e) {
-        logger.error('Erreur chargement EDT:', e);
-      }
-    })();
-  }, [get]);
+    return structure;
+  }, [requete.data]);
 
   // Données de démo si pas de données API
   const hasData = useMemo(() => Object.values(edt).some(arr => arr.length > 0), [edt]);
