@@ -10,6 +10,8 @@ use App\Models\Payment;
 use App\Models\PaymentHistory;
 use App\Models\PaiementEleve;
 use App\Models\Eleve;
+use App\Http\Requests\Payment\InitializePaymentRequest;
+use App\Http\Requests\Payment\MobileMoneyRequest;
 use App\Services\Billing\PaymentProvider;
 use App\Support\SchoolContext;
 
@@ -77,16 +79,8 @@ class PaymentController extends Controller
     /**
      * Initialiser un paiement
      */
-    public function initializePayment(Request $request)
+    public function initializePayment(InitializePaymentRequest $request)
     {
-        $request->validate([
-            'eleve_id' => 'required|school_exists:eleves,id',
-            'paiement_eleve_id' => 'nullable|school_exists:paiements,id',
-            'amount' => 'required|numeric|min:100',
-            'description' => 'required|string',
-            'type' => 'required|in:scolarite,cantine,transport,autre',
-            'periode' => 'nullable|string'
-        ]);
 
         DB::beginTransaction();
         try {
@@ -174,13 +168,8 @@ class PaymentController extends Controller
     /**
      * Traiter paiement Mobile Money
      */
-    public function processMobileMoney(Request $request)
+    public function processMobileMoney(MobileMoneyRequest $request)
     {
-        $request->validate([
-            'payment_id' => 'required|school_exists:payments,id',
-            'phone_number' => 'required|string',
-            'operator' => 'required|in:mtn,moov'
-        ]);
 
         try {
             $payment = $this->authorizedPayment((int) $request->payment_id);
