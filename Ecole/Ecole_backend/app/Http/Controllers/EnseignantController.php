@@ -6,7 +6,6 @@ use App\Models\Enseignant;
 use App\Models\EnseignantMatiere;
 use App\Models\User;
 use App\Models\Classes;
-use App\Models\EmploiDuTemps;
 use App\Models\Notes;
 use App\Services\UserService;
 use App\Support\Roles;
@@ -95,24 +94,6 @@ class EnseignantController extends Controller
             'success' => true,
             'data' => $user->enseignant->classes()->with('eleve.user')->get()
         ]);
-    }
-
-    /**
-     * Espace Enseignant : Récupérer son emploi du temps
-     */
-    public function getEmploiTemps()
-    {
-        $user = Auth::user();
-        if (!$user->enseignant) {
-            return response()->json(['message' => 'Profil enseignant non trouvé'], 404);
-        }
-
-        $emploi = EmploiDuTemps::where('enseignant_id', $user->enseignant->id)
-            ->with(['classe', 'matiere'])
-            ->orderBy('jour')
-            ->get();
-
-        return response()->json(['success' => true, 'data' => $emploi]);
     }
 
     /**

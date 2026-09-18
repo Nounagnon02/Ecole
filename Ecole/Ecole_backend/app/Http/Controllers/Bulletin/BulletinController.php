@@ -13,68 +13,6 @@ class BulletinController extends Controller
 {
     use BulletinCalculation;
 
-    public function GenerateFile(Request $request)
-    {
-        try {
-            Log::debug('GenerateFile', ['keys' => array_keys($request->all())]);
-
-            $classe_id = $request->query('classe_id');
-            $serie_id = $request->query('serie_id');
-            $matiere_id = $request->query('matiere_id');
-            $periode = $request->query('periode');
-            $categorie_id = $request->query('categorie_id');
-
-            $query = Eleve::with('user:id,name,prenom');
-
-            if ($classe_id) {
-                $query->where('class_id', $classe_id);
-            }
-            if ($serie_id) {
-                $query->where('serie_id', $serie_id);
-            }
-            
-            if ($categorie_id) {
-                $query->whereHas('classe', function($q) use ($categorie_id) {
-                    $q->where('categorie_classe', $categorie_id);
-                });
-            }
-
-
-            $eleves = $query->get();
-            
-
-            $data = [];
-            foreach ($eleves as $eleve) {
-                $moyenneInterrogations = $this->calculerMoyenneInterrogations($eleve->id, $matiere_id, $periode);
-                $moyenneDevoirs = $this->getNotesDevoirs($eleve->id, $matiere_id, $periode);
-                $data[] = [
-                    'eleve_id' => $eleve->id,
-                    'nom' => $eleve->user->name ?? '',
-                    'prenom' => $eleve->user->prenom ?? '',
-                    'numero_matricule' => $eleve->numero_matricule,
-                    'moyenne_interrogations' => $moyenneInterrogations,
-                    'Devoirs' => $moyenneDevoirs,
-                    'periode' => $periode
-                ];
-            }
-
-            return response()->json([
-                'success' => true,
-                'data' => $data
-            ]);
-
-        } catch (\Exception $e) {
-            $this->rethrowIfMeaningful($e);
-            Log::error('Error in GenerateFile: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString()
-            ]);
-            return response()->json([
-                'success' => false,
-                'message' => 'An internal server error occurred.'
-            ], 500);
-        }
-    }
-
     public function getBulletin($eleveId, Request $request)
     {
         try {
@@ -295,25 +233,4 @@ class BulletinController extends Controller
         }
     }
 
-    // Méthode pour débugger les données d'un élève
-    public function debugEleve($eleveId, Request $request)
-    {
-        $periode = $request->get('periode', 'Trimestre 1');
-        
-        // Récupérer toutes les notes de l'élève
-        $notes = Notes::where('eleve_id', $eleveId)
-                    ->where('periode', $periode)
-                    ->with(['matiere'])
-                    ->get();
-        
-        // Récupérer les informations de l'élève
-        $eleve = Eleve::with(['classe', 'serie.matieres'])->find($eleveId);
-        
-        return response()->json([
-            'eleve' => $eleve,
-            'notes' => $notes,
-            'periode' => $periode,
-            'total_notes' => $notes->count()
-        ]);
-    }
 }

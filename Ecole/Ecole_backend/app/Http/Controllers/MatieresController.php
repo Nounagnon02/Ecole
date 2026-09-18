@@ -21,34 +21,6 @@ class MatieresController extends Controller
         return Matieres::paginate(50);
     }
 
-    public function Serie_avec_matieres()
-    {
-        return Series::with('matieres')->get();
-    }
-
-    public function indexWithSeries()
-    {
-        $matieres = Matieres::with(['series' => function($query) {
-            $query->select('series.id', 'series.nom')
-                ->withPivot('coefficient','classe_id');
-        }])->get();
-
-        return response()->json($matieres->map(function($matiere) {
-            return [
-                'id' => $matiere->id,
-                'nom' => $matiere->nom,
-                'classe_id' => $matiere->classe_id,
-                'series' => $matiere->series->map(function($serie) {
-                    return [
-                        'id' => $serie->id,
-                        'nom' => $serie->nom,
-                        'coefficient' => $serie->pivot->coefficient
-                    ];
-                })
-            ];
-        }));
-    }
-
     public function store(Request $request)
     {
         $this->authorize('create', Matieres::class);
@@ -68,17 +40,6 @@ class MatieresController extends Controller
             $this->rethrowIfMeaningful($e);
             return response()->json(['message' => 'Erreur lors de la création', 'error' => $this->clientErrorMessage($e)], 500);
         }
-    }
-
-    public function show($id)
-    {
-        $matiere = Matieres::find($id);
-
-        if (!$matiere) {
-            return response()->json(['message' => 'Matière non trouvée'], 404);
-        }
-
-        return response()->json($matiere);
     }
 
     public function update(Request $request, $id)
@@ -137,25 +98,6 @@ class MatieresController extends Controller
             $this->rethrowIfMeaningful($e);
             return response()->json(['message' => 'Erreur lors de la suppression', 'error' => $this->clientErrorMessage($e)], 500);
         }
-    }
-
-    public function getSeries($id)
-    {
-        $matiere = Matieres::find($id);
-
-        if (!$matiere) {
-            return response()->json(['message' => 'Matière non trouvée'], 404);
-        }
-
-        $series = $matiere->series()->get()->map(function ($serie) {
-            return [
-                'id' => $serie->id,
-                'nom' => $serie->nom,
-                'coefficient' => $serie->pivot->coefficient
-            ];
-        });
-
-        return response()->json($series);
     }
 
     private function matieresParNiveau(string $niveau, bool $flatten = false)
