@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\{PaiementEleve, Bourse, Depense, Eleve, TransactionPaiement};
+use App\Support\Reglement;
 use App\Services\FedaPayService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -10,34 +11,6 @@ use Illuminate\Support\Facades\Log;
 
 class ComptableController extends Controller
 {
-    /** Modes de règlement acceptés. */
-    private const PAYMENT_MODES = ['ESPECES', 'MOBILE_MONEY', 'VIREMENT', 'CHEQUE', 'CARTE'];
-
-    /**
-     * Statut en slug et en libellé à partir de `statut_global`.
-     *
-     * La table porte les constantes du modèle depuis la migration de
-     * normalisation : l'ancien repli d'accents (`'payé'` → `PAYE`) n'a plus de
-     * raison d'être.
-     */
-    private function statutSlug(?string $global): string
-    {
-        return match ($global) {
-            PaiementEleve::PAID => 'payee',
-            PaiementEleve::PARTIAL => 'partiel',
-            default => 'en_attente',
-        };
-    }
-
-    private function statutLabel(?string $global): string
-    {
-        return match ($global) {
-            PaiementEleve::PAID => 'Payée',
-            PaiementEleve::PARTIAL => 'Partielle',
-            default => 'En attente',
-        };
-    }
-
     /**
      * Liste des paiements pour le portail comptable.
      *
@@ -77,8 +50,8 @@ class ComptableController extends Controller
                     'montant_restant' => (float) ($p->montant_restant ?? 0),
                     'date_paiement' => $p->date_paiement?->format('Y-m-d'),
                     'mode_paiement' => $p->mode_paiement,
-                    'statut' => $this->statutSlug($p->statut_global),
-                    'statut_label' => $this->statutLabel($p->statut_global),
+                    'statut' => Reglement::slug($p->statut_global),
+                    'statut_label' => Reglement::libelle($p->statut_global),
                     'created_at' => $p->created_at?->toISOString(),
                 ];
             });
@@ -187,7 +160,7 @@ class ComptableController extends Controller
             'type_paiement' => 'required|string|max:255',
             // NOT NULL en base, et une écriture comptable sans mode de
             // règlement n'est pas rapprochable.
-            'mode_paiement' => 'required|string|in:' . implode(',', self::PAYMENT_MODES),
+            'mode_paiement' => Reglement::regleMode(),
             'date_paiement' => 'required|date',
             'reference'     => 'nullable|string|max:255',
             'parents_id'    => 'nullable|school_exists:parents,id',
@@ -219,7 +192,7 @@ class ComptableController extends Controller
             'montant_paye'    => $montant,
             'montant_restant' => 0,
             'statut_global'   => PaiementEleve::PAID,
-            'reference'       => $validated['reference'] ?? $this->nextReference(),
+            'reference'       => $validated['reference'] ?? Reglement::nouvelleReference(),
         ]);
 
         \Cache::forget('dashboard_directeur_' . (auth()->user()->ecole_id ?? 'global'));
@@ -233,11 +206,6 @@ class ComptableController extends Controller
      * `paiements.reference` est unique par école depuis que les identifiants
      * émis par l'établissement ont été sortis de l'unicité plateforme.
      */
-    private function nextReference(): string
-    {
-        return 'PAY-' . now()->format('Ymd') . '-' . strtoupper(\Illuminate\Support\Str::random(6));
-    }
-
     public function storeBourse(Request $request)
     {
         $validated = $request->validate([
@@ -264,7 +232,7 @@ class ComptableController extends Controller
         // badge et le libellé étaient « En attente »/vide sur chaque reçu.
         $statutGlobal = $paiement->statut_global;
         $estPaye = $statutGlobal === PaiementEleve::PAID;
-        $statutLabel = $this->statutLabel($statutGlobal);
+        $statutLabel = Reglement::libelle($statutGlobal);
 
         $html = '<!DOCTYPE html>
 <html lang="fr">
@@ -367,8 +335,8 @@ class ComptableController extends Controller
                         'type' => $p->type_paiement ?: $p->mode_paiement,
                         'montant' => (float) $p->montant,
                         'date' => $p->date_paiement?->format('d/m/Y'),
-                        'statut' => $this->statutSlug($p->statut_global),
-                        'statut_label' => $this->statutLabel($p->statut_global),
+                        'statut' => Reglement::slug($p->statut_global),
+                        'statut_label' => Reglement::libelle($p->statut_global),
                         'mode' => $p->mode_paiement,
                     ];
                 }),
