@@ -5,7 +5,9 @@
  * Données dynamiques via API /api/v1/admin/modules
  */
 
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
+import { useApiQuery } from '@/shared/lib/api-client';
+import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
   Puzzle, ToggleLeft, ToggleRight,
@@ -15,8 +17,6 @@ import {
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
-import { useApi } from '@/hooks/useApi';
-import logger from '@/shared/lib/logger';
 
 const MODULE_ICONS = {
   core: Shield,
@@ -45,23 +45,16 @@ const MODULE_COLORS = {
 };
 
 export default function ModulesPage() {
-  const { loading, error, get } = useApi();
-  const [modules, setModules] = useState([]);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await get('/v1/admin/modules');
-        const items = Array.isArray(res?.data?.data) ? res.data.data
-          : Array.isArray(res?.data) ? res.data
-          : Array.isArray(res) ? res
-          : [];
-        setModules(items);
-      } catch (e) {
-        logger.error('Erreur chargement modules:', e);
-      }
-    })();
-  }, [get]);
+  const requete = useApiQuery(['modules'], '/v1/admin/modules');
+
+  // La page tenait un `useState` de données doublé d'un `useEffect` de premier
+  // rendu — le motif répété sur trente-neuf pages, sans cache ni
+  // déduplication (cf. audit P4.1). `unwrapList` traverse les trois formes
+  // d'enveloppe que renvoient les contrôleurs.
+  const modules = useMemo(() => unwrapList(requete.data) ?? [], [requete.data]);
+  const loading = requete.isPending;
+  const error = requete.isError ? (requete.error?.message ?? 'Erreur de chargement') : null;
 
   if (loading) {
     return (

@@ -5,7 +5,9 @@
  * Données dynamiques via /v1/admin/tenants et /v1/admin/tenants/:id/settings
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { api, useApiQuery } from '@/shared/lib/api-client';
+import { unwrapList } from '@/shared/lib/unwrap';
 import {
   Palette, Image, Globe, Monitor, Save,
   Type, Eye, Smartphone, Loader2, AlertCircle
@@ -13,7 +15,6 @@ import {
 import Card from '@/shared/components/ui/Card';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
-import { useApi } from '@/hooks/useApi';
 import logger from '@/shared/lib/logger';
 
 const PRESET_COLORS = [
@@ -26,8 +27,6 @@ const PRESET_COLORS = [
 ];
 
 export default function WhiteLabelPage() {
-  const { loading, error, get, patch } = useApi();
-  const [ecoles, setEcoles] = useState([]);
   const [selectedTenant, setSelectedTenant] = useState('');
   const [primaryColor, setPrimaryColor] = useState('#4F46E5');
   const [secondaryColor, setSecondaryColor] = useState('#7C3AED');
@@ -37,57 +36,66 @@ export default function WhiteLabelPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  // Load ecoles (tenants)
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await get('/v1/admin/tenants');
-        const items = Array.isArray(res?.data?.data) ? res.data.data
-          : Array.isArray(res?.data) ? res.data
-          : Array.isArray(res) ? res
-          : [];
-        setEcoles(items.map((e) => ({
-          id: e.id,
-          nom: e.nom || e.name || `École ${e.id}`
-        })));
-        if (items.length > 0 && !selectedTenant) {
-          setSelectedTenant(String(items[0].id));
-        }
-      } catch (e) {
-        logger.error('Erreur chargement établissements:', e);
-      }
-    })();
-  }, [get]);
+  // ─── État serveur ────────────────────────────────────────────
+  //
+  // Deux requêtes, la seconde dépendante de la première : `enabled` remplace
+  // le `if (!selectedTenant) return` qui gardait l'ancien effet, et la clé
+  // porte l'établissement, si bien que changer de sélection change de cache
+  // au lieu d'écraser le précédent (cf. audit P4.1).
+  const requeteEcoles = useApiQuery(['tenants'], '/v1/admin/tenants');
 
-  // Load white-label config for selected tenant
-  const loadConfig = useCallback(async () => {
-    if (!selectedTenant) return;
-    try {
-      // Route réelle : GET /api/v1/admin/tenants/{tenant}/settings.
-      // `/admin/white-label/…` n'existe pas, et le préfixe /api était en
-      // double (le client axios a déjà baseURL '/api').
-      const res = await get(`/v1/admin/tenants/${selectedTenant}/settings`);
-      const cfg = res?.data?.data || res?.data || res || {};
-      setBrandName(cfg.nom_brand || cfg.brand_name || cfg.nom || '');
-      setPrimaryColor(cfg.couleur_primaire || cfg.primary_color || '#4F46E5');
-      setSecondaryColor(cfg.couleur_secondaire || cfg.secondary_color || '#7C3AED');
-      setLogoUrl(cfg.logo_url || cfg.logo || '');
-      setFaviconUrl(cfg.favicon_url || cfg.favicon || '');
-    } catch (e) {
-      logger.error('Erreur chargement config white-label:', e);
+  const ecoles = useMemo(
+    () => (unwrapList(requeteEcoles.data) ?? []).map((e) => ({
+      id: e.id,
+      nom: e.nom || e.name || `École ${e.id}`,
+    })),
+    [requeteEcoles.data],
+  );
+
+  // Route réelle : GET /api/v1/admin/tenants/{tenant}/settings.
+  // `/admin/white-label/…` n'existe pas, et le préfixe /api était en double
+  // (le client axios porte déjà baseURL '/api').
+  const requeteConfig = useApiQuery(
+    ['tenant-settings', selectedTenant],
+    `/v1/admin/tenants/${selectedTenant}/settings`,
+    { queryOptions: { enabled: !!selectedTenant } },
+  );
+
+  const loading = requeteEcoles.isPending;
+  const error = requeteEcoles.isError
+    ? (requeteEcoles.error?.message ?? 'Erreur de chargement')
+    : null;
+
+  // Premier établissement sélectionné d'office : la page n'a rien à montrer
+  // sans cible.
+  useEffect(() => {
+    if (!selectedTenant && ecoles.length > 0) {
+      setSelectedTenant(String(ecoles[0].id));
     }
-  }, [get, selectedTenant]);
+  }, [ecoles, selectedTenant]);
 
+  // ─── État de formulaire ──────────────────────────────────────
+  //
+  // react-query porte l'état serveur, pas celui d'un formulaire que
+  // l'utilisateur modifie. Les champs sont donc semés depuis la réponse, puis
+  // vivent leur vie jusqu'à l'enregistrement.
   useEffect(() => {
-    loadConfig();
-  }, [loadConfig]);
+    const cfg = requeteConfig.data?.data ?? requeteConfig.data;
+    if (!cfg) return;
+
+    setBrandName(cfg.nom_brand || cfg.brand_name || cfg.nom || '');
+    setPrimaryColor(cfg.couleur_primaire || cfg.primary_color || '#4F46E5');
+    setSecondaryColor(cfg.couleur_secondaire || cfg.secondary_color || '#7C3AED');
+    setLogoUrl(cfg.logo_url || cfg.logo || '');
+    setFaviconUrl(cfg.favicon_url || cfg.favicon || '');
+  }, [requeteConfig.data]);
 
   const handleSave = async () => {
     if (!selectedTenant) return;
     setSaving(true);
     setSaved(false);
     try {
-      await patch(`/v1/admin/tenants/${selectedTenant}/settings`, {
+      await api.patch(`/v1/admin/tenants/${selectedTenant}/settings`, {
         brand_name: brandName,
         primary_color: primaryColor,
         secondary_color: secondaryColor

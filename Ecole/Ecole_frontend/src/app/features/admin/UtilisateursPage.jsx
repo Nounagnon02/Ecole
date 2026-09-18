@@ -5,7 +5,9 @@
  * Données dynamiques via API /api/v1/admin/tenants
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import { useApiQuery } from '@/shared/lib/api-client';
+import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
   Users, Plus, Search, Shield, UserCog, UserCheck,
@@ -18,8 +20,6 @@ import Avatar from '@/shared/components/ui/Avatar';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
-import { useApi } from '@/hooks/useApi';
-import logger from '@/shared/lib/logger';
 
 const ROLES_DISPLAY = [
   'Directeur', 'Enseignant', 'Élève', 'Parent',
@@ -41,21 +41,18 @@ const ROLE_ICONS = {
 };
 
 export default function UtilisateursPage() {
-  const { loading, error, get } = useApi();
-  const [utilisateurs, setUtilisateurs] = useState([]);
   const [search, setSearch] = useState('');
   const [filterRole, setFilterRole] = useState('');
   const [filterStatut, setFilterStatut] = useState('');
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await get('/v1/admin/tenants');
-        const items = Array.isArray(res?.data?.data) ? res.data.data
-          : Array.isArray(res?.data) ? res.data
-          : Array.isArray(res) ? res
-          : [];
-        setUtilisateurs(items.map((t) => ({
+  const requete = useApiQuery(['tenants'], '/v1/admin/tenants');
+
+  // La page tenait un `useState` de données doublé d'un `useEffect` de premier
+  // rendu — le motif répété sur trente-neuf pages, sans cache ni
+  // déduplication (cf. audit P4.1). `unwrapList` traverse les trois formes
+  // d'enveloppe que renvoient les contrôleurs.
+  const utilisateurs = useMemo(
+    () => (unwrapList(requete.data) ?? []).map((t) => ({
           id: t.id,
           nom: t.name || t.nom || '—',
           email: t.email || '—',
@@ -63,13 +60,12 @@ export default function UtilisateursPage() {
           ecole: t.name || t.nom || '—',
           statut: t.status === 'active' || t.is_active ? 'actif' : 'inactif',
           derniereConnexion: t.last_login_at || t.created_at,
-          dateCreation: t.created_at
-        })));
-      } catch (e) {
-        logger.error('Erreur chargement utilisateurs:', e);
-      }
-    })();
-  }, [get]);
+          dateCreation: t.created_at,
+        })),
+    [requete.data],
+  );
+  const loading = requete.isPending;
+  const error = requete.isError ? (requete.error?.message ?? 'Erreur de chargement') : null;
 
   const stats = useMemo(() => ({
     total: utilisateurs.length,

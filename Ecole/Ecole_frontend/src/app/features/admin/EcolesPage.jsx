@@ -4,7 +4,8 @@
  * Données réelles depuis l'API + modale de création/provision.
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import {
   Building2, Plus, Search, MapPin, Phone, Mail, Users,
@@ -21,6 +22,7 @@ import Modal from '@/shared/components/ui/Modal';
 import StatsCard from '@/shared/components/ui/StatsCard';
 import { Skeleton } from '@/shared/components/ui/Skeleton';
 import { api } from '@/shared/services/api';
+import { useApiQuery } from '@/shared/lib/api-client';
 
 const STATUT_CONFIG = {
   active: { variant: 'primary', label: 'Actif' },
@@ -99,9 +101,6 @@ function EcoleForm({ form, onChange, errors }) {
 }
 
 export default function EcolesPage() {
-  const [ecoles, setEcoles] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [search, setSearch] = useState('');
   const [filterStatut, setFilterStatut] = useState('');
 
@@ -118,22 +117,23 @@ export default function EcolesPage() {
   const [provisioning, setProvisioning] = useState(false);
   const [provResult, setProvResult] = useState(null);
 
-  // Chargement des écoles
-  const fetchEcoles = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await api.get('/ecoles');
-      // `/ecoles` est paginé : res.data.data est le paginateur, pas le tableau.
-      setEcoles(unwrapList(res.data));
-    } catch (err) {
-      setError(err.message || 'Erreur de chargement');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Chargement des écoles.
+  //
+  // La page tenait son propre `useState` de données, de chargement et
+  // d'erreur, plus un `useEffect` de premier rendu — le motif répété sur
+  // trente-neuf pages, sans cache ni déduplication : deux composants montés
+  // ensemble lançaient deux requêtes, et un retour sur la page rechargeait
+  // tout (cf. audit P4.1).
+  const requete = useApiQuery(['ecoles'], '/ecoles');
+  const queryClient = useQueryClient();
 
-  useEffect(() => { fetchEcoles(); }, []);
+  // `/ecoles` est paginé : `data.data` est le paginateur, pas le tableau.
+  const ecoles = useMemo(() => unwrapList(requete.data) ?? [], [requete.data]);
+  const loading = requete.isPending;
+  const error = requete.isError ? (requete.error?.message ?? 'Erreur de chargement') : null;
+
+  /** Invalide la liste pour que les créations apparaissent sans rechargement. */
+  const fetchEcoles = () => queryClient.invalidateQueries({ queryKey: ['ecoles'] });
 
   const stats = useMemo(() => {
     const actifs = ecoles.filter((e) => e.status === 'active').length;
@@ -246,7 +246,10 @@ export default function EcolesPage() {
         <StatsCard title="Total" value={loading ? '...' : String(stats.total)} icon={Building2} color="primary" />
         <StatsCard title="Actives" value={loading ? '...' : String(stats.actifs)} icon={CheckCircle} color="emerald" />
         <StatsCard title="Inactives" value={loading ? '...' : String(stats.inactifs)} icon={XCircle} color="red" />
-        <StatsCard title="Établissements" value={loading ? '...' : String(stats.total)} icon={Users} color="sky" />
+        {/* Cette carte portait `stats.total` — le nombre d'écoles, déjà donné
+            par la première — sous une icône « utilisateurs ». `totalEffectifs`
+            était calculé et jamais affiché. */}
+        <StatsCard title="Élèves" value={loading ? '...' : String(stats.totalEffectifs)} icon={Users} color="sky" />
       </div>
 
       {/* ─── Barre de recherche + filtre ────────────────────────── */}
