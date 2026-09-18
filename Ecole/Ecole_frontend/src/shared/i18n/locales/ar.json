@@ -175,7 +175,9 @@
     "mark_all_read": "تحديد الكل كمقروء",
     "view_all": "عرض جميع الإشعارات",
     "toggle_menu": "فتح القائمة",
-    "search": "بحث"
+    "search": "بحث",
+    "language": "اللغة",
+    "toggle_theme": "تبديل السمة"
   },
   "securite": {
     "title": "الأمان",

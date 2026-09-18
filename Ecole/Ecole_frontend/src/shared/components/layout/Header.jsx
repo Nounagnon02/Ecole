@@ -24,6 +24,7 @@ import useRealtimeStore from '@/shared/stores/realtime-store';
 import { ROLE_LABELS } from '@/shared/types/roles';
 import { cn } from '@/shared/lib/utils';
 import { useTranslation } from '@/shared/i18n';
+import LanguageSwitcher from './LanguageSwitcher';
 
 /* ─── Animation variants ────────────────────────────────────────────────── */
 const dropdownVariants = {
@@ -153,11 +154,13 @@ export default function Header() {
           </kbd>
         </button>
 
-{/* Theme toggle */}
+<LanguageSwitcher />
+
+        {/* Theme toggle */}
         <button
           onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
           className="flex h-9 w-9 items-center justify-center rounded-lg text-[var(--text-tertiary)] transition-all hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
-          aria-label="Changer le thème"
+          aria-label={t('header.toggle_theme')}
         >
           <AnimatePresence mode="wait">
             {theme === 'dark' ? (
