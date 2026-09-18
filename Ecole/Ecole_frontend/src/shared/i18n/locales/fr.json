@@ -498,6 +498,14 @@
       "soins": {
         "title": "Soins Infirmiers",
         "subtitle": "Registre des soins dispensés aux élèves"
+      },
+      "dossiers": {
+        "title": "Dossiers Médicaux",
+        "subtitle": "Gestion des dossiers médicaux des élèves"
+      },
+      "vaccinations": {
+        "title": "Carnet de Vaccination",
+        "subtitle": "Suivi et historique des vaccinations"
       }
     },
     "notes": {
@@ -510,6 +518,25 @@
       "paiements": {
         "title": "Paiements",
         "subtitle": "Gestion des transactions financières"
+      },
+      "callback": {
+        "status": {
+          "approved": "Paiement confirmé",
+          "failed": "Échec du paiement",
+          "pending": "Vérification en cours...",
+          "unknown": "Statut indéterminé"
+        },
+        "messages": {
+          "verifying": "Vérification du paiement en cours...",
+          "missing_id": "Identifiant de transaction manquant.",
+          "approved": "Paiement confirmé avec succès !",
+          "pending": "Paiement en attente de confirmation...",
+          "failed": "Le paiement a échoué.",
+          "verification_failed": "Échec de la vérification.",
+          "network_error": "Erreur réseau lors de la vérification."
+        },
+        "back": "Retour à l'échéancier",
+        "redirect": "Redirection automatique dans 3 secondes..."
       }
     },
     "parametres": {
@@ -542,6 +569,10 @@
       "surveillance": {
         "title": "Surveillance",
         "subtitle": "Registre des incidents et signalements"
+      },
+      "presences": {
+        "title": "Présences",
+        "subtitle": "Suivi des présences du {date}"
       }
     },
     "universite": {
@@ -580,6 +611,89 @@
       "taches": {
         "title": "Tâches",
         "subtitle": "Suivi des devoirs, projets et examens"
+      }
+    },
+    "affectations": {
+      "affectations": {
+        "title": "Affectations des enseignants",
+        "subtitle": "Attribuez les classes, séries et matières à chaque enseignant"
+      }
+    },
+    "ai": {
+      "welcome": {
+        "directeur": {
+          "title": "Tableau de bord prédictif",
+          "subtitle": "Analyses, tendances et alertes intelligentes",
+          "suggestions": {
+            "s1": "Analyser les résultats",
+            "s2": "Tendances trimestrielles",
+            "s3": "Alertes et risques",
+            "s4": "Recommandations"
+          }
+        },
+        "enseignant": {
+          "title": "Assistant pédagogique IA",
+          "subtitle": "Préparez vos cours et suivez vos élèves",
+          "suggestions": {
+            "s1": "Planifier un cours",
+            "s2": "Analyser ma classe",
+            "s3": "Générer un exercice",
+            "s4": "Conseil pédagogique"
+          }
+        },
+        "eleve": {
+          "title": "Tuteur IA",
+          "subtitle": "Posez vos questions, apprenez à votre rythme",
+          "suggestions": {
+            "s1": "Aide en maths",
+            "s2": "Aide en français",
+            "s3": "Aide en physique",
+            "s4": "Réviser un contrôle"
+          }
+        },
+        "parent": {
+          "title": "Assistant parental",
+          "subtitle": "Suivi intelligent de la scolarité",
+          "suggestions": {
+            "s1": "Rapport de mon enfant",
+            "s2": "Progrès récents",
+            "s3": "Conseil éducatif",
+            "s4": "Objectifs trimestre"
+          }
+        },
+        "default": {
+          "title": "Assistant IA",
+          "subtitle": "Comment puis-je vous aider ?",
+          "suggestions": {
+            "s1": "Analyse générale",
+            "s2": "Statistiques",
+            "s3": "Rapport",
+            "s4": "Aide"
+          }
+        }
+      },
+      "tabs": {
+        "chat": "Chat IA",
+        "analysis": "Analyses"
+      },
+      "thinking": "Réflexion...",
+      "placeholder": "Posez votre question...",
+      "empty_hint": "Posez une question ou choisissez une suggestion ci-dessous",
+      "errors": {
+        "no_answer": "Je n'ai pas pu traiter votre demande.",
+        "unavailable": "Service IA momentanément indisponible. Veuillez réessayer."
+      },
+      "predictive": {
+        "title": "Analyse prédictive",
+        "run": "Analyser",
+        "not_configured": "Configurez la clé API Anthropic dans config/services.php pour activer l'analyse IA.",
+        "hint": "Cliquez sur \"Analyser\" pour générer un rapport prédictif basé sur les données de votre établissement.",
+        "trend": "Tendance {n}"
+      },
+      "stats": {
+        "performance": "Performances moyennes",
+        "alerts": "Alertes actives",
+        "recommendations": "Recommandations"
       }
     }
   }

@@ -20,8 +20,10 @@ import Avatar from '@/shared/components/ui/Avatar';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
+import { useTranslation } from '@/shared/i18n';
 
 export default function DossiersPage() {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [filterAllergie, setFilterAllergie] = useState('');
   const [tab, setTab] = useState('dossiers'); // 'dossiers' | 'vaccinations'
@@ -127,12 +129,10 @@ export default function DossiersPage() {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">
-            {tab === 'dossiers' ? 'Dossiers Médicaux' : 'Carnet de Vaccination'}
+            {t(tab === 'dossiers' ? 'pages.infirmier.dossiers.title' : 'pages.infirmier.vaccinations.title')}
           </h1>
           <p className="text-sm text-neutral-500">
-            {tab === 'dossiers'
-              ? 'Gestion des dossiers médicaux des élèves'
-              : 'Suivi et historique des vaccinations'}
+            {t(tab === 'dossiers' ? 'pages.infirmier.dossiers.subtitle' : 'pages.infirmier.vaccinations.subtitle')}
           </p>
         </div>
         <Button size="sm" icon={<Plus />}>
