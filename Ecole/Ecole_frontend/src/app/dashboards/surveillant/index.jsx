@@ -37,6 +37,7 @@ const STATS_META = [
 ];
 
 function ApercuSection({ stats, presences, retards, data }) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -50,8 +51,8 @@ function ApercuSection({ stats, presences, retards, data }) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <Card.Header>
-            <Card.Title>Présences de la Semaine</Card.Title>
-            <Card.Description>Tendance quotidienne</Card.Description>
+            <Card.Title>{t('dashboards.surveillant.presences_de_la_semaine')}</Card.Title>
+            <Card.Description>{t('dashboards.surveillant.tendance_quotidienne')}</Card.Description>
           </Card.Header>
           <Card.Body>
             <div className="h-[260px]">
@@ -71,8 +72,8 @@ function ApercuSection({ stats, presences, retards, data }) {
 
         <Card>
           <Card.Header>
-            <Card.Title>Points de Surveillance</Card.Title>
-            <Card.Description>Zones actives aujourd'hui</Card.Description>
+            <Card.Title>{t('dashboards.surveillant.points_de_surveillance')}</Card.Title>
+            <Card.Description>{t('dashboards.surveillant.zones_actives_aujourd_hui')}</Card.Description>
           </Card.Header>
           <Card.Body>
             {data?.points_surveillance && data.points_surveillance.length > 0 ? (
@@ -93,7 +94,7 @@ function ApercuSection({ stats, presences, retards, data }) {
             ) : (
               <div className="flex flex-col items-center justify-center py-8 text-[var(--text-tertiary)]">
                 <MapPin className="h-8 w-8 mb-2 opacity-30" />
-                <p className="text-sm">Aucun point de surveillance</p>
+                <p className="text-sm">{t('dashboards.surveillant.aucun_point_de_surveillance')}</p>
               </div>
             )}
           </Card.Body>
@@ -103,18 +104,18 @@ function ApercuSection({ stats, presences, retards, data }) {
       <Card>
         <Card.Header>
           <div className="flex items-center justify-between">
-            <Card.Title>Retards du Jour</Card.Title>
+            <Card.Title>{t('dashboards.surveillant.retards_du_jour')}</Card.Title>
             <Badge variant="warning" size="sm">{retards.length} signalés</Badge>
           </div>
         </Card.Header>
         <Card.Body className="p-0">
           <Table>
             <Table.Header>
-              <Table.Head>Élève</Table.Head>
-              <Table.Head>Classe</Table.Head>
-              <Table.Head>Retard</Table.Head>
-              <Table.Head>Motif</Table.Head>
-              <Table.Head>Récurrent</Table.Head>
+              <Table.Head>{t('common.student')}</Table.Head>
+              <Table.Head>{t('common.class')}</Table.Head>
+              <Table.Head>{t('common.late')}</Table.Head>
+              <Table.Head>{t('common.reason')}</Table.Head>
+              <Table.Head>{t('dashboards.surveillant.recurrent')}</Table.Head>
             </Table.Header>
             <Table.Body>
               {retards.map((r) => (
@@ -124,7 +125,7 @@ function ApercuSection({ stats, presences, retards, data }) {
                   <Table.Cell>{r.temps}</Table.Cell>
                   <Table.Cell>{r.motif}</Table.Cell>
                   <Table.Cell>
-                    {r.recurrent ? <Badge variant="danger" size="sm">Récurrent</Badge> : <Badge variant="neutral" size="sm">Ponctuel</Badge>}
+                    {r.recurrent ? <Badge variant="danger" size="sm">{t('dashboards.surveillant.recurrent')}</Badge> : <Badge variant="neutral" size="sm">{t('dashboards.surveillant.ponctuel')}</Badge>}
                   </Table.Cell>
                 </Table.Row>
               ))}
@@ -137,7 +138,7 @@ function ApercuSection({ stats, presences, retards, data }) {
         <Card>
           <Card.Header>
             <div className="flex items-center justify-between">
-              <Card.Title>Absents du Jour</Card.Title>
+              <Card.Title>{t('dashboards.surveillant.absents_du_jour')}</Card.Title>
               {data?.absents_jour?.length > 0 && (
                 <Badge variant="danger" size="sm">{data.absents_jour.length}</Badge>
               )}
@@ -147,9 +148,9 @@ function ApercuSection({ stats, presences, retards, data }) {
             {data?.absents_jour?.length > 0 ? (
             <Table>
               <Table.Header>
-                <Table.Head>Élève</Table.Head>
-                <Table.Head>Classe</Table.Head>
-                <Table.Head>Justifié</Table.Head>
+                <Table.Head>{t('common.student')}</Table.Head>
+                <Table.Head>{t('common.class')}</Table.Head>
+                <Table.Head>{t('dashboards.surveillant.justifie')}</Table.Head>
               </Table.Header>
               <Table.Body>
                 {data.absents_jour.map((a) => (
@@ -157,7 +158,7 @@ function ApercuSection({ stats, presences, retards, data }) {
                     <Table.Cell><span className="font-medium text-neutral-900 dark:text-white">{a.eleve}</span></Table.Cell>
                     <Table.Cell>{a.classe}</Table.Cell>
                     <Table.Cell>
-                      {a.justifiee ? <Badge variant="success" size="sm">Oui</Badge> : <Badge variant="danger" size="sm">Non</Badge>}
+                      {a.justifiee ? <Badge variant="success" size="sm">{t('dashboards.surveillant.oui')}</Badge> : <Badge variant="danger" size="sm">{t('dashboards.surveillant.non')}</Badge>}
                     </Table.Cell>
                   </Table.Row>
                 ))}
@@ -166,7 +167,7 @@ function ApercuSection({ stats, presences, retards, data }) {
             ) : (
               <div className="flex flex-col items-center justify-center py-8 text-[var(--text-tertiary)]">
                 <UserCheck className="h-8 w-8 mb-2 opacity-30" />
-                <p className="text-sm">Aucun absent signalé aujourd'hui</p>
+                <p className="text-sm">{t('dashboards.surveillant.aucun_absent_signale_aujourd_hui')}</p>
               </div>
             )}
           </Card.Body>
@@ -175,7 +176,7 @@ function ApercuSection({ stats, presences, retards, data }) {
         <Card>
           <Card.Header>
             <div className="flex items-center justify-between">
-              <Card.Title>Incidents Récents</Card.Title>
+              <Card.Title>{t('dashboards.surveillant.incidents_recents')}</Card.Title>
               {data?.incidents?.length > 0 && (
                 <Badge variant="warning" size="sm">{data.incidents.length}</Badge>
               )}
@@ -185,9 +186,9 @@ function ApercuSection({ stats, presences, retards, data }) {
             {data?.incidents?.length > 0 ? (
             <Table>
               <Table.Header>
-                <Table.Head>Incident</Table.Head>
-                <Table.Head>Date</Table.Head>
-                <Table.Head>Gravité</Table.Head>
+                <Table.Head>{t('dashboards.surveillant.incident')}</Table.Head>
+                <Table.Head>{t('common.date')}</Table.Head>
+                <Table.Head>{t('dashboards.surveillant.gravite')}</Table.Head>
               </Table.Header>
               <Table.Body>
                 {data.incidents.map((i) => (
@@ -204,7 +205,7 @@ function ApercuSection({ stats, presences, retards, data }) {
             ) : (
               <div className="flex flex-col items-center justify-center py-8 text-[var(--text-tertiary)]">
                 <AlertTriangle className="h-8 w-8 mb-2 opacity-30" />
-                <p className="text-sm">Aucun incident récent</p>
+                <p className="text-sm">{t('dashboards.surveillant.aucun_incident_recent')}</p>
               </div>
             )}
           </Card.Body>
@@ -213,7 +214,7 @@ function ApercuSection({ stats, presences, retards, data }) {
         <Card>
           <Card.Header>
             <div className="flex items-center justify-between">
-              <Card.Title>Absences Non Justifiées</Card.Title>
+              <Card.Title>{t('dashboards.surveillant.absences_non_justifiees')}</Card.Title>
               {data?.absences_non_justifiees?.length > 0 && (
                 <Badge variant="danger" size="sm">{data.absences_non_justifiees.length}</Badge>
               )}
@@ -223,8 +224,8 @@ function ApercuSection({ stats, presences, retards, data }) {
             {data?.absences_non_justifiees?.length > 0 ? (
             <Table>
               <Table.Header>
-                <Table.Head>Élève</Table.Head>
-                <Table.Head>Date</Table.Head>
+                <Table.Head>{t('common.student')}</Table.Head>
+                <Table.Head>{t('common.date')}</Table.Head>
               </Table.Header>
               <Table.Body>
                 {data.absences_non_justifiees.map((a) => (
@@ -238,7 +239,7 @@ function ApercuSection({ stats, presences, retards, data }) {
             ) : (
               <div className="flex flex-col items-center justify-center py-8 text-[var(--text-tertiary)]">
                 <Clock className="h-8 w-8 mb-2 opacity-30" />
-                <p className="text-sm">Toutes les absences sont justifiées</p>
+                <p className="text-sm">{t('dashboards.surveillant.toutes_les_absences_sont_justifiees')}</p>
               </div>
             )}
           </Card.Body>
@@ -288,7 +289,7 @@ export default function SurveillantDashboard() {
       onRefresh={refetch}
       actions={
         <>
-    <Button variant="ghost" size="sm"><Shield className="h-4 w-4 mr-1" /> Mon Service</Button>
+    <Button variant="ghost" size="sm"><Shield className="h-4 w-4 mr-1" /> {t('dashboards.surveillant.mon_service')}</Button>
         </>
       }
     >

@@ -46,6 +46,7 @@ const MOTIF_COLORS = [
 ];
 
 function ApercuSection({ stats, frequentation, visites, motifs, urgencesJour, alertesMedicales, soinsRecurrents }) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -59,8 +60,8 @@ function ApercuSection({ stats, frequentation, visites, motifs, urgencesJour, al
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <Card.Header>
-            <Card.Title>Fréquentation Infirmerie</Card.Title>
-            <Card.Description>Visites et urgences — 6 derniers mois</Card.Description>
+            <Card.Title>{t('dashboards.infirmier.frequentation_infirmerie')}</Card.Title>
+            <Card.Description>{t('dashboards.infirmier.visites_et_urgences_6_derniers_mois')}</Card.Description>
           </Card.Header>
           <Card.Body>
             <div className="h-[260px]">
@@ -84,8 +85,8 @@ function ApercuSection({ stats, frequentation, visites, motifs, urgencesJour, al
 
         <Card>
           <Card.Header>
-            <Card.Title>Motifs Fréquents</Card.Title>
-            <Card.Description>Ce mois-ci</Card.Description>
+            <Card.Title>{t('dashboards.infirmier.motifs_frequents')}</Card.Title>
+            <Card.Description>{t('dashboards.infirmier.ce_mois_ci')}</Card.Description>
           </Card.Header>
           <Card.Body>
             <div className="space-y-3">
@@ -104,7 +105,7 @@ function ApercuSection({ stats, frequentation, visites, motifs, urgencesJour, al
                 );
               })}
               {!motifs?.length && (
-                <p className="text-sm text-neutral-400 dark:text-neutral-500">Aucune consultation ce mois-ci.</p>
+                <p className="text-sm text-neutral-400 dark:text-neutral-500">{t('dashboards.infirmier.aucune_consultation_ce_mois_ci')}</p>
               )}
             </div>
           </Card.Body>
@@ -114,19 +115,19 @@ function ApercuSection({ stats, frequentation, visites, motifs, urgencesJour, al
       <Card>
         <Card.Header>
           <div className="flex items-center justify-between">
-            <Card.Title>Dernières Visites</Card.Title>
+            <Card.Title>{t('dashboards.infirmier.dernieres_visites')}</Card.Title>
             <Badge variant="warning" size="sm">{visites.filter(v => v.statut === 'En cours').length} en cours</Badge>
           </div>
         </Card.Header>
         <Card.Body className="p-0">
           <Table>
             <Table.Header>
-              <Table.Head>Élève</Table.Head>
-              <Table.Head>Classe</Table.Head>
-              <Table.Head>Motif</Table.Head>
-              <Table.Head>Soin</Table.Head>
-              <Table.Head>Heure</Table.Head>
-              <Table.Head>Statut</Table.Head>
+              <Table.Head>{t('common.student')}</Table.Head>
+              <Table.Head>{t('common.class')}</Table.Head>
+              <Table.Head>{t('common.reason')}</Table.Head>
+              <Table.Head>{t('dashboards.infirmier.soin')}</Table.Head>
+              <Table.Head>{t('common.time')}</Table.Head>
+              <Table.Head>{t('common.status_label')}</Table.Head>
             </Table.Header>
             <Table.Body>
               {visites.map((v) => (
@@ -150,7 +151,7 @@ function ApercuSection({ stats, frequentation, visites, motifs, urgencesJour, al
         <Card>
           <Card.Header>
             <div className="flex items-center justify-between">
-              <Card.Title>Urgences du Jour</Card.Title>
+              <Card.Title>{t('dashboards.infirmier.urgences_du_jour')}</Card.Title>
               {urgencesJour.length > 0 && (
                 <Badge variant="danger" size="sm">{urgencesJour.length}</Badge>
               )}
@@ -160,9 +161,9 @@ function ApercuSection({ stats, frequentation, visites, motifs, urgencesJour, al
             {urgencesJour.length > 0 ? (
             <Table>
               <Table.Header>
-                <Table.Head>Élève</Table.Head>
-                <Table.Head>Motif</Table.Head>
-                <Table.Head>Heure</Table.Head>
+                <Table.Head>{t('common.student')}</Table.Head>
+                <Table.Head>{t('common.reason')}</Table.Head>
+                <Table.Head>{t('common.time')}</Table.Head>
               </Table.Header>
               <Table.Body>
                 {urgencesJour.map((u) => (
@@ -177,7 +178,7 @@ function ApercuSection({ stats, frequentation, visites, motifs, urgencesJour, al
             ) : (
               <div className="flex flex-col items-center justify-center py-8 text-[var(--text-tertiary)]">
                 <Heart className="h-8 w-8 mb-2 opacity-30" />
-                <p className="text-sm">Aucune urgence aujourd'hui</p>
+                <p className="text-sm">{t('dashboards.infirmier.aucune_urgence_aujourd_hui')}</p>
               </div>
             )}
           </Card.Body>
@@ -186,7 +187,7 @@ function ApercuSection({ stats, frequentation, visites, motifs, urgencesJour, al
         <Card>
           <Card.Header>
             <div className="flex items-center justify-between">
-              <Card.Title>Alertes Médicales</Card.Title>
+              <Card.Title>{t('dashboards.infirmier.alertes_medicales')}</Card.Title>
               {alertesMedicales.length > 0 && (
                 <Badge variant="warning" size="sm">{alertesMedicales.length}</Badge>
               )}
@@ -196,8 +197,8 @@ function ApercuSection({ stats, frequentation, visites, motifs, urgencesJour, al
             {alertesMedicales.length > 0 ? (
             <Table>
               <Table.Header>
-                <Table.Head>Élève</Table.Head>
-                <Table.Head>Allergies / Maladie</Table.Head>
+                <Table.Head>{t('common.student')}</Table.Head>
+                <Table.Head>{t('dashboards.infirmier.allergies_maladie')}</Table.Head>
               </Table.Header>
               <Table.Body>
                 {alertesMedicales.map((a) => (
@@ -211,7 +212,7 @@ function ApercuSection({ stats, frequentation, visites, motifs, urgencesJour, al
             ) : (
               <div className="flex flex-col items-center justify-center py-8 text-[var(--text-tertiary)]">
                 <AlertTriangle className="h-8 w-8 mb-2 opacity-30" />
-                <p className="text-sm">Aucune alerte médicale signalée</p>
+                <p className="text-sm">{t('dashboards.infirmier.aucune_alerte_medicale_signalee')}</p>
               </div>
             )}
           </Card.Body>
@@ -219,15 +220,15 @@ function ApercuSection({ stats, frequentation, visites, motifs, urgencesJour, al
 
         <Card>
           <Card.Header>
-            <Card.Title>Soins Récurrents</Card.Title>
-            <Card.Description>Élèves suivis régulièrement</Card.Description>
+            <Card.Title>{t('dashboards.infirmier.soins_recurrents')}</Card.Title>
+            <Card.Description>{t('dashboards.infirmier.eleves_suivis_regulierement')}</Card.Description>
           </Card.Header>
           <Card.Body className="p-0">
             {soinsRecurrents.length > 0 ? (
             <Table>
               <Table.Header>
-                <Table.Head>Élève</Table.Head>
-                <Table.Head>Visites</Table.Head>
+                <Table.Head>{t('common.student')}</Table.Head>
+                <Table.Head>{t('dashboards.infirmier.visites')}</Table.Head>
               </Table.Header>
               <Table.Body>
                 {soinsRecurrents.map((s) => (
@@ -246,7 +247,7 @@ function ApercuSection({ stats, frequentation, visites, motifs, urgencesJour, al
             ) : (
               <div className="flex flex-col items-center justify-center py-8 text-[var(--text-tertiary)]">
                 <Activity className="h-8 w-8 mb-2 opacity-30" />
-                <p className="text-sm">Aucun élève suivi de façon récurrente</p>
+                <p className="text-sm">{t('dashboards.infirmier.aucun_eleve_suivi_de_facon_recurrente')}</p>
               </div>
             )}
           </Card.Body>
@@ -300,7 +301,7 @@ export default function InfirmierDashboard() {
       onRefresh={refetch}
       actions={
         <>
-    <Button variant="ghost" size="sm"><Heart className="h-4 w-4 mr-1" /> État des Lieux</Button>
+    <Button variant="ghost" size="sm"><Heart className="h-4 w-4 mr-1" /> {t('dashboards.infirmier.etat_des_lieux')}</Button>
         </>
       }
     >

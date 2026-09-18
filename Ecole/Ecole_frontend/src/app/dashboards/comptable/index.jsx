@@ -39,6 +39,7 @@ const STATS_META = [
 ];
 
 function ApercuSection({ stats, caData, repartition, factures, impayes, tresorerie }) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -49,8 +50,8 @@ function ApercuSection({ stats, caData, repartition, factures, impayes, tresorer
         )) : (
           <div className="col-span-full flex flex-col items-center justify-center py-12 text-[var(--text-tertiary)]">
             <Wallet className="h-10 w-10 mb-3 opacity-30" />
-            <p className="text-sm">Aucune donnée financière disponible</p>
-            <p className="text-xs mt-1">Les statistiques apparaîtront une fois les paiements enregistrés</p>
+            <p className="text-sm">{t('dashboards.comptable.aucune_donnee_financiere_disponible')}</p>
+            <p className="text-xs mt-1">{t('dashboards.comptable.les_statistiques_apparaitront_une_fois_les')}</p>
           </div>
         )}
       </div>
@@ -58,8 +59,8 @@ function ApercuSection({ stats, caData, repartition, factures, impayes, tresorer
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2">
           <Card.Header>
-            <Card.Title>Évolution des Finances</Card.Title>
-            <Card.Description>Revenus et dépenses — 6 derniers mois</Card.Description>
+            <Card.Title>{t('dashboards.comptable.evolution_des_finances')}</Card.Title>
+            <Card.Description>{t('dashboards.comptable.revenus_et_depenses_6_derniers_mois')}</Card.Description>
           </Card.Header>
           <Card.Body>
             {caData.length > 0 ? (
@@ -77,7 +78,7 @@ function ApercuSection({ stats, caData, repartition, factures, impayes, tresorer
             </div>
             ) : (
               <div className="h-[280px] flex items-center justify-center text-sm text-[var(--text-tertiary)]">
-                Aucune donnée financière pour la période
+                {t('dashboards.comptable.aucune_donnee_financiere_pour_la_periode')}
               </div>
             )}
           </Card.Body>
@@ -85,8 +86,8 @@ function ApercuSection({ stats, caData, repartition, factures, impayes, tresorer
 
         <Card>
           <Card.Header>
-            <Card.Title>Répartition</Card.Title>
-            <Card.Description>Part des montants par type</Card.Description>
+            <Card.Title>{t('dashboards.comptable.repartition')}</Card.Title>
+            <Card.Description>{t('dashboards.comptable.part_des_montants_par_type')}</Card.Description>
           </Card.Header>
           <Card.Body>
             {repartition.length > 0 ? (
@@ -117,7 +118,7 @@ function ApercuSection({ stats, caData, repartition, factures, impayes, tresorer
             </>
             ) : (
               <div className="h-[220px] flex items-center justify-center text-sm text-[var(--text-tertiary)]">
-                Aucune répartition disponible
+                {t('dashboards.comptable.aucune_repartition_disponible')}
               </div>
             )}
           </Card.Body>
@@ -127,24 +128,24 @@ function ApercuSection({ stats, caData, repartition, factures, impayes, tresorer
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card>
           <Card.Header>
-            <Card.Title>Trésorerie du Mois</Card.Title>
-            <Card.Description>Encaissé réellement versé</Card.Description>
+            <Card.Title>{t('dashboards.comptable.tresorerie_du_mois')}</Card.Title>
+            <Card.Description>{t('dashboards.comptable.encaisse_reellement_verse')}</Card.Description>
           </Card.Header>
           <Card.Body className="space-y-4">
             <div>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400">Encaissements</p>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">{t('dashboards.comptable.encaissements')}</p>
               <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
                 {(tresorerie?.encaissements_mois || 0).toLocaleString()} F
               </p>
             </div>
             <div>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400">Dépenses du mois</p>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">{t('dashboards.comptable.depenses_du_mois')}</p>
               <p className="text-xl font-bold text-red-600 dark:text-red-400">
                 {(tresorerie?.depenses_mois || 0).toLocaleString()} F
               </p>
             </div>
             <div className="rounded-lg border border-neutral-100 bg-neutral-50 p-3 dark:border-neutral-800 dark:bg-neutral-900/50">
-              <p className="text-xs text-neutral-500 dark:text-neutral-400">Solde</p>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">{t('common.balance')}</p>
               <p className="text-2xl font-bold text-neutral-900 dark:text-white">
                 {(tresorerie?.solde || 0).toLocaleString()} F
               </p>
@@ -155,7 +156,7 @@ function ApercuSection({ stats, caData, repartition, factures, impayes, tresorer
         <Card className="lg:col-span-2">
           <Card.Header>
             <div className="flex items-center justify-between">
-              <Card.Title>Impayés Prioritaires</Card.Title>
+              <Card.Title>{t('dashboards.comptable.impayes_prioritaires')}</Card.Title>
               {impayes.length > 0 && (
                 <Badge variant="danger" size="sm">{impayes.length} comptes à suivre</Badge>
               )}
@@ -165,10 +166,10 @@ function ApercuSection({ stats, caData, repartition, factures, impayes, tresorer
             {impayes.length > 0 ? (
             <Table>
               <Table.Header>
-                <Table.Head>Élève</Table.Head>
-                <Table.Head>Classe</Table.Head>
-                <Table.Head>Type</Table.Head>
-                <Table.Head>Reste Dû</Table.Head>
+                <Table.Head>{t('common.student')}</Table.Head>
+                <Table.Head>{t('common.class')}</Table.Head>
+                <Table.Head>{t('common.type')}</Table.Head>
+                <Table.Head>{t('dashboards.comptable.reste_du')}</Table.Head>
               </Table.Header>
               <Table.Body>
                 {impayes.map((f) => (
@@ -186,7 +187,7 @@ function ApercuSection({ stats, caData, repartition, factures, impayes, tresorer
             ) : (
               <div className="flex flex-col items-center justify-center py-12 text-[var(--text-tertiary)]">
                 <CheckCircle2 className="h-8 w-8 mb-2 opacity-30" />
-                <p className="text-sm">Aucun impayé — tous les comptes sont à jour</p>
+                <p className="text-sm">{t('dashboards.comptable.aucun_impaye_tous_les_comptes_sont_a_jour')}</p>
               </div>
             )}
           </Card.Body>
@@ -196,7 +197,7 @@ function ApercuSection({ stats, caData, repartition, factures, impayes, tresorer
       <Card>
         <Card.Header>
           <div className="flex items-center justify-between">
-            <Card.Title>Factures Récentes</Card.Title>
+            <Card.Title>{t('dashboards.comptable.factures_recentes')}</Card.Title>
             {factures.length > 0 && (
             <Badge variant="warning" size="sm">{factures.filter(f => f.statut !== 'Payée').length} en attente</Badge>
             )}
@@ -206,11 +207,11 @@ function ApercuSection({ stats, caData, repartition, factures, impayes, tresorer
           {factures.length > 0 ? (
           <Table>
             <Table.Header>
-              <Table.Head>Élève</Table.Head>
-              <Table.Head>Classe</Table.Head>
-              <Table.Head>Montant</Table.Head>
-              <Table.Head>Statut</Table.Head>
-              <Table.Head>Échéance</Table.Head>
+              <Table.Head>{t('common.student')}</Table.Head>
+              <Table.Head>{t('common.class')}</Table.Head>
+              <Table.Head>{t('common.amount')}</Table.Head>
+              <Table.Head>{t('common.status_label')}</Table.Head>
+              <Table.Head>{t('dashboards.comptable.echeance')}</Table.Head>
             </Table.Header>
             <Table.Body>
               {factures.map((f) => (
@@ -231,7 +232,7 @@ function ApercuSection({ stats, caData, repartition, factures, impayes, tresorer
           ) : (
             <div className="flex flex-col items-center justify-center py-12 text-[var(--text-tertiary)]">
               <Receipt className="h-8 w-8 mb-2 opacity-30" />
-              <p className="text-sm">Aucune facture récente</p>
+              <p className="text-sm">{t('dashboards.comptable.aucune_facture_recente')}</p>
             </div>
           )}
         </Card.Body>
@@ -283,7 +284,7 @@ export default function ComptableDashboard() {
       onRefresh={refetch}
       actions={
         <Button variant="ghost" size="sm">
-          <Wallet className="h-4 w-4 mr-1" /> Synthèse
+          <Wallet className="h-4 w-4 mr-1" /> {t('dashboards.comptable.synthese')}
         </Button>
       }
     >

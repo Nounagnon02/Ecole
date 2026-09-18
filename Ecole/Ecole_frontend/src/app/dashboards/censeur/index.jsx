@@ -39,6 +39,7 @@ const STATS_META = [
 const SANCTIONS_COLORS = ['var(--accent)', 'var(--red)', 'var(--amber)', 'var(--green)'];
 
 function ApercuSection({ stats, evolution, types_sanctions, sanctions, absencesParClasse, sanctionsAttente, recidivistes }) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -52,8 +53,8 @@ function ApercuSection({ stats, evolution, types_sanctions, sanctions, absencesP
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2">
           <Card.Header>
-            <Card.Title>Évolution Disciplinaire</Card.Title>
-            <Card.Description>Sanctions et avertissements — 6 derniers mois</Card.Description>
+            <Card.Title>{t('dashboards.censeur.evolution_disciplinaire')}</Card.Title>
+            <Card.Description>{t('dashboards.censeur.sanctions_et_avertissements_6_derniers_mois')}</Card.Description>
           </Card.Header>
           <Card.Body>
             <div className="h-[260px]">
@@ -73,8 +74,8 @@ function ApercuSection({ stats, evolution, types_sanctions, sanctions, absencesP
 
         <Card>
           <Card.Header>
-            <Card.Title>Répartition</Card.Title>
-            <Card.Description>Types de sanctions</Card.Description>
+            <Card.Title>{t('dashboards.censeur.repartition')}</Card.Title>
+            <Card.Description>{t('dashboards.censeur.types_de_sanctions')}</Card.Description>
           </Card.Header>
           <Card.Body>
             <div className="h-[200px]">
@@ -107,19 +108,19 @@ function ApercuSection({ stats, evolution, types_sanctions, sanctions, absencesP
       <Card>
         <Card.Header>
           <div className="flex items-center justify-between">
-            <Card.Title>Sanctions Récentes</Card.Title>
+            <Card.Title>{t('dashboards.censeur.sanctions_recentes')}</Card.Title>
             <Badge variant="warning" size="sm">{sanctions.filter(s => s.statut === 'En cours').length} en cours</Badge>
           </div>
         </Card.Header>
         <Card.Body className="p-0">
           <Table>
             <Table.Header>
-              <Table.Head>Élève</Table.Head>
-              <Table.Head>Classe</Table.Head>
-              <Table.Head>Motif</Table.Head>
-              <Table.Head>Sanction</Table.Head>
-              <Table.Head>Date</Table.Head>
-              <Table.Head>Statut</Table.Head>
+              <Table.Head>{t('common.student')}</Table.Head>
+              <Table.Head>{t('common.class')}</Table.Head>
+              <Table.Head>{t('common.reason')}</Table.Head>
+              <Table.Head>{t('dashboards.censeur.sanction')}</Table.Head>
+              <Table.Head>{t('common.date')}</Table.Head>
+              <Table.Head>{t('common.status_label')}</Table.Head>
             </Table.Header>
             <Table.Body>
               {sanctions.map((s) => (
@@ -144,8 +145,8 @@ function ApercuSection({ stats, evolution, types_sanctions, sanctions, absencesP
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card>
           <Card.Header>
-            <Card.Title>Absences par Classe</Card.Title>
-            <Card.Description>Non justifiées ce mois-ci</Card.Description>
+            <Card.Title>{t('dashboards.censeur.absences_par_classe')}</Card.Title>
+            <Card.Description>{t('dashboards.censeur.non_justifiees_ce_mois_ci')}</Card.Description>
           </Card.Header>
           <Card.Body>
             {absencesParClasse.length > 0 ? (
@@ -168,7 +169,7 @@ function ApercuSection({ stats, evolution, types_sanctions, sanctions, absencesP
             ) : (
               <div className="flex flex-col items-center justify-center py-8 text-[var(--text-tertiary)]">
                 <CalendarX className="h-8 w-8 mb-2 opacity-30" />
-                <p className="text-sm">Aucune absence non justifiée ce mois</p>
+                <p className="text-sm">{t('dashboards.censeur.aucune_absence_non_justifiee_ce_mois')}</p>
               </div>
             )}
           </Card.Body>
@@ -177,7 +178,7 @@ function ApercuSection({ stats, evolution, types_sanctions, sanctions, absencesP
         <Card>
           <Card.Header>
             <div className="flex items-center justify-between">
-              <Card.Title>Sanctions en Attente</Card.Title>
+              <Card.Title>{t('dashboards.censeur.sanctions_en_attente')}</Card.Title>
               {sanctionsAttente.length > 0 && (
                 <Badge variant="warning" size="sm">{sanctionsAttente.length}</Badge>
               )}
@@ -187,9 +188,9 @@ function ApercuSection({ stats, evolution, types_sanctions, sanctions, absencesP
             {sanctionsAttente.length > 0 ? (
             <Table>
               <Table.Header>
-                <Table.Head>Élève</Table.Head>
-                <Table.Head>Sanction</Table.Head>
-                <Table.Head>Date</Table.Head>
+                <Table.Head>{t('common.student')}</Table.Head>
+                <Table.Head>{t('dashboards.censeur.sanction')}</Table.Head>
+                <Table.Head>{t('common.date')}</Table.Head>
               </Table.Header>
               <Table.Body>
                 {sanctionsAttente.map((s) => (
@@ -204,7 +205,7 @@ function ApercuSection({ stats, evolution, types_sanctions, sanctions, absencesP
             ) : (
               <div className="flex flex-col items-center justify-center py-8 text-[var(--text-tertiary)]">
                 <Gavel className="h-8 w-8 mb-2 opacity-30" />
-                <p className="text-sm">Aucune sanction à suivre</p>
+                <p className="text-sm">{t('dashboards.censeur.aucune_sanction_a_suivre')}</p>
               </div>
             )}
           </Card.Body>
@@ -212,16 +213,16 @@ function ApercuSection({ stats, evolution, types_sanctions, sanctions, absencesP
 
         <Card>
           <Card.Header>
-            <Card.Title>Récidivistes</Card.Title>
-            <Card.Description>2 sanctions ou plus</Card.Description>
+            <Card.Title>{t('dashboards.censeur.recidivistes')}</Card.Title>
+            <Card.Description>{t('dashboards.censeur.2_sanctions_ou_plus')}</Card.Description>
           </Card.Header>
           <Card.Body className="p-0">
             {recidivistes.length > 0 ? (
             <Table>
               <Table.Header>
-                <Table.Head>Élève</Table.Head>
-                <Table.Head>Classe</Table.Head>
-                <Table.Head>Sanctions</Table.Head>
+                <Table.Head>{t('common.student')}</Table.Head>
+                <Table.Head>{t('common.class')}</Table.Head>
+                <Table.Head>{t('dashboards.censeur.sanctions')}</Table.Head>
               </Table.Header>
               <Table.Body>
                 {recidivistes.map((r) => (
@@ -238,7 +239,7 @@ function ApercuSection({ stats, evolution, types_sanctions, sanctions, absencesP
             ) : (
               <div className="flex flex-col items-center justify-center py-8 text-[var(--text-tertiary)]">
                 <AlertTriangle className="h-8 w-8 mb-2 opacity-30" />
-                <p className="text-sm">Aucun récidiviste</p>
+                <p className="text-sm">{t('dashboards.censeur.aucun_recidiviste')}</p>
               </div>
             )}
           </Card.Body>
@@ -292,7 +293,7 @@ export default function CenseurDashboard() {
       onRefresh={refetch}
       actions={
         <>
-    <Button variant="ghost" size="sm"><BookOpen className="h-4 w-4 mr-1" /> Règlement</Button>
+    <Button variant="ghost" size="sm"><BookOpen className="h-4 w-4 mr-1" /> {t('dashboards.censeur.reglement')}</Button>
         </>
       }
     >

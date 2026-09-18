@@ -76,8 +76,8 @@ function ApercuSection({ data, loading }) {
           <Card.Header>
             <div className="flex items-center justify-between">
               <div>
-                <Card.Title>Notes par Matière</Card.Title>
-                <Card.Description>Moyennes par matière</Card.Description>
+                <Card.Title>{t('dashboards.eleve.notes_par_matiere')}</Card.Title>
+                <Card.Description>{t('dashboards.eleve.moyennes_par_matiere')}</Card.Description>
               </div>
               {stats.moyenne_generale && (
                 <Badge variant="primary" size="sm">Moy: {stats.moyenne_generale}/20</Badge>
@@ -103,8 +103,8 @@ function ApercuSection({ data, loading }) {
 
         <Card>
           <Card.Header>
-            <Card.Title>Prochains Cours</Card.Title>
-            <Card.Description>Emploi du temps</Card.Description>
+            <Card.Title>{t('dashboards.eleve.prochains_cours')}</Card.Title>
+            <Card.Description>{t('dashboards.eleve.emploi_du_temps')}</Card.Description>
           </Card.Header>
           <Card.Body className="p-0">
             {loading ? (
@@ -112,7 +112,7 @@ function ApercuSection({ data, loading }) {
                 {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-12 rounded-lg" />)}
               </div>
             ) : emploi.length === 0 ? (
-              <p className="p-6 text-center text-sm text-neutral-400">Aucun cours planifié</p>
+              <p className="p-6 text-center text-sm text-neutral-400">{t('dashboards.eleve.aucun_cours_planifie')}</p>
             ) : (
               <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
                 {emploi.slice(0, 5).map((cours, i) => (
@@ -138,17 +138,18 @@ function ApercuSection({ data, loading }) {
 }
 
 function NotesSection({ data, loading }) {
+  const { t } = useTranslation();
   const matieres = data?.matieres ?? [];
 
   return (
     <div className="space-y-6">
-      <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Mes Notes</h2>
+      <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">{t('dashboards.eleve.mes_notes')}</h2>
       <Card padding={false}>
         <Table>
           <Table.Header>
-            <Table.Head>Matière</Table.Head>
-            <Table.Head>Note</Table.Head>
-            <Table.Head>Coefficient</Table.Head>
+            <Table.Head>{t('common.subject')}</Table.Head>
+            <Table.Head>{t('common.grade')}</Table.Head>
+            <Table.Head>{t('dashboards.eleve.coefficient')}</Table.Head>
           </Table.Header>
           <Table.Body>
             {loading && Array.from({ length: 5 }).map((_, i) => (
@@ -158,7 +159,7 @@ function NotesSection({ data, loading }) {
             ))}
             {!loading && matieres.length === 0 && (
               <Table.Row>
-                <td colSpan={3} className="p-8 text-center text-sm text-neutral-500">Aucune note disponible</td>
+                <td colSpan={3} className="p-8 text-center text-sm text-neutral-500">{t('dashboards.eleve.aucune_note_disponible')}</td>
               </Table.Row>
             )}
             {!loading && matieres.map((m, i) => (

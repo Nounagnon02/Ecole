@@ -86,7 +86,8 @@
     "late": "Late",
     "time": "Time",
     "teachers": "Teachers",
-    "students": "Students"
+    "students": "Students",
+    "subject": "Subject"
   },
   "auth": {
     "login": "Log in",
@@ -258,7 +259,27 @@
         "espace_disque": "Disk Space",
         "erreurs_api": "API Errors",
         "uptime": "Uptime"
-      }
+      },
+      "activite_plateforme": "Platform Activity",
+      "actions_auditees_7_derniers_jours": "Audited actions — last 7 days",
+      "actualiser": "Refresh",
+      "sante_systeme": "System Health",
+      "indicateurs_cles": "Key indicators",
+      "logs_systeme_temps_reel": "System Logs — Real Time",
+      "voir_tous_les_logs": "View all logs",
+      "utilisateurs_recents": "Recent Users",
+      "aucun_utilisateur_recent": "No recent user",
+      "logs_systeme": "System Logs",
+      "rechercher_dans_les_logs": "Search the logs…",
+      "rechercher_dans_les_logs_2": "Search the logs",
+      "chargement_des_logs": "Loading logs…",
+      "aucune_entree_de_journal_pour_ce_filtre": "No log entry for this filter",
+      "sauvegardes": "Backups",
+      "gestion_des_backups": "Backup management",
+      "sauvegarder": "Save",
+      "backups_automatiques_restauration_et": "Automatic backups, restore and scheduling",
+      "alertes": "Alerts",
+      "parametres": "Settings"
     },
     "bibliothecaire": {
       "title": "Library",
@@ -273,7 +294,26 @@
         "emprunts_en_cours": "Active Loans",
         "retards": "Overdue",
         "membres_actifs": "Active Members"
-      }
+      },
+      "activite_de_la_bibliotheque": "Library Activity",
+      "emprunts_et_retours_6_derniers_mois": "Loans and returns — last 6 months",
+      "categories": "Categories",
+      "repartition_des_ouvrages": "Book breakdown",
+      "emprunts_en_cours": "Current Loans",
+      "ouvrage": "Book",
+      "emprunt": "Loan",
+      "retour_prevu": "Expected Return",
+      "retards_de_retour": "Overdue Returns",
+      "aucun_retour_en_retard": "No overdue return",
+      "nouveautes": "What's New",
+      "derniers_ajouts_au_catalogue": "Latest catalog additions",
+      "titre": "Title",
+      "auteur": "Author",
+      "aucune_nouveaute_recente": "Nothing new recently",
+      "les_plus_empruntes": "Most Borrowed",
+      "ouvrages_les_plus_lus": "Most read books",
+      "aucun_emprunt_enregistre": "No loan recorded",
+      "recherche_rapide": "Quick Search"
     },
     "censeur": {
       "title": "Dean of Discipline",
@@ -288,7 +328,23 @@
         "sanctions_du_mois": "Sanctions This Month",
         "absences_non_justifiees": "Unexcused Absences",
         "avertissements": "Warnings"
-      }
+      },
+      "evolution_disciplinaire": "Disciplinary Trend",
+      "sanctions_et_avertissements_6_derniers_mois": "Sanctions and warnings — last 6 months",
+      "repartition": "Breakdown",
+      "types_de_sanctions": "Sanction types",
+      "sanctions_recentes": "Recent Sanctions",
+      "sanction": "Sanction",
+      "absences_par_classe": "Absences by Class",
+      "non_justifiees_ce_mois_ci": "Unjustified this month",
+      "aucune_absence_non_justifiee_ce_mois": "No unjustified absence this month",
+      "sanctions_en_attente": "Pending Sanctions",
+      "aucune_sanction_a_suivre": "No sanction to follow up",
+      "recidivistes": "Repeat Offenders",
+      "2_sanctions_ou_plus": "2 or more sanctions",
+      "sanctions": "Sanctions",
+      "aucun_recidiviste": "No repeat offender",
+      "reglement": "Payment"
     },
     "comptable": {
       "title": "Accounting",
@@ -303,7 +359,26 @@
         "factures_en_attente": "Pending Invoices",
         "taux_recouvrement": "Collection Rate",
         "depenses_du_mois": "Monthly Expenses"
-      }
+      },
+      "aucune_donnee_financiere_disponible": "No financial data available",
+      "les_statistiques_apparaitront_une_fois_les": "Statistics will appear once payments are recorded",
+      "evolution_des_finances": "Financial Trend",
+      "revenus_et_depenses_6_derniers_mois": "Income and expenses — last 6 months",
+      "aucune_donnee_financiere_pour_la_periode": "No financial data for the period",
+      "repartition": "Breakdown",
+      "part_des_montants_par_type": "Share of amounts by type",
+      "aucune_repartition_disponible": "No breakdown available",
+      "tresorerie_du_mois": "Cash Position of the Month",
+      "encaisse_reellement_verse": "Actually collected",
+      "encaissements": "Collections",
+      "depenses_du_mois": "Expenses of the month",
+      "impayes_prioritaires": "Priority Unpaid Balances",
+      "reste_du": "Balance Due",
+      "aucun_impaye_tous_les_comptes_sont_a_jour": "No unpaid balance — all accounts are up to date",
+      "factures_recentes": "Recent Invoices",
+      "echeance": "Due date",
+      "aucune_facture_recente": "No recent invoice",
+      "synthese": "Summary"
     },
     "directeur": {
       "title": "Dashboard",
@@ -319,7 +394,17 @@
         "total_eleves": "Total Students",
         "enseignants": "Teachers",
         "classes": "Classes"
-      }
+      },
+      "evolution_des_effectifs": "Enrollment Trend",
+      "inscriptions_par_mois": "Enrollments per month",
+      "repartition_des_notes": "Grade Distribution",
+      "distribution_par_tranche": "Distribution by range",
+      "classes_et_effectifs": "Classes and Enrollment",
+      "vue_d_ensemble_des_classes_actives": "Overview of active classes",
+      "effectif": "Headcount",
+      "categorie": "Category",
+      "aucune_classe": "No class",
+      "rapport": "Report"
     },
     "eleve": {
       "title": "My Student Space",
@@ -334,7 +419,15 @@
         "moyenne_generale": "Overall Average",
         "total_notes": "Total Grades",
         "absences_ce_mois": "Absences This Month"
-      }
+      },
+      "notes_par_matiere": "Grades by Subject",
+      "moyennes_par_matiere": "Averages by subject",
+      "prochains_cours": "Upcoming Courses",
+      "emploi_du_temps": "Schedule",
+      "aucun_cours_planifie": "No course scheduled",
+      "mes_notes": "My Grades",
+      "coefficient": "Coefficient",
+      "aucune_note_disponible": "No grade available"
     },
     "enseignant": {
       "title": "My Teacher Space",
@@ -352,7 +445,28 @@
         "cours_semaine": "Classes This Week",
         "moyenne_classe": "Class Average",
         "devoirs_a_corriger": "Assignments to Grade"
-      }
+      },
+      "emploi_du_temps_aujourd_hui": "Schedule — Today",
+      "aucun_cours_prevu_aujourd_hui": "No course scheduled today",
+      "voir_la_semaine": "View the week",
+      "devoirs_evaluations": "Assignments & Assessments",
+      "echeance_atteinte_a_corriger": "Due date reached — to grade",
+      "nouveau": "New",
+      "aucun_devoir_a_corriger": "No assignment to grade",
+      "saisie_des_notes": "Grade Entry",
+      "gerer_les_evaluations_et_notes": "Manage assessments and grades",
+      "saisir_des_notes": "Enter Grades",
+      "dernieres_notes_saisies": "Latest Grades Entered",
+      "appreciation": "Remarks",
+      "aucune_note_saisie": "No grade entered",
+      "cahier_de_textes": "Lesson Log",
+      "suivi_des_lecons_et_seances": "Tracking of lessons and sessions",
+      "nouvelle_seance": "New Session",
+      "cahier_de_textes_numerique_lecons_seances_et": "Digital lesson log — lessons, sessions and teaching progress",
+      "emploi_du_temps": "Schedule",
+      "planning_hebdomadaire_des_cours": "Weekly course schedule",
+      "aucun_emploi_du_temps_disponible": "No timetable available",
+      "pas_de_cours": "No class"
     },
     "infirmier": {
       "title": "Infirmary",
@@ -367,7 +481,24 @@
         "en_cours": "In Progress",
         "cas_urgents": "Urgent Cases",
         "consultations": "Consultations"
-      }
+      },
+      "frequentation_infirmerie": "Infirmary Attendance",
+      "visites_et_urgences_6_derniers_mois": "Visits and emergencies — last 6 months",
+      "motifs_frequents": "Frequent Reasons",
+      "ce_mois_ci": "This month",
+      "aucune_consultation_ce_mois_ci": "No consultation this month.",
+      "dernieres_visites": "Latest Visits",
+      "soin": "Care",
+      "urgences_du_jour": "Today's Emergencies",
+      "aucune_urgence_aujourd_hui": "No emergency today",
+      "alertes_medicales": "Medical Alerts",
+      "allergies_maladie": "Allergies / Illness",
+      "aucune_alerte_medicale_signalee": "No medical alert reported",
+      "soins_recurrents": "Recurring Care",
+      "eleves_suivis_regulierement": "Students followed regularly",
+      "visites": "Visits",
+      "aucun_eleve_suivi_de_facon_recurrente": "No student followed on a recurring basis",
+      "etat_des_lieux": "Overview"
     },
     "parent": {
       "title": "Parent Space",
@@ -384,7 +515,20 @@
         "moyenne_generale": "Overall Average",
         "assiduite": "Attendance",
         "solde": "Balance"
-      }
+      },
+      "evolution_des_notes": "Grade Trend",
+      "suivi_trimestriel": "Term follow-up",
+      "aucune_donnee_d_evolution_disponible": "No trend data available",
+      "mes_enfants": "My Children",
+      "vue_rapide": "Quick view",
+      "aucun_enfant_trouve": "No child found",
+      "contact_principal": "Main contact",
+      "tuteur_legal": "Legal guardian",
+      "derniers_echanges": "Latest Exchanges",
+      "avec_l_etablissement": "With the school",
+      "aucun_echange_recent": "No recent exchange",
+      "urgent": "Urgent",
+      "voir_tous_les_echanges": "View all exchanges"
     },
     "secretaire": {
       "title": "Secretariat",
@@ -400,7 +544,20 @@
         "nouveaux_ce_mois": "New This Month",
         "dossiers_en_cours": "Files in Progress",
         "documents_generes": "Documents Generated"
-      }
+      },
+      "flux_d_inscriptions": "Enrollment Flow",
+      "nouveaux_inscrits_6_derniers_mois": "New enrollments — last 6 months",
+      "rendez_vous_du_jour": "Today's Appointments",
+      "dernieres_inscriptions": "Latest Enrollments",
+      "nom": "Last name",
+      "planning_a_venir": "Upcoming Schedule",
+      "7_prochains_jours": "Next 7 days",
+      "visiteur": "Visitor",
+      "aucun_rendez_vous_prevu_cette_semaine": "No appointment planned this week",
+      "certificats_a_emettre": "Certificates to Issue",
+      "demande": "Request",
+      "aucun_certificat_en_attente": "No certificate pending",
+      "tableau_de_bord": "Dashboard"
     },
     "surveillant": {
       "title": "Supervision",
@@ -415,7 +572,27 @@
         "presents_aujourdhui": "Present Today",
         "absents": "Absent",
         "alertes": "Alerts"
-      }
+      },
+      "presences_de_la_semaine": "Attendance of the Week",
+      "tendance_quotidienne": "Daily trend",
+      "points_de_surveillance": "Supervision Points",
+      "zones_actives_aujourd_hui": "Zones active today",
+      "aucun_point_de_surveillance": "No supervision point",
+      "retards_du_jour": "Late Arrivals Today",
+      "recurrent": "Recurring",
+      "ponctuel": "One-off",
+      "absents_du_jour": "Absent Today",
+      "justifie": "Justified",
+      "oui": "Yes",
+      "non": "No",
+      "aucun_absent_signale_aujourd_hui": "No absences reported today",
+      "incidents_recents": "Recent Incidents",
+      "incident": "Incident",
+      "gravite": "Severity",
+      "aucun_incident_recent": "No recent incident",
+      "absences_non_justifiees": "Unjustified Absences",
+      "toutes_les_absences_sont_justifiees": "All absences are justified",
+      "mon_service": "My Department"
     },
     "universite": {
       "title": "University",
@@ -432,7 +609,17 @@
         "departements": "Departments",
         "enseignants": "Teachers",
         "etudiants": "Students"
-      }
+      },
+      "inscriptions_diplomes": "Enrollments & Degrees",
+      "evolution_sur_5_ans": "5-year trend",
+      "aucune_donnee_d_inscription": "No enrollment data",
+      "etudiants_par_faculte": "Students by Faculty",
+      "repartition_semestre_actuel": "Current semester breakdown",
+      "aucune_donnee_facultaire": "No faculty data",
+      "activites_recentes": "Recent Activities",
+      "derniers_evenements_dans_l_universite": "Latest events at the university",
+      "aucune_activite_recente": "No recent activity",
+      "calendrier": "Calendar"
     }
   },
   "pages": {

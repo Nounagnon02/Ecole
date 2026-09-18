@@ -104,8 +104,8 @@ function ApercuSection({ data, loading }) {
           <Card.Header>
             <div className="flex items-center justify-between">
               <div>
-                <Card.Title>Évolution des Notes</Card.Title>
-                <Card.Description>Suivi trimestriel</Card.Description>
+                <Card.Title>{t('dashboards.parent.evolution_des_notes')}</Card.Title>
+                <Card.Description>{t('dashboards.parent.suivi_trimestriel')}</Card.Description>
               </div>
               {childKeys.length > 0 && (
                 <div className="flex items-center gap-4 text-xs">
@@ -124,7 +124,7 @@ function ApercuSection({ data, loading }) {
               {safeEvolution.length === 0 || childKeys.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-[var(--text-tertiary)]">
                   <TrendingUp className="h-10 w-10 mb-3 opacity-40" />
-                  <p className="text-sm">Aucune donnée d'évolution disponible</p>
+                  <p className="text-sm">{t('dashboards.parent.aucune_donnee_d_evolution_disponible')}</p>
                 </div>
               ) : (
               <ResponsiveContainer width="100%" height="100%">
@@ -163,14 +163,14 @@ function ApercuSection({ data, loading }) {
         {/* Enfants */}
         <Card>
           <Card.Header>
-            <Card.Title>Mes Enfants</Card.Title>
-            <Card.Description>Vue rapide</Card.Description>
+            <Card.Title>{t('dashboards.parent.mes_enfants')}</Card.Title>
+            <Card.Description>{t('dashboards.parent.vue_rapide')}</Card.Description>
           </Card.Header>
           <Card.Body className="space-y-4">
             {safeEnfants.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-10 text-[var(--text-tertiary)]">
                 <Users className="h-10 w-10 mb-3 opacity-40" />
-                <p className="text-sm">Aucun enfant trouvé</p>
+                <p className="text-sm">{t('dashboards.parent.aucun_enfant_trouve')}</p>
               </div>
             ) : (
               safeEnfants.map((enfant) => (
@@ -190,10 +190,10 @@ function ApercuSection({ data, loading }) {
                           <Badge variant={roleVariant(enfant.role)} size="sm">{enfant.role}</Badge>
                         )}
                         {enfant.is_primary && (
-                          <Badge variant="success" size="sm">Contact principal</Badge>
+                          <Badge variant="success" size="sm">{t('dashboards.parent.contact_principal')}</Badge>
                         )}
                         {enfant.is_guardian && (
-                          <Badge variant="info" size="sm">Tuteur légal</Badge>
+                          <Badge variant="info" size="sm">{t('dashboards.parent.tuteur_legal')}</Badge>
                         )}
                       </div>
                     </div>
@@ -217,8 +217,8 @@ function ApercuSection({ data, loading }) {
         <Card.Header>
           <div className="flex items-center justify-between">
             <div>
-              <Card.Title>Derniers Échanges</Card.Title>
-              <Card.Description>Avec l'établissement</Card.Description>
+              <Card.Title>{t('dashboards.parent.derniers_echanges')}</Card.Title>
+              <Card.Description>{t('dashboards.parent.avec_l_etablissement')}</Card.Description>
             </div>
             <Badge variant="danger" size="sm">{safeCommunications.filter(c => c.urgent).length} urgent</Badge>
           </div>
@@ -227,7 +227,7 @@ function ApercuSection({ data, loading }) {
           {safeCommunications.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-[var(--text-tertiary)]">
               <MessageSquare className="h-10 w-10 mb-3 opacity-40" />
-              <p className="text-sm">Aucun échange récent</p>
+              <p className="text-sm">{t('dashboards.parent.aucun_echange_recent')}</p>
             </div>
           ) : (
           <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
@@ -243,7 +243,7 @@ function ApercuSection({ data, loading }) {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="font-medium text-sm text-neutral-900 dark:text-white">{msg.sujet}</span>
-                    {msg.urgent && <Badge variant="danger" size="sm">Urgent</Badge>}
+                    {msg.urgent && <Badge variant="danger" size="sm">{t('dashboards.parent.urgent')}</Badge>}
                   </div>
                   <p className="text-xs text-neutral-500 mt-0.5">{msg.from} · {msg.role}</p>
                 </div>
@@ -255,7 +255,7 @@ function ApercuSection({ data, loading }) {
         </Card.Body>
         <Card.Footer>
           <Button variant="ghost" size="sm" className="w-full">
-            Voir tous les échanges <ArrowRight className="h-4 w-4 ml-1" />
+            {t('dashboards.parent.voir_tous_les_echanges')} <ArrowRight className="h-4 w-4 ml-1" />
           </Button>
         </Card.Footer>
       </Card>

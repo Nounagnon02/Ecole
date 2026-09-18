@@ -38,6 +38,7 @@ const STATS_META = [
 const CAT_COLORS = ['var(--accent)', 'var(--green)', 'var(--amber)', 'var(--red)', 'var(--primary)'];
 
 function ApercuSection({ stats, activite, categories, emprunts, retardsListe, nouveautes, populaires }) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -51,8 +52,8 @@ function ApercuSection({ stats, activite, categories, emprunts, retardsListe, no
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2">
           <Card.Header>
-            <Card.Title>Activité de la Bibliothèque</Card.Title>
-            <Card.Description>Emprunts et retours — 6 derniers mois</Card.Description>
+            <Card.Title>{t('dashboards.bibliothecaire.activite_de_la_bibliotheque')}</Card.Title>
+            <Card.Description>{t('dashboards.bibliothecaire.emprunts_et_retours_6_derniers_mois')}</Card.Description>
           </Card.Header>
           <Card.Body>
             <div className="h-[260px]">
@@ -72,8 +73,8 @@ function ApercuSection({ stats, activite, categories, emprunts, retardsListe, no
 
         <Card>
           <Card.Header>
-            <Card.Title>Catégories</Card.Title>
-            <Card.Description>Répartition des ouvrages</Card.Description>
+            <Card.Title>{t('dashboards.bibliothecaire.categories')}</Card.Title>
+            <Card.Description>{t('dashboards.bibliothecaire.repartition_des_ouvrages')}</Card.Description>
           </Card.Header>
           <Card.Body>
             <div className="h-[200px]">
@@ -106,7 +107,7 @@ function ApercuSection({ stats, activite, categories, emprunts, retardsListe, no
       <Card>
         <Card.Header>
           <div className="flex items-center justify-between">
-            <Card.Title>Emprunts en Cours</Card.Title>
+            <Card.Title>{t('dashboards.bibliothecaire.emprunts_en_cours')}</Card.Title>
             <div className="flex gap-2">
               <Badge variant="danger" size="sm">{emprunts.filter(e => e.statut === 'En retard' || e.statut === 'Retard').length} en retard</Badge>
             </div>
@@ -115,12 +116,12 @@ function ApercuSection({ stats, activite, categories, emprunts, retardsListe, no
         <Card.Body className="p-0">
           <Table>
             <Table.Header>
-              <Table.Head>Élève</Table.Head>
-              <Table.Head>Classe</Table.Head>
-              <Table.Head>Ouvrage</Table.Head>
-              <Table.Head>Emprunt</Table.Head>
-              <Table.Head>Retour Prévu</Table.Head>
-              <Table.Head>Statut</Table.Head>
+              <Table.Head>{t('common.student')}</Table.Head>
+              <Table.Head>{t('common.class')}</Table.Head>
+              <Table.Head>{t('dashboards.bibliothecaire.ouvrage')}</Table.Head>
+              <Table.Head>{t('dashboards.bibliothecaire.emprunt')}</Table.Head>
+              <Table.Head>{t('dashboards.bibliothecaire.retour_prevu')}</Table.Head>
+              <Table.Head>{t('common.status_label')}</Table.Head>
             </Table.Header>
             <Table.Body>
               {emprunts.map((e) => (
@@ -146,7 +147,7 @@ function ApercuSection({ stats, activite, categories, emprunts, retardsListe, no
         <Card>
           <Card.Header>
             <div className="flex items-center justify-between">
-              <Card.Title>Retards de Retour</Card.Title>
+              <Card.Title>{t('dashboards.bibliothecaire.retards_de_retour')}</Card.Title>
               {retardsListe.length > 0 && (
                 <Badge variant="danger" size="sm">{retardsListe.length}</Badge>
               )}
@@ -156,9 +157,9 @@ function ApercuSection({ stats, activite, categories, emprunts, retardsListe, no
             {retardsListe.length > 0 ? (
             <Table>
               <Table.Header>
-                <Table.Head>Élève</Table.Head>
-                <Table.Head>Ouvrage</Table.Head>
-                <Table.Head>Retard</Table.Head>
+                <Table.Head>{t('common.student')}</Table.Head>
+                <Table.Head>{t('dashboards.bibliothecaire.ouvrage')}</Table.Head>
+                <Table.Head>{t('common.late')}</Table.Head>
               </Table.Header>
               <Table.Body>
                 {retardsListe.map((r) => (
@@ -175,7 +176,7 @@ function ApercuSection({ stats, activite, categories, emprunts, retardsListe, no
             ) : (
               <div className="flex flex-col items-center justify-center py-8 text-[var(--text-tertiary)]">
                 <Clock className="h-8 w-8 mb-2 opacity-30" />
-                <p className="text-sm">Aucun retour en retard</p>
+                <p className="text-sm">{t('dashboards.bibliothecaire.aucun_retour_en_retard')}</p>
               </div>
             )}
           </Card.Body>
@@ -183,15 +184,15 @@ function ApercuSection({ stats, activite, categories, emprunts, retardsListe, no
 
         <Card>
           <Card.Header>
-            <Card.Title>Nouveautés</Card.Title>
-            <Card.Description>Derniers ajouts au catalogue</Card.Description>
+            <Card.Title>{t('dashboards.bibliothecaire.nouveautes')}</Card.Title>
+            <Card.Description>{t('dashboards.bibliothecaire.derniers_ajouts_au_catalogue')}</Card.Description>
           </Card.Header>
           <Card.Body className="p-0">
             {nouveautes.length > 0 ? (
             <Table>
               <Table.Header>
-                <Table.Head>Titre</Table.Head>
-                <Table.Head>Auteur</Table.Head>
+                <Table.Head>{t('dashboards.bibliothecaire.titre')}</Table.Head>
+                <Table.Head>{t('dashboards.bibliothecaire.auteur')}</Table.Head>
               </Table.Header>
               <Table.Body>
                 {nouveautes.map((n) => (
@@ -208,7 +209,7 @@ function ApercuSection({ stats, activite, categories, emprunts, retardsListe, no
             ) : (
               <div className="flex flex-col items-center justify-center py-8 text-[var(--text-tertiary)]">
                 <BookOpen className="h-8 w-8 mb-2 opacity-30" />
-                <p className="text-sm">Aucune nouveauté récente</p>
+                <p className="text-sm">{t('dashboards.bibliothecaire.aucune_nouveaute_recente')}</p>
               </div>
             )}
           </Card.Body>
@@ -216,8 +217,8 @@ function ApercuSection({ stats, activite, categories, emprunts, retardsListe, no
 
         <Card>
           <Card.Header>
-            <Card.Title>Les Plus Empruntés</Card.Title>
-            <Card.Description>Ouvrages les plus lus</Card.Description>
+            <Card.Title>{t('dashboards.bibliothecaire.les_plus_empruntes')}</Card.Title>
+            <Card.Description>{t('dashboards.bibliothecaire.ouvrages_les_plus_lus')}</Card.Description>
           </Card.Header>
           <Card.Body>
             {populaires.length > 0 ? (
@@ -240,7 +241,7 @@ function ApercuSection({ stats, activite, categories, emprunts, retardsListe, no
             ) : (
               <div className="flex flex-col items-center justify-center py-8 text-[var(--text-tertiary)]">
                 <Library className="h-8 w-8 mb-2 opacity-30" />
-                <p className="text-sm">Aucun emprunt enregistré</p>
+                <p className="text-sm">{t('dashboards.bibliothecaire.aucun_emprunt_enregistre')}</p>
               </div>
             )}
           </Card.Body>
@@ -294,7 +295,7 @@ export default function BibliothecaireDashboard() {
       onRefresh={refetch}
       actions={
         <>
-    <Button variant="ghost" size="sm"><Search className="h-4 w-4 mr-1" /> Recherche Rapide</Button>
+    <Button variant="ghost" size="sm"><Search className="h-4 w-4 mr-1" /> {t('dashboards.bibliothecaire.recherche_rapide')}</Button>
         </>
       }
     >

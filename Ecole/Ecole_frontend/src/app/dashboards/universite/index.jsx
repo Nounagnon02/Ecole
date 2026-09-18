@@ -47,6 +47,7 @@ const STATS_META = [
 /* ─── Sections ────────────────────────────────────────────────── */
 
 function ApercuSection({ stats, inscriptions, facultes, activites, loading }) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-6">
       {/* KPIs */}
@@ -65,15 +66,15 @@ function ApercuSection({ stats, inscriptions, facultes, activites, loading }) {
         {/* Inscriptions */}
         <Card>
           <Card.Header>
-            <Card.Title>Inscriptions & Diplômes</Card.Title>
-            <Card.Description>Évolution sur 5 ans</Card.Description>
+            <Card.Title>{t('dashboards.universite.inscriptions_diplomes')}</Card.Title>
+            <Card.Description>{t('dashboards.universite.evolution_sur_5_ans')}</Card.Description>
           </Card.Header>
           <Card.Body>
             <div className="h-[260px]">
               {inscriptions.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-[var(--text-tertiary)]">
                   <BarChart3 className="h-10 w-10 mb-3 opacity-40" />
-                  <p className="text-sm">Aucune donnée d'inscription</p>
+                  <p className="text-sm">{t('dashboards.universite.aucune_donnee_d_inscription')}</p>
                 </div>
               ) : (
               <ResponsiveContainer width="100%" height="100%">
@@ -94,15 +95,15 @@ function ApercuSection({ stats, inscriptions, facultes, activites, loading }) {
         {/* Répartition par faculté */}
         <Card>
           <Card.Header>
-            <Card.Title>Étudiants par Faculté</Card.Title>
-            <Card.Description>Répartition semestre actuel</Card.Description>
+            <Card.Title>{t('dashboards.universite.etudiants_par_faculte')}</Card.Title>
+            <Card.Description>{t('dashboards.universite.repartition_semestre_actuel')}</Card.Description>
           </Card.Header>
           <Card.Body>
             <div className="h-[260px]">
               {facultes.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-[var(--text-tertiary)]">
                   <Building2 className="h-10 w-10 mb-3 opacity-40" />
-                  <p className="text-sm">Aucune donnée facultaire</p>
+                  <p className="text-sm">{t('dashboards.universite.aucune_donnee_facultaire')}</p>
                 </div>
               ) : (
               <ResponsiveContainer width="100%" height="100%">
@@ -125,14 +126,14 @@ function ApercuSection({ stats, inscriptions, facultes, activites, loading }) {
       {/* Activités récentes */}
       <Card>
         <Card.Header>
-          <Card.Title>Activités Récentes</Card.Title>
-          <Card.Description>Derniers événements dans l'université</Card.Description>
+          <Card.Title>{t('dashboards.universite.activites_recentes')}</Card.Title>
+          <Card.Description>{t('dashboards.universite.derniers_evenements_dans_l_universite')}</Card.Description>
         </Card.Header>
         <Card.Body>
           {activites.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 text-[var(--text-tertiary)]">
               <Activity className="h-10 w-10 mb-3 opacity-40" />
-              <p className="text-sm">Aucune activité récente</p>
+              <p className="text-sm">{t('dashboards.universite.aucune_activite_recente')}</p>
             </div>
           ) : (
           <div className="space-y-1">
@@ -217,7 +218,7 @@ export default function UniversiteDashboard() {
     <Button variant="ghost" size="sm" icon={<Search className="h-4 w-4" />} />
     <Button variant="ghost" size="sm"><Bell className="h-4 w-4" /></Button>
     <Button variant="ghost" size="sm" icon={<Calendar className="h-4 w-4" />}>
-    Calendrier
+    {t('dashboards.universite.calendrier')}
     </Button>
         </>
       }

@@ -86,7 +86,8 @@
     "late": "تأخر",
     "time": "الوقت",
     "teachers": "الأساتذة",
-    "students": "الطلاب"
+    "students": "الطلاب",
+    "subject": "المادة"
   },
   "auth": {
     "login": "تسجيل الدخول",
@@ -258,7 +259,27 @@
         "espace_disque": "مساحة القرص",
         "erreurs_api": "أخطاء الواجهة البرمجية",
         "uptime": "مدة التشغيل"
-      }
+      },
+      "activite_plateforme": "نشاط المنصة",
+      "actions_auditees_7_derniers_jours": "الإجراءات المُدقَّقة — آخر 7 أيام",
+      "actualiser": "تحديث",
+      "sante_systeme": "سلامة النظام",
+      "indicateurs_cles": "المؤشرات الرئيسية",
+      "logs_systeme_temps_reel": "سجلات النظام — الوقت الفعلي",
+      "voir_tous_les_logs": "عرض جميع السجلات",
+      "utilisateurs_recents": "المستخدمون الجدد",
+      "aucun_utilisateur_recent": "لا يوجد مستخدمون جدد",
+      "logs_systeme": "سجلات النظام",
+      "rechercher_dans_les_logs": "ابحث في السجلات…",
+      "rechercher_dans_les_logs_2": "البحث في السجلات",
+      "chargement_des_logs": "جارٍ تحميل السجلات…",
+      "aucune_entree_de_journal_pour_ce_filtre": "لا توجد سجلات لهذه التصفية",
+      "sauvegardes": "النسخ الاحتياطية",
+      "gestion_des_backups": "إدارة النسخ الاحتياطية",
+      "sauvegarder": "حفظ",
+      "backups_automatiques_restauration_et": "نسخ احتياطية تلقائية واستعادة وجدولة",
+      "alertes": "التنبيهات",
+      "parametres": "الإعدادات"
     },
     "bibliothecaire": {
       "title": "المكتبة",
@@ -273,7 +294,26 @@
         "emprunts_en_cours": "الاستعارات الجارية",
         "retards": "المتأخرات",
         "membres_actifs": "الأعضاء النشطون"
-      }
+      },
+      "activite_de_la_bibliotheque": "نشاط المكتبة",
+      "emprunts_et_retours_6_derniers_mois": "الاستعارات والإرجاعات — آخر 6 أشهر",
+      "categories": "الفئات",
+      "repartition_des_ouvrages": "توزيع الكتب",
+      "emprunts_en_cours": "الاستعارات الجارية",
+      "ouvrage": "الكتاب",
+      "emprunt": "الاستعارة",
+      "retour_prevu": "الإرجاع المتوقع",
+      "retards_de_retour": "تأخر الإرجاع",
+      "aucun_retour_en_retard": "لا توجد إرجاعات متأخرة",
+      "nouveautes": "المستجدات",
+      "derniers_ajouts_au_catalogue": "آخر الإضافات إلى الفهرس",
+      "titre": "العنوان",
+      "auteur": "المؤلف",
+      "aucune_nouveaute_recente": "لا مستجدات حديثة",
+      "les_plus_empruntes": "الأكثر استعارة",
+      "ouvrages_les_plus_lus": "الكتب الأكثر قراءة",
+      "aucun_emprunt_enregistre": "لا توجد استعارات مسجَّلة",
+      "recherche_rapide": "بحث سريع"
     },
     "censeur": {
       "title": "مراقب الانضباط",
@@ -288,7 +328,23 @@
         "sanctions_du_mois": "عقوبات هذا الشهر",
         "absences_non_justifiees": "غيابات غير مبررة",
         "avertissements": "الإنذارات"
-      }
+      },
+      "evolution_disciplinaire": "التطور التأديبي",
+      "sanctions_et_avertissements_6_derniers_mois": "العقوبات والإنذارات — آخر 6 أشهر",
+      "repartition": "التوزيع",
+      "types_de_sanctions": "أنواع العقوبات",
+      "sanctions_recentes": "العقوبات الأخيرة",
+      "sanction": "العقوبة",
+      "absences_par_classe": "الغيابات حسب القسم",
+      "non_justifiees_ce_mois_ci": "غير مبررة هذا الشهر",
+      "aucune_absence_non_justifiee_ce_mois": "لا توجد غيابات غير مبررة هذا الشهر",
+      "sanctions_en_attente": "العقوبات المعلَّقة",
+      "aucune_sanction_a_suivre": "لا توجد عقوبات للمتابعة",
+      "recidivistes": "العائدون للمخالفة",
+      "2_sanctions_ou_plus": "عقوبتان أو أكثر",
+      "sanctions": "العقوبات",
+      "aucun_recidiviste": "لا يوجد عائدون للمخالفة",
+      "reglement": "التسديد"
     },
     "comptable": {
       "title": "المحاسبة",
@@ -303,7 +359,26 @@
         "factures_en_attente": "فواتير معلقة",
         "taux_recouvrement": "معدل التحصيل",
         "depenses_du_mois": "مصاريف الشهر"
-      }
+      },
+      "aucune_donnee_financiere_disponible": "لا توجد بيانات مالية متاحة",
+      "les_statistiques_apparaitront_une_fois_les": "ستظهر الإحصائيات بعد تسجيل المدفوعات",
+      "evolution_des_finances": "التطور المالي",
+      "revenus_et_depenses_6_derniers_mois": "الإيرادات والمصروفات — آخر 6 أشهر",
+      "aucune_donnee_financiere_pour_la_periode": "لا توجد بيانات مالية للفترة",
+      "repartition": "التوزيع",
+      "part_des_montants_par_type": "حصة المبالغ حسب النوع",
+      "aucune_repartition_disponible": "لا يوجد توزيع متاح",
+      "tresorerie_du_mois": "خزينة الشهر",
+      "encaisse_reellement_verse": "المحصَّل فعلياً",
+      "encaissements": "التحصيلات",
+      "depenses_du_mois": "مصروفات الشهر",
+      "impayes_prioritaires": "المستحقات ذات الأولوية",
+      "reste_du": "المتبقي المستحق",
+      "aucun_impaye_tous_les_comptes_sont_a_jour": "لا توجد مستحقات — جميع الحسابات محدَّثة",
+      "factures_recentes": "الفواتير الأخيرة",
+      "echeance": "الاستحقاق",
+      "aucune_facture_recente": "لا توجد فواتير حديثة",
+      "synthese": "الخلاصة"
     },
     "directeur": {
       "title": "لوحة القيادة",
@@ -319,7 +394,17 @@
         "total_eleves": "إجمالي الطلاب",
         "enseignants": "المعلمون",
         "classes": "الأقسام"
-      }
+      },
+      "evolution_des_effectifs": "تطور الأعداد",
+      "inscriptions_par_mois": "التسجيلات حسب الشهر",
+      "repartition_des_notes": "توزيع الدرجات",
+      "distribution_par_tranche": "التوزيع حسب الفئات",
+      "classes_et_effectifs": "الأقسام والأعداد",
+      "vue_d_ensemble_des_classes_actives": "نظرة عامة على الأقسام النشطة",
+      "effectif": "العدد",
+      "categorie": "الفئة",
+      "aucune_classe": "لا توجد أقسام",
+      "rapport": "التقرير"
     },
     "eleve": {
       "title": "فضائي كطالب",
@@ -334,7 +419,15 @@
         "moyenne_generale": "المعدل العام",
         "total_notes": "إجمالي الدرجات",
         "absences_ce_mois": "غيابات هذا الشهر"
-      }
+      },
+      "notes_par_matiere": "الدرجات حسب المادة",
+      "moyennes_par_matiere": "المعدلات حسب المادة",
+      "prochains_cours": "المقررات القادمة",
+      "emploi_du_temps": "الجدول الزمني",
+      "aucun_cours_planifie": "لا توجد مقررات مجدولة",
+      "mes_notes": "درجاتي",
+      "coefficient": "المعامل",
+      "aucune_note_disponible": "لا توجد درجات متاحة"
     },
     "enseignant": {
       "title": "فضائي كمعلم",
@@ -352,7 +445,28 @@
         "cours_semaine": "الحصص هذا الأسبوع",
         "moyenne_classe": "معدل القسم",
         "devoirs_a_corriger": "واجبات للتصحيح"
-      }
+      },
+      "emploi_du_temps_aujourd_hui": "الجدول الزمني — اليوم",
+      "aucun_cours_prevu_aujourd_hui": "لا توجد مقررات مبرمجة اليوم",
+      "voir_la_semaine": "عرض الأسبوع",
+      "devoirs_evaluations": "الواجبات والتقييمات",
+      "echeance_atteinte_a_corriger": "بلغ أجل الاستحقاق — للتصحيح",
+      "nouveau": "جديد",
+      "aucun_devoir_a_corriger": "لا توجد واجبات للتصحيح",
+      "saisie_des_notes": "إدخال الدرجات",
+      "gerer_les_evaluations_et_notes": "إدارة التقييمات والدرجات",
+      "saisir_des_notes": "إدخال الدرجات",
+      "dernieres_notes_saisies": "آخر الدرجات المُدخَلة",
+      "appreciation": "التقدير",
+      "aucune_note_saisie": "لم تُدخَل أي درجة",
+      "cahier_de_textes": "دفتر النصوص",
+      "suivi_des_lecons_et_seances": "متابعة الدروس والحصص",
+      "nouvelle_seance": "حصة جديدة",
+      "cahier_de_textes_numerique_lecons_seances_et": "دفتر نصوص رقمي — الدروس والحصص والتقدم البيداغوجي",
+      "emploi_du_temps": "الجدول الزمني",
+      "planning_hebdomadaire_des_cours": "الجدول الأسبوعي للمقررات",
+      "aucun_emploi_du_temps_disponible": "لا يوجد جدول زمني متاح",
+      "pas_de_cours": "لا توجد حصص"
     },
     "infirmier": {
       "title": "المستوصف",
@@ -367,7 +481,24 @@
         "en_cours": "قيد التنفيذ",
         "cas_urgents": "حالات طارئة",
         "consultations": "الاستشارات"
-      }
+      },
+      "frequentation_infirmerie": "ارتياد المستوصف",
+      "visites_et_urgences_6_derniers_mois": "الزيارات وحالات الاستعجال — آخر 6 أشهر",
+      "motifs_frequents": "الأسباب المتكررة",
+      "ce_mois_ci": "هذا الشهر",
+      "aucune_consultation_ce_mois_ci": "لا توجد استشارات هذا الشهر.",
+      "dernieres_visites": "آخر الزيارات",
+      "soin": "الرعاية",
+      "urgences_du_jour": "حالات استعجال اليوم",
+      "aucune_urgence_aujourd_hui": "لا توجد حالات استعجال اليوم",
+      "alertes_medicales": "التنبيهات الطبية",
+      "allergies_maladie": "الحساسية / المرض",
+      "aucune_alerte_medicale_signalee": "لم يُبلَّغ عن أي تنبيه طبي",
+      "soins_recurrents": "الرعاية المتكررة",
+      "eleves_suivis_regulierement": "الطلاب المتابَعون بانتظام",
+      "visites": "الزيارات",
+      "aucun_eleve_suivi_de_facon_recurrente": "لا يوجد طلاب يُتابَعون بشكل متكرر",
+      "etat_des_lieux": "الوضع العام"
     },
     "parent": {
       "title": "فضاء ولي الأمر",
@@ -384,7 +515,20 @@
         "moyenne_generale": "المعدل العام",
         "assiduite": "المواظبة",
         "solde": "الرصيد"
-      }
+      },
+      "evolution_des_notes": "تطور الدرجات",
+      "suivi_trimestriel": "المتابعة الفصلية",
+      "aucune_donnee_d_evolution_disponible": "لا توجد بيانات تطور متاحة",
+      "mes_enfants": "أبنائي",
+      "vue_rapide": "نظرة سريعة",
+      "aucun_enfant_trouve": "لم يتم العثور على أي ابن",
+      "contact_principal": "جهة الاتصال الرئيسية",
+      "tuteur_legal": "الولي الشرعي",
+      "derniers_echanges": "آخر المراسلات",
+      "avec_l_etablissement": "مع المؤسسة",
+      "aucun_echange_recent": "لا توجد مراسلات حديثة",
+      "urgent": "عاجل",
+      "voir_tous_les_echanges": "عرض جميع المراسلات"
     },
     "secretaire": {
       "title": "الأمانة",
@@ -400,7 +544,20 @@
         "nouveaux_ce_mois": "جدد هذا الشهر",
         "dossiers_en_cours": "ملفات قيد المعالجة",
         "documents_generes": "وثائق مُصدرة"
-      }
+      },
+      "flux_d_inscriptions": "تدفق التسجيلات",
+      "nouveaux_inscrits_6_derniers_mois": "المسجَّلون الجدد — آخر 6 أشهر",
+      "rendez_vous_du_jour": "مواعيد اليوم",
+      "dernieres_inscriptions": "آخر التسجيلات",
+      "nom": "اللقب",
+      "planning_a_venir": "الجدولة القادمة",
+      "7_prochains_jours": "الأيام السبعة القادمة",
+      "visiteur": "الزائر",
+      "aucun_rendez_vous_prevu_cette_semaine": "لا توجد مواعيد مبرمجة هذا الأسبوع",
+      "certificats_a_emettre": "الشهادات المطلوب إصدارها",
+      "demande": "الطلب",
+      "aucun_certificat_en_attente": "لا توجد شهادات قيد الانتظار",
+      "tableau_de_bord": "لوحة القيادة"
     },
     "surveillant": {
       "title": "المراقبة",
@@ -415,7 +572,27 @@
         "presents_aujourdhui": "الحاضرون اليوم",
         "absents": "الغائبون",
         "alertes": "التنبيهات"
-      }
+      },
+      "presences_de_la_semaine": "حضور الأسبوع",
+      "tendance_quotidienne": "الاتجاه اليومي",
+      "points_de_surveillance": "نقاط المراقبة",
+      "zones_actives_aujourd_hui": "المناطق النشطة اليوم",
+      "aucun_point_de_surveillance": "لا توجد نقاط مراقبة",
+      "retards_du_jour": "متأخرو اليوم",
+      "recurrent": "متكرر",
+      "ponctuel": "عرضي",
+      "absents_du_jour": "غائبو اليوم",
+      "justifie": "مبرر",
+      "oui": "نعم",
+      "non": "لا",
+      "aucun_absent_signale_aujourd_hui": "لم يُبلَّغ عن أي غياب اليوم",
+      "incidents_recents": "الحوادث الأخيرة",
+      "incident": "الحادثة",
+      "gravite": "الخطورة",
+      "aucun_incident_recent": "لا توجد حوادث حديثة",
+      "absences_non_justifiees": "الغيابات غير المبررة",
+      "toutes_les_absences_sont_justifiees": "جميع الغيابات مبررة",
+      "mon_service": "مصلحتي"
     },
     "universite": {
       "title": "الجامعة",
@@ -432,7 +609,17 @@
         "departements": "الأقسام",
         "enseignants": "المعلمون",
         "etudiants": "الطلاب"
-      }
+      },
+      "inscriptions_diplomes": "التسجيلات والشهادات",
+      "evolution_sur_5_ans": "التطور خلال 5 سنوات",
+      "aucune_donnee_d_inscription": "لا توجد بيانات تسجيل",
+      "etudiants_par_faculte": "الطلاب حسب الكلية",
+      "repartition_semestre_actuel": "توزيع السداسي الحالي",
+      "aucune_donnee_facultaire": "لا توجد بيانات عن الكليات",
+      "activites_recentes": "الأنشطة الأخيرة",
+      "derniers_evenements_dans_l_universite": "آخر الأحداث في الجامعة",
+      "aucune_activite_recente": "لا يوجد نشاط حديث",
+      "calendrier": "التقويم"
     }
   },
   "pages": {
