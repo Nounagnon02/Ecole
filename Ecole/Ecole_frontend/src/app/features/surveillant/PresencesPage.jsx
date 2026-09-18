@@ -20,8 +20,10 @@ import Avatar from '@/shared/components/ui/Avatar';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
+import { useTranslation } from '@/shared/i18n';
 
 export default function PresencesPage() {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [filterClasse, setFilterClasse] = useState('');
   const [filterStatut, setFilterStatut] = useState('');
@@ -140,8 +142,8 @@ export default function PresencesPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Présences</h1>
-          <p className="text-sm text-neutral-500">Suivi des présences du {formatDate(today)}</p>
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.surveillant.presences.title')}</h1>
+          <p className="text-sm text-neutral-500">{t('pages.surveillant.presences.subtitle', { date: formatDate(today) })}</p>
         </div>
         <Button variant="outline" size="sm" icon={<Download />}>Exporter</Button>
       </div>

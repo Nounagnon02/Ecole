@@ -498,6 +498,14 @@
       "soins": {
         "title": "Nursing Care",
         "subtitle": "Register of care provided to students"
+      },
+      "dossiers": {
+        "title": "Medical Records",
+        "subtitle": "Management of student medical records"
+      },
+      "vaccinations": {
+        "title": "Vaccination Record",
+        "subtitle": "Tracking and history of vaccinations"
       }
     },
     "notes": {
@@ -510,6 +518,25 @@
       "paiements": {
         "title": "Payments",
         "subtitle": "Financial transaction management"
+      },
+      "callback": {
+        "status": {
+          "approved": "Payment confirmed",
+          "failed": "Payment failed",
+          "pending": "Verification in progress...",
+          "unknown": "Unknown status"
+        },
+        "messages": {
+          "verifying": "Verifying your payment...",
+          "missing_id": "Missing transaction identifier.",
+          "approved": "Payment successfully confirmed!",
+          "pending": "Payment awaiting confirmation...",
+          "failed": "The payment failed.",
+          "verification_failed": "Verification failed.",
+          "network_error": "Network error during verification."
+        },
+        "back": "Back to the payment schedule",
+        "redirect": "Automatic redirect in 3 seconds..."
       }
     },
     "parametres": {
@@ -542,6 +569,10 @@
       "surveillance": {
         "title": "Supervision",
         "subtitle": "Register of incidents and reports"
+      },
+      "presences": {
+        "title": "Attendance",
+        "subtitle": "Attendance tracking for {date}"
       }
     },
     "universite": {
@@ -580,6 +611,89 @@
       "taches": {
         "title": "Tasks",
         "subtitle": "Tracking of assignments, projects and exams"
+      }
+    },
+    "affectations": {
+      "affectations": {
+        "title": "Teacher assignments",
+        "subtitle": "Assign classes, tracks and subjects to each teacher"
+      }
+    },
+    "ai": {
+      "welcome": {
+        "directeur": {
+          "title": "Predictive dashboard",
+          "subtitle": "Smart analyses, trends and alerts",
+          "suggestions": {
+            "s1": "Analyze results",
+            "s2": "Quarterly trends",
+            "s3": "Alerts and risks",
+            "s4": "Recommendations"
+          }
+        },
+        "enseignant": {
+          "title": "AI teaching assistant",
+          "subtitle": "Prepare your lessons and follow your students",
+          "suggestions": {
+            "s1": "Plan a lesson",
+            "s2": "Analyze my class",
+            "s3": "Generate an exercise",
+            "s4": "Teaching advice"
+          }
+        },
+        "eleve": {
+          "title": "AI tutor",
+          "subtitle": "Ask your questions, learn at your own pace",
+          "suggestions": {
+            "s1": "Help with math",
+            "s2": "Help with French",
+            "s3": "Help with physics",
+            "s4": "Revise for a test"
+          }
+        },
+        "parent": {
+          "title": "Parental assistant",
+          "subtitle": "Smart tracking of schooling",
+          "suggestions": {
+            "s1": "My child's report",
+            "s2": "Recent progress",
+            "s3": "Educational advice",
+            "s4": "Term goals"
+          }
+        },
+        "default": {
+          "title": "AI assistant",
+          "subtitle": "How can I help you?",
+          "suggestions": {
+            "s1": "General analysis",
+            "s2": "Statistics",
+            "s3": "Report",
+            "s4": "Help"
+          }
+        }
+      },
+      "tabs": {
+        "chat": "AI chat",
+        "analysis": "Analyses"
+      },
+      "thinking": "Thinking...",
+      "placeholder": "Ask your question...",
+      "empty_hint": "Ask a question or pick a suggestion below",
+      "errors": {
+        "no_answer": "I couldn't process your request.",
+        "unavailable": "AI service temporarily unavailable. Please try again."
+      },
+      "predictive": {
+        "title": "Predictive analysis",
+        "run": "Analyze",
+        "not_configured": "Set the Anthropic API key in config/services.php to enable AI analysis.",
+        "hint": "Click \"Analyze\" to generate a predictive report based on your school's data.",
+        "trend": "Trend {n}"
+      },
+      "stats": {
+        "performance": "Average performance",
+        "alerts": "Active alerts",
+        "recommendations": "Recommendations"
       }
     }
   }

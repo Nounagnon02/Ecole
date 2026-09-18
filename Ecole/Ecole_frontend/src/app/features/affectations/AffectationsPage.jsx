@@ -24,6 +24,7 @@ import { useApi } from '@/hooks/useApi';
 import { useApiQuery } from '@/shared/lib/api-client';
 import { unwrapList } from '@/shared/lib/unwrap';
 import { useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from '@/shared/i18n';
 
 /**
  * Normalise { success, data } | paginateur | tableau nu.
@@ -39,6 +40,7 @@ const NOM_ENSEIGNANT = (e) =>
   [e?.user?.name, e?.user?.prenom].filter(Boolean).join(' ').trim() || 'Enseignant';
 
 export default function AffectationsPage() {
+  const { t } = useTranslation();
   const { post, delete: del } = useApi();
 
 
@@ -228,10 +230,10 @@ export default function AffectationsPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">
-            Affectations des enseignants
+            {t('pages.affectations.affectations.title')}
           </h1>
           <p className="text-sm text-neutral-500">
-            Attribuez les classes, séries et matières à chaque enseignant
+            {t('pages.affectations.affectations.subtitle')}
           </p>
         </div>
       </div>
