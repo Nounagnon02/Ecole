@@ -24,7 +24,15 @@ use Illuminate\Support\Facades\Auth;
  * paiements) étaient appelées par le frontend sans exister côté API — la page
  * « Mes enfants » affichait donc toujours des listes vides.
  */
-class ParentController extends Controller
+/**
+ * Espace parent — ce qu'un parent consulte sur ses propres enfants.
+ *
+ * À ne pas confondre avec `ParentsController`, qui gère l'administration des
+ * comptes parents (création, invitation, rattachement des élèves). Les deux
+ * s'appelaient `ParentController` et `ParentsController` : un `s` séparait un
+ * portail utilisateur d'un CRUD d'administration (cf. audit P3.8).
+ */
+class EspaceParentController extends Controller
 {
     /**
      * Récupère la liste des enfants du parent connecté.
