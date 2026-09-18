@@ -5,7 +5,9 @@
  * Données dynamiques via API /evenements
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import { useApiQuery } from '@/shared/lib/api-client';
+import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
   CalendarDays, Plus, Search, Clock, Users, MapPin, BookOpen,
@@ -17,8 +19,6 @@ import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
-import { useApi } from '@/hooks/useApi';
-import logger from '@/shared/lib/logger';
 
 const TYPE_CONFIG = {
   reunion: { label: 'Réunion', color: 'text-blue-500 bg-blue-100 dark:bg-blue-900/20' },
@@ -40,23 +40,19 @@ const getTypeIcon = (type) => {
 };
 
 export default function PlanningPage() {
-  const { loading, error, get } = useApi();
-  const [evenements, setEvenements] = useState([]);
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState('');
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await get('/evenements');
-        const raw = res?.data?.data || res?.data || res || [];
-        const items = Array.isArray(raw) ? raw : [];
-        setEvenements(items);
-      } catch (e) {
-        logger.error('Erreur chargement événements:', e);
-      }
-    })();
-  }, [get]);
+  // Le chargement passait par un `useState` doublé d'un `useEffect` de
+  // premier rendu, sans cache ni déduplication : deux composants montés
+  // ensemble lançaient deux requêtes, et un retour sur la page rechargeait
+  // tout (cf. audit P4.1). `unwrapList` traverse les trois formes
+  // d'enveloppe que renvoient les contrôleurs.
+  const requete = useApiQuery(['evenements'], '/evenements');
+
+  const evenements = useMemo(() => unwrapList(requete.data) ?? [], [requete.data]);
+  const loading = requete.isPending;
+  const error = requete.isError ? (requete.error?.message ?? 'Erreur de chargement') : null;
 
   const stats = useMemo(() => {
     const now = new Date();

@@ -5,7 +5,9 @@
  * Données dynamiques via API /surveillant/incidents et /surveillant/absences
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import { useApiQuery } from '@/shared/lib/api-client';
+import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
   Shield, AlertTriangle, CheckCircle,
@@ -16,8 +18,6 @@ import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import StatsCard from '@/shared/components/ui/StatsCard';
-import { useApi } from '@/hooks/useApi';
-import logger from '@/shared/lib/logger';
 
 const getStatutVariant = (statut) => {
   switch (statut) {
@@ -52,24 +52,18 @@ const getGraviteColor = (gravite) => {
 };
 
 export default function SurveillancePage() {
-  const { loading, error, get } = useApi();
-  const [incidents, setIncidents] = useState([]);
   const [filterGravite, setFilterGravite] = useState('');
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await get('/surveillant/incidents');
-        const items = Array.isArray(res?.data?.data) ? res.data.data
-          : Array.isArray(res?.data) ? res.data
-          : Array.isArray(res) ? res
-          : [];
-        setIncidents(items);
-      } catch (e) {
-        logger.error('Erreur chargement incidents:', e);
-      }
-    })();
-  }, [get]);
+  // Le chargement passait par un `useState` doublé d'un `useEffect` de
+  // premier rendu, sans cache ni déduplication : deux composants montés
+  // ensemble lançaient deux requêtes, et un retour sur la page rechargeait
+  // tout (cf. audit P4.1). `unwrapList` traverse les trois formes
+  // d'enveloppe que renvoient les contrôleurs.
+  const requete = useApiQuery(['surveillant-incidents'], '/surveillant/incidents');
+
+  const incidents = useMemo(() => unwrapList(requete.data) ?? [], [requete.data]);
+  const loading = requete.isPending;
+  const error = requete.isError ? (requete.error?.message ?? 'Erreur de chargement') : null;
 
   const stats = useMemo(() => ({
     total: incidents.length,

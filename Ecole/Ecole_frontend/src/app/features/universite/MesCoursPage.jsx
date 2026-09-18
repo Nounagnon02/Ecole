@@ -5,48 +5,45 @@
  * Données dynamiques via API /api/universite/mes-cours
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import { useApiQuery } from '@/shared/lib/api-client';
+import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
-  BookOpen, Search, Filter, Clock, Users, Calendar, GraduationCap,
-  FileText, Download, Eye, Video, MapPin, Loader2, AlertCircle,
+  BookOpen, Search, Clock, Users, Calendar, GraduationCap,
+  FileText, Eye, MapPin, Loader2, AlertCircle,
 } from 'lucide-react';
-import { cn, formatDate } from '@/shared/lib/utils';
+import { cn } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
-import { useApi } from '@/hooks/useApi';
-import logger from '@/shared/lib/logger';
 
 export default function MesCoursPage() {
-  const { loading, error, get } = useApi();
-  const [cours, setCours] = useState([]);
   const [search, setSearch] = useState('');
 
-  useEffect(() => {
-    (async () => {
-      try {
-        // GET /api/universite/mes-cours — un étudiant y reçoit les matières de
-        // sa filière, un enseignant celles qu'il assure. Le serveur résout le
-        // profil via `etudiants.user_id` / `uni_enseignants.user_id`.
-        const res = await get('/universite/mes-cours');
-        const items = Array.isArray(res?.data?.data) ? res.data.data
-          : Array.isArray(res?.data) ? res.data
-          : Array.isArray(res) ? res
-          : [];
-        setCours(items.map(c => ({
+  // GET /api/universite/mes-cours — un étudiant y reçoit les matières de
+  // sa filière, un enseignant celles qu'il assure. Le serveur résout le
+  // profil via `etudiants.user_id` / `uni_enseignants.user_id`.
+  // Le chargement passait par un `useState` doublé d'un `useEffect` de
+  // premier rendu, sans cache ni déduplication : deux composants montés
+  // ensemble lançaient deux requêtes, et un retour sur la page rechargeait
+  // tout (cf. audit P4.1). `unwrapList` traverse les trois formes
+  // d'enveloppe que renvoient les contrôleurs.
+  const requete = useApiQuery(['universite-mes-cours'], '/universite/mes-cours');
+
+  const cours = useMemo(
+    () => (unwrapList(requete.data) ?? []).map(c => ({
           ...c,
           progression: c.progression || c.avancement || 0,
           prochainCours: c.prochain_cours || c.prochainCours || null,
           statut: c.statut || 'en_cours',
-        })));
-      } catch (e) {
-        logger.error('Erreur chargement mes cours:', e);
-      }
-    })();
-  }, [get]);
+        })),
+    [requete.data],
+  );
+  const loading = requete.isPending;
+  const error = requete.isError ? (requete.error?.message ?? 'Erreur de chargement') : null;
 
   const stats = useMemo(() => ({
     total: cours.length,

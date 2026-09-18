@@ -5,7 +5,9 @@
  * Données dynamiques via API /comptable/paiements
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import { useApiQuery } from '@/shared/lib/api-client';
+import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
   FileText, Plus, Download, Eye, Send, Printer,
@@ -17,8 +19,6 @@ import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
-import { useApi } from '@/hooks/useApi';
-import logger from '@/shared/lib/logger';
 
 const getStatutVariant = (statut) => {
   switch (statut) {
@@ -45,32 +45,29 @@ const getStatutLabel = (statut) => {
 };
 
 export default function FacturesPage() {
-  const { loading, error, get } = useApi();
-  const [factures, setFactures] = useState([]);
   const [search, setSearch] = useState('');
   const [filterStatut, setFilterStatut] = useState('');
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await get('/comptable/paiements');
-        const items = Array.isArray(res?.data?.data) ? res.data.data
-          : Array.isArray(res?.data) ? res.data
-          : Array.isArray(res) ? res
-          : [];
-        setFactures(items.map((p, i) => ({
+  // Le chargement passait par un `useState` doublé d'un `useEffect` de
+  // premier rendu, sans cache ni déduplication : deux composants montés
+  // ensemble lançaient deux requêtes, et un retour sur la page rechargeait
+  // tout (cf. audit P4.1). `unwrapList` traverse les trois formes
+  // d'enveloppe que renvoient les contrôleurs.
+  const requete = useApiQuery(['comptable-paiements'], '/comptable/paiements');
+
+  const factures = useMemo(
+    () => (unwrapList(requete.data) ?? []).map((p, i) => ({
           ...p,
           numero: p.reference || `FAC-${String(2025000 + (p.id || i)).slice(-6)}`,
           client: p.eleve ? `${p.eleve.prenom || ''} ${p.eleve.nom || ''}`.trim() : 'N/A',
           motif: p.type_paiement || 'Frais',
           dateEmission: p.date_paiement || p.created_at,
           dateEcheance: p.date_paiement || p.created_at
-        })));
-      } catch (e) {
-        logger.error('Erreur chargement factures:', e);
-      }
-    })();
-  }, [get]);
+        })),
+    [requete.data],
+  );
+  const loading = requete.isPending;
+  const error = requete.isError ? (requete.error?.message ?? 'Erreur de chargement') : null;
 
   const stats = useMemo(() => {
     const total = factures.reduce((s, f) => s + Number(f.montant || 0), 0);

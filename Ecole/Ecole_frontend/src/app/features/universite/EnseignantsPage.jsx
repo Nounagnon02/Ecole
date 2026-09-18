@@ -5,7 +5,9 @@
  * Données dynamiques via API /api/universite/enseignants
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import { useApiQuery } from '@/shared/lib/api-client';
+import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
   Users, Plus, Search, BookOpen, GraduationCap,
@@ -16,8 +18,6 @@ import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
-import { useApi } from '@/hooks/useApi';
-import logger from '@/shared/lib/logger';
 
 const GRADE_BADGE = {
   professeur: { variant: 'primary', label: 'Professeur' },
@@ -30,19 +30,17 @@ const GRADE_BADGE = {
 };
 
 export default function EnseignantsPage() {
-  const { loading, error, get } = useApi();
-  const [enseignants, setEnseignants] = useState([]);
   const [search, setSearch] = useState('');
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await get('/universite/enseignants');
-        const items = Array.isArray(res?.data?.data) ? res.data.data
-          : Array.isArray(res?.data) ? res.data
-          : Array.isArray(res) ? res
-          : [];
-        setEnseignants(items.map((e) => ({
+  // Le chargement passait par un `useState` doublé d'un `useEffect` de
+  // premier rendu, sans cache ni déduplication : deux composants montés
+  // ensemble lançaient deux requêtes, et un retour sur la page rechargeait
+  // tout (cf. audit P4.1). `unwrapList` traverse les trois formes
+  // d'enveloppe que renvoient les contrôleurs.
+  const requete = useApiQuery(['universite-enseignants'], '/universite/enseignants');
+
+  const enseignants = useMemo(
+    () => (unwrapList(requete.data) ?? []).map((e) => ({
           ...e,
           grade: e.grade || e.titre || '—',
           departement: e.departement?.nom || e.departement_nom || '—',
@@ -50,12 +48,11 @@ export default function EnseignantsPage() {
           specialite: e.specialite || e.discipline || '—',
           cours: e.cours_count ?? e.cours ?? 0,
           etudiants: e.etudiants_count ?? e.etudiants ?? 0
-        })));
-      } catch (e) {
-        logger.error('Erreur chargement enseignants:', e);
-      }
-    })();
-  }, [get]);
+        })),
+    [requete.data],
+  );
+  const loading = requete.isPending;
+  const error = requete.isError ? (requete.error?.message ?? 'Erreur de chargement') : null;
 
   const stats = useMemo(() => ({
     total: enseignants.length,

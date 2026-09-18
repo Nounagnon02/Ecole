@@ -5,7 +5,9 @@
  * Données dynamiques via API /comptable/paiements
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import { useApiQuery } from '@/shared/lib/api-client';
+import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
   DollarSign, TrendingUp, TrendingDown, ArrowUpRight,   Search, Download, Eye, FileText, Loader2, AlertCircle
@@ -16,8 +18,6 @@ import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
-import { useApi } from '@/hooks/useApi';
-import logger from '@/shared/lib/logger';
 
 const getStatutColor = (statut) => {
   switch (statut) {
@@ -44,26 +44,20 @@ const getStatutLabel = (statut) => {
 };
 
 export default function TransactionsPage() {
-  const { loading, error, get } = useApi();
-  const [transactions, setTransactions] = useState([]);
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState('');
   const [filterStatut, setFilterStatut] = useState('');
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await get('/comptable/paiements');
-        const items = Array.isArray(res?.data?.data) ? res.data.data
-          : Array.isArray(res?.data) ? res.data
-          : Array.isArray(res) ? res
-          : [];
-        setTransactions(items);
-      } catch (e) {
-        logger.error('Erreur chargement transactions:', e);
-      }
-    })();
-  }, [get]);
+  // Le chargement passait par un `useState` doublé d'un `useEffect` de
+  // premier rendu, sans cache ni déduplication : deux composants montés
+  // ensemble lançaient deux requêtes, et un retour sur la page rechargeait
+  // tout (cf. audit P4.1). `unwrapList` traverse les trois formes
+  // d'enveloppe que renvoient les contrôleurs.
+  const requete = useApiQuery(['comptable-paiements'], '/comptable/paiements');
+
+  const transactions = useMemo(() => unwrapList(requete.data) ?? [], [requete.data]);
+  const loading = requete.isPending;
+  const error = requete.isError ? (requete.error?.message ?? 'Erreur de chargement') : null;
 
   const stats = useMemo(() => {
     const recettes = transactions.filter((t) => t.statut === 'paye' || t.statut === 'payee');
