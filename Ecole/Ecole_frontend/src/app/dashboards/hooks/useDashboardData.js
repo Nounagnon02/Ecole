@@ -47,7 +47,11 @@ export function useDashboardData(endpoint, options = {}) {
 
   const refetch = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: cle });
-  }, [queryClient, cle.join('|')]); // eslint-disable-line react-hooks/exhaustive-deps
+  // `cle` est un tableau reconstruit à chaque rendu : le comparer par
+  // référence retriggerait `refetch` en boucle. `cle.join('|')` en tient lieu
+  // de dépendance stable — le projet n'a pas le plugin `react-hooks`, donc pas
+  // de règle à désactiver ici.
+  }, [queryClient, cle.join('|')]);
 
   return {
     data: requete.isError ? null : donnees,
