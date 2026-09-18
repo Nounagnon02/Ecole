@@ -105,7 +105,7 @@ export default function FacturesPage() {
           onClick={() => window.location.reload()}
           className="mt-4 inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors"
         >
-          Réessayer
+          {t('common.retry')}
         </button>
       </div>
     );
@@ -120,10 +120,10 @@ export default function FacturesPage() {
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-4">
-        <StatsCard title="Total Facturé" value={formatCurrency(stats.total)} icon={FileText} color="primary" />
-        <StatsCard title="Payé" value={formatCurrency(stats.payees)} icon={CheckCircle} color="emerald" />
-        <StatsCard title="Impayé" value={formatCurrency(stats.impayees)} icon={AlertCircle} color="red" />
-        <StatsCard title="Taux Recouvrement" value={`${stats.total > 0 ? Math.round((stats.payees / stats.total) * 100) : 0}%`} icon={FileText} color="sky" />
+        <StatsCard title={t('pages.comptable.factures.total_facture')} value={formatCurrency(stats.total)} icon={FileText} color="primary" />
+        <StatsCard title={t('pages.comptable.factures.paye')} value={formatCurrency(stats.payees)} icon={CheckCircle} color="emerald" />
+        <StatsCard title={t('pages.comptable.factures.impaye')} value={formatCurrency(stats.impayees)} icon={AlertCircle} color="red" />
+        <StatsCard title={t('pages.comptable.factures.taux_recouvrement')} value={`${stats.total > 0 ? Math.round((stats.payees / stats.total) * 100) : 0}%`} icon={FileText} color="sky" />
       </div>
 
       {/* Actions */}
@@ -132,7 +132,7 @@ export default function FacturesPage() {
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
             <Input
-              placeholder="Rechercher une facture..."
+              placeholder={t('pages.comptable.factures.rechercher_une_facture')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
@@ -142,16 +142,16 @@ export default function FacturesPage() {
             <select
               value={filterStatut}
               onChange={(e) => setFilterStatut(e.target.value)}
-              aria-label="Filtrer par statut"
+              aria-label={t('common.filter_by_status')}
               className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
             >
-              <option value="">Tous les statuts</option>
-              <option value="paye">Payée</option>
-              <option value="en_attente">En attente</option>
-              <option value="echec">Impayée</option>
+              <option value="">{t('common.all_statuses')}</option>
+              <option value="paye">{t('pages.comptable.factures.payee')}</option>
+              <option value="en_attente">{t('common.status.pending')}</option>
+              <option value="echec">{t('pages.comptable.factures.impayee')}</option>
             </select>
-            <Button variant="outline" size="sm" icon={<Download />}>Exporter</Button>
-            <Button size="sm" icon={<Plus />}>Nouvelle facture</Button>
+            <Button variant="outline" size="sm" icon={<Download />}>{t('common.export')}</Button>
+            <Button size="sm" icon={<Plus />}>{t('pages.comptable.factures.nouvelle_facture')}</Button>
           </div>
         </div>
       </Card>
@@ -162,20 +162,20 @@ export default function FacturesPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-neutral-200 dark:border-neutral-700 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                <th scope="col" className="pb-3 pr-4">N Facture</th>
-                <th scope="col" className="pb-3 pr-4">Client</th>
-                <th scope="col" className="pb-3 pr-4">Motif</th>
-                <th scope="col" className="pb-3 pr-4">Montant</th>
-                <th scope="col" className="pb-3 pr-4">Date</th>
-                <th scope="col" className="pb-3 pr-4">Statut</th>
-                <th scope="col" className="pb-3 text-right">Actions</th>
+                <th scope="col" className="pb-3 pr-4">{t('pages.comptable.factures.n_facture')}</th>
+                <th scope="col" className="pb-3 pr-4">{t('pages.comptable.factures.client')}</th>
+                <th scope="col" className="pb-3 pr-4">{t('common.reason')}</th>
+                <th scope="col" className="pb-3 pr-4">{t('common.amount')}</th>
+                <th scope="col" className="pb-3 pr-4">{t('common.date')}</th>
+                <th scope="col" className="pb-3 pr-4">{t('common.status_label')}</th>
+                <th scope="col" className="pb-3 text-right">{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 && (
                 <tr>
                   <td colSpan={7} className="py-8 text-center text-sm text-neutral-500">
-                    Aucune facture trouvée
+                    {t('pages.comptable.factures.aucune_facture_trouvee')}
                   </td>
                 </tr>
               )}
@@ -205,9 +205,9 @@ export default function FacturesPage() {
                   </td>
                   <td className="py-3 text-right">
                     <div className="flex justify-end gap-1">
-                      <Button variant="ghost" size="sm" icon={<Eye />} title="Voir" />
-                      <Button variant="ghost" size="sm" icon={<Send />} title="Envoyer" />
-                      <Button variant="ghost" size="sm" icon={<Printer />} title="Imprimer" />
+                      <Button variant="ghost" size="sm" icon={<Eye />} title={t('common.view')} />
+                      <Button variant="ghost" size="sm" icon={<Send />} title={t('pages.comptable.factures.envoyer')} />
+                      <Button variant="ghost" size="sm" icon={<Printer />} title={t('pages.comptable.factures.imprimer')} />
                     </div>
                   </td>
                 </tr>

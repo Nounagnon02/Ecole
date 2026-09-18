@@ -64,7 +64,23 @@
     "date": "Date",
     "type": "Type",
     "reason": "Motif",
-    "average": "Moyenne"
+    "average": "Moyenne",
+    "amount": "Montant",
+    "status_label": "Statut",
+    "view": "Voir",
+    "balance": "Solde",
+    "all_types": "Tous les types",
+    "search_course": "Rechercher un cours...",
+    "filter_by_subject": "Filtrer par matière",
+    "courses": "Cours",
+    "no_course_found": "Aucun cours trouvé",
+    "filter_by_class": "Filtrer par classe",
+    "all_classes": "Toutes les classes",
+    "matricule": "Matricule",
+    "no_student_found": "Aucun élève trouvé",
+    "rank": "Rang",
+    "today": "Aujourd'hui",
+    "grade": "Note"
   },
   "auth": {
     "login": "Connexion",
@@ -532,45 +548,126 @@
     "comptable": {
       "factures": {
         "title": "Factures",
-        "subtitle": "Gérez les factures et les paiements"
+        "subtitle": "Gérez les factures et les paiements",
+        "total_facture": "Total Facturé",
+        "paye": "Payé",
+        "impaye": "Impayé",
+        "taux_recouvrement": "Taux Recouvrement",
+        "rechercher_une_facture": "Rechercher une facture...",
+        "payee": "Payée",
+        "impayee": "Impayée",
+        "nouvelle_facture": "Nouvelle facture",
+        "n_facture": "N Facture",
+        "client": "Client",
+        "aucune_facture_trouvee": "Aucune facture trouvée",
+        "envoyer": "Envoyer",
+        "imprimer": "Imprimer"
       },
       "transactions": {
         "title": "Transactions",
-        "subtitle": "Toutes les transactions financières de l'établissement"
+        "subtitle": "Toutes les transactions financières de l'établissement",
+        "recettes": "Recettes",
+        "depenses": "Dépenses",
+        "transactions": "Transactions",
+        "rechercher_une_transaction": "Rechercher une transaction...",
+        "filtrer_par_type": "Filtrer par type",
+        "scolarite": "Scolarité",
+        "cantine": "Cantine",
+        "transport": "Transport",
+        "inscription": "Inscription",
+        "bibliotheque": "Bibliothèque",
+        "payee": "Payée",
+        "echec": "Échec",
+        "reference": "Référence",
+        "methode": "Méthode",
+        "aucune_transaction_trouvee": "Aucune transaction trouvée"
       }
     },
     "eleve": {
       "cours": {
         "title": "Mes Cours",
-        "subtitle": "Consultez vos cours, devoirs et ressources"
+        "subtitle": "Consultez vos cours, devoirs et ressources",
+        "toutes_les_matieres": "Toutes les matières",
+        "filtrer_par_type": "Filtrer par type",
+        "devoir": "Devoir"
       }
     },
     "eleves": {
       "eleves": {
         "title": "Élèves",
-        "subtitle": "Gérez l'ensemble des élèves inscrits"
+        "subtitle": "Gérez l'ensemble des élèves inscrits",
+        "nouvel_eleve": "Nouvel Élève",
+        "plus_d_actions": "Plus d'actions",
+        "retirer_des_effectifs": "Retirer des effectifs"
       }
     },
     "emploi_du_temps": {
       "emploi_du_temps": {
         "title": "Emploi du Temps",
-        "subtitle": "Consultez les emplois du temps par classe"
+        "subtitle": "Consultez les emplois du temps par classe",
+        "ajouter_un_cours": "Ajouter un Cours",
+        "annee_scolaire_2025_2026": "Année scolaire 2025-2026",
+        "filtrer_par_enseignant": "Filtrer par enseignant",
+        "pause": "Pause",
+        "disponible": "Disponible",
+        "donnees_chargees_depuis_l_api": "Données chargées depuis l'API",
+        "mode_demo_api_indisponible": "Mode démo (API indisponible)"
       }
     },
     "enseignant": {
       "classes": {
         "title": "Mes Classes",
-        "subtitle": "Gérez vos classes et suivez vos élèves"
+        "subtitle": "Gérez vos classes et suivez vos élèves",
+        "aucune_classe_assignee": "Aucune classe assignée",
+        "liste": "Liste",
+        "grille": "Grille",
+        "absences": "Absences",
+        "appreciation": "Appréciation",
+        "moyenne": "Moyenne:",
+        "absences_2": "Absences:"
       }
     },
     "infirmier": {
       "soins": {
         "title": "Soins Infirmiers",
-        "subtitle": "Registre des soins dispensés aux élèves"
+        "subtitle": "Registre des soins dispensés aux élèves",
+        "nouveau_soin": "Nouveau soin",
+        "total_soins": "Total Soins",
+        "urgences": "Urgences",
+        "traites": "Traités",
+        "filtrer_par_type_d_urgence": "Filtrer par type d'urgence",
+        "urgence": "Urgence",
+        "consultation": "Consultation",
+        "traite": "Traité",
+        "aucun_soin_trouve": "Aucun soin trouvé"
       },
       "dossiers": {
         "title": "Dossiers Médicaux",
-        "subtitle": "Gestion des dossiers médicaux des élèves"
+        "subtitle": "Gestion des dossiers médicaux des élèves",
+        "dossiers_medicaux": "Dossiers Médicaux",
+        "vaccinations": "Vaccinations",
+        "total_dossiers": "Total Dossiers",
+        "allergies_connues": "Allergies connues",
+        "vaccins_non_a_jour": "Vaccins non à jour",
+        "visites_recentes": "Visites récentes",
+        "filtrer_par_allergie": "Filtrer par allergie",
+        "toutes_les_allergies": "Toutes les allergies",
+        "avec_allergies": "Avec allergies",
+        "sans_allergies": "Sans allergies",
+        "aucun_dossier_trouve": "Aucun dossier trouvé",
+        "groupe_sanguin": "Groupe sanguin",
+        "allergies": "Allergies",
+        "vaccins": "Vaccins",
+        "derniere_visite": "Dernière visite",
+        "maladies_chroniques": "Maladies chroniques:",
+        "consulter": "Consulter",
+        "total_vaccins": "Total Vaccins",
+        "rappels_planifies": "Rappels planifiés",
+        "rappels_en_retard": "Rappels en retard",
+        "effets_secondaires": "Effets secondaires",
+        "aucune_vaccination_enregistree": "Aucune vaccination enregistrée",
+        "rappel": "Rappel",
+        "effets_secondaires_signales": "(effets secondaires signalés)"
       },
       "vaccinations": {
         "title": "Carnet de Vaccination",
@@ -580,7 +677,41 @@
     "notes": {
       "notes": {
         "title": "Notes",
-        "subtitle": "Consultez et gérez les notes des élèves"
+        "subtitle": "Consultez et gérez les notes des élèves",
+        "importer": "Importer",
+        "nouvelle_note": "Nouvelle Note",
+        "moyenne_generale": "Moyenne Générale",
+        "total_evaluations": "Total Évaluations",
+        "taux_de_reussite": "Taux de Réussite",
+        "echecs": "Échecs",
+        "notes": "Notes",
+        "classement": "Classement",
+        "bulletins": "Bulletins",
+        "toutes_les_matieres": "Toutes les matières",
+        "matiere": "matière",
+        "periode": "Période",
+        "action": "Action",
+        "aucune_note_trouvee": "Aucune note trouvée",
+        "verrouillee": "Verrouillée",
+        "deverrouillee": "Déverrouillée",
+        "classement_des_eleves": "Classement des élèves",
+        "selectionner_une_classe": "Sélectionner une classe",
+        "filtrer_par_periode": "Filtrer par période",
+        "trimestre_1": "Trimestre 1",
+        "trimestre_2": "Trimestre 2",
+        "trimestre_3": "Trimestre 3",
+        "selectionnez_une_classe_et_une_periode_pour": "Sélectionnez une classe et une période pour voir le classement",
+        "selectionner_une_annee": "Sélectionner une année",
+        "recalculer_l_instantane": "Recalculer l'instantané",
+        "verrouiller_le_bulletin": "Verrouiller le bulletin",
+        "moyennes_de_la_classe": "Moyennes de la classe",
+        "selectionnez_une_classe_pour_consulter_les": "Sélectionnez une classe pour consulter les moyennes",
+        "aucun_instantane_pour_cette_classe_et_cette": "Aucun instantané pour cette classe et cette période. Cliquez sur « Recalculer l'instantané ».",
+        "effectif": "Effectif",
+        "bulletins_verrouilles": "Bulletins verrouillés",
+        "selectionnez_une_classe_pour_consulter_les_2": "Sélectionnez une classe pour consulter les bulletins",
+        "aucun_bulletin_verrouille_recalculez_l": "Aucun bulletin verrouillé. Recalculez l'instantané puis verrouillez le bulletin.",
+        "mention": "Mention"
       }
     },
     "paiements": {

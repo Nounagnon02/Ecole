@@ -64,7 +64,23 @@
     "date": "Date",
     "type": "Type",
     "reason": "Reason",
-    "average": "Average"
+    "average": "Average",
+    "amount": "Amount",
+    "status_label": "Status",
+    "view": "View",
+    "balance": "Balance",
+    "all_types": "All types",
+    "search_course": "Search for a course...",
+    "filter_by_subject": "Filter by subject",
+    "courses": "Courses",
+    "no_course_found": "No course found",
+    "filter_by_class": "Filter by class",
+    "all_classes": "All classes",
+    "matricule": "Student ID",
+    "no_student_found": "No student found",
+    "rank": "Rank",
+    "today": "Today",
+    "grade": "Grade"
   },
   "auth": {
     "login": "Log in",
@@ -532,45 +548,126 @@
     "comptable": {
       "factures": {
         "title": "Invoices",
-        "subtitle": "Manage invoices and payments"
+        "subtitle": "Manage invoices and payments",
+        "total_facture": "Total Invoiced",
+        "paye": "Paid",
+        "impaye": "Unpaid",
+        "taux_recouvrement": "Collection Rate",
+        "rechercher_une_facture": "Search for an invoice...",
+        "payee": "Paid",
+        "impayee": "Unpaid",
+        "nouvelle_facture": "New invoice",
+        "n_facture": "Invoice No.",
+        "client": "Customer",
+        "aucune_facture_trouvee": "No invoice found",
+        "envoyer": "Send",
+        "imprimer": "Print"
       },
       "transactions": {
         "title": "Transactions",
-        "subtitle": "All of the school's financial transactions"
+        "subtitle": "All of the school's financial transactions",
+        "recettes": "Income",
+        "depenses": "Expenses",
+        "transactions": "Transactions",
+        "rechercher_une_transaction": "Search for a transaction...",
+        "filtrer_par_type": "Filter by type",
+        "scolarite": "Tuition",
+        "cantine": "Canteen",
+        "transport": "Transport",
+        "inscription": "Enrollment",
+        "bibliotheque": "Library",
+        "payee": "Paid",
+        "echec": "Failed",
+        "reference": "Reference",
+        "methode": "Method",
+        "aucune_transaction_trouvee": "No transaction found"
       }
     },
     "eleve": {
       "cours": {
         "title": "My Courses",
-        "subtitle": "View your courses, assignments and resources"
+        "subtitle": "View your courses, assignments and resources",
+        "toutes_les_matieres": "All subjects",
+        "filtrer_par_type": "Filter by type",
+        "devoir": "Assignment"
       }
     },
     "eleves": {
       "eleves": {
         "title": "Students",
-        "subtitle": "Manage all enrolled students"
+        "subtitle": "Manage all enrolled students",
+        "nouvel_eleve": "New Student",
+        "plus_d_actions": "More actions",
+        "retirer_des_effectifs": "Remove from the roll"
       }
     },
     "emploi_du_temps": {
       "emploi_du_temps": {
         "title": "Schedule",
-        "subtitle": "View timetables by class"
+        "subtitle": "View timetables by class",
+        "ajouter_un_cours": "Add a Course",
+        "annee_scolaire_2025_2026": "School year 2025-2026",
+        "filtrer_par_enseignant": "Filter by teacher",
+        "pause": "Break",
+        "disponible": "Available",
+        "donnees_chargees_depuis_l_api": "Data loaded from the API",
+        "mode_demo_api_indisponible": "Demo mode (API unavailable)"
       }
     },
     "enseignant": {
       "classes": {
         "title": "My Classes",
-        "subtitle": "Manage your classes and follow your students"
+        "subtitle": "Manage your classes and follow your students",
+        "aucune_classe_assignee": "No class assigned",
+        "liste": "List",
+        "grille": "Grid",
+        "absences": "Absences",
+        "appreciation": "Remarks",
+        "moyenne": "Average:",
+        "absences_2": "Absences:"
       }
     },
     "infirmier": {
       "soins": {
         "title": "Nursing Care",
-        "subtitle": "Register of care provided to students"
+        "subtitle": "Register of care provided to students",
+        "nouveau_soin": "New care record",
+        "total_soins": "Total Care Records",
+        "urgences": "Emergencies",
+        "traites": "Handled",
+        "filtrer_par_type_d_urgence": "Filter by urgency type",
+        "urgence": "Emergency",
+        "consultation": "Consultation",
+        "traite": "Handled",
+        "aucun_soin_trouve": "No care record found"
       },
       "dossiers": {
         "title": "Medical Records",
-        "subtitle": "Management of student medical records"
+        "subtitle": "Management of student medical records",
+        "dossiers_medicaux": "Medical Records",
+        "vaccinations": "Vaccinations",
+        "total_dossiers": "Total Records",
+        "allergies_connues": "Known allergies",
+        "vaccins_non_a_jour": "Vaccines not up to date",
+        "visites_recentes": "Recent visits",
+        "filtrer_par_allergie": "Filter by allergy",
+        "toutes_les_allergies": "All allergies",
+        "avec_allergies": "With allergies",
+        "sans_allergies": "Without allergies",
+        "aucun_dossier_trouve": "No record found",
+        "groupe_sanguin": "Blood type",
+        "allergies": "Allergies",
+        "vaccins": "Vaccines",
+        "derniere_visite": "Last visit",
+        "maladies_chroniques": "Chronic conditions:",
+        "consulter": "View",
+        "total_vaccins": "Total Vaccines",
+        "rappels_planifies": "Scheduled reminders",
+        "rappels_en_retard": "Overdue reminders",
+        "effets_secondaires": "Side effects",
+        "aucune_vaccination_enregistree": "No vaccination recorded",
+        "rappel": "Reminder",
+        "effets_secondaires_signales": "(side effects reported)"
       },
       "vaccinations": {
         "title": "Vaccination Record",
@@ -580,7 +677,41 @@
     "notes": {
       "notes": {
         "title": "Grades",
-        "subtitle": "View and manage student grades"
+        "subtitle": "View and manage student grades",
+        "importer": "Import",
+        "nouvelle_note": "New Grade",
+        "moyenne_generale": "Overall Average",
+        "total_evaluations": "Total Assessments",
+        "taux_de_reussite": "Success Rate",
+        "echecs": "Failures",
+        "notes": "Grades",
+        "classement": "Ranking",
+        "bulletins": "Report cards",
+        "toutes_les_matieres": "All subjects",
+        "matiere": "subject",
+        "periode": "Period",
+        "action": "Action",
+        "aucune_note_trouvee": "No grade found",
+        "verrouillee": "Locked",
+        "deverrouillee": "Unlocked",
+        "classement_des_eleves": "Student ranking",
+        "selectionner_une_classe": "Select a class",
+        "filtrer_par_periode": "Filter by period",
+        "trimestre_1": "Term 1",
+        "trimestre_2": "Term 2",
+        "trimestre_3": "Term 3",
+        "selectionnez_une_classe_et_une_periode_pour": "Select a class and a period to see the ranking",
+        "selectionner_une_annee": "Select a year",
+        "recalculer_l_instantane": "Recalculate snapshot",
+        "verrouiller_le_bulletin": "Lock the report card",
+        "moyennes_de_la_classe": "Class averages",
+        "selectionnez_une_classe_pour_consulter_les": "Select a class to view the averages",
+        "aucun_instantane_pour_cette_classe_et_cette": "No snapshot for this class and period. Click “Recalculate snapshot”.",
+        "effectif": "Headcount",
+        "bulletins_verrouilles": "Locked report cards",
+        "selectionnez_une_classe_pour_consulter_les_2": "Select a class to view the report cards",
+        "aucun_bulletin_verrouille_recalculez_l": "No locked report card. Recalculate the snapshot, then lock the report card.",
+        "mention": "Honors"
       }
     },
     "paiements": {
