@@ -240,11 +240,16 @@ class AuthController extends Controller
                 'name' => $validated['name'],
                 'prenom' => $validated['prenom'],
                 'role' => $validated['role'],
-                'email' => $validated['email'],
+                // `nullable` : ces champs peuvent être absents de la requête,
+                // pas seulement vides. Y accéder sans repli levait un
+                // "Undefined array key" (silencieux en production, mais un
+                // vrai bug) dès qu'un appelant omettait le champ plutôt que
+                // d'envoyer une chaîne vide.
+                'email' => $validated['email'] ?? null,
                 'identifiant' => $validated['identifiant'],
                 'password' => Hash::make($validated['password']),
                 'ecole_id' => $validated['ecole_id'],
-                'telephone' => $validated['telephone'],
+                'telephone' => $validated['telephone'] ?? null,
             ]);
 
             // Création du profil selon le rôle
@@ -258,7 +263,7 @@ class AuthController extends Controller
                     'user_id' => $user->id,
                     'numero_matricule' => $profileData['numero_matricule'],
                     'classe_id' => $profileData['classe_id'],
-                    'serie_id' => $profileData['serie_id'],
+                    'serie_id' => $profileData['serie_id'] ?? null,
                 ]);
             } elseif ($user->role === 'parent') {
                 UserParent::create(['user_id' => $user->id]);
@@ -279,8 +284,18 @@ class AuthController extends Controller
             return response()->json(['message' => 'Utilisateur créé avec succès', 'user' => $user], 201);
 
         } catch (\Exception $e) {
-            $this->rethrowIfMeaningful($e);
+            // Rollback D'ABORD : `rethrowIfMeaningful` relance immédiatement
+            // les exceptions "signifiantes" (dont `ValidationException` — la
+            // validation du profil élève, juste au-dessus, en lève une). Dans
+            // l'ancien ordre, cette relance sortait de la méthode avant
+            // d'atteindre `DB::rollBack()` : la transaction restait ouverte.
+            // Sans connexion persistante l'effet ne se voit pas (chaque
+            // requête en reprend une neuve), mais avec une connexion
+            // réutilisée (worker de file, connexions persistantes) la requête
+            // suivante sur cette connexion échoue avec « there is already an
+            // active transaction ».
             \DB::rollBack();
+            $this->rethrowIfMeaningful($e);
             return response()->json(['message' => 'Erreur lors de l\'inscription', 'error' => $this->clientErrorMessage($e)], 500);
         }
     }
