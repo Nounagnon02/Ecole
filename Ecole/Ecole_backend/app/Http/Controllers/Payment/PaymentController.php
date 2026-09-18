@@ -158,8 +158,13 @@ class PaymentController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            $this->rethrowIfMeaningful($e);
+            // Rollback D'ABORD : `rethrowIfMeaningful` relance immédiatement
+            // les exceptions « signifiantes » (403/404/422/...) — les
+            // relancer avant le rollback désynchronise la comptabilité de
+            // transactions de Laravel de la connexion PDO réelle (même bug
+            // que celui trouvé dans AuthController::inscription()).
             DB::rollBack();
+            $this->rethrowIfMeaningful($e);
             Log::error('Payment initialization error', ['error' => $e->getMessage()]);
             return response()->json(['success' => false, 'message' => 'Erreur lors de l\'initialisation du paiement'], 500);
         }
@@ -393,6 +398,9 @@ class PaymentController extends Controller
             $payment = Payment::findOrFail($request->payment_id);
 
             if ($payment->refund_status !== 'requested') {
+                // Rien n'a encore été écrit, mais la transaction reste
+                // ouverte tant qu'elle n'est pas explicitement fermée.
+                DB::rollBack();
                 return response()->json(['success' => false, 'message' => 'Aucune demande de remboursement'], 400);
             }
 
@@ -413,8 +421,8 @@ class PaymentController extends Controller
             return response()->json(['success' => true, 'message' => 'Remboursement effectué']);
 
         } catch (\Exception $e) {
-            $this->rethrowIfMeaningful($e);
             DB::rollBack();
+            $this->rethrowIfMeaningful($e);
             Log::error('Refund processing error', ['error' => $e->getMessage()]);
             return response()->json(['success' => false, 'message' => 'Erreur lors du remboursement'], 500);
         }
