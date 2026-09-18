@@ -175,7 +175,9 @@
     "mark_all_read": "Tout marquer comme lu",
     "view_all": "Voir toutes les notifications",
     "toggle_menu": "Ouvrir le menu",
-    "search": "Rechercher"
+    "search": "Rechercher",
+    "language": "Langue",
+    "toggle_theme": "Changer le thème"
   },
   "securite": {
     "title": "Sécurité",
