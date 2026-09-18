@@ -11,7 +11,7 @@ import { devtools } from 'zustand/middleware';
 import axios from 'axios';
 import apiClient from '@/shared/lib/api-client';
 import { cacheClear } from '@/shared/lib/db';
-import { clearDashboardCache } from '@/shared/lib/dashboard-cache';
+import { clearDashboardCache } from '@/shared/lib/query-client';
 import { normalizeRole } from '@/shared/types/roles';
 
 export const SESSION_CHECK_INTERVAL = 5 * 60 * 1000; // 5 min entre vérifications
@@ -147,10 +147,10 @@ const useAuthStore = create(
         // par l'utilisateur suivant sur un poste partagé (cf. audit S17).
         await cacheClear().catch(() => {});
 
-        // Même problème pour le cache mémoire des tableaux de bord, indexé
-        // par rôle et non par utilisateur : sans purge, l'utilisateur suivant
-        // voyait les effectifs et finances du précédent, éventuellement
-        // d'un autre établissement.
+        // Même problème pour le cache serveur de react-query, qui porte les
+        // réponses des tableaux de bord : sans purge, l'utilisateur suivant
+        // voyait les effectifs et finances du précédent, éventuellement d'un
+        // autre établissement.
         clearDashboardCache();
 
         set({ ...initialState, isLoading: false });

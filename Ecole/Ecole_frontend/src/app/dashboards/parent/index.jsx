@@ -6,7 +6,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
   Users,
   TrendingUp,
@@ -23,18 +23,15 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer,
   Area, AreaChart
 } from 'recharts';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
 import { cn } from '@/shared/lib/utils';
 import { useDashboardStats } from '@/app/dashboards/hooks/useDashboardData';
+import DashboardShell from '@/app/dashboards/DashboardShell';
 import StatsCard from '@/shared/components/ui/StatsCard';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Avatar from '@/shared/components/ui/Avatar';
 import Button from '@/shared/components/ui/Button';
 import { Skeleton } from '@/shared/components/ui/Skeleton';
-import { RefreshButton } from '@/shared/components/ui';
-import { ErrorDisplay } from '@/shared/components/ui/EmptyState';
 
 // ─── Constantes ───────────────────────────────────────────────
 
@@ -285,61 +282,17 @@ export default function ParentDashboard() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <motion.h1
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="font-fraunces text-2xl font-bold text-neutral-900 dark:text-white"
-          >
-            Espace Parent
-          </motion.h1>
-          <p className="text-neutral-500 dark:text-neutral-400 mt-1">
-            Suivi de vos enfants — {format(new Date(), 'EEEE d MMMM yyyy', { locale: fr })}
-          </p>
-        </div>
-        <RefreshButton loading={loading} onRefresh={refetch} />
-      </div>
-
-      {error && (
-        <ErrorDisplay message={error} onRetry={refetch} />
-      )}
-
-      <div className="border-b border-neutral-200 dark:border-neutral-800">
-        <nav className="flex gap-1 overflow-x-auto -mb-px">
-          {TABS.map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => handleTabClick(tab.id)}
-                className={cn(
-                  'flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-all whitespace-nowrap',
-                  activeTab === tab.id
-                    ? 'border-[var(--accent)] text-[var(--accent)] dark:text-[var(--accent)]'
-                    : 'border-transparent text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200'
-                )}
-              >
-                <Icon className="h-4 w-4" />
-                {tab.label}
-              </button>
-            );
-          })}
-        </nav>
-      </div>
-
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
-          transition={{ duration: 0.2 }}
-        >
-          {renderSection()}
-        </motion.div>
-      </AnimatePresence>
-    </div>
+    <DashboardShell
+      title="Espace Parent"
+      subtitle="Suivi de vos enfants"
+      tabs={TABS}
+      activeTab={activeTab}
+      onTabChange={handleTabClick}
+      loading={loading}
+      error={error}
+      onRefresh={refetch}
+    >
+      {renderSection()}
+    </DashboardShell>
   );
 }

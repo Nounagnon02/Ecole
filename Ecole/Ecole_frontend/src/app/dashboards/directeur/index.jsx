@@ -4,21 +4,19 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
   Users, GraduationCap, DollarSign,   Activity, School, MessageSquare,
   Calendar, BarChart3, Download,
-  Search, RefreshCw
+  Search
 } from 'lucide-react';
 import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart as RePieChart, Pie, Cell, Legend,
   Area, AreaChart
 } from 'recharts';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
-import { cn } from '@/shared/lib/utils';
 import { useDashboardStats } from '@/app/dashboards/hooks/useDashboardData';
+import DashboardShell from '@/app/dashboards/DashboardShell';
 import StatsCard from '@/shared/components/ui/StatsCard';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
@@ -257,68 +255,21 @@ export default function DirecteurDashboard() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <motion.h1
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="font-fraunces text-2xl font-bold text-neutral-900 dark:text-white"
-          >
-            Tableau de Bord
-          </motion.h1>
-          <p className="text-neutral-500 dark:text-neutral-400 mt-1">
-            {format(new Date(), 'EEEE d MMMM yyyy', { locale: fr })}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          {error && (
-            <span className="text-xs text-red-500">Erreur de chargement</span>
-          )}
-          <Button variant="ghost" size="sm" onClick={refetch} disabled={loading}>
-            <RefreshCw className={cn('h-4 w-4 mr-1', loading && 'animate-spin')} />
-            Actualiser
-          </Button>
-          <Button variant="ghost" size="sm">
-            <Download className="h-4 w-4 mr-1" />Rapport
-          </Button>
-        </div>
-      </div>
-
-      <div className="border-b border-neutral-200 dark:border-neutral-800">
-        <nav className="flex gap-1 overflow-x-auto -mb-px">
-          {TABS.map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => handleTabClick(tab.id)}
-                className={cn(
-                  'flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-all whitespace-nowrap',
-                  activeTab === tab.id
-                    ? 'border-[var(--accent)] text-[var(--accent)]'
-                    : 'border-transparent text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200'
-                )}
-              >
-                <Icon className="h-4 w-4" />
-                {tab.label}
-              </button>
-            );
-          })}
-        </nav>
-      </div>
-
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
-          transition={{ duration: 0.2 }}
-        >
-          {renderSection()}
-        </motion.div>
-      </AnimatePresence>
-    </div>
+    <DashboardShell
+      title="Tableau de Bord"
+      tabs={TABS}
+      activeTab={activeTab}
+      onTabChange={handleTabClick}
+      loading={loading}
+      error={error}
+      onRefresh={refetch}
+      actions={
+        <Button variant="ghost" size="sm">
+          <Download className="h-4 w-4 mr-1" />Rapport
+        </Button>
+      }
+    >
+      {renderSection()}
+    </DashboardShell>
   );
 }
