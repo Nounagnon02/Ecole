@@ -18,6 +18,7 @@ import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import StatsCard from '@/shared/components/ui/StatsCard';
+import { useTranslation } from '@/shared/i18n';
 
 const getStatutVariant = (statut) => {
   switch (statut) {
@@ -52,6 +53,7 @@ const getGraviteColor = (gravite) => {
 };
 
 export default function SurveillancePage() {
+  const { t } = useTranslation();
   const [filterGravite, setFilterGravite] = useState('');
 
   // Le chargement passait par un `useState` doublé d'un `useEffect` de
@@ -106,8 +108,8 @@ export default function SurveillancePage() {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Surveillance</h1>
-        <p className="text-sm text-neutral-500">Registre des incidents et signalements</p>
+        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.surveillant.surveillance.title')}</h1>
+        <p className="text-sm text-neutral-500">{t('pages.surveillant.surveillance.subtitle')}</p>
       </div>
 
       {/* Stats */}

@@ -19,6 +19,7 @@ import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
+import { useTranslation } from '@/shared/i18n';
 
 function getTypeIcon(type) {
   const cfg = {
@@ -30,6 +31,7 @@ function getTypeIcon(type) {
 }
 
 export default function DocumentsPage() {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [filterCategorie, setFilterCategorie] = useState('');
 
@@ -94,8 +96,8 @@ export default function DocumentsPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Courriers</h1>
-          <p className="text-sm text-neutral-500">Gestion des courriers et documents administratifs</p>
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.secretaire.documents.title')}</h1>
+          <p className="text-sm text-neutral-500">{t('pages.secretaire.documents.subtitle')}</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" icon={<FolderOpen />}>Dossiers</Button>

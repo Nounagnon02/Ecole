@@ -18,6 +18,7 @@ import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
+import { useTranslation } from '@/shared/i18n';
 
 const GRADE_BADGE = {
   professeur: { variant: 'primary', label: 'Professeur' },
@@ -30,6 +31,7 @@ const GRADE_BADGE = {
 };
 
 export default function EnseignantsPage() {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
 
   // Le chargement passait par un `useState` doublé d'un `useEffect` de
@@ -95,8 +97,8 @@ export default function EnseignantsPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Enseignants</h1>
-          <p className="text-sm text-neutral-500">Profils et affectations des enseignants chercheurs</p>
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.universite.enseignants.title')}</h1>
+          <p className="text-sm text-neutral-500">{t('pages.universite.enseignants.subtitle')}</p>
         </div>
         <Button size="sm" icon={<Plus />}>Ajouter un enseignant</Button>
       </div>

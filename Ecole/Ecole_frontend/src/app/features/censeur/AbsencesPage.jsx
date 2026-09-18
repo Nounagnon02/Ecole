@@ -20,6 +20,7 @@ import Avatar from '@/shared/components/ui/Avatar';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
+import { useTranslation } from '@/shared/i18n';
 
 const getTypeLabel = (type) => {
   switch (type) {
@@ -32,6 +33,7 @@ const getTypeLabel = (type) => {
 };
 
 export default function AbsencesPage() {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [filterStatut, setFilterStatut] = useState('');
 
@@ -101,8 +103,8 @@ export default function AbsencesPage() {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Absences</h1>
-        <p className="text-sm text-neutral-500">Suivi et justification des absences</p>
+        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.censeur.absences.title')}</h1>
+        <p className="text-sm text-neutral-500">{t('pages.censeur.absences.subtitle')}</p>
       </div>
 
       {/* Stats */}

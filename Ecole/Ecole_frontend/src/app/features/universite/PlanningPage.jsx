@@ -19,6 +19,7 @@ import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
+import { useTranslation } from '@/shared/i18n';
 
 const TYPE_CONFIG = {
   cours: { label: 'Cours', color: 'text-blue-500 bg-blue-100 dark:bg-blue-900/20', icon: BookOpen },
@@ -32,6 +33,7 @@ const TYPE_CONFIG = {
 };
 
 export default function PlanningPage() {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState('');
 
@@ -108,8 +110,8 @@ export default function PlanningPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Planning</h1>
-          <p className="text-sm text-neutral-500">Calendrier universitaire des cours et événements</p>
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.universite.planning.title')}</h1>
+          <p className="text-sm text-neutral-500">{t('pages.universite.planning.subtitle')}</p>
         </div>
         <Button size="sm" icon={<Plus />}>Nouvel événement</Button>
       </div>

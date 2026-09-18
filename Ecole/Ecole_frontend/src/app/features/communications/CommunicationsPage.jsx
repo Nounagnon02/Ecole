@@ -22,6 +22,7 @@ import Avatar from '@/shared/components/ui/Avatar';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import { useApi } from '@/hooks/useApi';
+import { useTranslation } from '@/shared/i18n';
 
 const CATEGORY_CONFIG = {
   all: { label: 'Tout', icon: MessageSquare },
@@ -71,6 +72,7 @@ function normalizePost(p) {
 }
 
 export default function CommunicationsPage() {
+  const { t } = useTranslation();
   // Deuxième instance, volontairement : `useApi` porte un `loading` et un
   // `error` uniques. Partagée avec la lecture, une écriture qui échoue
   // remplacerait tout le fil par l'écran d'erreur — un champ mal rempli
@@ -204,8 +206,8 @@ export default function CommunicationsPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Communications</h1>
-          <p className="text-sm text-neutral-500">Restez informé des actualités de l'établissement</p>
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.communications.communications.title')}</h1>
+          <p className="text-sm text-neutral-500">{t('pages.communications.communications.subtitle')}</p>
         </div>
         <Button size="sm" icon={<Plus />} onClick={toggleForm} aria-expanded={formOpen}>
           Nouvelle Publication

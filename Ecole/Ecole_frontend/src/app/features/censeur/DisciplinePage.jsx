@@ -20,6 +20,7 @@ import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
+import { useTranslation } from '@/shared/i18n';
 
 const getGraviteVariant = (g) => {
   switch (g) {
@@ -54,6 +55,7 @@ const ALERT_COLORS = {
 };
 
 export default function DisciplinePage() {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [filterGravite, setFilterGravite] = useState('');
   const [filterStatut, setFilterStatut] = useState('');
@@ -132,8 +134,8 @@ export default function DisciplinePage() {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Discipline</h1>
-        <p className="text-sm text-neutral-500">Gestion des incidents, sanctions et tendances disciplinaires</p>
+        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.censeur.discipline.title')}</h1>
+        <p className="text-sm text-neutral-500">{t('pages.censeur.discipline.subtitle')}</p>
       </div>
 
       {/* Stats */}

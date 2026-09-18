@@ -19,6 +19,7 @@ import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
+import { useTranslation } from '@/shared/i18n';
 
 const getStatutVariant = (statut) => {
   switch (statut) {
@@ -45,6 +46,7 @@ const getStatutLabel = (statut) => {
 };
 
 export default function FacturesPage() {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [filterStatut, setFilterStatut] = useState('');
 
@@ -112,8 +114,8 @@ export default function FacturesPage() {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Factures</h1>
-        <p className="text-sm text-neutral-500">Gérez les factures et les paiements</p>
+        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.comptable.factures.title')}</h1>
+        <p className="text-sm text-neutral-500">{t('pages.comptable.factures.subtitle')}</p>
       </div>
 
       {/* Stats */}

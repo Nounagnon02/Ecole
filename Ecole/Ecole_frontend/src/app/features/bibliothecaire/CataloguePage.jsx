@@ -19,8 +19,10 @@ import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
+import { useTranslation } from '@/shared/i18n';
 
 export default function CataloguePage() {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [filterCategorie, setFilterCategorie] = useState('');
 
@@ -78,8 +80,8 @@ export default function CataloguePage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Catalogue</h1>
-          <p className="text-sm text-neutral-500">Gestion des ouvrages et ressources de la bibliothèque</p>
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.bibliothecaire.catalogue.title')}</h1>
+          <p className="text-sm text-neutral-500">{t('pages.bibliothecaire.catalogue.subtitle')}</p>
         </div>
         <Button size="sm" icon={<Plus />}>Ajouter un ouvrage</Button>
       </div>

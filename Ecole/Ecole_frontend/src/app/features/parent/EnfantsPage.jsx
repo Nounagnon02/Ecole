@@ -18,8 +18,10 @@ import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Avatar from '@/shared/components/ui/Avatar';
 import StatsCard from '@/shared/components/ui/StatsCard';
+import { useTranslation } from '@/shared/i18n';
 
 export default function EnfantsPage() {
+  const { t } = useTranslation();
   const [selectedEnfant, setSelectedEnfant] = useState(null);
   const [activeTab, setActiveTab] = useState('notes');
 
@@ -96,8 +98,8 @@ export default function EnfantsPage() {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Mes Enfants</h1>
-        <p className="text-sm text-neutral-500">Suivez la scolarité de vos enfants</p>
+        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.parent.enfants.title')}</h1>
+        <p className="text-sm text-neutral-500">{t('pages.parent.enfants.subtitle')}</p>
       </div>
 
       {/* Sélection enfant */}

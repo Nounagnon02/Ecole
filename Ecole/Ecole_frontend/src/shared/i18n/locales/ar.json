@@ -433,6 +433,154 @@
         "title": "الإعدادات",
         "subtitle": "إعدادات النظام العامة"
       }
+    },
+    "bibliothecaire": {
+      "catalogue": {
+        "title": "الفهرس",
+        "subtitle": "إدارة كتب ومصادر المكتبة"
+      },
+      "emprunts": {
+        "title": "الاستعارات",
+        "subtitle": "متابعة الاستعارات والإرجاع والغرامات"
+      }
+    },
+    "censeur": {
+      "absences": {
+        "title": "الغيابات",
+        "subtitle": "متابعة الغيابات وتبريرها"
+      },
+      "discipline": {
+        "title": "الانضباط",
+        "subtitle": "إدارة الحوادث والعقوبات والاتجاهات التأديبية"
+      }
+    },
+    "communications": {
+      "communications": {
+        "title": "الإعلانات",
+        "subtitle": "ابقَ على اطلاع بأخبار المؤسسة"
+      }
+    },
+    "comptable": {
+      "factures": {
+        "title": "الفواتير",
+        "subtitle": "إدارة الفواتير والمدفوعات"
+      },
+      "transactions": {
+        "title": "المعاملات",
+        "subtitle": "جميع المعاملات المالية للمؤسسة"
+      }
+    },
+    "eleve": {
+      "cours": {
+        "title": "مقرراتي",
+        "subtitle": "اطّلع على مقرراتك وواجباتك ومصادرك"
+      }
+    },
+    "eleves": {
+      "eleves": {
+        "title": "الطلاب",
+        "subtitle": "إدارة جميع الطلاب المسجلين"
+      }
+    },
+    "emploi_du_temps": {
+      "emploi_du_temps": {
+        "title": "الجدول الزمني",
+        "subtitle": "اطّلع على الجداول الزمنية حسب القسم"
+      }
+    },
+    "enseignant": {
+      "classes": {
+        "title": "أقسامي",
+        "subtitle": "أدر أقسامك وتابع طلابك"
+      }
+    },
+    "infirmier": {
+      "soins": {
+        "title": "الرعاية التمريضية",
+        "subtitle": "سجل الرعاية المقدمة للطلاب"
+      }
+    },
+    "notes": {
+      "notes": {
+        "title": "الدرجات",
+        "subtitle": "اطّلع على درجات الطلاب وأدرها"
+      }
+    },
+    "paiements": {
+      "paiements": {
+        "title": "المدفوعات",
+        "subtitle": "إدارة المعاملات المالية"
+      }
+    },
+    "parametres": {
+      "parametres": {
+        "title": "الإعدادات",
+        "subtitle": "أدر تفضيلاتك وإعدادات حسابك"
+      }
+    },
+    "parent": {
+      "enfants": {
+        "title": "أبنائي",
+        "subtitle": "تابع مسار أبنائك الدراسي"
+      }
+    },
+    "secretaire": {
+      "documents": {
+        "title": "المراسلات",
+        "subtitle": "إدارة المراسلات والوثائق الإدارية"
+      },
+      "inscriptions": {
+        "title": "التسجيلات",
+        "subtitle": "إدارة تسجيلات الطلاب الجدد"
+      },
+      "planning": {
+        "title": "الجدولة",
+        "subtitle": "تخطيط الفعاليات والمواعيد"
+      }
+    },
+    "surveillant": {
+      "surveillance": {
+        "title": "المراقبة",
+        "subtitle": "سجل الحوادث والبلاغات"
+      }
+    },
+    "universite": {
+      "cours": {
+        "title": "المقررات",
+        "subtitle": "تخطيط وإدارة المقررات الجامعية"
+      },
+      "departements": {
+        "title": "الأقسام",
+        "subtitle": "إدارة الأقسام حسب الكلية"
+      },
+      "enseignants": {
+        "title": "الأساتذة",
+        "subtitle": "ملفات وتكليفات الأساتذة الباحثين"
+      },
+      "etudiants": {
+        "title": "الطلاب",
+        "subtitle": "إدارة تسجيلات الطلاب وملفاتهم"
+      },
+      "facultes": {
+        "title": "الكليات",
+        "subtitle": "إدارة كليات الجامعة"
+      },
+      "mes_cours": {
+        "title": "مقرراتي",
+        "subtitle": "المقررات المسندة إليك"
+      },
+      "notes": {
+        "title": "الدرجات",
+        "subtitle": "إدخال الدرجات واستعراضها"
+      },
+      "planning": {
+        "title": "الجدولة",
+        "subtitle": "التقويم الجامعي للمقررات والفعاليات"
+      },
+      "taches": {
+        "title": "المهام",
+        "subtitle": "متابعة الواجبات والمشاريع والامتحانات"
+      }
     }
   }
 }

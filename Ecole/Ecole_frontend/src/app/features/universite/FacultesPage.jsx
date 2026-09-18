@@ -17,8 +17,10 @@ import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
+import { useTranslation } from '@/shared/i18n';
 
 export default function FacultesPage() {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
 
   // Le chargement passait par un `useState` doublé d'un `useEffect` de
@@ -78,8 +80,8 @@ export default function FacultesPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Facultés</h1>
-          <p className="text-sm text-neutral-500">Gestion des facultés de l'université</p>
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.universite.facultes.title')}</h1>
+          <p className="text-sm text-neutral-500">{t('pages.universite.facultes.subtitle')}</p>
         </div>
         <Button size="sm" icon={<Plus />}>Ajouter une faculté</Button>
       </div>
