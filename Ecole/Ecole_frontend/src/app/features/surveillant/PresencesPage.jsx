@@ -145,15 +145,15 @@ export default function PresencesPage() {
           <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.surveillant.presences.title')}</h1>
           <p className="text-sm text-neutral-500">{t('pages.surveillant.presences.subtitle', { date: formatDate(today) })}</p>
         </div>
-        <Button variant="outline" size="sm" icon={<Download />}>Exporter</Button>
+        <Button variant="outline" size="sm" icon={<Download />}>{t('common.export')}</Button>
       </div>
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-4">
-        <StatsCard title="Total" value={String(stats.total)} icon={Users} color="primary" />
-        <StatsCard title="Présents" value={String(stats.presents)} icon={CheckCircle} color="emerald" />
-        <StatsCard title="Retards" value={String(stats.retards)} icon={Clock} color="amber" />
-        <StatsCard title="Absents" value={String(stats.absents)} icon={XCircle} color="red" />
+        <StatsCard title={t('common.total')} value={String(stats.total)} icon={Users} color="primary" />
+        <StatsCard title={t('pages.surveillant.presences.presents')} value={String(stats.presents)} icon={CheckCircle} color="emerald" />
+        <StatsCard title={t('pages.surveillant.presences.retards')} value={String(stats.retards)} icon={Clock} color="amber" />
+        <StatsCard title={t('pages.surveillant.presences.absents')} value={String(stats.absents)} icon={XCircle} color="red" />
       </div>
 
       {/* Filtres */}
@@ -162,7 +162,7 @@ export default function PresencesPage() {
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
             <Input
-              placeholder="Rechercher un élève..."
+              placeholder={t('common.search_student')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
@@ -171,22 +171,22 @@ export default function PresencesPage() {
           <select
             value={filterClasse}
             onChange={(e) => setFilterClasse(e.target.value)}
-            aria-label="Filtrer par classe"
+            aria-label={t('common.filter_by_class')}
             className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
           >
-            <option value="">Toutes les classes</option>
+            <option value="">{t('common.all_classes')}</option>
             {classesList.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
           <select
             value={filterStatut}
             onChange={(e) => setFilterStatut(e.target.value)}
-            aria-label="Filtrer par statut"
+            aria-label={t('common.filter_by_status')}
             className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
           >
-            <option value="">Tous les statuts</option>
-            <option value="present">Présent</option>
-            <option value="retard">Retard</option>
-            <option value="absent">Absent</option>
+            <option value="">{t('common.all_statuses')}</option>
+            <option value="present">{t('pages.surveillant.presences.present')}</option>
+            <option value="retard">{t('common.late')}</option>
+            <option value="absent">{t('pages.surveillant.presences.absent')}</option>
           </select>
         </div>
       </Card>
@@ -197,19 +197,19 @@ export default function PresencesPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-neutral-200 dark:border-neutral-700 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                <th scope="col" className="pb-3 pr-4">Élève</th>
-                <th scope="col" className="pb-3 pr-4">Classe</th>
-                <th scope="col" className="pb-3 pr-4">Statut</th>
-                <th scope="col" className="pb-3 pr-4">Heure</th>
-                <th scope="col" className="pb-3 pr-4">Motif</th>
-                <th scope="col" className="pb-3 text-right">Actions</th>
+                <th scope="col" className="pb-3 pr-4">{t('common.student')}</th>
+                <th scope="col" className="pb-3 pr-4">{t('common.class')}</th>
+                <th scope="col" className="pb-3 pr-4">{t('common.status_label')}</th>
+                <th scope="col" className="pb-3 pr-4">{t('common.time')}</th>
+                <th scope="col" className="pb-3 pr-4">{t('common.reason')}</th>
+                <th scope="col" className="pb-3 text-right">{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 && (
                 <tr>
                   <td colSpan={6} className="py-8 text-center text-sm text-neutral-500">
-                    Aucune présence trouvée
+                    {t('pages.surveillant.presences.aucune_presence_trouvee')}
                   </td>
                 </tr>
               )}
@@ -237,7 +237,7 @@ export default function PresencesPage() {
                     <span className="text-sm text-neutral-500 italic">{p.motif || '—'}</span>
                   </td>
                   <td className="py-3 text-right">
-                    <Button variant="ghost" size="sm">Modifier</Button>
+                    <Button variant="ghost" size="sm">{t('common.edit')}</Button>
                   </td>
                 </tr>
               ))}

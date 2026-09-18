@@ -99,7 +99,7 @@ export default function SurveillancePage() {
           onClick={() => window.location.reload()}
           className="mt-4 inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors"
         >
-          Réessayer
+          {t('common.retry')}
         </button>
       </div>
     );
@@ -114,10 +114,10 @@ export default function SurveillancePage() {
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-4">
-        <StatsCard title="Total" value={String(stats.total)} icon={Shield} color="primary" />
-        <StatsCard title="En cours" value={String(stats.enCours)} icon={AlertTriangle} color="amber" />
-        <StatsCard title="Terminés" value={String(stats.termines)} icon={CheckCircle} color="emerald" />
-        <StatsCard title="Graves" value={String(stats.graves)} icon={AlertCircle} color="red" />
+        <StatsCard title={t('common.total')} value={String(stats.total)} icon={Shield} color="primary" />
+        <StatsCard title={t('common.status.in_progress')} value={String(stats.enCours)} icon={AlertTriangle} color="amber" />
+        <StatsCard title={t('common.finished')} value={String(stats.termines)} icon={CheckCircle} color="emerald" />
+        <StatsCard title={t('pages.surveillant.surveillance.graves')} value={String(stats.graves)} icon={AlertCircle} color="red" />
       </div>
 
       {/* Filtres */}
@@ -127,16 +127,16 @@ export default function SurveillancePage() {
             <select
               value={filterGravite}
               onChange={(e) => setFilterGravite(e.target.value)}
-              aria-label="Filtrer par gravité"
+              aria-label={t('pages.surveillant.surveillance.filtrer_par_gravite')}
               className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
             >
-              <option value="">Toutes les gravités</option>
-              <option value="faible">Faible</option>
-              <option value="moyenne">Moyenne</option>
-              <option value="grave">Grave</option>
+              <option value="">{t('pages.surveillant.surveillance.toutes_les_gravites')}</option>
+              <option value="faible">{t('pages.surveillant.surveillance.faible')}</option>
+              <option value="moyenne">{t('common.average')}</option>
+              <option value="grave">{t('pages.surveillant.surveillance.grave')}</option>
             </select>
           </div>
-          <Button size="sm" icon={<Plus />}>Nouvel incident</Button>
+          <Button size="sm" icon={<Plus />}>{t('pages.surveillant.surveillance.nouvel_incident')}</Button>
         </div>
       </Card>
 
@@ -146,7 +146,7 @@ export default function SurveillancePage() {
           <Card>
             <div className="text-center py-8 text-neutral-500">
               <Shield className="mx-auto h-8 w-8 mb-2" />
-              <p className="text-sm">Aucun incident trouvé</p>
+              <p className="text-sm">{t('pages.surveillant.surveillance.aucun_incident_trouve')}</p>
             </div>
           </Card>
         )}
@@ -181,7 +181,7 @@ export default function SurveillancePage() {
                   </span>
                 </div>
               </div>
-              <Button variant="ghost" size="sm">Détails</Button>
+              <Button variant="ghost" size="sm">{t('common.details')}</Button>
             </div>
           </Card>
         ))}

@@ -148,18 +148,18 @@ export default function PaiementsPage() {
           <Button variant="ghost" size="sm" onClick={refetch} disabled={isLoading}>
             <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} />
           </Button>
-          <Button variant="outline" size="sm" icon={<Receipt />}>Factures</Button>
-          <Button variant="outline" size="sm" icon={<Download />}>Exporter</Button>
-          <Button size="sm" icon={<Plus />}>Nouveau Paiement</Button>
+          <Button variant="outline" size="sm" icon={<Receipt />}>{t('pages.paiements.paiements.factures')}</Button>
+          <Button variant="outline" size="sm" icon={<Download />}>{t('common.export')}</Button>
+          <Button size="sm" icon={<Plus />}>{t('pages.paiements.paiements.nouveau_paiement')}</Button>
         </div>
       </div>
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatsCard title="Revenus Encaissés" value={formatCurrency(totalPaye)} icon={DollarSign} color="primary" />
-        <StatsCard title="Transactions" value={String(totalTransactions)} icon={CreditCard} color="emerald" />
-        <StatsCard title="Taux d'Encaisse" value={`${tauxEncaisse}%`} icon={TrendingUp} color="sky" />
-        <StatsCard title="Impayés" value={`${100 - tauxEncaisse}%`} icon={TrendingDown} color="red" />
+        <StatsCard title={t('pages.paiements.paiements.revenus_encaisses')} value={formatCurrency(totalPaye)} icon={DollarSign} color="primary" />
+        <StatsCard title={t('pages.paiements.paiements.transactions')} value={String(totalTransactions)} icon={CreditCard} color="emerald" />
+        <StatsCard title={t('pages.paiements.paiements.taux_d_encaisse')} value={`${tauxEncaisse}%`} icon={TrendingUp} color="sky" />
+        <StatsCard title={t('pages.paiements.paiements.impayes')} value={`${100 - tauxEncaisse}%`} icon={TrendingDown} color="red" />
       </div>
 
       {/* Tabs */}
@@ -174,7 +174,7 @@ export default function PaiementsPage() {
           )}
         >
           <CreditCard className="h-4 w-4 inline mr-1.5" />
-          Paiements
+          {t('pages.paiements.paiements.paiements')}
         </button>
         <button
           onClick={() => setTab('echeancier')}
@@ -186,7 +186,7 @@ export default function PaiementsPage() {
           )}
         >
           <Calendar className="h-4 w-4 inline mr-1.5" />
-          Échéancier
+          {t('pages.paiements.paiements.echeancier')}
         </button>
       </div>
 
@@ -199,7 +199,7 @@ export default function PaiementsPage() {
               <div className="relative flex-1 max-w-sm">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
                 <Input
-                  placeholder="Rechercher un élève..."
+                  placeholder={t('common.search_student')}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="pl-9"
@@ -208,13 +208,13 @@ export default function PaiementsPage() {
               <select
                 value={filterStatut}
                 onChange={(e) => setFilterStatut(e.target.value)}
-                aria-label="Filtrer par statut"
+                aria-label={t('common.filter_by_status')}
                 className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
               >
-                <option value="">Tous les statuts</option>
-                <option value="payee">Payé</option>
-                <option value="partiel">Partiel</option>
-                <option value="en_attente">En attente</option>
+                <option value="">{t('common.all_statuses')}</option>
+                <option value="payee">{t('pages.paiements.paiements.paye')}</option>
+                <option value="partiel">{t('pages.paiements.paiements.partiel')}</option>
+                <option value="en_attente">{t('common.status.pending')}</option>
               </select>
             </div>
           </Card>
@@ -228,13 +228,13 @@ export default function PaiementsPage() {
             )}
             <Table>
               <Table.Header>
-                <Table.Head>Référence</Table.Head>
-                <Table.Head>Élève</Table.Head>
-                <Table.Head>Type</Table.Head>
-                <Table.Head>Montant</Table.Head>
-                <Table.Head>Date</Table.Head>
-                <Table.Head>Statut</Table.Head>
-                <Table.Head className="text-right">Reçu</Table.Head>
+                <Table.Head>{t('pages.paiements.paiements.reference')}</Table.Head>
+                <Table.Head>{t('common.student')}</Table.Head>
+                <Table.Head>{t('common.type')}</Table.Head>
+                <Table.Head>{t('common.amount')}</Table.Head>
+                <Table.Head>{t('common.date')}</Table.Head>
+                <Table.Head>{t('common.status_label')}</Table.Head>
+                <Table.Head className="text-right">{t('pages.paiements.paiements.recu')}</Table.Head>
               </Table.Header>
               <Table.Body>
                 {isLoading && Array.from({ length: 5 }).map((_, i) => (
@@ -247,7 +247,7 @@ export default function PaiementsPage() {
                 {!isLoading && filtered.length === 0 && (
                   <Table.Row>
                     <td colSpan={7} className="p-8 text-center text-sm text-neutral-500">
-                      Aucun paiement trouvé
+                      {t('pages.paiements.paiements.aucun_paiement_trouve')}
                     </td>
                   </Table.Row>
                 )}
@@ -283,7 +283,7 @@ export default function PaiementsPage() {
                       <button
                         onClick={() => handleRecu(p.id)}
                         className="p-1.5 rounded-lg text-neutral-400 hover:text-[var(--accent)] hover:bg-[var(--accent-subtle)] transition-colors"
-                        title="Voir le reçu"
+                        title={t('pages.paiements.paiements.voir_le_recu')}
                       >
                         <Eye className="h-4 w-4" />
                       </button>
@@ -305,7 +305,7 @@ export default function PaiementsPage() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
                 <Input
-                  placeholder="Rechercher un élève..."
+                  placeholder={t('common.search_student')}
                   value={echeanceSearch}
                   onChange={(e) => setEcheanceSearch(e.target.value)}
                   className="pl-9"
@@ -328,7 +328,7 @@ export default function PaiementsPage() {
                   </button>
                 ))}
                 {filteredEleves.length === 0 && (
-                  <p className="text-sm text-neutral-500 text-center py-4">Aucun élève trouvé</p>
+                  <p className="text-sm text-neutral-500 text-center py-4">{t('common.no_student_found')}</p>
                 )}
               </div>
             </div>
@@ -339,7 +339,7 @@ export default function PaiementsPage() {
             <div className="p-4">
               {!echeanceEleve && (
                 <div className="py-16 text-center text-sm text-neutral-500">
-                  Sélectionnez un élève pour voir son échéancier
+                  {t('pages.paiements.paiements.selectionnez_un_eleve_pour_voir_son_echeancier')}
                 </div>
               )}
 
@@ -356,25 +356,25 @@ export default function PaiementsPage() {
                   {/* Résumé */}
                   <div className="flex flex-wrap gap-4">
                     <div className="flex-1 min-w-[140px] rounded-xl border border-neutral-200 dark:border-neutral-800 p-3">
-                      <p className="text-xs text-neutral-500">Total dû</p>
+                      <p className="text-xs text-neutral-500">{t('pages.paiements.paiements.total_du')}</p>
                       <p className="text-lg font-bold text-neutral-900 dark:text-white">
                         {formatCurrency(echeanceData.resume.total_du)}
                       </p>
                     </div>
                     <div className="flex-1 min-w-[140px] rounded-xl border border-emerald-200 dark:border-emerald-800 p-3">
-                      <p className="text-xs text-neutral-500">Payé</p>
+                      <p className="text-xs text-neutral-500">{t('pages.paiements.paiements.paye')}</p>
                       <p className="text-lg font-bold text-emerald-600">
                         {formatCurrency(echeanceData.resume.total_paye)}
                       </p>
                     </div>
                     <div className="flex-1 min-w-[140px] rounded-xl border border-amber-200 dark:border-amber-800 p-3">
-                      <p className="text-xs text-neutral-500">Solde</p>
+                      <p className="text-xs text-neutral-500">{t('common.balance')}</p>
                       <p className="text-lg font-bold text-amber-600">
                         {formatCurrency(echeanceData.resume.solde)}
                       </p>
                     </div>
                     <div className="flex-1 min-w-[140px] rounded-xl border border-neutral-200 dark:border-neutral-800 p-3">
-                      <p className="text-xs text-neutral-500">Échéances</p>
+                      <p className="text-xs text-neutral-500">{t('pages.paiements.paiements.echeances')}</p>
                       <p className="text-lg font-bold text-neutral-900 dark:text-white">
                         {echeanceData.resume.nb_payees}/{echeanceData.resume.nb_echeances}
                       </p>
@@ -393,18 +393,18 @@ export default function PaiementsPage() {
                   {/* Tableau des échéances */}
                   <Table>
                     <Table.Header>
-                      <Table.Head>Référence</Table.Head>
-                      <Table.Head>Type</Table.Head>
-                      <Table.Head>Montant</Table.Head>
-                      <Table.Head>Date</Table.Head>
-                      <Table.Head>Statut</Table.Head>
-                      <Table.Head className="text-right">Action</Table.Head>
+                      <Table.Head>{t('pages.paiements.paiements.reference')}</Table.Head>
+                      <Table.Head>{t('common.type')}</Table.Head>
+                      <Table.Head>{t('common.amount')}</Table.Head>
+                      <Table.Head>{t('common.date')}</Table.Head>
+                      <Table.Head>{t('common.status_label')}</Table.Head>
+                      <Table.Head className="text-right">{t('pages.paiements.paiements.action')}</Table.Head>
                     </Table.Header>
                     <Table.Body>
                       {(Array.isArray(echeanceData?.echeances) ? echeanceData.echeances : []).length === 0 && (
                         <Table.Row>
                           <td colSpan={6} className="p-8 text-center text-sm text-neutral-500">
-                            Aucune échéance
+                            {t('pages.paiements.paiements.aucune_echeance')}
                           </td>
                         </Table.Row>
                       )}
@@ -433,13 +433,13 @@ export default function PaiementsPage() {
                                   icon={<ExternalLink className="h-3.5 w-3.5" />}
                                   onClick={() => handlePaiement(e.id)}
                                 >
-                                  Payer
+                                  {t('pages.paiements.paiements.payer')}
                                 </Button>
                               )}
                               <button
                                 onClick={() => handleRecu(e.id)}
                                 className="p-1.5 rounded-lg text-neutral-400 hover:text-[var(--accent)] hover:bg-[var(--accent-subtle)] transition-colors"
-                                title="Voir le reçu"
+                                title={t('pages.paiements.paiements.voir_le_recu')}
                               >
                                 <Eye className="h-4 w-4" />
                               </button>

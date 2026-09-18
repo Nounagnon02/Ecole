@@ -80,7 +80,11 @@
     "no_student_found": "No student found",
     "rank": "Rank",
     "today": "Today",
-    "grade": "Grade"
+    "grade": "Grade",
+    "search_ellipsis": "Search...",
+    "school": "School",
+    "late": "Late",
+    "time": "Time"
   },
   "auth": {
     "login": "Log in",
@@ -717,7 +721,27 @@
     "paiements": {
       "paiements": {
         "title": "Payments",
-        "subtitle": "Financial transaction management"
+        "subtitle": "Financial transaction management",
+        "factures": "Invoices",
+        "nouveau_paiement": "New Payment",
+        "revenus_encaisses": "Revenue Collected",
+        "transactions": "Transactions",
+        "taux_d_encaisse": "Collection Rate",
+        "impayes": "Unpaid",
+        "paiements": "Payments",
+        "echeancier": "Payment schedule",
+        "paye": "Paid",
+        "partiel": "Partial",
+        "reference": "Reference",
+        "recu": "Receipt",
+        "aucun_paiement_trouve": "No payment found",
+        "voir_le_recu": "View receipt",
+        "selectionnez_un_eleve_pour_voir_son_echeancier": "Select a student to see their payment schedule",
+        "total_du": "Total due",
+        "echeances": "Due dates",
+        "action": "Action",
+        "aucune_echeance": "No due date",
+        "payer": "Pay"
       },
       "callback": {
         "status": {
@@ -742,37 +766,131 @@
     "parametres": {
       "parametres": {
         "title": "Settings",
-        "subtitle": "Manage your preferences and account configuration"
+        "subtitle": "Manage your preferences and account configuration",
+        "photo_de_profil": "Profile photo",
+        "changer_la_photo": "Change photo",
+        "png_jpg_max_2_mo": "PNG, JPG. Max 2 MB.",
+        "informations_personnelles": "Personal information",
+        "prenom": "First name",
+        "nom": "Last name",
+        "email": "Email",
+        "telephone": "Phone",
+        "specialite": "Specialty",
+        "grade": "Grade",
+        "matieres_maitrisees": "Subjects taught",
+        "chargement_des_matieres": "Loading subjects…",
+        "experiences_professionnelles": "Professional experience",
+        "ajouter": "Add",
+        "aucune_experience_renseignee": "No experience provided.",
+        "poste": "Position",
+        "professeur_de_mathematiques": "Mathematics teacher",
+        "lycee_public": "Public high school",
+        "debut": "Start",
+        "fin_optionnel": "End (optional)",
+        "description_optionnel": "Description (optional)",
+        "missions_classes_encadrees": "Duties, classes supervised…",
+        "retirer": "Remove",
+        "enregistrer": "Save",
+        "enregistre": "Saved",
+        "preferences_de_notifications": "Notification preferences",
+        "mot_de_passe": "Password",
+        "mot_de_passe_actuel": "Current password",
+        "nouveau_mot_de_passe": "New password",
+        "confirmer": "Confirm",
+        "sessions_actives": "Active sessions",
+        "chrome_sur_windows": "Chrome on Windows",
+        "ip_192_168_1_42_derniere_activite_il_y_a_2_min": "IP: 192.168.1.42 · Last activity: 2 min ago",
+        "active": "Active",
+        "safari_sur_macos": "Safari on macOS",
+        "ip_10_0_0_15_derniere_activite_il_y_a_3_jours": "IP: 10.0.0.15 · Last activity: 3 days ago",
+        "revoquer": "Revoke",
+        "theme": "Theme",
+        "police": "Font",
+        "inter_par_defaut": "Inter (default)",
+        "normale": "Normal",
+        "grande": "Large",
+        "tres_grande": "Extra large",
+        "preferences_generales": "General preferences",
+        "langue": "Language",
+        "langue_de_l_interface": "Interface language",
+        "fuseau_horaire": "Time zone",
+        "format_de_date": "Date format",
+        "devise": "Currency",
+        "format_d_affichage_des_montants": "Amount display format"
       }
     },
     "parent": {
       "enfants": {
         "title": "My Children",
-        "subtitle": "Follow your children's schooling"
+        "subtitle": "Follow your children's schooling",
+        "aucun_enfant_lie_a_votre_compte": "No child linked to your account",
+        "moyenne_generale": "Overall Average",
+        "absences": "Absences",
+        "frais_scolarite": "Tuition Fees",
+        "aucune_note_disponible": "No grade available",
+        "aucune_absence": "No absence",
+        "frais_de_scolarite": "Tuition fees"
       }
     },
     "secretaire": {
       "documents": {
         "title": "Correspondence",
-        "subtitle": "Management of correspondence and administrative documents"
+        "subtitle": "Management of correspondence and administrative documents",
+        "dossiers": "Folders",
+        "nouveau_courrier": "New mail",
+        "entrants": "Incoming",
+        "sortants": "Outgoing",
+        "rechercher_un_courrier": "Search for mail...",
+        "filtrer_par_categorie": "Filter by category",
+        "entrant": "Incoming",
+        "sortant": "Outgoing",
+        "objet": "Subject",
+        "expediteur": "Sender",
+        "destinataire": "Recipient",
+        "aucun_courrier_trouve": "No mail found",
+        "telecharger": "Download"
       },
       "inscriptions": {
         "title": "Enrollments",
-        "subtitle": "Management of new student enrollments"
+        "subtitle": "Management of new student enrollments",
+        "nouvelle_inscription": "New enrollment",
+        "complets": "Complete",
+        "incomplets": "Incomplete",
+        "complet": "Complete",
+        "incomplet": "Incomplete",
+        "aucune_inscription_trouvee": "No enrollment found",
+        "completer": "Complete"
       },
       "planning": {
         "title": "Planning",
-        "subtitle": "Scheduling of events and appointments"
+        "subtitle": "Scheduling of events and appointments",
+        "nouvel_evenement": "New event",
+        "planifies": "Scheduled",
+        "rechercher_un_evenement": "Search for an event...",
+        "aucun_evenement_trouve": "No event found"
       }
     },
     "surveillant": {
       "surveillance": {
         "title": "Supervision",
-        "subtitle": "Register of incidents and reports"
+        "subtitle": "Register of incidents and reports",
+        "graves": "Serious",
+        "filtrer_par_gravite": "Filter by severity",
+        "toutes_les_gravites": "All severities",
+        "faible": "Low",
+        "grave": "Serious",
+        "nouvel_incident": "New incident",
+        "aucun_incident_trouve": "No incident found"
       },
       "presences": {
         "title": "Attendance",
-        "subtitle": "Attendance tracking for {date}"
+        "subtitle": "Attendance tracking for {date}",
+        "presents": "Present",
+        "retards": "Late arrivals",
+        "absents": "Absent",
+        "present": "Present",
+        "absent": "Absent",
+        "aucune_presence_trouvee": "No attendance record found"
       }
     },
     "universite": {
@@ -894,6 +1012,18 @@
         "performance": "Average performance",
         "alerts": "Active alerts",
         "recommendations": "Recommendations"
+      }
+    },
+    "messagerie": {
+      "messagerie": {
+        "aucune_conversation": "No conversation",
+        "nouvelle_conversation": "New conversation",
+        "fermer": "Close",
+        "aucun_contact_disponible": "No contact available",
+        "aucun_message_pour_cette_conversation": "No messages in this conversation",
+        "ecrivez_votre_message": "Write your message...",
+        "envoyer": "Send",
+        "selectionnez_une_conversation": "Select a conversation"
       }
     }
   }

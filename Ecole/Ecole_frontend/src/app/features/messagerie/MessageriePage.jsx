@@ -35,6 +35,7 @@ import { useApi } from '@/hooks/useApi';
 import useAuthStore from '@/shared/stores/auth-store';
 import { unwrapList } from '@/shared/lib/unwrap';
 import logger from '@/shared/lib/logger';
+import { useTranslation } from '@/shared/i18n';
 
 /**
  * Normalise une ligne de conversation en objet UI. Le backend expose
@@ -56,6 +57,7 @@ function mapConversations(items) {
 }
 
 export default function MessageriePage() {
+  const { t } = useTranslation();
   const { post, put } = useApi();
   // Nécessaire pour distinguer les messages envoyés de ceux reçus : l'API
   // renvoie l'identifiant de l'auteur dans `expediteur`.
@@ -232,7 +234,7 @@ export default function MessageriePage() {
           onClick={() => window.location.reload()}
           className="mt-4 inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors"
         >
-          Réessayer
+          {t('common.retry')}
         </button>
       </div>
     );
@@ -247,7 +249,7 @@ export default function MessageriePage() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
               <Input
-                placeholder="Rechercher..."
+                placeholder={t('common.search_ellipsis')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-9"
@@ -280,7 +282,7 @@ export default function MessageriePage() {
             {filtered.length === 0 && !loadingConv && (
               <div className="text-center py-8 text-neutral-500">
                 <MessageSquare className="mx-auto h-8 w-8 mb-2" />
-                <p className="text-sm">Aucune conversation</p>
+                <p className="text-sm">{t('pages.messagerie.messagerie.aucune_conversation')}</p>
               </div>
             )}
             {filtered.map((conv) => (
@@ -322,7 +324,7 @@ export default function MessageriePage() {
 
           <div className="border-t border-neutral-200 p-3 dark:border-neutral-700">
             <Button variant="ghost" size="sm" icon={<Users />} className="w-full justify-start" onClick={openContacts}>
-              Nouvelle conversation
+              {t('pages.messagerie.messagerie.nouvelle_conversation')}
             </Button>
           </div>
 
@@ -330,8 +332,8 @@ export default function MessageriePage() {
           {showContacts && (
             <div className="absolute inset-0 z-10 flex flex-col rounded-xl border border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-900">
               <div className="flex items-center justify-between border-b border-neutral-200 p-3 dark:border-neutral-700">
-                <p className="text-sm font-semibold text-neutral-900 dark:text-white">Nouvelle conversation</p>
-                <button onClick={() => setShowContacts(false)} aria-label="Fermer">
+                <p className="text-sm font-semibold text-neutral-900 dark:text-white">{t('pages.messagerie.messagerie.nouvelle_conversation')}</p>
+                <button onClick={() => setShowContacts(false)} aria-label={t('pages.messagerie.messagerie.fermer')}>
                   <X className="h-4 w-4 text-neutral-400" />
                 </button>
               </div>
@@ -342,7 +344,7 @@ export default function MessageriePage() {
                   </div>
                 )}
                 {!loadingContacts && contacts.length === 0 && (
-                  <p className="p-4 text-sm text-neutral-400">Aucun contact disponible</p>
+                  <p className="p-4 text-sm text-neutral-400">{t('pages.messagerie.messagerie.aucun_contact_disponible')}</p>
                 )}
                 {contacts.map((contact) => (
                   <button
@@ -393,7 +395,7 @@ export default function MessageriePage() {
                 {messages.length === 0 && !loadingMsg && (
                   <div className="text-center py-8 text-neutral-400">
                     <MessageSquare className="mx-auto h-12 w-12 mb-3" />
-                    <p className="text-sm">Aucun message pour cette conversation</p>
+                    <p className="text-sm">{t('pages.messagerie.messagerie.aucun_message_pour_cette_conversation')}</p>
                   </div>
                 )}
                 {messages.map((msg) => (
@@ -427,7 +429,7 @@ export default function MessageriePage() {
                     type="text"
                     value={messageText}
                     onChange={(e) => setMessageText(e.target.value)}
-                    placeholder="Écrivez votre message..."
+                    placeholder={t('pages.messagerie.messagerie.ecrivez_votre_message')}
                     className="flex-1 rounded-xl border border-neutral-300 bg-white px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && messageText.trim()) {
@@ -436,7 +438,7 @@ export default function MessageriePage() {
                     }}
                   />
                   <Button size="sm" icon={<Send />} disabled={!messageText.trim()} onClick={sendMessage}>
-                    Envoyer
+                    {t('pages.messagerie.messagerie.envoyer')}
                   </Button>
                 </div>
               </div>
@@ -445,7 +447,7 @@ export default function MessageriePage() {
             <div className="flex-1 flex items-center justify-center text-neutral-400">
               <div className="text-center">
                 <MessageSquare className="mx-auto h-12 w-12 mb-3" />
-                <p className="text-sm">Sélectionnez une conversation</p>
+                <p className="text-sm">{t('pages.messagerie.messagerie.selectionnez_une_conversation')}</p>
               </div>
             </div>
           )}

@@ -80,7 +80,11 @@
     "no_student_found": "Aucun élève trouvé",
     "rank": "Rang",
     "today": "Aujourd'hui",
-    "grade": "Note"
+    "grade": "Note",
+    "search_ellipsis": "Rechercher...",
+    "school": "Établissement",
+    "late": "Retard",
+    "time": "Heure"
   },
   "auth": {
     "login": "Connexion",
@@ -717,7 +721,27 @@
     "paiements": {
       "paiements": {
         "title": "Paiements",
-        "subtitle": "Gestion des transactions financières"
+        "subtitle": "Gestion des transactions financières",
+        "factures": "Factures",
+        "nouveau_paiement": "Nouveau Paiement",
+        "revenus_encaisses": "Revenus Encaissés",
+        "transactions": "Transactions",
+        "taux_d_encaisse": "Taux d'Encaisse",
+        "impayes": "Impayés",
+        "paiements": "Paiements",
+        "echeancier": "Échéancier",
+        "paye": "Payé",
+        "partiel": "Partiel",
+        "reference": "Référence",
+        "recu": "Reçu",
+        "aucun_paiement_trouve": "Aucun paiement trouvé",
+        "voir_le_recu": "Voir le reçu",
+        "selectionnez_un_eleve_pour_voir_son_echeancier": "Sélectionnez un élève pour voir son échéancier",
+        "total_du": "Total dû",
+        "echeances": "Échéances",
+        "action": "Action",
+        "aucune_echeance": "Aucune échéance",
+        "payer": "Payer"
       },
       "callback": {
         "status": {
@@ -742,37 +766,131 @@
     "parametres": {
       "parametres": {
         "title": "Paramètres",
-        "subtitle": "Gérez vos préférences et la configuration de votre compte"
+        "subtitle": "Gérez vos préférences et la configuration de votre compte",
+        "photo_de_profil": "Photo de profil",
+        "changer_la_photo": "Changer la photo",
+        "png_jpg_max_2_mo": "PNG, JPG. Max 2 Mo.",
+        "informations_personnelles": "Informations personnelles",
+        "prenom": "Prénom",
+        "nom": "Nom",
+        "email": "Email",
+        "telephone": "Téléphone",
+        "specialite": "Spécialité",
+        "grade": "Grade",
+        "matieres_maitrisees": "Matières maîtrisées",
+        "chargement_des_matieres": "Chargement des matières…",
+        "experiences_professionnelles": "Expériences professionnelles",
+        "ajouter": "Ajouter",
+        "aucune_experience_renseignee": "Aucune expérience renseignée.",
+        "poste": "Poste",
+        "professeur_de_mathematiques": "Professeur de mathématiques",
+        "lycee_public": "Lycée public",
+        "debut": "Début",
+        "fin_optionnel": "Fin (optionnel)",
+        "description_optionnel": "Description (optionnel)",
+        "missions_classes_encadrees": "Missions, classes encadrées…",
+        "retirer": "Retirer",
+        "enregistrer": "Enregistrer",
+        "enregistre": "Enregistré",
+        "preferences_de_notifications": "Préférences de notifications",
+        "mot_de_passe": "Mot de passe",
+        "mot_de_passe_actuel": "Mot de passe actuel",
+        "nouveau_mot_de_passe": "Nouveau mot de passe",
+        "confirmer": "Confirmer",
+        "sessions_actives": "Sessions actives",
+        "chrome_sur_windows": "Chrome sur Windows",
+        "ip_192_168_1_42_derniere_activite_il_y_a_2_min": "IP: 192.168.1.42 · Dernière activité: il y a 2 min",
+        "active": "Active",
+        "safari_sur_macos": "Safari sur macOS",
+        "ip_10_0_0_15_derniere_activite_il_y_a_3_jours": "IP: 10.0.0.15 · Dernière activité: il y a 3 jours",
+        "revoquer": "Révoquer",
+        "theme": "Thème",
+        "police": "Police",
+        "inter_par_defaut": "Inter (par défaut)",
+        "normale": "Normale",
+        "grande": "Grande",
+        "tres_grande": "Très grande",
+        "preferences_generales": "Préférences générales",
+        "langue": "Langue",
+        "langue_de_l_interface": "Langue de l'interface",
+        "fuseau_horaire": "Fuseau horaire",
+        "format_de_date": "Format de date",
+        "devise": "Devise",
+        "format_d_affichage_des_montants": "Format d'affichage des montants"
       }
     },
     "parent": {
       "enfants": {
         "title": "Mes Enfants",
-        "subtitle": "Suivez la scolarité de vos enfants"
+        "subtitle": "Suivez la scolarité de vos enfants",
+        "aucun_enfant_lie_a_votre_compte": "Aucun enfant lié à votre compte",
+        "moyenne_generale": "Moyenne Générale",
+        "absences": "Absences",
+        "frais_scolarite": "Frais Scolarité",
+        "aucune_note_disponible": "Aucune note disponible",
+        "aucune_absence": "Aucune absence",
+        "frais_de_scolarite": "Frais de scolarité"
       }
     },
     "secretaire": {
       "documents": {
         "title": "Courriers",
-        "subtitle": "Gestion des courriers et documents administratifs"
+        "subtitle": "Gestion des courriers et documents administratifs",
+        "dossiers": "Dossiers",
+        "nouveau_courrier": "Nouveau courrier",
+        "entrants": "Entrants",
+        "sortants": "Sortants",
+        "rechercher_un_courrier": "Rechercher un courrier...",
+        "filtrer_par_categorie": "Filtrer par catégorie",
+        "entrant": "Entrant",
+        "sortant": "Sortant",
+        "objet": "Objet",
+        "expediteur": "Expéditeur",
+        "destinataire": "Destinataire",
+        "aucun_courrier_trouve": "Aucun courrier trouvé",
+        "telecharger": "Télécharger"
       },
       "inscriptions": {
         "title": "Inscriptions",
-        "subtitle": "Gestion des inscriptions des nouveaux élèves"
+        "subtitle": "Gestion des inscriptions des nouveaux élèves",
+        "nouvelle_inscription": "Nouvelle inscription",
+        "complets": "Complets",
+        "incomplets": "Incomplets",
+        "complet": "Complet",
+        "incomplet": "Incomplet",
+        "aucune_inscription_trouvee": "Aucune inscription trouvée",
+        "completer": "Compléter"
       },
       "planning": {
         "title": "Planning",
-        "subtitle": "Planification des événements et rendez-vous"
+        "subtitle": "Planification des événements et rendez-vous",
+        "nouvel_evenement": "Nouvel événement",
+        "planifies": "Planifiés",
+        "rechercher_un_evenement": "Rechercher un événement...",
+        "aucun_evenement_trouve": "Aucun événement trouvé"
       }
     },
     "surveillant": {
       "surveillance": {
         "title": "Surveillance",
-        "subtitle": "Registre des incidents et signalements"
+        "subtitle": "Registre des incidents et signalements",
+        "graves": "Graves",
+        "filtrer_par_gravite": "Filtrer par gravité",
+        "toutes_les_gravites": "Toutes les gravités",
+        "faible": "Faible",
+        "grave": "Grave",
+        "nouvel_incident": "Nouvel incident",
+        "aucun_incident_trouve": "Aucun incident trouvé"
       },
       "presences": {
         "title": "Présences",
-        "subtitle": "Suivi des présences du {date}"
+        "subtitle": "Suivi des présences du {date}",
+        "presents": "Présents",
+        "retards": "Retards",
+        "absents": "Absents",
+        "present": "Présent",
+        "absent": "Absent",
+        "aucune_presence_trouvee": "Aucune présence trouvée"
       }
     },
     "universite": {
@@ -894,6 +1012,18 @@
         "performance": "Performances moyennes",
         "alerts": "Alertes actives",
         "recommendations": "Recommandations"
+      }
+    },
+    "messagerie": {
+      "messagerie": {
+        "aucune_conversation": "Aucune conversation",
+        "nouvelle_conversation": "Nouvelle conversation",
+        "fermer": "Fermer",
+        "aucun_contact_disponible": "Aucun contact disponible",
+        "aucun_message_pour_cette_conversation": "Aucun message pour cette conversation",
+        "ecrivez_votre_message": "Écrivez votre message...",
+        "envoyer": "Envoyer",
+        "selectionnez_une_conversation": "Sélectionnez une conversation"
       }
     }
   }
