@@ -41,6 +41,7 @@ const STATS_META = [
 ];
 
 function ApercuSection({ stats, fluxInscriptions, rendezVous, inscriptions, planningRendezVous, certificatsAttente }) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -54,8 +55,8 @@ function ApercuSection({ stats, fluxInscriptions, rendezVous, inscriptions, plan
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2">
           <Card.Header>
-            <Card.Title>Flux d'Inscriptions</Card.Title>
-            <Card.Description>Nouveaux inscrits — 6 derniers mois</Card.Description>
+            <Card.Title>{t('dashboards.secretaire.flux_d_inscriptions')}</Card.Title>
+            <Card.Description>{t('dashboards.secretaire.nouveaux_inscrits_6_derniers_mois')}</Card.Description>
           </Card.Header>
           <Card.Body>
             <div className="h-[260px]">
@@ -77,7 +78,7 @@ function ApercuSection({ stats, fluxInscriptions, rendezVous, inscriptions, plan
 
         <Card>
           <Card.Header>
-            <Card.Title>Rendez-vous du Jour</Card.Title>
+            <Card.Title>{t('dashboards.secretaire.rendez_vous_du_jour')}</Card.Title>
             <Card.Description>{format(new Date(), 'EEEE d MMMM', { locale: fr })}</Card.Description>
           </Card.Header>
           <Card.Body>
@@ -102,18 +103,18 @@ function ApercuSection({ stats, fluxInscriptions, rendezVous, inscriptions, plan
       <Card>
         <Card.Header>
           <div className="flex items-center justify-between">
-            <Card.Title>Dernières Inscriptions</Card.Title>
-            <Badge variant="primary" size="sm">Aujourd'hui</Badge>
+            <Card.Title>{t('dashboards.secretaire.dernieres_inscriptions')}</Card.Title>
+            <Badge variant="primary" size="sm">{t('common.today')}</Badge>
           </div>
         </Card.Header>
         <Card.Body className="p-0">
           <Table>
             <Table.Header>
-              <Table.Head>Nom</Table.Head>
-              <Table.Head>Classe</Table.Head>
-              <Table.Head>Type</Table.Head>
-              <Table.Head>Date</Table.Head>
-              <Table.Head>Statut</Table.Head>
+              <Table.Head>{t('dashboards.secretaire.nom')}</Table.Head>
+              <Table.Head>{t('common.class')}</Table.Head>
+              <Table.Head>{t('common.type')}</Table.Head>
+              <Table.Head>{t('common.date')}</Table.Head>
+              <Table.Head>{t('common.status_label')}</Table.Head>
             </Table.Header>
             <Table.Body>
               {inscriptions.map((ins) => (
@@ -136,8 +137,8 @@ function ApercuSection({ stats, fluxInscriptions, rendezVous, inscriptions, plan
         <Card>
           <Card.Header>
             <div className="flex items-center justify-between">
-              <Card.Title>Planning à Venir</Card.Title>
-              <Card.Description>7 prochains jours</Card.Description>
+              <Card.Title>{t('dashboards.secretaire.planning_a_venir')}</Card.Title>
+              <Card.Description>{t('dashboards.secretaire.7_prochains_jours')}</Card.Description>
               {planningRendezVous.length > 0 && (
                 <Badge variant="primary" size="sm">{planningRendezVous.length}</Badge>
               )}
@@ -147,10 +148,10 @@ function ApercuSection({ stats, fluxInscriptions, rendezVous, inscriptions, plan
             {planningRendezVous.length > 0 ? (
             <Table>
               <Table.Header>
-                <Table.Head>Visiteur</Table.Head>
-                <Table.Head>Motif</Table.Head>
-                <Table.Head>Date</Table.Head>
-                <Table.Head>Heure</Table.Head>
+                <Table.Head>{t('dashboards.secretaire.visiteur')}</Table.Head>
+                <Table.Head>{t('common.reason')}</Table.Head>
+                <Table.Head>{t('common.date')}</Table.Head>
+                <Table.Head>{t('common.time')}</Table.Head>
               </Table.Header>
               <Table.Body>
                 {planningRendezVous.map((rv) => (
@@ -166,7 +167,7 @@ function ApercuSection({ stats, fluxInscriptions, rendezVous, inscriptions, plan
             ) : (
               <div className="flex flex-col items-center justify-center py-8 text-[var(--text-tertiary)]">
                 <Calendar className="h-8 w-8 mb-2 opacity-30" />
-                <p className="text-sm">Aucun rendez-vous prévu cette semaine</p>
+                <p className="text-sm">{t('dashboards.secretaire.aucun_rendez_vous_prevu_cette_semaine')}</p>
               </div>
             )}
           </Card.Body>
@@ -175,7 +176,7 @@ function ApercuSection({ stats, fluxInscriptions, rendezVous, inscriptions, plan
         <Card>
           <Card.Header>
             <div className="flex items-center justify-between">
-              <Card.Title>Certificats à Émettre</Card.Title>
+              <Card.Title>{t('dashboards.secretaire.certificats_a_emettre')}</Card.Title>
               {certificatsAttente.length > 0 && (
                 <Badge variant="warning" size="sm">{certificatsAttente.length}</Badge>
               )}
@@ -185,9 +186,9 @@ function ApercuSection({ stats, fluxInscriptions, rendezVous, inscriptions, plan
             {certificatsAttente.length > 0 ? (
             <Table>
               <Table.Header>
-                <Table.Head>Élève</Table.Head>
-                <Table.Head>Type</Table.Head>
-                <Table.Head>Demande</Table.Head>
+                <Table.Head>{t('common.student')}</Table.Head>
+                <Table.Head>{t('common.type')}</Table.Head>
+                <Table.Head>{t('dashboards.secretaire.demande')}</Table.Head>
               </Table.Header>
               <Table.Body>
                 {certificatsAttente.map((c) => (
@@ -202,7 +203,7 @@ function ApercuSection({ stats, fluxInscriptions, rendezVous, inscriptions, plan
             ) : (
               <div className="flex flex-col items-center justify-center py-8 text-[var(--text-tertiary)]">
                 <FileText className="h-8 w-8 mb-2 opacity-30" />
-                <p className="text-sm">Aucun certificat en attente</p>
+                <p className="text-sm">{t('dashboards.secretaire.aucun_certificat_en_attente')}</p>
               </div>
             )}
           </Card.Body>
@@ -262,7 +263,7 @@ export default function SecretaireDashboard() {
       onRefresh={refetch}
       actions={
         <>
-    <Button variant="ghost" size="sm"><ClipboardList className="h-4 w-4 mr-1" /> Tableau de Bord</Button>
+    <Button variant="ghost" size="sm"><ClipboardList className="h-4 w-4 mr-1" /> {t('dashboards.secretaire.tableau_de_bord')}</Button>
         </>
       }
     >

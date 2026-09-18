@@ -93,11 +93,11 @@ function ApercuSection({ data, loading, onRefresh }) {
           <Card.Header>
             <div className="flex items-center justify-between">
               <div>
-                <Card.Title>Activité Plateforme</Card.Title>
-                <Card.Description>Actions auditées — 7 derniers jours</Card.Description>
+                <Card.Title>{t('dashboards.admin.activite_plateforme')}</Card.Title>
+                <Card.Description>{t('dashboards.admin.actions_auditees_7_derniers_jours')}</Card.Description>
               </div>
               <Button variant="ghost" size="sm" onClick={onRefresh} disabled={loading}>
-                <RefreshCw className={cn('h-4 w-4 mr-1', loading && 'animate-spin')} /> Actualiser
+                <RefreshCw className={cn('h-4 w-4 mr-1', loading && 'animate-spin')} /> {t('dashboards.admin.actualiser')}
               </Button>
             </div>
           </Card.Header>
@@ -125,8 +125,8 @@ function ApercuSection({ data, loading, onRefresh }) {
         {/* System health */}
         <Card>
           <Card.Header>
-            <Card.Title>Santé Système</Card.Title>
-            <Card.Description>Indicateurs clés</Card.Description>
+            <Card.Title>{t('dashboards.admin.sante_systeme')}</Card.Title>
+            <Card.Description>{t('dashboards.admin.indicateurs_cles')}</Card.Description>
           </Card.Header>
           <Card.Body className="space-y-4">
             {safeHealth.map((item) => (
@@ -151,7 +151,7 @@ function ApercuSection({ data, loading, onRefresh }) {
       <Card>
         <Card.Header>
           <div className="flex items-center justify-between">
-            <Card.Title>Logs Système — Temps Réel</Card.Title>
+            <Card.Title>{t('dashboards.admin.logs_systeme_temps_reel')}</Card.Title>
             <Badge variant="danger" size="sm">{safeLogs.filter(l => l.level === 'ERROR').length} erreurs</Badge>
           </div>
         </Card.Header>
@@ -176,7 +176,7 @@ function ApercuSection({ data, loading, onRefresh }) {
         </Card.Body>
         <Card.Footer>
           <Button variant="ghost" size="sm" className="w-full">
-            Voir tous les logs <Terminal className="h-4 w-4 ml-1" />
+            {t('dashboards.admin.voir_tous_les_logs')} <Terminal className="h-4 w-4 ml-1" />
           </Button>
         </Card.Footer>
       </Card>
@@ -185,13 +185,13 @@ function ApercuSection({ data, loading, onRefresh }) {
       <Card>
         <Card.Header>
           <div className="flex items-center justify-between">
-            <Card.Title>Utilisateurs Récents</Card.Title>
+            <Card.Title>{t('dashboards.admin.utilisateurs_recents')}</Card.Title>
             <Badge size="sm">{safeUtilisateurs.length} comptes</Badge>
           </div>
         </Card.Header>
         <Card.Body className="p-0">
           {safeUtilisateurs.length === 0 ? (
-            <p className="text-neutral-500 text-center py-8 text-sm">Aucun utilisateur récent</p>
+            <p className="text-neutral-500 text-center py-8 text-sm">{t('dashboards.admin.aucun_utilisateur_recent')}</p>
           ) : (
             <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
               {safeUtilisateurs.map((u) => (
@@ -218,6 +218,7 @@ function ApercuSection({ data, loading, onRefresh }) {
 }
 
 function LogsSection({ data, loading }) {
+  const { t } = useTranslation();
   const logs = data?.logs || [];
   const [niveau, setNiveau] = useState('Tous');
   const [recherche, setRecherche] = useState('');
@@ -233,11 +234,11 @@ function LogsSection({ data, loading }) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Logs Système</h2>
+          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">{t('dashboards.admin.logs_systeme')}</h2>
           <p className="text-sm text-neutral-500 mt-1">Journalisation détaillée — {logs.length} entrées</p>
         </div>
         <Button variant="ghost" size="sm" onClick={() => window.print()}>
-          <Download className="h-4 w-4 mr-1" /> Exporter
+          <Download className="h-4 w-4 mr-1" /> {t('common.export')}
         </Button>
       </div>
 
@@ -247,8 +248,8 @@ function LogsSection({ data, loading }) {
           <input
             value={recherche}
             onChange={(e) => setRecherche(e.target.value)}
-            placeholder="Rechercher dans les logs…"
-            aria-label="Rechercher dans les logs"
+            placeholder={t('dashboards.admin.rechercher_dans_les_logs')}
+            aria-label={t('dashboards.admin.rechercher_dans_les_logs_2')}
             className="w-full pl-9 pr-4 py-2 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
           />
         </div>
@@ -273,9 +274,9 @@ function LogsSection({ data, loading }) {
       <Card>
         <Card.Body className="p-0">
           {loading ? (
-            <p className="text-neutral-500 text-center py-12">Chargement des logs…</p>
+            <p className="text-neutral-500 text-center py-12">{t('dashboards.admin.chargement_des_logs')}</p>
           ) : filtres.length === 0 ? (
-            <p className="text-neutral-500 text-center py-12">Aucune entrée de journal pour ce filtre</p>
+            <p className="text-neutral-500 text-center py-12">{t('dashboards.admin.aucune_entree_de_journal_pour_ce_filtre')}</p>
           ) : (
             <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
               {filtres.map((log) => (
@@ -302,21 +303,22 @@ function LogsSection({ data, loading }) {
 }
 
 function SauvegardesSection() {
+  const { t } = useTranslation();
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Sauvegardes</h2>
-          <p className="text-sm text-neutral-500 mt-1">Gestion des backups</p>
+          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">{t('dashboards.admin.sauvegardes')}</h2>
+          <p className="text-sm text-neutral-500 mt-1">{t('dashboards.admin.gestion_des_backups')}</p>
         </div>
         <Button>
-          <Database className="h-4 w-4 mr-2" /> Sauvegarder
+          <Database className="h-4 w-4 mr-2" /> {t('dashboards.admin.sauvegarder')}
         </Button>
       </div>
       <Card>
         <Card.Body>
           <p className="text-neutral-500 text-center py-12">
-            Backups automatiques, restauration et planification
+            {t('dashboards.admin.backups_automatiques_restauration_et')}
           </p>
         </Card.Body>
       </Card>
@@ -370,10 +372,10 @@ export default function AdminDashboard() {
       actions={
         <>
     <Button variant="ghost" size="sm">
-    <Bell className="h-4 w-4 mr-1" /> Alertes
+    <Bell className="h-4 w-4 mr-1" /> {t('dashboards.admin.alertes')}
     </Button>
     <Button variant="ghost" size="sm">
-    <Settings className="h-4 w-4 mr-1" /> Paramètres
+    <Settings className="h-4 w-4 mr-1" /> {t('dashboards.admin.parametres')}
     </Button>
         </>
       }

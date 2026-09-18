@@ -73,6 +73,7 @@ function StatCardsGrid({ stats, loading }) {
 }
 
 function PerformanceChart({ data, loading }) {
+  const { t } = useTranslation();
   const chartData = data?.evolution_effectifs ?? [];
 
   return (
@@ -80,11 +81,11 @@ function PerformanceChart({ data, loading }) {
       <Card.Header>
         <div className="flex items-center justify-between">
           <div>
-            <Card.Title>Évolution des Effectifs</Card.Title>
-            <Card.Description>Inscriptions par mois</Card.Description>
+            <Card.Title>{t('dashboards.directeur.evolution_des_effectifs')}</Card.Title>
+            <Card.Description>{t('dashboards.directeur.inscriptions_par_mois')}</Card.Description>
           </div>
           <Button variant="ghost" size="sm">
-            <Download className="h-4 w-4 mr-1" />Exporter
+            <Download className="h-4 w-4 mr-1" />{t('common.export')}
           </Button>
         </div>
       </Card.Header>
@@ -114,13 +115,14 @@ function PerformanceChart({ data, loading }) {
 }
 
 function RepartitionPie({ data, loading }) {
+  const { t } = useTranslation();
   const chartData = data?.repartition_notes ?? [];
 
   return (
     <Card>
       <Card.Header>
-        <Card.Title>Répartition des Notes</Card.Title>
-        <Card.Description>Distribution par tranche</Card.Description>
+        <Card.Title>{t('dashboards.directeur.repartition_des_notes')}</Card.Title>
+        <Card.Description>{t('dashboards.directeur.distribution_par_tranche')}</Card.Description>
       </Card.Header>
       <Card.Body>
         <div className="h-[300px]">
@@ -152,6 +154,7 @@ function RepartitionPie({ data, loading }) {
 }
 
 function ClassesTable({ classes, loading }) {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const filtered = (classes ?? []).filter((c) =>
     !search || c.nom_classe?.toLowerCase().includes(search.toLowerCase())
@@ -162,11 +165,11 @@ function ClassesTable({ classes, loading }) {
       <Card.Header>
         <div className="flex items-center justify-between">
           <div>
-            <Card.Title>Classes et Effectifs</Card.Title>
-            <Card.Description>Vue d'ensemble des classes actives</Card.Description>
+            <Card.Title>{t('dashboards.directeur.classes_et_effectifs')}</Card.Title>
+            <Card.Description>{t('dashboards.directeur.vue_d_ensemble_des_classes_actives')}</Card.Description>
           </div>
           <Input
-            placeholder="Rechercher..."
+            placeholder={t('common.search_ellipsis')}
             size="sm"
             icon={Search}
             className="w-48"
@@ -178,9 +181,9 @@ function ClassesTable({ classes, loading }) {
       <Card.Body className="p-0">
         <Table>
           <Table.Header>
-            <Table.Head>Classe</Table.Head>
-            <Table.Head>Effectif</Table.Head>
-            <Table.Head>Catégorie</Table.Head>
+            <Table.Head>{t('common.class')}</Table.Head>
+            <Table.Head>{t('dashboards.directeur.effectif')}</Table.Head>
+            <Table.Head>{t('dashboards.directeur.categorie')}</Table.Head>
           </Table.Header>
           <Table.Body>
             {loading && Array.from({ length: 4 }).map((_, i) => (
@@ -203,7 +206,7 @@ function ClassesTable({ classes, loading }) {
             ))}
             {!loading && filtered.length === 0 && (
               <Table.Row>
-                <td colSpan={3} className="p-6 text-center text-sm text-neutral-500">Aucune classe</td>
+                <td colSpan={3} className="p-6 text-center text-sm text-neutral-500">{t('dashboards.directeur.aucune_classe')}</td>
               </Table.Row>
             )}
           </Table.Body>
@@ -269,7 +272,7 @@ export default function DirecteurDashboard() {
       onRefresh={refetch}
       actions={
         <Button variant="ghost" size="sm">
-          <Download className="h-4 w-4 mr-1" />Rapport
+          <Download className="h-4 w-4 mr-1" />{t('dashboards.directeur.rapport')}
         </Button>
       }
     >

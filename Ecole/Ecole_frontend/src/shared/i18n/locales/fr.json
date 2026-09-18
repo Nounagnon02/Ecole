@@ -86,7 +86,8 @@
     "late": "Retard",
     "time": "Heure",
     "teachers": "Enseignants",
-    "students": "Étudiants"
+    "students": "Étudiants",
+    "subject": "Matière"
   },
   "auth": {
     "login": "Connexion",
@@ -258,7 +259,27 @@
         "espace_disque": "Espace Disque",
         "erreurs_api": "Erreurs API",
         "uptime": "Uptime"
-      }
+      },
+      "activite_plateforme": "Activité Plateforme",
+      "actions_auditees_7_derniers_jours": "Actions auditées — 7 derniers jours",
+      "actualiser": "Actualiser",
+      "sante_systeme": "Santé Système",
+      "indicateurs_cles": "Indicateurs clés",
+      "logs_systeme_temps_reel": "Logs Système — Temps Réel",
+      "voir_tous_les_logs": "Voir tous les logs",
+      "utilisateurs_recents": "Utilisateurs Récents",
+      "aucun_utilisateur_recent": "Aucun utilisateur récent",
+      "logs_systeme": "Logs Système",
+      "rechercher_dans_les_logs": "Rechercher dans les logs…",
+      "rechercher_dans_les_logs_2": "Rechercher dans les logs",
+      "chargement_des_logs": "Chargement des logs…",
+      "aucune_entree_de_journal_pour_ce_filtre": "Aucune entrée de journal pour ce filtre",
+      "sauvegardes": "Sauvegardes",
+      "gestion_des_backups": "Gestion des backups",
+      "sauvegarder": "Sauvegarder",
+      "backups_automatiques_restauration_et": "Backups automatiques, restauration et planification",
+      "alertes": "Alertes",
+      "parametres": "Paramètres"
     },
     "bibliothecaire": {
       "title": "Bibliothèque",
@@ -273,7 +294,26 @@
         "emprunts_en_cours": "Emprunts en Cours",
         "retards": "Retards",
         "membres_actifs": "Membres Actifs"
-      }
+      },
+      "activite_de_la_bibliotheque": "Activité de la Bibliothèque",
+      "emprunts_et_retours_6_derniers_mois": "Emprunts et retours — 6 derniers mois",
+      "categories": "Catégories",
+      "repartition_des_ouvrages": "Répartition des ouvrages",
+      "emprunts_en_cours": "Emprunts en Cours",
+      "ouvrage": "Ouvrage",
+      "emprunt": "Emprunt",
+      "retour_prevu": "Retour Prévu",
+      "retards_de_retour": "Retards de Retour",
+      "aucun_retour_en_retard": "Aucun retour en retard",
+      "nouveautes": "Nouveautés",
+      "derniers_ajouts_au_catalogue": "Derniers ajouts au catalogue",
+      "titre": "Titre",
+      "auteur": "Auteur",
+      "aucune_nouveaute_recente": "Aucune nouveauté récente",
+      "les_plus_empruntes": "Les Plus Empruntés",
+      "ouvrages_les_plus_lus": "Ouvrages les plus lus",
+      "aucun_emprunt_enregistre": "Aucun emprunt enregistré",
+      "recherche_rapide": "Recherche Rapide"
     },
     "censeur": {
       "title": "Censeur",
@@ -288,7 +328,23 @@
         "sanctions_du_mois": "Sanctions du Mois",
         "absences_non_justifiees": "Absences Non Justifiées",
         "avertissements": "Avertissements"
-      }
+      },
+      "evolution_disciplinaire": "Évolution Disciplinaire",
+      "sanctions_et_avertissements_6_derniers_mois": "Sanctions et avertissements — 6 derniers mois",
+      "repartition": "Répartition",
+      "types_de_sanctions": "Types de sanctions",
+      "sanctions_recentes": "Sanctions Récentes",
+      "sanction": "Sanction",
+      "absences_par_classe": "Absences par Classe",
+      "non_justifiees_ce_mois_ci": "Non justifiées ce mois-ci",
+      "aucune_absence_non_justifiee_ce_mois": "Aucune absence non justifiée ce mois",
+      "sanctions_en_attente": "Sanctions en Attente",
+      "aucune_sanction_a_suivre": "Aucune sanction à suivre",
+      "recidivistes": "Récidivistes",
+      "2_sanctions_ou_plus": "2 sanctions ou plus",
+      "sanctions": "Sanctions",
+      "aucun_recidiviste": "Aucun récidiviste",
+      "reglement": "Règlement"
     },
     "comptable": {
       "title": "Comptabilité",
@@ -303,7 +359,26 @@
         "factures_en_attente": "Factures en Attente",
         "taux_recouvrement": "Taux Recouvrement",
         "depenses_du_mois": "Dépenses du Mois"
-      }
+      },
+      "aucune_donnee_financiere_disponible": "Aucune donnée financière disponible",
+      "les_statistiques_apparaitront_une_fois_les": "Les statistiques apparaîtront une fois les paiements enregistrés",
+      "evolution_des_finances": "Évolution des Finances",
+      "revenus_et_depenses_6_derniers_mois": "Revenus et dépenses — 6 derniers mois",
+      "aucune_donnee_financiere_pour_la_periode": "Aucune donnée financière pour la période",
+      "repartition": "Répartition",
+      "part_des_montants_par_type": "Part des montants par type",
+      "aucune_repartition_disponible": "Aucune répartition disponible",
+      "tresorerie_du_mois": "Trésorerie du Mois",
+      "encaisse_reellement_verse": "Encaissé réellement versé",
+      "encaissements": "Encaissements",
+      "depenses_du_mois": "Dépenses du mois",
+      "impayes_prioritaires": "Impayés Prioritaires",
+      "reste_du": "Reste Dû",
+      "aucun_impaye_tous_les_comptes_sont_a_jour": "Aucun impayé — tous les comptes sont à jour",
+      "factures_recentes": "Factures Récentes",
+      "echeance": "Échéance",
+      "aucune_facture_recente": "Aucune facture récente",
+      "synthese": "Synthèse"
     },
     "directeur": {
       "title": "Tableau de Bord",
@@ -319,7 +394,17 @@
         "total_eleves": "Total Élèves",
         "enseignants": "Enseignants",
         "classes": "Classes"
-      }
+      },
+      "evolution_des_effectifs": "Évolution des Effectifs",
+      "inscriptions_par_mois": "Inscriptions par mois",
+      "repartition_des_notes": "Répartition des Notes",
+      "distribution_par_tranche": "Distribution par tranche",
+      "classes_et_effectifs": "Classes et Effectifs",
+      "vue_d_ensemble_des_classes_actives": "Vue d'ensemble des classes actives",
+      "effectif": "Effectif",
+      "categorie": "Catégorie",
+      "aucune_classe": "Aucune classe",
+      "rapport": "Rapport"
     },
     "eleve": {
       "title": "Mon Espace Élève",
@@ -334,7 +419,15 @@
         "moyenne_generale": "Moyenne Générale",
         "total_notes": "Total Notes",
         "absences_ce_mois": "Absences ce Mois"
-      }
+      },
+      "notes_par_matiere": "Notes par Matière",
+      "moyennes_par_matiere": "Moyennes par matière",
+      "prochains_cours": "Prochains Cours",
+      "emploi_du_temps": "Emploi du temps",
+      "aucun_cours_planifie": "Aucun cours planifié",
+      "mes_notes": "Mes Notes",
+      "coefficient": "Coefficient",
+      "aucune_note_disponible": "Aucune note disponible"
     },
     "enseignant": {
       "title": "Mon Espace Enseignant",
@@ -352,7 +445,28 @@
         "cours_semaine": "Cours Cette Semaine",
         "moyenne_classe": "Moyenne Classe",
         "devoirs_a_corriger": "Devoirs à Corriger"
-      }
+      },
+      "emploi_du_temps_aujourd_hui": "Emploi du Temps — Aujourd'hui",
+      "aucun_cours_prevu_aujourd_hui": "Aucun cours prévu aujourd'hui",
+      "voir_la_semaine": "Voir la semaine",
+      "devoirs_evaluations": "Devoirs & Évaluations",
+      "echeance_atteinte_a_corriger": "Échéance atteinte — à corriger",
+      "nouveau": "Nouveau",
+      "aucun_devoir_a_corriger": "Aucun devoir à corriger",
+      "saisie_des_notes": "Saisie des Notes",
+      "gerer_les_evaluations_et_notes": "Gérer les évaluations et notes",
+      "saisir_des_notes": "Saisir des Notes",
+      "dernieres_notes_saisies": "Dernières Notes Saisies",
+      "appreciation": "Appréciation",
+      "aucune_note_saisie": "Aucune note saisie",
+      "cahier_de_textes": "Cahier de Textes",
+      "suivi_des_lecons_et_seances": "Suivi des leçons et séances",
+      "nouvelle_seance": "Nouvelle Séance",
+      "cahier_de_textes_numerique_lecons_seances_et": "Cahier de textes numérique — leçons, séances, et progression pédagogique",
+      "emploi_du_temps": "Emploi du Temps",
+      "planning_hebdomadaire_des_cours": "Planning hebdomadaire des cours",
+      "aucun_emploi_du_temps_disponible": "Aucun emploi du temps disponible",
+      "pas_de_cours": "Pas de cours"
     },
     "infirmier": {
       "title": "Infirmerie",
@@ -367,7 +481,24 @@
         "en_cours": "En Cours",
         "cas_urgents": "Cas Urgents",
         "consultations": "Consultations"
-      }
+      },
+      "frequentation_infirmerie": "Fréquentation Infirmerie",
+      "visites_et_urgences_6_derniers_mois": "Visites et urgences — 6 derniers mois",
+      "motifs_frequents": "Motifs Fréquents",
+      "ce_mois_ci": "Ce mois-ci",
+      "aucune_consultation_ce_mois_ci": "Aucune consultation ce mois-ci.",
+      "dernieres_visites": "Dernières Visites",
+      "soin": "Soin",
+      "urgences_du_jour": "Urgences du Jour",
+      "aucune_urgence_aujourd_hui": "Aucune urgence aujourd'hui",
+      "alertes_medicales": "Alertes Médicales",
+      "allergies_maladie": "Allergies / Maladie",
+      "aucune_alerte_medicale_signalee": "Aucune alerte médicale signalée",
+      "soins_recurrents": "Soins Récurrents",
+      "eleves_suivis_regulierement": "Élèves suivis régulièrement",
+      "visites": "Visites",
+      "aucun_eleve_suivi_de_facon_recurrente": "Aucun élève suivi de façon récurrente",
+      "etat_des_lieux": "État des Lieux"
     },
     "parent": {
       "title": "Espace Parent",
@@ -384,7 +515,20 @@
         "moyenne_generale": "Moyenne Générale",
         "assiduite": "Assiduité",
         "solde": "Solde"
-      }
+      },
+      "evolution_des_notes": "Évolution des Notes",
+      "suivi_trimestriel": "Suivi trimestriel",
+      "aucune_donnee_d_evolution_disponible": "Aucune donnée d'évolution disponible",
+      "mes_enfants": "Mes Enfants",
+      "vue_rapide": "Vue rapide",
+      "aucun_enfant_trouve": "Aucun enfant trouvé",
+      "contact_principal": "Contact principal",
+      "tuteur_legal": "Tuteur légal",
+      "derniers_echanges": "Derniers Échanges",
+      "avec_l_etablissement": "Avec l'établissement",
+      "aucun_echange_recent": "Aucun échange récent",
+      "urgent": "Urgent",
+      "voir_tous_les_echanges": "Voir tous les échanges"
     },
     "secretaire": {
       "title": "Secrétariat",
@@ -400,7 +544,20 @@
         "nouveaux_ce_mois": "Nouveaux ce Mois",
         "dossiers_en_cours": "Dossiers en Cours",
         "documents_generes": "Documents Générés"
-      }
+      },
+      "flux_d_inscriptions": "Flux d'Inscriptions",
+      "nouveaux_inscrits_6_derniers_mois": "Nouveaux inscrits — 6 derniers mois",
+      "rendez_vous_du_jour": "Rendez-vous du Jour",
+      "dernieres_inscriptions": "Dernières Inscriptions",
+      "nom": "Nom",
+      "planning_a_venir": "Planning à Venir",
+      "7_prochains_jours": "7 prochains jours",
+      "visiteur": "Visiteur",
+      "aucun_rendez_vous_prevu_cette_semaine": "Aucun rendez-vous prévu cette semaine",
+      "certificats_a_emettre": "Certificats à Émettre",
+      "demande": "Demande",
+      "aucun_certificat_en_attente": "Aucun certificat en attente",
+      "tableau_de_bord": "Tableau de Bord"
     },
     "surveillant": {
       "title": "Surveillance",
@@ -415,7 +572,27 @@
         "presents_aujourdhui": "Présents Aujourd'hui",
         "absents": "Absents",
         "alertes": "Alertes"
-      }
+      },
+      "presences_de_la_semaine": "Présences de la Semaine",
+      "tendance_quotidienne": "Tendance quotidienne",
+      "points_de_surveillance": "Points de Surveillance",
+      "zones_actives_aujourd_hui": "Zones actives aujourd'hui",
+      "aucun_point_de_surveillance": "Aucun point de surveillance",
+      "retards_du_jour": "Retards du Jour",
+      "recurrent": "Récurrent",
+      "ponctuel": "Ponctuel",
+      "absents_du_jour": "Absents du Jour",
+      "justifie": "Justifié",
+      "oui": "Oui",
+      "non": "Non",
+      "aucun_absent_signale_aujourd_hui": "Aucun absent signalé aujourd'hui",
+      "incidents_recents": "Incidents Récents",
+      "incident": "Incident",
+      "gravite": "Gravité",
+      "aucun_incident_recent": "Aucun incident récent",
+      "absences_non_justifiees": "Absences Non Justifiées",
+      "toutes_les_absences_sont_justifiees": "Toutes les absences sont justifiées",
+      "mon_service": "Mon Service"
     },
     "universite": {
       "title": "Université",
@@ -432,7 +609,17 @@
         "departements": "Départements",
         "enseignants": "Enseignants",
         "etudiants": "Étudiants"
-      }
+      },
+      "inscriptions_diplomes": "Inscriptions & Diplômes",
+      "evolution_sur_5_ans": "Évolution sur 5 ans",
+      "aucune_donnee_d_inscription": "Aucune donnée d'inscription",
+      "etudiants_par_faculte": "Étudiants par Faculté",
+      "repartition_semestre_actuel": "Répartition semestre actuel",
+      "aucune_donnee_facultaire": "Aucune donnée facultaire",
+      "activites_recentes": "Activités Récentes",
+      "derniers_evenements_dans_l_universite": "Derniers événements dans l'université",
+      "aucune_activite_recente": "Aucune activité récente",
+      "calendrier": "Calendrier"
     }
   },
   "pages": {

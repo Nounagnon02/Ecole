@@ -57,6 +57,7 @@ const STATS_META = [
 // ─── Sections ─────────────────────────────────────────────────
 
 function ApercuSection({ stats, emploiTemps, devoirs, loading }) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -81,7 +82,7 @@ function ApercuSection({ stats, emploiTemps, devoirs, loading }) {
           <Card.Header>
             <div className="flex items-center justify-between">
               <div>
-                <Card.Title>Emploi du Temps — Aujourd'hui</Card.Title>
+                <Card.Title>{t('dashboards.enseignant.emploi_du_temps_aujourd_hui')}</Card.Title>
                 <Card.Description>{format(new Date(), 'EEEE d MMMM', { locale: fr })}</Card.Description>
               </div>
               <Badge variant="primary" size="sm">{emploiTemps[0]?.cours?.length || 0} cours</Badge>
@@ -95,7 +96,7 @@ function ApercuSection({ stats, emploiTemps, devoirs, loading }) {
             ) : emploiTemps.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-8 text-[var(--text-tertiary)]">
                 <Clock className="h-8 w-8 mb-2 opacity-40" />
-                <p className="text-sm">Aucun cours prévu aujourd'hui</p>
+                <p className="text-sm">{t('dashboards.enseignant.aucun_cours_prevu_aujourd_hui')}</p>
               </div>
             ) : (
             <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
@@ -119,7 +120,7 @@ function ApercuSection({ stats, emploiTemps, devoirs, loading }) {
           </Card.Body>
           <Card.Footer>
             <Button variant="ghost" size="sm" className="w-full">
-              Voir la semaine <ArrowRight className="h-4 w-4 ml-1" />
+              {t('dashboards.enseignant.voir_la_semaine')} <ArrowRight className="h-4 w-4 ml-1" />
             </Button>
           </Card.Footer>
         </Card>
@@ -129,11 +130,11 @@ function ApercuSection({ stats, emploiTemps, devoirs, loading }) {
           <Card.Header>
             <div className="flex items-center justify-between">
               <div>
-                <Card.Title>Devoirs & Évaluations</Card.Title>
-                <Card.Description>Échéance atteinte — à corriger</Card.Description>
+                <Card.Title>{t('dashboards.enseignant.devoirs_evaluations')}</Card.Title>
+                <Card.Description>{t('dashboards.enseignant.echeance_atteinte_a_corriger')}</Card.Description>
               </div>
               <Button variant="ghost" size="sm">
-                <PenLine className="h-4 w-4 mr-1" /> Nouveau
+                <PenLine className="h-4 w-4 mr-1" /> {t('dashboards.enseignant.nouveau')}
               </Button>
             </div>
           </Card.Header>
@@ -145,7 +146,7 @@ function ApercuSection({ stats, emploiTemps, devoirs, loading }) {
             ) : devoirs.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-8 text-[var(--text-tertiary)]">
                 <FileText className="h-8 w-8 mb-2 opacity-40" />
-                <p className="text-sm">Aucun devoir à corriger</p>
+                <p className="text-sm">{t('dashboards.enseignant.aucun_devoir_a_corriger')}</p>
               </div>
             ) : (
             <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
@@ -177,15 +178,16 @@ function ApercuSection({ stats, emploiTemps, devoirs, loading }) {
 }
 
 function NotesSection({ notes, loading }) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Saisie des Notes</h2>
-          <p className="text-sm text-neutral-500 mt-1">Gérer les évaluations et notes</p>
+          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">{t('dashboards.enseignant.saisie_des_notes')}</h2>
+          <p className="text-sm text-neutral-500 mt-1">{t('dashboards.enseignant.gerer_les_evaluations_et_notes')}</p>
         </div>
         <Button>
-          <PenLine className="h-4 w-4 mr-2" /> Saisir des Notes
+          <PenLine className="h-4 w-4 mr-2" /> {t('dashboards.enseignant.saisir_des_notes')}
         </Button>
       </div>
 
@@ -193,19 +195,19 @@ function NotesSection({ notes, loading }) {
       <Card>
         <Card.Header>
           <div className="flex items-center justify-between">
-            <Card.Title>Dernières Notes Saisies</Card.Title>
-            <Input placeholder="Rechercher..." size="sm" icon={Search} className="w-48" />
+            <Card.Title>{t('dashboards.enseignant.dernieres_notes_saisies')}</Card.Title>
+            <Input placeholder={t('common.search_ellipsis')} size="sm" icon={Search} className="w-48" />
           </div>
         </Card.Header>
         <Card.Body className="p-0">
           <Table>
             <Table.Header>
-              <Table.Head>Élève</Table.Head>
-              <Table.Head>Classe</Table.Head>
-              <Table.Head>Matière</Table.Head>
-              <Table.Head>Note</Table.Head>
-              <Table.Head>Date</Table.Head>
-              <Table.Head>Appréciation</Table.Head>
+              <Table.Head>{t('common.student')}</Table.Head>
+              <Table.Head>{t('common.class')}</Table.Head>
+              <Table.Head>{t('common.subject')}</Table.Head>
+              <Table.Head>{t('common.grade')}</Table.Head>
+              <Table.Head>{t('common.date')}</Table.Head>
+              <Table.Head>{t('dashboards.enseignant.appreciation')}</Table.Head>
             </Table.Header>
             <Table.Body>
               {loading && Array.from({ length: 5 }).map((_, i) => (
@@ -215,7 +217,7 @@ function NotesSection({ notes, loading }) {
               ))}
               {!loading && notes.length === 0 && (
                 <Table.Row>
-                  <td colSpan={6} className="p-6 text-center text-sm text-neutral-500">Aucune note saisie</td>
+                  <td colSpan={6} className="p-6 text-center text-sm text-neutral-500">{t('dashboards.enseignant.aucune_note_saisie')}</td>
                 </Table.Row>
               )}
               {!loading && notes.map((n) => (
@@ -260,21 +262,22 @@ function NotesSection({ notes, loading }) {
 }
 
 function CahierSection() {
+  const { t } = useTranslation();
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Cahier de Textes</h2>
-          <p className="text-sm text-neutral-500 mt-1">Suivi des leçons et séances</p>
+          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">{t('dashboards.enseignant.cahier_de_textes')}</h2>
+          <p className="text-sm text-neutral-500 mt-1">{t('dashboards.enseignant.suivi_des_lecons_et_seances')}</p>
         </div>
         <Button>
-          <PenLine className="h-4 w-4 mr-2" /> Nouvelle Séance
+          <PenLine className="h-4 w-4 mr-2" /> {t('dashboards.enseignant.nouvelle_seance')}
         </Button>
       </div>
       <Card>
         <Card.Body>
           <p className="text-neutral-500 text-center py-12">
-            Cahier de textes numérique — leçons, séances, et progression pédagogique
+            {t('dashboards.enseignant.cahier_de_textes_numerique_lecons_seances_et')}
           </p>
         </Card.Body>
       </Card>
@@ -283,19 +286,20 @@ function CahierSection() {
 }
 
 function EmploiSection({ emploiTemps }) {
+  const { t } = useTranslation();
   const planning = emploiTemps;
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Emploi du Temps</h2>
-          <p className="text-sm text-neutral-500 mt-1">Planning hebdomadaire des cours</p>
+          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">{t('dashboards.enseignant.emploi_du_temps')}</h2>
+          <p className="text-sm text-neutral-500 mt-1">{t('dashboards.enseignant.planning_hebdomadaire_des_cours')}</p>
         </div>
       </div>
       {planning.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-[var(--text-tertiary)]">
           <Calendar className="h-12 w-12 mb-3 opacity-40" />
-          <p className="text-sm">Aucun emploi du temps disponible</p>
+          <p className="text-sm">{t('dashboards.enseignant.aucun_emploi_du_temps_disponible')}</p>
         </div>
       ) : (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
@@ -306,7 +310,7 @@ function EmploiSection({ emploiTemps }) {
             </Card.Header>
             <Card.Body>
               {jour.cours.length === 0 ? (
-                <p className="text-xs text-neutral-400 text-center py-4">Pas de cours</p>
+                <p className="text-xs text-neutral-400 text-center py-4">{t('dashboards.enseignant.pas_de_cours')}</p>
               ) : (
                 <div className="space-y-3">
                   {jour.cours.map((cours, i) => (
