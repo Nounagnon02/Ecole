@@ -50,7 +50,7 @@ export default function PlanningPage() {
   const evenements = useMemo(
     () => (unwrapList(requete.data) ?? []).map((e) => ({
           ...e,
-          titre: e.titre || e.intitule || 'Événement',
+          titre: e.titre || e.intitule || t('pages.universite.planning.evenement'),
           type: e.type || 'evenement',
           date: e.date ? new Date(e.date) : new Date(),
           debut: e.heure_debut || e.debut || '08:00',
@@ -66,10 +66,10 @@ export default function PlanningPage() {
             '—',
           statut: e.statut || 'planifie',
         })),
-    [requete.data],
+    [requete.data, t],
   );
   const loading = requete.isPending;
-  const error = requete.isError ? (requete.error?.message ?? 'Erreur de chargement') : null;
+  const error = requete.isError ? (requete.error?.message ?? t('common.load_error')) : null;
 
   const stats = useMemo(() => ({
     total: evenements.length,
@@ -180,7 +180,7 @@ export default function PlanningPage() {
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-sm font-semibold text-neutral-900 dark:text-white">{evt.titre}</span>
                     <Badge variant={evt.statut === 'termine' ? 'primary' : 'warning'} size="sm">
-                      {evt.statut === 'termine' ? 'Terminé' : 'Planifié'}
+                      {evt.statut === 'termine' ? t('pages.universite.planning.termine') : t('pages.universite.planning.planifie')}
                     </Badge>
                   </div>
                   <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-neutral-500">

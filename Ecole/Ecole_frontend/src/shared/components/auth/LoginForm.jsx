@@ -243,13 +243,13 @@ export default function LoginForm() {
   const validate = useCallback(() => {
     const newErrors = {};
     if (!form.email) {
-      newErrors.email = 'Veuillez entrer votre identifiant ou email';
+      newErrors.email = t('auth.login_form.veuillez_entrer_votre_identifiant_ou_email');
     }
     if (!form.password) {
-      newErrors.password = 'Veuillez entrer votre mot de passe';
+      newErrors.password = t('auth.login_form.veuillez_entrer_votre_mot_de_passe');
     }
     return newErrors;
-  }, [form]);
+  }, [form, t]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -293,7 +293,7 @@ export default function LoginForm() {
         setErrors({
           _general:
             err.message ||
-            'Erreur de connexion. Veuillez reessayer.'
+            t('auth.login_form.erreur_de_connexion_veuillez_reessayer')
         });
       }
     } finally {
@@ -310,7 +310,7 @@ export default function LoginForm() {
       navigate(path, { replace: true });
     } catch (err) {
       setErrors({
-        _general: err.message || 'Erreur lors de la selection de l\'ecole.'
+        _general: err.message || t('auth.login_form.erreur_lors_de_la_selection_de_l_ecole')
       });
       setSchoolLoading(false);
     }
@@ -523,9 +523,9 @@ export default function LoginForm() {
             <div className="grid grid-cols-4 gap-6">
               {[
                 { num: 'I', label: 'Eleves', sub: 'Gestion des notes' },
-                { num: 'II', label: 'Paiements', sub: 'Tresorerie' },
+                { num: 'II', label: t('common.payments'), sub: 'Tresorerie' },
                 { num: 'III', label: 'Communication', sub: 'Messagerie' },
-                { num: 'IV', label: 'Planning', sub: 'Emploi du temps' },
+                { num: 'IV', label: 'Planning', sub: t('auth.login_form.emploi_du_temps') },
               ].map(({ num, label, sub }) => (
                 <div key={num} className="group cursor-default border-l border-[var(--border-light)] pl-3 transition-all duration-300 hover:border-[var(--accent)] hover:pl-4">
                   <span className="font-fraunces text-[11px] font-semibold tracking-[0.05em] text-[var(--accent)] block">{num}</span>

@@ -84,7 +84,7 @@ export default function MessageriePage() {
   const loadingConv = requeteConversations.isPending;
   const loading = requeteConversations.isPending;
   const error = requeteConversations.isError
-    ? (requeteConversations.error?.message ?? 'Erreur de chargement')
+    ? (requeteConversations.error?.message ?? t('common.load_error'))
     : null;
 
   const refreshConversations = useCallback(
@@ -167,8 +167,8 @@ export default function MessageriePage() {
     setShowContacts(false);
     const thread = {
       id: contact.id,
-      name: contact.name || 'Conversation',
-      role: contact.role || 'Utilisateur',
+      name: contact.name || t('pages.messagerie.messagerie.conversation'),
+      role: contact.role || t('common.user'),
       lastMessage: '',
       date: new Date().toISOString(),
       unread: 0,
@@ -184,7 +184,7 @@ export default function MessageriePage() {
         : { data: [{ id: contact.id, contact_id: contact.id, contact_nom: thread.name, role: thread.role, dernier_message: '', non_lus: 0 }, ...liste] };
     });
     setSelectedConv(thread);
-  }, [queryClient]);
+  }, [queryClient, t]);
 
   const filtered = useMemo(() =>
     conversations.filter((c) =>
@@ -267,7 +267,7 @@ export default function MessageriePage() {
                       : 'text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800'
                   )}
                 >
-                  {f === 'inbox' ? 'Boîte' : f === 'starred' ? 'Favoris' : 'Archive'}
+                  {f === 'inbox' ? t('pages.messagerie.messagerie.boite') : f === 'starred' ? t('pages.messagerie.messagerie.favoris') : t('pages.messagerie.messagerie.archive')}
                 </button>
               ))}
             </div>
@@ -312,7 +312,7 @@ export default function MessageriePage() {
                         {formatRelativeTime(conv.date)}
                       </span>
                     </div>
-                    <p className="text-xs text-neutral-500 truncate">{conv.lastMessage || 'Aucun message'}</p>
+                    <p className="text-xs text-neutral-500 truncate">{conv.lastMessage || t('pages.messagerie.messagerie.aucun_message')}</p>
                   </div>
                   {conv.unread > 0 && (
                     <Badge variant="primary" size="sm" className="shrink-0">{conv.unread}</Badge>

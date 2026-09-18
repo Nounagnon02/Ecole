@@ -56,7 +56,7 @@ export default function ModulesPage() {
   // d'enveloppe que renvoient les contrôleurs.
   const modules = useMemo(() => unwrapList(requete.data) ?? [], [requete.data]);
   const loading = requete.isPending;
-  const error = requete.isError ? (requete.error?.message ?? 'Erreur de chargement') : null;
+  const error = requete.isError ? (requete.error?.message ?? t('common.load_error')) : null;
 
   if (loading) {
     return (
@@ -124,7 +124,7 @@ export default function ModulesPage() {
                         <span className="text-xs text-neutral-400">{mod.tenants_count ?? mod.tenants ?? 0} tenant(s)</span>
                         <button className={`inline-flex items-center gap-1 text-xs font-medium ${mod.is_active ? 'text-emerald-600' : 'text-neutral-400'}`}>
                           {mod.is_active ? <ToggleRight className="h-4 w-4" /> : <ToggleLeft className="h-4 w-4" />}
-                          {mod.is_active ? 'Activé' : 'Désactivé'}
+                          {mod.is_active ? t('pages.admin.modules.active') : t('pages.admin.modules.desactive')}
                         </button>
                       </div>
                     </div>

@@ -59,7 +59,7 @@ export default function TransactionsPage() {
 
   const transactions = useMemo(() => unwrapList(requete.data) ?? [], [requete.data]);
   const loading = requete.isPending;
-  const error = requete.isError ? (requete.error?.message ?? 'Erreur de chargement') : null;
+  const error = requete.isError ? (requete.error?.message ?? t('common.load_error')) : null;
 
   const stats = useMemo(() => {
     const recettes = transactions.filter((t) => t.statut === 'paye' || t.statut === 'payee');
@@ -217,7 +217,7 @@ export default function TransactionsPage() {
                       'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400'
                     )}>
                       <ArrowUpRight className="h-3 w-3" />
-                      {trx.type_paiement || 'Paiement'}
+                      {trx.type_paiement || t('pages.comptable.transactions.paiement')}
                     </span>
                   </td>
                   <td className="py-3 pr-4">

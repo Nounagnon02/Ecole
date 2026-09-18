@@ -133,7 +133,7 @@ export default function EcolesPage() {
   // `/ecoles` est paginé : `data.data` est le paginateur, pas le tableau.
   const ecoles = useMemo(() => unwrapList(requete.data) ?? [], [requete.data]);
   const loading = requete.isPending;
-  const error = requete.isError ? (requete.error?.message ?? 'Erreur de chargement') : null;
+  const error = requete.isError ? (requete.error?.message ?? t('common.load_error')) : null;
 
   /** Invalide la liste pour que les créations apparaissent sans rechargement. */
   const fetchEcoles = () => queryClient.invalidateQueries({ queryKey: ['ecoles'] });
@@ -182,7 +182,7 @@ export default function EcolesPage() {
         });
         setCreateErrors(mapped);
       } else {
-        setCreateErrors({ _general: err.message || 'Erreur de création' });
+        setCreateErrors({ _general: err.message || t('pages.admin.ecoles.erreur_de_creation') });
       }
     } finally {
       setCreating(false);
@@ -213,7 +213,7 @@ export default function EcolesPage() {
         });
         setProvErrors(mapped);
       } else {
-        setProvErrors({ _general: err.message || 'Erreur de provisionnement' });
+        setProvErrors({ _general: err.message || t('pages.admin.ecoles.erreur_de_provisionnement') });
       }
     } finally {
       setProvisioning(false);
@@ -386,8 +386,8 @@ export default function EcolesPage() {
       <Modal
         open={showProvisionModal}
         onClose={() => { if (!provResult) setShowProvisionModal(false); }}
-        title={provResult ? 'École créée avec succès !' : 'Provisionner une école'}
-        description={provResult ? 'Tous les comptes ont été générés automatiquement.' : 'Crée une école avec tous ses comptes utilisateurs en une fois'}
+        title={provResult ? t('pages.admin.ecoles.ecole_creee_avec_succes') : t('pages.admin.ecoles.provisionner_une_ecole')}
+        description={provResult ? t('pages.admin.ecoles.tous_les_comptes_ont_ete_generes_automatiquement') : t('pages.admin.ecoles.cree_une_ecole_avec_tous_ses_comptes')}
         size={provResult ? 'lg' : 'md'}
         closeOnOverlay={!provResult}
         footer={

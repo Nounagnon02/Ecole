@@ -46,7 +46,7 @@ export default function CoursPage() {
     [requete.data],
   );
   const loading = requete.isPending;
-  const error = requete.isError ? (requete.error?.message ?? 'Erreur de chargement') : null;
+  const error = requete.isError ? (requete.error?.message ?? t('common.load_error')) : null;
 
   const matieres = useMemo(() => [...new Set(cours.map((c) => c.matiere?.nom || c.matiere).filter(Boolean))], [cours]);
 
@@ -177,7 +177,7 @@ export default function CoursPage() {
 
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <Badge variant="primary" size="sm">{c.matiere?.nom || c.matiere || 'Matière'}</Badge>
+                    <Badge variant="primary" size="sm">{c.matiere?.nom || c.matiere || t('common.subject')}</Badge>
                     <span className="text-xs text-neutral-500 capitalize">
                       {c.type === 'tp' ? 'TP' : c.type}
                     </span>
@@ -187,7 +187,7 @@ export default function CoursPage() {
                     </div>
                   </div>
                   <h3 className="mt-1 text-base font-semibold text-neutral-900 dark:text-white">
-                    {c.chapitre || c.intitule || c.titre || 'Cours'}
+                    {c.chapitre || c.intitule || c.titre || t('common.courses')}
                   </h3>
                   <p className="mt-1 text-sm text-neutral-500">{c.resume}</p>
 

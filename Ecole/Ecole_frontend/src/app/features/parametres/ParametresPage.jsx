@@ -52,11 +52,11 @@ export default function ParametresPage() {
       if (res?.data?.success) {
         updateUser(res.data.user);
         setSaved(true);
-        toast.success('Profil mis à jour');
+        toast.success(t('pages.parametres.parametres.profil_mis_a_jour'));
         setTimeout(() => setSaved(false), 3000);
       }
     } catch (err) {
-      toast.error(err?.message || 'Erreur lors de la mise à jour');
+      toast.error(err?.message || t('pages.parametres.parametres.erreur_lors_de_la_mise_a_jour'));
     }
   };
 
@@ -147,7 +147,7 @@ function ProfilSection({ user, onSave, saving, saved }) {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 2 * 1024 * 1024) {
-      toast.error('Image trop lourde (max 2 Mo)');
+      toast.error(t('pages.parametres.parametres.image_trop_lourde_max_2_mo'));
       return;
     }
     const reader = new FileReader();
@@ -365,12 +365,12 @@ function ProfilSection({ user, onSave, saving, saved }) {
 function NotificationsSection() {
   const { t } = useTranslation();
   const toggles = [
-    { label: 'Notifications push', desc: 'Recevoir les notifications sur votre appareil', enabled: true },
-    { label: 'Email', desc: 'Recevoir un résumé par email', enabled: true },
-    { label: 'Communications importantes', desc: 'Alertes de la direction', enabled: true },
-    { label: 'Notes et évaluations', desc: 'Quand une note est publiée', enabled: false },
-    { label: 'Paiements', desc: 'Confirmation de paiement et rappels', enabled: true },
-    { label: 'Emploi du temps', desc: 'Changements dans l\'emploi du temps', enabled: false },
+    { label: t('pages.parametres.parametres.notifications_push'), desc: t('pages.parametres.parametres.recevoir_les_notifications_sur_votre_appareil'), enabled: true },
+    { label: t('pages.parametres.parametres.email'), desc: t('pages.parametres.parametres.recevoir_un_resume_par_email'), enabled: true },
+    { label: t('pages.parametres.parametres.communications_importantes'), desc: t('pages.parametres.parametres.alertes_de_la_direction'), enabled: true },
+    { label: t('pages.parametres.parametres.notes_et_evaluations'), desc: t('pages.parametres.parametres.quand_une_note_est_publiee'), enabled: false },
+    { label: t('common.payments'), desc: t('pages.parametres.parametres.confirmation_de_paiement_et_rappels'), enabled: true },
+    { label: t('pages.parametres.parametres.emploi_du_temps'), desc: t('pages.parametres.parametres.changements_dans_l_emploi_du_temps'), enabled: false },
   ];
 
   return (
@@ -406,15 +406,15 @@ function SecuriteSection() {
   const handleChangePassword = async () => {
     setPasswordError('');
     if (!currentPassword || !newPassword || !confirmPassword) {
-      setPasswordError('Tous les champs sont requis.');
+      setPasswordError(t('pages.parametres.parametres.tous_les_champs_sont_requis'));
       return;
     }
     if (newPassword.length < 8) {
-      setPasswordError('Le nouveau mot de passe doit faire au moins 8 caractères.');
+      setPasswordError(t('pages.parametres.parametres.le_nouveau_mot_de_passe_doit_faire_au_moins_8'));
       return;
     }
     if (newPassword !== confirmPassword) {
-      setPasswordError('Les mots de passe ne correspondent pas.');
+      setPasswordError(t('pages.parametres.parametres.les_mots_de_passe_ne_correspondent_pas'));
       return;
     }
     try {
@@ -423,12 +423,12 @@ function SecuriteSection() {
         password: newPassword,
         password_confirmation: confirmPassword,
       });
-      toast.success('Mot de passe mis à jour avec succès.');
+      toast.success(t('pages.parametres.parametres.mot_de_passe_mis_a_jour_avec_succes'));
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
     } catch (e) {
-      setPasswordError(e.response?.data?.message || 'Erreur lors du changement de mot de passe.');
+      setPasswordError(e.response?.data?.message || t('pages.parametres.parametres.erreur_lors_du_changement_de_mot_de_passe'));
     }
   };
 
@@ -454,7 +454,7 @@ function SecuriteSection() {
           {passwordError && <p className="text-sm text-red-600">{passwordError}</p>}
           <div className="flex justify-end">
             <Button onClick={handleChangePassword} disabled={loading}>
-              {loading ? 'Mise à jour...' : 'Mettre à jour'}
+              {loading ? t('pages.parametres.parametres.mise_a_jour') : t('pages.parametres.parametres.mettre_a_jour')}
             </Button>
           </div>
         </div>
@@ -498,9 +498,9 @@ function ApparenceSection() {
         <Card.Header title={t('pages.parametres.parametres.theme')} />
         <div className="grid grid-cols-3 gap-3">
           {[
-            { id: 'light', label: 'Clair', icon: Sun, desc: 'Thème clair' },
-            { id: 'dark', label: 'Sombre', icon: Moon, desc: 'Thème sombre' },
-            { id: 'system', label: 'Système', icon: Smartphone, desc: 'Suit votre appareil' },
+            { id: 'light', label: t('pages.parametres.parametres.clair'), icon: Sun, desc: t('pages.parametres.parametres.theme_clair') },
+            { id: 'dark', label: t('pages.parametres.parametres.sombre'), icon: Moon, desc: t('pages.parametres.parametres.theme_sombre') },
+            { id: 'system', label: t('pages.parametres.parametres.systeme'), icon: Smartphone, desc: t('pages.parametres.parametres.suit_votre_appareil') },
           ].map((theme) => (
             <button
               key={theme.id}

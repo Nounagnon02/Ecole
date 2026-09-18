@@ -36,7 +36,7 @@ export default function InscriptionsPage() {
 
   const inscriptions = useMemo(() => unwrapList(requete.data) ?? [], [requete.data]);
   const loading = requete.isPending;
-  const error = requete.isError ? (requete.error?.message ?? 'Erreur de chargement') : null;
+  const error = requete.isError ? (requete.error?.message ?? t('common.load_error')) : null;
 
   const stats = useMemo(() => ({
     total: inscriptions.length,
@@ -138,7 +138,7 @@ export default function InscriptionsPage() {
                     {ins.eleve?.prenom} {ins.eleve?.nom}
                   </span>
                   <Badge variant={ins.dossier_complet ? 'primary' : 'warning'} size="sm">
-                    {ins.dossier_complet ? 'Complet' : 'Incomplet'}
+                    {ins.dossier_complet ? t('pages.secretaire.inscriptions.complet') : t('pages.secretaire.inscriptions.incomplet')}
                   </Badge>
                   {ins.eleve?.classe?.nom_classe && (
                     <Badge variant="outline" size="sm">{ins.eleve.classe.nom_classe}</Badge>
@@ -171,7 +171,7 @@ export default function InscriptionsPage() {
                       : 'bg-neutral-100 text-neutral-400 dark:bg-neutral-800 dark:text-neutral-500'
                   )}>
                     {ins.dossier_complet ? <CheckCircle className="h-2.5 w-2.5" /> : <XCircle className="h-2.5 w-2.5" />}
-                    {ins.dossier_complet ? 'Dossier complet' : 'Dossier incomplet'}
+                    {ins.dossier_complet ? t('pages.secretaire.inscriptions.dossier_complet') : t('pages.secretaire.inscriptions.dossier_incomplet')}
                   </span>
                 </div>
               </div>

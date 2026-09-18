@@ -53,7 +53,7 @@ export default function EmpruntsPage() {
 
   const emprunts = useMemo(() => unwrapList(requete.data) ?? [], [requete.data]);
   const loading = requete.isPending;
-  const error = requete.isError ? (requete.error?.message ?? 'Erreur de chargement') : null;
+  const error = requete.isError ? (requete.error?.message ?? t('common.load_error')) : null;
 
   const stats = useMemo(() => {
     const now = new Date();
@@ -195,7 +195,7 @@ export default function EmpruntsPage() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-sm font-semibold text-neutral-900 dark:text-white">{e.livre?.titre || 'Ouvrage'}</span>
+                    <span className="text-sm font-semibold text-neutral-900 dark:text-white">{e.livre?.titre || t('pages.bibliothecaire.emprunts.ouvrage')}</span>
                     <Badge variant={getStatutVariant(statut)} size="sm">{getStatutLabel(statut)}</Badge>
                     {penalite > 0 && (
                       <span className="inline-flex items-center gap-1 rounded-full bg-red-50 dark:bg-red-500/10 px-2 py-0.5 text-xs font-medium text-red-600">

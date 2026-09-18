@@ -121,7 +121,7 @@ export default function Breadcrumb({ items: propItems, className }) {
     if (segments.length === 0) return [];
 
     const homePath = user?.role ? ROLE_REDIRECT_MAP[user.role] : '/connexion';
-    const items = [{ label: 'Accueil', href: homePath }];
+    const items = [{ label: t('components.breadcrumb.accueil'), href: homePath }];
 
     let accumulated = '';
     for (let i = 0; i < segments.length; i++) {
@@ -146,7 +146,7 @@ export default function Breadcrumb({ items: propItems, className }) {
     }
 
     return items;
-  }, [location.pathname, propItems, user?.role]);
+  }, [location.pathname, propItems, user?.role, t]);
 
   const items = propItems || autoItems || [];
 

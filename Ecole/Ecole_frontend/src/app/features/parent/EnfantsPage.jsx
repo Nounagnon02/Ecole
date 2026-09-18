@@ -34,18 +34,18 @@ export default function EnfantsPage() {
   const enfants = useMemo(
     () => (unwrapList(requeteEnfants.data) ?? []).map((e) => ({
       ...e,
-      nom: e.nom || `${e.prenom} ${e.nom_famille || ''}`.trim() || e.user?.name || 'Enfant',
+      nom: e.nom || `${e.prenom} ${e.nom_famille || ''}`.trim() || e.user?.name || t('pages.parent.enfants.enfant'),
       frais: e.frais || { total: 0, paye: 0 },
       moyenne: e.moyenne ?? 0,
       rang: e.rang ?? 0,
       absences: e.absences ?? 0,
     })),
-    [requeteEnfants.data],
+    [requeteEnfants.data, t],
   );
 
   const loading = requeteEnfants.isPending;
   const error = requeteEnfants.isError
-    ? (requeteEnfants.error?.message ?? 'Erreur de chargement')
+    ? (requeteEnfants.error?.message ?? t('common.load_error'))
     : null;
 
   useEffect(() => {
@@ -157,10 +157,10 @@ export default function EnfantsPage() {
         <Card>
           <div className="flex gap-1 border-b border-neutral-200 dark:border-neutral-700 pb-0 mb-4">
             {[
-              { id: 'notes', label: 'Notes', icon: BookOpen },
-              { id: 'edt', label: 'Emploi du Temps', icon: Calendar },
-              { id: 'absences', label: 'Absences', icon: AlertTriangle },
-              { id: 'paiements', label: 'Paiements', icon: FileText },
+              { id: 'notes', label: t('pages.parent.enfants.notes'), icon: BookOpen },
+              { id: 'edt', label: t('pages.parent.enfants.emploi_du_temps'), icon: Calendar },
+              { id: 'absences', label: t('pages.parent.enfants.absences'), icon: AlertTriangle },
+              { id: 'paiements', label: t('common.payments'), icon: FileText },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -193,8 +193,8 @@ export default function EnfantsPage() {
                         <BookOpen className="h-5 w-5 text-[var(--accent)]" />
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-neutral-900 dark:text-white">{n.matiere?.nom || n.matiere || 'Matière'}</p>
-                        <p className="text-xs text-neutral-500">{n.appreciation || n.type_evaluation || 'Évaluation'}</p>
+                        <p className="text-sm font-medium text-neutral-900 dark:text-white">{n.matiere?.nom || n.matiere || t('common.subject')}</p>
+                        <p className="text-xs text-neutral-500">{n.appreciation || n.type_evaluation || t('pages.parent.enfants.evaluation')}</p>
                       </div>
                     </div>
                     <div className="text-right">
@@ -248,15 +248,15 @@ export default function EnfantsPage() {
                       </div>
                       <div>
                         <p className="text-sm font-medium text-neutral-900 dark:text-white">
-                          {a.type || 'Absence'} - {formatDate(a.date)}
+                          {a.type || t('pages.parent.enfants.absence')} - {formatDate(a.date)}
                         </p>
                         <p className="text-xs text-neutral-500">
-                          {a.justifiee ? 'Justifiée' : 'Non justifiée'} - {a.motif || 'Sans motif'}
+                          {a.justifiee ? t('pages.parent.enfants.justifiee') : t('pages.parent.enfants.non_justifiee')} - {a.motif || t('pages.parent.enfants.sans_motif')}
                         </p>
                       </div>
                     </div>
                     <Badge variant={a.justifiee ? 'primary' : 'danger'} size="sm">
-                      {a.justifiee ? 'Justifiée' : 'Non justifiée'}
+                      {a.justifiee ? t('pages.parent.enfants.justifiee') : t('pages.parent.enfants.non_justifiee')}
                     </Badge>
                   </div>
                 ))
@@ -271,7 +271,7 @@ export default function EnfantsPage() {
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">{t('pages.parent.enfants.frais_de_scolarite')}</span>
                     <Badge variant={selectedEnfant.frais.paye >= selectedEnfant.frais.total ? 'primary' : 'warning'}>
-                      {selectedEnfant.frais.paye >= selectedEnfant.frais.total ? 'Payé' : 'Partiel'}
+                      {selectedEnfant.frais.paye >= selectedEnfant.frais.total ? t('common.status.paid') : t('pages.parent.enfants.partiel')}
                     </Badge>
                   </div>
                   <div className="h-2 rounded-full bg-neutral-200 dark:bg-neutral-700 overflow-hidden">
@@ -293,14 +293,14 @@ export default function EnfantsPage() {
                         <FileText className="h-5 w-5 text-amber-500" />
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-neutral-900 dark:text-white">{p.type || 'Frais'}</p>
+                        <p className="text-sm font-medium text-neutral-900 dark:text-white">{p.type || t('pages.parent.enfants.frais')}</p>
                         <p className="text-xs text-neutral-500">{formatDate(p.date)}</p>
                       </div>
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-bold text-emerald-600">{formatNumber(p.montant)} FCFA</p>
                       <Badge variant={p.statut === 'paye' ? 'primary' : 'warning'} size="sm">
-                        {p.statut === 'paye' ? 'Payé' : 'En attente'}
+                        {p.statut === 'paye' ? t('common.status.paid') : t('common.status.pending')}
                       </Badge>
                     </div>
                   </div>

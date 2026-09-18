@@ -37,7 +37,7 @@ export default function PresencesPage() {
 
   const loading = requeteAbsences.isPending;
   const error = requeteAbsences.isError
-    ? (requeteAbsences.error?.message ?? 'Erreur de chargement')
+    ? (requeteAbsences.error?.message ?? t('common.load_error'))
     : null;
 
   // La liste de présence est dérivée, pas stockée : les absences du jour
@@ -72,13 +72,13 @@ export default function PresencesPage() {
 
     return absences.map((a) => ({
       id: a.id,
-      nom: `${a.eleve?.prenom || ''} ${a.eleve?.nom || ''}`.trim() || 'Élève',
+      nom: `${a.eleve?.prenom || ''} ${a.eleve?.nom || ''}`.trim() || t('common.student'),
       classe: a.eleve?.classe?.nom_classe || '—',
       statut: a.type === 'retard' ? 'retard' : 'absent',
       heureArrivee: '—',
       motif: a.motif || '',
     }));
-  }, [requeteAbsences.data, requeteEleves.data]);
+  }, [requeteAbsences.data, requeteEleves.data, t]);
 
   const stats = useMemo(() => ({
     total: presences.length,
@@ -227,7 +227,7 @@ export default function PresencesPage() {
                   <td className="py-3 pr-4">
                     <span className={cn('inline-flex items-center gap-1 text-sm font-medium', getStatutClass(p.statut))}>
                       {getStatutIcon(p.statut)}
-                      <span className="capitalize">{p.statut === 'retard' ? 'Retard' : p.statut}</span>
+                      <span className="capitalize">{p.statut === 'retard' ? t('common.late') : p.statut}</span>
                     </span>
                   </td>
                   <td className="py-3 pr-4">

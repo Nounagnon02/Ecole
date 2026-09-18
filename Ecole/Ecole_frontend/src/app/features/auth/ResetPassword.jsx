@@ -19,11 +19,13 @@ import {
   fadeUp,
   container,
 } from '@/shared/components/auth/AuthDecorations';
+import { useTranslation } from '@/shared/i18n';
 
 /* ═══════════════════════════════════════════════════════════════════
  *  COMPOSANT PRINCIPAL
  * ═══════════════════════════════════════════════════════════════════ */
 export default function ResetPassword() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -52,15 +54,15 @@ export default function ResetPassword() {
   const validate = useCallback(() => {
     const newErrors = {};
     if (!form.password) {
-      newErrors.password = 'Veuillez entrer un mot de passe';
+      newErrors.password = t('pages.auth.reset_password.veuillez_entrer_un_mot_de_passe');
     } else if (form.password.length < 6) {
-      newErrors.password = 'Le mot de passe doit contenir au moins 6 caractères';
+      newErrors.password = t('pages.auth.reset_password.le_mot_de_passe_doit_contenir_au_moins_6');
     }
     if (form.password !== form.password_confirmation) {
-      newErrors.password_confirmation = 'Les mots de passe ne correspondent pas';
+      newErrors.password_confirmation = t('pages.auth.reset_password.les_mots_de_passe_ne_correspondent_pas');
     }
     return newErrors;
-  }, [form]);
+  }, [form, t]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -68,7 +70,7 @@ export default function ResetPassword() {
 
     // Vérifier que token et email sont présents
     if (!token || !email) {
-      setErrors({ _general: 'Lien de réinitialisation invalide ou incomplet.' });
+      setErrors({ _general: t('pages.auth.reset_password.lien_de_reinitialisation_invalide_ou_incomplet') });
       return;
     }
 
@@ -101,7 +103,7 @@ export default function ResetPassword() {
         setErrors({
           _general:
             err.message ||
-            'Erreur lors de la réinitialisation. Veuillez réessayer.',
+            t('pages.auth.reset_password.erreur_lors_de_la_reinitialisation_veuillez'),
         });
       }
     } finally {

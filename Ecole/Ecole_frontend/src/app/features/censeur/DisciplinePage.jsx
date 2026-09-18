@@ -84,7 +84,7 @@ export default function DisciplinePage() {
 
   const loading = requeteIncidents.isPending;
   const error = requeteIncidents.isError
-    ? (requeteIncidents.error?.message ?? 'Erreur de chargement')
+    ? (requeteIncidents.error?.message ?? t('common.load_error'))
     : null;
 
   const incidentStats = useMemo(() => ({
@@ -314,7 +314,7 @@ export default function DisciplinePage() {
                   <span className="text-sm font-semibold text-neutral-900 dark:text-white">{incident.type}</span>
                   <Badge variant={getGraviteVariant(incident.gravite)} size="sm">{getGraviteLabel(incident.gravite)}</Badge>
                   <Badge variant={incident.statut === 'traitee' || incident.statut === 'termine' || incident.statut === 'résolu' ? 'primary' : 'warning'} size="sm">
-                    {incident.statut === 'traitee' || incident.statut === 'termine' || incident.statut === 'résolu' ? 'Traitée' : 'En cours'}
+                    {incident.statut === 'traitee' || incident.statut === 'termine' || incident.statut === 'résolu' ? t('pages.censeur.discipline.traitee') : t('common.status.in_progress')}
                   </Badge>
                 </div>
                 <div className="mt-2 flex flex-wrap items-center gap-4 text-xs text-neutral-500">

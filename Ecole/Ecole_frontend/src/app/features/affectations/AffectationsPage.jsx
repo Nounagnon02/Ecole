@@ -69,9 +69,9 @@ export default function AffectationsPage() {
 
   const loading = requeteEnseignants.isPending || requeteClasses.isPending;
   const error = requeteEnseignants.isError
-    ? (requeteEnseignants.error?.message ?? 'Erreur de chargement')
+    ? (requeteEnseignants.error?.message ?? t('common.load_error'))
     : requeteClasses.isError
-      ? (requeteClasses.error?.message ?? 'Erreur de chargement')
+      ? (requeteClasses.error?.message ?? t('common.load_error'))
       : null;
 
   const selectedTeacher = useMemo(
@@ -156,7 +156,7 @@ export default function AffectationsPage() {
       setMatiereId('');
     } catch (e) {
       clearError();
-      setActionError(e.response?.data?.message || e.message || "L'affectation a été refusée");
+      setActionError(e.response?.data?.message || e.message || t('pages.affectations.affectations.l_affectation_a_ete_refusee'));
     } finally {
       setSaving(false);
     }
@@ -170,7 +170,7 @@ export default function AffectationsPage() {
       setAffectations(unwrapPayload(res?.data));
     } catch (e) {
       clearError();
-      setActionError(e.response?.data?.message || e.message || 'Le retrait a échoué');
+      setActionError(e.response?.data?.message || e.message || t('pages.affectations.affectations.le_retrait_a_echoue'));
     }
   };
 
@@ -192,7 +192,7 @@ export default function AffectationsPage() {
       });
     } catch (e) {
       clearError();
-      setActionError(e.response?.data?.message || e.message || "L'affectation a été refusée");
+      setActionError(e.response?.data?.message || e.message || t('pages.affectations.affectations.l_affectation_a_ete_refusee'));
     }
   };
 
@@ -278,7 +278,7 @@ export default function AffectationsPage() {
                         {NOM_ENSEIGNANT(selectedTeacher)}
                       </p>
                       <p className="text-xs text-neutral-500">
-                        {selectedTeacher.specialite || selectedTeacher.grade || 'Enseignant'}
+                        {selectedTeacher.specialite || selectedTeacher.grade || t('pages.affectations.affectations.enseignant')}
                       </p>
                     </div>
                   </div>
@@ -309,7 +309,7 @@ export default function AffectationsPage() {
                 <Select
                   aria-label="Série"
                   label="Série"
-                  placeholder={classeId ? 'Choisir une série' : 'Choisissez d\u2019abord une classe'}
+                  placeholder={classeId ? t('pages.affectations.affectations.choisir_une_serie') : t('pages.affectations.affectations.choisissez_d_abord_une_classe')}
                   options={seriesOptions}
                   value={serieId}
                   disabled={!classeId}
@@ -321,7 +321,7 @@ export default function AffectationsPage() {
                 <Select
                   aria-label="Matière"
                   label="Matière"
-                  placeholder={serieId ? 'Choisir une matière' : 'Choisissez d\u2019abord une série'}
+                  placeholder={serieId ? t('pages.affectations.affectations.choisir_une_matiere') : t('pages.affectations.affectations.choisissez_d_abord_une_serie')}
                   options={matieresOptions}
                   value={matiereId}
                   disabled={!serieId}
@@ -342,7 +342,7 @@ export default function AffectationsPage() {
 
           <Card className="mt-6">
             <Card.Header>
-              <Card.Title>Cours de {selectedTeacher ? NOM_ENSEIGNANT(selectedTeacher) : 'l’enseignant'}</Card.Title>
+              <Card.Title>Cours de {selectedTeacher ? NOM_ENSEIGNANT(selectedTeacher) : t('pages.affectations.affectations.l_enseignant')}</Card.Title>
               <Card.Description>
                 {affectations.length} affectation{affectations.length > 1 ? 's' : ''}
               </Card.Description>
@@ -369,10 +369,10 @@ export default function AffectationsPage() {
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium text-neutral-900 dark:text-white">
-                          {a.matiere?.nom || 'Matière'}
+                          {a.matiere?.nom || t('common.subject')}
                         </p>
                         <p className="truncate text-xs text-neutral-500">
-                          {a.classe?.nom_classe || 'Classe'}
+                          {a.classe?.nom_classe || t('common.class')}
                           {a.serie?.nom ? ` · ${a.serie.nom}` : ''}
                         </p>
                       </div>

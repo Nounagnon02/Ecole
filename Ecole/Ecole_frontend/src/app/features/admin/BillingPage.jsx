@@ -52,7 +52,7 @@ export default function BillingPage() {
   // Les revenus manquants dégradent un graphique, ils ne cachent pas la page.
   const loading = requeteFactures.isPending;
   const error = requeteFactures.isError
-    ? (requeteFactures.error?.message ?? 'Erreur de chargement')
+    ? (requeteFactures.error?.message ?? t('common.load_error'))
     : null;
 
   const stats = useMemo(() => ({

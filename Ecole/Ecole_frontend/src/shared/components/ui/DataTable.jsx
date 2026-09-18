@@ -422,7 +422,7 @@ const DataTable = forwardRef(function DataTable(
                               type="button"
                               onClick={(e) => { e.stopPropagation(); onView(item); }}
                               className="flex h-11 w-11 items-center justify-center rounded-lg text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-600 dark:hover:bg-neutral-800 dark:hover:text-neutral-300"
-                              aria-label={`Voir ${resolveValue(item, columns[0]?.accessor || columns[0]?.key) || 'l\'élément'}`}
+                              aria-label={`Voir ${resolveValue(item, columns[0]?.accessor || columns[0]?.key) || t('components.data_table.l_element')}`}
                               title={t('common.view')}
                             >
                               <Eye className="h-4 w-4" />
@@ -433,7 +433,7 @@ const DataTable = forwardRef(function DataTable(
                               type="button"
                               onClick={(e) => { e.stopPropagation(); onEdit(item); }}
                               className="flex h-11 w-11 items-center justify-center rounded-lg text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-[var(--accent)] dark:hover:bg-neutral-800 dark:hover:text-[var(--accent)]"
-                              aria-label={`Modifier ${resolveValue(item, columns[0]?.accessor || columns[0]?.key) || 'l\'élément'}`}
+                              aria-label={`Modifier ${resolveValue(item, columns[0]?.accessor || columns[0]?.key) || t('components.data_table.l_element')}`}
                               title={t('common.edit')}
                             >
                               <Edit2 className="h-4 w-4" />
@@ -444,7 +444,7 @@ const DataTable = forwardRef(function DataTable(
                               type="button"
                               onClick={(e) => { e.stopPropagation(); onDelete(item); }}
                               className="flex h-11 w-11 items-center justify-center rounded-lg text-neutral-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30 dark:hover:text-red-400"
-                              aria-label={`Supprimer ${resolveValue(item, columns[0]?.accessor || columns[0]?.key) || 'l\'élément'}`}
+                              aria-label={`Supprimer ${resolveValue(item, columns[0]?.accessor || columns[0]?.key) || t('components.data_table.l_element')}`}
                               title={t('common.delete')}
                             >
                               <Trash2 className="h-4 w-4" />

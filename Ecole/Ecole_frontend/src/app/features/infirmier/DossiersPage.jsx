@@ -40,7 +40,7 @@ export default function DossiersPage() {
 
   const loading = requeteDossiers.isPending;
   const error = requeteDossiers.isError
-    ? (requeteDossiers.error?.message ?? 'Erreur de chargement')
+    ? (requeteDossiers.error?.message ?? t('common.load_error'))
     : null;
 
   const stats = useMemo(() => {
@@ -136,7 +136,7 @@ export default function DossiersPage() {
           </p>
         </div>
         <Button size="sm" icon={<Plus />}>
-          {tab === 'dossiers' ? 'Nouveau dossier' : 'Nouveau vaccin'}
+          {tab === 'dossiers' ? t('pages.infirmier.dossiers.nouveau_dossier') : t('pages.infirmier.dossiers.nouveau_vaccin')}
         </Button>
       </div>
 
@@ -240,7 +240,7 @@ export default function DossiersPage() {
                       'font-medium',
                       d.allergies && d.allergies !== 'Aucune' ? 'text-amber-600' : 'text-neutral-700 dark:text-neutral-300'
                     )}>
-                      {d.allergies || 'Aucune'}
+                      {d.allergies || t('pages.infirmier.dossiers.aucune')}
                     </span>
                   </div>
                   <div>
@@ -251,7 +251,7 @@ export default function DossiersPage() {
                       'font-medium text-sm',
                       !d.vaccins_a_jour ? 'text-red-600' : 'text-emerald-600'
                     )}>
-                      {d.vaccins_a_jour ? 'À jour' : 'Non à jour'}
+                      {d.vaccins_a_jour ? t('pages.infirmier.dossiers.a_jour') : t('pages.infirmier.dossiers.non_a_jour')}
                     </span>
                   </div>
                   <div>

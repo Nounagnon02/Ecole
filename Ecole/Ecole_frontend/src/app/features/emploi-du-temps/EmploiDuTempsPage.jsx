@@ -46,7 +46,7 @@ export default function EmploiDuTempsPage() {
   // réponse, pas stockée à côté d'elle.
   const requete = useApiQuery(['emploi-du-temps'], '/emploi-du-temps');
   const loading = requete.isPending;
-  const error = requete.isError ? (requete.error?.message ?? 'Erreur de chargement') : null;
+  const error = requete.isError ? (requete.error?.message ?? t('common.load_error')) : null;
 
   const edt = useMemo(() => {
     const items = unwrapList(requete.data) ?? [];

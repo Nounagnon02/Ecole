@@ -100,7 +100,7 @@ export default function CommunicationsPage() {
   );
   const loadingPosts = requete.isPending;
   const loading = requete.isPending;
-  const error = requete.isError ? (requete.error?.message ?? 'Erreur de chargement') : null;
+  const error = requete.isError ? (requete.error?.message ?? t('common.load_error')) : null;
 
   /**
    * Insérer l'annonce créée en tête du cache, sans recharger le fil.
@@ -175,7 +175,7 @@ export default function CommunicationsPage() {
       // 422 Laravel : { message, errors: { champ: [message] } }. L'intercepteur
       // conserve les deux — le message général et le détail par champ.
       setFieldErrors(err?.errors || err?.response?.data?.errors || {});
-      setSubmitError(err?.message || 'La publication a échoué.');
+      setSubmitError(err?.message || t('pages.communications.communications.la_publication_a_echoue'));
     }
   };
 

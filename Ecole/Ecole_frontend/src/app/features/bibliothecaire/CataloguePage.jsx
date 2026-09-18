@@ -35,7 +35,7 @@ export default function CataloguePage() {
 
   const ouvrages = useMemo(() => unwrapList(requete.data) ?? [], [requete.data]);
   const loading = requete.isPending;
-  const error = requete.isError ? (requete.error?.message ?? 'Erreur de chargement') : null;
+  const error = requete.isError ? (requete.error?.message ?? t('common.load_error')) : null;
 
   const stats = useMemo(() => ({
     total: ouvrages.length,
@@ -143,7 +143,7 @@ export default function CataloguePage() {
               <BookOpen className="h-5 w-5 text-[var(--accent)]" />
             </div>
             <h3 className="font-semibold text-sm text-neutral-900 dark:text-white mb-1">{o.titre}</h3>
-            <p className="text-xs text-neutral-500 mb-2">par {o.auteur || 'Inconnu'}</p>
+            <p className="text-xs text-neutral-500 mb-2">par {o.auteur || t('pages.bibliothecaire.catalogue.inconnu')}</p>
             <div className="flex items-center gap-2 mb-2">
               {o.categorie && <Badge variant="outline" size="sm">{o.categorie}</Badge>}
               {o.annee_publication && (
@@ -155,7 +155,7 @@ export default function CataloguePage() {
                 'font-medium',
                 o.disponible ? 'text-emerald-600' : 'text-red-600'
               )}>
-                {o.disponible ? 'Disponible' : 'Épuisé'}
+                {o.disponible ? t('pages.bibliothecaire.catalogue.disponible') : t('pages.bibliothecaire.catalogue.epuise')}
                 {o.nombre_exemplaires ? ` (${o.nombre_exemplaires} ex.)` : ''}
               </span>
               {o.isbn && <span className="text-neutral-400">ISBN: {o.isbn.slice(-8)}</span>}

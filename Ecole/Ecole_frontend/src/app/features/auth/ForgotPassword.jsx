@@ -18,11 +18,13 @@ import {
   fadeUp,
   container,
 } from '@/shared/components/auth/AuthDecorations';
+import { useTranslation } from '@/shared/i18n';
 
 /* ═══════════════════════════════════════════════════════════════════
  *  COMPOSANT PRINCIPAL
  * ═══════════════════════════════════════════════════════════════════ */
 export default function ForgotPassword() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -35,12 +37,12 @@ export default function ForgotPassword() {
   }, [errors]);
 
   const validate = useCallback(() => {
-    if (!email) return { email: 'Veuillez entrer votre adresse email' };
+    if (!email) return { email: t('pages.auth.forgot_password.veuillez_entrer_votre_adresse_email') };
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return { email: 'Adresse email invalide' };
+      return { email: t('pages.auth.forgot_password.adresse_email_invalide') };
     }
     return {};
-  }, [email]);
+  }, [email, t]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -70,7 +72,7 @@ export default function ForgotPassword() {
         setErrors({
           _general:
             err.message ||
-            'Erreur lors de l\'envoi. Veuillez réessayer.'
+            t('pages.auth.forgot_password.erreur_lors_de_l_envoi_veuillez_reessayer')
         });
       }
     } finally {

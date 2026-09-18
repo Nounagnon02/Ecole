@@ -44,7 +44,7 @@ export default function DepartementsPage() {
     [requete.data],
   );
   const loading = requete.isPending;
-  const error = requete.isError ? (requete.error?.message ?? 'Erreur de chargement') : null;
+  const error = requete.isError ? (requete.error?.message ?? t('common.load_error')) : null;
 
   const facultes = useMemo(() =>
     [...new Set(departements.map((d) => d.faculte_nom).filter(Boolean))],

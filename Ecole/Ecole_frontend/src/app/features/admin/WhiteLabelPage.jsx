@@ -65,7 +65,7 @@ export default function WhiteLabelPage() {
 
   const loading = requeteEcoles.isPending;
   const error = requeteEcoles.isError
-    ? (requeteEcoles.error?.message ?? 'Erreur de chargement')
+    ? (requeteEcoles.error?.message ?? t('common.load_error'))
     : null;
 
   // Premier établissement sélectionné d'office : la page n'a rien à montrer
@@ -137,7 +137,7 @@ export default function WhiteLabelPage() {
         </div>
         <Button onClick={handleSave} disabled={saving || !selectedTenant}>
           {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-          {saving ? 'Enregistrement...' : saved ? 'Enregistré !' : 'Enregistrer'}
+          {saving ? t('pages.admin.white_label.enregistrement') : saved ? t('pages.admin.white_label.enregistre') : t('common.save')}
         </Button>
       </div>
 

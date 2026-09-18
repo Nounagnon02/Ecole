@@ -29,7 +29,7 @@ export default function PlansPage() {
   // d'enveloppe que renvoient les contrôleurs.
   const plans = useMemo(() => unwrapList(requete.data) ?? [], [requete.data]);
   const loading = requete.isPending;
-  const error = requete.isError ? (requete.error?.message ?? 'Erreur de chargement') : null;
+  const error = requete.isError ? (requete.error?.message ?? t('common.load_error')) : null;
 
   if (loading) {
     return (
@@ -84,13 +84,13 @@ export default function PlansPage() {
                     <p className="text-sm text-neutral-500">{plan.slug}</p>
                   </div>
                   <Badge variant={plan.is_active ? 'success' : 'neutral'} size="sm">
-                    {plan.is_active ? 'Actif' : 'Inactif'}
+                    {plan.is_active ? t('common.status.active') : t('common.status.inactive')}
                   </Badge>
                 </div>
 
                 <div className="mb-4">
                   <p className="text-3xl font-bold text-neutral-900 dark:text-white">
-                    {plan.price_monthly === 0 || plan.price_monthly === '0.00' ? 'Gratuit' : `${Number(plan.price_monthly).toLocaleString()} FCFA`}
+                    {plan.price_monthly === 0 || plan.price_monthly === '0.00' ? t('pages.admin.plans.gratuit') : `${Number(plan.price_monthly).toLocaleString()} FCFA`}
                   </p>
                   <p className="text-xs text-neutral-500">{t('pages.admin.plans.mois')}</p>
                   {plan.price_yearly > 0 && (

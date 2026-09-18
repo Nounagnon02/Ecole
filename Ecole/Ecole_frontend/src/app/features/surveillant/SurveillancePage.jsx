@@ -65,7 +65,7 @@ export default function SurveillancePage() {
 
   const incidents = useMemo(() => unwrapList(requete.data) ?? [], [requete.data]);
   const loading = requete.isPending;
-  const error = requete.isError ? (requete.error?.message ?? 'Erreur de chargement') : null;
+  const error = requete.isError ? (requete.error?.message ?? t('common.load_error')) : null;
 
   const stats = useMemo(() => ({
     total: incidents.length,
@@ -173,7 +173,7 @@ export default function SurveillancePage() {
                 </div>
                 <div className="mt-2 flex items-center gap-4 text-sm text-neutral-600 dark:text-neutral-400">
                   <span className={cn('inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium', getGraviteColor(s.gravite))}>
-                    {s.gravite ? `Gravité: ${s.gravite}` : 'Non définie'}
+                    {s.gravite ? `Gravité: ${s.gravite}` : t('pages.surveillant.surveillance.non_definie')}
                   </span>
                   <span className="flex items-center gap-1">
                     <Calendar className="h-3.5 w-3.5" />
