@@ -99,7 +99,22 @@
     "no_account": "Don't have an account?",
     "register": "Sign up",
     "login_title": "Welcome back",
-    "login_subtitle": "Enter your credentials to access your account"
+    "login_subtitle": "Enter your credentials to access your account",
+    "login_form": {
+      "votre_ecole": "Your school",
+      "vous_etes_associe_a_plusieurs_etablissements": "You are associated with several schools.",
+      "choisissez_celui_auquel_acceder": "Choose the one you want to access.",
+      "changer_d_identifiant": "Use a different account",
+      "annee_scolaire_2025_2026": "School year 2025 — 2026",
+      "systeme_de_gestion_scolaire": "School management system",
+      "pense_pour_l_excellence": "designed for excellence.",
+      "connectez_vous_a_votre_espace": "Log in to your account",
+      "accedez_a_votre_tableau_de_bord": "Access your dashboard",
+      "email_ou_identifiant": "Email or username",
+      "vous_exemple_com_ou_eleve_2024_001": "you@example.com or ELEVE-2024-001",
+      "se_connecter": "Log in",
+      "besoin_d_aide_contactez_votre_administrateur": "Need help? Contact your administrator"
+    }
   },
   "eleve": {
     "title": "Students",
@@ -212,7 +227,9 @@
     "toggle_menu": "Toggle menu",
     "search": "Search",
     "language": "Language",
-    "toggle_theme": "Toggle theme"
+    "toggle_theme": "Toggle theme",
+    "mon_profil": "My profile",
+    "parametres": "Settings"
   },
   "securite": {
     "title": "Security",
@@ -1361,6 +1378,43 @@
         "envoyer": "Send",
         "selectionnez_une_conversation": "Select a conversation"
       }
+    }
+  },
+  "app_shell": {
+    "aller_au_contenu_principal": "Skip to main content"
+  },
+  "sidebar": {
+    "navigation_principale": "Main navigation"
+  },
+  "components": {
+    "breadcrumb": {
+      "fil_d_ariane": "Breadcrumb"
+    },
+    "command_palette": {
+      "palette_de_commandes": "Command palette",
+      "rechercher_eleves_classes_paiements": "Search students, classes, payments...",
+      "resultats_de_recherche": "Search results",
+      "essayez_un_nom_d_eleve_de_classe_ou_une_action": "Try a student name, a class or an action",
+      "suggestions": "Suggestions",
+      "tapez_pour_commencer_a_rechercher": "Type to start searching...",
+      "naviguer": "Navigate",
+      "ouvrir": "Open"
+    },
+    "data_table": {
+      "page_precedente": "Previous page",
+      "page_suivante": "Next page",
+      "rechercher": "Search…",
+      "rechercher_dans_le_tableau": "Search the table"
+    },
+    "refresh_button": {
+      "actualiser_les_donnees": "Refresh data",
+      "actualiser": "Refresh"
+    },
+    "skeleton": {
+      "chargement": "Loading",
+      "chargement_en_cours": "Loading…",
+      "contenu_en_chargement": "Content loading",
+      "tableau_en_chargement": "Table loading"
     }
   }
 }

@@ -99,7 +99,22 @@
     "no_account": "Pas encore de compte ?",
     "register": "S'inscrire",
     "login_title": "Connectez-vous à votre compte",
-    "login_subtitle": "Entrez vos identifiants pour accéder à votre espace"
+    "login_subtitle": "Entrez vos identifiants pour accéder à votre espace",
+    "login_form": {
+      "votre_ecole": "Votre école",
+      "vous_etes_associe_a_plusieurs_etablissements": "Vous êtes associé à plusieurs établissements.",
+      "choisissez_celui_auquel_acceder": "Choisissez celui auquel accéder.",
+      "changer_d_identifiant": "Changer d'identifiant",
+      "annee_scolaire_2025_2026": "Année scolaire 2025 — 2026",
+      "systeme_de_gestion_scolaire": "Système de gestion scolaire",
+      "pense_pour_l_excellence": "pensé pour l'excellence.",
+      "connectez_vous_a_votre_espace": "Connectez-vous à votre espace",
+      "accedez_a_votre_tableau_de_bord": "Accédez à votre tableau de bord",
+      "email_ou_identifiant": "Email ou identifiant",
+      "vous_exemple_com_ou_eleve_2024_001": "vous@exemple.com ou ELEVE-2024-001",
+      "se_connecter": "Se connecter",
+      "besoin_d_aide_contactez_votre_administrateur": "Besoin d'aide ? Contactez votre administrateur"
+    }
   },
   "eleve": {
     "title": "Élèves",
@@ -212,7 +227,9 @@
     "toggle_menu": "Ouvrir le menu",
     "search": "Rechercher",
     "language": "Langue",
-    "toggle_theme": "Changer le thème"
+    "toggle_theme": "Changer le thème",
+    "mon_profil": "Mon profil",
+    "parametres": "Paramètres"
   },
   "securite": {
     "title": "Sécurité",
@@ -1361,6 +1378,43 @@
         "envoyer": "Envoyer",
         "selectionnez_une_conversation": "Sélectionnez une conversation"
       }
+    }
+  },
+  "app_shell": {
+    "aller_au_contenu_principal": "Aller au contenu principal"
+  },
+  "sidebar": {
+    "navigation_principale": "Navigation principale"
+  },
+  "components": {
+    "breadcrumb": {
+      "fil_d_ariane": "Fil d'Ariane"
+    },
+    "command_palette": {
+      "palette_de_commandes": "Palette de commandes",
+      "rechercher_eleves_classes_paiements": "Rechercher élèves, classes, paiements...",
+      "resultats_de_recherche": "Résultats de recherche",
+      "essayez_un_nom_d_eleve_de_classe_ou_une_action": "Essayez un nom d'élève, de classe ou une action",
+      "suggestions": "Suggestions",
+      "tapez_pour_commencer_a_rechercher": "Tapez pour commencer à rechercher...",
+      "naviguer": "Naviguer",
+      "ouvrir": "Ouvrir"
+    },
+    "data_table": {
+      "page_precedente": "Page précédente",
+      "page_suivante": "Page suivante",
+      "rechercher": "Rechercher…",
+      "rechercher_dans_le_tableau": "Rechercher dans le tableau"
+    },
+    "refresh_button": {
+      "actualiser_les_donnees": "Actualiser les données",
+      "actualiser": "Actualiser"
+    },
+    "skeleton": {
+      "chargement": "Chargement",
+      "chargement_en_cours": "Chargement en cours…",
+      "contenu_en_chargement": "Contenu en chargement",
+      "tableau_en_chargement": "Tableau en chargement"
     }
   }
 }
