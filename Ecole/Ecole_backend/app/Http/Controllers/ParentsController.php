@@ -8,6 +8,12 @@ use App\Models\ParentEleve;
 use App\Models\ParentInvitation;
 use App\Models\Eleve;
 use App\Services\UserService;
+use App\Support\SchoolContext;
+use App\Http\Requests\Parents\StoreParentRequest;
+use App\Http\Requests\Parents\UpdateParentRequest;
+use App\Http\Requests\Parents\UpdateParentElevesRequest;
+use App\Http\Requests\Parents\InviteParentRequest;
+use App\Http\Requests\Parents\AcceptParentInvitationRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -31,24 +37,9 @@ class ParentsController extends Controller
     /**
      * Création d'un parent (Admin)
      */
-    public function store(Request $request)
+    public function store(StoreParentRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string',
-            'prenom' => 'required|string',
-            'email' => 'required|email|unique:users,email',
-            'identifiant' => 'required|string|unique:users,identifiant',
-            'password' => 'required|string|min:8',
-            'ecole_id' => 'required|exists:ecoles,id',
-            'telephone' => 'nullable|string',
-            'eleve_ids' => 'sometimes|array',
-            'eleve_ids.*' => 'school_exists:eleves,id',
-            'liens' => 'sometimes|array',
-            'liens.*.eleve_id' => 'required|school_exists:eleves,id',
-            'liens.*.role' => 'sometimes|nullable|in:' . implode(',', ParentEleve::ROLES),
-            'liens.*.is_primary' => 'sometimes|boolean',
-            'liens.*.is_guardian' => 'sometimes|boolean',
-        ]);
+        $validated = $request->validated();
 
         try {
             return DB::transaction(function () use ($validated, $request) {
@@ -60,7 +51,7 @@ class ParentsController extends Controller
                     'password' => Hash::make($validated['password']),
                     'role' => 'parent',
                     'ecole_id' => $validated['ecole_id'],
-                    'telephone' => $validated['telephone'],
+                    'telephone' => $validated['telephone'] ?? null,
                 ]);
 
                 $parent = UserParent::create([
@@ -93,21 +84,13 @@ class ParentsController extends Controller
         return response()->json($parent);
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdateParentRequest $request, $id)
     {
         $parent = UserParent::findOrFail($id);
         $this->authorize('update', $parent);
 
         $user = $parent->user;
-
-        $validated = $request->validate([
-            'name' => 'sometimes|string',
-            'prenom' => 'sometimes|string',
-            'email' => 'sometimes|nullable|email|unique:users,email,' . $user->id,
-            'telephone' => 'sometimes|string',
-            'eleve_ids' => 'sometimes|array',
-            'eleve_ids.*' => 'school_exists:eleves,id',
-        ]);
+        $validated = $request->validated();
 
         $user->update(array_intersect_key($validated, array_flip(['name', 'prenom', 'email', 'telephone'])));
         
@@ -125,18 +108,9 @@ class ParentsController extends Controller
     /**
      * Lier des élèves à un parent
      */
-    public function updateEleves(Request $request, $id)
+    public function updateEleves(UpdateParentElevesRequest $request, $id)
     {
         $parent = UserParent::findOrFail($id);
-        $request->validate([
-            'eleve_ids' => 'sometimes|array',
-            'eleve_ids.*' => 'school_exists:eleves,id',
-            'liens' => 'sometimes|array',
-            'liens.*.eleve_id' => 'required|school_exists:eleves,id',
-            'liens.*.role' => 'sometimes|nullable|in:' . implode(',', ParentEleve::ROLES),
-            'liens.*.is_primary' => 'sometimes|boolean',
-            'liens.*.is_guardian' => 'sometimes|boolean',
-        ]);
 
         if ($request->has('liens')) {
             $parent->setEleves($request->input('liens'));
@@ -181,16 +155,9 @@ class ParentsController extends Controller
      * Invitation parent par l'école (Admin/Comptable/Secrétaire)
      * POST /api/parents/invite
      */
-    public function invite(Request $request)
+    public function invite(InviteParentRequest $request)
     {
-        $validated = $request->validate([
-            'email' => 'required|email',
-            'eleve_id' => 'required|school_exists:eleves,id',
-            'role' => 'nullable|in:' . implode(',', ParentEleve::ROLES),
-            'is_primary' => 'boolean',
-            'is_guardian' => 'boolean',
-            'expires_in_days' => 'nullable|integer|min:1|max:30',
-        ]);
+        $validated = $request->validated();
 
         $eleve = Eleve::findOrFail($validated['eleve_id']);
         $this->authorize('update', $eleve); // Vérifie que l'user peut gérer cet élève
@@ -242,7 +209,14 @@ class ParentsController extends Controller
      */
     public function verifyInvitation($token)
     {
-        $invitation = ParentInvitation::where('token', $token)->first();
+        // Route publique : l'invité n'est pas authentifié, donc
+        // `resolveEcoleId()` n'a rien à résoudre et le scope multi-écoles de
+        // `ParentInvitation` échoue fermé (`1 = 0`) — cette lecture ne
+        // trouvait jamais rien, quel que soit le jeton. Le jeton lui-même est
+        // le secret qui autorise l'accès (même schéma que le webhook de
+        // paiement, cf. PaymentController::webhook) : on lit sans le scope,
+        // puis on rebascule dedans pour tout ce que l'invitation touche.
+        $invitation = ParentInvitation::withoutGlobalScope('ecole')->where('token', $token)->first();
 
         if (!$invitation) {
             return response()->json([
@@ -260,34 +234,32 @@ class ParentsController extends Controller
             ], 422);
         }
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'email' => $invitation->email,
-                'eleve' => $invitation->eleve->load('user', 'classe'),
-                'role' => $invitation->role,
-                'is_primary' => $invitation->is_primary,
-                'is_guardian' => $invitation->is_guardian,
-                'expires_at' => $invitation->expires_at,
-            ],
-        ]);
+        return SchoolContext::for((int) $invitation->ecole_id, function () use ($invitation) {
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'email' => $invitation->email,
+                    'eleve' => $invitation->eleve->load('user', 'classe'),
+                    'role' => $invitation->role,
+                    'is_primary' => $invitation->is_primary,
+                    'is_guardian' => $invitation->is_guardian,
+                    'expires_at' => $invitation->expires_at,
+                ],
+            ]);
+        });
     }
 
     /**
      * Inscription parent via invitation (public)
      * POST /api/public/parent/accept-invitation
      */
-    public function acceptInvitation(Request $request)
+    public function acceptInvitation(AcceptParentInvitationRequest $request)
     {
-        $validated = $request->validate([
-            'token' => 'required|string',
-            'password' => 'required|string|min:8|confirmed',
-            'name' => 'required|string',
-            'prenom' => 'required|string',
-            'telephone' => 'nullable|string',
-        ]);
+        $validated = $request->validated();
 
-        $invitation = ParentInvitation::where('token', $request->token)->first();
+        // Même raison qu'au-dessus (`verifyInvitation`) : invité non
+        // authentifié, le jeton est le secret qui autorise cette lecture.
+        $invitation = ParentInvitation::withoutGlobalScope('ecole')->where('token', $request->token)->first();
 
         if (!$invitation || !$invitation->isValid()) {
             return response()->json([
@@ -297,6 +269,8 @@ class ParentsController extends Controller
         }
 
         // Vérifier si l'email est déjà utilisé
+        // `User` est exempté du scope (BelongsToEcole.php) : cette lecture
+        // n'a pas besoin de contexte.
         if (User::where('email', $invitation->email)->exists()) {
             return response()->json([
                 'success' => false,
@@ -305,52 +279,59 @@ class ParentsController extends Controller
         }
 
         try {
-            return DB::transaction(function () use ($validated, $invitation) {
-                // Créer l'utilisateur
-                $user = User::create([
-                    'name' => $validated['name'],
-                    'prenom' => $validated['prenom'],
-                    'email' => $invitation->email,
-                    'identifiant' => Str::slug($validated['name'] . '-' . $validated['prenom']) . '-' . Str::random(6),
-                    'password' => Hash::make($validated['password']),
-                    'role' => 'parent',
-                    'ecole_id' => $invitation->ecole_id,
-                    'telephone' => $validated['telephone'],
-                ]);
+            // Sans ce contexte, `UserParent::create()` (BelongsToEcole)
+            // n'avait aucun utilisateur authentifié dont dériver `ecole_id`
+            // et l'écrivait `null` : le profil parent créé par cette route
+            // devenait invisible à toute lecture scopée (liste des parents,
+            // fiche élève...), silencieusement, pour toujours.
+            return SchoolContext::for((int) $invitation->ecole_id, function () use ($validated, $invitation) {
+                return DB::transaction(function () use ($validated, $invitation) {
+                    // Créer l'utilisateur
+                    $user = User::create([
+                        'name' => $validated['name'],
+                        'prenom' => $validated['prenom'],
+                        'email' => $invitation->email,
+                        'identifiant' => Str::slug($validated['name'] . '-' . $validated['prenom']) . '-' . Str::random(6),
+                        'password' => Hash::make($validated['password']),
+                        'role' => 'parent',
+                        'ecole_id' => $invitation->ecole_id,
+                        'telephone' => $validated['telephone'] ?? null,
+                    ]);
 
-                // Créer le profil parent
-                $parent = UserParent::create([
-                    'user_id' => $user->id,
-                ]);
+                    // Créer le profil parent
+                    $parent = UserParent::create([
+                        'user_id' => $user->id,
+                    ]);
 
-                // Lier l'élève au parent via le pivot
-                $parent->eleves()->attach($invitation->eleve_id, [
-                    'role' => $invitation->role ?? ParentEleve::ROLE_TUTEUR,
-                    'is_primary' => $invitation->is_primary,
-                    'is_guardian' => $invitation->is_guardian,
-                    'ecole_id' => $invitation->ecole_id,
-                ]);
+                    // Lier l'élève au parent via le pivot
+                    $parent->eleves()->attach($invitation->eleve_id, [
+                        'role' => $invitation->role ?? ParentEleve::ROLE_TUTEUR,
+                        'is_primary' => $invitation->is_primary,
+                        'is_guardian' => $invitation->is_guardian,
+                        'ecole_id' => $invitation->ecole_id,
+                    ]);
 
-                // Si is_primary, définir comme contact principal
-                if ($invitation->is_primary) {
-                    ParentEleve::setPrimary($invitation->eleve_id, $parent->id);
-                }
+                    // Si is_primary, définir comme contact principal
+                    if ($invitation->is_primary) {
+                        ParentEleve::setPrimary($invitation->eleve_id, $parent->id);
+                    }
 
-                // Marquer l'invitation comme acceptée
-                $invitation->update([
-                    'is_accepted' => true,
-                    'accepted_at' => now(),
-                ]);
+                    // Marquer l'invitation comme acceptée
+                    $invitation->update([
+                        'is_accepted' => true,
+                        'accepted_at' => now(),
+                    ]);
 
-                \Cache::forget('dashboard_directeur_' . (auth()->user()->ecole_id ?? 'global'));
+                    \Cache::forget('dashboard_directeur_' . $invitation->ecole_id);
 
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Compte créé avec succès',
-                    'data' => [
-                        'user' => $user->load('parent.eleves.user'),
-                    ],
-                ], 201);
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Compte créé avec succès',
+                        'data' => [
+                            'user' => $user->load('parent.eleves.user'),
+                        ],
+                    ], 201);
+                });
             });
         } catch (\Exception $e) {
             $this->rethrowIfMeaningful($e);
@@ -420,7 +401,7 @@ class ParentsController extends Controller
                     'password' => Hash::make($validated['password']),
                     'role' => 'parent',
                     'ecole_id' => $eleve->ecole_id,
-                    'telephone' => $validated['telephone'],
+                    'telephone' => $validated['telephone'] ?? null,
                 ]);
 
                 $parent = UserParent::create([
