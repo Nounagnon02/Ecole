@@ -20,6 +20,7 @@ import {
   container,
 } from '@/shared/components/auth/AuthDecorations';
 import { useTranslation } from '@/shared/i18n';
+import LanguageSwitcher from '@/shared/components/layout/LanguageSwitcher';
 
 /* ═══════════════════════════════════════════════════════════════════
  *  COMPOSANT PRINCIPAL
@@ -116,6 +117,7 @@ export default function ResetPassword() {
     return (
       <div className="relative min-h-screen bg-[var(--surface)] overflow-hidden">
         <TopDecorativeBand />
+        <div className="absolute end-4 top-4 z-20"><LanguageSwitcher /></div>
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(184,86,46,0.03),transparent_60%)] pointer-events-none" />
         <div className="relative z-10 flex min-h-screen items-center justify-center px-6">
           <motion.div
@@ -130,11 +132,10 @@ export default function ResetPassword() {
                 </div>
               </div>
               <h1 className="font-fraunces text-2xl font-semibold text-[var(--text-primary)]">
-                Lien invalide
+                {t('pages.auth.reset_password.lien_invalide')}
               </h1>
               <p className="mt-3 text-sm text-[var(--text-secondary)] leading-relaxed">
-                Le lien de réinitialisation est invalide ou a expiré.
-                Veuillez refaire une demande.
+                {t('pages.auth.reset_password.le_lien_de_reinitialisation_est_invalide_ou_a')}
               </p>
               <div className="mt-8">
                 <Link
@@ -142,7 +143,7 @@ export default function ResetPassword() {
                   className="inline-flex items-center gap-2 rounded-lg bg-[var(--accent)] px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[var(--accent-hover)]"
                 >
                   <ArrowLeft className="h-4 w-4" />
-                  Nouvelle demande
+                  {t('pages.auth.reset_password.nouvelle_demande')}
                 </Link>
               </div>
             </div>
@@ -157,6 +158,7 @@ export default function ResetPassword() {
     return (
       <div className="relative min-h-screen bg-[var(--surface)] overflow-hidden">
         <TopDecorativeBand />
+        <div className="absolute end-4 top-4 z-20"><LanguageSwitcher /></div>
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(184,86,46,0.03),transparent_60%)] pointer-events-none" />
         <div className="relative z-10 flex min-h-screen items-center justify-center px-6">
           <motion.div
@@ -171,18 +173,17 @@ export default function ResetPassword() {
                 </div>
               </div>
               <h1 className="font-fraunces text-2xl font-semibold text-[var(--text-primary)]">
-                Mot de passe réinitialisé
+                {t('pages.auth.reset_password.mot_de_passe_reinitialise')}
               </h1>
               <p className="mt-3 text-sm text-[var(--text-secondary)] leading-relaxed">
-                Votre mot de passe a été modifié avec succès.
-                Vous pouvez maintenant vous connecter avec votre nouveau mot de passe.
+                {t('pages.auth.reset_password.votre_mot_de_passe_a_ete_modifie_avec_succes')}
               </p>
               <div className="mt-8">
                 <button
                   onClick={() => navigate('/connexion', { replace: true })}
                   className="inline-flex items-center gap-2 rounded-lg bg-[var(--accent)] px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[var(--accent-hover)]"
                 >
-                  Se connecter
+                  {t('pages.auth.reset_password.se_connecter')}
                   <ArrowLeft className="h-4 w-4 rotate-180" />
                 </button>
               </div>
@@ -197,6 +198,7 @@ export default function ResetPassword() {
   return (
     <div className="relative min-h-screen bg-[var(--surface)] overflow-hidden">
       <TopDecorativeBand />
+      <div className="absolute end-4 top-4 z-20"><LanguageSwitcher /></div>
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(184,86,46,0.03),transparent_60%)] pointer-events-none" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(26,58,60,0.04),transparent_50%)] pointer-events-none" />
 
@@ -222,7 +224,7 @@ export default function ResetPassword() {
             transition={{ delay: 0.4, duration: 0.5 }}
             className="font-fraunces text-2xl font-semibold text-[var(--text-primary)] mt-6"
           >
-            Nouveau mot de passe
+            {t('pages.auth.reset_password.nouveau_mot_de_passe')}
           </motion.h2>
           <motion.p
             initial={{ opacity: 0 }}
@@ -230,7 +232,7 @@ export default function ResetPassword() {
             transition={{ delay: 0.5, duration: 0.6 }}
             className="text-sm text-[var(--text-secondary)] mt-2 text-center max-w-xs"
           >
-            Choisissez un mot de passe sécurisé d'au moins 6 caractères.
+            {t('pages.auth.reset_password.choisissez_un_mot_de_passe_securise_d_au_moins')}
           </motion.p>
         </motion.div>
 
@@ -250,10 +252,10 @@ export default function ResetPassword() {
               <div className="px-10 pt-4 pb-6">
                 <motion.div variants={fadeUp}>
                   <h1 className="font-fraunces text-2xl font-semibold text-[var(--text-primary)]">
-                    Réinitialiser
+                    {t('pages.auth.reset_password.reinitialiser')}
                   </h1>
                   <p className="mt-1.5 text-sm text-[var(--text-secondary)]">
-                    Pour <strong className="text-[var(--text-primary)]">{email}</strong>
+                    {t('pages.auth.reset_password.for')}{' '}<strong className="text-[var(--text-primary)]">{email}</strong>
                   </p>
                 </motion.div>
 
@@ -274,8 +276,8 @@ export default function ResetPassword() {
                     <Input
                       id="reset-password"
                       type="password"
-                      label="Nouveau mot de passe"
-                      placeholder="Au moins 6 caractères"
+                      label={t('pages.auth.reset_password.nouveau_mot_de_passe')}
+                      placeholder={t('pages.auth.reset_password.au_moins_6_caracteres')}
                       value={form.password}
                       onChange={setField('password')}
                       error={errors.password}
@@ -289,8 +291,8 @@ export default function ResetPassword() {
                     <Input
                       id="reset-password-confirm"
                       type="password"
-                      label="Confirmer le mot de passe"
-                      placeholder="Répétez le mot de passe"
+                      label={t('pages.auth.reset_password.confirmer_le_mot_de_passe')}
+                      placeholder={t('pages.auth.reset_password.repetez_le_mot_de_passe')}
                       value={form.password_confirmation}
                       onChange={setField('password_confirmation')}
                       error={errors.password_confirmation}
@@ -310,7 +312,7 @@ export default function ResetPassword() {
                     >
                       {!loading && (
                         <span className="flex items-center gap-2">
-                          Réinitialiser
+                          {t('pages.auth.reset_password.reinitialiser')}
                           <ArrowLeft className="h-4 w-4 rotate-180" />
                         </span>
                       )}
@@ -325,7 +327,7 @@ export default function ResetPassword() {
                     to="/connexion"
                     className="font-medium text-[var(--accent)] transition-colors hover:text-[var(--accent-hover)]"
                   >
-                    Retour à la connexion
+                    {t('pages.auth.reset_password.retour_a_la_connexion')}
                   </Link>
                 </p>
               </div>

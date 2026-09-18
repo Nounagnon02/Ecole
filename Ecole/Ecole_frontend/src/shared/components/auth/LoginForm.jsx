@@ -20,6 +20,7 @@ import useAuthStore from '@/shared/stores/auth-store';
 import { ROLE_REDIRECT_MAP, FALLBACK_REDIRECT } from '@/features/roles/route-config';
 import { Button, Input } from '@/shared/components/ui';
 import { useTranslation } from '@/shared/i18n';
+import LanguageSwitcher from '@/shared/components/layout/LanguageSwitcher';
 
 /* ─── Animation variants ────────────────────────────────────────────── */
 const fadeUp = {
@@ -321,6 +322,7 @@ export default function LoginForm() {
     return (
       <div className="relative min-h-screen bg-[var(--surface)] overflow-hidden">
         <TopDecorativeBand />
+        <div className="absolute end-4 top-4 z-20"><LanguageSwitcher /></div>
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(184,86,46,0.03),transparent_60%)] pointer-events-none" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(26,58,60,0.04),transparent_50%)] pointer-events-none" />
 
@@ -414,6 +416,7 @@ export default function LoginForm() {
   return (
     <div className="relative min-h-screen bg-[var(--surface)] overflow-hidden">
       <TopDecorativeBand />
+      <div className="absolute end-4 top-4 z-20"><LanguageSwitcher /></div>
 
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(184,86,46,0.03),transparent_60%)] pointer-events-none" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(26,58,60,0.04),transparent_50%)] pointer-events-none" />
@@ -522,10 +525,10 @@ export default function LoginForm() {
 
             <div className="grid grid-cols-4 gap-6">
               {[
-                { num: 'I', label: 'Eleves', sub: 'Gestion des notes' },
-                { num: 'II', label: t('common.payments'), sub: 'Tresorerie' },
-                { num: 'III', label: 'Communication', sub: 'Messagerie' },
-                { num: 'IV', label: 'Planning', sub: t('auth.login_form.emploi_du_temps') },
+                { num: 'I', label: t('auth.login_form.eleves'), sub: t('auth.login_form.gestion_des_notes') },
+                { num: 'II', label: t('common.payments'), sub: t('auth.login_form.tresorerie') },
+                { num: 'III', label: t('auth.login_form.communication'), sub: t('nav.messagerie') },
+                { num: 'IV', label: t('auth.login_form.planning'), sub: t('auth.login_form.emploi_du_temps') },
               ].map(({ num, label, sub }) => (
                 <div key={num} className="group cursor-default border-l border-[var(--border-light)] pl-3 transition-all duration-300 hover:border-[var(--accent)] hover:pl-4">
                   <span className="font-fraunces text-[11px] font-semibold tracking-[0.05em] text-[var(--accent)] block">{num}</span>
@@ -675,7 +678,7 @@ export default function LoginForm() {
               transition={{ delay: 0.7, duration: 0.5 }}
               className="mt-6 text-center text-[11px] text-[var(--text-tertiary)]/40"
             >
-              &copy; {new Date().getFullYear()} Ecole. Tous droits reserves.
+              &copy; {new Date().getFullYear()} {t('auth.login_form.droits')}
             </motion.p>
           </motion.div>
         </div>

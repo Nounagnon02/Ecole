@@ -22,18 +22,16 @@ import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
 import { useTranslation } from '@/shared/i18n';
 
-const getTypeLabel = (type) => {
-  switch (type) {
-    case 'absence': return 'Absence';
-    case 'retard': return 'Retard';
-    case 'maladie': return 'Maladie';
-    case 'famille': return 'Familial';
-    default: return type || 'Autres';
-  }
+const TYPE_LABEL_KEYS = {
+  absence: 'pages.censeur.absences.absence',
+  retard: 'pages.censeur.absences.retard',
+  maladie: 'pages.censeur.absences.maladie',
+  famille: 'pages.censeur.absences.familial',
 };
 
 export default function AbsencesPage() {
   const { t } = useTranslation();
+  const getTypeLabel = (type) => (TYPE_LABEL_KEYS[type] ? t(TYPE_LABEL_KEYS[type]) : (type || t('pages.censeur.absences.autres')));
   const [search, setSearch] = useState('');
   const [filterStatut, setFilterStatut] = useState('');
 

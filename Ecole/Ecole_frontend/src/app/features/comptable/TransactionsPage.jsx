@@ -32,20 +32,18 @@ const getStatutColor = (statut) => {
   }
 };
 
-const getStatutLabel = (statut) => {
-  switch (statut) {
-    case 'paye':
-    case 'payee': return 'Payée';
-    case 'en_attente': return 'En attente';
-    case 'partiel': return 'Partielle';
-    case 'echec': return 'Échec';
-    case 'rembourse': return 'Remboursé';
-    default: return statut || '—';
-  }
+const STATUT_LABEL_KEYS = {
+  paye: 'pages.comptable.transactions.payee',
+  payee: 'pages.comptable.transactions.payee',
+  en_attente: 'common.status.pending',
+  partiel: 'pages.comptable.transactions.partielle',
+  echec: 'pages.comptable.transactions.echec',
+  rembourse: 'pages.comptable.transactions.rembourse',
 };
 
 export default function TransactionsPage() {
   const { t } = useTranslation();
+  const statutLabel = (v) => (STATUT_LABEL_KEYS[v] ? t(STATUT_LABEL_KEYS[v]) : (v || '—'));
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState('');
   const [filterStatut, setFilterStatut] = useState('');
@@ -229,7 +227,7 @@ export default function TransactionsPage() {
                     </span>
                   </td>
                   <td className="py-3 pr-4">
-                    <Badge variant={getStatutColor(trx.statut)} size="sm">{getStatutLabel(trx.statut)}</Badge>
+                    <Badge variant={getStatutColor(trx.statut)} size="sm">{statutLabel(trx.statut)}</Badge>
                   </td>
                   <td className="py-3 text-right">
                     <Button variant="ghost" size="sm" icon={<Eye />} />

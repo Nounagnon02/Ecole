@@ -33,20 +33,18 @@ const getStatutVariant = (statut) => {
   }
 };
 
-const getStatutLabel = (statut) => {
-  switch (statut) {
-    case 'paye':
-    case 'payee': return 'Payée';
-    case 'en_attente': return 'En attente';
-    case 'partiel': return 'Partielle';
-    case 'impaye':
-    case 'echec': return 'Impayée';
-    default: return statut || '—';
-  }
+const STATUT_LABEL_KEYS = {
+  paye: 'pages.comptable.factures.payee',
+  payee: 'pages.comptable.factures.payee',
+  en_attente: 'common.status.pending',
+  partiel: 'pages.comptable.factures.partielle',
+  impaye: 'pages.comptable.factures.impayee',
+  echec: 'pages.comptable.factures.impayee',
 };
 
 export default function FacturesPage() {
   const { t } = useTranslation();
+  const statutLabel = (v) => (STATUT_LABEL_KEYS[v] ? t(STATUT_LABEL_KEYS[v]) : (v || '—'));
   const [search, setSearch] = useState('');
   const [filterStatut, setFilterStatut] = useState('');
 
@@ -200,7 +198,7 @@ export default function FacturesPage() {
                   </td>
                   <td className="py-3 pr-4">
                     <Badge variant={getStatutVariant(fac.statut)} size="sm">
-                      {getStatutLabel(fac.statut)}
+                      {statutLabel(fac.statut)}
                     </Badge>
                   </td>
                   <td className="py-3 text-right">

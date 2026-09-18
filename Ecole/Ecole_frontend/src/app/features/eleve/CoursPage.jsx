@@ -76,12 +76,12 @@ export default function CoursPage() {
   const getStatusLabel = (status) => {
     switch (status) {
       case 'termine':
-      case 'terminé': return 'Terminé';
+      case 'terminé': return t('pages.bibliothecaire.emprunts.termine');
       case 'prevue':
-      case 'a_venir': return 'À venir';
-      case 'rendu': return 'Rendu';
+      case 'a_venir': return t('pages.eleve.cours.a_venir');
+      case 'rendu': return t('pages.eleve.cours.rendu');
       case 'a_rendre':
-      case 'en_retard': return 'À rendre';
+      case 'en_retard': return t('pages.eleve.cours.a_rendre');
       default: return status;
     }
   };

@@ -55,18 +55,18 @@ export default function TachesPage() {
   const requete = useApiQuery(['universite-devoirs'], '/universite/devoirs');
 
   const taches = useMemo(
-    () => (unwrapList(requete.data) ?? []).map((t) => ({
-          ...t,
-          titre: t.titre || t.intitule || 'Tâche',
-          cours: t.cours?.intitule || t.cours?.nom || t.cours_nom || 'Cours',
-          type: t.type || 'devoir',
-          dateLimite: t.date_limite || t.dateLimite || t.date_fin || null,
-          priorite: t.priorite || 'moyenne',
-          statut: t.statut || 'en_cours',
-          soumissions: t.soumissions || t.soumissions_count || 0,
-          totalEtudiants: t.total_etudiants || t.etudiants_count || t.totalEtudiants || 0,
+    () => (unwrapList(requete.data) ?? []).map((item) => ({
+          ...item,
+          titre: item.titre || item.intitule || t('pages.universite.taches.tache'),
+          cours: item.cours?.intitule || item.cours?.nom || item.cours_nom || t('common.courses'),
+          type: item.type || 'devoir',
+          dateLimite: item.date_limite || item.dateLimite || item.date_fin || null,
+          priorite: item.priorite || 'moyenne',
+          statut: item.statut || 'en_cours',
+          soumissions: item.soumissions || item.soumissions_count || 0,
+          totalEtudiants: item.total_etudiants || item.etudiants_count || item.totalEtudiants || 0,
         })),
-    [requete.data],
+    [requete.data, t],
   );
   const loading = requete.isPending;
   const error = requete.isError ? (requete.error?.message ?? t('common.load_error')) : null;
@@ -90,10 +90,10 @@ export default function TachesPage() {
   const daysUntilDeadline = (date) => {
     if (!date) return '—';
     const diff = Math.ceil((new Date(date) - new Date()) / 86400000);
-    if (diff < 0) return 'Dépassée';
-    if (diff === 0) return 'Aujourd\'hui';
-    if (diff === 1) return 'Demain';
-    return `Dans ${diff} jours`;
+    if (diff < 0) return t('pages.universite.taches.depassee');
+    if (diff === 0) return t('pages.universite.taches.aujourdhui');
+    if (diff === 1) return t('pages.universite.taches.demain');
+    return t('pages.universite.taches.dans_x_jours', { n: diff });
   };
 
   if (loading) {
@@ -167,48 +167,48 @@ export default function TachesPage() {
             </div>
           </Card>
         )}
-        {filtered.map((t) => {
-          const isOverdue = t.dateLimite && new Date(t.dateLimite) < new Date() && t.statut !== 'termine';
+        {filtered.map((tache) => {
+          const isOverdue = tache.dateLimite && new Date(tache.dateLimite) < new Date() && tache.statut !== 'termine';
           return (
-            <Card key={t.id} hover>
+            <Card key={tache.id} hover>
               <div className="flex items-start gap-4">
                 <div className={cn(
                   'h-10 w-10 rounded-xl flex items-center justify-center shrink-0',
-                  t.statut === 'termine' ? 'bg-emerald-100 dark:bg-emerald-900/20' :
+                  tache.statut === 'termine' ? 'bg-emerald-100 dark:bg-emerald-900/20' :
                   isOverdue ? 'bg-red-100 dark:bg-red-900/20' :
                   'bg-amber-100 dark:bg-amber-900/20'
                 )}>
-                  {t.statut === 'termine'
+                  {tache.statut === 'termine'
                     ? <CheckCircle className="h-5 w-5 text-emerald-500" />
-                    : getTypeIcon(t.type)}
+                    : getTypeIcon(tache.type)}
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-sm font-semibold text-neutral-900 dark:text-white">{t.titre}</span>
-                    <Badge variant={t.statut === 'termine' ? 'primary' : 'warning'} size="sm">
-                      {t.statut === 'termine' ? 'Terminée' : 'En cours'}
+                    <span className="text-sm font-semibold text-neutral-900 dark:text-white">{tache.titre}</span>
+                    <Badge variant={tache.statut === 'termine' ? 'primary' : 'warning'} size="sm">
+                      {tache.statut === 'termine' ? t('pages.universite.taches.terminee') : t('common.status.in_progress')}
                     </Badge>
-                    <Badge variant={PRIORITE_CONFIG[t.priorite]?.variant || 'outline'} size="sm">
-                      {PRIORITE_CONFIG[t.priorite]?.label || t.priorite}
+                    <Badge variant={PRIORITE_CONFIG[tache.priorite]?.variant || 'outline'} size="sm">
+                      {PRIORITE_CONFIG[tache.priorite]?.label || tache.priorite}
                     </Badge>
-                    <Badge variant="outline" size="sm" className="capitalize">{t.type}</Badge>
+                    <Badge variant="outline" size="sm" className="capitalize">{tache.type}</Badge>
                   </div>
                   <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-neutral-500">
-                    <span className="flex items-center gap-1"><FileText className="h-3 w-3" /> {t.cours}</span>
+                    <span className="flex items-center gap-1"><FileText className="h-3 w-3" /> {tache.cours}</span>
                     <span className={cn(
                       'flex items-center gap-1',
                       isOverdue ? 'text-red-600 font-medium' : ''
                     )}>
                       <Calendar className="h-3 w-3" />
-                      {daysUntilDeadline(t.dateLimite)}
+                      {daysUntilDeadline(tache.dateLimite)}
                     </span>
                     <span className="flex items-center gap-1">
                       <Users className="h-3 w-3" />
-                      {t.soumissions}/{t.totalEtudiants} soumissions
+                      {tache.soumissions}/{tache.totalEtudiants} soumissions
                     </span>
                   </div>
                 </div>
-                <Button variant="outline" size="sm">Gérer</Button>
+                <Button variant="outline" size="sm">{t('common.manage')}</Button>
               </div>
             </Card>
           );
