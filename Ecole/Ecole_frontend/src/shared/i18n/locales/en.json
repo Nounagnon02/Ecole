@@ -87,7 +87,10 @@
     "time": "Time",
     "teachers": "Teachers",
     "students": "Students",
-    "subject": "Subject"
+    "subject": "Subject",
+    "load_error": "Loading error",
+    "user": "User",
+    "payments": "Payments"
   },
   "auth": {
     "login": "Log in",
@@ -113,7 +116,12 @@
       "email_ou_identifiant": "Email or username",
       "vous_exemple_com_ou_eleve_2024_001": "you@example.com or ELEVE-2024-001",
       "se_connecter": "Log in",
-      "besoin_d_aide_contactez_votre_administrateur": "Need help? Contact your administrator"
+      "besoin_d_aide_contactez_votre_administrateur": "Need help? Contact your administrator",
+      "veuillez_entrer_votre_identifiant_ou_email": "Please enter your username or email",
+      "veuillez_entrer_votre_mot_de_passe": "Please enter your password",
+      "erreur_de_connexion_veuillez_reessayer": "Login error. Please try again.",
+      "erreur_lors_de_la_selection_de_l_ecole": "Error while selecting the school.",
+      "emploi_du_temps": "Schedule"
     }
   },
   "eleve": {
@@ -670,7 +678,13 @@
         "mot_de_passe_optionnel": "Password (optional)",
         "defaut_genere_aleatoirement": "Default: randomly generated",
         "comptes_qui_seront_crees_automatiquement": "🔑 Accounts that will be created automatically:",
-        "directeur_directeur_maternelle_primaire": "Principal, Nursery/Primary/Secondary Principal, Deputy Head, Secretary, Accountant, Supervisor, Nurse, Librarian"
+        "directeur_directeur_maternelle_primaire": "Principal, Nursery/Primary/Secondary Principal, Deputy Head, Secretary, Accountant, Supervisor, Nurse, Librarian",
+        "erreur_de_creation": "Creation error",
+        "erreur_de_provisionnement": "Provisioning error",
+        "ecole_creee_avec_succes": "School created successfully!",
+        "provisionner_une_ecole": "Provision a school",
+        "tous_les_comptes_ont_ete_generes_automatiquement": "All accounts were generated automatically.",
+        "cree_une_ecole_avec_tous_ses_comptes": "Creates a school with all its user accounts at once"
       },
       "plans": {
         "title": "Subscription Plans",
@@ -679,14 +693,17 @@
         "aucun_plan_disponible": "No plan available",
         "populaire": "Popular",
         "mois": "/month",
-        "aucune_fonctionnalite_listee": "No features listed"
+        "aucune_fonctionnalite_listee": "No features listed",
+        "gratuit": "Free"
       },
       "modules": {
         "title": "Modules",
         "subtitle": "Feature marketplace",
         "nouveau_module": "New module",
         "aucun_module_disponible": "No module available",
-        "core": "Core"
+        "core": "Core",
+        "active": "Enabled",
+        "desactive": "Disabled"
       },
       "utilisateurs": {
         "title": "Users",
@@ -730,7 +747,10 @@
         "activite_recente": "Recent activity",
         "aucune_activite_recente": "No recent activity",
         "taux_de_presence": "Attendance rate",
-        "cours_programmes": "Scheduled courses"
+        "cours_programmes": "Scheduled courses",
+        "eleves": "Students",
+        "parents": "Parents",
+        "personnel": "Staff"
       },
       "white_label": {
         "title": "White Label",
@@ -754,7 +774,9 @@
         "apercu": "Preview",
         "rendu_en_direct": "Live preview",
         "web": "Web",
-        "mobile": "Mobile"
+        "mobile": "Mobile",
+        "enregistrement": "Saving...",
+        "enregistre": "Saved!"
       },
       "configuration": {
         "title": "Configuration",
@@ -773,7 +795,10 @@
         "categories": "Categories",
         "rechercher_un_titre_ou_un_auteur": "Search for a title or an author...",
         "aucun_ouvrage_trouve": "No book found",
-        "emprunter": "Borrow"
+        "emprunter": "Borrow",
+        "inconnu": "Unknown",
+        "disponible": "Available",
+        "epuise": "Out of stock"
       },
       "emprunts": {
         "title": "Loans",
@@ -785,7 +810,8 @@
         "rechercher_un_eleve_ou_un_ouvrage": "Search for a student or a book...",
         "termine": "Completed",
         "aucun_emprunt_trouve": "No loan found",
-        "marquer_retour": "Mark as returned"
+        "marquer_retour": "Mark as returned",
+        "ouvrage": "Book"
       }
     },
     "censeur": {
@@ -840,7 +866,8 @@
         "publier": "Publish",
         "aucune_communication_trouvee": "No communication found",
         "epingle": "Pinned",
-        "partager": "Share"
+        "partager": "Share",
+        "la_publication_a_echoue": "Publishing failed."
       }
     },
     "comptable": {
@@ -859,7 +886,8 @@
         "client": "Customer",
         "aucune_facture_trouvee": "No invoice found",
         "envoyer": "Send",
-        "imprimer": "Print"
+        "imprimer": "Print",
+        "frais": "Fees"
       },
       "transactions": {
         "title": "Transactions",
@@ -878,7 +906,8 @@
         "echec": "Failed",
         "reference": "Reference",
         "methode": "Method",
-        "aucune_transaction_trouvee": "No transaction found"
+        "aucune_transaction_trouvee": "No transaction found",
+        "paiement": "Payment"
       }
     },
     "eleve": {
@@ -896,7 +925,13 @@
         "subtitle": "Manage all enrolled students",
         "nouvel_eleve": "New Student",
         "plus_d_actions": "More actions",
-        "retirer_des_effectifs": "Remove from the roll"
+        "retirer_des_effectifs": "Remove from the roll",
+        "impossible_de_retirer_l_eleve": "Unable to remove the student",
+        "total_eleves": "Total Students",
+        "actifs": "Active",
+        "inactifs": "Inactive",
+        "moyenne_generale": "Overall Average",
+        "impossible_de_recuperer_les_eleves": "Unable to retrieve the students"
       }
     },
     "emploi_du_temps": {
@@ -922,7 +957,11 @@
         "absences": "Absences",
         "appreciation": "Remarks",
         "moyenne": "Average:",
-        "absences_2": "Absences:"
+        "absences_2": "Absences:",
+        "college": "Middle school",
+        "excellent": "Excellent",
+        "passable": "Fair",
+        "insuffisant": "Insufficient"
       }
     },
     "infirmier": {
@@ -965,7 +1004,12 @@
         "effets_secondaires": "Side effects",
         "aucune_vaccination_enregistree": "No vaccination recorded",
         "rappel": "Reminder",
-        "effets_secondaires_signales": "(side effects reported)"
+        "effets_secondaires_signales": "(side effects reported)",
+        "nouveau_dossier": "New record",
+        "nouveau_vaccin": "New vaccine",
+        "aucune": "None",
+        "a_jour": "Up to date",
+        "non_a_jour": "Not up to date"
       },
       "vaccinations": {
         "title": "Vaccination Record",
@@ -1009,7 +1053,12 @@
         "bulletins_verrouilles": "Locked report cards",
         "selectionnez_une_classe_pour_consulter_les_2": "Select a class to view the report cards",
         "aucun_bulletin_verrouille_recalculez_l": "No locked report card. Recalculate the snapshot, then lock the report card.",
-        "mention": "Honors"
+        "mention": "Honors",
+        "impossible_de_recuperer_les_notes": "Unable to retrieve the grades",
+        "deverrouiller": "Unlock",
+        "verrouiller": "Lock",
+        "publie": "Published",
+        "verrouille": "Locked"
       }
     },
     "paiements": {
@@ -1035,7 +1084,11 @@
         "echeances": "Due dates",
         "action": "Action",
         "aucune_echeance": "No due date",
-        "payer": "Pay"
+        "payer": "Pay",
+        "url_de_paiement_invalide": "Invalid payment URL",
+        "impossible_d_initialiser_le_paiement": "Unable to initialize the payment",
+        "erreur_lors_de_l_initialisation_du_paiement": "Error while initializing the payment",
+        "impossible_de_recuperer_les_paiements": "Unable to retrieve the payments"
       },
       "callback": {
         "status": {
@@ -1110,7 +1163,33 @@
         "fuseau_horaire": "Time zone",
         "format_de_date": "Date format",
         "devise": "Currency",
-        "format_d_affichage_des_montants": "Amount display format"
+        "format_d_affichage_des_montants": "Amount display format",
+        "profil_mis_a_jour": "Profile updated",
+        "erreur_lors_de_la_mise_a_jour": "Update error",
+        "image_trop_lourde_max_2_mo": "Image too large (max 2 MB)",
+        "notifications_push": "Push notifications",
+        "recevoir_les_notifications_sur_votre_appareil": "Receive notifications on your device",
+        "recevoir_un_resume_par_email": "Receive a summary by email",
+        "communications_importantes": "Important communications",
+        "alertes_de_la_direction": "Alerts from the administration",
+        "notes_et_evaluations": "Grades and assessments",
+        "quand_une_note_est_publiee": "When a grade is published",
+        "confirmation_de_paiement_et_rappels": "Payment confirmation and reminders",
+        "emploi_du_temps": "Schedule",
+        "changements_dans_l_emploi_du_temps": "Changes to the timetable",
+        "tous_les_champs_sont_requis": "All fields are required.",
+        "le_nouveau_mot_de_passe_doit_faire_au_moins_8": "The new password must be at least 8 characters long.",
+        "les_mots_de_passe_ne_correspondent_pas": "Passwords do not match.",
+        "mot_de_passe_mis_a_jour_avec_succes": "Password updated successfully.",
+        "erreur_lors_du_changement_de_mot_de_passe": "Error while changing the password.",
+        "mise_a_jour": "Updating...",
+        "mettre_a_jour": "Update",
+        "clair": "Light",
+        "theme_clair": "Light theme",
+        "sombre": "Dark",
+        "theme_sombre": "Dark theme",
+        "systeme": "System",
+        "suit_votre_appareil": "Follows your device"
       }
     },
     "parent": {
@@ -1123,7 +1202,17 @@
         "frais_scolarite": "Tuition Fees",
         "aucune_note_disponible": "No grade available",
         "aucune_absence": "No absence",
-        "frais_de_scolarite": "Tuition fees"
+        "frais_de_scolarite": "Tuition fees",
+        "enfant": "Child",
+        "notes": "Grades",
+        "emploi_du_temps": "Schedule",
+        "evaluation": "Assessment",
+        "absence": "Absence",
+        "justifiee": "Justified",
+        "non_justifiee": "Unjustified",
+        "sans_motif": "No reason given",
+        "partiel": "Partial",
+        "frais": "Fees"
       }
     },
     "secretaire": {
@@ -1142,7 +1231,8 @@
         "expediteur": "Sender",
         "destinataire": "Recipient",
         "aucun_courrier_trouve": "No mail found",
-        "telecharger": "Download"
+        "telecharger": "Download",
+        "sans_objet": "No subject"
       },
       "inscriptions": {
         "title": "Enrollments",
@@ -1153,7 +1243,9 @@
         "complet": "Complete",
         "incomplet": "Incomplete",
         "aucune_inscription_trouvee": "No enrollment found",
-        "completer": "Complete"
+        "completer": "Complete",
+        "dossier_complet": "Complete file",
+        "dossier_incomplet": "Incomplete file"
       },
       "planning": {
         "title": "Planning",
@@ -1161,7 +1253,9 @@
         "nouvel_evenement": "New event",
         "planifies": "Scheduled",
         "rechercher_un_evenement": "Search for an event...",
-        "aucun_evenement_trouve": "No event found"
+        "aucun_evenement_trouve": "No event found",
+        "planifie": "Scheduled",
+        "termine": "Completed"
       }
     },
     "surveillant": {
@@ -1174,7 +1268,8 @@
         "faible": "Low",
         "grave": "Serious",
         "nouvel_incident": "New incident",
-        "aucun_incident_trouve": "No incident found"
+        "aucun_incident_trouve": "No incident found",
+        "non_definie": "Not defined"
       },
       "presences": {
         "title": "Attendance",
@@ -1193,7 +1288,8 @@
         "subtitle": "Planning and management of university courses",
         "ajouter_un_cours": "Add a course",
         "total_cours": "Total Courses",
-        "credits": "Credits"
+        "credits": "Credits",
+        "termine": "Completed"
       },
       "departements": {
         "title": "Departments",
@@ -1249,7 +1345,8 @@
         "title": "My Courses",
         "subtitle": "Courses assigned to you",
         "progression": "Progress",
-        "notes": "Grades"
+        "notes": "Grades",
+        "termine": "Completed"
       },
       "notes": {
         "title": "Grades",
@@ -1270,7 +1367,10 @@
         "nouvel_evenement": "New event",
         "planifies": "Scheduled",
         "rechercher_un_evenement": "Search for an event...",
-        "aucun_evenement_trouve": "No event found"
+        "aucun_evenement_trouve": "No event found",
+        "evenement": "Event",
+        "termine": "Completed",
+        "planifie": "Scheduled"
       },
       "taches": {
         "title": "Tasks",
@@ -1287,7 +1387,15 @@
     "affectations": {
       "affectations": {
         "title": "Teacher assignments",
-        "subtitle": "Assign classes, tracks and subjects to each teacher"
+        "subtitle": "Assign classes, tracks and subjects to each teacher",
+        "l_affectation_a_ete_refusee": "The assignment was refused",
+        "le_retrait_a_echoue": "The removal failed",
+        "enseignant": "Teacher",
+        "choisir_une_serie": "Choose a track",
+        "choisissez_d_abord_une_classe": "Choose a class first",
+        "choisir_une_matiere": "Choose a subject",
+        "choisissez_d_abord_une_serie": "Choose a track first",
+        "l_enseignant": "the teacher"
       }
     },
     "ai": {
@@ -1376,7 +1484,26 @@
         "aucun_message_pour_cette_conversation": "No messages in this conversation",
         "ecrivez_votre_message": "Write your message...",
         "envoyer": "Send",
-        "selectionnez_une_conversation": "Select a conversation"
+        "selectionnez_une_conversation": "Select a conversation",
+        "conversation": "Conversation",
+        "boite": "Inbox",
+        "favoris": "Starred",
+        "archive": "Archive",
+        "aucun_message": "No message"
+      }
+    },
+    "auth": {
+      "forgot_password": {
+        "veuillez_entrer_votre_adresse_email": "Please enter your email address",
+        "adresse_email_invalide": "Invalid email address",
+        "erreur_lors_de_l_envoi_veuillez_reessayer": "Error while sending. Please try again."
+      },
+      "reset_password": {
+        "veuillez_entrer_un_mot_de_passe": "Please enter a password",
+        "le_mot_de_passe_doit_contenir_au_moins_6": "The password must contain at least 6 characters",
+        "les_mots_de_passe_ne_correspondent_pas": "Passwords do not match",
+        "lien_de_reinitialisation_invalide_ou_incomplet": "Invalid or incomplete reset link.",
+        "erreur_lors_de_la_reinitialisation_veuillez": "Error while resetting. Please try again."
       }
     }
   },
@@ -1384,11 +1511,14 @@
     "aller_au_contenu_principal": "Skip to main content"
   },
   "sidebar": {
-    "navigation_principale": "Main navigation"
+    "navigation_principale": "Main navigation",
+    "etendre": "Expand",
+    "reduire": "Collapse"
   },
   "components": {
     "breadcrumb": {
-      "fil_d_ariane": "Breadcrumb"
+      "fil_d_ariane": "Breadcrumb",
+      "accueil": "Home"
     },
     "command_palette": {
       "palette_de_commandes": "Command palette",
@@ -1404,7 +1534,8 @@
       "page_precedente": "Previous page",
       "page_suivante": "Next page",
       "rechercher": "Search…",
-      "rechercher_dans_le_tableau": "Search the table"
+      "rechercher_dans_le_tableau": "Search the table",
+      "l_element": "the item"
     },
     "refresh_button": {
       "actualiser_les_donnees": "Refresh data",
@@ -1415,6 +1546,13 @@
       "chargement_en_cours": "Loading…",
       "contenu_en_chargement": "Content loading",
       "tableau_en_chargement": "Table loading"
+    },
+    "avatar": {
+      "avatar": "Avatar"
+    },
+    "input": {
+      "masquer_le_mot_de_passe": "Hide password",
+      "afficher_le_mot_de_passe": "Show password"
     }
   }
 }

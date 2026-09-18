@@ -277,7 +277,7 @@ export default function NotesPage() {
           <Card padding={false}>
             {error && (
               <div className="p-6 text-center text-sm text-red-500">
-                Erreur : {error.message ?? 'Impossible de récupérer les notes'}
+                Erreur : {error.message ?? t('pages.notes.notes.impossible_de_recuperer_les_notes')}
               </div>
             )}
             <Table>
@@ -349,7 +349,7 @@ export default function NotesPage() {
                             ? 'text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-500/10'
                             : 'text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800'
                         )}
-                        title={n.locked ? 'Déverrouiller' : 'Verrouiller'}
+                        title={n.locked ? t('pages.notes.notes.deverrouiller') : t('pages.notes.notes.verrouiller')}
                       >
                         {n.locked ? <Unlock className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
                       </button>
@@ -641,7 +641,7 @@ export default function NotesPage() {
                       </Table.Cell>
                       <Table.Cell className="text-right">
                         <Badge variant={b.publie ? 'success' : 'neutral'} size="sm">
-                          {b.publie ? 'Publié' : 'Verrouillé'}
+                          {b.publie ? t('pages.notes.notes.publie') : t('pages.notes.notes.verrouille')}
                         </Badge>
                       </Table.Cell>
                     </Table.Row>

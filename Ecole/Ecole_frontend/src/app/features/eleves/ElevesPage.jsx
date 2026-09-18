@@ -50,7 +50,7 @@ export default function ElevesPage() {
       await apiClient.post(`/eleves/${eleve.id}/deactivate`);
       queryClient.invalidateQueries({ queryKey: ['eleves'] });
     } catch (e) {
-      toast.error(e?.response?.data?.message ?? 'Impossible de retirer l\'élève');
+      toast.error(e?.response?.data?.message ?? t('pages.eleves.eleves.impossible_de_retirer_l_eleve'));
     }
   };
 
@@ -76,10 +76,10 @@ export default function ElevesPage() {
     : '—';
 
   const STATS = [
-    { title: 'Total Élèves', value: String(eleves.length), icon: Users, color: 'primary' },
-    { title: 'Actifs', value: String(actifs), icon: UserCheck, color: 'emerald' },
-    { title: 'Inactifs', value: String(inactifs), icon: UserX, color: 'amber' },
-    { title: 'Moyenne Générale', value: `${moyenneGenerale}/20`, icon: GraduationCap, color: 'sky' },
+    { title: t('pages.eleves.eleves.total_eleves'), value: String(eleves.length), icon: Users, color: 'primary' },
+    { title: t('pages.eleves.eleves.actifs'), value: String(actifs), icon: UserCheck, color: 'emerald' },
+    { title: t('pages.eleves.eleves.inactifs'), value: String(inactifs), icon: UserX, color: 'amber' },
+    { title: t('pages.eleves.eleves.moyenne_generale'), value: `${moyenneGenerale}/20`, icon: GraduationCap, color: 'sky' },
   ];
 
   return (
@@ -130,7 +130,7 @@ export default function ElevesPage() {
       <Card padding={false}>
         {error && (
           <div className="p-6 text-center text-sm text-red-500">
-            Erreur de chargement : {error.message ?? 'Impossible de récupérer les élèves'}
+            Erreur de chargement : {error.message ?? t('pages.eleves.eleves.impossible_de_recuperer_les_eleves')}
           </div>
         )}
         <Table>

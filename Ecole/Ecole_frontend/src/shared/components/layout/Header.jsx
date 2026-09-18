@@ -269,7 +269,7 @@ export default function Header() {
             </div>
             <div className="hidden text-left lg:block">
               <p className="text-sm font-medium leading-tight text-[var(--text-primary)]">
-                {user?.name || 'Utilisateur'}
+                {user?.name || t('common.user')}
               </p>
               <p className="text-xs leading-tight text-[var(--text-tertiary)]">
                 {ROLE_LABELS[user?.role] || user?.role || '—'}
@@ -293,7 +293,7 @@ export default function Header() {
                 className="absolute right-0 top-full mt-2 w-56 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface-raised)] shadow-[var(--shadow-4)]"
               >
                 <div className="border-b border-[var(--border-light)] px-4 py-3">
-                  <p className="text-sm font-medium text-[var(--text-primary)]">{user?.nom || 'Utilisateur'}</p>
+                  <p className="text-sm font-medium text-[var(--text-primary)]">{user?.nom || t('common.user')}</p>
                   <p className="text-xs text-[var(--text-tertiary)]">{user?.email || ''}</p>
                 </div>
 

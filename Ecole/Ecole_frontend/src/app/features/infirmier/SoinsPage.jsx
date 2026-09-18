@@ -49,7 +49,7 @@ export default function SoinsPage() {
 
   const soins = useMemo(() => unwrapList(requete.data) ?? [], [requete.data]);
   const loading = requete.isPending;
-  const error = requete.isError ? (requete.error?.message ?? 'Erreur de chargement') : null;
+  const error = requete.isError ? (requete.error?.message ?? t('common.load_error')) : null;
 
   const stats = useMemo(() => {
     const today = new Date().toDateString();
@@ -167,9 +167,9 @@ export default function SoinsPage() {
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-sm font-semibold text-neutral-900 dark:text-white">{soin.motif || 'Consultation'}</span>
+                  <span className="text-sm font-semibold text-neutral-900 dark:text-white">{soin.motif || t('pages.infirmier.soins.consultation')}</span>
                   <Badge variant={soin.traitement ? 'primary' : 'warning'} size="sm">
-                    {soin.traitement ? 'Traité' : 'En cours'}
+                    {soin.traitement ? t('pages.infirmier.soins.traite') : t('common.status.in_progress')}
                   </Badge>
                   <Badge variant={soin.urgence ? 'danger' : 'outline'} size="sm">
                     {getTypeLabel(soin.urgence)}

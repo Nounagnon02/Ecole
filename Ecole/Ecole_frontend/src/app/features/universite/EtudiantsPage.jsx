@@ -46,7 +46,7 @@ export default function EtudiantsPage() {
     [requete.data],
   );
   const loading = requete.isPending;
-  const error = requete.isError ? (requete.error?.message ?? 'Erreur de chargement') : null;
+  const error = requete.isError ? (requete.error?.message ?? t('common.load_error')) : null;
 
   const niveaux = useMemo(() =>
     ['Tous', ...new Set(etudiants.map((e) => e.niveau).filter(Boolean))],
@@ -182,7 +182,7 @@ export default function EtudiantsPage() {
                   </td>
                   <td className="py-3 pr-4">
                     <Badge variant={e.statut === 'actif' ? 'primary' : 'danger'} size="sm">
-                      {e.statut === 'actif' ? 'Actif' : 'Suspendu'}
+                      {e.statut === 'actif' ? t('common.status.active') : t('common.status.suspended')}
                     </Badge>
                   </td>
                   <td className="py-3 text-right">

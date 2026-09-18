@@ -35,7 +35,7 @@ export default function ClassesPage() {
   const classes = useMemo(() => unwrapList(requeteClasses.data) ?? [], [requeteClasses.data]);
   const loading = requeteClasses.isPending;
   const error = requeteClasses.isError
-    ? (requeteClasses.error?.message ?? 'Erreur de chargement')
+    ? (requeteClasses.error?.message ?? t('common.load_error'))
     : null;
 
   useEffect(() => {
@@ -120,7 +120,7 @@ export default function ClassesPage() {
               )}
             >
               <div className="flex items-center justify-between mb-3">
-                <Badge variant="primary" size="sm">{classe.niveau || 'Collège'}</Badge>
+                <Badge variant="primary" size="sm">{classe.niveau || t('pages.enseignant.classes.college')}</Badge>
                 <GraduationCap className="h-5 w-5 text-[var(--accent)]" />
               </div>
               <p className="text-lg font-bold text-neutral-900 dark:text-white">{classe.nom}</p>
@@ -241,7 +241,7 @@ export default function ClassesPage() {
                           eleve.moyenne >= 10 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400' :
                           'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400'
                         )}>
-                          {eleve.moyenne >= 14 ? 'Excellent' : eleve.moyenne >= 10 ? 'Passable' : 'Insuffisant'}
+                          {eleve.moyenne >= 14 ? t('pages.enseignant.classes.excellent') : eleve.moyenne >= 10 ? t('pages.enseignant.classes.passable') : t('pages.enseignant.classes.insuffisant')}
                         </span>
                       </td>
                       <td className="py-3 text-right">

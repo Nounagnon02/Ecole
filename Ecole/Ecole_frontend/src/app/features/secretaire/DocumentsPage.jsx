@@ -44,7 +44,7 @@ export default function DocumentsPage() {
 
   const documents = useMemo(() => unwrapList(requete.data) ?? [], [requete.data]);
   const loading = requete.isPending;
-  const error = requete.isError ? (requete.error?.message ?? 'Erreur de chargement') : null;
+  const error = requete.isError ? (requete.error?.message ?? t('common.load_error')) : null;
 
   const stats = useMemo(() => ({
     total: documents.length,
@@ -168,7 +168,7 @@ export default function DocumentsPage() {
                       <div className={cn('h-8 w-8 rounded-lg flex items-center justify-center', typeCfg('pdf').color)}>
                         <IconComponent type="pdf" />
                       </div>
-                      <span className="text-sm font-medium text-neutral-900 dark:text-white">{doc.objet || 'Sans objet'}</span>
+                      <span className="text-sm font-medium text-neutral-900 dark:text-white">{doc.objet || t('pages.secretaire.documents.sans_objet')}</span>
                     </div>
                   </td>
                   <td className="py-3 pr-4">
@@ -179,7 +179,7 @@ export default function DocumentsPage() {
                   </td>
                   <td className="py-3 pr-4">
                     <Badge variant={doc.type === 'entrant' ? 'primary' : 'warning'} size="sm">
-                      {doc.type === 'entrant' ? 'Entrant' : 'Sortant'}
+                      {doc.type === 'entrant' ? t('pages.secretaire.documents.entrant') : t('pages.secretaire.documents.sortant')}
                     </Badge>
                   </td>
                   <td className="py-3 pr-4">

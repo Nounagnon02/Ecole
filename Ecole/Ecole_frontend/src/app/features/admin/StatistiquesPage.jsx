@@ -37,7 +37,7 @@ export default function StatistiquesPage() {
   // `{ data }` n'est pas systématique côté contrôleurs, d'où le repli.
   const stats = requete.data?.data ?? requete.data ?? null;
   const loading = requete.isPending;
-  const error = requete.isError ? (requete.error?.message ?? 'Erreur de chargement') : null;
+  const error = requete.isError ? (requete.error?.message ?? t('common.load_error')) : null;
 
   if (loading) {
     return (
@@ -60,10 +60,10 @@ export default function StatistiquesPage() {
 
   // Calculer la répartition des rôles à partir des données API si disponibles
   const repartitionRoles = data.repartition_roles || data.roles_distribution || [
-    { role: 'Élèves', count: data.total_eleves || data.total_students || 0, pct: 0, color: 'bg-[var(--primary)]' },
-    { role: 'Enseignants', count: data.total_enseignants || data.total_teachers || 0, pct: 0, color: 'bg-emerald-500' },
-    { role: 'Parents', count: data.total_parents || 0, pct: 0, color: 'bg-amber-500' },
-    { role: 'Personnel', count: data.total_personnel || 0, pct: 0, color: 'bg-sky-500' },
+    { role: t('pages.admin.statistiques.eleves'), count: data.total_eleves || data.total_students || 0, pct: 0, color: 'bg-[var(--primary)]' },
+    { role: t('common.teachers'), count: data.total_enseignants || data.total_teachers || 0, pct: 0, color: 'bg-emerald-500' },
+    { role: t('pages.admin.statistiques.parents'), count: data.total_parents || 0, pct: 0, color: 'bg-amber-500' },
+    { role: t('pages.admin.statistiques.personnel'), count: data.total_personnel || 0, pct: 0, color: 'bg-sky-500' },
   ];
 
   // Calculer les pourcentages

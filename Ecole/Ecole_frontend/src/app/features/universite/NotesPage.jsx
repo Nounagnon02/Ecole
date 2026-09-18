@@ -37,9 +37,9 @@ export default function NotesPage() {
   const notes = useMemo(
     () => (unwrapList(requete.data) ?? []).map((n) => ({
           ...n,
-          etudiant: n.etudiant?.nom || n.etudiant?.prenom ? `${n.etudiant?.prenom || ''} ${n.etudiant?.nom || ''}`.trim() : n.etudiant_nom || 'Étudiant',
+          etudiant: n.etudiant?.nom || n.etudiant?.prenom ? `${n.etudiant?.prenom || ''} ${n.etudiant?.nom || ''}`.trim() : n.etudiant_nom || t('pages.universite.notes.etudiant'),
           matricule: n.etudiant?.matricule || n.matricule || '—',
-          cours: n.cours?.intitule || n.cours?.nom || n.cours_nom || 'Cours',
+          cours: n.cours?.intitule || n.cours?.nom || n.cours_nom || t('common.courses'),
           note: n.note || n.valeur || 0,
           sur: n.sur || n.note_sur || 20,
           coefficient: n.coefficient || n.coef || 1,
@@ -47,10 +47,10 @@ export default function NotesPage() {
           date: n.date || n.created_at || null,
           statut: n.statut || 'validee'
         })),
-    [requete.data],
+    [requete.data, t],
   );
   const loading = requete.isPending;
-  const error = requete.isError ? (requete.error?.message ?? 'Erreur de chargement') : null;
+  const error = requete.isError ? (requete.error?.message ?? t('common.load_error')) : null;
 
   const getNoteColor = (note, sur) => {
     const pct = (note / sur) * 100;
@@ -185,7 +185,7 @@ export default function NotesPage() {
                   <td className="py-3 pr-4 text-sm text-neutral-600 dark:text-neutral-400">{n.date ? formatDate(n.date) : '—'}</td>
                   <td className="py-3 pr-4">
                     <Badge variant={n.statut === 'validee' ? 'primary' : 'warning'} size="sm">
-                      {n.statut === 'validee' ? 'Validée' : 'En attente'}
+                      {n.statut === 'validee' ? t('pages.universite.notes.validee') : t('common.status.pending')}
                     </Badge>
                   </td>
                   <td className="py-3 text-right">

@@ -62,14 +62,14 @@ export default function FacturesPage() {
           ...p,
           numero: p.reference || `FAC-${String(2025000 + (p.id || i)).slice(-6)}`,
           client: p.eleve ? `${p.eleve.prenom || ''} ${p.eleve.nom || ''}`.trim() : 'N/A',
-          motif: p.type_paiement || 'Frais',
+          motif: p.type_paiement || t('pages.comptable.factures.frais'),
           dateEmission: p.date_paiement || p.created_at,
           dateEcheance: p.date_paiement || p.created_at
         })),
-    [requete.data],
+    [requete.data, t],
   );
   const loading = requete.isPending;
-  const error = requete.isError ? (requete.error?.message ?? 'Erreur de chargement') : null;
+  const error = requete.isError ? (requete.error?.message ?? t('common.load_error')) : null;
 
   const stats = useMemo(() => {
     const total = factures.reduce((s, f) => s + Number(f.montant || 0), 0);

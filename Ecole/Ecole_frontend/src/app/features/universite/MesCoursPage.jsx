@@ -45,7 +45,7 @@ export default function MesCoursPage() {
     [requete.data],
   );
   const loading = requete.isPending;
-  const error = requete.isError ? (requete.error?.message ?? 'Erreur de chargement') : null;
+  const error = requete.isError ? (requete.error?.message ?? t('common.load_error')) : null;
 
   const stats = useMemo(() => ({
     total: cours.length,
@@ -130,7 +130,7 @@ export default function MesCoursPage() {
                   <span className="text-sm font-semibold text-neutral-900 dark:text-white">{c.intitule}</span>
                   <Badge variant="outline" size="sm">{c.code}</Badge>
                   <Badge variant={c.statut === 'termine' || c.statut === 'terminé' ? 'outline' : 'primary'} size="sm">
-                    {c.statut === 'termine' || c.statut === 'terminé' ? 'Terminé' : 'En cours'}
+                    {c.statut === 'termine' || c.statut === 'terminé' ? t('pages.universite.mes_cours.termine') : t('common.status.in_progress')}
                   </Badge>
                 </div>
                 <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-neutral-500">

@@ -119,20 +119,20 @@ export default function PaiementsPage() {
         try {
           const url = new URL(res.data.payment_url);
           if (!ALLOWED_HOSTS.some(h => url.hostname.endsWith(h))) {
-            toast.error('URL de paiement invalide');
+            toast.error(t('pages.paiements.paiements.url_de_paiement_invalide'));
             return;
           }
         } catch {
-          toast.error('URL de paiement invalide');
+          toast.error(t('pages.paiements.paiements.url_de_paiement_invalide'));
           return;
         }
         window.location.href = res.data.payment_url;
       } else {
-        toast.error(res.data?.message || 'Impossible d\'initialiser le paiement');
+        toast.error(res.data?.message || t('pages.paiements.paiements.impossible_d_initialiser_le_paiement'));
       }
     } catch (err) {
       logger.error('Erreur initiation paiement:', err);
-      toast.error('Erreur lors de l\'initialisation du paiement');
+      toast.error(t('pages.paiements.paiements.erreur_lors_de_l_initialisation_du_paiement'));
     }
   };
 
@@ -223,7 +223,7 @@ export default function PaiementsPage() {
           <Card padding={false}>
             {error && (
               <div className="p-6 text-center text-sm text-red-500">
-                Erreur : {error.message ?? 'Impossible de récupérer les paiements'}
+                Erreur : {error.message ?? t('pages.paiements.paiements.impossible_de_recuperer_les_paiements')}
               </div>
             )}
             <Table>

@@ -54,7 +54,7 @@ export default function PlanningPage() {
 
   const evenements = useMemo(() => unwrapList(requete.data) ?? [], [requete.data]);
   const loading = requete.isPending;
-  const error = requete.isError ? (requete.error?.message ?? 'Erreur de chargement') : null;
+  const error = requete.isError ? (requete.error?.message ?? t('common.load_error')) : null;
 
   const stats = useMemo(() => {
     const now = new Date();
@@ -182,7 +182,7 @@ export default function PlanningPage() {
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-sm font-semibold text-neutral-900 dark:text-white">{evt.titre}</span>
                       <Badge variant={estFutur ? 'warning' : 'primary'} size="sm">
-                        {estFutur ? 'Planifié' : 'Terminé'}
+                        {estFutur ? t('pages.secretaire.planning.planifie') : t('pages.secretaire.planning.termine')}
                       </Badge>
                     </div>
                     <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-neutral-500">

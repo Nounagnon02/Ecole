@@ -67,7 +67,7 @@ export default function UtilisateursPage() {
     [requete.data],
   );
   const loading = requete.isPending;
-  const error = requete.isError ? (requete.error?.message ?? 'Erreur de chargement') : null;
+  const error = requete.isError ? (requete.error?.message ?? t('common.load_error')) : null;
 
   const stats = useMemo(() => ({
     total: utilisateurs.length,
@@ -202,7 +202,7 @@ export default function UtilisateursPage() {
                     <td className="py-3 pr-4 text-sm text-neutral-600 dark:text-neutral-400">{u.ecole}</td>
                     <td className="py-3 pr-4">
                       <Badge variant={u.statut === 'actif' ? 'primary' : 'outline'} size="sm">
-                        {u.statut === 'actif' ? 'Actif' : 'Inactif'}
+                        {u.statut === 'actif' ? t('common.status.active') : t('common.status.inactive')}
                       </Badge>
                     </td>
                     <td className="py-3 pr-4 text-sm text-neutral-600 dark:text-neutral-400">

@@ -251,7 +251,7 @@ export default function Sidebar() {
           <button
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
             className="ml-auto hidden h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[var(--text-tertiary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] lg:flex"
-            aria-label={sidebarCollapsed ? 'Étendre' : 'Réduire'}
+            aria-label={sidebarCollapsed ? t('sidebar.etendre') : t('sidebar.reduire')}
           >
             <ChevronLeft
               className={cn(
@@ -319,7 +319,7 @@ export default function Sidebar() {
               {!sidebarCollapsed && (
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-[var(--text-primary)]">
-                    {user?.name || 'Utilisateur'}
+                    {user?.name || t('common.user')}
                   </p>
                   <p className="truncate text-xs text-[var(--text-tertiary)]">
                     {ROLE_LABELS[user?.role] || user?.role || '—'}
