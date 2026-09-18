@@ -89,17 +89,17 @@ export default function MesCoursPage() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-4">
-        <StatsCard title="Total" value={String(stats.total)} icon={BookOpen} color="primary" />
-        <StatsCard title="En cours" value={String(stats.enCours)} icon={Clock} color="emerald" />
-        <StatsCard title="Terminés" value={String(stats.termines)} icon={GraduationCap} color="sky" />
-        <StatsCard title="Étudiants" value={String(stats.totalEtudiants)} icon={Users} color="amber" />
+        <StatsCard title={t('common.total')} value={String(stats.total)} icon={BookOpen} color="primary" />
+        <StatsCard title={t('common.status.in_progress')} value={String(stats.enCours)} icon={Clock} color="emerald" />
+        <StatsCard title={t('common.finished')} value={String(stats.termines)} icon={GraduationCap} color="sky" />
+        <StatsCard title={t('common.students')} value={String(stats.totalEtudiants)} icon={Users} color="amber" />
       </div>
 
       <Card>
         <div className="relative max-w-sm">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
           <Input
-            placeholder="Rechercher un cours..."
+            placeholder={t('common.search_course')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
@@ -112,7 +112,7 @@ export default function MesCoursPage() {
           <Card>
             <div className="text-center py-8 text-neutral-500">
               <BookOpen className="mx-auto h-8 w-8 mb-2" />
-              <p className="text-sm">Aucun cours trouvé</p>
+              <p className="text-sm">{t('common.no_course_found')}</p>
             </div>
           </Card>
         )}
@@ -145,7 +145,7 @@ export default function MesCoursPage() {
                 {/* Barre de progression */}
                 <div className="mt-3">
                   <div className="flex items-center justify-between text-xs mb-1">
-                    <span className="text-neutral-500">Progression</span>
+                    <span className="text-neutral-500">{t('pages.universite.mes_cours.progression')}</span>
                     <span className="font-medium text-neutral-700 dark:text-neutral-300">{c.progression}%</span>
                   </div>
                   <div className="h-2 bg-neutral-200 dark:bg-neutral-700 rounded-full overflow-hidden">
@@ -160,8 +160,8 @@ export default function MesCoursPage() {
                 </div>
               </div>
               <div className="flex gap-1">
-                <Button variant="outline" size="sm" icon={<Eye />}>Détails</Button>
-                <Button variant="ghost" size="sm" icon={<FileText />}>Notes</Button>
+                <Button variant="outline" size="sm" icon={<Eye />}>{t('common.details')}</Button>
+                <Button variant="ghost" size="sm" icon={<FileText />}>{t('pages.universite.mes_cours.notes')}</Button>
               </div>
             </div>
           </Card>

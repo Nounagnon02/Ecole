@@ -100,21 +100,21 @@ export default function EnseignantsPage() {
           <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.universite.enseignants.title')}</h1>
           <p className="text-sm text-neutral-500">{t('pages.universite.enseignants.subtitle')}</p>
         </div>
-        <Button size="sm" icon={<Plus />}>Ajouter un enseignant</Button>
+        <Button size="sm" icon={<Plus />}>{t('pages.universite.enseignants.ajouter_un_enseignant')}</Button>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-4">
-        <StatsCard title="Total" value={String(stats.total)} icon={Users} color="primary" />
-        <StatsCard title="Professeurs" value={String(stats.professeurs)} icon={GraduationCap} color="sky" />
-        <StatsCard title="Maîtres de Conf." value={String(stats.maitresConferences)} icon={BookOpen} color="emerald" />
-        <StatsCard title="Assistants" value={String(stats.assistants)} icon={Users} color="amber" />
+        <StatsCard title={t('common.total')} value={String(stats.total)} icon={Users} color="primary" />
+        <StatsCard title={t('pages.universite.enseignants.professeurs')} value={String(stats.professeurs)} icon={GraduationCap} color="sky" />
+        <StatsCard title={t('pages.universite.enseignants.maitres_de_conf')} value={String(stats.maitresConferences)} icon={BookOpen} color="emerald" />
+        <StatsCard title={t('pages.universite.enseignants.assistants')} value={String(stats.assistants)} icon={Users} color="amber" />
       </div>
 
       <Card>
         <div className="relative max-w-sm">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
           <Input
-            placeholder="Rechercher un enseignant..."
+            placeholder={t('pages.universite.enseignants.rechercher_un_enseignant')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
@@ -128,7 +128,7 @@ export default function EnseignantsPage() {
             <Card>
               <div className="text-center py-8 text-neutral-500">
                 <Users className="mx-auto h-8 w-8 mb-2" />
-                <p className="text-sm">Aucun enseignant trouvé</p>
+                <p className="text-sm">{t('pages.universite.enseignants.aucun_enseignant_trouve')}</p>
               </div>
             </Card>
           </div>
@@ -155,11 +155,11 @@ export default function EnseignantsPage() {
               <div className="flex items-center gap-3 text-xs mb-3">
                 <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg p-2 text-center flex-1">
                   <span className="block font-bold text-neutral-900 dark:text-white">{e.cours}</span>
-                  <span className="text-neutral-500">Cours</span>
+                  <span className="text-neutral-500">{t('common.courses')}</span>
                 </div>
                 <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg p-2 text-center flex-1">
                   <span className="block font-bold text-neutral-900 dark:text-white">{e.etudiants}</span>
-                  <span className="text-neutral-500">Étud.</span>
+                  <span className="text-neutral-500">{t('pages.universite.enseignants.etud')}</span>
                 </div>
               </div>
 

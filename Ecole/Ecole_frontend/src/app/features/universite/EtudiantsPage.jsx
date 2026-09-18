@@ -93,14 +93,14 @@ export default function EtudiantsPage() {
           <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.universite.etudiants.title')}</h1>
           <p className="text-sm text-neutral-500">{t('pages.universite.etudiants.subtitle')}</p>
         </div>
-        <Button size="sm" icon={<Plus />}>Ajouter un étudiant</Button>
+        <Button size="sm" icon={<Plus />}>{t('pages.universite.etudiants.ajouter_un_etudiant')}</Button>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-4">
-        <StatsCard title="Total" value={String(stats.total)} icon={GraduationCap} color="primary" />
-        <StatsCard title="Actifs" value={String(stats.actifs)} icon={User} color="emerald" />
-        <StatsCard title="Suspendus" value={String(stats.suspendus)} icon={User} color="red" />
-        <StatsCard title="Niveaux" value={String(stats.niveaux)} icon={BookOpen} color="sky" />
+        <StatsCard title={t('common.total')} value={String(stats.total)} icon={GraduationCap} color="primary" />
+        <StatsCard title={t('pages.universite.etudiants.actifs')} value={String(stats.actifs)} icon={User} color="emerald" />
+        <StatsCard title={t('pages.universite.etudiants.suspendus')} value={String(stats.suspendus)} icon={User} color="red" />
+        <StatsCard title={t('pages.universite.etudiants.niveaux')} value={String(stats.niveaux)} icon={BookOpen} color="sky" />
       </div>
 
       <Card>
@@ -108,7 +108,7 @@ export default function EtudiantsPage() {
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
             <Input
-              placeholder="Rechercher un étudiant..."
+              placeholder={t('pages.universite.etudiants.rechercher_un_etudiant')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
@@ -139,22 +139,22 @@ export default function EtudiantsPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-neutral-200 dark:border-neutral-700 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                <th scope="col" className="pb-3 pr-4">Étudiant</th>
-                <th scope="col" className="pb-3 pr-4">Matricule</th>
-                <th scope="col" className="pb-3 pr-4">Niveau</th>
-                <th scope="col" className="pb-3 pr-4">Filière</th>
-                <th scope="col" className="pb-3 pr-4">Faculté</th>
-                <th scope="col" className="pb-3 pr-4">Contact</th>
-                <th scope="col" className="pb-3 pr-4">Inscription</th>
-                <th scope="col" className="pb-3 pr-4">Statut</th>
-                <th scope="col" className="pb-3 text-right">Actions</th>
+                <th scope="col" className="pb-3 pr-4">{t('pages.universite.etudiants.etudiant')}</th>
+                <th scope="col" className="pb-3 pr-4">{t('common.matricule')}</th>
+                <th scope="col" className="pb-3 pr-4">{t('pages.universite.etudiants.niveau')}</th>
+                <th scope="col" className="pb-3 pr-4">{t('pages.universite.etudiants.filiere')}</th>
+                <th scope="col" className="pb-3 pr-4">{t('pages.universite.etudiants.faculte')}</th>
+                <th scope="col" className="pb-3 pr-4">{t('pages.universite.etudiants.contact')}</th>
+                <th scope="col" className="pb-3 pr-4">{t('pages.universite.etudiants.inscription')}</th>
+                <th scope="col" className="pb-3 pr-4">{t('common.status_label')}</th>
+                <th scope="col" className="pb-3 text-right">{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 && (
                 <tr>
                   <td colSpan={9} className="py-8 text-center text-sm text-neutral-500">
-                    Aucun étudiant trouvé
+                    {t('pages.universite.etudiants.aucun_etudiant_trouve')}
                   </td>
                 </tr>
               )}
@@ -186,7 +186,7 @@ export default function EtudiantsPage() {
                     </Badge>
                   </td>
                   <td className="py-3 text-right">
-                    <Button variant="ghost" size="sm" icon={<Eye />} title="Voir" />
+                    <Button variant="ghost" size="sm" icon={<Eye />} title={t('common.view')} />
                   </td>
                 </tr>
               ))}

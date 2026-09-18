@@ -111,16 +111,16 @@ export default function UtilisateursPage() {
           <p className="text-sm text-neutral-500">{t('pages.admin.utilisateurs.subtitle')}</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" icon={<Ban />}>Désactiver</Button>
-          <Button size="sm" icon={<Plus />}>Ajouter</Button>
+          <Button variant="outline" size="sm" icon={<Ban />}>{t('pages.admin.utilisateurs.desactiver')}</Button>
+          <Button size="sm" icon={<Plus />}>{t('pages.admin.utilisateurs.ajouter')}</Button>
         </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-4">
-        <StatsCard title="Total" value={String(stats.total)} icon={Users} color="primary" />
-        <StatsCard title="Actifs" value={String(stats.actifs)} icon={CheckCircle} color="emerald" />
-        <StatsCard title="Inactifs" value={String(stats.inactifs)} icon={XCircle} color="red" />
-        <StatsCard title="Établissements" value={String(stats.roles)} icon={Shield} color="amber" />
+        <StatsCard title={t('common.total')} value={String(stats.total)} icon={Users} color="primary" />
+        <StatsCard title={t('pages.admin.utilisateurs.actifs')} value={String(stats.actifs)} icon={CheckCircle} color="emerald" />
+        <StatsCard title={t('pages.admin.utilisateurs.inactifs')} value={String(stats.inactifs)} icon={XCircle} color="red" />
+        <StatsCard title={t('pages.admin.utilisateurs.etablissements')} value={String(stats.roles)} icon={Shield} color="amber" />
       </div>
 
       <Card>
@@ -128,7 +128,7 @@ export default function UtilisateursPage() {
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
             <Input
-              placeholder="Rechercher un utilisateur..."
+              placeholder={t('pages.admin.utilisateurs.rechercher_un_utilisateur')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
@@ -138,10 +138,10 @@ export default function UtilisateursPage() {
             <select
               value={filterRole}
               onChange={(e) => setFilterRole(e.target.value)}
-              aria-label="Filtrer par rôle"
+              aria-label={t('pages.admin.utilisateurs.filtrer_par_role')}
               className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
             >
-              <option value="">Tous les rôles</option>
+              <option value="">{t('pages.admin.utilisateurs.tous_les_roles')}</option>
               {ROLES_DISPLAY.map((r) => (
                 <option key={r} value={r}>{r}</option>
               ))}
@@ -149,12 +149,12 @@ export default function UtilisateursPage() {
             <select
               value={filterStatut}
               onChange={(e) => setFilterStatut(e.target.value)}
-              aria-label="Filtrer par statut"
+              aria-label={t('common.filter_by_status')}
               className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
             >
-              <option value="">Tous les statuts</option>
-              <option value="actif">Actif</option>
-              <option value="inactif">Inactif</option>
+              <option value="">{t('common.all_statuses')}</option>
+              <option value="actif">{t('pages.admin.utilisateurs.actif')}</option>
+              <option value="inactif">{t('pages.admin.utilisateurs.inactif')}</option>
             </select>
           </div>
         </div>
@@ -165,19 +165,19 @@ export default function UtilisateursPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-neutral-200 dark:border-neutral-700 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                <th scope="col" className="pb-3 pr-4">Utilisateur</th>
-                <th scope="col" className="pb-3 pr-4">Rôle</th>
-                <th scope="col" className="pb-3 pr-4">Établissement</th>
-                <th scope="col" className="pb-3 pr-4">Statut</th>
-                <th scope="col" className="pb-3 pr-4">Dernière connexion</th>
-                <th scope="col" className="pb-3 text-right">Actions</th>
+                <th scope="col" className="pb-3 pr-4">{t('pages.admin.utilisateurs.utilisateur')}</th>
+                <th scope="col" className="pb-3 pr-4">{t('pages.admin.utilisateurs.role')}</th>
+                <th scope="col" className="pb-3 pr-4">{t('common.school')}</th>
+                <th scope="col" className="pb-3 pr-4">{t('common.status_label')}</th>
+                <th scope="col" className="pb-3 pr-4">{t('pages.admin.utilisateurs.derniere_connexion')}</th>
+                <th scope="col" className="pb-3 text-right">{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 && (
                 <tr>
                   <td colSpan={6} className="py-8 text-center text-sm text-neutral-500">
-                    Aucun utilisateur trouvé
+                    {t('pages.admin.utilisateurs.aucun_utilisateur_trouve')}
                   </td>
                 </tr>
               )}
@@ -215,9 +215,9 @@ export default function UtilisateursPage() {
                     </td>
                     <td className="py-3 text-right">
                       <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="sm" icon={<Eye />} title="Voir" />
-                        <Button variant="ghost" size="sm" icon={<Ban />} title="Désactiver" />
-                        <Button variant="ghost" size="sm" icon={<Trash2 />} title="Supprimer" className="text-red-500 hover:text-red-600" />
+                        <Button variant="ghost" size="sm" icon={<Eye />} title={t('common.view')} />
+                        <Button variant="ghost" size="sm" icon={<Ban />} title={t('pages.admin.utilisateurs.desactiver')} />
+                        <Button variant="ghost" size="sm" icon={<Trash2 />} title={t('common.delete')} className="text-red-500 hover:text-red-600" />
                       </div>
                     </td>
                   </tr>

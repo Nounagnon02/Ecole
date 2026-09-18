@@ -55,12 +55,12 @@ export default function PlansPage() {
           <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.admin.plans.title')}</h1>
           <p className="text-sm text-neutral-500 mt-1">{t('pages.admin.plans.subtitle')}</p>
         </div>
-        <Button icon={<Plus className="h-4 w-4" />}>Nouveau plan</Button>
+        <Button icon={<Plus className="h-4 w-4" />}>{t('pages.admin.plans.nouveau_plan')}</Button>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
         {plans.length === 0 && (
-          <div className="lg:col-span-3 text-center py-12 text-sm text-neutral-500">Aucun plan disponible</div>
+          <div className="lg:col-span-3 text-center py-12 text-sm text-neutral-500">{t('pages.admin.plans.aucun_plan_disponible')}</div>
         )}
         {plans.map((plan, i) => (
           <motion.div
@@ -73,7 +73,7 @@ export default function PlansPage() {
               {plan.is_popular && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
                   <Badge variant="primary" size="sm">
-                    <Zap className="h-3 w-3 mr-1" /> Populaire
+                    <Zap className="h-3 w-3 mr-1" /> {t('pages.admin.plans.populaire')}
                   </Badge>
                 </div>
               )}
@@ -92,7 +92,7 @@ export default function PlansPage() {
                   <p className="text-3xl font-bold text-neutral-900 dark:text-white">
                     {plan.price_monthly === 0 || plan.price_monthly === '0.00' ? 'Gratuit' : `${Number(plan.price_monthly).toLocaleString()} FCFA`}
                   </p>
-                  <p className="text-xs text-neutral-500">/mois</p>
+                  <p className="text-xs text-neutral-500">{t('pages.admin.plans.mois')}</p>
                   {plan.price_yearly > 0 && (
                     <p className="text-xs text-neutral-400 mt-1">
                       {Number(plan.price_yearly).toLocaleString()} FCFA/an
@@ -123,16 +123,16 @@ export default function PlansPage() {
                     </div>
                   ))}
                   {(!plan.features || plan.features.length === 0) && (
-                    <p className="text-xs text-neutral-400 italic">Aucune fonctionnalité listée</p>
+                    <p className="text-xs text-neutral-400 italic">{t('pages.admin.plans.aucune_fonctionnalite_listee')}</p>
                   )}
                 </div>
 
                 <div className="flex gap-2">
                   <Button variant="ghost" size="sm" className="flex-1">
-                    <Edit3 className="h-4 w-4 mr-1" /> Modifier
+                    <Edit3 className="h-4 w-4 mr-1" /> {t('common.edit')}
                   </Button>
                   <Button variant="ghost" size="sm" className="flex-1 text-red-500 hover:text-red-600">
-                    <Trash2 className="h-4 w-4 mr-1" /> Supprimer
+                    <Trash2 className="h-4 w-4 mr-1" /> {t('common.delete')}
                   </Button>
                 </div>
               </Card.Body>

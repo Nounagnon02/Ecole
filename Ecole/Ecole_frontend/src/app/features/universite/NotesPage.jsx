@@ -104,16 +104,16 @@ export default function NotesPage() {
           <p className="text-sm text-neutral-500">{t('pages.universite.notes.subtitle')}</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" icon={<Download />}>Exporter</Button>
-          <Button size="sm" icon={<Plus />}>Ajouter une note</Button>
+          <Button variant="outline" size="sm" icon={<Download />}>{t('common.export')}</Button>
+          <Button size="sm" icon={<Plus />}>{t('pages.universite.notes.ajouter_une_note')}</Button>
         </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-4">
-        <StatsCard title="Total Notes" value={String(stats.total)} icon={GraduationCap} color="primary" />
-        <StatsCard title="Validées" value={String(stats.validees)} icon={CheckCircle} color="emerald" />
-        <StatsCard title="En attente" value={String(stats.enAttente)} icon={Clock} color="amber" />
-        <StatsCard title="Moyenne" value={`${stats.moyenne}%`} icon={TrendingUp} color="sky" />
+        <StatsCard title={t('pages.universite.notes.total_notes')} value={String(stats.total)} icon={GraduationCap} color="primary" />
+        <StatsCard title={t('pages.universite.notes.validees')} value={String(stats.validees)} icon={CheckCircle} color="emerald" />
+        <StatsCard title={t('common.status.pending')} value={String(stats.enAttente)} icon={Clock} color="amber" />
+        <StatsCard title={t('common.average')} value={`${stats.moyenne}%`} icon={TrendingUp} color="sky" />
       </div>
 
       <Card>
@@ -121,7 +121,7 @@ export default function NotesPage() {
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
             <Input
-              placeholder="Rechercher par étudiant ou cours..."
+              placeholder={t('pages.universite.notes.rechercher_par_etudiant_ou_cours')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
@@ -130,12 +130,12 @@ export default function NotesPage() {
           <select
             value={filterStatut}
             onChange={(e) => setFilterStatut(e.target.value)}
-            aria-label="Filtrer par statut"
+            aria-label={t('common.filter_by_status')}
             className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
           >
-            <option value="">Tous les statuts</option>
-            <option value="validee">Validée</option>
-            <option value="en_attente">En attente</option>
+            <option value="">{t('common.all_statuses')}</option>
+            <option value="validee">{t('pages.universite.notes.validee')}</option>
+            <option value="en_attente">{t('common.status.pending')}</option>
           </select>
         </div>
       </Card>
@@ -145,22 +145,22 @@ export default function NotesPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-neutral-200 dark:border-neutral-700 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                <th scope="col" className="pb-3 pr-4">Étudiant</th>
-                <th scope="col" className="pb-3 pr-4">Matricule</th>
-                <th scope="col" className="pb-3 pr-4">Cours</th>
-                <th scope="col" className="pb-3 pr-4">Note</th>
-                <th scope="col" className="pb-3 pr-4">Coefficient</th>
-                <th scope="col" className="pb-3 pr-4">Semestre</th>
-                <th scope="col" className="pb-3 pr-4">Date</th>
-                <th scope="col" className="pb-3 pr-4">Statut</th>
-                <th scope="col" className="pb-3 text-right">Actions</th>
+                <th scope="col" className="pb-3 pr-4">{t('pages.universite.notes.etudiant')}</th>
+                <th scope="col" className="pb-3 pr-4">{t('common.matricule')}</th>
+                <th scope="col" className="pb-3 pr-4">{t('common.courses')}</th>
+                <th scope="col" className="pb-3 pr-4">{t('common.grade')}</th>
+                <th scope="col" className="pb-3 pr-4">{t('pages.universite.notes.coefficient')}</th>
+                <th scope="col" className="pb-3 pr-4">{t('pages.universite.notes.semestre')}</th>
+                <th scope="col" className="pb-3 pr-4">{t('common.date')}</th>
+                <th scope="col" className="pb-3 pr-4">{t('common.status_label')}</th>
+                <th scope="col" className="pb-3 text-right">{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 && (
                 <tr>
                   <td colSpan={9} className="py-8 text-center text-sm text-neutral-500">
-                    Aucune note trouvée
+                    {t('pages.universite.notes.aucune_note_trouvee')}
                   </td>
                 </tr>
               )}
@@ -189,7 +189,7 @@ export default function NotesPage() {
                     </Badge>
                   </td>
                   <td className="py-3 text-right">
-                    <Button variant="ghost" size="sm" icon={<Eye />} title="Voir" />
+                    <Button variant="ghost" size="sm" icon={<Eye />} title={t('common.view')} />
                   </td>
                 </tr>
               ))}

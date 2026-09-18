@@ -88,14 +88,14 @@ export default function CoursPage() {
           <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.universite.cours.title')}</h1>
           <p className="text-sm text-neutral-500">{t('pages.universite.cours.subtitle')}</p>
         </div>
-        <Button size="sm" icon={<Plus />}>Ajouter un cours</Button>
+        <Button size="sm" icon={<Plus />}>{t('pages.universite.cours.ajouter_un_cours')}</Button>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-4">
-        <StatsCard title="Total Cours" value={String(stats.total)} icon={BookOpen} color="primary" />
-        <StatsCard title="En cours" value={String(stats.actifs)} icon={Clock} color="emerald" />
-        <StatsCard title="Terminés" value={String(stats.termines)} icon={GraduationCap} color="sky" />
-        <StatsCard title="Crédits" value={String(stats.creditsTotal)} icon={Building2} color="amber" />
+        <StatsCard title={t('pages.universite.cours.total_cours')} value={String(stats.total)} icon={BookOpen} color="primary" />
+        <StatsCard title={t('common.status.in_progress')} value={String(stats.actifs)} icon={Clock} color="emerald" />
+        <StatsCard title={t('common.finished')} value={String(stats.termines)} icon={GraduationCap} color="sky" />
+        <StatsCard title={t('pages.universite.cours.credits')} value={String(stats.creditsTotal)} icon={Building2} color="amber" />
       </div>
 
       <Card>
@@ -103,7 +103,7 @@ export default function CoursPage() {
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
             <Input
-              placeholder="Rechercher un cours..."
+              placeholder={t('common.search_course')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
@@ -134,7 +134,7 @@ export default function CoursPage() {
             <Card>
               <div className="text-center py-8 text-neutral-500">
                 <BookOpen className="mx-auto h-8 w-8 mb-2" />
-                <p className="text-sm">Aucun cours trouvé</p>
+                <p className="text-sm">{t('common.no_course_found')}</p>
               </div>
             </Card>
           </div>
@@ -162,7 +162,7 @@ export default function CoursPage() {
               <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {c.etudiants}</span>
             </div>
             <div className="mt-3">
-              <Button variant="outline" size="sm" icon={<Eye />}>Détails</Button>
+              <Button variant="outline" size="sm" icon={<Eye />}>{t('common.details')}</Button>
             </div>
           </Card>
         ))}
