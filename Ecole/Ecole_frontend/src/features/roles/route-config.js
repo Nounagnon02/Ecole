@@ -16,6 +16,15 @@ const lazy = (importFn) => importFn;
 /* ─── Route config ──────────────────────────────────────────────────── */
 export const ROUTE_CONFIG = {
   // ─── PUBLIQUES ────────────────────────────────────────────────────────
+  // `home` et `connexion` ont `roles: null`, ce qui les range dans
+  // PUBLIC_ROUTES — or `App.jsx` ne génère que PROTECTED_ROUTES et câble `/`
+  // en dur sur `<AuthRedirect />`. Ces deux entrées sont donc inertes :
+  // `LandingPage` (536 l.) n'est jamais rendue, bien qu'elle soit compilée
+  // dans son propre chunk.
+  //
+  // Décision produit en suspens : ouvrir `/` sur la landing pour les visiteurs
+  // non authentifiés, ou retirer la page. Laissée en l'état volontairement —
+  // supprimer une page d'accueil déjà écrite n'est pas un nettoyage.
   home: {
     path: '/',
     component: lazy(() => import('@/app/landing/LandingPage')),
