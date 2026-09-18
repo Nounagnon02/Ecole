@@ -18,7 +18,6 @@
         "phpoffice/phpspreadsheet": "*",
         "pragmarx/google2fa-laravel": "^3.0",
         "smalot/pdfparser": "^2.12",
-        "spatie/laravel-permission": "^6.0",
         "stancl/tenancy": "^3.7"
     },
     "require-dev": {
