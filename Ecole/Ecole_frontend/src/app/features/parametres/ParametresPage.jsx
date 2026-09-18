@@ -19,6 +19,7 @@ import { useApi } from '@/hooks/useApi';
 import { toast } from 'sonner';
 import useAuthStore from '@/shared/stores/auth-store';
 import { ROLE_GROUPS, hasRole } from '@/shared/types/roles';
+import { useTranslation } from '@/shared/i18n';
 
 const SECTIONS = [
   { id: 'profil', label: 'Profil', icon: User },
@@ -29,6 +30,7 @@ const SECTIONS = [
 ];
 
 export default function ParametresPage() {
+  const { t } = useTranslation();
   const { user, updateUser } = useAuthStore();
   const { loading, error, put } = useApi();
   const [activeSection, setActiveSection] = useState('profil');
@@ -78,8 +80,8 @@ export default function ParametresPage() {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Paramètres</h1>
-        <p className="text-sm text-neutral-500">Gérez vos préférences et la configuration de votre compte</p>
+        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.parametres.parametres.title')}</h1>
+        <p className="text-sm text-neutral-500">{t('pages.parametres.parametres.subtitle')}</p>
       </div>
 
       <div className="flex flex-col gap-6 lg:flex-row">

@@ -19,8 +19,10 @@ import Button from '@/shared/components/ui/Button';
 import Table from '@/shared/components/ui/Table';
 import Input from '@/shared/components/ui/Input';
 import { Skeleton } from '@/shared/components/ui/Skeleton';
+import { useTranslation } from '@/shared/i18n';
 
 export default function NotesPage() {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [filterMatiere, setFilterMatiere] = useState('');
   const [filterClasse, setFilterClasse] = useState('');
@@ -172,8 +174,8 @@ export default function NotesPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Notes</h1>
-          <p className="text-sm text-neutral-500">Consultez et gérez les notes des élèves</p>
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.notes.notes.title')}</h1>
+          <p className="text-sm text-neutral-500">{t('pages.notes.notes.subtitle')}</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" onClick={refetch} disabled={isLoading}>

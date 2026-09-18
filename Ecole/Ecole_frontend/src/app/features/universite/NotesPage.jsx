@@ -20,8 +20,10 @@ import Avatar from '@/shared/components/ui/Avatar';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
+import { useTranslation } from '@/shared/i18n';
 
 export default function NotesPage() {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [filterStatut, setFilterStatut] = useState('');
 
@@ -98,8 +100,8 @@ export default function NotesPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Notes</h1>
-          <p className="text-sm text-neutral-500">Saisie et consultation des notes</p>
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.universite.notes.title')}</h1>
+          <p className="text-sm text-neutral-500">{t('pages.universite.notes.subtitle')}</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" icon={<Download />}>Exporter</Button>

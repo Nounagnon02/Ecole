@@ -433,6 +433,154 @@
         "title": "Configuration",
         "subtitle": "Paramètres globaux du système"
       }
+    },
+    "bibliothecaire": {
+      "catalogue": {
+        "title": "Catalogue",
+        "subtitle": "Gestion des ouvrages et ressources de la bibliothèque"
+      },
+      "emprunts": {
+        "title": "Emprunts",
+        "subtitle": "Suivi des emprunts, retours et pénalités"
+      }
+    },
+    "censeur": {
+      "absences": {
+        "title": "Absences",
+        "subtitle": "Suivi et justification des absences"
+      },
+      "discipline": {
+        "title": "Discipline",
+        "subtitle": "Gestion des incidents, sanctions et tendances disciplinaires"
+      }
+    },
+    "communications": {
+      "communications": {
+        "title": "Communications",
+        "subtitle": "Restez informé des actualités de l'établissement"
+      }
+    },
+    "comptable": {
+      "factures": {
+        "title": "Factures",
+        "subtitle": "Gérez les factures et les paiements"
+      },
+      "transactions": {
+        "title": "Transactions",
+        "subtitle": "Toutes les transactions financières de l'établissement"
+      }
+    },
+    "eleve": {
+      "cours": {
+        "title": "Mes Cours",
+        "subtitle": "Consultez vos cours, devoirs et ressources"
+      }
+    },
+    "eleves": {
+      "eleves": {
+        "title": "Élèves",
+        "subtitle": "Gérez l'ensemble des élèves inscrits"
+      }
+    },
+    "emploi_du_temps": {
+      "emploi_du_temps": {
+        "title": "Emploi du Temps",
+        "subtitle": "Consultez les emplois du temps par classe"
+      }
+    },
+    "enseignant": {
+      "classes": {
+        "title": "Mes Classes",
+        "subtitle": "Gérez vos classes et suivez vos élèves"
+      }
+    },
+    "infirmier": {
+      "soins": {
+        "title": "Soins Infirmiers",
+        "subtitle": "Registre des soins dispensés aux élèves"
+      }
+    },
+    "notes": {
+      "notes": {
+        "title": "Notes",
+        "subtitle": "Consultez et gérez les notes des élèves"
+      }
+    },
+    "paiements": {
+      "paiements": {
+        "title": "Paiements",
+        "subtitle": "Gestion des transactions financières"
+      }
+    },
+    "parametres": {
+      "parametres": {
+        "title": "Paramètres",
+        "subtitle": "Gérez vos préférences et la configuration de votre compte"
+      }
+    },
+    "parent": {
+      "enfants": {
+        "title": "Mes Enfants",
+        "subtitle": "Suivez la scolarité de vos enfants"
+      }
+    },
+    "secretaire": {
+      "documents": {
+        "title": "Courriers",
+        "subtitle": "Gestion des courriers et documents administratifs"
+      },
+      "inscriptions": {
+        "title": "Inscriptions",
+        "subtitle": "Gestion des inscriptions des nouveaux élèves"
+      },
+      "planning": {
+        "title": "Planning",
+        "subtitle": "Planification des événements et rendez-vous"
+      }
+    },
+    "surveillant": {
+      "surveillance": {
+        "title": "Surveillance",
+        "subtitle": "Registre des incidents et signalements"
+      }
+    },
+    "universite": {
+      "cours": {
+        "title": "Cours",
+        "subtitle": "Planification et gestion des cours universitaires"
+      },
+      "departements": {
+        "title": "Départements",
+        "subtitle": "Gestion des départements par faculté"
+      },
+      "enseignants": {
+        "title": "Enseignants",
+        "subtitle": "Profils et affectations des enseignants chercheurs"
+      },
+      "etudiants": {
+        "title": "Étudiants",
+        "subtitle": "Gestion des inscriptions et profils étudiants"
+      },
+      "facultes": {
+        "title": "Facultés",
+        "subtitle": "Gestion des facultés de l'université"
+      },
+      "mes_cours": {
+        "title": "Mes Cours",
+        "subtitle": "Cours qui vous sont assignés"
+      },
+      "notes": {
+        "title": "Notes",
+        "subtitle": "Saisie et consultation des notes"
+      },
+      "planning": {
+        "title": "Planning",
+        "subtitle": "Calendrier universitaire des cours et événements"
+      },
+      "taches": {
+        "title": "Tâches",
+        "subtitle": "Suivi des devoirs, projets et examens"
+      }
     }
   }
 }

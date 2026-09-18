@@ -19,6 +19,7 @@ import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
+import { useTranslation } from '@/shared/i18n';
 
 const getStatutVariant = (statut) => {
   switch (statut) {
@@ -39,6 +40,7 @@ const getStatutLabel = (statut) => {
 };
 
 export default function EmpruntsPage() {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [filterStatut, setFilterStatut] = useState('');
 
@@ -120,8 +122,8 @@ export default function EmpruntsPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Emprunts</h1>
-          <p className="text-sm text-neutral-500">Suivi des emprunts, retours et pénalités</p>
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.bibliothecaire.emprunts.title')}</h1>
+          <p className="text-sm text-neutral-500">{t('pages.bibliothecaire.emprunts.subtitle')}</p>
         </div>
         <Button size="sm" icon={<Plus />}>Nouvel emprunt</Button>
       </div>

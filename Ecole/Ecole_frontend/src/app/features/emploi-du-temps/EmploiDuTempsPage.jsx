@@ -17,6 +17,7 @@ import { cn } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
+import { useTranslation } from '@/shared/i18n';
 
 /* ─── Jours et créneaux ───────────────────────────────────────────── */
 const JOURS = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
@@ -34,6 +35,7 @@ const CRENEAUX = [
 ];
 
 export default function EmploiDuTempsPage() {
+  const { t } = useTranslation();
   const [semaine, setSemaine] = useState(0);
   const [filterMatiere, setFilterMatiere] = useState('Toutes');
   const [filterClasse, setFilterClasse] = useState('Toutes');
@@ -150,8 +152,8 @@ export default function EmploiDuTempsPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Emploi du Temps</h1>
-          <p className="text-sm text-neutral-500">Consultez les emplois du temps par classe</p>
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.emploi_du_temps.emploi_du_temps.title')}</h1>
+          <p className="text-sm text-neutral-500">{t('pages.emploi_du_temps.emploi_du_temps.subtitle')}</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" icon={<Download />}>

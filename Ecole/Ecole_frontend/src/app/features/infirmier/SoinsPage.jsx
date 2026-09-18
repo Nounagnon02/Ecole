@@ -20,6 +20,7 @@ import Avatar from '@/shared/components/ui/Avatar';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
+import { useTranslation } from '@/shared/i18n';
 
 const getTypeIcon = (urgence) => {
   if (urgence) return <Activity className="h-4 w-4" />;
@@ -34,6 +35,7 @@ const getTypeColor = (urgence) => {
 const getTypeLabel = (urgence) => urgence ? 'Urgence' : 'Consultation';
 
 export default function SoinsPage() {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [filterUrgence, setFilterUrgence] = useState('');
   const [filterStatut, setFilterStatut] = useState('');
@@ -96,8 +98,8 @@ export default function SoinsPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Soins Infirmiers</h1>
-          <p className="text-sm text-neutral-500">Registre des soins dispensés aux élèves</p>
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.infirmier.soins.title')}</h1>
+          <p className="text-sm text-neutral-500">{t('pages.infirmier.soins.subtitle')}</p>
         </div>
         <Button size="sm" icon={<Plus />}>Nouveau soin</Button>
       </div>

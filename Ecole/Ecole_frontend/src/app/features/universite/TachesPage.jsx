@@ -19,6 +19,7 @@ import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
+import { useTranslation } from '@/shared/i18n';
 
 const PRIORITE_CONFIG = {
   haute: { variant: 'danger', label: 'Haute' },
@@ -38,6 +39,7 @@ const getTypeIcon = (type) => {
 };
 
 export default function TachesPage() {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [filterStatut, setFilterStatut] = useState('');
 
@@ -115,8 +117,8 @@ export default function TachesPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Tâches</h1>
-          <p className="text-sm text-neutral-500">Suivi des devoirs, projets et examens</p>
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.universite.taches.title')}</h1>
+          <p className="text-sm text-neutral-500">{t('pages.universite.taches.subtitle')}</p>
         </div>
         <Button size="sm" icon={<Plus />}>Nouvelle tâche</Button>
       </div>

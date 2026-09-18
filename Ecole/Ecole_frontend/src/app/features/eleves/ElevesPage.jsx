@@ -21,6 +21,7 @@ import Table from '@/shared/components/ui/Table';
 import Input from '@/shared/components/ui/Input';
 import { Skeleton } from '@/shared/components/ui/Skeleton';
 import { toast } from 'sonner';
+import { useTranslation } from '@/shared/i18n';
 
 const STATUT_COLORS = {
   actif: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400',
@@ -29,6 +30,7 @@ const STATUT_COLORS = {
 };
 
 export default function ElevesPage() {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [filterClasse, setFilterClasse] = useState('');
 
@@ -84,8 +86,8 @@ export default function ElevesPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Élèves</h1>
-          <p className="text-sm text-neutral-500">Gérez l'ensemble des élèves inscrits</p>
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.eleves.eleves.title')}</h1>
+          <p className="text-sm text-neutral-500">{t('pages.eleves.eleves.subtitle')}</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" onClick={refetch} disabled={isLoading}>

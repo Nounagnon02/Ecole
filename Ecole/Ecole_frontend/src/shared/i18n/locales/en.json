@@ -433,6 +433,154 @@
         "title": "Configuration",
         "subtitle": "Global system settings"
       }
+    },
+    "bibliothecaire": {
+      "catalogue": {
+        "title": "Catalog",
+        "subtitle": "Management of the library's books and resources"
+      },
+      "emprunts": {
+        "title": "Loans",
+        "subtitle": "Tracking of loans, returns and penalties"
+      }
+    },
+    "censeur": {
+      "absences": {
+        "title": "Absences",
+        "subtitle": "Tracking and justification of absences"
+      },
+      "discipline": {
+        "title": "Discipline",
+        "subtitle": "Management of incidents, sanctions and disciplinary trends"
+      }
+    },
+    "communications": {
+      "communications": {
+        "title": "Communications",
+        "subtitle": "Stay informed about school news"
+      }
+    },
+    "comptable": {
+      "factures": {
+        "title": "Invoices",
+        "subtitle": "Manage invoices and payments"
+      },
+      "transactions": {
+        "title": "Transactions",
+        "subtitle": "All of the school's financial transactions"
+      }
+    },
+    "eleve": {
+      "cours": {
+        "title": "My Courses",
+        "subtitle": "View your courses, assignments and resources"
+      }
+    },
+    "eleves": {
+      "eleves": {
+        "title": "Students",
+        "subtitle": "Manage all enrolled students"
+      }
+    },
+    "emploi_du_temps": {
+      "emploi_du_temps": {
+        "title": "Schedule",
+        "subtitle": "View timetables by class"
+      }
+    },
+    "enseignant": {
+      "classes": {
+        "title": "My Classes",
+        "subtitle": "Manage your classes and follow your students"
+      }
+    },
+    "infirmier": {
+      "soins": {
+        "title": "Nursing Care",
+        "subtitle": "Register of care provided to students"
+      }
+    },
+    "notes": {
+      "notes": {
+        "title": "Grades",
+        "subtitle": "View and manage student grades"
+      }
+    },
+    "paiements": {
+      "paiements": {
+        "title": "Payments",
+        "subtitle": "Financial transaction management"
+      }
+    },
+    "parametres": {
+      "parametres": {
+        "title": "Settings",
+        "subtitle": "Manage your preferences and account configuration"
+      }
+    },
+    "parent": {
+      "enfants": {
+        "title": "My Children",
+        "subtitle": "Follow your children's schooling"
+      }
+    },
+    "secretaire": {
+      "documents": {
+        "title": "Correspondence",
+        "subtitle": "Management of correspondence and administrative documents"
+      },
+      "inscriptions": {
+        "title": "Enrollments",
+        "subtitle": "Management of new student enrollments"
+      },
+      "planning": {
+        "title": "Planning",
+        "subtitle": "Scheduling of events and appointments"
+      }
+    },
+    "surveillant": {
+      "surveillance": {
+        "title": "Supervision",
+        "subtitle": "Register of incidents and reports"
+      }
+    },
+    "universite": {
+      "cours": {
+        "title": "Courses",
+        "subtitle": "Planning and management of university courses"
+      },
+      "departements": {
+        "title": "Departments",
+        "subtitle": "Management of departments by faculty"
+      },
+      "enseignants": {
+        "title": "Teachers",
+        "subtitle": "Profiles and assignments of research faculty"
+      },
+      "etudiants": {
+        "title": "Students",
+        "subtitle": "Management of student enrollments and profiles"
+      },
+      "facultes": {
+        "title": "Faculties",
+        "subtitle": "Management of the university's faculties"
+      },
+      "mes_cours": {
+        "title": "My Courses",
+        "subtitle": "Courses assigned to you"
+      },
+      "notes": {
+        "title": "Grades",
+        "subtitle": "Entry and viewing of grades"
+      },
+      "planning": {
+        "title": "Planning",
+        "subtitle": "University calendar of courses and events"
+      },
+      "taches": {
+        "title": "Tasks",
+        "subtitle": "Tracking of assignments, projects and exams"
+      }
     }
   }
 }

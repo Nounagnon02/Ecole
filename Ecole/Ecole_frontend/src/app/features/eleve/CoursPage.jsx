@@ -19,8 +19,10 @@ import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
+import { useTranslation } from '@/shared/i18n';
 
 export default function CoursPage() {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [filterMatiere, setFilterMatiere] = useState('');
   const [filterType, setFilterType] = useState('');
@@ -104,8 +106,8 @@ export default function CoursPage() {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Mes Cours</h1>
-        <p className="text-sm text-neutral-500">Consultez vos cours, devoirs et ressources</p>
+        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.eleve.cours.title')}</h1>
+        <p className="text-sm text-neutral-500">{t('pages.eleve.cours.subtitle')}</p>
       </div>
 
       {/* Filtres */}

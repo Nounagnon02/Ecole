@@ -19,8 +19,10 @@ import Badge from '@/shared/components/ui/Badge';
 import Avatar from '@/shared/components/ui/Avatar';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
+import { useTranslation } from '@/shared/i18n';
 
 export default function ClassesPage() {
+  const { t } = useTranslation();
   const [selectedClasse, setSelectedClasse] = useState(null);
   const [search, setSearch] = useState('');
   const [viewMode, setViewMode] = useState('liste');
@@ -91,8 +93,8 @@ export default function ClassesPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Mes Classes</h1>
-          <p className="text-sm text-neutral-500">Gérez vos classes et suivez vos élèves</p>
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.enseignant.classes.title')}</h1>
+          <p className="text-sm text-neutral-500">{t('pages.enseignant.classes.subtitle')}</p>
         </div>
       </div>
 

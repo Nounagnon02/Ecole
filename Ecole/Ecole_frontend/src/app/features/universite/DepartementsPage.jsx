@@ -17,8 +17,10 @@ import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
+import { useTranslation } from '@/shared/i18n';
 
 export default function DepartementsPage() {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [filterFaculte, setFilterFaculte] = useState('');
 
@@ -85,8 +87,8 @@ export default function DepartementsPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Départements</h1>
-          <p className="text-sm text-neutral-500">Gestion des départements par faculté</p>
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.universite.departements.title')}</h1>
+          <p className="text-sm text-neutral-500">{t('pages.universite.departements.subtitle')}</p>
         </div>
         <Button size="sm" icon={<Plus />}>Nouveau département</Button>
       </div>

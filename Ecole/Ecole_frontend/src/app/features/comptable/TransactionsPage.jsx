@@ -18,6 +18,7 @@ import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
+import { useTranslation } from '@/shared/i18n';
 
 const getStatutColor = (statut) => {
   switch (statut) {
@@ -44,6 +45,7 @@ const getStatutLabel = (statut) => {
 };
 
 export default function TransactionsPage() {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState('');
   const [filterStatut, setFilterStatut] = useState('');
@@ -113,8 +115,8 @@ export default function TransactionsPage() {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Transactions</h1>
-        <p className="text-sm text-neutral-500">Toutes les transactions financières de l'établissement</p>
+        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.comptable.transactions.title')}</h1>
+        <p className="text-sm text-neutral-500">{t('pages.comptable.transactions.subtitle')}</p>
       </div>
 
       {/* Stats */}
