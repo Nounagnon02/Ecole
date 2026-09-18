@@ -53,32 +53,11 @@ class NotesCrudController extends Controller
         ]);
     }
 
-    public function getNotesByEleves($eleveId)
-    {
-        $eleve = Eleve::find($eleveId);
-        if (!$eleve) {
-            return response()->json(['success' => false, 'message' => 'Élève non trouvé'], 404);
-        }
-        $this->authorize('view', $eleve);
-
-        $notes = Notes::with('eleve')
-            ->where('eleve_id', $eleveId)
-            ->get();
-
-        return response()->json($notes);
-    }
-
-    public function getNotesBySession($sessionId)
-    {
-        $this->authorize('viewAny', Notes::class);
-
-        $notes = Notes::with('eleve')
-            ->where('sessions_id', $sessionId)
-            ->get();
-
-        return response()->json($notes);
-    }
-
+    /**
+     * `getNotesByEleves` et `getNotesBySession` retirées : ni routées, ni
+     * appelées, ni testées. Cette seconde interrogeait au passage
+     * `sessions_id`, une colonne qui n'existe pas.
+     */
     public function show($id)
     {
         $note = Notes::with(['eleve', 'classe', 'matiere', 'enseignant'])->find($id);
