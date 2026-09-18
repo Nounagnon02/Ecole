@@ -208,7 +208,12 @@ class CompleteDataSeeder extends Seeder
         }
 
         // Rendez-vous
-        $parents = UserParent::all();
+        //
+        // `eleves` chargée avec : sans elle, `$parent->eleves` ci-dessous
+        // déclenchait une requête par parent — un N+1 resté invisible tant que
+        // rien ne faisait tourner ce seeder avec `preventLazyLoading()` actif
+        // (cf. audit P2.6, qui l'a activé hors production).
+        $parents = UserParent::with('eleves')->get();
         $enseignants = Enseignant::all();
         foreach ($parents->take(8) as $parent) {
             RendezVous::create([
