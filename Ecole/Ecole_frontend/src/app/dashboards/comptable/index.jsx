@@ -23,6 +23,7 @@ import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Table from '@/shared/components/ui/Table';
+import { useTranslation } from '@/shared/i18n';
 
 const TABS = [
   { id: 'apercu', label: 'Aperçu', icon: BarChart3 },
@@ -31,10 +32,10 @@ const TABS = [
 ];
 
 const STATS_META = [
-  { title: 'Revenus du Mois', icon: TrendingUp, color: 'emerald' },
-  { title: 'Factures en Attente', icon: Clock, color: 'amber' },
-  { title: 'Taux Recouvrement', icon: CheckCircle2, color: 'primary' },
-  { title: 'Dépenses du Mois', icon: ArrowDownRight, color: 'red' },
+  { title: 'Revenus du Mois', key: 'revenus_du_mois', icon: TrendingUp, color: 'emerald' },
+  { title: 'Factures en Attente', key: 'factures_en_attente', icon: Clock, color: 'amber' },
+  { title: 'Taux Recouvrement', key: 'taux_recouvrement', icon: CheckCircle2, color: 'primary' },
+  { title: 'Dépenses du Mois', key: 'depenses_du_mois', icon: ArrowDownRight, color: 'red' },
 ];
 
 function ApercuSection({ stats, caData, repartition, factures, impayes, tresorerie }) {
@@ -241,10 +242,16 @@ function ApercuSection({ stats, caData, repartition, factures, impayes, tresorer
 
 export default function ComptableDashboard() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('apercu');
   const { data, loading, error, refetch } = useDashboardStats('comptable');
 
-  const stats = data?.stats?.map((s, i) => ({ ...s, icon: STATS_META[i]?.icon, color: STATS_META[i]?.color })) || [];
+  const stats = data?.stats?.map((s, i) => ({
+    ...s,
+    title: STATS_META[i]?.key ? t(`dashboards.comptable.stats.${STATS_META[i].key}`) : s.title,
+    icon: STATS_META[i]?.icon,
+    color: STATS_META[i]?.color,
+  })) || [];
   const caData = data?.donnes_ca || [];
   const repartition = data?.repartition_revenus || data?.repartition || [];
   const factures = data?.factures || [];
@@ -266,9 +273,9 @@ export default function ComptableDashboard() {
 
   return (
     <DashboardShell
-      title="Comptabilité"
-      subtitle="Suivi financier"
-      tabs={TABS}
+      title={t('dashboards.comptable.title')}
+      subtitle={t('dashboards.comptable.subtitle')}
+      tabs={TABS.map((tab) => ({ ...tab, label: t(`dashboards.comptable.tabs.${tab.id}`) }))}
       activeTab={activeTab}
       onTabChange={handleTabClick}
       loading={loading}

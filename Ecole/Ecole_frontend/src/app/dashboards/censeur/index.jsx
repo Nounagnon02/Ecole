@@ -21,6 +21,7 @@ import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Table from '@/shared/components/ui/Table';
+import { useTranslation } from '@/shared/i18n';
 
 const TABS = [
   { id: 'apercu', label: 'Aperçu', icon: BarChart3 },
@@ -29,10 +30,10 @@ const TABS = [
 ];
 
 const STATS_META = [
-  { title: 'Total Élèves', icon: Users, color: 'primary' },
-  { title: 'Sanctions du Mois', icon: Gavel, color: 'amber' },
-  { title: 'Absences Non Justifiées', icon: CalendarX, color: 'red' },
-  { title: 'Avertissements', icon: AlertTriangle, color: 'sky' },
+  { title: 'Total Élèves', key: 'total_eleves', icon: Users, color: 'primary' },
+  { title: 'Sanctions du Mois', key: 'sanctions_du_mois', icon: Gavel, color: 'amber' },
+  { title: 'Absences Non Justifiées', key: 'absences_non_justifiees', icon: CalendarX, color: 'red' },
+  { title: 'Avertissements', key: 'avertissements', icon: AlertTriangle, color: 'sky' },
 ];
 
 const SANCTIONS_COLORS = ['var(--accent)', 'var(--red)', 'var(--amber)', 'var(--green)'];
@@ -249,10 +250,16 @@ function ApercuSection({ stats, evolution, types_sanctions, sanctions, absencesP
 
 export default function CenseurDashboard() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('apercu');
   const { data, loading, error, refetch } = useDashboardStats('censeur');
 
-  const stats = data?.stats?.map((s, i) => ({ ...s, icon: STATS_META[i]?.icon, color: STATS_META[i]?.color })) || [];
+  const stats = data?.stats?.map((s, i) => ({
+    ...s,
+    title: STATS_META[i]?.key ? t(`dashboards.censeur.stats.${STATS_META[i].key}`) : s.title,
+    icon: STATS_META[i]?.icon,
+    color: STATS_META[i]?.color,
+  })) || [];
   const evolution = data?.evolution || [];
   const types_sanctions = data?.types_sanctions || [];
   const sanctions = data?.sanctions || [];
@@ -275,9 +282,9 @@ export default function CenseurDashboard() {
 
   return (
     <DashboardShell
-      title="Censeur"
-      subtitle="Discipline et absences"
-      tabs={TABS}
+      title={t('dashboards.censeur.title')}
+      subtitle={t('dashboards.censeur.subtitle')}
+      tabs={TABS.map((tab) => ({ ...tab, label: t(`dashboards.censeur.tabs.${tab.id}`) }))}
       activeTab={activeTab}
       onTabChange={handleTabClick}
       loading={loading}

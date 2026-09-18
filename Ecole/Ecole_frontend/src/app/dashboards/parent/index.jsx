@@ -32,6 +32,7 @@ import Badge from '@/shared/components/ui/Badge';
 import Avatar from '@/shared/components/ui/Avatar';
 import Button from '@/shared/components/ui/Button';
 import { Skeleton } from '@/shared/components/ui/Skeleton';
+import { useTranslation } from '@/shared/i18n';
 
 // ─── Constantes ───────────────────────────────────────────────
 
@@ -44,16 +45,22 @@ const TABS = [
 ];
 
 const STATS_META = [
-  { title: 'Enfants Scolarisés', icon: Users, color: 'primary' },
-  { title: 'Moyenne Générale', icon: TrendingUp, color: 'emerald' },
-  { title: 'Assiduité', icon: CheckCircle2, color: 'sky' },
-  { title: 'Solde', icon: DollarSign, color: 'amber' },
+  { title: 'Enfants Scolarisés', key: 'enfants_scolarises', icon: Users, color: 'primary' },
+  { title: 'Moyenne Générale', key: 'moyenne_generale', icon: TrendingUp, color: 'emerald' },
+  { title: 'Assiduité', key: 'assiduite', icon: CheckCircle2, color: 'sky' },
+  { title: 'Solde', key: 'solde', icon: DollarSign, color: 'amber' },
 ];
 
 // ─── Sections ─────────────────────────────────────────────────
 
 function ApercuSection({ data, loading }) {
-  const safeStats = data?.stats?.map((s, i) => ({ ...s, icon: STATS_META[i]?.icon, color: STATS_META[i]?.color })) || [];
+  const { t } = useTranslation();
+  const safeStats = data?.stats?.map((s, i) => ({
+    ...s,
+    title: STATS_META[i]?.key ? t(`dashboards.parent.stats.${STATS_META[i].key}`) : s.title,
+    icon: STATS_META[i]?.icon,
+    color: STATS_META[i]?.color,
+  })) || [];
   const safeEnfants = data?.enfants || data?.children || [];
   const safeEvolution = data?.evolution || [];
   const safeCommunications = data?.communications || [];
@@ -260,6 +267,7 @@ function ApercuSection({ data, loading }) {
 
 export default function ParentDashboard() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('apercu');
   const { data, loading, error, refetch } = useDashboardStats('parent');
 
@@ -283,9 +291,9 @@ export default function ParentDashboard() {
 
   return (
     <DashboardShell
-      title="Espace Parent"
-      subtitle="Suivi de vos enfants"
-      tabs={TABS}
+      title={t('dashboards.parent.title')}
+      subtitle={t('dashboards.parent.subtitle')}
+      tabs={TABS.map((tab) => ({ ...tab, label: t(`dashboards.parent.tabs.${tab.id}`) }))}
       activeTab={activeTab}
       onTabChange={handleTabClick}
       loading={loading}

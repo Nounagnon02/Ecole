@@ -24,6 +24,7 @@ import Button from '@/shared/components/ui/Button';
 import Table from '@/shared/components/ui/Table';
 import Input from '@/shared/components/ui/Input';
 import { Skeleton } from '@/shared/components/ui/Skeleton';
+import { useTranslation } from '@/shared/i18n';
 
 const COLORS = ['var(--accent)', 'var(--green)', 'var(--amber)', 'var(--red)', 'var(--blue)', 'var(--primary)', 'var(--text-secondary)'];
 
@@ -37,6 +38,8 @@ const TABS = [
 ];
 
 function StatCardsGrid({ stats, loading }) {
+  const { t } = useTranslation();
+
   if (loading) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
@@ -48,9 +51,9 @@ function StatCardsGrid({ stats, loading }) {
   }
 
   const cards = [
-    { title: 'Total Élèves', value: String(stats?.total_eleves ?? 0), icon: Users, color: 'primary' },
-    { title: 'Enseignants', value: String(stats?.total_enseignants ?? 0), icon: GraduationCap, color: 'emerald' },
-    { title: 'Classes', value: String(stats?.total_classes ?? 0), icon: School, color: 'amber' },
+    { title: t('dashboards.directeur.stats.total_eleves'), value: String(stats?.total_eleves ?? 0), icon: Users, color: 'primary' },
+    { title: t('dashboards.directeur.stats.enseignants'), value: String(stats?.total_enseignants ?? 0), icon: GraduationCap, color: 'emerald' },
+    { title: t('dashboards.directeur.stats.classes'), value: String(stats?.total_classes ?? 0), icon: School, color: 'amber' },
   ];
 
   return (
@@ -228,6 +231,7 @@ function ApercuSection({ data, loading }) {
 
 export default function DirecteurDashboard() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('apercu');
   const { data, loading, error, refetch } = useDashboardStats('directeur');
 
@@ -256,8 +260,8 @@ export default function DirecteurDashboard() {
 
   return (
     <DashboardShell
-      title="Tableau de Bord"
-      tabs={TABS}
+      title={t('dashboards.directeur.title')}
+      tabs={TABS.map((tab) => ({ ...tab, label: t(`dashboards.directeur.tabs.${tab.id}`) }))}
       activeTab={activeTab}
       onTabChange={handleTabClick}
       loading={loading}

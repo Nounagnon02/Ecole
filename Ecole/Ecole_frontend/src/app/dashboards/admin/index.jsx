@@ -26,6 +26,7 @@ import {
 } from 'recharts';
 import { format } from 'date-fns';
 import { cn } from '@/shared/lib/utils';
+import { useTranslation } from '@/shared/i18n';
 import { useDashboardStats } from '@/app/dashboards/hooks/useDashboardData';
 import DashboardShell from '@/app/dashboards/DashboardShell';
 import StatsCard from '@/shared/components/ui/StatsCard';
@@ -35,6 +36,9 @@ import Button from '@/shared/components/ui/Button';
 
 // ─── Constantes ───────────────────────────────────────────────
 
+// Les `id`/`key` ci-dessous sont aussi le dernier segment de la clé i18n
+// (`dashboards.admin.tabs.<id>`, `dashboards.admin.stats.<key>`) : le texte
+// affiché vient de `t()`, ces tableaux ne portent plus que la structure.
 const TABS = [
   { id: 'apercu', label: 'Aperçu', icon: Activity },
   { id: 'utilisateurs', label: 'Utilisateurs', icon: Users },
@@ -44,16 +48,25 @@ const TABS = [
 ];
 
 const STATS_META = [
-  { title: 'Utilisateurs Actifs', icon: Users, color: 'primary' },
-  { title: 'Espace Disque', icon: HardDrive, color: 'sky' },
-  { title: 'Erreurs API', icon: AlertTriangle, color: 'red' },
-  { title: 'Uptime', icon: CheckCircle2, color: 'emerald' },
+  { title: 'Utilisateurs Actifs', key: 'utilisateurs_actifs', icon: Users, color: 'primary' },
+  { title: 'Espace Disque', key: 'espace_disque', icon: HardDrive, color: 'sky' },
+  { title: 'Erreurs API', key: 'erreurs_api', icon: AlertTriangle, color: 'red' },
+  { title: 'Uptime', key: 'uptime', icon: CheckCircle2, color: 'emerald' },
 ];
 
 // ─── Sections ─────────────────────────────────────────────────
 
 function ApercuSection({ data, loading, onRefresh }) {
-  const safeStats = data?.stats?.map((s, i) => ({ ...s, icon: STATS_META[i]?.icon, color: STATS_META[i]?.color })) || [];
+  const { t } = useTranslation();
+  // Le titre affiché est traduit côté front, pas celui renvoyé par l'API :
+  // le backend n'a pas de notion de locale, et les deux tableaux restent
+  // alignés par position comme `icon`/`color` juste à côté.
+  const safeStats = data?.stats?.map((s, i) => ({
+    ...s,
+    title: STATS_META[i]?.key ? t(`dashboards.admin.stats.${STATS_META[i].key}`) : s.title,
+    icon: STATS_META[i]?.icon,
+    color: STATS_META[i]?.color,
+  })) || [];
   const safeTraffic = data?.traffic || [];
   const safeLogs = data?.logs || [];
   const safeHealth = data?.health || [];
@@ -315,6 +328,7 @@ function SauvegardesSection() {
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('apercu');
   const { data, loading, error, refetch } = useDashboardStats('admin');
 
@@ -345,9 +359,9 @@ export default function AdminDashboard() {
 
   return (
     <DashboardShell
-      title="Administration Système"
-      subtitle="Gestion de la plateforme"
-      tabs={TABS}
+      title={t('dashboards.admin.title')}
+      subtitle={t('dashboards.admin.subtitle')}
+      tabs={TABS.map((tab) => ({ ...tab, label: t(`dashboards.admin.tabs.${tab.id}`) }))}
       activeTab={activeTab}
       onTabChange={handleTabClick}
       loading={loading}

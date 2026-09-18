@@ -24,6 +24,7 @@ import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Table from '@/shared/components/ui/Table';
+import { useTranslation } from '@/shared/i18n';
 
 const TABS = [
   { id: 'apercu', label: 'Aperçu', icon: BarChart3 },
@@ -33,10 +34,10 @@ const TABS = [
 ];
 
 const STATS_META = [
-  { title: 'Inscriptions', icon: Users, color: 'primary' },
-  { title: 'Nouveaux ce Mois', icon: UserPlus, color: 'emerald' },
-  { title: 'Dossiers en Cours', icon: ClipboardList, color: 'amber' },
-  { title: 'Documents Générés', icon: FileText, color: 'sky' },
+  { title: 'Inscriptions', key: 'inscriptions', icon: Users, color: 'primary' },
+  { title: 'Nouveaux ce Mois', key: 'nouveaux_ce_mois', icon: UserPlus, color: 'emerald' },
+  { title: 'Dossiers en Cours', key: 'dossiers_en_cours', icon: ClipboardList, color: 'amber' },
+  { title: 'Documents Générés', key: 'documents_generes', icon: FileText, color: 'sky' },
 ];
 
 function ApercuSection({ stats, fluxInscriptions, rendezVous, inscriptions, planningRendezVous, certificatsAttente }) {
@@ -213,10 +214,16 @@ function ApercuSection({ stats, fluxInscriptions, rendezVous, inscriptions, plan
 
 export default function SecretaireDashboard() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('apercu');
   const { data, loading, error, refetch } = useDashboardStats('secretaire');
 
-  const stats = data?.stats?.map((s, i) => ({ ...s, icon: STATS_META[i]?.icon, color: STATS_META[i]?.color })) || [];
+  const stats = data?.stats?.map((s, i) => ({
+    ...s,
+    title: STATS_META[i]?.key ? t(`dashboards.secretaire.stats.${STATS_META[i].key}`) : s.title,
+    icon: STATS_META[i]?.icon,
+    color: STATS_META[i]?.color,
+  })) || [];
   const fluxInscriptions = data?.flux_inscriptions || [];
   const rendezVous = data?.rendez_vous || [];
   const inscriptions = data?.inscriptions || [];
@@ -245,9 +252,9 @@ export default function SecretaireDashboard() {
 
   return (
     <DashboardShell
-      title="Secrétariat"
-      subtitle="Gestion administrative"
-      tabs={TABS}
+      title={t('dashboards.secretaire.title')}
+      subtitle={t('dashboards.secretaire.subtitle')}
+      tabs={TABS.map((tab) => ({ ...tab, label: t(`dashboards.secretaire.tabs.${tab.id}`) }))}
       activeTab={activeTab}
       onTabChange={handleTabClick}
       loading={loading}

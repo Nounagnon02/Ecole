@@ -18,11 +18,31 @@ import ar from './locales/ar.json';
 /* ─── Ressources ─────────────────────────────────────────────────── */
 const RESOURCES = { fr, en, ar };
 
+/** Résolution d'une clé pointée dans les ressources d'une locale. */
+function resolve(key, locale, params = {}) {
+  const keys = key.split('.');
+  let value = RESOURCES[locale];
+  for (const k of keys) {
+    value = value?.[k];
+  }
+  if (typeof value === 'undefined') return key;
+  if (typeof value === 'string') {
+    return value.replace(/\{(\w+)\}/g, (_, k) => params[k] ?? `{${k}}`);
+  }
+  return value;
+}
+
 /* ─── Contexte ───────────────────────────────────────────────────── */
+// Le `t` par défaut résout vraiment le français plutôt que de renvoyer la
+// clé brute : aucun test de ce projet ne monte `I18nProvider`, et le
+// français est la locale par défaut de l'application (`initialLocale`
+// ci-dessous). Un composant rendu sans provider — dans un test comme dans
+// un usage isolé — doit donc afficher le même texte qu'avec le provider
+// monté en 'fr', pas la clé i18n brute.
 const I18nContext = createContext({
   locale: 'fr',
   setLocale: () => {},
-  t: (key) => key,
+  t: (key, params) => resolve(key, 'fr', params),
   dir: 'ltr',
 });
 
@@ -42,21 +62,7 @@ export function I18nProvider({ children, initialLocale = 'fr' }) {
     }
   }, []);
 
-  const t = useCallback(
-    (key, params = {}) => {
-      const keys = key.split('.');
-      let value = RESOURCES[locale];
-      for (const k of keys) {
-        value = value?.[k];
-      }
-      if (typeof value === 'undefined') return key;
-      if (typeof value === 'string') {
-        return value.replace(/\{(\w+)\}/g, (_, k) => params[k] ?? `{${k}}`);
-      }
-      return value;
-    },
-    [locale]
-  );
+  const t = useCallback((key, params = {}) => resolve(key, locale, params), [locale]);
 
   const dir = locale === 'ar' ? 'rtl' : 'ltr';
 
@@ -83,14 +89,5 @@ export function useTranslation() {
 
 /* ─── Helper pour les cas non-React ─────────────────────────────── */
 export function translate(key, locale = 'fr', params = {}) {
-  const keys = key.split('.');
-  let value = RESOURCES[locale];
-  for (const k of keys) {
-    value = value?.[k];
-  }
-  if (typeof value === 'undefined') return key;
-  if (typeof value === 'string') {
-    return value.replace(/\{(\w+)\}/g, (_, k) => params[k] ?? `{${k}}`);
-  }
-  return value;
+  return resolve(key, locale, params);
 }
