@@ -96,23 +96,23 @@ export default function BillingPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0 }}>
-          <StatsCard title="Revenu total" value={`${stats.totalRevenue.toLocaleString()} FCFA`} icon={DollarSign} color="primary" />
+          <StatsCard title={t('pages.admin.billing.revenu_total')} value={`${stats.totalRevenue.toLocaleString()} FCFA`} icon={DollarSign} color="primary" />
         </motion.div>
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
-          <StatsCard title="Factures payées" value={String(stats.paid)} icon={CheckCircle2} color="emerald" />
+          <StatsCard title={t('pages.admin.billing.factures_payees')} value={String(stats.paid)} icon={CheckCircle2} color="emerald" />
         </motion.div>
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <StatsCard title="En attente" value={String(stats.pending)} icon={Clock} color="amber" />
+          <StatsCard title={t('common.status.pending')} value={String(stats.pending)} icon={Clock} color="amber" />
         </motion.div>
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-          <StatsCard title="Total factures" value={String(stats.total)} icon={CreditCard} color="sky" />
+          <StatsCard title={t('pages.admin.billing.total_factures')} value={String(stats.total)} icon={CreditCard} color="sky" />
         </motion.div>
       </div>
 
       <Card>
         <div className="border-b border-neutral-200 p-4 dark:border-neutral-700">
-          <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">Revenus</h3>
-          <p className="text-xs text-neutral-500">Évolution sur 6 mois</p>
+          <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">{t('pages.admin.billing.revenus')}</h3>
+          <p className="text-xs text-neutral-500">{t('pages.admin.billing.evolution_sur_6_mois')}</p>
         </div>
         <div className="p-4">
           <div className="h-[250px]">
@@ -140,24 +140,24 @@ export default function BillingPage() {
         <div className="border-b border-neutral-200 p-4 dark:border-neutral-700">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">Factures récentes</h3>
-              <p className="text-xs text-neutral-500">Historique des transactions</p>
+              <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">{t('pages.admin.billing.factures_recentes')}</h3>
+              <p className="text-xs text-neutral-500">{t('pages.admin.billing.historique_des_transactions')}</p>
             </div>
             <div className="flex items-center gap-2">
               <Input
-                placeholder="Rechercher..."
+                placeholder={t('common.search_ellipsis')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-48"
               />
-              <Button variant="ghost" size="sm" icon={<Download />}>Exporter</Button>
+              <Button variant="ghost" size="sm" icon={<Download />}>{t('common.export')}</Button>
             </div>
           </div>
         </div>
         <div className="p-0">
           <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
             {filtered.length === 0 && (
-              <div className="px-6 py-8 text-center text-sm text-neutral-500">Aucune facture trouvée</div>
+              <div className="px-6 py-8 text-center text-sm text-neutral-500">{t('pages.admin.billing.aucune_facture_trouvee')}</div>
             )}
             {filtered.map((inv) => {
               const statusConf = STATUS_BADGE[inv.status] || STATUS_BADGE.pending;

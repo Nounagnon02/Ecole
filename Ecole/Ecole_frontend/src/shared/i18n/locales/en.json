@@ -84,7 +84,9 @@
     "search_ellipsis": "Search...",
     "school": "School",
     "late": "Late",
-    "time": "Time"
+    "time": "Time",
+    "teachers": "Teachers",
+    "students": "Students"
   },
   "auth": {
     "login": "Log in",
@@ -437,35 +439,123 @@
     "admin": {
       "ecoles": {
         "title": "Schools",
-        "subtitle": "School management"
+        "subtitle": "School management",
+        "nom_de_l_etablissement": "School name",
+        "ex_complexe_scolaire_lumiere": "E.g. Lumière School Complex",
+        "email": "Email",
+        "telephone": "Phone",
+        "adresse": "Address",
+        "cotonou_benin": "Cotonou, Benin",
+        "ville": "City",
+        "cotonou": "Cotonou",
+        "provisionner": "Provision",
+        "ajouter_une_ecole": "Add a school",
+        "actives": "Active",
+        "inactives": "Inactive",
+        "eleves": "Students",
+        "rechercher_une_ecole": "Search for a school...",
+        "actualiser": "Refresh",
+        "actif": "Active",
+        "inactif": "Inactive",
+        "aucune_ecole_trouvee": "No school found",
+        "creez_un_nouvel_etablissement_scolaire": "Create a new school",
+        "creer_l_ecole": "Create the school",
+        "terminer": "Finish",
+        "comptes_crees": "Accounts created",
+        "mot_de_passe_commun": "Shared password:",
+        "mot_de_passe_optionnel": "Password (optional)",
+        "defaut_genere_aleatoirement": "Default: randomly generated",
+        "comptes_qui_seront_crees_automatiquement": "🔑 Accounts that will be created automatically:",
+        "directeur_directeur_maternelle_primaire": "Principal, Nursery/Primary/Secondary Principal, Deputy Head, Secretary, Accountant, Supervisor, Nurse, Librarian"
       },
       "plans": {
         "title": "Subscription Plans",
-        "subtitle": "Manage offers and pricing"
+        "subtitle": "Manage offers and pricing",
+        "nouveau_plan": "New plan",
+        "aucun_plan_disponible": "No plan available",
+        "populaire": "Popular",
+        "mois": "/month",
+        "aucune_fonctionnalite_listee": "No features listed"
       },
       "modules": {
         "title": "Modules",
-        "subtitle": "Feature marketplace"
+        "subtitle": "Feature marketplace",
+        "nouveau_module": "New module",
+        "aucun_module_disponible": "No module available",
+        "core": "Core"
       },
       "utilisateurs": {
         "title": "Users",
-        "subtitle": "Account and access management"
+        "subtitle": "Account and access management",
+        "desactiver": "Deactivate",
+        "ajouter": "Add",
+        "actifs": "Active",
+        "inactifs": "Inactive",
+        "etablissements": "Schools",
+        "rechercher_un_utilisateur": "Search for a user...",
+        "filtrer_par_role": "Filter by role",
+        "tous_les_roles": "All roles",
+        "actif": "Active",
+        "inactif": "Inactive",
+        "utilisateur": "User",
+        "role": "Role",
+        "derniere_connexion": "Last login",
+        "aucun_utilisateur_trouve": "No user found"
       },
       "billing": {
         "title": "Billing",
-        "subtitle": "Transactions, subscriptions and revenue"
+        "subtitle": "Transactions, subscriptions and revenue",
+        "revenu_total": "Total revenue",
+        "factures_payees": "Paid invoices",
+        "total_factures": "Total invoices",
+        "revenus": "Revenue",
+        "evolution_sur_6_mois": "6-month trend",
+        "factures_recentes": "Recent invoices",
+        "historique_des_transactions": "Transaction history",
+        "aucune_facture_trouvee": "No invoice found"
       },
       "statistiques": {
         "title": "Statistics",
-        "subtitle": "Key indicators and system analytics"
+        "subtitle": "Key indicators and system analytics",
+        "mis_a_jour_en_temps_reel": "Updated in real time",
+        "etablissements": "Schools",
+        "utilisateurs": "Users",
+        "revenus_mensuels": "Monthly Revenue",
+        "taux_de_reussite": "Success Rate",
+        "repartition_des_utilisateurs": "User breakdown",
+        "activite_recente": "Recent activity",
+        "aucune_activite_recente": "No recent activity",
+        "taux_de_presence": "Attendance rate",
+        "cours_programmes": "Scheduled courses"
       },
       "white_label": {
         "title": "White Label",
-        "subtitle": "Branding customization per school"
+        "subtitle": "Branding customization per school",
+        "selectionnez_l_etablissement_a_personnaliser": "Select the school to customize",
+        "nom_de_la_marque": "Brand name",
+        "affiche_dans_l_en_tete_et_les_communications": "Shown in the header and in communications",
+        "nom_de_l_etablissement": "School name",
+        "couleurs": "Colors",
+        "personnalisez_les_couleurs_principales": "Customize the main colors",
+        "couleur_primaire": "Primary color",
+        "couleur_secondaire": "Secondary color",
+        "logo_favicon": "Logo & Favicon",
+        "telechargez_le_logo_et_l_icone_de_l": "Upload the school's logo and icon",
+        "logo_png_svg_max_2_mo": "Logo (PNG, SVG, max 2 MB)",
+        "logo": "Logo",
+        "cliquez_pour_uploader": "Click to upload",
+        "choisir_un_fichier": "Choose a file",
+        "favicon_png_ico_max_1_mo": "Favicon (PNG, ICO, max 1 MB)",
+        "favicon": "Favicon",
+        "apercu": "Preview",
+        "rendu_en_direct": "Live preview",
+        "web": "Web",
+        "mobile": "Mobile"
       },
       "configuration": {
         "title": "Configuration",
-        "subtitle": "Global system settings"
+        "subtitle": "Global system settings",
+        "reinitialiser": "Reset"
       }
     },
     "bibliothecaire": {
@@ -896,39 +986,98 @@
     "universite": {
       "cours": {
         "title": "Courses",
-        "subtitle": "Planning and management of university courses"
+        "subtitle": "Planning and management of university courses",
+        "ajouter_un_cours": "Add a course",
+        "total_cours": "Total Courses",
+        "credits": "Credits"
       },
       "departements": {
         "title": "Departments",
-        "subtitle": "Management of departments by faculty"
+        "subtitle": "Management of departments by faculty",
+        "nouveau_departement": "New department",
+        "departements": "Departments",
+        "rechercher_un_departement": "Search for a department...",
+        "filtrer_par_faculte": "Filter by faculty",
+        "toutes_facultes": "All faculties",
+        "aucun_departement_trouve": "No department found",
+        "gerer": "Manage"
       },
       "enseignants": {
         "title": "Teachers",
-        "subtitle": "Profiles and assignments of research faculty"
+        "subtitle": "Profiles and assignments of research faculty",
+        "ajouter_un_enseignant": "Add a teacher",
+        "professeurs": "Professors",
+        "maitres_de_conf": "Senior Lecturers",
+        "assistants": "Assistants",
+        "rechercher_un_enseignant": "Search for a teacher...",
+        "aucun_enseignant_trouve": "No teacher found",
+        "etud": "Students"
       },
       "etudiants": {
         "title": "Students",
-        "subtitle": "Management of student enrollments and profiles"
+        "subtitle": "Management of student enrollments and profiles",
+        "ajouter_un_etudiant": "Add a student",
+        "actifs": "Active",
+        "suspendus": "Suspended",
+        "niveaux": "Levels",
+        "rechercher_un_etudiant": "Search for a student...",
+        "etudiant": "Student",
+        "niveau": "Level",
+        "filiere": "Program",
+        "faculte": "Faculty",
+        "contact": "Contact",
+        "inscription": "Enrollment",
+        "aucun_etudiant_trouve": "No student found"
       },
       "facultes": {
         "title": "Faculties",
-        "subtitle": "Management of the university's faculties"
+        "subtitle": "Management of the university's faculties",
+        "ajouter_une_faculte": "Add a faculty",
+        "facultes": "Faculties",
+        "departements": "Departments",
+        "rechercher_une_faculte": "Search for a faculty...",
+        "aucune_faculte_trouvee": "No faculty found",
+        "dept": "Dept.",
+        "ens": "Teachers",
+        "etud": "Students"
       },
       "mes_cours": {
         "title": "My Courses",
-        "subtitle": "Courses assigned to you"
+        "subtitle": "Courses assigned to you",
+        "progression": "Progress",
+        "notes": "Grades"
       },
       "notes": {
         "title": "Grades",
-        "subtitle": "Entry and viewing of grades"
+        "subtitle": "Entry and viewing of grades",
+        "ajouter_une_note": "Add a grade",
+        "total_notes": "Total Grades",
+        "validees": "Validated",
+        "rechercher_par_etudiant_ou_cours": "Search by student or course...",
+        "validee": "Validated",
+        "etudiant": "Student",
+        "coefficient": "Coefficient",
+        "semestre": "Semester",
+        "aucune_note_trouvee": "No grade found"
       },
       "planning": {
         "title": "Planning",
-        "subtitle": "University calendar of courses and events"
+        "subtitle": "University calendar of courses and events",
+        "nouvel_evenement": "New event",
+        "planifies": "Scheduled",
+        "rechercher_un_evenement": "Search for an event...",
+        "aucun_evenement_trouve": "No event found"
       },
       "taches": {
         "title": "Tasks",
-        "subtitle": "Tracking of assignments, projects and exams"
+        "subtitle": "Tracking of assignments, projects and exams",
+        "nouvelle_tache": "New task",
+        "terminees": "Completed",
+        "urgentes": "Urgent",
+        "rechercher_une_tache": "Search for a task...",
+        "termine": "Completed",
+        "a_faire": "To do",
+        "aucune_tache_trouvee": "No task found"
       }
     },
     "affectations": {

@@ -147,8 +147,8 @@ export default function WhiteLabelPage() {
           {/* Tenant selector */}
           <Card>
             <div className="border-b border-neutral-200 p-4 dark:border-neutral-700">
-              <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">Établissement</h3>
-              <p className="text-xs text-neutral-500 mt-0.5">Sélectionnez l'établissement à personnaliser</p>
+              <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">{t('common.school')}</h3>
+              <p className="text-xs text-neutral-500 mt-0.5">{t('pages.admin.white_label.selectionnez_l_etablissement_a_personnaliser')}</p>
             </div>
             <div className="p-4">
               <select
@@ -169,8 +169,8 @@ export default function WhiteLabelPage() {
               <div className="flex items-center gap-2">
                 <Type className="h-5 w-5 text-neutral-500" />
                 <div>
-                  <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">Nom de la marque</h3>
-                  <p className="text-xs text-neutral-500 mt-0.5">Affiché dans l'en-tête et les communications</p>
+                  <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">{t('pages.admin.white_label.nom_de_la_marque')}</h3>
+                  <p className="text-xs text-neutral-500 mt-0.5">{t('pages.admin.white_label.affiche_dans_l_en_tete_et_les_communications')}</p>
                 </div>
               </div>
             </div>
@@ -178,7 +178,7 @@ export default function WhiteLabelPage() {
               <Input
                 value={brandName}
                 onChange={(e) => setBrandName(e.target.value)}
-                placeholder="Nom de l'établissement"
+                placeholder={t('pages.admin.white_label.nom_de_l_etablissement')}
               />
             </div>
           </Card>
@@ -189,8 +189,8 @@ export default function WhiteLabelPage() {
               <div className="flex items-center gap-2">
                 <Palette className="h-5 w-5 text-neutral-500" />
                 <div>
-                  <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">Couleurs</h3>
-                  <p className="text-xs text-neutral-500 mt-0.5">Personnalisez les couleurs principales</p>
+                  <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">{t('pages.admin.white_label.couleurs')}</h3>
+                  <p className="text-xs text-neutral-500 mt-0.5">{t('pages.admin.white_label.personnalisez_les_couleurs_principales')}</p>
                 </div>
               </div>
             </div>
@@ -216,7 +216,7 @@ export default function WhiteLabelPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-medium text-neutral-500 mb-1.5">Couleur primaire</label>
+                  <label className="block text-xs font-medium text-neutral-500 mb-1.5">{t('pages.admin.white_label.couleur_primaire')}</label>
                   <div className="flex items-center gap-3">
                     <input
                       type="color"
@@ -228,7 +228,7 @@ export default function WhiteLabelPage() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-neutral-500 mb-1.5">Couleur secondaire</label>
+                  <label className="block text-xs font-medium text-neutral-500 mb-1.5">{t('pages.admin.white_label.couleur_secondaire')}</label>
                   <div className="flex items-center gap-3">
                     <input
                       type="color"
@@ -249,45 +249,45 @@ export default function WhiteLabelPage() {
               <div className="flex items-center gap-2">
                 <Image className="h-5 w-5 text-neutral-500" />
                 <div>
-                  <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">Logo & Favicon</h3>
-                  <p className="text-xs text-neutral-500 mt-0.5">Téléchargez le logo et l'icône de l'établissement</p>
+                  <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">{t('pages.admin.white_label.logo_favicon')}</h3>
+                  <p className="text-xs text-neutral-500 mt-0.5">{t('pages.admin.white_label.telechargez_le_logo_et_l_icone_de_l')}</p>
                 </div>
               </div>
             </div>
             <div className="p-4">
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-xs font-medium text-neutral-500 mb-2">Logo (PNG, SVG, max 2 Mo)</label>
+                  <label className="block text-xs font-medium text-neutral-500 mb-2">{t('pages.admin.white_label.logo_png_svg_max_2_mo')}</label>
                   <div className="flex items-center justify-center h-32 rounded-xl border-2 border-dashed border-neutral-200 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800/50">
                     {logoUrl ? (
-                      <img src={logoUrl} alt="Logo" className="max-h-24 max-w-full rounded" />
+                      <img src={logoUrl} alt={t('pages.admin.white_label.logo')} className="max-h-24 max-w-full rounded" />
                     ) : (
                       <div className="text-center">
                         <Image className="h-8 w-8 text-neutral-300 mx-auto mb-1" />
-                        <p className="text-xs text-neutral-400">Cliquez pour uploader</p>
+                        <p className="text-xs text-neutral-400">{t('pages.admin.white_label.cliquez_pour_uploader')}</p>
                       </div>
                     )}
                   </div>
                   <input type="file" accept="image/png,image/svg+xml" className="hidden" id="logo-upload" onChange={(e) => { const f = e.target.files[0]; if (f) setLogoUrl(URL.createObjectURL(f)); }} />
                   <Button variant="outline" size="sm" className="mt-2" onClick={() => document.getElementById('logo-upload').click()}>
-                    Choisir un fichier
+                    {t('pages.admin.white_label.choisir_un_fichier')}
                   </Button>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-neutral-500 mb-2">Favicon (PNG, ICO, max 1 Mo)</label>
+                  <label className="block text-xs font-medium text-neutral-500 mb-2">{t('pages.admin.white_label.favicon_png_ico_max_1_mo')}</label>
                   <div className="flex items-center justify-center h-32 rounded-xl border-2 border-dashed border-neutral-200 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800/50">
                     {faviconUrl ? (
-                      <img src={faviconUrl} alt="Favicon" className="h-16 w-16 rounded" />
+                      <img src={faviconUrl} alt={t('pages.admin.white_label.favicon')} className="h-16 w-16 rounded" />
                     ) : (
                       <div className="text-center">
                         <Globe className="h-8 w-8 text-neutral-300 mx-auto mb-1" />
-                        <p className="text-xs text-neutral-400">Cliquez pour uploader</p>
+                        <p className="text-xs text-neutral-400">{t('pages.admin.white_label.cliquez_pour_uploader')}</p>
                       </div>
                     )}
                   </div>
                   <input type="file" accept="image/png,image/x-icon" className="hidden" id="favicon-upload" onChange={(e) => { const f = e.target.files[0]; if (f) setFaviconUrl(URL.createObjectURL(f)); }} />
                   <Button variant="outline" size="sm" className="mt-2" onClick={() => document.getElementById('favicon-upload').click()}>
-                    Choisir un fichier
+                    {t('pages.admin.white_label.choisir_un_fichier')}
                   </Button>
                 </div>
               </div>
@@ -302,8 +302,8 @@ export default function WhiteLabelPage() {
               <div className="flex items-center gap-2">
                 <Eye className="h-5 w-5 text-neutral-500" />
                 <div>
-                  <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">Aperçu</h3>
-                  <p className="text-xs text-neutral-500 mt-0.5">Rendu en direct</p>
+                  <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">{t('pages.admin.white_label.apercu')}</h3>
+                  <p className="text-xs text-neutral-500 mt-0.5">{t('pages.admin.white_label.rendu_en_direct')}</p>
                 </div>
               </div>
             </div>
@@ -330,11 +330,11 @@ export default function WhiteLabelPage() {
               <div className="mt-4 space-y-3">
                 <div className="flex items-center gap-3 text-sm text-neutral-500">
                   <Monitor className="h-4 w-4" />
-                  <span>Web</span>
+                  <span>{t('pages.admin.white_label.web')}</span>
                 </div>
                 <div className="flex items-center gap-3 text-sm text-neutral-500">
                   <Smartphone className="h-4 w-4" />
-                  <span>Mobile</span>
+                  <span>{t('pages.admin.white_label.mobile')}</span>
                 </div>
               </div>
             </div>

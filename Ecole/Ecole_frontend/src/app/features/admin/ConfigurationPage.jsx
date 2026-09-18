@@ -95,7 +95,7 @@ export default function ConfigurationPage() {
           <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.admin.configuration.title')}</h1>
           <p className="text-sm text-neutral-500">{t('pages.admin.configuration.subtitle')}</p>
         </div>
-        <Button size="sm" icon={<Save />}>Enregistrer</Button>
+        <Button size="sm" icon={<Save />}>{t('common.save')}</Button>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-4">
@@ -166,7 +166,7 @@ export default function ConfigurationPage() {
                           <span className="text-sm text-neutral-600 dark:text-neutral-400">{field.value}</span>
                         )}
                         {field.type !== 'toggle' && (
-                          <Button variant="ghost" size="sm" icon={<Settings className="h-3 w-3" />} title="Modifier" />
+                          <Button variant="ghost" size="sm" icon={<Settings className="h-3 w-3" />} title={t('common.edit')} />
                         )}
                       </div>
                     </div>
@@ -175,8 +175,8 @@ export default function ConfigurationPage() {
 
                 <div className="mt-6 pt-4 border-t border-neutral-200 dark:border-neutral-700">
                   <div className="flex gap-2 justify-end">
-                    <Button variant="outline" size="sm">Réinitialiser</Button>
-                    <Button size="sm" icon={<Save />}>Enregistrer</Button>
+                    <Button variant="outline" size="sm">{t('pages.admin.configuration.reinitialiser')}</Button>
+                    <Button size="sm" icon={<Save />}>{t('common.save')}</Button>
                   </div>
                 </div>
               </Card>

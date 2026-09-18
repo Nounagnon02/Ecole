@@ -84,7 +84,9 @@
     "search_ellipsis": "Rechercher...",
     "school": "Établissement",
     "late": "Retard",
-    "time": "Heure"
+    "time": "Heure",
+    "teachers": "Enseignants",
+    "students": "Étudiants"
   },
   "auth": {
     "login": "Connexion",
@@ -437,35 +439,123 @@
     "admin": {
       "ecoles": {
         "title": "Écoles",
-        "subtitle": "Gestion des établissements scolaires"
+        "subtitle": "Gestion des établissements scolaires",
+        "nom_de_l_etablissement": "Nom de l'établissement",
+        "ex_complexe_scolaire_lumiere": "Ex: Complexe Scolaire Lumière",
+        "email": "Email",
+        "telephone": "Téléphone",
+        "adresse": "Adresse",
+        "cotonou_benin": "Cotonou, Bénin",
+        "ville": "Ville",
+        "cotonou": "Cotonou",
+        "provisionner": "Provisionner",
+        "ajouter_une_ecole": "Ajouter une école",
+        "actives": "Actives",
+        "inactives": "Inactives",
+        "eleves": "Élèves",
+        "rechercher_une_ecole": "Rechercher une école...",
+        "actualiser": "Actualiser",
+        "actif": "Actif",
+        "inactif": "Inactif",
+        "aucune_ecole_trouvee": "Aucune école trouvée",
+        "creez_un_nouvel_etablissement_scolaire": "Créez un nouvel établissement scolaire",
+        "creer_l_ecole": "Créer l'école",
+        "terminer": "Terminer",
+        "comptes_crees": "Comptes créés",
+        "mot_de_passe_commun": "Mot de passe commun :",
+        "mot_de_passe_optionnel": "Mot de passe (optionnel)",
+        "defaut_genere_aleatoirement": "Défaut : généré aléatoirement",
+        "comptes_qui_seront_crees_automatiquement": "🔑 Comptes qui seront créés automatiquement :",
+        "directeur_directeur_maternelle_primaire": "Directeur, Directeur Maternelle/Primaire/Secondaire, Censeur, Secrétaire, Comptable, Surveillant, Infirmier, Bibliothécaire"
       },
       "plans": {
         "title": "Plans d'abonnement",
-        "subtitle": "Gérez les offres et tarifs"
+        "subtitle": "Gérez les offres et tarifs",
+        "nouveau_plan": "Nouveau plan",
+        "aucun_plan_disponible": "Aucun plan disponible",
+        "populaire": "Populaire",
+        "mois": "/mois",
+        "aucune_fonctionnalite_listee": "Aucune fonctionnalité listée"
       },
       "modules": {
         "title": "Modules",
-        "subtitle": "Marketplace de fonctionnalités"
+        "subtitle": "Marketplace de fonctionnalités",
+        "nouveau_module": "Nouveau module",
+        "aucun_module_disponible": "Aucun module disponible",
+        "core": "Core"
       },
       "utilisateurs": {
         "title": "Utilisateurs",
-        "subtitle": "Gestion des comptes et accès"
+        "subtitle": "Gestion des comptes et accès",
+        "desactiver": "Désactiver",
+        "ajouter": "Ajouter",
+        "actifs": "Actifs",
+        "inactifs": "Inactifs",
+        "etablissements": "Établissements",
+        "rechercher_un_utilisateur": "Rechercher un utilisateur...",
+        "filtrer_par_role": "Filtrer par rôle",
+        "tous_les_roles": "Tous les rôles",
+        "actif": "Actif",
+        "inactif": "Inactif",
+        "utilisateur": "Utilisateur",
+        "role": "Rôle",
+        "derniere_connexion": "Dernière connexion",
+        "aucun_utilisateur_trouve": "Aucun utilisateur trouvé"
       },
       "billing": {
         "title": "Facturation",
-        "subtitle": "Transactions, abonnements et revenus"
+        "subtitle": "Transactions, abonnements et revenus",
+        "revenu_total": "Revenu total",
+        "factures_payees": "Factures payées",
+        "total_factures": "Total factures",
+        "revenus": "Revenus",
+        "evolution_sur_6_mois": "Évolution sur 6 mois",
+        "factures_recentes": "Factures récentes",
+        "historique_des_transactions": "Historique des transactions",
+        "aucune_facture_trouvee": "Aucune facture trouvée"
       },
       "statistiques": {
         "title": "Statistiques",
-        "subtitle": "Indicateurs clés et analytics du système"
+        "subtitle": "Indicateurs clés et analytics du système",
+        "mis_a_jour_en_temps_reel": "Mis à jour en temps réel",
+        "etablissements": "Établissements",
+        "utilisateurs": "Utilisateurs",
+        "revenus_mensuels": "Revenus Mensuels",
+        "taux_de_reussite": "Taux de Réussite",
+        "repartition_des_utilisateurs": "Répartition des utilisateurs",
+        "activite_recente": "Activité récente",
+        "aucune_activite_recente": "Aucune activité récente",
+        "taux_de_presence": "Taux de présence",
+        "cours_programmes": "Cours programmés"
       },
       "white_label": {
         "title": "White-Label",
-        "subtitle": "Personnalisation de la marque par établissement"
+        "subtitle": "Personnalisation de la marque par établissement",
+        "selectionnez_l_etablissement_a_personnaliser": "Sélectionnez l'établissement à personnaliser",
+        "nom_de_la_marque": "Nom de la marque",
+        "affiche_dans_l_en_tete_et_les_communications": "Affiché dans l'en-tête et les communications",
+        "nom_de_l_etablissement": "Nom de l'établissement",
+        "couleurs": "Couleurs",
+        "personnalisez_les_couleurs_principales": "Personnalisez les couleurs principales",
+        "couleur_primaire": "Couleur primaire",
+        "couleur_secondaire": "Couleur secondaire",
+        "logo_favicon": "Logo & Favicon",
+        "telechargez_le_logo_et_l_icone_de_l": "Téléchargez le logo et l'icône de l'établissement",
+        "logo_png_svg_max_2_mo": "Logo (PNG, SVG, max 2 Mo)",
+        "logo": "Logo",
+        "cliquez_pour_uploader": "Cliquez pour uploader",
+        "choisir_un_fichier": "Choisir un fichier",
+        "favicon_png_ico_max_1_mo": "Favicon (PNG, ICO, max 1 Mo)",
+        "favicon": "Favicon",
+        "apercu": "Aperçu",
+        "rendu_en_direct": "Rendu en direct",
+        "web": "Web",
+        "mobile": "Mobile"
       },
       "configuration": {
         "title": "Configuration",
-        "subtitle": "Paramètres globaux du système"
+        "subtitle": "Paramètres globaux du système",
+        "reinitialiser": "Réinitialiser"
       }
     },
     "bibliothecaire": {
@@ -896,39 +986,98 @@
     "universite": {
       "cours": {
         "title": "Cours",
-        "subtitle": "Planification et gestion des cours universitaires"
+        "subtitle": "Planification et gestion des cours universitaires",
+        "ajouter_un_cours": "Ajouter un cours",
+        "total_cours": "Total Cours",
+        "credits": "Crédits"
       },
       "departements": {
         "title": "Départements",
-        "subtitle": "Gestion des départements par faculté"
+        "subtitle": "Gestion des départements par faculté",
+        "nouveau_departement": "Nouveau département",
+        "departements": "Départements",
+        "rechercher_un_departement": "Rechercher un département...",
+        "filtrer_par_faculte": "Filtrer par faculté",
+        "toutes_facultes": "Toutes facultés",
+        "aucun_departement_trouve": "Aucun département trouvé",
+        "gerer": "Gérer"
       },
       "enseignants": {
         "title": "Enseignants",
-        "subtitle": "Profils et affectations des enseignants chercheurs"
+        "subtitle": "Profils et affectations des enseignants chercheurs",
+        "ajouter_un_enseignant": "Ajouter un enseignant",
+        "professeurs": "Professeurs",
+        "maitres_de_conf": "Maîtres de Conf.",
+        "assistants": "Assistants",
+        "rechercher_un_enseignant": "Rechercher un enseignant...",
+        "aucun_enseignant_trouve": "Aucun enseignant trouvé",
+        "etud": "Étud."
       },
       "etudiants": {
         "title": "Étudiants",
-        "subtitle": "Gestion des inscriptions et profils étudiants"
+        "subtitle": "Gestion des inscriptions et profils étudiants",
+        "ajouter_un_etudiant": "Ajouter un étudiant",
+        "actifs": "Actifs",
+        "suspendus": "Suspendus",
+        "niveaux": "Niveaux",
+        "rechercher_un_etudiant": "Rechercher un étudiant...",
+        "etudiant": "Étudiant",
+        "niveau": "Niveau",
+        "filiere": "Filière",
+        "faculte": "Faculté",
+        "contact": "Contact",
+        "inscription": "Inscription",
+        "aucun_etudiant_trouve": "Aucun étudiant trouvé"
       },
       "facultes": {
         "title": "Facultés",
-        "subtitle": "Gestion des facultés de l'université"
+        "subtitle": "Gestion des facultés de l'université",
+        "ajouter_une_faculte": "Ajouter une faculté",
+        "facultes": "Facultés",
+        "departements": "Départements",
+        "rechercher_une_faculte": "Rechercher une faculté...",
+        "aucune_faculte_trouvee": "Aucune faculté trouvée",
+        "dept": "Dépt.",
+        "ens": "Ens.",
+        "etud": "Étud."
       },
       "mes_cours": {
         "title": "Mes Cours",
-        "subtitle": "Cours qui vous sont assignés"
+        "subtitle": "Cours qui vous sont assignés",
+        "progression": "Progression",
+        "notes": "Notes"
       },
       "notes": {
         "title": "Notes",
-        "subtitle": "Saisie et consultation des notes"
+        "subtitle": "Saisie et consultation des notes",
+        "ajouter_une_note": "Ajouter une note",
+        "total_notes": "Total Notes",
+        "validees": "Validées",
+        "rechercher_par_etudiant_ou_cours": "Rechercher par étudiant ou cours...",
+        "validee": "Validée",
+        "etudiant": "Étudiant",
+        "coefficient": "Coefficient",
+        "semestre": "Semestre",
+        "aucune_note_trouvee": "Aucune note trouvée"
       },
       "planning": {
         "title": "Planning",
-        "subtitle": "Calendrier universitaire des cours et événements"
+        "subtitle": "Calendrier universitaire des cours et événements",
+        "nouvel_evenement": "Nouvel événement",
+        "planifies": "Planifiés",
+        "rechercher_un_evenement": "Rechercher un événement...",
+        "aucun_evenement_trouve": "Aucun événement trouvé"
       },
       "taches": {
         "title": "Tâches",
-        "subtitle": "Suivi des devoirs, projets et examens"
+        "subtitle": "Suivi des devoirs, projets et examens",
+        "nouvelle_tache": "Nouvelle tâche",
+        "terminees": "Terminées",
+        "urgentes": "Urgentes",
+        "rechercher_une_tache": "Rechercher une tâche...",
+        "termine": "Terminé",
+        "a_faire": "À faire",
+        "aucune_tache_trouvee": "Aucune tâche trouvée"
       }
     },
     "affectations": {

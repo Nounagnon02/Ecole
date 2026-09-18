@@ -81,13 +81,13 @@ export default function StatistiquesPage() {
         </div>
         <Badge variant="primary" size="sm">
           <Clock className="h-3 w-3 mr-1" />
-          Mis à jour en temps réel
+          {t('pages.admin.statistiques.mis_a_jour_en_temps_reel')}
         </Badge>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-4">
         <StatsCard
-          title="Établissements"
+          title={t('pages.admin.statistiques.etablissements')}
           value={String(data.total_schools ?? data.total_ecoles ?? '—')}
           icon={Building2}
           color="primary"
@@ -99,7 +99,7 @@ export default function StatistiquesPage() {
           }
         />
         <StatsCard
-          title="Utilisateurs"
+          title={t('pages.admin.statistiques.utilisateurs')}
           value={formatNumber(data.total_users ?? data.total_utilisateurs ?? 0)}
           icon={Users}
           color="emerald"
@@ -111,7 +111,7 @@ export default function StatistiquesPage() {
           }
         />
         <StatsCard
-          title="Revenus Mensuels"
+          title={t('pages.admin.statistiques.revenus_mensuels')}
           value={data.monthly_revenue ? `${(data.monthly_revenue / 1000000).toFixed(1)}M` : '—'}
           icon={DollarSign}
           color="amber"
@@ -123,7 +123,7 @@ export default function StatistiquesPage() {
           }
         />
         <StatsCard
-          title="Taux de Réussite"
+          title={t('pages.admin.statistiques.taux_de_reussite')}
           value={data.success_rate ? `${data.success_rate}%` : '—'}
           icon={TrendingUp}
           color="sky"
@@ -138,7 +138,7 @@ export default function StatistiquesPage() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
-          <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-4">Répartition des utilisateurs</h3>
+          <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-4">{t('pages.admin.statistiques.repartition_des_utilisateurs')}</h3>
           <div className="space-y-4">
             {rolesWithPct.map((item) => (
               <div key={item.role}>
@@ -155,7 +155,7 @@ export default function StatistiquesPage() {
         </Card>
 
         <Card>
-          <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-4">Activité récente</h3>
+          <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-4">{t('pages.admin.statistiques.activite_recente')}</h3>
           <div className="space-y-3">
             {data.recent_activities?.length > 0 ? (
               data.recent_activities.map((a, i) => {
@@ -175,7 +175,7 @@ export default function StatistiquesPage() {
                 );
               })
             ) : (
-              <p className="text-sm text-neutral-400 text-center py-4">Aucune activité récente</p>
+              <p className="text-sm text-neutral-400 text-center py-4">{t('pages.admin.statistiques.aucune_activite_recente')}</p>
             )}
           </div>
         </Card>
@@ -188,7 +188,7 @@ export default function StatistiquesPage() {
               <CheckCircle className="h-5 w-5 text-emerald-500" />
             </div>
             <div>
-              <p className="text-xs text-neutral-500">Taux de présence</p>
+              <p className="text-xs text-neutral-500">{t('pages.admin.statistiques.taux_de_presence')}</p>
               <p className="text-lg font-bold text-neutral-900 dark:text-white">{data.attendance_rate ?? '—'}%</p>
             </div>
           </div>
@@ -199,7 +199,7 @@ export default function StatistiquesPage() {
               <BookOpen className="h-5 w-5 text-amber-500" />
             </div>
             <div>
-              <p className="text-xs text-neutral-500">Cours programmés</p>
+              <p className="text-xs text-neutral-500">{t('pages.admin.statistiques.cours_programmes')}</p>
               <p className="text-lg font-bold text-neutral-900 dark:text-white">{data.total_courses ? formatNumber(data.total_courses) : '—'}</p>
             </div>
           </div>

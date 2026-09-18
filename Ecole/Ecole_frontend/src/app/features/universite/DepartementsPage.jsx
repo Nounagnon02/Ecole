@@ -90,13 +90,13 @@ export default function DepartementsPage() {
           <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.universite.departements.title')}</h1>
           <p className="text-sm text-neutral-500">{t('pages.universite.departements.subtitle')}</p>
         </div>
-        <Button size="sm" icon={<Plus />}>Nouveau département</Button>
+        <Button size="sm" icon={<Plus />}>{t('pages.universite.departements.nouveau_departement')}</Button>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <StatsCard title="Départements" value={String(stats.total)} icon={BookOpen} color="primary" />
-        <StatsCard title="Enseignants" value={String(stats.enseignants)} icon={Users} color="emerald" />
-        <StatsCard title="Étudiants" value={String(stats.etudiants)} icon={GraduationCap} color="amber" />
+        <StatsCard title={t('pages.universite.departements.departements')} value={String(stats.total)} icon={BookOpen} color="primary" />
+        <StatsCard title={t('common.teachers')} value={String(stats.enseignants)} icon={Users} color="emerald" />
+        <StatsCard title={t('common.students')} value={String(stats.etudiants)} icon={GraduationCap} color="amber" />
       </div>
 
       <Card>
@@ -104,7 +104,7 @@ export default function DepartementsPage() {
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
             <Input
-              placeholder="Rechercher un département..."
+              placeholder={t('pages.universite.departements.rechercher_un_departement')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
@@ -113,10 +113,10 @@ export default function DepartementsPage() {
           <select
             value={filterFaculte}
             onChange={(e) => setFilterFaculte(e.target.value)}
-            aria-label="Filtrer par faculté"
+            aria-label={t('pages.universite.departements.filtrer_par_faculte')}
             className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
           >
-            <option value="">Toutes facultés</option>
+            <option value="">{t('pages.universite.departements.toutes_facultes')}</option>
             {facultes.map((f) => <option key={f} value={f}>{f}</option>)}
           </select>
         </div>
@@ -127,7 +127,7 @@ export default function DepartementsPage() {
           <Card>
             <div className="text-center py-8 text-neutral-500">
               <BookOpen className="mx-auto h-8 w-8 mb-2" />
-              <p className="text-sm">Aucun département trouvé</p>
+              <p className="text-sm">{t('pages.universite.departements.aucun_departement_trouve')}</p>
             </div>
           </Card>
         )}
@@ -158,7 +158,7 @@ export default function DepartementsPage() {
                   </div>
                 )}
               </div>
-              <Button variant="ghost" size="sm">Gérer</Button>
+              <Button variant="ghost" size="sm">{t('pages.universite.departements.gerer')}</Button>
             </div>
           </Card>
         ))}

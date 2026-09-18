@@ -82,7 +82,7 @@ export default function ModulesPage() {
           <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.admin.modules.title')}</h1>
           <p className="text-sm text-neutral-500 mt-1">{t('pages.admin.modules.subtitle')}</p>
         </div>
-        <Button icon={<Puzzle className="h-4 w-4" />}>Nouveau module</Button>
+        <Button icon={<Puzzle className="h-4 w-4" />}>{t('pages.admin.modules.nouveau_module')}</Button>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -91,7 +91,7 @@ export default function ModulesPage() {
             <Card>
               <div className="text-center py-8 text-neutral-500">
                 <Puzzle className="mx-auto h-8 w-8 mb-2" />
-                <p className="text-sm">Aucun module disponible</p>
+                <p className="text-sm">{t('pages.admin.modules.aucun_module_disponible')}</p>
               </div>
             </Card>
           </div>
@@ -116,7 +116,7 @@ export default function ModulesPage() {
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="font-semibold text-neutral-900 dark:text-white">{mod.name}</h3>
                         {mod.is_core && (
-                          <Badge variant="primary" size="sm">Core</Badge>
+                          <Badge variant="primary" size="sm">{t('pages.admin.modules.core')}</Badge>
                         )}
                       </div>
                       <p className="text-xs text-neutral-500 mb-3">{mod.description}</p>

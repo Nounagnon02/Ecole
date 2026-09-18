@@ -51,11 +51,12 @@ function EcoleSkeleton() {
 }
 
 function EcoleForm({ form, onChange, errors }) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-4">
       <Input
-        label="Nom de l'établissement"
-        placeholder="Ex: Complexe Scolaire Lumière"
+        label={t('pages.admin.ecoles.nom_de_l_etablissement')}
+        placeholder={t('pages.admin.ecoles.ex_complexe_scolaire_lumiere')}
         value={form.nom}
         onChange={(e) => onChange('nom', e.target.value)}
         error={errors.nom}
@@ -64,7 +65,7 @@ function EcoleForm({ form, onChange, errors }) {
       />
       <div className="grid grid-cols-2 gap-4">
         <Input
-          label="Email"
+          label={t('pages.admin.ecoles.email')}
           type="email"
           placeholder="contact@ecole.bj"
           value={form.email}
@@ -74,7 +75,7 @@ function EcoleForm({ form, onChange, errors }) {
           icon={<Mail className="h-4 w-4" />}
         />
         <Input
-          label="Téléphone"
+          label={t('pages.admin.ecoles.telephone')}
           placeholder="+229 01 02 03 04"
           value={form.telephone}
           onChange={(e) => onChange('telephone', e.target.value)}
@@ -82,8 +83,8 @@ function EcoleForm({ form, onChange, errors }) {
         />
       </div>
       <Input
-        label="Adresse"
-        placeholder="Cotonou, Bénin"
+        label={t('pages.admin.ecoles.adresse')}
+        placeholder={t('pages.admin.ecoles.cotonou_benin')}
         value={form.adresse}
         onChange={(e) => onChange('adresse', e.target.value)}
         error={errors.adresse}
@@ -91,8 +92,8 @@ function EcoleForm({ form, onChange, errors }) {
         icon={<MapPin className="h-4 w-4" />}
       />
       <Input
-        label="Ville"
-        placeholder="Cotonou"
+        label={t('pages.admin.ecoles.ville')}
+        placeholder={t('pages.admin.ecoles.cotonou')}
         value={form.ville}
         onChange={(e) => onChange('ville', e.target.value)}
         icon={<MapPin className="h-4 w-4" />}
@@ -235,23 +236,23 @@ export default function EcolesPage() {
         </div>
         <div className="flex items-center gap-2">
           <Button size="sm" variant="secondary" onClick={() => setShowProvisionModal(true)} icon={<KeyRound className="h-4 w-4" />}>
-            Provisionner
+            {t('pages.admin.ecoles.provisionner')}
           </Button>
           <Button size="sm" onClick={() => setShowCreateModal(true)} icon={<Plus className="h-4 w-4" />}>
-            Ajouter une école
+            {t('pages.admin.ecoles.ajouter_une_ecole')}
           </Button>
         </div>
       </div>
 
       {/* ─── Stats ──────────────────────────────────────────────── */}
       <div className="grid gap-4 sm:grid-cols-4">
-        <StatsCard title="Total" value={loading ? '...' : String(stats.total)} icon={Building2} color="primary" />
-        <StatsCard title="Actives" value={loading ? '...' : String(stats.actifs)} icon={CheckCircle} color="emerald" />
-        <StatsCard title="Inactives" value={loading ? '...' : String(stats.inactifs)} icon={XCircle} color="red" />
+        <StatsCard title={t('common.total')} value={loading ? '...' : String(stats.total)} icon={Building2} color="primary" />
+        <StatsCard title={t('pages.admin.ecoles.actives')} value={loading ? '...' : String(stats.actifs)} icon={CheckCircle} color="emerald" />
+        <StatsCard title={t('pages.admin.ecoles.inactives')} value={loading ? '...' : String(stats.inactifs)} icon={XCircle} color="red" />
         {/* Cette carte portait `stats.total` — le nombre d'écoles, déjà donné
             par la première — sous une icône « utilisateurs ». `totalEffectifs`
             était calculé et jamais affiché. */}
-        <StatsCard title="Élèves" value={loading ? '...' : String(stats.totalEffectifs)} icon={Users} color="sky" />
+        <StatsCard title={t('pages.admin.ecoles.eleves')} value={loading ? '...' : String(stats.totalEffectifs)} icon={Users} color="sky" />
       </div>
 
       {/* ─── Barre de recherche + filtre ────────────────────────── */}
@@ -260,7 +261,7 @@ export default function EcolesPage() {
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
             <Input
-              placeholder="Rechercher une école..."
+              placeholder={t('pages.admin.ecoles.rechercher_une_ecole')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
@@ -269,17 +270,17 @@ export default function EcolesPage() {
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" onClick={fetchEcoles} disabled={loading}>
               <RefreshCw className={cn('h-4 w-4 mr-1', loading && 'animate-spin')} />
-              Actualiser
+              {t('pages.admin.ecoles.actualiser')}
             </Button>
             <select
               value={filterStatut}
               onChange={(e) => setFilterStatut(e.target.value)}
-              aria-label="Filtrer par statut"
+              aria-label={t('common.filter_by_status')}
               className="h-10 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 text-[var(--text-primary)]"
             >
-              <option value="">Tous les statuts</option>
-              <option value="active">Actif</option>
-              <option value="inactive">Inactif</option>
+              <option value="">{t('common.all_statuses')}</option>
+              <option value="active">{t('pages.admin.ecoles.actif')}</option>
+              <option value="inactive">{t('pages.admin.ecoles.inactif')}</option>
             </select>
           </div>
         </div>
@@ -298,7 +299,7 @@ export default function EcolesPage() {
             <AlertCircle className="h-8 w-8" />
             <p className="text-sm">{error}</p>
             <Button size="sm" variant="secondary" onClick={fetchEcoles}>
-              <RefreshCw className="h-4 w-4 mr-1" />Réessayer
+              <RefreshCw className="h-4 w-4 mr-1" />{t('common.retry')}
             </Button>
           </div>
         </Card>
@@ -311,7 +312,7 @@ export default function EcolesPage() {
               <Card>
                 <div className="text-center py-8 text-[var(--text-tertiary)]">
                   <Building2 className="mx-auto h-8 w-8 mb-2 opacity-40" />
-                  <p className="text-sm">Aucune école trouvée</p>
+                  <p className="text-sm">{t('pages.admin.ecoles.aucune_ecole_trouvee')}</p>
                 </div>
               </Card>
             </div>
@@ -341,7 +342,7 @@ export default function EcolesPage() {
                     <span className="flex items-center gap-1"><BookOpen className="h-3 w-3" /> {e.classes_count ?? '?'} classes</span>
                   </div>
                 </div>
-                <Button variant="ghost" size="sm" icon={<Eye className="h-4 w-4" />} title="Voir" />
+                <Button variant="ghost" size="sm" icon={<Eye className="h-4 w-4" />} title={t('common.view')} />
               </div>
             </Card>
           ))}
@@ -354,14 +355,14 @@ export default function EcolesPage() {
       <Modal
         open={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        title="Ajouter une école"
-        description="Créez un nouvel établissement scolaire"
+        title={t('pages.admin.ecoles.ajouter_une_ecole')}
+        description={t('pages.admin.ecoles.creez_un_nouvel_etablissement_scolaire')}
         size="md"
         footer={
           <>
-            <Button variant="ghost" onClick={() => setShowCreateModal(false)}>Annuler</Button>
+            <Button variant="ghost" onClick={() => setShowCreateModal(false)}>{t('common.cancel')}</Button>
             <Button onClick={handleCreate} loading={creating}>
-              Créer l'école
+              {t('pages.admin.ecoles.creer_l_ecole')}
             </Button>
           </>
         }
@@ -392,13 +393,13 @@ export default function EcolesPage() {
         footer={
           provResult ? (
             <Button onClick={resetProvision}>
-              <CheckCircle className="h-4 w-4 mr-1" />Terminer
+              <CheckCircle className="h-4 w-4 mr-1" />{t('pages.admin.ecoles.terminer')}
             </Button>
           ) : (
             <>
-              <Button variant="ghost" onClick={() => setShowProvisionModal(false)}>Annuler</Button>
+              <Button variant="ghost" onClick={() => setShowProvisionModal(false)}>{t('common.cancel')}</Button>
               <Button onClick={handleProvision} loading={provisioning} icon={<KeyRound className="h-4 w-4" />}>
-                Provisionner
+                {t('pages.admin.ecoles.provisionner')}
               </Button>
             </>
           )
@@ -413,7 +414,7 @@ export default function EcolesPage() {
             </div>
 
             <div className="max-h-64 overflow-y-auto space-y-1">
-              <p className="text-xs font-medium text-[var(--text-tertiary)] uppercase tracking-wider">Comptes créés</p>
+              <p className="text-xs font-medium text-[var(--text-tertiary)] uppercase tracking-wider">{t('pages.admin.ecoles.comptes_crees')}</p>
               {provResult.users?.map((u, i) => (
                 <div key={i} className="flex items-center justify-between rounded-lg bg-[var(--surface)] border border-[var(--border-light)] px-4 py-2.5 text-sm">
                   <div>
@@ -428,7 +429,7 @@ export default function EcolesPage() {
             <div className="rounded-lg bg-[var(--accent-subtle)]/20 border border-[var(--accent)]/30 p-3 text-sm">
               <span className="flex items-center gap-2 text-[var(--accent)] font-medium">
                 <KeyRound className="h-4 w-4" />
-                Mot de passe commun : <code className="bg-[var(--surface)] px-2 py-0.5 rounded text-xs">{provResult.password}</code>
+                {t('pages.admin.ecoles.mot_de_passe_commun')} <code className="bg-[var(--surface)] px-2 py-0.5 rounded text-xs">{provResult.password}</code>
               </span>
             </div>
           </div>
@@ -443,8 +444,8 @@ export default function EcolesPage() {
             )}
             <div className="space-y-4">
               <Input
-                label="Nom de l'établissement"
-                placeholder="Ex: Complexe Scolaire Lumière"
+                label={t('pages.admin.ecoles.nom_de_l_etablissement')}
+                placeholder={t('pages.admin.ecoles.ex_complexe_scolaire_lumiere')}
                 value={provForm.nom}
                 onChange={(e) => handleProvField('nom', e.target.value)}
                 error={provErrors.nom}
@@ -453,7 +454,7 @@ export default function EcolesPage() {
               />
               <div className="grid grid-cols-2 gap-4">
                 <Input
-                  label="Email"
+                  label={t('pages.admin.ecoles.email')}
                   type="email"
                   placeholder="contact@ecole.bj"
                   value={provForm.email}
@@ -463,7 +464,7 @@ export default function EcolesPage() {
                   icon={<Mail className="h-4 w-4" />}
                 />
                 <Input
-                  label="Téléphone"
+                  label={t('pages.admin.ecoles.telephone')}
                   placeholder="+229 01 02 03 04"
                   value={provForm.telephone}
                   onChange={(e) => handleProvField('telephone', e.target.value)}
@@ -471,8 +472,8 @@ export default function EcolesPage() {
                 />
               </div>
               <Input
-                label="Adresse"
-                placeholder="Cotonou, Bénin"
+                label={t('pages.admin.ecoles.adresse')}
+                placeholder={t('pages.admin.ecoles.cotonou_benin')}
                 value={provForm.adresse}
                 onChange={(e) => handleProvField('adresse', e.target.value)}
                 error={provErrors.adresse}
@@ -481,24 +482,24 @@ export default function EcolesPage() {
               />
               <div className="grid grid-cols-2 gap-4">
                 <Input
-                  label="Ville"
-                  placeholder="Cotonou"
+                  label={t('pages.admin.ecoles.ville')}
+                  placeholder={t('pages.admin.ecoles.cotonou')}
                   value={provForm.ville}
                   onChange={(e) => handleProvField('ville', e.target.value)}
                   icon={<MapPin className="h-4 w-4" />}
                 />
                 <Input
-                  label="Mot de passe (optionnel)"
+                  label={t('pages.admin.ecoles.mot_de_passe_optionnel')}
                   type="password"
-                  placeholder="Défaut: password1234"
+                  placeholder={t('pages.admin.ecoles.defaut_genere_aleatoirement')}
                   value={provForm.password}
                   onChange={(e) => handleProvField('password', e.target.value)}
                   icon={<KeyRound className="h-4 w-4" />}
                 />
               </div>
               <div className="rounded-lg bg-[var(--primary-subtle)]/20 border border-[var(--primary)]/20 p-3 text-xs text-[var(--text-tertiary)]">
-                <p className="font-medium text-[var(--text-secondary)] mb-1">🔑 Comptes qui seront créés automatiquement :</p>
-                <p>Directeur, Directeur Maternelle/Primaire/Secondaire, Censeur, Secrétaire, Comptable, Surveillant, Infirmier, Bibliothécaire</p>
+                <p className="font-medium text-[var(--text-secondary)] mb-1">{t('pages.admin.ecoles.comptes_qui_seront_crees_automatiquement')}</p>
+                <p>{t('pages.admin.ecoles.directeur_directeur_maternelle_primaire')}</p>
               </div>
             </div>
           </>

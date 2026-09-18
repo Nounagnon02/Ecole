@@ -83,21 +83,21 @@ export default function FacultesPage() {
           <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.universite.facultes.title')}</h1>
           <p className="text-sm text-neutral-500">{t('pages.universite.facultes.subtitle')}</p>
         </div>
-        <Button size="sm" icon={<Plus />}>Ajouter une faculté</Button>
+        <Button size="sm" icon={<Plus />}>{t('pages.universite.facultes.ajouter_une_faculte')}</Button>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-4">
-        <StatsCard title="Facultés" value={String(stats.total)} icon={Building2} color="primary" />
-        <StatsCard title="Départements" value={String(stats.departements)} icon={BookOpen} color="sky" />
-        <StatsCard title="Enseignants" value={String(stats.enseignants)} icon={Users} color="emerald" />
-        <StatsCard title="Étudiants" value={String(stats.etudiants)} icon={Users} color="amber" />
+        <StatsCard title={t('pages.universite.facultes.facultes')} value={String(stats.total)} icon={Building2} color="primary" />
+        <StatsCard title={t('pages.universite.facultes.departements')} value={String(stats.departements)} icon={BookOpen} color="sky" />
+        <StatsCard title={t('common.teachers')} value={String(stats.enseignants)} icon={Users} color="emerald" />
+        <StatsCard title={t('common.students')} value={String(stats.etudiants)} icon={Users} color="amber" />
       </div>
 
       <Card>
         <div className="relative max-w-sm">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
           <Input
-            placeholder="Rechercher une faculté..."
+            placeholder={t('pages.universite.facultes.rechercher_une_faculte')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
@@ -111,7 +111,7 @@ export default function FacultesPage() {
             <Card>
               <div className="text-center py-8 text-neutral-500">
                 <Building2 className="mx-auto h-8 w-8 mb-2" />
-                <p className="text-sm">Aucune faculté trouvée</p>
+                <p className="text-sm">{t('pages.universite.facultes.aucune_faculte_trouvee')}</p>
               </div>
             </Card>
           </div>
@@ -130,15 +130,15 @@ export default function FacultesPage() {
             <div className="grid grid-cols-3 gap-2 text-center text-xs mb-3">
               <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg p-2">
                 <span className="block font-bold text-neutral-900 dark:text-white">{f.departements}</span>
-                <span className="text-neutral-500">Dépt.</span>
+                <span className="text-neutral-500">{t('pages.universite.facultes.dept')}</span>
               </div>
               <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg p-2">
                 <span className="block font-bold text-neutral-900 dark:text-white">{f.enseignants}</span>
-                <span className="text-neutral-500">Ens.</span>
+                <span className="text-neutral-500">{t('pages.universite.facultes.ens')}</span>
               </div>
               <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg p-2">
                 <span className="block font-bold text-neutral-900 dark:text-white">{f.etudiants}</span>
-                <span className="text-neutral-500">Étud.</span>
+                <span className="text-neutral-500">{t('pages.universite.facultes.etud')}</span>
               </div>
             </div>
 

@@ -84,7 +84,9 @@
     "search_ellipsis": "بحث...",
     "school": "المؤسسة",
     "late": "تأخر",
-    "time": "الوقت"
+    "time": "الوقت",
+    "teachers": "الأساتذة",
+    "students": "الطلاب"
   },
   "auth": {
     "login": "تسجيل الدخول",
@@ -437,35 +439,123 @@
     "admin": {
       "ecoles": {
         "title": "المدارس",
-        "subtitle": "إدارة المؤسسات المدرسية"
+        "subtitle": "إدارة المؤسسات المدرسية",
+        "nom_de_l_etablissement": "اسم المؤسسة",
+        "ex_complexe_scolaire_lumiere": "مثال: مجمع لوميير المدرسي",
+        "email": "البريد الإلكتروني",
+        "telephone": "الهاتف",
+        "adresse": "العنوان",
+        "cotonou_benin": "كوتونو، بنين",
+        "ville": "المدينة",
+        "cotonou": "كوتونو",
+        "provisionner": "تهيئة",
+        "ajouter_une_ecole": "إضافة مدرسة",
+        "actives": "النشطة",
+        "inactives": "غير النشطة",
+        "eleves": "الطلاب",
+        "rechercher_une_ecole": "ابحث عن مدرسة...",
+        "actualiser": "تحديث",
+        "actif": "نشط",
+        "inactif": "غير نشط",
+        "aucune_ecole_trouvee": "لم يتم العثور على أي مدرسة",
+        "creez_un_nouvel_etablissement_scolaire": "أنشئ مؤسسة تعليمية جديدة",
+        "creer_l_ecole": "إنشاء المدرسة",
+        "terminer": "إنهاء",
+        "comptes_crees": "الحسابات المنشأة",
+        "mot_de_passe_commun": "كلمة المرور المشتركة:",
+        "mot_de_passe_optionnel": "كلمة المرور (اختياري)",
+        "defaut_genere_aleatoirement": "الافتراضي: يُولَّد عشوائياً",
+        "comptes_qui_seront_crees_automatiquement": "🔑 الحسابات التي ستُنشأ تلقائياً:",
+        "directeur_directeur_maternelle_primaire": "المدير، مدير الروض/الابتدائي/الثانوي، الناظر، الكاتب، المحاسب، المراقب، الممرض، أمين المكتبة"
       },
       "plans": {
         "title": "خطط الاشتراك",
-        "subtitle": "إدارة العروض والأسعار"
+        "subtitle": "إدارة العروض والأسعار",
+        "nouveau_plan": "خطة جديدة",
+        "aucun_plan_disponible": "لا توجد خطط متاحة",
+        "populaire": "الأكثر طلباً",
+        "mois": "/شهر",
+        "aucune_fonctionnalite_listee": "لا توجد ميزات مدرجة"
       },
       "modules": {
         "title": "الوحدات",
-        "subtitle": "سوق الميزات"
+        "subtitle": "سوق الميزات",
+        "nouveau_module": "وحدة جديدة",
+        "aucun_module_disponible": "لا توجد وحدات متاحة",
+        "core": "الأساسي"
       },
       "utilisateurs": {
         "title": "المستخدمون",
-        "subtitle": "إدارة الحسابات والوصول"
+        "subtitle": "إدارة الحسابات والوصول",
+        "desactiver": "تعطيل",
+        "ajouter": "إضافة",
+        "actifs": "النشطون",
+        "inactifs": "غير النشطين",
+        "etablissements": "المؤسسات",
+        "rechercher_un_utilisateur": "ابحث عن مستخدم...",
+        "filtrer_par_role": "تصفية حسب الدور",
+        "tous_les_roles": "جميع الأدوار",
+        "actif": "نشط",
+        "inactif": "غير نشط",
+        "utilisateur": "المستخدم",
+        "role": "الدور",
+        "derniere_connexion": "آخر تسجيل دخول",
+        "aucun_utilisateur_trouve": "لم يتم العثور على أي مستخدم"
       },
       "billing": {
         "title": "الفوترة",
-        "subtitle": "المعاملات والاشتراكات والإيرادات"
+        "subtitle": "المعاملات والاشتراكات والإيرادات",
+        "revenu_total": "إجمالي الإيرادات",
+        "factures_payees": "الفواتير المدفوعة",
+        "total_factures": "مجموع الفواتير",
+        "revenus": "الإيرادات",
+        "evolution_sur_6_mois": "التطور خلال 6 أشهر",
+        "factures_recentes": "الفواتير الأخيرة",
+        "historique_des_transactions": "سجل المعاملات",
+        "aucune_facture_trouvee": "لم يتم العثور على أي فاتورة"
       },
       "statistiques": {
         "title": "الإحصائيات",
-        "subtitle": "المؤشرات الرئيسية وتحليلات النظام"
+        "subtitle": "المؤشرات الرئيسية وتحليلات النظام",
+        "mis_a_jour_en_temps_reel": "يُحدَّث في الوقت الفعلي",
+        "etablissements": "المؤسسات",
+        "utilisateurs": "المستخدمون",
+        "revenus_mensuels": "الإيرادات الشهرية",
+        "taux_de_reussite": "نسبة النجاح",
+        "repartition_des_utilisateurs": "توزيع المستخدمين",
+        "activite_recente": "النشاط الأخير",
+        "aucune_activite_recente": "لا يوجد نشاط حديث",
+        "taux_de_presence": "نسبة الحضور",
+        "cours_programmes": "المقررات المبرمجة"
       },
       "white_label": {
         "title": "العلامة البيضاء",
-        "subtitle": "تخصيص العلامة التجارية لكل مؤسسة"
+        "subtitle": "تخصيص العلامة التجارية لكل مؤسسة",
+        "selectionnez_l_etablissement_a_personnaliser": "اختر المؤسسة المراد تخصيصها",
+        "nom_de_la_marque": "اسم العلامة",
+        "affiche_dans_l_en_tete_et_les_communications": "يظهر في الترويسة وفي الإعلانات",
+        "nom_de_l_etablissement": "اسم المؤسسة",
+        "couleurs": "الألوان",
+        "personnalisez_les_couleurs_principales": "خصّص الألوان الرئيسية",
+        "couleur_primaire": "اللون الأساسي",
+        "couleur_secondaire": "اللون الثانوي",
+        "logo_favicon": "الشعار وأيقونة الموقع",
+        "telechargez_le_logo_et_l_icone_de_l": "ارفع شعار المؤسسة وأيقونتها",
+        "logo_png_svg_max_2_mo": "الشعار (PNG أو SVG، الحد الأقصى 2 ميغابايت)",
+        "logo": "الشعار",
+        "cliquez_pour_uploader": "انقر للرفع",
+        "choisir_un_fichier": "اختر ملفاً",
+        "favicon_png_ico_max_1_mo": "أيقونة الموقع (PNG أو ICO، الحد الأقصى 1 ميغابايت)",
+        "favicon": "أيقونة الموقع",
+        "apercu": "معاينة",
+        "rendu_en_direct": "معاينة مباشرة",
+        "web": "الويب",
+        "mobile": "الجوال"
       },
       "configuration": {
         "title": "الإعدادات",
-        "subtitle": "إعدادات النظام العامة"
+        "subtitle": "إعدادات النظام العامة",
+        "reinitialiser": "إعادة تعيين"
       }
     },
     "bibliothecaire": {
@@ -896,39 +986,98 @@
     "universite": {
       "cours": {
         "title": "المقررات",
-        "subtitle": "تخطيط وإدارة المقررات الجامعية"
+        "subtitle": "تخطيط وإدارة المقررات الجامعية",
+        "ajouter_un_cours": "إضافة مقرر",
+        "total_cours": "مجموع المقررات",
+        "credits": "الوحدات الدراسية"
       },
       "departements": {
         "title": "الأقسام",
-        "subtitle": "إدارة الأقسام حسب الكلية"
+        "subtitle": "إدارة الأقسام حسب الكلية",
+        "nouveau_departement": "قسم جديد",
+        "departements": "الأقسام",
+        "rechercher_un_departement": "ابحث عن قسم...",
+        "filtrer_par_faculte": "تصفية حسب الكلية",
+        "toutes_facultes": "جميع الكليات",
+        "aucun_departement_trouve": "لم يتم العثور على أي قسم",
+        "gerer": "إدارة"
       },
       "enseignants": {
         "title": "الأساتذة",
-        "subtitle": "ملفات وتكليفات الأساتذة الباحثين"
+        "subtitle": "ملفات وتكليفات الأساتذة الباحثين",
+        "ajouter_un_enseignant": "إضافة أستاذ",
+        "professeurs": "الأساتذة",
+        "maitres_de_conf": "أساتذة محاضرون",
+        "assistants": "المساعدون",
+        "rechercher_un_enseignant": "ابحث عن أستاذ...",
+        "aucun_enseignant_trouve": "لم يتم العثور على أي أستاذ",
+        "etud": "الطلاب"
       },
       "etudiants": {
         "title": "الطلاب",
-        "subtitle": "إدارة تسجيلات الطلاب وملفاتهم"
+        "subtitle": "إدارة تسجيلات الطلاب وملفاتهم",
+        "ajouter_un_etudiant": "إضافة طالب",
+        "actifs": "النشطون",
+        "suspendus": "الموقوفون",
+        "niveaux": "المستويات",
+        "rechercher_un_etudiant": "ابحث عن طالب...",
+        "etudiant": "الطالب",
+        "niveau": "المستوى",
+        "filiere": "الشعبة",
+        "faculte": "الكلية",
+        "contact": "جهة الاتصال",
+        "inscription": "التسجيل",
+        "aucun_etudiant_trouve": "لم يتم العثور على أي طالب"
       },
       "facultes": {
         "title": "الكليات",
-        "subtitle": "إدارة كليات الجامعة"
+        "subtitle": "إدارة كليات الجامعة",
+        "ajouter_une_faculte": "إضافة كلية",
+        "facultes": "الكليات",
+        "departements": "الأقسام",
+        "rechercher_une_faculte": "ابحث عن كلية...",
+        "aucune_faculte_trouvee": "لم يتم العثور على أي كلية",
+        "dept": "القسم",
+        "ens": "الأساتذة",
+        "etud": "الطلاب"
       },
       "mes_cours": {
         "title": "مقرراتي",
-        "subtitle": "المقررات المسندة إليك"
+        "subtitle": "المقررات المسندة إليك",
+        "progression": "التقدم",
+        "notes": "الدرجات"
       },
       "notes": {
         "title": "الدرجات",
-        "subtitle": "إدخال الدرجات واستعراضها"
+        "subtitle": "إدخال الدرجات واستعراضها",
+        "ajouter_une_note": "إضافة درجة",
+        "total_notes": "مجموع الدرجات",
+        "validees": "المصادَق عليها",
+        "rechercher_par_etudiant_ou_cours": "ابحث عن طالب أو مقرر...",
+        "validee": "مصادَق عليها",
+        "etudiant": "الطالب",
+        "coefficient": "المعامل",
+        "semestre": "السداسي",
+        "aucune_note_trouvee": "لم يتم العثور على أي درجة"
       },
       "planning": {
         "title": "الجدولة",
-        "subtitle": "التقويم الجامعي للمقررات والفعاليات"
+        "subtitle": "التقويم الجامعي للمقررات والفعاليات",
+        "nouvel_evenement": "فعالية جديدة",
+        "planifies": "المجدولة",
+        "rechercher_un_evenement": "ابحث عن فعالية...",
+        "aucun_evenement_trouve": "لم يتم العثور على أي فعالية"
       },
       "taches": {
         "title": "المهام",
-        "subtitle": "متابعة الواجبات والمشاريع والامتحانات"
+        "subtitle": "متابعة الواجبات والمشاريع والامتحانات",
+        "nouvelle_tache": "مهمة جديدة",
+        "terminees": "المنتهية",
+        "urgentes": "العاجلة",
+        "rechercher_une_tache": "ابحث عن مهمة...",
+        "termine": "منتهٍ",
+        "a_faire": "للإنجاز",
+        "aucune_tache_trouvee": "لم يتم العثور على أي مهمة"
       }
     },
     "affectations": {

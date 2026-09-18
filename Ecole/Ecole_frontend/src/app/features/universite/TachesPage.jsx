@@ -120,14 +120,14 @@ export default function TachesPage() {
           <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.universite.taches.title')}</h1>
           <p className="text-sm text-neutral-500">{t('pages.universite.taches.subtitle')}</p>
         </div>
-        <Button size="sm" icon={<Plus />}>Nouvelle tâche</Button>
+        <Button size="sm" icon={<Plus />}>{t('pages.universite.taches.nouvelle_tache')}</Button>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-4">
-        <StatsCard title="Total" value={String(stats.total)} icon={CheckSquare} color="primary" />
-        <StatsCard title="En cours" value={String(stats.enCours)} icon={Clock} color="amber" />
-        <StatsCard title="Terminées" value={String(stats.termines)} icon={CheckCircle} color="emerald" />
-        <StatsCard title="Urgentes" value={String(stats.urgentes)} icon={AlertCircle} color="red" />
+        <StatsCard title={t('common.total')} value={String(stats.total)} icon={CheckSquare} color="primary" />
+        <StatsCard title={t('common.status.in_progress')} value={String(stats.enCours)} icon={Clock} color="amber" />
+        <StatsCard title={t('pages.universite.taches.terminees')} value={String(stats.termines)} icon={CheckCircle} color="emerald" />
+        <StatsCard title={t('pages.universite.taches.urgentes')} value={String(stats.urgentes)} icon={AlertCircle} color="red" />
       </div>
 
       <Card>
@@ -135,7 +135,7 @@ export default function TachesPage() {
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
             <Input
-              placeholder="Rechercher une tâche..."
+              placeholder={t('pages.universite.taches.rechercher_une_tache')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
@@ -144,16 +144,16 @@ export default function TachesPage() {
           <select
             value={filterStatut}
             onChange={(e) => setFilterStatut(e.target.value)}
-            aria-label="Filtrer par statut"
+            aria-label={t('common.filter_by_status')}
             className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
           >
-            <option value="">Tous les statuts</option>
-            <option value="en_cours">En cours</option>
-            <option value="termine">Terminé</option>
+            <option value="">{t('common.all_statuses')}</option>
+            <option value="en_cours">{t('common.status.in_progress')}</option>
+            <option value="termine">{t('pages.universite.taches.termine')}</option>
             {/* `a_faire` sans accent : la valeur est comparée telle quelle au
                 `statut` renvoyé par le serveur, qui stocke la forme ASCII.
                 Avec `à_faire` le filtre ne correspondait jamais. */}
-            <option value="a_faire">À faire</option>
+            <option value="a_faire">{t('pages.universite.taches.a_faire')}</option>
           </select>
         </div>
       </Card>
@@ -163,7 +163,7 @@ export default function TachesPage() {
           <Card>
             <div className="text-center py-8 text-neutral-500">
               <CheckSquare className="mx-auto h-8 w-8 mb-2" />
-              <p className="text-sm">Aucune tâche trouvée</p>
+              <p className="text-sm">{t('pages.universite.taches.aucune_tache_trouvee')}</p>
             </div>
           </Card>
         )}
