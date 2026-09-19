@@ -83,6 +83,36 @@ class QueuedJobSchoolContextTest extends TestCase
         $this->assertCount(3, $lignes, "Seuls les 2 élèves de l'école A doivent figurer.");
     }
 
+    /** @test */
+    public function an_export_can_be_filtered_by_class()
+    {
+        // `where('class_id', ...)` au lieu de `classe_id` (colonne réelle) :
+        // dès qu'un filtre de classe était fourni, le job levait une
+        // `QueryException` (colonne inexistante) au lieu de filtrer — les
+        // tests existants n'appellent jamais l'export avec ce filtre, donc
+        // rien ne le voyait.
+        Storage::fake('local');
+
+        [$school, $staff] = $this->schoolWithStaff();
+
+        [$classeA, $classeB] = SchoolContext::for($school->id, fn () => [
+            \App\Models\Classes::factory()->create(['ecole_id' => $school->id]),
+            \App\Models\Classes::factory()->create(['ecole_id' => $school->id]),
+        ]);
+
+        SchoolContext::for($school->id, function () use ($school, $classeA, $classeB) {
+            Eleve::factory()->forSchool($school)->count(2)->create(['classe_id' => $classeA->id]);
+            Eleve::factory()->forSchool($school)->count(3)->create(['classe_id' => $classeB->id]);
+        });
+
+        (new ExportReportJob($staff, 'eleves', ['classe_id' => $classeA->id]))->handle();
+
+        $chemin = "exports/eleves_{$staff->id}_{$school->id}.csv";
+        $lignes = array_values(array_filter(explode("\n", Storage::disk('local')->get($chemin))));
+
+        $this->assertCount(3, $lignes, "1 en-tête + les 2 élèves de la classe filtrée, pas les 5.");
+    }
+
     /**
      * Un utilisateur sans école n'importe rien.
      *
