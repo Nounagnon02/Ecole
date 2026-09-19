@@ -49,13 +49,18 @@ Route::middleware([
             // compte authentifié — un élève — pouvait écrire des notes ou
             // modifier une fiche élève (audit A4). Les gardes sont alignées sur
             // la surface principale, la plus restrictive faisant foi.
+            //
+            // `->names('tenant.…')` : `routes/api/universite.php` déclare aussi un
+            // `apiResource` `matieres` et `notes`, d'où dix noms de route en double
+            // (`matieres.index`, `notes.store`, …). `php artisan route:cache`
+            // refuse alors de sérialiser — et railway.json comme la CI l'exécutent.
             $lectureStaff = 'role:directeur,admin,enseignant,censeur,secretaire';
             $ecritureDirection = 'role:directeur,admin';
 
             Route::apiResource('matieres', 'App\Http\Controllers\MatieresController')
-                ->only(['index', 'show'])->middleware($lectureStaff);
+                ->names('tenant.matieres')->only(['index', 'show'])->middleware($lectureStaff);
             Route::apiResource('matieres', 'App\Http\Controllers\MatieresController')
-                ->only(['store', 'update', 'destroy'])->middleware($ecritureDirection);
+                ->names('tenant.matieres')->only(['store', 'update', 'destroy'])->middleware($ecritureDirection);
 
             Route::apiResource('classes', 'App\Http\Controllers\ClassesController')
                 ->only(['index', 'show'])->middleware($lectureStaff);
@@ -70,9 +75,9 @@ Route::middleware([
             // La saisie de notes reste ouverte aux enseignants, comme
             // routes/api/academic.php:83.
             Route::apiResource('notes', 'App\Http\Controllers\Notes\NotesCrudController')
-                ->only(['index', 'show'])->middleware($lectureStaff);
+                ->names('tenant.notes')->only(['index', 'show'])->middleware($lectureStaff);
             Route::apiResource('notes', 'App\Http\Controllers\Notes\NotesCrudController')
-                ->only(['store', 'update', 'destroy'])->middleware('role:directeur,admin,enseignant');
+                ->names('tenant.notes')->only(['store', 'update', 'destroy'])->middleware('role:directeur,admin,enseignant');
 
             // Services
             //
