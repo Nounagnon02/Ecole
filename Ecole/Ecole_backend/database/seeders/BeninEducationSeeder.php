@@ -9,11 +9,18 @@ use App\Models\User;
 use App\Models\Eleve;
 use App\Models\Parent as ParentModel;
 use App\Models\Ecole;
+use Database\Seeders\Concerns\RefusesInProduction;
 
 class BeninEducationSeeder extends Seeder
 {
+    use RefusesInProduction;
+
     public function run()
     {
+        if ($this->abortIfProduction()) {
+            return;
+        }
+
         // 0. Ecole par défaut
         $ecole = DB::table('ecoles')->insertGetId([
             'nom' => 'Complexe Scolaire Excellence',

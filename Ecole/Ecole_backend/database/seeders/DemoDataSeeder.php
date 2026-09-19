@@ -3,14 +3,21 @@
 namespace Database\Seeders;
 
 use App\Models\PaiementEleve;
+use Database\Seeders\Concerns\RefusesInProduction;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class DemoDataSeeder extends Seeder
 {
+    use RefusesInProduction;
+
     public function run()
     {
+        if ($this->abortIfProduction()) {
+            return;
+        }
+
         $ecoleId = DB::table('ecoles')->first()->id ?? 1; // Premier établissement créé
 
         echo "== Démographie complète pour l'école #{$ecoleId} ==\n";

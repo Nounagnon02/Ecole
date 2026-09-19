@@ -21,6 +21,7 @@ use App\Models\Ecole;
 use App\Models\User;
 use App\Support\Roles;
 use App\Support\SchoolContext;
+use Database\Seeders\Concerns\RefusesInProduction;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
@@ -28,11 +29,17 @@ use Illuminate\Support\Facades\Schema;
 
 class UniversiteSeeder extends Seeder
 {
+    use RefusesInProduction;
+
     /**
      * Seed the university module with realistic Beninese data.
      */
     public function run(): void
     {
+        if ($this->abortIfProduction()) {
+            return;
+        }
+
         // `Schema::disableForeignKeyConstraints()`, pas `SET FOREIGN_KEY_CHECKS=0` :
         // la seconde forme est du SQL MySQL brut et lève une erreur de syntaxe sur
         // SQLite, si bien que ce seeder échouait dès sa première ligne. La méthode
