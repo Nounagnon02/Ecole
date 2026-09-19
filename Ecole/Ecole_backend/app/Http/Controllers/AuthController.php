@@ -3,16 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Http\Middleware\AccountLockout;
-use App\Models\Eleve;
-use App\Models\Enseignant;
 use App\Models\User;
-use App\Models\UserParent;
+use App\Services\AuthService;
 use App\Services\ProfileService;
 use App\Support\Roles;
 use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Carbon;
@@ -22,8 +19,10 @@ use Illuminate\Validation\Rules\Password;
 
 class AuthController extends Controller
 {
-    public function __construct(private ProfileService $profiles)
-    {
+    public function __construct(
+        private ProfileService $profiles,
+        private AuthService $auth,
+    ) {
     }
 
     /**
@@ -40,14 +39,9 @@ class AuthController extends Controller
     public function connexion(LoginRequest $request)
     {
         $login = $request->login();
+        $user = $this->auth->attempt($login, $request->password);
 
-        // Parenthèses explicites : sans le groupement, un `orWhere` se
-        // combinerait mal avec toute condition ajoutée par la suite.
-        $user = User::where(function ($q) use ($login) {
-            $q->where('email', $login)->orWhere('identifiant', $login);
-        })->first();
-
-        if (!$user || !Hash::check($request->password, $user->password)) {
+        if (!$user) {
             return response()->json(['message' => 'Identifiants incorrects'], 401);
         }
 
@@ -62,7 +56,7 @@ class AuthController extends Controller
         // contrôle, `ecoles.status` n'était lu nulle part à la connexion : la
         // désactivation était purement décorative et tout le monde continuait
         // à travailler normalement.
-        if ($message = $this->schoolAccessDenied($user)) {
+        if ($message = $this->auth->schoolAccessDenied($user)) {
             return response()->json(['message' => $message], 403);
         }
 
@@ -86,7 +80,7 @@ class AuthController extends Controller
             'user'        => $user,
             'role'        => $user->role,
             'ecole_id'    => $user->ecole_id,
-            'redirect_to' => $this->getRedirectRouteBasedOnRole($user->role),
+            'redirect_to' => $this->auth->redirectRouteFor($user->role),
         ];
 
         // Client stateful (SPA sur domaine déclaré dans sanctum.stateful) :
@@ -114,34 +108,6 @@ class AuthController extends Controller
         $payload['token_type'] = 'Bearer';
 
         return response()->json($payload);
-    }
-
-    /**
-     * Reason to refuse sign-in because of the user's school, or null.
-     *
-     * A platform super-admin has no school of their own and is never blocked
-     * here — otherwise a suspended establishment would lock out the very
-     * account needed to reactivate it.
-     */
-    private function schoolAccessDenied(User $user): ?string
-    {
-        if ($user->role === 'super-admin' || !$user->ecole_id) {
-            return null;
-        }
-
-        // withTrashed: a soft-deleted school must not silently behave like an
-        // active one just because the row is hidden from ordinary queries.
-        $school = \App\Models\Ecole::withTrashed()->find($user->ecole_id);
-
-        if (!$school || $school->trashed()) {
-            return "Cet établissement n'est plus accessible. Contactez l'administrateur.";
-        }
-
-        if ($school->status !== 'active') {
-            return 'Cet établissement est désactivé. Contactez l\'administrateur.';
-        }
-
-        return null;
     }
 
     /**
@@ -247,45 +213,22 @@ class AuthController extends Controller
             ? $validated['ecole_id']
             : $request->user()->ecole_id;
 
+        // Validée avant l'ouverture de la transaction (dans
+        // AuthService::registerUser) : une `ValidationException` ici ne
+        // laisse donc rien à annuler. C'est ce qui manquait à l'ancien code —
+        // cette validation vivait à l'intérieur du bloc transactionnel, et sa
+        // levée devait franchir tout le `catch` avant d'atteindre le rollback
+        // (cf. AuthRegistrationTest::a_validation_failure_mid_transaction_does_not_leave_it_open).
+        $profileData = $validated['role'] === Roles::ELEVE
+            ? $request->validate([
+                'numero_matricule' => 'required|string|unique:eleves',
+                'classe_id' => 'required|school_exists:classes,id',
+                'serie_id' => 'nullable|school_exists:series,id',
+            ])
+            : null;
+
         try {
-            \DB::beginTransaction();
-
-            $user = User::create([
-                'name' => $validated['name'],
-                'prenom' => $validated['prenom'],
-                'role' => $validated['role'],
-                // `nullable` : ces champs peuvent être absents de la requête,
-                // pas seulement vides. Y accéder sans repli levait un
-                // "Undefined array key" (silencieux en production, mais un
-                // vrai bug) dès qu'un appelant omettait le champ plutôt que
-                // d'envoyer une chaîne vide.
-                'email' => $validated['email'] ?? null,
-                'identifiant' => $validated['identifiant'],
-                'password' => Hash::make($validated['password']),
-                'ecole_id' => $ecoleId,
-                'telephone' => $validated['telephone'] ?? null,
-            ]);
-
-            // Création du profil selon le rôle
-            if ($user->role === 'eleve') {
-                $profileData = $request->validate([
-                    'numero_matricule' => 'required|string|unique:eleves',
-                    'classe_id' => 'required|school_exists:classes,id',
-                    'serie_id' => 'nullable|school_exists:series,id',
-                ]);
-                Eleve::create([
-                    'user_id' => $user->id,
-                    'numero_matricule' => $profileData['numero_matricule'],
-                    'classe_id' => $profileData['classe_id'],
-                    'serie_id' => $profileData['serie_id'] ?? null,
-                ]);
-            } elseif ($user->role === 'parent') {
-                UserParent::create(['user_id' => $user->id]);
-            } elseif (str_contains($user->role, 'enseignant')) {
-                Enseignant::create(['user_id' => $user->id]);
-            }
-
-            \DB::commit();
+            $user = $this->auth->registerUser($validated, $ecoleId, $profileData);
 
             // Traçabilité : qui a créé cet utilisateur (audit S28).
             Log::info('Utilisateur créé', [
@@ -296,19 +239,10 @@ class AuthController extends Controller
             ]);
 
             return response()->json(['message' => 'Utilisateur créé avec succès', 'user' => $user], 201);
-
         } catch (\Exception $e) {
-            // Rollback D'ABORD : `rethrowIfMeaningful` relance immédiatement
-            // les exceptions "signifiantes" (dont `ValidationException` — la
-            // validation du profil élève, juste au-dessus, en lève une). Dans
-            // l'ancien ordre, cette relance sortait de la méthode avant
-            // d'atteindre `DB::rollBack()` : la transaction restait ouverte.
-            // Sans connexion persistante l'effet ne se voit pas (chaque
-            // requête en reprend une neuve), mais avec une connexion
-            // réutilisée (worker de file, connexions persistantes) la requête
-            // suivante sur cette connexion échoue avec « there is already an
-            // active transaction ».
-            \DB::rollBack();
+            // `DB::transaction()` (dans AuthService::registerUser) referme
+            // elle-même la transaction sur toute exception avant de la
+            // relancer : pas de rollback manuel à faire ici.
             $this->rethrowIfMeaningful($e);
             return response()->json(['message' => 'Erreur lors de l\'inscription', 'error' => $this->clientErrorMessage($e)], 500);
         }
@@ -371,38 +305,8 @@ class AuthController extends Controller
             'user' => $user,
             'role' => $user->role,
             'ecole_id' => $request->ecole_id,
-            'redirect_to' => $this->getRedirectRouteBasedOnRole($user->role),
+            'redirect_to' => $this->auth->redirectRouteFor($user->role),
         ]);
-    }
-
-    protected function getRedirectRouteBasedOnRole($role)
-    {
-        $routes = [
-            Roles::ELEVE => '/dashboard-eleve',
-            Roles::PARENT => '/dashboard-parent',
-            Roles::TEACHER => '/dashboard-enseignant',
-            Roles::TEACHER_KINDERGARTEN => '/dashboard-enseignant',
-            Roles::TEACHER_PRIMARY => '/dashboard-enseignant',
-            Roles::TEACHER_SECONDARY => '/dashboard-enseignant',
-            Roles::DIRECTOR => '/dashboard-admin',
-            Roles::DIRECTOR_KINDERGARTEN => '/dashboard-admin',
-            Roles::DIRECTOR_PRIMARY => '/dashboard-admin',
-            Roles::DIRECTOR_SECONDARY => '/dashboard-admin',
-            Roles::ADMIN => '/dashboard-admin',
-            Roles::COMPTABLE => '/dashboard-comptable',
-            Roles::CENSEUR => '/dashboard-censeur',
-            Roles::SURVEILLANT => '/dashboard-surveillant',
-            Roles::SECRETAIRE => '/dashboard-secretaire',
-            Roles::INFIRMIER => '/dashboard-infirmier',
-            Roles::BIBLIOTHECAIRE => '/dashboard-bibliothecaire',
-            Roles::CHANCELLOR => '/dashboard-universite',
-            Roles::DEAN => '/dashboard-universite',
-            Roles::PROFESSOR => '/dashboard-universite',
-            Roles::STUDENT => '/dashboard-universite',
-            Roles::STAFF => '/dashboard-universite',
-        ];
-
-        return $routes[$role] ?? '/dashboard';
     }
 
     /**
