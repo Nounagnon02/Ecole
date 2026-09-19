@@ -81,12 +81,12 @@ class ExportReportJob implements ShouldQueue
     protected function exportEleves(): string
     {
         // Implémentation CSV de base
-        // Colonnes réelles : la clé de classe est `class_id`, le matricule
+        // Colonnes réelles : la clé de classe est `classe_id`, le matricule
         // `numero_matricule`, le nom de classe `nom_classe`, et nom/prénom/
         // téléphone/email vivent sur `users`. Cet export ne produisait que
         // des champs vides.
         $eleves = \App\Models\Eleve::with(['classe:id,nom_classe', 'user:id,name,prenom,telephone,email'])
-            ->when($this->filters['classe_id'] ?? null, fn($q, $id) => $q->where('class_id', $id))
+            ->when($this->filters['classe_id'] ?? null, fn($q, $id) => $q->where('classe_id', $id))
             ->get();
 
         $csv = "Matricule,Nom,Prénom,Classe,Sexe,Téléphone,Email\n";
