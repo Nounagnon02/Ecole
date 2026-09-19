@@ -84,8 +84,13 @@ Route::middleware([
             // PaymentController / ComptableController, cf. routes/api/services.php).
             Route::apiResource('messages', 'App\Http\Controllers\MessageController')
                 ->only(['index', 'store']);
+            // Lecture seule : `store` laissait n'importe quel compte connecté
+            // — un élève compris — envoyer une notification de contenu libre à
+            // n'importe quel utilisateur de la plateforme, toutes écoles
+            // confondues. Aucun client ne l'appelait et la surface principale
+            // (routes/api/services.php) ne l'a jamais exposé.
             Route::apiResource('notifications', 'App\Http\Controllers\NotificationController')
-                ->only(['index', 'store']);
+                ->only(['index']);
 
             // IA / EduPilot : déclarées dans routes/api/ia.php, sur la surface
             // principale. Les redéclarer ici créerait des URI en double, la
