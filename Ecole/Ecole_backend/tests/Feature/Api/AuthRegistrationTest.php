@@ -123,6 +123,65 @@ class AuthRegistrationTest extends TestCase
         $this->assertDatabaseHas('parents', ['user_id' => $response->json('user.id')]);
     }
 
+    /**
+     * `ecole_id` était pris tel quel dans le corps de la requête et seulement
+     * vérifié `exists:ecoles,id` : un directeur pouvait inscrire un compte
+     * dans l'école de son choix, pas seulement la sienne.
+     */
+    /** @test */
+    public function a_director_cannot_register_a_user_into_another_school()
+    {
+        $otherSchool = Ecole::factory()->create(['status' => 'active']);
+
+        $response = $this->actingAs($this->directeur)->postJson('/api/inscription', [
+            'name' => 'Kouassi',
+            'prenom' => 'Aya',
+            'role' => 'comptable',
+            'identifiant' => 'AYA-002',
+            'password' => 'motdepasse123',
+            'ecole_id' => $otherSchool->id,
+        ])->assertStatus(201);
+
+        $this->assertDatabaseHas('users', [
+            'identifiant' => 'AYA-002',
+            'ecole_id' => $this->school->id,
+        ]);
+        $this->assertDatabaseMissing('users', [
+            'identifiant' => 'AYA-002',
+            'ecole_id' => $otherSchool->id,
+        ]);
+    }
+
+    /** @test */
+    public function a_super_admin_can_register_a_user_into_a_chosen_school()
+    {
+        $superAdmin = User::factory()->create(['role' => 'super-admin', 'ecole_id' => null]);
+        $targetSchool = Ecole::factory()->create(['status' => 'active']);
+
+        $this->actingAs($superAdmin)->postJson('/api/inscription', [
+            'name' => 'Kouassi',
+            'prenom' => 'Aya',
+            'role' => 'comptable',
+            'identifiant' => 'AYA-003',
+            'password' => 'motdepasse123',
+            'ecole_id' => $targetSchool->id,
+        ])->assertStatus(201);
+
+        $this->assertDatabaseHas('users', [
+            'identifiant' => 'AYA-003',
+            'ecole_id' => $targetSchool->id,
+        ]);
+    }
+
+    /** @test */
+    public function registration_rejects_a_role_reserved_for_the_platform()
+    {
+        $this->actingAs($this->directeur)->postJson('/api/inscription', [
+            'name' => 'X', 'prenom' => 'Y', 'role' => 'super-admin',
+            'identifiant' => 'X-002', 'password' => 'motdepasse123', 'ecole_id' => $this->school->id,
+        ])->assertStatus(422)->assertJsonValidationErrors(['role']);
+    }
+
     /** @test */
     public function a_teacher_cannot_register_users()
     {
