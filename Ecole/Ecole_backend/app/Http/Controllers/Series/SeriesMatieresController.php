@@ -6,6 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\Classes;
 use App\Models\EnseignantsMaternellePrimaire;
 use App\Models\Series;
+use App\Http\Requests\Series\SyncMatieresRequest;
+use App\Http\Requests\Series\UpdateEnseignantsRequest;
+use App\Http\Requests\Series\UpdateEnseignantsMPRequest;
+use App\Http\Requests\Series\AttachMatiereRequest;
+use App\Http\Requests\Series\UpdateMatiereCoefficientRequest;
 use Illuminate\Http\Request;
 
 class SeriesMatieresController extends Controller
@@ -28,7 +33,7 @@ class SeriesMatieresController extends Controller
         return response()->json(['message' => 'Matière retirée de la série avec succès'], 200);
     }
 
-    public function syncMatieres(Request $request, $id)
+    public function syncMatieres(SyncMatieresRequest $request, $id)
     {
         $serie = Series::find($id);
 
@@ -36,12 +41,7 @@ class SeriesMatieresController extends Controller
             return response()->json(['message' => 'Serie non trouvée'], 404);
         }
 
-        $validated = $request->validate([
-            'matieres' => 'required|array',
-            'matieres.*.matiere_id' => 'required|school_exists:matieres,id',
-            'matieres.*.classe_id' => 'required|school_exists:classes,id', // Ajout de la validation
-            'matieres.*.coefficient' => 'required|numeric|min:0.1|max:10'
-        ]);
+        $validated = $request->validated();
 
         $syncData = [];
         foreach ($validated['matieres'] as $matiere) {
@@ -85,11 +85,25 @@ class SeriesMatieresController extends Controller
 
         $classeId = $request->query('classe_id');
 
-        $query = $serie->matieres()
-            ->when($classeId, function($query) use ($classeId) {
-                return $query->wherePivot('classe_id', $classeId);
-            })
-            ->select('matieres.id', 'matieres.nom', 'serie_matieres.coefficient');
+        // Pas de `->when()` ici : son callback reçoit le query builder brut
+        // de la relation, pas l'objet `BelongsToMany` — `wherePivot()` n'y
+        // existe pas, et l'appel manquant est réinterprété par le magic
+        // `__call` de Laravel comme une clause dynamique `where('pivot', ...)`
+        // sur une colonne qui n'existe pas. Le filtre `classe_id` ne
+        // retournait donc jamais aucune ligne. `wherePivot()` appelé
+        // directement sur la relation, elle, fonctionne.
+        // Pas de `->when()` ici : son callback reçoit le query builder brut
+        // de la relation, pas l'objet `BelongsToMany` — `wherePivot()` n'y
+        // existe pas, et l'appel manquant est réinterprété par le magic
+        // `__call` de Laravel comme une clause dynamique `where('pivot', ...)`
+        // sur une colonne qui n'existe pas. Le filtre `classe_id` ne
+        // retournait donc jamais aucune ligne. `wherePivot()` appelé
+        // directement sur la relation, elle, fonctionne.
+        $query = $serie->matieres()->select('matieres.id', 'matieres.nom', 'serie_matieres.coefficient');
+
+        if ($classeId) {
+            $query->wherePivot('classe_id', $classeId);
+        }
 
         $matieres = $query->get();
 
@@ -114,17 +128,8 @@ class SeriesMatieresController extends Controller
     }
 
     // Met à jour les enseignants pour les matières d'une série dans une classe
-    public function updateEnseignants(Request $request, $classeId, $serieId)
+    public function updateEnseignants(UpdateEnseignantsRequest $request, $classeId, $serieId)
     {
-        $request->validate([
-            'matieres' => 'required|array',
-            'matieres.*.classe_id' => 'required|school_exists:classes,id',
-            'matieres.*.serie_id' => 'required|school_exists:series,id',
-            'matieres.*.matiere_id' => 'required|school_exists:matieres,id',
-            'matieres.*.enseignants' => 'array',
-            'matieres.*.enseignants.*' => 'school_exists:enseignants,id'
-        ]);
-
         $classe = Classes::findOrFail($classeId);
         $serie = $classe->series()->findOrFail($serieId);
 
@@ -151,15 +156,8 @@ class SeriesMatieresController extends Controller
         ]);
     }
 
-    public function updateEnseignantsMP(Request $request, $classeId)
+    public function updateEnseignantsMP(UpdateEnseignantsMPRequest $request, $classeId)
     {
-        $request->validate([
-            'classes' => 'required|array',
-            'classes.*.classe_id' => 'required|school_exists:classes,id',
-            'classes.*.enseignants' => 'array',
-            'classes.*.enseignants.*' => 'school_exists:enseignants_maternelle_primaire,id'
-        ]);
-
         $classe = Classes::findOrFail($classeId);
 
         // On suppose qu'il n'y a qu'une entrée dans le tableau classes
@@ -179,7 +177,7 @@ class SeriesMatieresController extends Controller
         ]);
     }
 
-    public function attachMatiere(Request $request, $id)
+    public function attachMatiere(AttachMatiereRequest $request, $id)
     {
         $serie = Series::find($id);
 
@@ -187,11 +185,7 @@ class SeriesMatieresController extends Controller
             return response()->json(['message' => 'Serie non trouvée'], 404);
         }
 
-        $validated = $request->validate([
-            'matiere_id' => 'required|school_exists:matieres,id',
-            'classe_id' => 'required|school_exists:classes,id',
-            'coefficient' => 'required|numeric|min:0.1|max:10'
-        ]);
+        $validated = $request->validated();
 
         // Vérifier si la matière est déjà attachée à cette classe dans cette série
         if ($serie->matieres()
@@ -209,7 +203,7 @@ class SeriesMatieresController extends Controller
         return response()->json(['message' => 'Matière ajoutée à la série avec succès'], 201);
     }
 
-    public function updateMatiereCoefficient(Request $request, $id, $matiere_id)
+    public function updateMatiereCoefficient(UpdateMatiereCoefficientRequest $request, $id, $matiere_id)
     {
         $serie = Series::find($id);
 
@@ -217,10 +211,7 @@ class SeriesMatieresController extends Controller
             return response()->json(['message' => 'Serie non trouvée'], 404);
         }
 
-        $validated = $request->validate([
-            'classe_id' => 'required|school_exists:classes,id',
-            'coefficient' => 'required|numeric|min:0.1|max:10'
-        ]);
+        $validated = $request->validated();
 
         // Mettre à jour le coefficient pour la classe spécifique
         $serie->matieres()
