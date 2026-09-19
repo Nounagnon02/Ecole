@@ -201,7 +201,10 @@ class AuthController extends Controller
             'experiences.*.date_fin' => 'nullable|date|after_or_equal:experiences.*.date_debut',
             'experiences.*.description' => 'nullable|string|max:1000',
             'matieres_maitrisees' => 'sometimes|array|max:50',
-            'matieres_maitrisees.*' => 'integer|exists:matieres,id',
+            // `exists:` interroge la table brute, sans le scope `ecole` : un
+            // enseignant pouvait déclarer maîtriser une matière d'un autre
+            // établissement. `school_exists` restreint à l'école de l'appelant.
+            'matieres_maitrisees.*' => 'integer|school_exists:matieres,id',
         ]);
 
         $this->profiles->update($user, $validated);
