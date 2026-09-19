@@ -12,7 +12,9 @@ return [
     |
     */
 
-    'api_path' => 'docs/api',
+    // Préfixe des routes à documenter — pas l'URL de la page de documentation.
+    // `docs/api` ne correspondait à aucune route : le document sortait vide.
+    'api_path' => 'api',
     'info' => [
         'title' => 'École API — Système de Gestion Scolaire',
         'description' => 'API RESTful complète pour la plateforme de gestion scolaire multi-tenant École.',
@@ -26,11 +28,12 @@ return [
     |
     */
 
+    // Format attendu par Scramble : `description => url`. Une liste de tableaux
+    // (`[['url' => …, 'description' => …]]`) fait planter la génération —
+    // `url($tableau)` lève une TypeError — donc ni `scramble:export` ni la page
+    // /docs/api ne produisaient de document.
     'servers' => [
-        [
-            'url' => env('APP_URL'),
-            'description' => 'Serveur principal',
-        ],
+        'Serveur principal' => env('APP_URL'),
     ],
 
     /*
