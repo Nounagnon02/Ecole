@@ -48,7 +48,7 @@ class EnseignantController extends Controller
                     'identifiant' => $validated['identifiant'],
                     'password' => Hash::make($validated['password']),
                     'role' => $validated['role'],
-                    'ecole_id' => $validated['ecole_id'],
+                    'ecole_id' => auth()->user()->ecole_id,
                 ]);
 
                 $enseignant = Enseignant::create([
