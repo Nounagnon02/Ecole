@@ -219,19 +219,29 @@ class AuthController extends Controller
      */
     public function inscription(Request $request)
     {
-        // Seul un admin ou directeur peut inscrire des gens dans le système réel
-        // Mais pour la flexibilité initiale, on laisse ouvert ou on check le user connecté
-        
+        // La route est déjà gardée par `role:directeur,super-admin,admin`
+        // (routes/api/auth.php). Mais `ecole_id` était pris tel quel dans le
+        // corps de la requête et seulement vérifié `exists:ecoles,id` — sans
+        // égard à l'école de l'appelant. Un directeur ou un admin (des rôles
+        // d'établissement, pas seulement le super-admin transverse) pouvait
+        // donc injecter un compte, de n'importe quel rôle, dans l'école de son
+        // choix. `role` n'était pas davantage borné : `required|string`
+        // acceptait `super-admin` lui-même. Même schéma déjà fermé sur
+        // `selectSchool()` — celui-ci était resté ouvert.
         $validated = $request->validate([
             'name' => 'required|string',
             'prenom' => 'required|string',
-            'role' => 'required|string',
+            'role' => 'required|string|in:' . implode(',', Roles::provisionable()),
             'email' => 'nullable|email|unique:users,email',
             'identifiant' => 'required|string|unique:users,identifiant',
             'password' => ['required', 'string', Password::defaults()],
             'ecole_id' => 'required|exists:ecoles,id',
             'telephone' => 'nullable|string',
         ]);
+
+        $ecoleId = $request->user()->role === Roles::SUPER_ADMIN
+            ? $validated['ecole_id']
+            : $request->user()->ecole_id;
 
         try {
             \DB::beginTransaction();
@@ -248,7 +258,7 @@ class AuthController extends Controller
                 'email' => $validated['email'] ?? null,
                 'identifiant' => $validated['identifiant'],
                 'password' => Hash::make($validated['password']),
-                'ecole_id' => $validated['ecole_id'],
+                'ecole_id' => $ecoleId,
                 'telephone' => $validated['telephone'] ?? null,
             ]);
 
