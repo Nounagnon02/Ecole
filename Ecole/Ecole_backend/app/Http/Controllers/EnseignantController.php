@@ -9,6 +9,9 @@ use App\Models\Classes;
 use App\Models\Notes;
 use App\Services\UserService;
 use App\Support\Roles;
+use App\Http\Requests\Enseignant\StoreEnseignantRequest;
+use App\Http\Requests\Enseignant\StoreAffectationsRequest;
+use App\Http\Requests\Enseignant\UpdateEnseignantRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -32,17 +35,9 @@ class EnseignantController extends Controller
     /**
      * Création d'un enseignant (Admin)
      */
-    public function store(Request $request)
+    public function store(StoreEnseignantRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string',
-            'prenom' => 'required|string',
-            'email' => 'required|email|unique:users,email',
-            'identifiant' => 'required|string|unique:users,identifiant',
-            'password' => 'required|string|min:8',
-            'ecole_id' => 'required|exists:ecoles,id',
-            'role' => 'required|in:' . implode(',', Roles::teachers()),
-        ]);
+        $validated = $request->validated();
 
         try {
             return DB::transaction(function () use ($validated) {
@@ -171,19 +166,14 @@ class EnseignantController extends Controller
      * Enregistrer les affectations d'un enseignant
      * POST /enseignants/{id}/affectations — body { affectations: [{classe_id, serie_id, matiere_id}] }
      */
-    public function storeAffectations(Request $request, $id)
+    public function storeAffectations(StoreAffectationsRequest $request, $id)
     {
         $enseignant = Enseignant::find($id);
         if (!$enseignant) {
             return response()->json(['message' => 'Enseignant non trouvé'], 404);
         }
 
-        $validated = $request->validate([
-            'affectations' => 'required|array|min:1',
-            'affectations.*.classe_id' => 'required|school_exists:classes,id',
-            'affectations.*.serie_id' => 'required|school_exists:series,id',
-            'affectations.*.matiere_id' => 'required|school_exists:matieres,id',
-        ]);
+        $validated = $request->validated();
 
         $ecoleId = $enseignant->ecole_id ?: auth()->user()?->ecole_id;
         if (!$ecoleId) {
@@ -274,17 +264,12 @@ class EnseignantController extends Controller
      * Mettre à jour un enseignant (Admin / Directeur)
      * PUT /enseignants/update/{id}
      */
-    public function update(Request $request, $id)
+    public function update(UpdateEnseignantRequest $request, $id)
     {
         $enseignant = Enseignant::with('user')->findOrFail($id);
         $user = $enseignant->user;
 
-        $validated = $request->validate([
-            'name'    => 'sometimes|string|max:255',
-            'prenom'  => 'sometimes|string|max:255',
-            'email'   => 'sometimes|nullable|email|unique:users,email,' . $user->id,
-            'role'    => 'sometimes|in:' . implode(',', Roles::teachers()),
-        ]);
+        $validated = $request->validated();
 
         $user->update(array_intersect_key($validated, array_flip(['name', 'prenom', 'email', 'role'])));
 
