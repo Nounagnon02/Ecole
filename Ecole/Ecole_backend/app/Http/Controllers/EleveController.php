@@ -290,7 +290,11 @@ class EleveController extends Controller
         }
 
         $emploi = EmploiDuTemps::with(['matiere:id,nom', 'enseignant.user:id,name,prenom'])
-            ->where('classe_id', $eleve->class_id)
+// `class_id` n'existe pas sur `Eleve` (la colonne est `classe_id`,
+            // comme partout ailleurs dans ce contrôleur) : le filtre résolvait
+            // toujours `null`, donc cette route ne renvoyait jamais l'emploi du
+            // temps réel de l'élève, quelle que soit sa classe.
+            ->where('classe_id', $eleve->classe_id)
             ->orderBy('jour')
             ->orderBy('heure_debut')
             ->get();

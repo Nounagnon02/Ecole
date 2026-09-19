@@ -95,13 +95,21 @@ it('returns children of a parent', function () {
 });
 
 it('returns student timetable', function () {
+    // Régression : `emploiDuTemps()` filtrait sur `$eleve->class_id`, un
+    // attribut qui n'existe pas (la colonne est `classe_id`) — la requête
+    // résolvait toujours `null` et la réponse était systématiquement vide,
+    // quelle que soit la classe de l'élève. `assertJsonStructure(['data' =>
+    // []])` valide la FORME, vide ou non : c'est pour ça que le bug n'était
+    // jamais remonté. On vérifie ici que la ligne créée est bien présente.
     $ecole = Ecole::factory()->create();
     $user = User::factory()->create(['role' => 'eleve', 'ecole_id' => $ecole->id]);
     $eleve = Eleve::factory()->create(['user_id' => $user->id, 'ecole_id' => $ecole->id]);
     $classe = Classes::factory()->create(['ecole_id' => $ecole->id]);
     $eleve->update(['classe_id' => $classe->id]);
 
-    EmploiDuTemps::factory()->create(['classe_id' => $classe->id, 'ecole_id' => $ecole->id]);
+    $creneau = EmploiDuTemps::factory()->create(['classe_id' => $classe->id, 'ecole_id' => $ecole->id]);
+    // Bruit : une autre classe ne doit jamais apparaître dans la réponse.
+    EmploiDuTemps::factory()->create(['ecole_id' => $ecole->id]);
 
     $this->actingAs($user);
 
@@ -109,6 +117,10 @@ it('returns student timetable', function () {
 
     $response->assertOk()
         ->assertJsonStructure(['success', 'data' => []]);
+
+    $data = $response->json('data');
+    expect($data)->toHaveCount(1);
+    expect($data[0]['id'])->toBe($creneau->id);
 });
 
 it('returns 404 for student timetable when no profile', function () {
