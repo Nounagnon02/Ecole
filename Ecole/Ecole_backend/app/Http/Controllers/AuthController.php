@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
@@ -443,7 +444,11 @@ class AuthController extends Controller
             ->where('token', sha1($token))
             ->first();
 
-        if (!$record || now()->diffInMinutes($record->created_at) > 60) {
+        // Carbon 3 : `diffInMinutes()` est signé et négatif quand la date
+        // passée en argument est antérieure. L'ancien
+        // `now()->diffInMinutes($record->created_at) > 60` n'était jamais
+        // vrai : un lien de vérification ne périmait jamais.
+        if (!$record || Carbon::parse($record->created_at)->addHour()->isPast()) {
             return response()->json(['message' => 'Token invalide ou expiré'], 422);
         }
 
