@@ -6,14 +6,21 @@ use App\Models\Enseignant;
 use App\Models\User;
 use App\Models\Ecole;
 use App\Support\Roles;
+use Database\Seeders\Concerns\RefusesInProduction;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
 
 class AdminUsersSeeder extends Seeder
 {
+    use RefusesInProduction;
+
     public function run()
     {
+        if ($this->abortIfProduction()) {
+            return;
+        }
+
         $password = 'password';
 
         $roles = [
