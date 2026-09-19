@@ -35,7 +35,9 @@ function Card({ children, className, variant = 'default', hover = false, padding
   );
 }
 
-Card.Header = forwardRef(function CardHeader({ children, className, action, padding = true }, ref) {
+// `title` est le raccourci des huit `<Card.Header title="…" />` de la page
+// Paramètres : la prop était ignorée, donc aucun de ces titres ne s'affichait.
+Card.Header = forwardRef(function CardHeader({ children, title, className, action, padding = true }, ref) {
   return (
     <div
       ref={ref}
@@ -45,7 +47,10 @@ Card.Header = forwardRef(function CardHeader({ children, className, action, padd
         className
       )}
     >
-      <div className="min-w-0 flex-1">{children}</div>
+      <div className="min-w-0 flex-1">
+        {title && <Card.Title>{title}</Card.Title>}
+        {children}
+      </div>
       {action && <div className="shrink-0">{action}</div>}
     </div>
   );

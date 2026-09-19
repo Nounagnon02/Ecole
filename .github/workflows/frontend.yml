@@ -116,16 +116,21 @@ jobs:
       # `npx vite &` seul laissait le serveur attaché aux flux de l'étape :
       # ceux-ci sont fermés à la fin du `run`, ce qui pouvait tuer le serveur
       # avant l'étape d'attente.
+      # Le port 3002 est celui de `vite.config.js` et le défaut de `baseURL`
+      # dans `playwright.config.js`. La CI démarrait sur 3000 sans poser
+      # `PLAYWRIGHT_BASE_URL` : le serveur écoutait donc là où les tests
+      # n'allaient pas regarder.
       - name: Start dev server
-        run: nohup npx vite --port 3000 --strictPort > vite.log 2>&1 &
+        run: nohup npm start -- --port 3002 --strictPort > vite.log 2>&1 &
         env:
           CI: true
       - name: Wait for server
-        run: npx wait-on --timeout 120000 http://localhost:3000
+        run: npm exec -- wait-on --timeout 120000 http://localhost:3002
       - name: Run Playwright tests
-        run: npx playwright test
+        run: npm run test:e2e
         env:
           CI: true
+          PLAYWRIGHT_BASE_URL: http://localhost:3002
       - name: Upload Playwright report
         if: failure()
         uses: actions/upload-artifact@v4

@@ -18,11 +18,14 @@ import {
   fadeUp,
   container,
 } from '@/shared/components/auth/AuthDecorations';
+import { useTranslation } from '@/shared/i18n';
+import LanguageSwitcher from '@/shared/components/layout/LanguageSwitcher';
 
 /* ═══════════════════════════════════════════════════════════════════
  *  COMPOSANT PRINCIPAL
  * ═══════════════════════════════════════════════════════════════════ */
 export default function ForgotPassword() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -35,12 +38,12 @@ export default function ForgotPassword() {
   }, [errors]);
 
   const validate = useCallback(() => {
-    if (!email) return { email: 'Veuillez entrer votre adresse email' };
+    if (!email) return { email: t('pages.auth.forgot_password.veuillez_entrer_votre_adresse_email') };
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return { email: 'Adresse email invalide' };
+      return { email: t('pages.auth.forgot_password.adresse_email_invalide') };
     }
     return {};
-  }, [email]);
+  }, [email, t]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -70,7 +73,7 @@ export default function ForgotPassword() {
         setErrors({
           _general:
             err.message ||
-            'Erreur lors de l\'envoi. Veuillez réessayer.'
+            t('pages.auth.forgot_password.erreur_lors_de_l_envoi_veuillez_reessayer')
         });
       }
     } finally {
@@ -83,6 +86,7 @@ export default function ForgotPassword() {
     return (
       <div className="relative min-h-screen bg-[var(--surface)] overflow-hidden">
         <TopDecorativeBand />
+        <div className="absolute end-4 top-4 z-20"><LanguageSwitcher /></div>
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(184,86,46,0.03),transparent_60%)] pointer-events-none" />
         <div className="relative z-10 flex min-h-screen items-center justify-center px-6">
           <motion.div
@@ -98,14 +102,13 @@ export default function ForgotPassword() {
               </div>
 
               <h1 className="font-fraunces text-2xl font-semibold text-[var(--text-primary)]">
-                Email envoyé
+                {t('pages.auth.forgot_password.email_envoye')}
               </h1>
               <p className="mt-3 text-sm text-[var(--text-secondary)] leading-relaxed">
-                Si un compte existe avec l'adresse <strong className="text-[var(--text-primary)]">{email}</strong>,
-                vous recevrez un email contenant un lien pour réinitialiser votre mot de passe.
+                {t('pages.auth.forgot_password.sent_before')}<strong className="text-[var(--text-primary)]">{email}</strong>{t('pages.auth.forgot_password.sent_after')}
               </p>
               <p className="mt-2 text-xs text-[var(--text-tertiary)]">
-                Vérifiez votre boîte de réception et vos spams. Le lien expire dans 60 minutes.
+                {t('pages.auth.forgot_password.verifiez_votre_boite_de_reception_et_vos_spams')}
               </p>
 
               <div className="mt-8 flex items-center justify-center gap-2">
@@ -114,7 +117,7 @@ export default function ForgotPassword() {
                   className="inline-flex items-center gap-2 text-sm font-medium text-[var(--accent)] transition-colors hover:text-[var(--accent-hover)]"
                 >
                   <ArrowLeft className="h-4 w-4" />
-                  Retour à la connexion
+                  {t('pages.auth.forgot_password.retour_a_la_connexion')}
                 </Link>
               </div>
             </div>
@@ -128,6 +131,7 @@ export default function ForgotPassword() {
   return (
     <div className="relative min-h-screen bg-[var(--surface)] overflow-hidden">
       <TopDecorativeBand />
+      <div className="absolute end-4 top-4 z-20"><LanguageSwitcher /></div>
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(184,86,46,0.03),transparent_60%)] pointer-events-none" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(26,58,60,0.04),transparent_50%)] pointer-events-none" />
 
@@ -185,13 +189,13 @@ export default function ForgotPassword() {
                     className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--accent)] mb-4 transition-colors hover:text-[var(--accent-hover)]"
                   >
                     <ArrowLeft className="h-3.5 w-3.5" />
-                    Retour à la connexion
+                    {t('pages.auth.forgot_password.retour_a_la_connexion')}
                   </Link>
                   <h1 className="font-fraunces text-2xl font-semibold text-[var(--text-primary)]">
-                    Mot de passe oublié
+                    {t('pages.auth.forgot_password.mot_de_passe_oublie')}
                   </h1>
                   <p className="mt-1.5 text-sm text-[var(--text-secondary)]">
-                    Saisissez votre adresse email et nous vous enverrons un lien pour réinitialiser votre mot de passe.
+                    {t('pages.auth.forgot_password.saisissez_votre_adresse_email_et_nous_vous')}
                   </p>
                 </motion.div>
 
@@ -212,8 +216,8 @@ export default function ForgotPassword() {
                     <Input
                       id="forgot-email"
                       type="email"
-                      label="Adresse email"
-                      placeholder="vous@exemple.com"
+                      label={t('pages.auth.forgot_password.adresse_email')}
+                      placeholder={t('pages.auth.forgot_password.vous_exemple_com')}
                       value={email}
                       onChange={handleChange}
                       error={errors.email}
@@ -233,7 +237,7 @@ export default function ForgotPassword() {
                     >
                       {!loading && (
                         <span className="flex items-center gap-2">
-                          Envoyer le lien
+                          {t('pages.auth.forgot_password.envoyer_le_lien')}
                           <Send className="h-4 w-4" />
                         </span>
                       )}
@@ -244,12 +248,12 @@ export default function ForgotPassword() {
 
               <div className="border-t border-[var(--border-light)] px-10 py-5">
                 <p className="text-center text-xs text-[var(--text-tertiary)]">
-                  Vous avez déjà un compte ?{' '}
+                  {t('pages.auth.forgot_password.have_account')}{' '}
                   <Link
                     to="/connexion"
                     className="font-medium text-[var(--accent)] transition-colors hover:text-[var(--accent-hover)]"
                   >
-                    Connectez-vous
+                    {t('pages.auth.forgot_password.connectez_vous')}
                   </Link>
                 </p>
               </div>

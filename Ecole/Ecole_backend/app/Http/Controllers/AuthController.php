@@ -7,7 +7,9 @@ use App\Models\Eleve;
 use App\Models\Enseignant;
 use App\Models\User;
 use App\Models\UserParent;
+use App\Services\ProfileService;
 use App\Support\Roles;
+use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -19,6 +21,10 @@ use Illuminate\Validation\Rules\Password;
 
 class AuthController extends Controller
 {
+    public function __construct(private ProfileService $profiles)
+    {
+    }
+
     /**
      * Authentification unifiée.
      *
@@ -30,20 +36,9 @@ class AuthController extends Controller
      * part —, si bien que l'application mobile n'obtenait jamais de token et
      * recevait 401 sur toutes les routes protégées (cf. audit F2).
      */
-    public function connexion(Request $request)
+    public function connexion(LoginRequest $request)
     {
-        // Le contrat était ambigu : le champ s'appelait `email` mais acceptait
-        // aussi un identifiant (l'interface le libelle « Email ou identifiant »),
-        // et beaucoup de comptes n'ont pas d'adresse — la colonne est nullable.
-        // Les deux noms de champ sont désormais acceptés, l'un ou l'autre suffit.
-        $request->validate([
-            'email'       => 'required_without:identifiant|nullable|string',
-            'identifiant' => 'required_without:email|nullable|string',
-            'password'    => 'required|string',
-            'device_name' => 'nullable|string|max:255',
-        ]);
-
-        $login = $request->input('identifiant') ?: $request->input('email');
+        $login = $request->login();
 
         // Parenthèses explicites : sans le groupement, un `orWhere` se
         // combinerait mal avec toute condition ajoutée par la suite.
@@ -170,47 +165,8 @@ class AuthController extends Controller
 
         return response()->json([
             'success' => true,
-            'user' => $this->profilePayload($user),
+            'user' => $this->profiles->payload($user),
         ]);
-    }
-
-    /**
-     * Payload profil : champs du compte + données métier selon le rôle.
-     *
-     * Les champs de base sont partagés par toutes les surfaces. Pour un
-     * enseignant (scolaire), on embarque aussi son profil `enseignants`
-     * (spécialité, grade) et ses données de profil étendues — expériences et
-     * matières maîtrisées (cf. audit F3).
-     */
-    private function profilePayload(User $user): array
-    {
-        $payload = $user->only([
-            'id', 'name', 'prenom', 'email', 'identifiant',
-            'role', 'ecole_id', 'telephone', 'avatar', 'is_active',
-            'email_verified_at', 'created_at', 'updated_at',
-        ]);
-
-        if ($user->role === Roles::TEACHER || str_contains($user->role, 'enseignement')) {
-            $enseignant = $user->enseignant;
-            $payload['profil'] = $enseignant
-                ? [
-                    'id' => $enseignant->id,
-                    'specialite' => $enseignant->specialite,
-                    'grade' => $enseignant->grade,
-                    'date_naissance' => $enseignant->date_naissance,
-                    'lieu_naissance' => $enseignant->lieu_naissance,
-                    'sexe' => $enseignant->sexe,
-                    'experiences' => $enseignant->experiences()->orderByDesc('date_debut')->get([
-                        'id', 'poste', 'etablissement', 'date_debut', 'date_fin', 'description',
-                    ]),
-                    'matieres_maitrisees' => $enseignant->matieresMaitrisees()
-                        ->orderBy('matieres.nom')
-                        ->get(['matieres.id', 'matieres.nom']),
-                ]
-                : null;
-        }
-
-        return $payload;
     }
 
     /**
@@ -248,94 +204,44 @@ class AuthController extends Controller
             'matieres_maitrisees.*' => 'integer|exists:matieres,id',
         ]);
 
-        $user->update(collect($validated)->only([
-            'name', 'prenom', 'email', 'telephone', 'avatar',
-        ])->all());
-
-        if ($user->role === Roles::TEACHER || str_contains($user->role, 'enseignement')) {
-            $this->syncTeacherProfile($user, $validated);
-        }
+        $this->profiles->update($user, $validated);
 
         return response()->json([
             'success' => true,
             'message' => 'Profil mis à jour',
-            'user' => $this->profilePayload($user),
+            'user' => $this->profiles->payload($user),
         ]);
     }
 
     /**
-     * Synchronise le profil professionnel de l'enseignant :
-     * champs de la ligne `enseignants`, expériences et matières maîtrisées.
-     */
-    private function syncTeacherProfile(User $user, array $validated): void
-    {
-        $enseignant = $user->enseignant;
-
-        if (!$enseignant) {
-            return;
-        }
-
-        if (array_key_exists('specialite', $validated) || array_key_exists('grade', $validated)) {
-            $enseignant->update(collect($validated)->only(['specialite', 'grade'])->all());
-        }
-
-        // Les expériences sont remplacées en bloc : le front envoie la liste
-        // complète. Une entrée portant un `id` existant est mise à jour, une
-        // entrée sans `id` est créée, et toute expérience persistée absente de
-        // la liste est supprimée.
-        if (array_key_exists('experiences', $validated)) {
-            $sentIds = [];
-
-            foreach ($validated['experiences'] as $row) {
-                if (($row['id'] ?? null) !== null) {
-                    $sentIds[] = (int) $row['id'];
-                    $enseignant->experiences()->whereKey($row['id'])->update([
-                        'poste' => $row['poste'],
-                        'etablissement' => $row['etablissement'] ?? null,
-                        'date_debut' => $row['date_debut'],
-                        'date_fin' => $row['date_fin'] ?? null,
-                        'description' => $row['description'] ?? null,
-                    ]);
-                } else {
-                    $experience = $enseignant->experiences()->create([
-                        'poste' => $row['poste'],
-                        'etablissement' => $row['etablissement'] ?? null,
-                        'date_debut' => $row['date_debut'],
-                        'date_fin' => $row['date_fin'] ?? null,
-                        'description' => $row['description'] ?? null,
-                    ]);
-                    $sentIds[] = (int) $experience->id;
-                }
-            }
-
-            $enseignant->experiences()
-                ->whereNotIn('id', $sentIds ?: [0])
-                ->delete();
-        }
-
-        if (array_key_exists('matieres_maitrisees', $validated)) {
-            $enseignant->matieresMaitrisees()->sync($validated['matieres_maitrisees'] ?? []);
-        }
-    }
-
-    /**
-     * Inscription (Généralement gérée par un administrateur).
+     * Inscription
+ (Généralement gérée par un administrateur).
      */
     public function inscription(Request $request)
     {
-        // Seul un admin ou directeur peut inscrire des gens dans le système réel
-        // Mais pour la flexibilité initiale, on laisse ouvert ou on check le user connecté
-        
+        // La route est déjà gardée par `role:directeur,super-admin,admin`
+        // (routes/api/auth.php). Mais `ecole_id` était pris tel quel dans le
+        // corps de la requête et seulement vérifié `exists:ecoles,id` — sans
+        // égard à l'école de l'appelant. Un directeur ou un admin (des rôles
+        // d'établissement, pas seulement le super-admin transverse) pouvait
+        // donc injecter un compte, de n'importe quel rôle, dans l'école de son
+        // choix. `role` n'était pas davantage borné : `required|string`
+        // acceptait `super-admin` lui-même. Même schéma déjà fermé sur
+        // `selectSchool()` — celui-ci était resté ouvert.
         $validated = $request->validate([
             'name' => 'required|string',
             'prenom' => 'required|string',
-            'role' => 'required|string',
+            'role' => 'required|string|in:' . implode(',', Roles::provisionable()),
             'email' => 'nullable|email|unique:users,email',
             'identifiant' => 'required|string|unique:users,identifiant',
             'password' => ['required', 'string', Password::defaults()],
             'ecole_id' => 'required|exists:ecoles,id',
             'telephone' => 'nullable|string',
         ]);
+
+        $ecoleId = $request->user()->role === Roles::SUPER_ADMIN
+            ? $validated['ecole_id']
+            : $request->user()->ecole_id;
 
         try {
             \DB::beginTransaction();
@@ -344,11 +250,16 @@ class AuthController extends Controller
                 'name' => $validated['name'],
                 'prenom' => $validated['prenom'],
                 'role' => $validated['role'],
-                'email' => $validated['email'],
+                // `nullable` : ces champs peuvent être absents de la requête,
+                // pas seulement vides. Y accéder sans repli levait un
+                // "Undefined array key" (silencieux en production, mais un
+                // vrai bug) dès qu'un appelant omettait le champ plutôt que
+                // d'envoyer une chaîne vide.
+                'email' => $validated['email'] ?? null,
                 'identifiant' => $validated['identifiant'],
                 'password' => Hash::make($validated['password']),
-                'ecole_id' => $validated['ecole_id'],
-                'telephone' => $validated['telephone'],
+                'ecole_id' => $ecoleId,
+                'telephone' => $validated['telephone'] ?? null,
             ]);
 
             // Création du profil selon le rôle
@@ -362,7 +273,7 @@ class AuthController extends Controller
                     'user_id' => $user->id,
                     'numero_matricule' => $profileData['numero_matricule'],
                     'classe_id' => $profileData['classe_id'],
-                    'serie_id' => $profileData['serie_id'],
+                    'serie_id' => $profileData['serie_id'] ?? null,
                 ]);
             } elseif ($user->role === 'parent') {
                 UserParent::create(['user_id' => $user->id]);
@@ -383,8 +294,18 @@ class AuthController extends Controller
             return response()->json(['message' => 'Utilisateur créé avec succès', 'user' => $user], 201);
 
         } catch (\Exception $e) {
-            $this->rethrowIfMeaningful($e);
+            // Rollback D'ABORD : `rethrowIfMeaningful` relance immédiatement
+            // les exceptions "signifiantes" (dont `ValidationException` — la
+            // validation du profil élève, juste au-dessus, en lève une). Dans
+            // l'ancien ordre, cette relance sortait de la méthode avant
+            // d'atteindre `DB::rollBack()` : la transaction restait ouverte.
+            // Sans connexion persistante l'effet ne se voit pas (chaque
+            // requête en reprend une neuve), mais avec une connexion
+            // réutilisée (worker de file, connexions persistantes) la requête
+            // suivante sur cette connexion échoue avec « there is already an
+            // active transaction ».
             \DB::rollBack();
+            $this->rethrowIfMeaningful($e);
             return response()->json(['message' => 'Erreur lors de l\'inscription', 'error' => $this->clientErrorMessage($e)], 500);
         }
     }

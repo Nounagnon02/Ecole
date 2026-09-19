@@ -32,10 +32,16 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-function renderPage(element, { withQuery = false } = {}) {
-  const tree = <MemoryRouter>{element}</MemoryRouter>;
-  if (!withQuery) return render(tree);
-  return render(<QueryClientProvider client={makeQueryClient()}>{tree}</QueryClientProvider>);
+function renderPage(element) {
+  // Le provider était optionnel tant que quelques pages seulement passaient
+  // par react-query. Elles y passent toutes désormais, et un QueryClient est
+  // sans effet sur celles qui ne l'interrogent pas : autant l'appliquer
+  // systématiquement, et retirer un paramètre qu'on oubliait de poser.
+  return render(
+    <QueryClientProvider client={makeQueryClient()}>
+      <MemoryRouter>{element}</MemoryRouter>
+    </QueryClientProvider>,
+  );
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -54,7 +60,7 @@ describe('ElevesPage', () => {
     // Forme réelle de GET /eleves : paginate() renvoyé tel quel.
     http.onGet('/eleves').reply(200, { current_page: 1, last_page: 1, per_page: 50, total: 1, data: [ELEVE] });
 
-    renderPage(<ElevesPage />, { withQuery: true });
+    renderPage(<ElevesPage />);
 
     await waitFor(() => expect(screen.getByText(/Adjovi/)).toBeInTheDocument());
     expect(screen.getByText('ELV-2024-001')).toBeInTheDocument();
@@ -66,7 +72,7 @@ describe('ElevesPage', () => {
   it('accepte aussi un tableau nu', async () => {
     http.onGet('/eleves').reply(200, [ELEVE]);
 
-    renderPage(<ElevesPage />, { withQuery: true });
+    renderPage(<ElevesPage />);
 
     await waitFor(() => expect(screen.getByText(/Adjovi/)).toBeInTheDocument());
   });
@@ -74,7 +80,7 @@ describe('ElevesPage', () => {
   it('affiche l’état vide sans message d’erreur quand il n’y a aucun élève', async () => {
     http.onGet('/eleves').reply(200, { current_page: 1, total: 0, data: [] });
 
-    renderPage(<ElevesPage />, { withQuery: true });
+    renderPage(<ElevesPage />);
 
     await waitFor(() => expect(screen.getByText('Aucun élève trouvé')).toBeInTheDocument());
     expect(screen.queryByText(/Erreur de chargement/i)).not.toBeInTheDocument();
@@ -87,7 +93,7 @@ describe('ElevesPage', () => {
   ])('rend visiblement l’erreur sur %i, message du serveur inclus', async (status, message) => {
     http.onGet('/eleves').reply(status, { message });
 
-    renderPage(<ElevesPage />, { withQuery: true });
+    renderPage(<ElevesPage />);
 
     await waitFor(() => expect(screen.getByText(new RegExp(message))).toBeInTheDocument());
     expect(screen.getByText(/Erreur de chargement/i)).toBeInTheDocument();
@@ -96,7 +102,7 @@ describe('ElevesPage', () => {
   it('rend l’erreur sur panne réseau', async () => {
     http.onGet('/eleves').networkError('Network Error');
 
-    renderPage(<ElevesPage />, { withQuery: true });
+    renderPage(<ElevesPage />);
 
     await waitFor(() => expect(screen.getByText(/Erreur de chargement/i)).toBeInTheDocument());
   });
@@ -105,14 +111,14 @@ describe('ElevesPage', () => {
     // Réessayer un verdict 4xx retarde l'erreur pour rien et multiplie
     // les requêtes ; une panne serveur, elle, mérite une nouvelle chance.
     http.onGet('/eleves').reply(403, { message: 'Interdit' });
-    const first = renderPage(<ElevesPage />, { withQuery: true });
+    const first = renderPage(<ElevesPage />);
     await waitFor(() => expect(screen.getByText(/Interdit/)).toBeInTheDocument());
     expect(http.callsTo('get', '/eleves')).toHaveLength(1);
     first.unmount();
 
     http.reset();
     http.onGet('/eleves').reply(503, { message: 'Indisponible' });
-    renderPage(<ElevesPage />, { withQuery: true });
+    renderPage(<ElevesPage />);
     await waitFor(() => expect(screen.getByText(/Indisponible/)).toBeInTheDocument());
     expect(http.callsTo('get', '/eleves').length).toBeGreaterThan(1);
   });
@@ -122,7 +128,7 @@ describe('ElevesPage', () => {
       data: [ELEVE, { ...ELEVE, id: 2, user: { name: 'Kponou', prenom: 'Jean' }, classe: { nom_classe: '6e A' } }],
     });
 
-    renderPage(<ElevesPage />, { withQuery: true });
+    renderPage(<ElevesPage />);
     await waitFor(() => expect(screen.getByText(/Kponou/)).toBeInTheDocument());
 
     fireEvent.change(screen.getByPlaceholderText(/Rechercher un élève/i), {
@@ -138,7 +144,7 @@ describe('ElevesPage', () => {
     http.onPost('/eleves/1/deactivate').reply(200, { success: true });
 
     vi.spyOn(window, 'confirm').mockReturnValue(true);
-    renderPage(<ElevesPage />, { withQuery: true });
+    renderPage(<ElevesPage />);
 
     await waitFor(() => expect(screen.getByText(/Adjovi/)).toBeInTheDocument());
 
@@ -153,7 +159,7 @@ describe('ElevesPage', () => {
     http.onGet('/eleves').reply(200, { data: [ELEVE] });
 
     vi.spyOn(window, 'confirm').mockReturnValue(false);
-    renderPage(<ElevesPage />, { withQuery: true });
+    renderPage(<ElevesPage />);
 
     await waitFor(() => expect(screen.getByText(/Adjovi/)).toBeInTheDocument());
     fireEvent.click(screen.getByTitle('Retirer des effectifs'));

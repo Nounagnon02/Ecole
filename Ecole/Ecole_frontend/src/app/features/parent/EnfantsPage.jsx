@@ -5,7 +5,9 @@
  * Données dynamiques via API /parent/enfants
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { useApiQuery } from '@/shared/lib/api-client';
+import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
   User, GraduationCap, BookOpen, TrendingUp, Calendar,
@@ -16,75 +18,59 @@ import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Avatar from '@/shared/components/ui/Avatar';
 import StatsCard from '@/shared/components/ui/StatsCard';
-import { useApi } from '@/hooks/useApi';
-import logger from '@/shared/lib/logger';
+import { useTranslation } from '@/shared/i18n';
 
 export default function EnfantsPage() {
-  const { loading, error, get } = useApi();
-  const [enfants, setEnfants] = useState([]);
+  const { t } = useTranslation();
   const [selectedEnfant, setSelectedEnfant] = useState(null);
   const [activeTab, setActiveTab] = useState('notes');
-  const [notes, setNotes] = useState([]);
-  const [absences, setAbsences] = useState([]);
-  const [edt, setEdt] = useState({});
-  const [paiements, setPaiements] = useState([]);
+
+  // Les enfants rattachés au compte, puis le détail de celui consulté.
+  // `useApi()` exposait un `loading` et un `error` partagés par les cinq
+  // chargements : l'échec d'un détail d'appoint masquait l'état des autres
+  // (cf. audit P4.1).
+  const requeteEnfants = useApiQuery(['parent-enfants'], '/parent/enfants');
+
+  const enfants = useMemo(
+    () => (unwrapList(requeteEnfants.data) ?? []).map((e) => ({
+      ...e,
+      nom: e.nom || `${e.prenom} ${e.nom_famille || ''}`.trim() || e.user?.name || t('pages.parent.enfants.enfant'),
+      frais: e.frais || { total: 0, paye: 0 },
+      moyenne: e.moyenne ?? 0,
+      rang: e.rang ?? 0,
+      absences: e.absences ?? 0,
+    })),
+    [requeteEnfants.data, t],
+  );
+
+  const loading = requeteEnfants.isPending;
+  const error = requeteEnfants.isError
+    ? (requeteEnfants.error?.message ?? t('common.load_error'))
+    : null;
 
   useEffect(() => {
-    (async () => {
-      try {
-        const res = await get('/parent/enfants');
-        const items = Array.isArray(res?.data?.data) ? res.data.data
-          : Array.isArray(res?.data) ? res.data
-          : Array.isArray(res) ? res
-          : [];
-        setEnfants(items.map(e => ({
-          ...e,
-          nom: e.nom || `${e.prenom} ${e.nom_famille || ''}`.trim() || e.user?.name || 'Enfant',
-          frais: e.frais || { total: 0, paye: 0 },
-          moyenne: e.moyenne ?? 0,
-          rang: e.rang ?? 0,
-          absences: e.absences ?? 0
-        })));
-        if (items.length > 0 && !selectedEnfant) setSelectedEnfant(items[0]);
-      } catch (e) {
-        logger.error('Erreur chargement enfants:', e);
-      }
-    })();
-  }, [get]);
+    if (!selectedEnfant && enfants.length > 0) setSelectedEnfant(enfants[0]);
+  }, [enfants, selectedEnfant]);
 
-  useEffect(() => {
-    if (!selectedEnfant) return;
-    (async () => {
-      try {
-        const [notesRes, absRes, edtRes, payRes] = await Promise.allSettled([
-          get(`/parent/enfants/${selectedEnfant.id}/notes`),
-          get(`/parent/enfants/${selectedEnfant.id}/absences`),
-          get(`/parent/enfants/${selectedEnfant.id}/emploi-du-temps`),
-          get(`/parent/enfants/${selectedEnfant.id}/paiements`),
-        ]);
-        setNotes(notesRes.status === 'fulfilled'
-          ? (Array.isArray(notesRes.value?.data?.data) ? notesRes.value.data.data
-            : Array.isArray(notesRes.value?.data) ? notesRes.value.data
-            : Array.isArray(notesRes.value) ? notesRes.value : [])
-          : []);
-        setAbsences(absRes.status === 'fulfilled'
-          ? (Array.isArray(absRes.value?.data?.data) ? absRes.value.data.data
-            : Array.isArray(absRes.value?.data) ? absRes.value.data
-            : Array.isArray(absRes.value) ? absRes.value : [])
-          : []);
-        setEdt(edtRes.status === 'fulfilled'
-          ? (edtRes.value?.data?.data || edtRes.value?.data || edtRes.value || {})
-          : {});
-        setPaiements(payRes.status === 'fulfilled'
-          ? (Array.isArray(payRes.value?.data?.data) ? payRes.value.data.data
-            : Array.isArray(payRes.value?.data) ? payRes.value.data
-            : Array.isArray(payRes.value) ? payRes.value : [])
-          : []);
-      } catch (e) {
-        logger.error('Erreur chargement détails enfant:', e);
-      }
-    })();
-  }, [selectedEnfant, get]);
+  // Quatre détails indépendants, chacun avec sa clé et son état : un relevé
+  // d'absences indisponible ne doit pas vider les notes.
+  const idEnfant = selectedEnfant?.id;
+  const activeSiEnfant = { queryOptions: { enabled: !!idEnfant } };
+
+  const requeteNotes = useApiQuery(['enfant-notes', idEnfant], `/parent/enfants/${idEnfant}/notes`, activeSiEnfant);
+  const requeteAbsences = useApiQuery(['enfant-absences', idEnfant], `/parent/enfants/${idEnfant}/absences`, activeSiEnfant);
+  const requeteEdt = useApiQuery(['enfant-edt', idEnfant], `/parent/enfants/${idEnfant}/emploi-du-temps`, activeSiEnfant);
+  const requetePaiements = useApiQuery(['enfant-paiements', idEnfant], `/parent/enfants/${idEnfant}/paiements`, activeSiEnfant);
+
+  const notes = useMemo(() => unwrapList(requeteNotes.data) ?? [], [requeteNotes.data]);
+  const absences = useMemo(() => unwrapList(requeteAbsences.data) ?? [], [requeteAbsences.data]);
+  const paiements = useMemo(() => unwrapList(requetePaiements.data) ?? [], [requetePaiements.data]);
+
+  // L'emploi du temps est un objet indexé par jour, pas une liste.
+  const edt = useMemo(
+    () => requeteEdt.data?.data ?? requeteEdt.data ?? {},
+    [requeteEdt.data],
+  );
 
   if (loading && !selectedEnfant) {
     return (
@@ -103,7 +89,7 @@ export default function EnfantsPage() {
           onClick={() => window.location.reload()}
           className="mt-4 inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors"
         >
-          Réessayer
+          {t('common.retry')}
         </button>
       </div>
     );
@@ -112,8 +98,8 @@ export default function EnfantsPage() {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Mes Enfants</h1>
-        <p className="text-sm text-neutral-500">Suivez la scolarité de vos enfants</p>
+        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.parent.enfants.title')}</h1>
+        <p className="text-sm text-neutral-500">{t('pages.parent.enfants.subtitle')}</p>
       </div>
 
       {/* Sélection enfant */}
@@ -122,7 +108,7 @@ export default function EnfantsPage() {
           <Card className="flex-1">
             <div className="text-center py-8 text-neutral-500">
               <User className="mx-auto h-8 w-8 mb-2" />
-              <p className="text-sm">Aucun enfant lié à votre compte</p>
+              <p className="text-sm">{t('pages.parent.enfants.aucun_enfant_lie_a_votre_compte')}</p>
             </div>
           </Card>
         ) : (
@@ -154,11 +140,11 @@ export default function EnfantsPage() {
       {/* Stats rapides */}
       {selectedEnfant && (
         <div className="grid gap-4 sm:grid-cols-4">
-          <StatsCard title="Moyenne Générale" value={selectedEnfant.moyenne?.toFixed(1) || '—'} icon={TrendingUp} color="primary" />
-          <StatsCard title="Rang" value={`${selectedEnfant.rang || '—'}e`} icon={GraduationCap} color="emerald" />
-          <StatsCard title="Absences" value={String(selectedEnfant.absences || 0)} icon={AlertTriangle} color={selectedEnfant.absences > 0 ? 'red' : 'emerald'} />
+          <StatsCard title={t('pages.parent.enfants.moyenne_generale')} value={selectedEnfant.moyenne?.toFixed(1) || '—'} icon={TrendingUp} color="primary" />
+          <StatsCard title={t('common.rank')} value={`${selectedEnfant.rang || '—'}e`} icon={GraduationCap} color="emerald" />
+          <StatsCard title={t('pages.parent.enfants.absences')} value={String(selectedEnfant.absences || 0)} icon={AlertTriangle} color={selectedEnfant.absences > 0 ? 'red' : 'emerald'} />
           <StatsCard
-            title="Frais Scolarité"
+            title={t('pages.parent.enfants.frais_scolarite')}
             value={selectedEnfant.frais?.total > 0 ? `${((selectedEnfant.frais.paye / selectedEnfant.frais.total) * 100).toFixed(0)}%` : '—'}
             icon={FileText}
             color="sky"
@@ -171,10 +157,10 @@ export default function EnfantsPage() {
         <Card>
           <div className="flex gap-1 border-b border-neutral-200 dark:border-neutral-700 pb-0 mb-4">
             {[
-              { id: 'notes', label: 'Notes', icon: BookOpen },
-              { id: 'edt', label: 'Emploi du Temps', icon: Calendar },
-              { id: 'absences', label: 'Absences', icon: AlertTriangle },
-              { id: 'paiements', label: 'Paiements', icon: FileText },
+              { id: 'notes', label: t('pages.parent.enfants.notes'), icon: BookOpen },
+              { id: 'edt', label: t('pages.parent.enfants.emploi_du_temps'), icon: Calendar },
+              { id: 'absences', label: t('pages.parent.enfants.absences'), icon: AlertTriangle },
+              { id: 'paiements', label: t('common.payments'), icon: FileText },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -197,7 +183,7 @@ export default function EnfantsPage() {
               {notes.length === 0 ? (
                 <div className="text-center py-8 text-neutral-500">
                   <BookOpen className="mx-auto h-8 w-8 mb-2" />
-                  <p className="text-sm">Aucune note disponible</p>
+                  <p className="text-sm">{t('pages.parent.enfants.aucune_note_disponible')}</p>
                 </div>
               ) : (
                 notes.map((n, i) => (
@@ -207,8 +193,8 @@ export default function EnfantsPage() {
                         <BookOpen className="h-5 w-5 text-[var(--accent)]" />
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-neutral-900 dark:text-white">{n.matiere?.nom || n.matiere || 'Matière'}</p>
-                        <p className="text-xs text-neutral-500">{n.appreciation || n.type_evaluation || 'Évaluation'}</p>
+                        <p className="text-sm font-medium text-neutral-900 dark:text-white">{n.matiere?.nom || n.matiere || t('common.subject')}</p>
+                        <p className="text-xs text-neutral-500">{n.appreciation || n.type_evaluation || t('pages.parent.enfants.evaluation')}</p>
                       </div>
                     </div>
                     <div className="text-right">
@@ -251,7 +237,7 @@ export default function EnfantsPage() {
               {absences.length === 0 ? (
                 <div className="text-center py-8 text-neutral-500">
                   <AlertTriangle className="mx-auto h-8 w-8 mb-2" />
-                  <p className="text-sm">Aucune absence</p>
+                  <p className="text-sm">{t('pages.parent.enfants.aucune_absence')}</p>
                 </div>
               ) : (
                 absences.map((a) => (
@@ -262,15 +248,15 @@ export default function EnfantsPage() {
                       </div>
                       <div>
                         <p className="text-sm font-medium text-neutral-900 dark:text-white">
-                          {a.type || 'Absence'} - {formatDate(a.date)}
+                          {a.type || t('pages.parent.enfants.absence')} - {formatDate(a.date)}
                         </p>
                         <p className="text-xs text-neutral-500">
-                          {a.justifiee ? 'Justifiée' : 'Non justifiée'} - {a.motif || 'Sans motif'}
+                          {a.justifiee ? t('pages.parent.enfants.justifiee') : t('pages.parent.enfants.non_justifiee')} - {a.motif || t('pages.parent.enfants.sans_motif')}
                         </p>
                       </div>
                     </div>
                     <Badge variant={a.justifiee ? 'primary' : 'danger'} size="sm">
-                      {a.justifiee ? 'Justifiée' : 'Non justifiée'}
+                      {a.justifiee ? t('pages.parent.enfants.justifiee') : t('pages.parent.enfants.non_justifiee')}
                     </Badge>
                   </div>
                 ))
@@ -283,9 +269,9 @@ export default function EnfantsPage() {
               {paiements.length === 0 ? (
                 <div className="rounded-xl bg-neutral-50 dark:bg-neutral-800/50 p-4">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Frais de scolarité</span>
+                    <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">{t('pages.parent.enfants.frais_de_scolarite')}</span>
                     <Badge variant={selectedEnfant.frais.paye >= selectedEnfant.frais.total ? 'primary' : 'warning'}>
-                      {selectedEnfant.frais.paye >= selectedEnfant.frais.total ? 'Payé' : 'Partiel'}
+                      {selectedEnfant.frais.paye >= selectedEnfant.frais.total ? t('common.status.paid') : t('pages.parent.enfants.partiel')}
                     </Badge>
                   </div>
                   <div className="h-2 rounded-full bg-neutral-200 dark:bg-neutral-700 overflow-hidden">
@@ -307,14 +293,14 @@ export default function EnfantsPage() {
                         <FileText className="h-5 w-5 text-amber-500" />
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-neutral-900 dark:text-white">{p.type || 'Frais'}</p>
+                        <p className="text-sm font-medium text-neutral-900 dark:text-white">{p.type || t('pages.parent.enfants.frais')}</p>
                         <p className="text-xs text-neutral-500">{formatDate(p.date)}</p>
                       </div>
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-bold text-emerald-600">{formatNumber(p.montant)} FCFA</p>
                       <Badge variant={p.statut === 'paye' ? 'primary' : 'warning'} size="sm">
-                        {p.statut === 'paye' ? 'Payé' : 'En attente'}
+                        {p.statut === 'paye' ? t('common.status.paid') : t('common.status.pending')}
                       </Badge>
                     </div>
                   </div>

@@ -16,7 +16,9 @@ export default defineConfig({
   ],
   server: {
     port: 3002,
-    open: true,
+    // Pas d'ouverture de navigateur en CI : le conteneur est sans affichage et
+    // `open` y lance un `xdg-open` qui n'aboutit pas.
+    open: !process.env.CI,
     proxy: {
       '/api': {
         target: 'http://localhost:8000',

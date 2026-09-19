@@ -41,10 +41,38 @@ Route::middleware([
                 ->middleware('role:directeur,censeur,secretaire');
 
             // Academic
-            Route::apiResource('matieres', 'App\Http\Controllers\MatieresController');
-            Route::apiResource('classes', 'App\Http\Controllers\ClassesController');
-            Route::apiResource('eleves', 'App\Http\Controllers\EleveController');
-            Route::apiResource('notes', 'App\Http\Controllers\Notes\NotesCrudController');
+            //
+            // Ces ressources exposent les mêmes contrôleurs que `routes/api/`,
+            // où chaque écriture est gardée par un `role:` (cf.
+            // routes/api/academic.php). Ici elles ne portaient que
+            // `auth:sanctum` : sur un sous-domaine tenant, n'importe quel
+            // compte authentifié — un élève — pouvait écrire des notes ou
+            // modifier une fiche élève (audit A4). Les gardes sont alignées sur
+            // la surface principale, la plus restrictive faisant foi.
+            $lectureStaff = 'role:directeur,admin,enseignant,censeur,secretaire';
+            $ecritureDirection = 'role:directeur,admin';
+
+            Route::apiResource('matieres', 'App\Http\Controllers\MatieresController')
+                ->only(['index', 'show'])->middleware($lectureStaff);
+            Route::apiResource('matieres', 'App\Http\Controllers\MatieresController')
+                ->only(['store', 'update', 'destroy'])->middleware($ecritureDirection);
+
+            Route::apiResource('classes', 'App\Http\Controllers\ClassesController')
+                ->only(['index', 'show'])->middleware($lectureStaff);
+            Route::apiResource('classes', 'App\Http\Controllers\ClassesController')
+                ->only(['store', 'update', 'destroy'])->middleware($ecritureDirection);
+
+            Route::apiResource('eleves', 'App\Http\Controllers\EleveController')
+                ->only(['index', 'show'])->middleware('role:directeur,admin,enseignant');
+            Route::apiResource('eleves', 'App\Http\Controllers\EleveController')
+                ->only(['store', 'update', 'destroy'])->middleware($ecritureDirection);
+
+            // La saisie de notes reste ouverte aux enseignants, comme
+            // routes/api/academic.php:83.
+            Route::apiResource('notes', 'App\Http\Controllers\Notes\NotesCrudController')
+                ->only(['index', 'show'])->middleware($lectureStaff);
+            Route::apiResource('notes', 'App\Http\Controllers\Notes\NotesCrudController')
+                ->only(['store', 'update', 'destroy'])->middleware('role:directeur,admin,enseignant');
 
             // Services
             //

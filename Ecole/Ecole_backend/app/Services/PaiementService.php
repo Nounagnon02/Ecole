@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Classe;
+use App\Support\Reglement;
 use App\Models\PaiementEleve;
 use Illuminate\Support\Facades\DB;
 
@@ -22,7 +23,13 @@ class PaiementService extends BaseService
             'eleve_id' => 'required|school_exists:eleves,id',
             'montant' => 'required|numeric|min:0',
             'type' => 'required|in:frais_scolarite,inscription,tenue,transport,autre',
-            'mode_paiement' => 'required|in:espece,cheque,virement,mobile_money,carte',
+            // Ce service validait `espece,cheque,virement,mobile_money,carte`
+            // en minuscule singulier, quand `ComptableController`, la factory
+            // et les seeders écrivent `ESPECES`, `MOBILE_MONEY`, `VIREMENT`…
+            // Deux vocabulaires pour la même colonne : un paiement créé par
+            // ce chemin était invisible de tout filtre écrit sur l'autre
+            // (cf. audit P4.4).
+            'mode_paiement' => Reglement::regleMode(),
             'reference' => 'nullable|string|max:255',
             'date_paiement' => 'required|date',
             'notes' => 'nullable|string',

@@ -49,7 +49,10 @@ class DevoirController extends Controller
         }
 
         $devoirs = Devoir::with(['classe', 'matiere', 'enseignant'])
-            ->where('classe_id', $eleve->class_id)
+            // `class_id` n'existe pas sur `Eleve` (la colonne est `classe_id`) :
+            // le filtre résolvait toujours `null`, donc un élève ne voyait
+            // jamais aucun devoir publié pour sa classe, quelle qu'elle soit.
+            ->where('classe_id', $eleve->classe_id)
             ->where('publie', true)
             ->orderBy('date_limite', 'asc')
             ->get()
@@ -102,9 +105,12 @@ class DevoirController extends Controller
         // Associer automatiquement à tous les élèves de la classe
         if ($devoir->publie) {
             // whereHas('eleve') filtre la table `eleves`, dont la clé de
-            // classe est `class_id`.
+            // classe est `classe_id` (et non `class_id` — cette même faute
+            // rendait `indexEleve()` systématiquement vide, cf. plus bas).
+            // Avec `class_id`, aucun élève n'était jamais rattaché : la
+            // publication d'un devoir n'inscrivait personne.
             $eleves = User::whereHas('eleve', function ($q) use ($devoir) {
-                $q->where('class_id', $devoir->classe_id);
+                $q->where('classe_id', $devoir->classe_id);
             })->pluck('id');
 
             $devoir->eleves()->syncWithoutDetaching($eleves);

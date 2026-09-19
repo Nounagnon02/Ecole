@@ -17,6 +17,8 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { makeQueryClient } from './helpers/render';
 import { MemoryRouter } from 'react-router-dom';
 import CommunicationsPage from '@/app/features/communications/CommunicationsPage';
 import { installHttpMock } from './helpers/http-mock';
@@ -59,9 +61,13 @@ afterEach(() => {
 
 function renderPage() {
   return render(
-    <MemoryRouter>
-      <CommunicationsPage />
-    </MemoryRouter>
+    // La page passe par react-query : un QueryClient neuf par test,
+    // pour qu'aucune réponse ne survive d'un cas au suivant.
+    <QueryClientProvider client={makeQueryClient()}>
+      <MemoryRouter>
+        <CommunicationsPage />
+      </MemoryRouter>
+    </QueryClientProvider>
   );
 }
 

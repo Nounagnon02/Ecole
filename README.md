@@ -1,33 +1,79 @@
-# École - Système de Gestion Scolaire Complet
+# École — plateforme de gestion scolaire
 
-Ce projet est une solution complète pour la gestion d'établissements scolaires, conçue pour simplifier l'administration et améliorer la communication entre les différentes parties prenantes de l'école.
+Gestion d'établissements scolaires multi-écoles (Bénin), du maternel au
+supérieur : élèves, notes et bulletins, paiements, bibliothèque, infirmerie,
+transport, messagerie. Quatre surfaces partagent une même API.
 
-##  Architecture du Projet
+## Les quatre surfaces
 
-Le système est construit sur une architecture modulaire composée de trois parties principales :
+| Surface | Pile | Emplacement |
+|---|---|---|
+| **API** | Laravel 11 · PHP 8.2 · MySQL 8 | [`Ecole/Ecole_backend`](./Ecole/Ecole_backend) |
+| **Web** | React 18 · Vite 6 · Tailwind 4 · TanStack Query | [`Ecole/Ecole_frontend`](./Ecole/Ecole_frontend) |
+| **Mobile** | Expo 52 · React Native 0.76 · Expo Router | [`Ecole/Ecole_mobile`](./Ecole/Ecole_mobile) |
+| **Desktop** | Electron 28, enveloppe du build web | [`Ecole/Ecole_desktop`](./Ecole/Ecole_desktop) |
 
-### 1. Backend (Laravel)
+## Démarrer
 
-Le cœur du système, construit avec le framework PHP **Laravel**. Il gère toute la logique métier, les interactions avec la base de données, l'authentification et fournit une API RESTful pour les applications frontend et mobile.
+```bash
+# API — http://localhost:8000
+cd Ecole/Ecole_backend
+composer install
+cp .env.example .env && php artisan key:generate
+php artisan migrate --seed
+php artisan serve
 
-- **Technologie** : PHP, Laravel
-- **Base de données** : MySQL, PostgreSQL (configurable)
-- **Pour plus de détails**, consultez le [README du backend](./Ecole/Ecole_backend/README.md).
+# Web — http://localhost:3002 (proxy /api vers le port 8000)
+cd Ecole/Ecole_frontend
+npm ci
+npm start
+```
 
-### 2. Frontend (React)
+## Tests
 
-Une application web riche et interactive développée avec **React**. Elle fournit une interface utilisateur intuitive pour les différents rôles au sein de l'école (directeur, enseignant, élève, etc.), chacun avec son propre tableau de bord et ses fonctionnalités dédiées.
+```bash
+cd Ecole/Ecole_backend  && vendor/bin/pest          # 467 tests
+cd Ecole/Ecole_frontend && npm test                 # 360 tests
+cd Ecole/Ecole_frontend && npm run test:e2e         # 78 tests Playwright
+```
 
-- **Technologie** : React, React Router, Axios
-- **Pour plus de détails**, consultez le [README du frontend](./Ecole/Ecole_frontend/README.md).
+La suite backend tourne sur SQLite en mémoire par défaut. La CI la rejoue sur
+**MySQL 8**, parce que les deux moteurs ne se comportent pas pareil : types
+`decimal` rendus en chaîne, clés étrangères réellement appliquées, `YEAR`
+borné à 1901‑2155. Pour reproduire ce passage en local :
 
-### 3. Application Mobile (React Native)
+```bash
+DB_CONNECTION=mysql DB_DATABASE=ecole_test vendor/bin/pest
+```
 
-Une application mobile multiplateforme (iOS et Android) construite avec **React Native**. Elle offre un accès en déplacement aux fonctionnalités clés du système, permettant aux utilisateurs de rester connectés et informés où qu'ils soient.
+## Ce qu'il faut savoir avant de toucher au code
 
-- **Technologie** : React Native, Expo
-- **Pour plus de détails**, consultez le [README de l'application mobile](./Ecole/Ecole_mobile/README.md).
+**Le cloisonnement par école est un scope global, pas un `where` manuel.**
+`app/Traits/BelongsToEcole.php` filtre 71 des 82 modèles sur `ecole_id` et,
+faute d'école résolue, bloque tout (`whereRaw('1 = 0')`) plutôt que de laisser
+passer. `User` en est exempté — la connexion doit trouver un compte avant de
+connaître son école — ce qui impose un filtrage manuel partout où l'on
+interroge `users`.
 
-## Démarrage Rapide
+**Hors requête HTTP, il n'y a ni `auth()` ni session.** Un job en file, une
+commande Artisan, un webhook de paiement : tous perdent le contexte et le scope
+retombe sur « aucun résultat », silencieusement. Ces chemins doivent lier une
+école explicitement avec `App\Support\SchoolContext::for()`.
 
-Pour obtenir des instructions détaillées sur la configuration et le lancement de chaque partie de l'application, veuillez vous référer aux fichiers `README.md` respectifs liés ci-dessus.
+**Les rôles sont une colonne `string` et un middleware maison**
+(`app/Http/Middleware/CheckRole.php`, alias `role:`), pas un paquet de
+permissions. Le référentiel des rôles vit dans `app/Support/Roles.php`.
+
+## Documentation
+
+| Chemin | Contenu |
+|---|---|
+| [`docs/production-secrets.md`](./docs/production-secrets.md) | Gestion des secrets et procédure de rotation — **à lire avant tout déploiement** |
+| [`docs/reference/`](./docs/reference) | Conception du cloisonnement, API universitaire, structure des migrations |
+| [`docs/archive/`](./docs/archive) | Audits, plans et rapports historiques, conservés pour mémoire |
+
+## CI
+
+Cinq workflows sous [`.github/workflows/`](./.github/workflows), orchestrés par
+`ci.yml`, qui est le seul habilité à déclencher un déploiement. Le backend est
+testé deux fois — SQLite puis MySQL 8 — et le déploiement dépend des deux.

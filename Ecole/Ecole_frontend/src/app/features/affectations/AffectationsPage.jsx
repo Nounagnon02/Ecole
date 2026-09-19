@@ -12,7 +12,7 @@
  * rattachée à la série de la classe (cascade classe -> série -> matière).
  */
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { GraduationCap, Trash2, Plus, Users, Loader2, RefreshCw, BookOpen } from 'lucide-react';
 import Card from '@/shared/components/ui/Card';
@@ -21,27 +21,30 @@ import Button from '@/shared/components/ui/Button';
 import Select from '@/shared/components/ui/Select';
 import { Tabs } from '@/shared/components/ui/Tabs';
 import { useApi } from '@/hooks/useApi';
+import { useApiQuery } from '@/shared/lib/api-client';
+import { unwrapList } from '@/shared/lib/unwrap';
+import { useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from '@/shared/i18n';
 
-/** Normalise { success, data } | tableau nu | tableau. */
-function unwrap(res) {
-  return Array.isArray(res?.data?.data) ? res.data.data
-    : Array.isArray(res?.data) ? res.data
-    : Array.isArray(res) ? res
-    : [];
+/**
+ * Normalise { success, data } | paginateur | tableau nu.
+ *
+ * `unwrap` prenait une réponse axios ; react-query livre déjà `response.data`,
+ * d'où ce nom distinct et l'appui sur le helper partagé.
+ */
+function unwrapPayload(payload) {
+  return unwrapList(payload);
 }
 
 const NOM_ENSEIGNANT = (e) =>
   [e?.user?.name, e?.user?.prenom].filter(Boolean).join(' ').trim() || 'Enseignant';
 
 export default function AffectationsPage() {
-  const { loading, error, clearError, get, post, delete: del } = useApi();
+  const { t } = useTranslation();
+  const { post, delete: del } = useApi();
 
-  const [teachers, setTeachers] = useState([]);
-  const [classes, setClasses] = useState([]);
-  const [mpTeachers, setMpTeachers] = useState([]);
 
   const [selectedTeacherId, setSelectedTeacherId] = useState('');
-  const [affectations, setAffectations] = useState([]);
 
   const [classeId, setClasseId] = useState('');
   const [serieId, setSerieId] = useState('');
@@ -50,47 +53,68 @@ export default function AffectationsPage() {
   const [saving, setSaving] = useState(false);
   const [actionError, setActionError] = useState(null);
 
-  const loadAll = useCallback(async () => {
-    clearError();
-    try {
-      const [tRes, cRes, mRes] = await Promise.all([
-        get('/enseignants'),
-        get('/classes', { params: { with_matieres: 1 } }),
-        get('/enseignants-mp'),
-      ]);
-      setTeachers(unwrap(tRes));
-      setClasses(unwrap(cRes));
-      setMpTeachers(unwrap(mRes));
-    } catch (e) {
-      /* l'erreur est déjà exposée par useApi */
-    }
-  }, [get, clearError]);
+  // Trois référentiels indépendants, puis les affectations de l'enseignant
+  // sélectionné. `useApi()` exposait un `loading` et un `error` partagés :
+  // l'échec de l'un masquait l'état des autres, et rien n'était mis en cache
+  // entre deux visites (cf. audit P4.1).
+  const requeteEnseignants = useApiQuery(['enseignants'], '/enseignants');
+  const requeteClasses = useApiQuery(['classes', 'avec-matieres'], '/classes', {
+    config: { params: { with_matieres: 1 } },
+  });
+  const requeteMp = useApiQuery(['enseignants-mp'], '/enseignants-mp');
 
-  useEffect(() => {
-    loadAll();
-  }, [loadAll]);
+  const teachers = useMemo(() => unwrapPayload(requeteEnseignants.data), [requeteEnseignants.data]);
+  const classes = useMemo(() => unwrapPayload(requeteClasses.data), [requeteClasses.data]);
+  const mpTeachers = useMemo(() => unwrapPayload(requeteMp.data), [requeteMp.data]);
+
+  const loading = requeteEnseignants.isPending || requeteClasses.isPending;
+  const error = requeteEnseignants.isError
+    ? (requeteEnseignants.error?.message ?? t('common.load_error'))
+    : requeteClasses.isError
+      ? (requeteClasses.error?.message ?? t('common.load_error'))
+      : null;
 
   const selectedTeacher = useMemo(
     () => teachers.find((t) => String(t.id) === String(selectedTeacherId)) || null,
     [teachers, selectedTeacherId]
   );
 
-  const loadAffectations = useCallback(async (teacherId) => {
-    try {
-      const res = await get(`/enseignants/${teacherId}/affectations`);
-      setAffectations(unwrap(res));
-    } catch (e) {
-      setAffectations([]);
-    }
-  }, [get]);
+  // Requête dépendante : `enabled` remplace le garde impératif, et la clé
+  // porte l'enseignant — changer de sélection change d'entrée de cache au
+  // lieu d'écraser la précédente.
+  const requeteAffectations = useApiQuery(
+    ['affectations', selectedTeacherId],
+    `/enseignants/${selectedTeacherId}/affectations`,
+    { queryOptions: { enabled: !!selectedTeacherId } },
+  );
 
-  useEffect(() => {
-    if (!selectedTeacherId) {
-      setAffectations([]);
-      return;
-    }
-    loadAffectations(selectedTeacherId);
-  }, [selectedTeacherId, loadAffectations]);
+  const affectations = useMemo(
+    () => (selectedTeacherId ? unwrapPayload(requeteAffectations.data) : []),
+    [requeteAffectations.data, selectedTeacherId],
+  );
+
+  const queryClient = useQueryClient();
+
+  /** Relance les trois référentiels — le bouton « Réessayer ». */
+  const loadAll = () => {
+    queryClient.invalidateQueries({ queryKey: ['enseignants'] });
+    queryClient.invalidateQueries({ queryKey: ['classes'] });
+    queryClient.invalidateQueries({ queryKey: ['enseignants-mp'] });
+  };
+
+  /**
+   * `clearError` vidait l'erreur partagée de `useApi()`. Chaque requête porte
+   * désormais la sienne ; seule l'erreur d'action reste à effacer.
+   */
+  const clearError = () => setActionError(null);
+
+  /**
+   * Les écritures renvoient la liste à jour : on la pose directement dans le
+   * cache plutôt que de relancer un aller-retour.
+   */
+  const setAffectations = (liste) => {
+    queryClient.setQueryData(['affectations', selectedTeacherId], { data: liste });
+  };
 
   /* Cascade classe -> série -> matière */
   const currentClasse = useMemo(
@@ -126,13 +150,13 @@ export default function AffectationsPage() {
           },
         ],
       });
-      setAffectations(unwrap(res));
+      setAffectations(unwrapPayload(res?.data));
       setClasseId('');
       setSerieId('');
       setMatiereId('');
     } catch (e) {
       clearError();
-      setActionError(e.response?.data?.message || e.message || "L'affectation a été refusée");
+      setActionError(e.response?.data?.message || e.message || t('pages.affectations.affectations.l_affectation_a_ete_refusee'));
     } finally {
       setSaving(false);
     }
@@ -143,10 +167,10 @@ export default function AffectationsPage() {
     setActionError(null);
     try {
       const res = await del(`/enseignants/${selectedTeacherId}/affectations/${affectationId}`);
-      setAffectations(unwrap(res));
+      setAffectations(unwrapPayload(res?.data));
     } catch (e) {
       clearError();
-      setActionError(e.response?.data?.message || e.message || 'Le retrait a échoué');
+      setActionError(e.response?.data?.message || e.message || t('pages.affectations.affectations.le_retrait_a_echoue'));
     }
   };
 
@@ -157,13 +181,18 @@ export default function AffectationsPage() {
       const res = await post(`/enseignants-mp/${mpTeacherId}/affectation`, {
         classe_id: Number(newClassId),
       });
-      const updated = res?.data?.data ?? unwrap(res);
-      setMpTeachers((prev) =>
-        prev.map((t) => (String(t.id) === String(mpTeacherId) ? { ...t, ...updated } : t))
-      );
+      const updated = res?.data?.data ?? res?.data ?? {};
+      // Le serveur renvoie l'enseignant mis à jour : on l'insère dans le
+      // cache plutôt que de relancer un aller-retour (cf. audit P4.1).
+      queryClient.setQueryData(['enseignants-mp'], (ancien) => {
+        const liste = unwrapPayload(ancien);
+        return {
+          data: liste.map((t) => (String(t.id) === String(mpTeacherId) ? { ...t, ...updated } : t)),
+        };
+      });
     } catch (e) {
       clearError();
-      setActionError(e.response?.data?.message || e.message || "L'affectation a été refusée");
+      setActionError(e.response?.data?.message || e.message || t('pages.affectations.affectations.l_affectation_a_ete_refusee'));
     }
   };
 
@@ -201,10 +230,10 @@ export default function AffectationsPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">
-            Affectations des enseignants
+            {t('pages.affectations.affectations.title')}
           </h1>
           <p className="text-sm text-neutral-500">
-            Attribuez les classes, séries et matières à chaque enseignant
+            {t('pages.affectations.affectations.subtitle')}
           </p>
         </div>
       </div>
@@ -249,7 +278,7 @@ export default function AffectationsPage() {
                         {NOM_ENSEIGNANT(selectedTeacher)}
                       </p>
                       <p className="text-xs text-neutral-500">
-                        {selectedTeacher.specialite || selectedTeacher.grade || 'Enseignant'}
+                        {selectedTeacher.specialite || selectedTeacher.grade || t('pages.affectations.affectations.enseignant')}
                       </p>
                     </div>
                   </div>
@@ -280,7 +309,7 @@ export default function AffectationsPage() {
                 <Select
                   aria-label="Série"
                   label="Série"
-                  placeholder={classeId ? 'Choisir une série' : 'Choisissez d\u2019abord une classe'}
+                  placeholder={classeId ? t('pages.affectations.affectations.choisir_une_serie') : t('pages.affectations.affectations.choisissez_d_abord_une_classe')}
                   options={seriesOptions}
                   value={serieId}
                   disabled={!classeId}
@@ -292,7 +321,7 @@ export default function AffectationsPage() {
                 <Select
                   aria-label="Matière"
                   label="Matière"
-                  placeholder={serieId ? 'Choisir une matière' : 'Choisissez d\u2019abord une série'}
+                  placeholder={serieId ? t('pages.affectations.affectations.choisir_une_matiere') : t('pages.affectations.affectations.choisissez_d_abord_une_serie')}
                   options={matieresOptions}
                   value={matiereId}
                   disabled={!serieId}
@@ -313,7 +342,7 @@ export default function AffectationsPage() {
 
           <Card className="mt-6">
             <Card.Header>
-              <Card.Title>Cours de {selectedTeacher ? NOM_ENSEIGNANT(selectedTeacher) : 'l’enseignant'}</Card.Title>
+              <Card.Title>Cours de {selectedTeacher ? NOM_ENSEIGNANT(selectedTeacher) : t('pages.affectations.affectations.l_enseignant')}</Card.Title>
               <Card.Description>
                 {affectations.length} affectation{affectations.length > 1 ? 's' : ''}
               </Card.Description>
@@ -340,10 +369,10 @@ export default function AffectationsPage() {
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium text-neutral-900 dark:text-white">
-                          {a.matiere?.nom || 'Matière'}
+                          {a.matiere?.nom || t('common.subject')}
                         </p>
                         <p className="truncate text-xs text-neutral-500">
-                          {a.classe?.nom_classe || 'Classe'}
+                          {a.classe?.nom_classe || t('common.class')}
                           {a.serie?.nom ? ` · ${a.serie.nom}` : ''}
                         </p>
                       </div>
@@ -379,31 +408,31 @@ export default function AffectationsPage() {
               {mpTeachers.length === 0 ? (
                 <div className="py-10 text-center text-sm text-neutral-500">
                   <Users className="mx-auto h-8 w-8 mb-2" />
-                  Aucun enseignant Maternelle / Primaire
+                  {t('pages.affectations.affectations.aucun_enseignant_mp')}
                 </div>
               ) : (
                 <ul className="divide-y divide-neutral-100 dark:divide-neutral-800">
-                  {mpTeachers.map((t) => (
-                    <li key={t.id} className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center">
+                  {mpTeachers.map((enseignant) => (
+                    <li key={enseignant.id} className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center">
                       <div className="flex items-center gap-3">
                         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--accent-subtle)] text-[var(--accent)]">
                           <GraduationCap className="h-4 w-4" />
                         </div>
                         <div>
                           <p className="text-sm font-medium text-neutral-900 dark:text-white">
-                            {NOM_ENSEIGNANT(t)}
+                            {NOM_ENSEIGNANT(enseignant)}
                           </p>
                           <p className="text-xs text-neutral-500">
-                            {t.classe?.categorie_classe || 'Maternelle / Primaire'}
+                            {enseignant.classe?.categorie_classe || t('pages.affectations.affectations.maternelle_primaire')}
                           </p>
                         </div>
                       </div>
                       <Select
-                        aria-label={`Classe de ${NOM_ENSEIGNANT(t)}`}
-                        label="Classe"
+                        aria-label={`${t('pages.affectations.affectations.classe_de')} ${NOM_ENSEIGNANT(enseignant)}`}
+                        label={t('common.class')}
                         options={classeOptions}
-                        value={t.classe?.id ? String(t.classe.id) : ''}
-                        onChange={(e) => handleMpChange(t.id, e.target.value)}
+                        value={enseignant.classe?.id ? String(enseignant.classe.id) : ''}
+                        onChange={(e) => handleMpChange(enseignant.id, e.target.value)}
                         className="sm:ml-auto sm:w-72"
                       />
                     </li>

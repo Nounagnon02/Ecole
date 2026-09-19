@@ -5,7 +5,10 @@
  * Données dynamiques via API /api/v1/admin/plans
  */
 
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
+import { useApiQuery } from '@/shared/lib/api-client';
+import { useTranslation } from '@/shared/i18n';
+import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
   Plus, Edit3, Trash2, CreditCard, CheckCircle2,
@@ -14,27 +17,19 @@ import {
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
-import { useApi } from '@/hooks/useApi';
-import logger from '@/shared/lib/logger';
 
 export default function PlansPage() {
-  const { loading, error, get } = useApi();
-  const [plans, setPlans] = useState([]);
+  const { t } = useTranslation();
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await get('/v1/admin/plans');
-        const items = Array.isArray(res?.data?.data) ? res.data.data
-          : Array.isArray(res?.data) ? res.data
-          : Array.isArray(res) ? res
-          : [];
-        setPlans(items);
-      } catch (e) {
-        logger.error('Erreur chargement plans:', e);
-      }
-    })();
-  }, [get]);
+  const requete = useApiQuery(['plans'], '/v1/admin/plans');
+
+  // La page tenait un `useState` de données doublé d'un `useEffect` de premier
+  // rendu — le motif répété sur trente-neuf pages, sans cache ni
+  // déduplication (cf. audit P4.1). `unwrapList` traverse les trois formes
+  // d'enveloppe que renvoient les contrôleurs.
+  const plans = useMemo(() => unwrapList(requete.data) ?? [], [requete.data]);
+  const loading = requete.isPending;
+  const error = requete.isError ? (requete.error?.message ?? t('common.load_error')) : null;
 
   if (loading) {
     return (
@@ -57,15 +52,15 @@ export default function PlansPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Plans d'abonnement</h1>
-          <p className="text-sm text-neutral-500 mt-1">Gérez les offres et tarifs</p>
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.admin.plans.title')}</h1>
+          <p className="text-sm text-neutral-500 mt-1">{t('pages.admin.plans.subtitle')}</p>
         </div>
-        <Button icon={<Plus className="h-4 w-4" />}>Nouveau plan</Button>
+        <Button icon={<Plus className="h-4 w-4" />}>{t('pages.admin.plans.nouveau_plan')}</Button>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
         {plans.length === 0 && (
-          <div className="lg:col-span-3 text-center py-12 text-sm text-neutral-500">Aucun plan disponible</div>
+          <div className="lg:col-span-3 text-center py-12 text-sm text-neutral-500">{t('pages.admin.plans.aucun_plan_disponible')}</div>
         )}
         {plans.map((plan, i) => (
           <motion.div
@@ -78,7 +73,7 @@ export default function PlansPage() {
               {plan.is_popular && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
                   <Badge variant="primary" size="sm">
-                    <Zap className="h-3 w-3 mr-1" /> Populaire
+                    <Zap className="h-3 w-3 mr-1" /> {t('pages.admin.plans.populaire')}
                   </Badge>
                 </div>
               )}
@@ -89,15 +84,15 @@ export default function PlansPage() {
                     <p className="text-sm text-neutral-500">{plan.slug}</p>
                   </div>
                   <Badge variant={plan.is_active ? 'success' : 'neutral'} size="sm">
-                    {plan.is_active ? 'Actif' : 'Inactif'}
+                    {plan.is_active ? t('common.status.active') : t('common.status.inactive')}
                   </Badge>
                 </div>
 
                 <div className="mb-4">
                   <p className="text-3xl font-bold text-neutral-900 dark:text-white">
-                    {plan.price_monthly === 0 || plan.price_monthly === '0.00' ? 'Gratuit' : `${Number(plan.price_monthly).toLocaleString()} FCFA`}
+                    {plan.price_monthly === 0 || plan.price_monthly === '0.00' ? t('pages.admin.plans.gratuit') : `${Number(plan.price_monthly).toLocaleString()} FCFA`}
                   </p>
-                  <p className="text-xs text-neutral-500">/mois</p>
+                  <p className="text-xs text-neutral-500">{t('pages.admin.plans.mois')}</p>
                   {plan.price_yearly > 0 && (
                     <p className="text-xs text-neutral-400 mt-1">
                       {Number(plan.price_yearly).toLocaleString()} FCFA/an
@@ -128,16 +123,16 @@ export default function PlansPage() {
                     </div>
                   ))}
                   {(!plan.features || plan.features.length === 0) && (
-                    <p className="text-xs text-neutral-400 italic">Aucune fonctionnalité listée</p>
+                    <p className="text-xs text-neutral-400 italic">{t('pages.admin.plans.aucune_fonctionnalite_listee')}</p>
                   )}
                 </div>
 
                 <div className="flex gap-2">
                   <Button variant="ghost" size="sm" className="flex-1">
-                    <Edit3 className="h-4 w-4 mr-1" /> Modifier
+                    <Edit3 className="h-4 w-4 mr-1" /> {t('common.edit')}
                   </Button>
                   <Button variant="ghost" size="sm" className="flex-1 text-red-500 hover:text-red-600">
-                    <Trash2 className="h-4 w-4 mr-1" /> Supprimer
+                    <Trash2 className="h-4 w-4 mr-1" /> {t('common.delete')}
                   </Button>
                 </div>
               </Card.Body>

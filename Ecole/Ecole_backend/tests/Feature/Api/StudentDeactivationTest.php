@@ -84,7 +84,12 @@ class StudentDeactivationTest extends TestCase
         $this->giveSchoolRecord();
 
         // SQLite n'applique les clés étrangères que si on le lui demande.
-        DB::statement('PRAGMA foreign_keys = ON');
+        // SQLite n'applique les clés étrangères que si on le lui demande ;
+        // MySQL les applique toujours et rejette ce PRAGMA comme une erreur de
+        // syntaxe. Le test doit valoir sur les deux moteurs.
+        if (DB::getDriverName() === 'sqlite') {
+            DB::statement('PRAGMA foreign_keys = ON');
+        }
 
         $this->expectException(\Illuminate\Database\QueryException::class);
 

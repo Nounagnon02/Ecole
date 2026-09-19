@@ -6,7 +6,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
   Users,
   TrendingUp,
@@ -23,18 +23,16 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer,
   Area, AreaChart
 } from 'recharts';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
 import { cn } from '@/shared/lib/utils';
 import { useDashboardStats } from '@/app/dashboards/hooks/useDashboardData';
+import DashboardShell from '@/app/dashboards/DashboardShell';
 import StatsCard from '@/shared/components/ui/StatsCard';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Avatar from '@/shared/components/ui/Avatar';
 import Button from '@/shared/components/ui/Button';
 import { Skeleton } from '@/shared/components/ui/Skeleton';
-import { RefreshButton } from '@/shared/components/ui';
-import { ErrorDisplay } from '@/shared/components/ui/EmptyState';
+import { useTranslation } from '@/shared/i18n';
 
 // ─── Constantes ───────────────────────────────────────────────
 
@@ -47,16 +45,22 @@ const TABS = [
 ];
 
 const STATS_META = [
-  { title: 'Enfants Scolarisés', icon: Users, color: 'primary' },
-  { title: 'Moyenne Générale', icon: TrendingUp, color: 'emerald' },
-  { title: 'Assiduité', icon: CheckCircle2, color: 'sky' },
-  { title: 'Solde', icon: DollarSign, color: 'amber' },
+  { title: 'Enfants Scolarisés', key: 'enfants_scolarises', icon: Users, color: 'primary' },
+  { title: 'Moyenne Générale', key: 'moyenne_generale', icon: TrendingUp, color: 'emerald' },
+  { title: 'Assiduité', key: 'assiduite', icon: CheckCircle2, color: 'sky' },
+  { title: 'Solde', key: 'solde', icon: DollarSign, color: 'amber' },
 ];
 
 // ─── Sections ─────────────────────────────────────────────────
 
 function ApercuSection({ data, loading }) {
-  const safeStats = data?.stats?.map((s, i) => ({ ...s, icon: STATS_META[i]?.icon, color: STATS_META[i]?.color })) || [];
+  const { t } = useTranslation();
+  const safeStats = data?.stats?.map((s, i) => ({
+    ...s,
+    title: STATS_META[i]?.key ? t(`dashboards.parent.stats.${STATS_META[i].key}`) : s.title,
+    icon: STATS_META[i]?.icon,
+    color: STATS_META[i]?.color,
+  })) || [];
   const safeEnfants = data?.enfants || data?.children || [];
   const safeEvolution = data?.evolution || [];
   const safeCommunications = data?.communications || [];
@@ -100,8 +104,8 @@ function ApercuSection({ data, loading }) {
           <Card.Header>
             <div className="flex items-center justify-between">
               <div>
-                <Card.Title>Évolution des Notes</Card.Title>
-                <Card.Description>Suivi trimestriel</Card.Description>
+                <Card.Title>{t('dashboards.parent.evolution_des_notes')}</Card.Title>
+                <Card.Description>{t('dashboards.parent.suivi_trimestriel')}</Card.Description>
               </div>
               {childKeys.length > 0 && (
                 <div className="flex items-center gap-4 text-xs">
@@ -120,7 +124,7 @@ function ApercuSection({ data, loading }) {
               {safeEvolution.length === 0 || childKeys.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-[var(--text-tertiary)]">
                   <TrendingUp className="h-10 w-10 mb-3 opacity-40" />
-                  <p className="text-sm">Aucune donnée d'évolution disponible</p>
+                  <p className="text-sm">{t('dashboards.parent.aucune_donnee_d_evolution_disponible')}</p>
                 </div>
               ) : (
               <ResponsiveContainer width="100%" height="100%">
@@ -159,14 +163,14 @@ function ApercuSection({ data, loading }) {
         {/* Enfants */}
         <Card>
           <Card.Header>
-            <Card.Title>Mes Enfants</Card.Title>
-            <Card.Description>Vue rapide</Card.Description>
+            <Card.Title>{t('dashboards.parent.mes_enfants')}</Card.Title>
+            <Card.Description>{t('dashboards.parent.vue_rapide')}</Card.Description>
           </Card.Header>
           <Card.Body className="space-y-4">
             {safeEnfants.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-10 text-[var(--text-tertiary)]">
                 <Users className="h-10 w-10 mb-3 opacity-40" />
-                <p className="text-sm">Aucun enfant trouvé</p>
+                <p className="text-sm">{t('dashboards.parent.aucun_enfant_trouve')}</p>
               </div>
             ) : (
               safeEnfants.map((enfant) => (
@@ -186,10 +190,10 @@ function ApercuSection({ data, loading }) {
                           <Badge variant={roleVariant(enfant.role)} size="sm">{enfant.role}</Badge>
                         )}
                         {enfant.is_primary && (
-                          <Badge variant="success" size="sm">Contact principal</Badge>
+                          <Badge variant="success" size="sm">{t('dashboards.parent.contact_principal')}</Badge>
                         )}
                         {enfant.is_guardian && (
-                          <Badge variant="info" size="sm">Tuteur légal</Badge>
+                          <Badge variant="info" size="sm">{t('dashboards.parent.tuteur_legal')}</Badge>
                         )}
                       </div>
                     </div>
@@ -213,8 +217,8 @@ function ApercuSection({ data, loading }) {
         <Card.Header>
           <div className="flex items-center justify-between">
             <div>
-              <Card.Title>Derniers Échanges</Card.Title>
-              <Card.Description>Avec l'établissement</Card.Description>
+              <Card.Title>{t('dashboards.parent.derniers_echanges')}</Card.Title>
+              <Card.Description>{t('dashboards.parent.avec_l_etablissement')}</Card.Description>
             </div>
             <Badge variant="danger" size="sm">{safeCommunications.filter(c => c.urgent).length} urgent</Badge>
           </div>
@@ -223,7 +227,7 @@ function ApercuSection({ data, loading }) {
           {safeCommunications.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-[var(--text-tertiary)]">
               <MessageSquare className="h-10 w-10 mb-3 opacity-40" />
-              <p className="text-sm">Aucun échange récent</p>
+              <p className="text-sm">{t('dashboards.parent.aucun_echange_recent')}</p>
             </div>
           ) : (
           <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
@@ -239,7 +243,7 @@ function ApercuSection({ data, loading }) {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="font-medium text-sm text-neutral-900 dark:text-white">{msg.sujet}</span>
-                    {msg.urgent && <Badge variant="danger" size="sm">Urgent</Badge>}
+                    {msg.urgent && <Badge variant="danger" size="sm">{t('dashboards.parent.urgent')}</Badge>}
                   </div>
                   <p className="text-xs text-neutral-500 mt-0.5">{msg.from} · {msg.role}</p>
                 </div>
@@ -251,7 +255,7 @@ function ApercuSection({ data, loading }) {
         </Card.Body>
         <Card.Footer>
           <Button variant="ghost" size="sm" className="w-full">
-            Voir tous les échanges <ArrowRight className="h-4 w-4 ml-1" />
+            {t('dashboards.parent.voir_tous_les_echanges')} <ArrowRight className="h-4 w-4 ml-1" />
           </Button>
         </Card.Footer>
       </Card>
@@ -263,6 +267,7 @@ function ApercuSection({ data, loading }) {
 
 export default function ParentDashboard() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('apercu');
   const { data, loading, error, refetch } = useDashboardStats('parent');
 
@@ -285,61 +290,17 @@ export default function ParentDashboard() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <motion.h1
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="font-fraunces text-2xl font-bold text-neutral-900 dark:text-white"
-          >
-            Espace Parent
-          </motion.h1>
-          <p className="text-neutral-500 dark:text-neutral-400 mt-1">
-            Suivi de vos enfants — {format(new Date(), 'EEEE d MMMM yyyy', { locale: fr })}
-          </p>
-        </div>
-        <RefreshButton loading={loading} onRefresh={refetch} />
-      </div>
-
-      {error && (
-        <ErrorDisplay message={error} onRetry={refetch} />
-      )}
-
-      <div className="border-b border-neutral-200 dark:border-neutral-800">
-        <nav className="flex gap-1 overflow-x-auto -mb-px">
-          {TABS.map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => handleTabClick(tab.id)}
-                className={cn(
-                  'flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-all whitespace-nowrap',
-                  activeTab === tab.id
-                    ? 'border-[var(--accent)] text-[var(--accent)] dark:text-[var(--accent)]'
-                    : 'border-transparent text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200'
-                )}
-              >
-                <Icon className="h-4 w-4" />
-                {tab.label}
-              </button>
-            );
-          })}
-        </nav>
-      </div>
-
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
-          transition={{ duration: 0.2 }}
-        >
-          {renderSection()}
-        </motion.div>
-      </AnimatePresence>
-    </div>
+    <DashboardShell
+      title={t('dashboards.parent.title')}
+      subtitle={t('dashboards.parent.subtitle')}
+      tabs={TABS.map((tab) => ({ ...tab, label: t(`dashboards.parent.tabs.${tab.id}`) }))}
+      activeTab={activeTab}
+      onTabChange={handleTabClick}
+      loading={loading}
+      error={error}
+      onRefresh={refetch}
+    >
+      {renderSection()}
+    </DashboardShell>
   );
 }

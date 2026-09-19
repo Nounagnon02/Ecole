@@ -8,6 +8,7 @@
 import { forwardRef, useState, useId, isValidElement } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { cn } from '@/shared/lib/utils';
+import { useTranslation } from '@/shared/i18n';
 
 const sizes = {
   sm: 'h-8 px-3 text-xs',
@@ -29,6 +30,7 @@ const Input = forwardRef(function Input(
   },
   ref
 ) {
+  const { t } = useTranslation();
   const generatedId = useId();
   const inputId = id || generatedId;
   const errorId = `${inputId}-error`;
@@ -84,7 +86,7 @@ const Input = forwardRef(function Input(
             onClick={() => setShowPassword(!showPassword)}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] transition-colors hover:text-[var(--text-primary)]"
             tabIndex={-1}
-            aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+            aria-label={showPassword ? t('components.input.masquer_le_mot_de_passe') : t('components.input.afficher_le_mot_de_passe')}
           >
             {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </button>

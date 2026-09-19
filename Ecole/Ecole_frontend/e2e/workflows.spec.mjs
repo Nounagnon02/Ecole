@@ -14,13 +14,20 @@ test.describe('Critical Workflows', () => {
       await expect(page.locator('h1, h2, .font-fraunces').first()).toBeVisible();
     });
 
-    test('login page is accessible from landing', async ({ page }) => {
+    // L'assertion était enveloppée dans `if (await loginLink.count() > 0)` :
+    // quand l'élément était absent, le bloc entier était sauté et le test
+    // passait sans rien vérifier. Or `/` ne rend pas de page d'accueil —
+    // `App.jsx` y câble `AuthRedirect`, qui renvoie un visiteur non
+    // authentifié vers `/connexion`. C'est ce comportement réel qui est
+    // vérifié ici, sans condition (cf. audit P2.5).
+    test('an unauthenticated visitor lands on the login page', async ({ page }) => {
       await page.goto('/');
-      const loginLink = page.locator('a[href*="connexion"], a[href*="login"], button:has-text("Connexion"), button:has-text("Se connecter")').first();
-      if (await loginLink.count() > 0) {
-        await loginLink.click();
-        await expect(page).toHaveURL(/connexion|login/);
-      }
+      await page.waitForLoadState('networkidle');
+
+      await expect(page).toHaveURL(/connexion/);
+      await expect(
+        page.locator('input[type="email"], input[name="email"], input[type="text"]').first()
+      ).toBeVisible();
     });
 
     test('connexion page renders correctly', async ({ page }) => {
@@ -57,7 +64,8 @@ test.describe('Critical Workflows', () => {
 
     for (const route of protectedRoutes) {
       test(`redirects ${route} to login when unauthenticated`, async ({ page }) => {
-        await page.goto(route);
+        await page.goto(route, { waitUntil: 'domcontentloaded' });
+        await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
         const url = page.url();
         expect(url.includes('connexion') || url.includes('login') || url.includes('403')).toBeTruthy();
       });
@@ -66,43 +74,50 @@ test.describe('Critical Workflows', () => {
 
   test.describe('Feature Pages', () => {
     test('eleves page redirects when unauthenticated', async ({ page }) => {
-      await page.goto('/eleves');
+      await page.goto('/eleves', { waitUntil: 'domcontentloaded' });
+      await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
       const url = page.url();
       expect(url.includes('connexion') || url.includes('login')).toBeTruthy();
     });
 
     test('notes page redirects when unauthenticated', async ({ page }) => {
-      await page.goto('/notes');
+      await page.goto('/notes', { waitUntil: 'domcontentloaded' });
+      await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
       const url = page.url();
       expect(url.includes('connexion') || url.includes('login')).toBeTruthy();
     });
 
     test('paiements page redirects when unauthenticated', async ({ page }) => {
-      await page.goto('/paiements');
+      await page.goto('/paiements', { waitUntil: 'domcontentloaded' });
+      await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
       const url = page.url();
       expect(url.includes('connexion') || url.includes('login')).toBeTruthy();
     });
 
     test('messagerie page redirects when unauthenticated', async ({ page }) => {
-      await page.goto('/messagerie');
+      await page.goto('/messagerie', { waitUntil: 'domcontentloaded' });
+      await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
       const url = page.url();
       expect(url.includes('connexion') || url.includes('login')).toBeTruthy();
     });
 
     test('emploi-du-temps page redirects when unauthenticated', async ({ page }) => {
-      await page.goto('/emploi-du-temps');
+      await page.goto('/emploi-du-temps', { waitUntil: 'domcontentloaded' });
+      await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
       const url = page.url();
       expect(url.includes('connexion') || url.includes('login')).toBeTruthy();
     });
 
     test('parametres page redirects when unauthenticated', async ({ page }) => {
-      await page.goto('/parametres');
+      await page.goto('/parametres', { waitUntil: 'domcontentloaded' });
+      await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
       const url = page.url();
       expect(url.includes('connexion') || url.includes('login')).toBeTruthy();
     });
 
     test('communications page redirects when unauthenticated', async ({ page }) => {
-      await page.goto('/communications');
+      await page.goto('/communications', { waitUntil: 'domcontentloaded' });
+      await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
       const url = page.url();
       expect(url.includes('connexion') || url.includes('login')).toBeTruthy();
     });
@@ -110,31 +125,36 @@ test.describe('Critical Workflows', () => {
 
   test.describe('University Module Pages', () => {
     test('facultes page redirects when unauthenticated', async ({ page }) => {
-      await page.goto('/universite/facultes');
+      await page.goto('/universite/facultes', { waitUntil: 'domcontentloaded' });
+      await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
       const url = page.url();
       expect(url.includes('connexion') || url.includes('login')).toBeTruthy();
     });
 
     test('etudiants page redirects when unauthenticated', async ({ page }) => {
-      await page.goto('/universite/etudiants');
+      await page.goto('/universite/etudiants', { waitUntil: 'domcontentloaded' });
+      await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
       const url = page.url();
       expect(url.includes('connexion') || url.includes('login')).toBeTruthy();
     });
 
     test('enseignants page redirects when unauthenticated', async ({ page }) => {
-      await page.goto('/universite/enseignants');
+      await page.goto('/universite/enseignants', { waitUntil: 'domcontentloaded' });
+      await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
       const url = page.url();
       expect(url.includes('connexion') || url.includes('login')).toBeTruthy();
     });
 
     test('cours page redirects when unauthenticated', async ({ page }) => {
-      await page.goto('/universite/cours');
+      await page.goto('/universite/cours', { waitUntil: 'domcontentloaded' });
+      await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
       const url = page.url();
       expect(url.includes('connexion') || url.includes('login')).toBeTruthy();
     });
 
     test('notes page redirects when unauthenticated', async ({ page }) => {
-      await page.goto('/universite/notes');
+      await page.goto('/universite/notes', { waitUntil: 'domcontentloaded' });
+      await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
       const url = page.url();
       expect(url.includes('connexion') || url.includes('login')).toBeTruthy();
     });
@@ -142,31 +162,36 @@ test.describe('Critical Workflows', () => {
 
   test.describe('Admin Super-Admin Pages', () => {
     test('admin ecoles page redirects when unauthenticated', async ({ page }) => {
-      await page.goto('/admin/ecoles');
+      await page.goto('/admin/ecoles', { waitUntil: 'domcontentloaded' });
+      await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
       const url = page.url();
       expect(url.includes('connexion') || url.includes('login')).toBeTruthy();
     });
 
     test('admin utilisateurs page redirects when unauthenticated', async ({ page }) => {
-      await page.goto('/admin/utilisateurs');
+      await page.goto('/admin/utilisateurs', { waitUntil: 'domcontentloaded' });
+      await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
       const url = page.url();
       expect(url.includes('connexion') || url.includes('login')).toBeTruthy();
     });
 
     test('admin billing page redirects when unauthenticated', async ({ page }) => {
-      await page.goto('/admin/billing');
+      await page.goto('/admin/billing', { waitUntil: 'domcontentloaded' });
+      await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
       const url = page.url();
       expect(url.includes('connexion') || url.includes('login')).toBeTruthy();
     });
 
     test('admin modules page redirects when unauthenticated', async ({ page }) => {
-      await page.goto('/admin/modules');
+      await page.goto('/admin/modules', { waitUntil: 'domcontentloaded' });
+      await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
       const url = page.url();
       expect(url.includes('connexion') || url.includes('login')).toBeTruthy();
     });
 
     test('admin white-label page redirects when unauthenticated', async ({ page }) => {
-      await page.goto('/admin/white-label');
+      await page.goto('/admin/white-label', { waitUntil: 'domcontentloaded' });
+      await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
       const url = page.url();
       expect(url.includes('connexion') || url.includes('login')).toBeTruthy();
     });
@@ -174,25 +199,29 @@ test.describe('Critical Workflows', () => {
 
   test.describe('AI Features', () => {
     test('directeur AI insights redirects when unauthenticated', async ({ page }) => {
-      await page.goto('/directeur/ai-insights');
+      await page.goto('/directeur/ai-insights', { waitUntil: 'domcontentloaded' });
+      await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
       const url = page.url();
       expect(url.includes('connexion') || url.includes('login')).toBeTruthy();
     });
 
     test('enseignant AI assistant redirects when unauthenticated', async ({ page }) => {
-      await page.goto('/enseignant/ai-assistant');
+      await page.goto('/enseignant/ai-assistant', { waitUntil: 'domcontentloaded' });
+      await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
       const url = page.url();
       expect(url.includes('connexion') || url.includes('login')).toBeTruthy();
     });
 
     test('parent AI report redirects when unauthenticated', async ({ page }) => {
-      await page.goto('/parent/ai-report');
+      await page.goto('/parent/ai-report', { waitUntil: 'domcontentloaded' });
+      await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
       const url = page.url();
       expect(url.includes('connexion') || url.includes('login')).toBeTruthy();
     });
 
     test('eleve AI tutor redirects when unauthenticated', async ({ page }) => {
-      await page.goto('/eleve/tutor');
+      await page.goto('/eleve/tutor', { waitUntil: 'domcontentloaded' });
+      await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
       const url = page.url();
       expect(url.includes('connexion') || url.includes('login')).toBeTruthy();
     });

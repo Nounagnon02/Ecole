@@ -11,6 +11,8 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { makeQueryClient } from './helpers/render';
 import MessageriePage from '@/app/features/messagerie/MessageriePage';
 import { installHttpMock } from './helpers/http-mock';
 import { signIn } from './helpers/render';
@@ -46,6 +48,16 @@ const THREAD = [
 
 let http;
 
+/** La page passe par react-query : un QueryClient neuf par test. */
+function renderPage() {
+  return render(
+    <QueryClientProvider client={makeQueryClient()}>
+      <MessageriePage />
+    </QueryClientProvider>,
+  );
+}
+
+
 beforeEach(() => {
   http = installHttpMock();
   signIn('directeur', { id: 1 });
@@ -79,19 +91,27 @@ describe('MessageriePage', () => {
     mockThread();
     mockReadConversation();
 
-    render(<MessageriePage />);
+    renderPage();
 
     await waitForListReady();
-    expect(screen.getByText('enseignant')).toBeInTheDocument();
+    // La première conversation est sélectionnée par un effet, donc un cycle de
+    // rendu après l'arrivée des données — d'où l'attente.
+    await waitFor(() => expect(screen.getByText('enseignant')).toBeInTheDocument());
     // L'aperçu du dernier message existe (liste + fil rechargé).
     expect(screen.getAllByText('Bonjour Directeur').length).toBeGreaterThan(0);
 
     // Le fil de la première conversation est chargé automatiquement.
     await waitFor(() => expect(screen.getByText('Bonjour Amin, à demain')).toBeInTheDocument());
 
-    // L'ouverture a marqué le fil lu et a rafraîchi la liste.
-    expect(http.callsTo('put', '/messages/conversation/10/read').length).toBeGreaterThan(0);
-    expect(http.callsTo('GET', '/messages/conversations').length).toBeGreaterThanOrEqual(2);
+    // L'ouverture marque le fil lu côté serveur.
+    await waitFor(() =>
+      expect(http.callsTo('put', '/messages/conversation/10/read').length).toBeGreaterThan(0),
+    );
+
+    // Le badge non-lus retombe à zéro sans recharger la liste : la valeur est
+    // connue d'avance, et recharger pour un compteur fait clignoter l'écran le
+    // temps de l'aller-retour. On vérifie donc l'effet, pas un second GET.
+    await waitFor(() => expect(screen.queryByText('2')).not.toBeInTheDocument());
   });
 
   it('envoie un message au contact sélectionné', async () => {
@@ -103,7 +123,7 @@ describe('MessageriePage', () => {
       data: { id: 3, created_at: '2026-08-07T10:00:00+01:00' },
     });
 
-    render(<MessageriePage />);
+    renderPage();
 
     await waitForListReady();
     // Le fil doit être chargé avant d'écrire : sinon le libellé envoyé
@@ -138,7 +158,7 @@ describe('MessageriePage', () => {
       data: { id: 3, created_at: '2026-08-07T10:00:00+01:00' },
     });
 
-    render(<MessageriePage />);
+    renderPage();
 
     await waitForListReady();
 
@@ -150,7 +170,7 @@ describe('MessageriePage', () => {
     // Le fil du nouveau contact est désormais le fil affiché ; l'envoi cible
     // le bon destinataire.
     await waitFor(() => expect(screen.getAllByText('Kofi Mensah').length).toBeGreaterThan(0));
-    expect(screen.getByText('parent')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText('parent')).toBeInTheDocument());
 
     fireEvent.change(screen.getByPlaceholderText('Écrivez votre message...'), {
       target: { value: 'Bonsoir' },

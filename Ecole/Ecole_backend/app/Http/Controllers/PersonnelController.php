@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Personnel;
 use App\Models\User;
 use App\Models\FichePaie;
+use App\Http\Requests\Personnel\StorePersonnelRequest;
+use App\Http\Requests\Personnel\GenererFichePaieRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -22,33 +24,11 @@ class PersonnelController extends Controller
     }
 
     /**
-     * Détail d'un membre du personnel
-     */
-    public function show($id)
-    {
-        $personnel = Personnel::with('user')->findOrFail($id);
-        $this->authorize('view', $personnel);
-        return response()->json($personnel);
-    }
-
-    /**
      * Ajouter un membre du personnel
      */
-    public function store(Request $request)
+    public function store(StorePersonnelRequest $request)
     {
-        $this->authorize('create', Personnel::class);
-
-        $validated = $request->validate([
-            'name' => 'required|string',
-            'prenom' => 'required|string',
-            'email' => 'required|email|unique:users,email',
-            'identifiant' => 'required|string|unique:users,identifiant',
-            'password' => 'required|string|min:8',
-            'poste' => 'required|string',
-            'salaire_base' => 'required|numeric',
-            'date_embauche' => 'required|date',
-            'type_contrat' => 'required|in:CDI,CDD,Stage',
-        ]);
+        $validated = $request->validated();
 
         try {
             return DB::transaction(function () use ($validated) {
@@ -81,80 +61,14 @@ class PersonnelController extends Controller
     }
 
     /**
-     * Modifier un membre du personnel
-     */
-    public function update(Request $request, $id)
-    {
-        $personnel = Personnel::findOrFail($id);
-        $this->authorize('update', $personnel);
-
-        $validated = $request->validate([
-            'name' => 'sometimes|string',
-            'prenom' => 'sometimes|string',
-            'email' => 'sometimes|email|unique:users,email,' . $personnel->user_id,
-            'poste' => 'sometimes|string',
-            'salaire_base' => 'sometimes|numeric',
-            'date_embauche' => 'sometimes|date',
-            'type_contrat' => 'sometimes|in:CDI,CDD,Stage',
-        ]);
-
-        try {
-            DB::transaction(function () use ($personnel, $validated) {
-                $userFields = array_intersect_key($validated, array_flip(['name', 'prenom', 'email']));
-                if ($userFields) {
-                    $personnel->user->update($userFields);
-                }
-
-                $personnelFields = array_intersect_key($validated, array_flip(['poste', 'salaire_base', 'date_embauche', 'type_contrat']));
-                if ($personnelFields) {
-                    $personnel->update($personnelFields);
-                }
-            });
-
-            return response()->json($personnel->load('user'));
-        } catch (\Exception $e) {
-            $this->rethrowIfMeaningful($e);
-            return response()->json(['message' => 'Erreur lors de la mise à jour', 'error' => $this->clientErrorMessage($e)], 500);
-        }
-    }
-
-    /**
-     * Désactiver un membre du personnel
-     */
-    public function destroy($id)
-    {
-        $personnel = Personnel::with('user')->findOrFail($id);
-        $this->authorize('delete', $personnel);
-
-        try {
-            $user = $personnel->user;
-            if ($user) {
-                $user->is_active = false;
-                $user->save();
-                $user->tokens()->delete();
-                DB::table('sessions')->where('user_id', $user->id)->delete();
-            }
-
-            return response()->json(['message' => 'Personnel désactivé']);
-        } catch (\Exception $e) {
-            $this->rethrowIfMeaningful($e);
-            return response()->json(['message' => 'Erreur lors de la désactivation', 'error' => $this->clientErrorMessage($e)], 500);
-        }
-    }
-
-    /**
      * Générer une fiche de paie
      */
-    public function genererFichePaie(Request $request, $id)
+    public function genererFichePaie(GenererFichePaieRequest $request, $id)
     {
         $personnel = Personnel::findOrFail($id);
         $this->authorize('update', $personnel);
 
-        $validated = $request->validate([
-            'periode' => 'required|string',
-            'primes' => 'nullable|numeric',
-            'retenues' => 'nullable|numeric',
-        ]);
+        $validated = $request->validated();
 
         $exists = FichePaie::where('user_id', $personnel->user_id)
             ->where('periode', $validated['periode'])

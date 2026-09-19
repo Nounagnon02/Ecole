@@ -5,7 +5,9 @@
  * Données dynamiques via API /bibliothecaire/emprunts
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import { useApiQuery } from '@/shared/lib/api-client';
+import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
   BookMarked, Plus, Search, Clock, CheckCircle, AlertTriangle,
@@ -17,8 +19,7 @@ import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
-import { useApi } from '@/hooks/useApi';
-import logger from '@/shared/lib/logger';
+import { useTranslation } from '@/shared/i18n';
 
 const getStatutVariant = (statut) => {
   switch (statut) {
@@ -29,35 +30,28 @@ const getStatutVariant = (statut) => {
   }
 };
 
-const getStatutLabel = (statut) => {
-  switch (statut) {
-    case 'en_cours': return 'En cours';
-    case 'en_retard': return 'En retard';
-    case 'termine': return 'Terminé';
-    default: return statut || '—';
-  }
+const STATUT_LABEL_KEYS = {
+  en_cours: 'common.status.in_progress',
+  en_retard: 'pages.bibliothecaire.emprunts.en_retard',
+  termine: 'pages.bibliothecaire.emprunts.termine',
 };
 
 export default function EmpruntsPage() {
-  const { loading, error, get } = useApi();
-  const [emprunts, setEmprunts] = useState([]);
+  const { t } = useTranslation();
+  const statutLabel = (v) => (STATUT_LABEL_KEYS[v] ? t(STATUT_LABEL_KEYS[v]) : (v || '—'));
   const [search, setSearch] = useState('');
   const [filterStatut, setFilterStatut] = useState('');
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await get('/bibliothecaire/emprunts');
-        const items = Array.isArray(res?.data?.data) ? res.data.data
-          : Array.isArray(res?.data) ? res.data
-          : Array.isArray(res) ? res
-          : [];
-        setEmprunts(items);
-      } catch (e) {
-        logger.error('Erreur chargement emprunts:', e);
-      }
-    })();
-  }, [get]);
+  // Le chargement passait par un `useState` doublé d'un `useEffect` de
+  // premier rendu, sans cache ni déduplication : deux composants montés
+  // ensemble lançaient deux requêtes, et un retour sur la page rechargeait
+  // tout (cf. audit P4.1). `unwrapList` traverse les trois formes
+  // d'enveloppe que renvoient les contrôleurs.
+  const requete = useApiQuery(['bibliothecaire-emprunts'], '/bibliothecaire/emprunts');
+
+  const emprunts = useMemo(() => unwrapList(requete.data) ?? [], [requete.data]);
+  const loading = requete.isPending;
+  const error = requete.isError ? (requete.error?.message ?? t('common.load_error')) : null;
 
   const stats = useMemo(() => {
     const now = new Date();
@@ -109,7 +103,7 @@ export default function EmpruntsPage() {
           onClick={() => window.location.reload()}
           className="mt-4 inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors"
         >
-          Réessayer
+          {t('common.retry')}
         </button>
       </div>
     );
@@ -126,19 +120,19 @@ export default function EmpruntsPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Emprunts</h1>
-          <p className="text-sm text-neutral-500">Suivi des emprunts, retours et pénalités</p>
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.bibliothecaire.emprunts.title')}</h1>
+          <p className="text-sm text-neutral-500">{t('pages.bibliothecaire.emprunts.subtitle')}</p>
         </div>
-        <Button size="sm" icon={<Plus />}>Nouvel emprunt</Button>
+        <Button size="sm" icon={<Plus />}>{t('pages.bibliothecaire.emprunts.nouvel_emprunt')}</Button>
       </div>
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-4">
-        <StatsCard title="Total Emprunts" value={String(stats.total)} icon={BookMarked} color="primary" />
-        <StatsCard title="En cours" value={String(stats.enCours)} icon={Clock} color="amber" />
-        <StatsCard title="En retard" value={String(stats.enRetard)} icon={AlertTriangle} color="red" />
-        <StatsCard title="Pénalités" value={formatCurrency(stats.penalites)} icon={Coins} color="sky" />
-        <StatsCard title="Terminés" value={String(stats.termines)} icon={CheckCircle} color="emerald" />
+        <StatsCard title={t('pages.bibliothecaire.emprunts.total_emprunts')} value={String(stats.total)} icon={BookMarked} color="primary" />
+        <StatsCard title={t('common.status.in_progress')} value={String(stats.enCours)} icon={Clock} color="amber" />
+        <StatsCard title={t('pages.bibliothecaire.emprunts.en_retard')} value={String(stats.enRetard)} icon={AlertTriangle} color="red" />
+        <StatsCard title={t('pages.bibliothecaire.emprunts.penalites')} value={formatCurrency(stats.penalites)} icon={Coins} color="sky" />
+        <StatsCard title={t('common.finished')} value={String(stats.termines)} icon={CheckCircle} color="emerald" />
       </div>
 
       {/* Filtres */}
@@ -147,7 +141,7 @@ export default function EmpruntsPage() {
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
             <Input
-              placeholder="Rechercher un élève ou un ouvrage..."
+              placeholder={t('pages.bibliothecaire.emprunts.rechercher_un_eleve_ou_un_ouvrage')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
@@ -156,13 +150,13 @@ export default function EmpruntsPage() {
           <select
             value={filterStatut}
             onChange={(e) => setFilterStatut(e.target.value)}
-            aria-label="Filtrer par statut"
+            aria-label={t('common.filter_by_status')}
             className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
           >
-            <option value="">Tous les statuts</option>
-            <option value="en_cours">En cours</option>
-            <option value="en_retard">En retard</option>
-            <option value="termine">Terminé</option>
+            <option value="">{t('common.all_statuses')}</option>
+            <option value="en_cours">{t('common.status.in_progress')}</option>
+            <option value="en_retard">{t('pages.bibliothecaire.emprunts.en_retard')}</option>
+            <option value="termine">{t('pages.bibliothecaire.emprunts.termine')}</option>
           </select>
         </div>
       </Card>
@@ -173,7 +167,7 @@ export default function EmpruntsPage() {
           <Card>
             <div className="text-center py-8 text-neutral-500">
               <BookMarked className="mx-auto h-8 w-8 mb-2" />
-              <p className="text-sm">Aucun emprunt trouvé</p>
+              <p className="text-sm">{t('pages.bibliothecaire.emprunts.aucun_emprunt_trouve')}</p>
             </div>
           </Card>
         )}
@@ -199,8 +193,8 @@ export default function EmpruntsPage() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-sm font-semibold text-neutral-900 dark:text-white">{e.livre?.titre || 'Ouvrage'}</span>
-                    <Badge variant={getStatutVariant(statut)} size="sm">{getStatutLabel(statut)}</Badge>
+                    <span className="text-sm font-semibold text-neutral-900 dark:text-white">{e.livre?.titre || t('pages.bibliothecaire.emprunts.ouvrage')}</span>
+                    <Badge variant={getStatutVariant(statut)} size="sm">{statutLabel(statut)}</Badge>
                     {penalite > 0 && (
                       <span className="inline-flex items-center gap-1 rounded-full bg-red-50 dark:bg-red-500/10 px-2 py-0.5 text-xs font-medium text-red-600">
                         <Coins className="h-3 w-3" />
@@ -239,9 +233,9 @@ export default function EmpruntsPage() {
                 </div>
                 <div className="flex gap-1">
                   {statut !== 'termine' && (
-                    <Button variant="outline" size="sm">Marquer retour</Button>
+                    <Button variant="outline" size="sm">{t('pages.bibliothecaire.emprunts.marquer_retour')}</Button>
                   )}
-                  <Button variant="ghost" size="sm">Détails</Button>
+                  <Button variant="ghost" size="sm">{t('common.details')}</Button>
                 </div>
               </div>
             </Card>
