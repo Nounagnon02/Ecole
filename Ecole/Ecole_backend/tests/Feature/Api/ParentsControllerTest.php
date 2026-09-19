@@ -54,6 +54,35 @@ class ParentsControllerTest extends TestCase
         $this->assertCount(1, $response->json('eleves'));
     }
 
+    /**
+     * `ecole_id` était pris tel quel dans le corps de la requête et seulement
+     * vérifié `exists:ecoles,id` : un directeur pouvait créer un compte
+     * parent dans l'école de son choix, pas seulement la sienne.
+     */
+    /** @test */
+    public function a_client_supplied_ecole_id_is_ignored()
+    {
+        $otherSchool = Ecole::factory()->create(['status' => 'active']);
+
+        $this->actingAs($this->directeur)->postJson('/api/parents', [
+            'name' => 'Adjovi',
+            'prenom' => 'Rose',
+            'email' => 'rose2.adjovi@ecole.bj',
+            'identifiant' => 'ROSE-002',
+            'password' => 'motdepasse123',
+            'ecole_id' => $otherSchool->id,
+        ])->assertStatus(201);
+
+        $this->assertDatabaseHas('users', [
+            'identifiant' => 'ROSE-002',
+            'ecole_id' => $this->school->id,
+        ]);
+        $this->assertDatabaseMissing('users', [
+            'identifiant' => 'ROSE-002',
+            'ecole_id' => $otherSchool->id,
+        ]);
+    }
+
     /** @test */
     public function creating_a_parent_rejects_a_student_from_another_school()
     {

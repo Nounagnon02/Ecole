@@ -50,7 +50,7 @@ class ParentsController extends Controller
                     'identifiant' => $validated['identifiant'],
                     'password' => Hash::make($validated['password']),
                     'role' => 'parent',
-                    'ecole_id' => $validated['ecole_id'],
+                    'ecole_id' => auth()->user()->ecole_id,
                     'telephone' => $validated['telephone'] ?? null,
                 ]);
 

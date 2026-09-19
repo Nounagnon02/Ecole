@@ -18,13 +18,17 @@ class StoreParentRequest extends FormRequest
 
     public function rules(): array
     {
+        // Pas de `ecole_id` : ce champ venait du corps de la requête et
+        // n'était vérifié que contre la table `ecoles` (n'importe quel
+        // établissement), sans égard à celle de l'appelant — un directeur
+        // pouvait créer un compte parent dans l'école de son choix. Le
+        // contrôleur le fixe désormais sur l'école de l'appelant.
         return [
             'name' => 'required|string',
             'prenom' => 'required|string',
             'email' => 'required|email|unique:users,email',
             'identifiant' => 'required|string|unique:users,identifiant',
             'password' => 'required|string|min:8',
-            'ecole_id' => 'required|exists:ecoles,id',
             'telephone' => 'nullable|string',
             'eleve_ids' => 'sometimes|array',
             'eleve_ids.*' => 'school_exists:eleves,id',
