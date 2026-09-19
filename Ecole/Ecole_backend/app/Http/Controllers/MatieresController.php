@@ -6,7 +6,6 @@ use App\Models\Coefficients;
 use App\Models\Matieres;
 use App\Models\Series;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
 class MatieresController extends Controller
 {
@@ -182,11 +181,17 @@ class MatieresController extends Controller
             return response()->json(['message' => 'Matière non trouvée'], 404);
         }
 
+        // `Rule::exists()` interroge la table brute, sans le scope `ecole` de
+        // `BelongsToEcole` : un directeur pouvait lier sa matière à la série ou
+        // la classe d'un autre établissement (cf. App\Validation\SchoolExistsRule,
+        // déjà appliquée ailleurs — ce contrôleur était resté à l'écart de cette
+        // remédiation). `school_exists` reproduit `exists` en restreignant à
+        // l'école courante.
         $validated = $request->validate([
             'series' => 'required|array',
-            'series.*.serie_id' => ['required', Rule::exists('series', 'id')],
+            'series.*.serie_id' => 'required|school_exists:series,id',
             'series.*.coefficient' => 'nullable|numeric|min:0.5|max:20',
-            'series.*.classe_id' => ['required', Rule::exists('classes', 'id')],
+            'series.*.classe_id' => 'required|school_exists:classes,id',
         ]);
 
         foreach ($validated['series'] as $lien) {
