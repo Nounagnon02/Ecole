@@ -1214,7 +1214,23 @@
         "sombre": "داكن",
         "theme_sombre": "السمة الداكنة",
         "systeme": "النظام",
-        "suit_votre_appareil": "يتبع إعدادات جهازك"
+        "suit_votre_appareil": "يتبع إعدادات جهازك",
+        "authentification_a_deux_facteurs": "المصادقة الثنائية",
+        "activee": "مفعّلة",
+        "desactivee": "معطّلة",
+        "protegez_votre_compte_avec_un_second_facteur": "احمِ حسابك بعامل ثانٍ، بالإضافة إلى كلمة المرور.",
+        "activer_la_2fa": "تفعيل المصادقة الثنائية",
+        "desactiver_la_2fa": "إلغاء تفعيل المصادقة الثنائية",
+        "erreur_lors_de_l_activation_de_la_2fa": "خطأ أثناء تفعيل المصادقة الثنائية.",
+        "scannez_ce_code_avec_votre_application": "امسح هذا الرمز باستخدام تطبيق المصادقة الخاص بك (Google Authenticator وAuthy وغيرهما).",
+        "je_ne_peux_pas_scanner_le_code": "لا يمكنني مسح الرمز",
+        "code_de_confirmation": "رمز التأكيد",
+        "2fa_activee_avec_succes": "تم تفعيل المصادقة الثنائية بنجاح.",
+        "code_invalide": "رمز غير صالح. حاول مرة أخرى.",
+        "entrez_un_code_pour_desactiver_la_2fa": "أدخل رمزًا من تطبيقك لتأكيد إلغاء التفعيل.",
+        "2fa_desactivee": "تم إلغاء تفعيل المصادقة الثنائية.",
+        "annuler": "إلغاء",
+        "desactiver": "إلغاء التفعيل"
       }
     },
     "parent": {
