@@ -20,6 +20,7 @@ import LoginForm from '@/shared/components/auth/LoginForm';
 import ForgotPassword from '@/app/features/auth/ForgotPassword';
 import ResetPassword from '@/app/features/auth/ResetPassword';
 import ErrorBoundary from '@/shared/components/ui/ErrorBoundary';
+import { captureException } from '@/shared/lib/error-reporting';
 import { LoadingSpinner } from '@/shared/components/ui/Skeleton';
 import { useTranslation } from '@/shared/i18n';
 import NotFoundPage from '@/app/error/NotFoundPage';
@@ -97,7 +98,7 @@ function buildProtectedRoutes() {
           <ProtectedRoute allowedRoles={cfg.roles}>
             <AuthenticatedLayout>
               <Suspense fallback={<LoadingSpinner />}>
-                  <ErrorBoundary>
+                  <ErrorBoundary onError={(error, info) => captureException(error, info)}>
                     <Component />
                   </ErrorBoundary>
                 </Suspense>
