@@ -1,0 +1,16 @@
+#!/bin/sh
+# Scan des secrets sur ce qui est indexé, avant le commit.
+#
+# Opt-in : `git config core.hooksPath .githooks` (une fois, par dépôt local).
+# Sans gitleaks installé, ce hook prévient et laisse passer plutôt que de
+# bloquer un commit legitime -- la CI (workflow "secrets" de ci.yml) reste le
+# vrai filet de sécurité, celui-ci n'est qu'un raccourci pour l'attraper plus
+# tôt, avant le push.
+
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo "[pre-commit] gitleaks introuvable -- scan de secrets ignoré localement (la CI le fera)."
+  echo "[pre-commit] installer : https://github.com/gitleaks/gitleaks#installing"
+  exit 0
+fi
+
+gitleaks protect --staged --redact --config "$(git rev-parse --show-toplevel)/.gitleaks.toml"

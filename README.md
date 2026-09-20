@@ -77,3 +77,14 @@ permissions. Le référentiel des rôles vit dans `app/Support/Roles.php`.
 Cinq workflows sous [`.github/workflows/`](./.github/workflows), orchestrés par
 `ci.yml`, qui est le seul habilité à déclencher un déploiement. Le backend est
 testé deux fois — SQLite puis MySQL 8 — et le déploiement dépend des deux.
+
+`ci.yml` scanne aussi les secrets (gitleaks) sur les seuls commits introduits
+par le push ou la PR — jamais tout l'historique — et bloque le déploiement en
+cas de fuite détectée. Dependabot ([`.github/dependabot.yml`](./.github/dependabot.yml))
+ouvre une PR hebdomadaire par écosystème (composer, npm, github-actions) pour
+les mises à jour de sécurité.
+
+Pour attraper une fuite avant même de pousser :
+`git config core.hooksPath .githooks` (une fois, par dépôt local) active un
+hook de pre-commit qui lance le même scan sur ce qui est indexé — sans effet
+si `gitleaks` n'est pas installé, la CI reste le filet de sécurité.
