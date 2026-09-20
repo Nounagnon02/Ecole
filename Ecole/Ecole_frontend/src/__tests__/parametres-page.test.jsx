@@ -38,7 +38,7 @@ afterEach(() => {
 });
 
 function renderPage() {
-  return renderRoute(<ParametresPage />, { path: '/parametres' });
+  return renderRoute(<ParametresPage />, { path: '/parametres', withQuery: true });
 }
 
 describe('ParametresPage — profil enseignant', () => {
@@ -208,7 +208,7 @@ describe('ParametresPage — langue de l\'interface', () => {
       isAuthenticated: true,
     });
 
-    renderRoute(<I18nProvider><ParametresPage /></I18nProvider>, { path: '/parametres' });
+    renderRoute(<I18nProvider><ParametresPage /></I18nProvider>, { path: '/parametres', withQuery: true });
 
     fireEvent.click(screen.getByRole('button', { name: /Préférences/i }));
     expect(await screen.findByText('Préférences générales')).toBeInTheDocument();

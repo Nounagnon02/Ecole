@@ -21,7 +21,7 @@ import Badge from '@/shared/components/ui/Badge';
 import Avatar from '@/shared/components/ui/Avatar';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
-import { useApi } from '@/hooks/useApi';
+import { api } from '@/shared/services/api';
 import { useTranslation } from '@/shared/i18n';
 
 const CATEGORY_CONFIG = {
@@ -73,11 +73,7 @@ function normalizePost(p) {
 
 export default function CommunicationsPage() {
   const { t } = useTranslation();
-  // Deuxième instance, volontairement : `useApi` porte un `loading` et un
-  // `error` uniques. Partagée avec la lecture, une écriture qui échoue
-  // remplacerait tout le fil par l'écran d'erreur — un champ mal rempli
-  // ferait donc disparaître les annonces déjà affichées.
-  const { post, loading: submitting } = useApi();
+  const [submitting, setSubmitting] = useState(false);
   const [activeCategory, setActiveCategory] = useState('all');
   const [formOpen, setFormOpen] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
@@ -153,11 +149,12 @@ export default function CommunicationsPage() {
     e.preventDefault();
     setFieldErrors({});
     setSubmitError(null);
+    setSubmitting(true);
 
     try {
       // POST /api/communications — l'auteur, l'école et la date de publication
       // sont posés par le serveur ; le client n'envoie que la rédaction.
-      const res = await post('/communications', {
+      const res = await api.post('/communications', {
         titre: form.titre,
         contenu: form.contenu,
         categorie: form.categorie,
@@ -176,6 +173,8 @@ export default function CommunicationsPage() {
       // conserve les deux — le message général et le détail par champ.
       setFieldErrors(err?.errors || err?.response?.data?.errors || {});
       setSubmitError(err?.message || t('pages.communications.communications.la_publication_a_echoue'));
+    } finally {
+      setSubmitting(false);
     }
   };
 

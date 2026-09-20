@@ -31,7 +31,7 @@ import Badge from '@/shared/components/ui/Badge';
 import Avatar from '@/shared/components/ui/Avatar';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
-import { useApi } from '@/hooks/useApi';
+import { api } from '@/shared/services/api';
 import useAuthStore from '@/shared/stores/auth-store';
 import { unwrapList } from '@/shared/lib/unwrap';
 import logger from '@/shared/lib/logger';
@@ -58,7 +58,6 @@ function mapConversations(items) {
 
 export default function MessageriePage() {
   const { t } = useTranslation();
-  const { post, put } = useApi();
   // Nécessaire pour distinguer les messages envoyés de ceux reçus : l'API
   // renvoie l'identifiant de l'auteur dans `expediteur`.
   const currentUserId = useAuthStore((s) => s.user?.id);
@@ -139,7 +138,7 @@ export default function MessageriePage() {
   useEffect(() => {
     if (!selectedConv || !requeteFil.isSuccess) return;
 
-    put(`/messages/conversation/${selectedConv.id}/read`).catch(() => {});
+    api.put(`/messages/conversation/${selectedConv.id}/read`).catch(() => {});
 
     queryClient.setQueryData(['messages', 'conversations'], (ancien) => {
       const liste = unwrapList(ancien) ?? [];
@@ -149,7 +148,7 @@ export default function MessageriePage() {
         ),
       };
     });
-  }, [selectedConv, requeteFil.isSuccess, put, queryClient]);
+  }, [selectedConv, requeteFil.isSuccess, queryClient]);
 
   // ─── Contacts ────────────────────────────────────────────────
   //
@@ -197,7 +196,7 @@ export default function MessageriePage() {
     const text = messageText.trim();
     setMessageText('');
     try {
-      const res = await post('/messages', {
+      const res = await api.post('/messages', {
         destinataire: String(selectedConv.id),
         contenu: text
       });
