@@ -9,6 +9,34 @@ beforeEach(function () {
     $this->ecole = Ecole::factory()->create();
 });
 
+it('exposes two_factor_enabled so the frontend can offer enable or disable', function () {
+    $withoutTwoFactor = User::factory()->create([
+        'ecole_id' => $this->ecole->id,
+        'two_factor_enabled' => false,
+    ]);
+    $withTwoFactor = User::factory()->create([
+        'ecole_id' => $this->ecole->id,
+        'two_factor_enabled' => true,
+    ]);
+
+    $this->actingAs($withoutTwoFactor)->getJson('/api/auth/me')
+        ->assertOk()->assertJsonPath('user.two_factor_enabled', false);
+
+    $this->actingAs($withTwoFactor)->getJson('/api/auth/me')
+        ->assertOk()->assertJsonPath('user.two_factor_enabled', true);
+});
+
+it('never exposes the two_factor_secret itself', function () {
+    $user = User::factory()->create([
+        'ecole_id' => $this->ecole->id,
+        'two_factor_enabled' => true,
+        'two_factor_secret' => encrypt('SOMESECRETVALUE'),
+    ]);
+
+    $this->actingAs($user)->getJson('/api/auth/me')
+        ->assertOk()->assertJsonMissingPath('user.two_factor_secret');
+});
+
 it('returns avatar and teacher profile fields in getProfile', function () {
     $user = User::factory()->create([
         'role' => 'enseignant',

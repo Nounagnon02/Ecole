@@ -29,6 +29,11 @@ class ProfileService
             'id', 'name', 'prenom', 'email', 'identifiant',
             'role', 'ecole_id', 'telephone', 'avatar', 'is_active',
             'email_verified_at', 'created_at', 'updated_at',
+            // Le frontend n'avait aucun moyen de savoir si la 2FA d'un
+            // compte est déjà active (le secret, lui, reste `$hidden` sur le
+            // modèle) : sans ce champ, l'écran d'activation ne peut pas
+            // afficher « activer » ou « désactiver » à bon escient.
+            'two_factor_enabled',
         ]);
 
         if ($this->isTeacher($user)) {
