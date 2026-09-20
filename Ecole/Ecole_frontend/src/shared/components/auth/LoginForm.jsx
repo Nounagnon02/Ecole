@@ -14,7 +14,8 @@ import {
   ArrowRight,
   Mail,
   HelpCircle,
-  School
+  School,
+  ShieldCheck
 } from 'lucide-react';
 import useAuthStore from '@/shared/stores/auth-store';
 import { ROLE_REDIRECT_MAP, FALLBACK_REDIRECT } from '@/features/roles/route-config';
@@ -222,6 +223,7 @@ export default function LoginForm() {
   const navigate = useNavigate();
   const login = useAuthStore((s) => s.login);
   const selectSchool = useAuthStore((s) => s.selectSchool);
+  const verifyTwoFactorLogin = useAuthStore((s) => s.verifyTwoFactorLogin);
   const pendingSchools = useAuthStore((s) => s.pendingSchools);
 
   const [form, setForm] = useState({ email: '', password: '' });
@@ -229,6 +231,9 @@ export default function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [schoolLoading, setSchoolLoading] = useState(false);
   const [showSchoolPicker, setShowSchoolPicker] = useState(false);
+  const [showTwoFactorChallenge, setShowTwoFactorChallenge] = useState(false);
+  const [twoFactorCode, setTwoFactorCode] = useState('');
+  const [twoFactorLoading, setTwoFactorLoading] = useState(false);
 
   const setField = useCallback(
     (field) => (e) => {
@@ -270,6 +275,15 @@ export default function LoginForm() {
         email: form.email,
         password: form.password
       });
+
+      // 2FA activée → afficher l'écran de code AVANT le cas générique
+      // ci-dessous : { requiresTwoFactor: true } n'a ni .requiresSchool ni
+      // .role, donc la branche "connexion directe" le prendrait par erreur
+      // pour un login réussi sans école et tenterait de rediriger dans le vide.
+      if (result?.requiresTwoFactor) {
+        setShowTwoFactorChallenge(true);
+        return;
+      }
 
       // Connexion directe (ecole unique) → redirection
       if (result && !result.requiresSchool) {
@@ -316,6 +330,118 @@ export default function LoginForm() {
       setSchoolLoading(false);
     }
   };
+
+  const handleTwoFactorSubmit = async (e) => {
+    e.preventDefault();
+    if (twoFactorLoading || twoFactorCode.length !== 6) return;
+
+    setTwoFactorLoading(true);
+    setErrors({});
+    try {
+      const user = await verifyTwoFactorLogin(twoFactorCode);
+      const path = ROLE_REDIRECT_MAP[user.role] || FALLBACK_REDIRECT;
+      navigate(path, { replace: true });
+    } catch (err) {
+      setErrors({
+        _general: err.message || t('auth.login_form.code_invalide')
+      });
+      setTwoFactorCode('');
+    } finally {
+      setTwoFactorLoading(false);
+    }
+  };
+
+  /* ─── ECRAN : Code de vérification à deux facteurs ────────────────── */
+  if (showTwoFactorChallenge) {
+    return (
+      <div className="relative min-h-screen bg-[var(--surface)] overflow-hidden">
+        <TopDecorativeBand />
+        <div className="absolute end-4 top-4 z-20"><LanguageSwitcher /></div>
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(184,86,46,0.03),transparent_60%)] pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(26,58,60,0.04),transparent_50%)] pointer-events-none" />
+
+        <div className="relative z-10 flex min-h-screen items-center justify-center px-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="w-full max-w-md"
+          >
+            <div className="border border-[var(--border)] border-t-4 border-t-[var(--accent)] bg-white dark:bg-[var(--surface-raised)] shadow-3 p-10">
+              <div className="flex justify-center -mt-6 mb-6">
+                <DividerOrnament className="h-2.5 w-20 text-[var(--accent)] opacity-25" />
+              </div>
+
+              <motion.div variants={fadeUp} className="text-center mb-8">
+                <div className="flex justify-center mb-4">
+                  <ShieldCheck className="h-12 w-12 text-[var(--primary)] opacity-60" />
+                </div>
+                <h2 className="font-fraunces text-2xl font-semibold text-[var(--text-primary)]">
+                  {t('auth.login_form.verification_en_deux_etapes')}
+                </h2>
+                <p className="mt-2 text-sm text-[var(--text-secondary)]">
+                  {t('auth.login_form.entrez_le_code_a_6_chiffres_de_votre_application')}
+                </p>
+              </motion.div>
+
+              {errors._general && (
+                <motion.div
+                  role="alert"
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mb-4 flex items-start gap-3 rounded-lg border border-[var(--red-subtle)] bg-red-50/50 px-4 py-3 text-sm text-[var(--red)]"
+                >
+                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                  <span>{errors._general}</span>
+                </motion.div>
+              )}
+
+              <form onSubmit={handleTwoFactorSubmit} className="space-y-6">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                  autoFocus
+                  aria-label={t('auth.login_form.code_de_verification')}
+                  value={twoFactorCode}
+                  onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-center font-mono text-2xl tracking-[0.5em] text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-ring)]"
+                  placeholder="000000"
+                />
+
+                <Button
+                  type="submit"
+                  className="w-full"
+                  loading={twoFactorLoading}
+                  disabled={twoFactorCode.length !== 6}
+                >
+                  {t('auth.login_form.verifier')}
+                </Button>
+              </form>
+
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.6, duration: 0.5 }}
+                className="mt-8 text-center text-[11px] text-[var(--text-tertiary)]/50"
+              >
+                <button
+                  onClick={() => {
+                    setShowTwoFactorChallenge(false);
+                    setTwoFactorCode('');
+                    useAuthStore.getState().clearSession();
+                  }}
+                  className="underline hover:text-[var(--accent)] transition-colors"
+                >
+                  {t('auth.login_form.changer_d_identifiant')}
+                </button>
+              </motion.p>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
 
   /* ─── ECRAN : Selection d'ecole ────────────────────────────────── */
   if (showSchoolPicker && pendingSchools?.length > 0) {

@@ -23,7 +23,8 @@ const initialState = {
   sessionLastVerified: null,
   pendingSchools: null, // [{ id, name }] quand le login necessite le choix de l'ecole
   pendingToken: null,   // token temporaire pour finaliser le choix d'ecole
-  step: 'initial',      // 'initial' | 'pick-school'
+  pendingTwoFactorToken: null, // jeton '2fa:pending' pour /auth/2fa/verify-login
+  step: 'initial',      // 'initial' | 'pick-school' | 'verify-2fa'
 };
 
 /**
@@ -85,6 +86,16 @@ const useAuthStore = create(
         // Etape 2 : Authentification sans ecole_id
         const { data } = await apiClient.post('/auth/login', credentials);
 
+        // 2FA activée : ni school ni user tant que le code n'est pas vérifié.
+        if (data.requires_2fa) {
+          set({
+            pendingTwoFactorToken: data.token || null,
+            step: 'verify-2fa',
+            isLoading: false,
+          });
+          return { requiresTwoFactor: true };
+        }
+
         // Si plusieurs ecoles → l'utilisateur doit choisir
         if (data.schools && Array.isArray(data.schools) && data.schools.length > 0) {
           set({
@@ -127,6 +138,37 @@ const useAuthStore = create(
           step: 'initial',
           pendingSchools: null,
           pendingToken: null,
+        });
+
+        return data.user;
+      },
+
+      /**
+       * Finalise la connexion en soumettant le code TOTP.
+       *
+       * Le jeton en attente ('2fa:pending', abilities restreintes côté
+       * backend) doit être envoyé en Authorization: Bearer — c'est ainsi que
+       * /auth/2fa/verify-login authentifie l'appelant, indépendamment de la
+       * session cookie normale que le reste de l'app utilise partout
+       * ailleurs. Passé en en-tête PAR APPEL (3e argument d'apiClient.post),
+       * jamais dans apiClient.defaults : il ne doit jamais s'attacher aux
+       * requêtes suivantes une fois la vraie session établie côté serveur.
+       */
+      verifyTwoFactorLogin: async (code) => {
+        const { pendingTwoFactorToken } = get();
+
+        const { data } = await apiClient.post(
+          '/auth/2fa/verify-login',
+          { code },
+          { headers: { Authorization: `Bearer ${pendingTwoFactorToken}` } }
+        );
+
+        set({
+          user: data.user,
+          isAuthenticated: true,
+          isLoading: false,
+          step: 'initial',
+          pendingTwoFactorToken: null,
         });
 
         return data.user;

@@ -340,6 +340,72 @@ describe('utilisateur rattaché à plusieurs écoles', () => {
   });
 });
 
+describe('compte avec la double authentification activée', () => {
+  it('affiche l’écran de code au lieu de rediriger', async () => {
+    http.onPost('/auth/login').reply(200, {
+      requires_2fa: true,
+      token: 'pending-2fa-token',
+      token_type: 'Bearer',
+    });
+
+    renderLogin();
+    fillCredentials();
+    submit();
+
+    await waitFor(() =>
+      expect(screen.getByText(/Vérification en deux étapes/i)).toBeInTheDocument()
+    );
+    expect(currentUrl()).toBe('/connexion');
+    expect(useAuthStore.getState().isAuthenticated).toBe(false);
+  });
+
+  it('finalise la connexion sur un code valide et redirige selon le rôle', async () => {
+    http.onPost('/auth/login').reply(200, {
+      requires_2fa: true,
+      token: 'pending-2fa-token',
+      token_type: 'Bearer',
+    });
+    http.onPost('/auth/2fa/verify-login').reply(200, {
+      token: 'full-token',
+      user: { id: 5, name: 'Directeur', role: ROLES.DIRECTEUR },
+      role: ROLES.DIRECTEUR,
+    });
+
+    renderLogin();
+    fillCredentials();
+    submit();
+    await waitFor(() => expect(screen.getByPlaceholderText('000000')).toBeInTheDocument());
+
+    fireEvent.change(screen.getByPlaceholderText('000000'), { target: { value: '123456' } });
+    fireEvent.click(screen.getByRole('button', { name: /Vérifier/i }));
+
+    await waitFor(() => expect(currentUrl()).toBe(ROLE_REDIRECT_MAP[ROLES.DIRECTEUR]));
+    expect(http.callsTo('post', '/auth/2fa/verify-login')[0].body).toEqual({ code: '123456' });
+    expect(useAuthStore.getState().isAuthenticated).toBe(true);
+  });
+
+  it('affiche l’erreur sur un code invalide, sans quitter l’écran ni s’authentifier', async () => {
+    http.onPost('/auth/login').reply(200, {
+      requires_2fa: true,
+      token: 'pending-2fa-token',
+      token_type: 'Bearer',
+    });
+    http.onPost('/auth/2fa/verify-login').reply(422, { message: 'Code 2FA invalide' });
+
+    renderLogin();
+    fillCredentials();
+    submit();
+    await waitFor(() => expect(screen.getByPlaceholderText('000000')).toBeInTheDocument());
+
+    fireEvent.change(screen.getByPlaceholderText('000000'), { target: { value: '000000' } });
+    fireEvent.click(screen.getByRole('button', { name: /Vérifier/i }));
+
+    await waitFor(() => expect(screen.getByText('Code 2FA invalide')).toBeInTheDocument());
+    expect(currentUrl()).toBe('/connexion');
+    expect(useAuthStore.getState().isAuthenticated).toBe(false);
+  });
+});
+
 describe('store — initialize / logout', () => {
   it('initialize() restaure la session depuis le cookie', async () => {
     http.onGet('/auth/me').reply(200, { user: { id: 5, name: 'Rose', role: ROLES.SECRETAIRE } });
