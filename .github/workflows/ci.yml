@@ -14,42 +14,87 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Empêche exactement la répétition de l'incident qui a déclenché la
+  # remédiation P0 de l'audit (.env.testing et credentials.md poussés sur
+  # origin). Ne scanne que les commits introduits par ce push/cette PR, pas
+  # tout l'historique : le but est d'empêcher une récidive, pas de rejuger un
+  # incident déjà connu et tracé à part (docs/production-secrets.md) —
+  # d'ailleurs vérifié séparément : gitleaks, fondé sur des motifs, ne
+  # détecte de toute façon pas ce genre de secret en clair (mot de passe
+  # lisible, pas une clé au format structuré) même en scannant tout
+  # l'historique. Ce n'est pas un filet de sécurité contre ce type de fuite,
+  # seulement contre la prochaine clé/jeton au format reconnaissable.
+  secrets:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Détermine les commits à scanner
+        id: range
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git fetch origin "${{ github.base_ref }}" --depth=1
+            echo "log_opts=origin/${{ github.base_ref }}..HEAD" >> "$GITHUB_OUTPUT"
+          elif [ -z "${{ github.event.before }}" ] || [ "${{ github.event.before }}" = "0000000000000000000000000000000000000000" ]; then
+            # Nouvelle branche : `before` est le SHA nul, aucun point de
+            # départ réel. Comparer à `main` plutôt que de borner au seul
+            # commit de tête — sinon le premier push d'une branche (souvent
+            # plusieurs commits d'un coup, comme celui qui a introduit ce
+            # workflow) ne verrait scanner que le dernier.
+            git fetch origin main --depth=1
+            echo "log_opts=origin/main..HEAD" >> "$GITHUB_OUTPUT"
+          else
+            echo "log_opts=${{ github.event.before }}..${{ github.sha }}" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Scan de secrets (gitleaks)
+        run: |
+          docker run --rm -v "$PWD:/repo" -w /repo zricethezav/gitleaks:v8.30.1 \
+            detect --source /repo --redact --config /repo/.gitleaks.toml \
+            --log-opts="${{ steps.range.outputs.log_opts }}"
+
   # Ce workflow contourne volontairement les filtres `paths:` des workflows
   # appelés : il donne l'état complet du dépôt sur chaque poussée, et c'est lui
   # — et lui seul — qui autorise le déploiement.
   backend:
+    needs: [secrets]
     uses: ./.github/workflows/backend.yml
     with:
       deploy: ${{ github.ref == 'refs/heads/main' }}
     secrets: inherit
 
   frontend:
+    needs: [secrets]
     uses: ./.github/workflows/frontend.yml
     with:
       deploy: ${{ github.ref == 'refs/heads/main' }}
     secrets: inherit
 
   mobile:
+    needs: [secrets]
     uses: ./.github/workflows/mobile.yml
     secrets: inherit
 
   desktop:
+    needs: [secrets]
     uses: ./.github/workflows/desktop.yml
     secrets: inherit
 
   notify:
     runs-on: ubuntu-22.04
-    needs: [backend, frontend, mobile, desktop]
+    needs: [secrets, backend, frontend, mobile, desktop]
     if: always()
     steps:
       - name: Check status
         run: |
+          echo "Secrets:  ${{ needs.secrets.result }}"
           echo "Backend:  ${{ needs.backend.result }}"
           echo "Frontend: ${{ needs.frontend.result }}"
           echo "Mobile:   ${{ needs.mobile.result }}"
           echo "Desktop:  ${{ needs.desktop.result }}"
           echec=0
           for resultat in \
+            "${{ needs.secrets.result }}" \
             "${{ needs.backend.result }}" \
             "${{ needs.frontend.result }}" \
             "${{ needs.mobile.result }}" \

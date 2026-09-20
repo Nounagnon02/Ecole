@@ -1,0 +1,17 @@
+title = "gitleaks config — Ecole"
+
+# Étend le jeu de règles par défaut de gitleaks (clés AWS/GCP, tokens
+# Stripe/GitHub/Slack, clés privées PEM, etc.) sans le redéfinir.
+[extend]
+useDefault = true
+
+[allowlist]
+  description = "Faux positifs vérifiés individuellement (voir commentaire par entrée)"
+
+  regexes = [
+    # `Ecole_mobile/__tests__/LoginScreen.test.jsx` : valeur de retour mockée
+    # de `api.post`, jamais un vrai jeton Sanctum. Filtré par sa valeur
+    # exacte, pas par chemin de fichier entier, pour qu'un vrai secret ajouté
+    # au même fichier reste détecté.
+    '''jeton-sanctum-123''',
+  ]
