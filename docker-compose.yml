@@ -1,0 +1,136 @@
+# Stack de développement local en une commande : `docker compose up`.
+#
+# Usage courant :
+#   docker compose up                          # backend:8010, frontend:3002
+#   docker compose exec backend php artisan db:seed   # peupler les données de démo
+#   docker compose exec backend php artisan test
+#   docker compose down                        # arrêt (les volumes nommés survivent)
+#   docker compose down -v                     # arrêt + suppression des données
+#
+# `vendor/` et `node_modules/` vivent dans des volumes nommés, pas le bind
+# mount du code : ils survivent aux redémarrages sans réinstallation, sans
+# jamais être écrasés par le contenu du dépôt hôte.
+#
+# Ceci ne construit ni ne remplace l'image de production
+# (Ecole/Ecole_backend/Dockerfile, php-fpm) ni le déploiement Vercel du
+# frontend — uniquement un environnement de développement local.
+
+services:
+  mysql:
+    image: mysql:8.0
+    # `mysql_native_password` : le client `mysql` (nécessaire côté backend
+    # pour charger database/schema/mysql-schema.sql — Illuminate\Database\
+    # Schema\MySqlSchemaState::load() shell-out vers ce binaire) échoue sur le
+    # plugin par défaut `caching_sha2_password`, qui exige une connexion
+    # « sécurisée » (TLS ou échange de clé RSA) même en local. Acceptable
+    # pour une base de développement jamais exposée ; jamais en production.
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ecole
+    ports:
+      - "127.0.0.1:33061:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot", "--silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "127.0.0.1:63790:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./Ecole/Ecole_backend
+      dockerfile: docker/dev/Dockerfile
+    ports:
+      # Port hôte 8010, pas 8000 : ne pas entrer en conflit avec un
+      # `php artisan serve` local lancé en dehors de Docker. Le port interne
+      # (8000, ce que le frontend cible via `backend:8000`) est inchangé.
+      - "127.0.0.1:8010:8000"
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: ecole
+      DB_USERNAME: root
+      DB_PASSWORD: root
+      CACHE_STORE: redis
+      CACHE_DRIVER: redis
+      SESSION_DRIVER: redis
+      QUEUE_CONNECTION: redis
+      REDIS_CLIENT: predis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: "null"
+      PRIMARY: "1"
+    volumes:
+      - ./Ecole/Ecole_backend:/var/www/html
+      - backend-vendor:/var/www/html/vendor
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  queue-worker:
+    build:
+      context: ./Ecole/Ecole_backend
+      dockerfile: docker/dev/Dockerfile
+    command: ["php", "artisan", "queue:work", "--tries=2"]
+    environment:
+      APP_ENV: local
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: ecole
+      DB_USERNAME: root
+      DB_PASSWORD: root
+      CACHE_STORE: redis
+      CACHE_DRIVER: redis
+      SESSION_DRIVER: redis
+      QUEUE_CONNECTION: redis
+      REDIS_CLIENT: predis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: "null"
+    volumes:
+      - ./Ecole/Ecole_backend:/var/www/html
+      - backend-vendor:/var/www/html/vendor
+    depends_on:
+      backend:
+        condition: service_started
+
+  frontend:
+    image: node:20-alpine
+    working_dir: /app
+    command: sh -c "npm ci && npm start -- --host 0.0.0.0 --port 3002"
+    environment:
+      CI: "true"
+      VITE_DEV_API_TARGET: http://backend:8000
+    ports:
+      - "127.0.0.1:3002:3002"
+    volumes:
+      - ./Ecole/Ecole_frontend:/app
+      - frontend-node-modules:/app/node_modules
+    depends_on:
+      - backend
+
+volumes:
+  mysql-data:
+  redis-data:
+  backend-vendor:
+  frontend-node-modules:

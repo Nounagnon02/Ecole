@@ -7,6 +7,12 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+// Configurable : à l'intérieur de docker-compose, `localhost` désigne le
+// conteneur frontend lui-même, pas le backend. `VITE_DEV_API_TARGET` permet
+// de viser le service `backend` sans toucher au code pour qui lance le
+// serveur de dev nativement (le défaut ne change pas).
+const devApiTarget = process.env.VITE_DEV_API_TARGET || 'http://localhost:8000';
+
 export default defineConfig({
   plugins: [
     react({
@@ -21,7 +27,7 @@ export default defineConfig({
     open: !process.env.CI,
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        target: devApiTarget,
         changeOrigin: true,
         configure: (proxy) => {
           proxy.on('proxyReq', (proxyReq) => {
@@ -30,7 +36,7 @@ export default defineConfig({
         },
       },
       '/sanctum': {
-        target: 'http://localhost:8000',
+        target: devApiTarget,
         changeOrigin: true,
         configure: (proxy) => {
           proxy.on('proxyReq', (proxyReq) => {
