@@ -231,6 +231,48 @@ class TwoFactorFlowTest extends TestCase
         $this->apiAs('POST', '/api/auth/2fa/verify-login', ['code' => '123456'])->assertStatus(401);
     }
 
+    /**
+     * Tous les tests ci-dessus passent par un jeton Bearer (comme un client
+     * mobile) — aucun ne reproduit un vrai navigateur SPA. `api-client.js`
+     * (frontend) n'envoie jamais d'en-tête Authorization : il compte
+     * uniquement sur le cookie de session, exactement comme
+     * AuthController::connexion() l'établit pour la connexion primaire
+     * (`Auth::login()` + `session()->regenerate()`). `verifyLogin()` ne le
+     * faisait pas — le code TOTP était accepté, un jeton Bearer était bien
+     * renvoyé, mais jamais utilisé par le SPA, et aucune session n'existait :
+     * la requête suivante répondait 401 malgré une 2FA réussie.
+     *
+     * @test
+     */
+    public function completing_the_exchange_from_a_stateful_client_establishes_a_real_session()
+    {
+        [$secret] = $this->enableTwoFactor();
+
+        // `Referer` dans sanctum.stateful : c'est ce que
+        // EnsureFrontendRequestsAreStateful::fromFrontend() regarde pour
+        // reconnaître un client SPA plutôt qu'un client à jeton.
+        $this->withHeaders(['Referer' => 'http://localhost:3000/']);
+
+        $pending = $this->postJson('/api/auth/login', [
+            'email' => 'directeur@ecole.bj',
+            'password' => 'motdepasse123',
+        ])->assertOk()->json('token');
+
+        // Authorization seulement pour cet appel précis (pas persisté sur
+        // les suivants) : c'est ainsi que le pending token s'échange.
+        $this->postJson('/api/auth/2fa/verify-login', [
+            'code' => $this->totp->getCurrentOtp($secret),
+        ], ['Authorization' => "Bearer {$pending}"])->assertOk();
+
+        $this->app['auth']->forgetGuards();
+
+        // Le point du test : sans AUCUN jeton Bearer, seulement le cookie de
+        // session déjà en place — comme le ferait vraiment api-client.js.
+        $this->getJson('/api/auth/me')
+            ->assertOk()
+            ->assertJsonPath('user.id', $this->user->id);
+    }
+
     /* ─── Désactivation ───────────────────────────────────────────────── */
 
     /** @test */

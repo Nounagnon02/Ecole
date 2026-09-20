@@ -134,12 +134,32 @@ class TwoFactorController extends Controller
         $user->two_factor_verified_at = now();
         $user->save();
 
-        // Client stateful : marquer la session comme validée (cf. verify).
+        // Client stateful (SPA) : authentifier la session, exactement comme
+        // AuthController::connexion() le fait pour la connexion primaire.
+        // Sans ceci, aucune session cookie n'était jamais établie pour un
+        // compte 2FA — `api-client.js` est en auth par cookie pure (jamais
+        // d'en-tête Authorization), donc le jeton Bearer renvoyé plus bas
+        // n'était jamais réutilisé par le SPA : chaque requête suivante
+        // répondait 401, alors même que le code TOTP venait d'être validé.
+        // Se marquer seulement `session()->put('two_factor_verified', true)`
+        // (l'ancien comportement) ne suffit pas sans `Auth::login()` : rien
+        // n'associe la session à un utilisateur.
+        if (\Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::fromFrontend($request)) {
+            // `Auth::guard('web')`, pas le bare `Auth::login()` : cette route
+            // exige `auth:sanctum` pour authentifier le jeton en attente, ce
+            // qui a déjà résolu/mis en cache le garde Sanctum (un
+            // `RequestGuard`, sans méthode `login()`) comme garde courant.
+            // `AuthController::connexion()` peut se permettre `Auth::login()`
+            // nu parce que sa route n'exige aucun garde au préalable.
+            Auth::guard('web')->login($user);
+            $request->session()?->regenerate();
+        }
+
         if ($request->hasSession()) {
             $request->session()->put('two_factor_verified', true);
         }
 
-        // Émettre le vrai token
+        // Émettre le vrai token (client mobile / natif)
         $device = 'auth-token';
         $token = $user->createToken($device)->plainTextToken;
 
