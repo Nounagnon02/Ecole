@@ -4,6 +4,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Support\Facades\Route;
+use Sentry\Laravel\Integration;
 
 /*
 |--------------------------------------------------------------------------
@@ -95,6 +96,19 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->job(new \App\Jobs\CleanupExpiredSessions)->hourly();
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        // Sans DSN configuré (`SENTRY_LARAVEL_DSN`), le SDK ne fait rien :
+        // sûr par défaut en local/CI, actif dès qu'un DSN est fourni.
+        Integration::handles($exceptions);
+
+        // `rethrowIfMeaningful()` (Controller de base) laisse déjà passer les
+        // 401/403/404/422 sans les aplatir en 500 : les rapporter à Sentry
+        // noierait les vraies pannes sous du bruit attendu (mauvais mot de
+        // passe, ressource absente, validation).
+        $exceptions->dontReport([
+            \Illuminate\Auth\AuthenticationException::class,
+            \Illuminate\Auth\Access\AuthorizationException::class,
+            \Illuminate\Database\Eloquent\ModelNotFoundException::class,
+            \Illuminate\Validation\ValidationException::class,
+        ]);
     })
     ->create();
