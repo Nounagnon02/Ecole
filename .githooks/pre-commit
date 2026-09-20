@@ -1,16 +1,70 @@
 #!/bin/sh
-# Scan des secrets sur ce qui est indexé, avant le commit.
+# Scan de secrets, format PHP (Pint) et lint JS (ESLint) sur ce qui est
+# indexé, avant le commit.
 #
 # Opt-in : `git config core.hooksPath .githooks` (une fois, par dépôt local).
-# Sans gitleaks installé, ce hook prévient et laisse passer plutôt que de
-# bloquer un commit legitime -- la CI (workflow "secrets" de ci.yml) reste le
-# vrai filet de sécurité, celui-ci n'est qu'un raccourci pour l'attraper plus
-# tôt, avant le push.
+# Chaque étape prévient et laisse passer si son outil n'est pas installé,
+# plutôt que de bloquer un commit légitime -- la CI reste le vrai filet de
+# sécurité (job "secrets" pour les fuites, "lint"/"style" pour le reste,
+# elle-même non bloquante sur le style — voir frontend.yml/backend.yml) ;
+# ceci n'est qu'un raccourci pour attraper les mêmes choses plus tôt.
+#
+# Pas de `set -e` : chaque étape décide elle-même si son échec doit bloquer
+# le commit (voir le lint ci-dessous, seul cas qui le fait) -- un `set -e`
+# global couperait le script au premier `$?` non nul, avant même d'avoir pu
+# le lire.
 
+ROOT="$(git rev-parse --show-toplevel)"
+
+# --- Secrets (gitleaks) -----------------------------------------------
+# Seule étape qui bloquait déjà le commit avant l'ajout du format/lint
+# ci-dessous : gitleaks était alors la dernière commande du script, et son
+# code de sortie devenait donc celui du hook. Ce n'est plus vrai maintenant
+# qu'il y a une suite -- vérifié et propagé explicitement.
 if ! command -v gitleaks >/dev/null 2>&1; then
   echo "[pre-commit] gitleaks introuvable -- scan de secrets ignoré localement (la CI le fera)."
   echo "[pre-commit] installer : https://github.com/gitleaks/gitleaks#installing"
-  exit 0
+elif ! gitleaks protect --staged --redact --config "$ROOT/.gitleaks.toml"; then
+  exit 1
 fi
 
-gitleaks protect --staged --redact --config "$(git rev-parse --show-toplevel)/.gitleaks.toml"
+# --- Format PHP (Pint) --------------------------------------------------
+# `--dirty` : ne reformate que les fichiers déjà modifiés (indexés ou non),
+# jamais tout le dépôt -- un commit qui touche un seul contrôleur ne doit pas
+# réécrire des fichiers sans rapport. Les fichiers réellement reformatés sont
+# ré-indexés, pour que la version corrigée parte dans le commit plutôt que la
+# version brute laissée dans l'arbre de travail.
+staged_php=$(git diff --cached --name-only --diff-filter=ACM -- 'Ecole/Ecole_backend/*.php' || true)
+if [ -n "$staged_php" ]; then
+  if [ -x "$ROOT/Ecole/Ecole_backend/vendor/bin/pint" ]; then
+    (cd "$ROOT/Ecole/Ecole_backend" && vendor/bin/pint --dirty --quiet) || true
+    echo "$staged_php" | while IFS= read -r f; do git add "$ROOT/$f"; done
+  else
+    echo "[pre-commit] Pint introuvable (composer install côté backend) -- format ignoré localement."
+  fi
+fi
+
+# --- Lint JS/JSX (ESLint) ------------------------------------------------
+# `--fix` corrige ce qui peut l'être et ré-indexe le résultat, comme Pint
+# ci-dessus. `--quiet` : n'échoue que sur de vraies erreurs, jamais sur les
+# avertissements (`no-unused-vars`, etc.) -- CI elle-même les traite en
+# `continue-on-error` (voir frontend.yml), un hook local ne doit pas être
+# plus strict que la CI qu'il imite.
+staged_js=$(git diff --cached --name-only --diff-filter=ACM -- 'Ecole/Ecole_frontend/src/*.js' 'Ecole/Ecole_frontend/src/*.jsx' || true)
+if [ -n "$staged_js" ]; then
+  if [ -x "$ROOT/Ecole/Ecole_frontend/node_modules/.bin/eslint" ]; then
+    (
+      cd "$ROOT/Ecole/Ecole_frontend"
+      relative=$(echo "$staged_js" | sed 's#^Ecole/Ecole_frontend/##')
+      echo "$relative" | xargs node_modules/.bin/eslint --fix --quiet
+    )
+    lint_status=$?
+    echo "$staged_js" | while IFS= read -r f; do git add "$ROOT/$f"; done
+    if [ "$lint_status" -ne 0 ]; then
+      echo "[pre-commit] ESLint a trouvé de vraies erreurs (pas de simples avertissements) -- commit bloqué."
+      exit 1
+    fi
+  else
+    echo "[pre-commit] ESLint introuvable (npm ci côté frontend) -- lint ignoré localement."
+  fi
+fi
