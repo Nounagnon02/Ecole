@@ -4,7 +4,7 @@
  * Préférences, notifications, sécurité et configuration du profil.
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   User, Bell, Shield, Palette, Globe, Smartphone,
@@ -15,7 +15,9 @@ import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import Badge from '@/shared/components/ui/Badge';
 import Avatar from '@/shared/components/ui/Avatar';
-import { useApi } from '@/hooks/useApi';
+import { api } from '@/shared/services/api';
+import { useApiQuery } from '@/shared/lib/api-client';
+import { unwrapList } from '@/shared/lib/unwrap';
 import { toast } from 'sonner';
 import useAuthStore from '@/shared/stores/auth-store';
 import { ROLE_GROUPS, hasRole } from '@/shared/types/roles';
@@ -32,13 +34,14 @@ const SECTIONS = [
 export default function ParametresPage() {
   const { t } = useTranslation();
   const { user, updateUser } = useAuthStore();
-  const { loading, error, put } = useApi();
+  const [saving, setSaving] = useState(false);
   const [activeSection, setActiveSection] = useState('profil');
   const [saved, setSaved] = useState(false);
 
   const handleSaveProfile = async (e, extra = {}) => {
     e.preventDefault();
     setSaved(false);
+    setSaving(true);
     try {
       const form = e.target;
       const data = {
@@ -48,7 +51,7 @@ export default function ParametresPage() {
         telephone: form.querySelector('[name="telephone"]')?.value,
         ...extra,
       };
-      const res = await put('/auth/profile', data);
+      const res = await api.put('/auth/profile', data);
       if (res?.data?.success) {
         updateUser(res.data.user);
         setSaved(true);
@@ -57,13 +60,15 @@ export default function ParametresPage() {
       }
     } catch (err) {
       toast.error(err?.message || t('pages.parametres.parametres.erreur_lors_de_la_mise_a_jour'));
+    } finally {
+      setSaving(false);
     }
   };
 
   const renderSection = () => {
     switch (activeSection) {
       case 'profil':
-        return <ProfilSection user={user} onSave={handleSaveProfile} saving={loading} saved={saved} />;
+        return <ProfilSection user={user} onSave={handleSaveProfile} saving={saving} saved={saved} />;
       case 'notifications':
         return <NotificationsSection />;
       case 'securite':
@@ -118,10 +123,8 @@ export default function ParametresPage() {
 function ProfilSection({ user, onSave, saving, saved }) {
   const { t } = useTranslation();
   const isTeacher = hasRole(user?.role, ROLE_GROUPS.ENSEIGNANTS);
-  const { get } = useApi();
 
   const [avatarDraft, setAvatarDraft] = useState(null);
-  const [matieres, setMatieres] = useState([]);
   const [selectedMatieres, setSelectedMatieres] = useState(
     () => user?.profil?.matieres_maitrisees?.map((m) => m.id) || []
   );
@@ -129,19 +132,12 @@ function ProfilSection({ user, onSave, saving, saved }) {
     () => user?.profil?.experiences || []
   );
 
-  useEffect(() => {
-    if (!isTeacher || matieres.length > 0) return;
-    get('/matieres')
-      .then((res) => {
-        const list = Array.isArray(res?.data?.data)
-          ? res.data.data
-          : Array.isArray(res?.data)
-            ? res.data
-            : Array.isArray(res) ? res : [];
-        setMatieres(list);
-      })
-      .catch(() => {});
-  }, [isTeacher]);
+  // Chargée une seule fois pour les enseignants — `enabled` remplace le garde
+  // impératif de l'ancien `useEffect` (cf. audit P4.1).
+  const requeteMatieres = useApiQuery(['matieres'], '/matieres', {
+    queryOptions: { enabled: isTeacher },
+  });
+  const matieres = useMemo(() => unwrapList(requeteMatieres.data) ?? [], [requeteMatieres.data]);
 
   const handleAvatarChange = (e) => {
     const file = e.target.files?.[0];
@@ -397,7 +393,7 @@ function NotificationsSection() {
 /* ─── Sécurité ────────────────────────────────────────────────────── */
 function SecuriteSection() {
   const { t } = useTranslation();
-  const { loading, post } = useApi();
+  const [loading, setLoading] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -417,8 +413,9 @@ function SecuriteSection() {
       setPasswordError(t('pages.parametres.parametres.les_mots_de_passe_ne_correspondent_pas'));
       return;
     }
+    setLoading(true);
     try {
-      await post('/auth/change-password', {
+      await api.post('/auth/change-password', {
         current_password: currentPassword,
         password: newPassword,
         password_confirmation: confirmPassword,
@@ -429,6 +426,8 @@ function SecuriteSection() {
       setConfirmPassword('');
     } catch (e) {
       setPasswordError(e.response?.data?.message || t('pages.parametres.parametres.erreur_lors_du_changement_de_mot_de_passe'));
+    } finally {
+      setLoading(false);
     }
   };
 

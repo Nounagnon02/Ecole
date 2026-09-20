@@ -20,7 +20,7 @@ import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Select from '@/shared/components/ui/Select';
 import { Tabs } from '@/shared/components/ui/Tabs';
-import { useApi } from '@/hooks/useApi';
+import { api } from '@/shared/services/api';
 import { useApiQuery } from '@/shared/lib/api-client';
 import { unwrapList } from '@/shared/lib/unwrap';
 import { useQueryClient } from '@tanstack/react-query';
@@ -41,8 +41,6 @@ const NOM_ENSEIGNANT = (e) =>
 
 export default function AffectationsPage() {
   const { t } = useTranslation();
-  const { post, delete: del } = useApi();
-
 
   const [selectedTeacherId, setSelectedTeacherId] = useState('');
 
@@ -141,7 +139,7 @@ export default function AffectationsPage() {
     setSaving(true);
     setActionError(null);
     try {
-      const res = await post(`/enseignants/${selectedTeacherId}/affectations`, {
+      const res = await api.post(`/enseignants/${selectedTeacherId}/affectations`, {
         affectations: [
           {
             classe_id: Number(classeId),
@@ -166,7 +164,7 @@ export default function AffectationsPage() {
     if (!selectedTeacher) return;
     setActionError(null);
     try {
-      const res = await del(`/enseignants/${selectedTeacherId}/affectations/${affectationId}`);
+      const res = await api.delete(`/enseignants/${selectedTeacherId}/affectations/${affectationId}`);
       setAffectations(unwrapPayload(res?.data));
     } catch (e) {
       clearError();
@@ -178,7 +176,7 @@ export default function AffectationsPage() {
     if (!newClassId) return;
     setActionError(null);
     try {
-      const res = await post(`/enseignants-mp/${mpTeacherId}/affectation`, {
+      const res = await api.post(`/enseignants-mp/${mpTeacherId}/affectation`, {
         classe_id: Number(newClassId),
       });
       const updated = res?.data?.data ?? res?.data ?? {};
