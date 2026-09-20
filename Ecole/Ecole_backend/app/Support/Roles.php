@@ -294,6 +294,21 @@ final class Roles
     }
 
     /**
+     * Roles that must have 2FA enabled: comptable and every head of school
+     * (directeur, cycle heads included via `satisfies()`), plus the two
+     * platform-management roles. All four routinely handle payments or
+     * medical records — none of them should be able to opt out of a second
+     * factor the way every other role can.
+     */
+    private const MANDATORY_2FA = [self::COMPTABLE, self::DIRECTOR, self::ADMIN, self::SUPER_ADMIN];
+
+    /** Must this role have 2FA enabled? */
+    public static function requiresTwoFactor(?string $role): bool
+    {
+        return self::satisfies($role, self::MANDATORY_2FA);
+    }
+
+    /**
      * The cycle a role is confined to — `Maternelle`, `Primaire`, `Secondaire`
      * — or null for a role that spans the whole school.
      *

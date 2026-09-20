@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\Roles;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use PragmaRX\Google2FA\Google2FA;
@@ -87,6 +88,17 @@ class TwoFactorController extends Controller
 
         if (!$user->two_factor_enabled) {
             return response()->json(['message' => 'La 2FA n\'est pas activée'], 422);
+        }
+
+        // Un rôle à 2FA obligatoire ne peut pas s'en dispenser : sans cette
+        // garde, la désactivation « réussirait » mais VerifyTwoFactor
+        // recantonnerait immédiatement le compte aux routes d'enrôlement au
+        // prochain appel — inoffensif (voir Roles::requiresTwoFactor()), mais
+        // une boucle confuse plutôt qu'un refus clair.
+        if (Roles::requiresTwoFactor($user->role)) {
+            return response()->json([
+                'message' => 'La 2FA est obligatoire pour votre rôle et ne peut pas être désactivée',
+            ], 422);
         }
 
         $secret = decrypt($user->two_factor_secret);

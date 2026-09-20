@@ -32,10 +32,15 @@ class TwoFactorFlowTest extends TestCase
         parent::setUp();
 
         $school = Ecole::factory()->create(['status' => 'active']);
+        // `secretaire`, pas `directeur` : ce fichier teste que la 2FA reste
+        // facultative et réversible pour un rôle qui n'en a pas l'obligation.
+        // `directeur` (comme comptable/admin/super-admin) l'exige désormais
+        // (Roles::requiresTwoFactor()) — ces scénarios-là vivent dans
+        // MandatoryTwoFactorTest.php, qui redéfinit ses propres utilisateurs.
         $this->user = User::factory()->create([
-            'role' => 'directeur',
+            'role' => 'secretaire',
             'ecole_id' => $school->id,
-            'email' => 'directeur@ecole.bj',
+            'email' => 'secretaire@ecole.bj',
             'password' => Hash::make('motdepasse123'),
         ]);
         $this->totp = new Google2FA();
@@ -61,7 +66,7 @@ class TwoFactorFlowTest extends TestCase
     private function login(): \Illuminate\Testing\TestResponse
     {
         return $this->apiAs('POST', '/api/auth/login', [
-            'email' => 'directeur@ecole.bj',
+            'email' => 'secretaire@ecole.bj',
             'password' => 'motdepasse123',
         ]);
     }
@@ -254,7 +259,7 @@ class TwoFactorFlowTest extends TestCase
         $this->withHeaders(['Referer' => 'http://localhost:3000/']);
 
         $pending = $this->postJson('/api/auth/login', [
-            'email' => 'directeur@ecole.bj',
+            'email' => 'secretaire@ecole.bj',
             'password' => 'motdepasse123',
         ])->assertOk()->json('token');
 
