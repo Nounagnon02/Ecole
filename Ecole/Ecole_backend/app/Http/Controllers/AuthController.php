@@ -76,6 +76,48 @@ class AuthController extends Controller
             ]);
         }
 
+        // Rôle à 2FA obligatoire (comptable, directeur, admin, super-admin)
+        // mais jamais encore activée : VerifyTwoFactor bloquerait de toute
+        // façon le tout premier appel suivant (`requires_2fa_setup`), mais
+        // seulement APRÈS que le frontend ait déjà traité cette réponse
+        // comme une connexion réussie et navigué vers le tableau de bord —
+        // rien n'y écoute ce signal en dehors du flux de connexion. Le
+        // signaler ici, au même endroit que `requires_2fa` ci-dessus, laisse
+        // LoginForm rediriger directement vers l'enrôlement.
+        //
+        // Il faut malgré tout authentifier l'appelant : `/auth/2fa/setup`
+        // exige `auth:sanctum`, et sans session ni jeton, cet appel
+        // échouerait avant même d'atteindre l'écran d'activation. Le jeton
+        // émis ci-dessous n'a rien de restreint (pas d'ability « pending ») :
+        // VerifyTwoFactor le cantonne déjà aux routes d'enrôlement tant que
+        // `two_factor_enabled` reste faux, quel que soit le jeton présenté.
+        if (Roles::requiresTwoFactor($user->role)) {
+            // `user` inclus (contrairement à `requires_2fa` ci-dessus) : la
+            // personne EST authentifiée à ce stade (mot de passe correct,
+            // session/jeton déjà posé juste en dessous) — seulement
+            // restreinte tant qu'elle n'a pas activé la 2FA. Le frontend en
+            // a besoin pour afficher l'écran d'activation nommément et
+            // connaître le rôle sans appel supplémentaire.
+            $setupPayload = [
+                'requires_2fa_setup' => true,
+                'user' => $this->profiles->payload($user),
+                'message' => 'Authentification à deux facteurs obligatoire pour ce rôle',
+            ];
+
+            if ($this->isStatefulClient($request)) {
+                Auth::login($user);
+                $request->session()?->regenerate();
+
+                return response()->json($setupPayload);
+            }
+
+            $device = $request->input('device_name', 'mobile');
+            $setupPayload['token'] = $user->createToken($device)->plainTextToken;
+            $setupPayload['token_type'] = 'Bearer';
+
+            return response()->json($setupPayload);
+        }
+
         $payload = [
             'user'        => $user,
             'role'        => $user->role,
