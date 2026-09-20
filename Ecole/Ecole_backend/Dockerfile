@@ -16,11 +16,19 @@ FROM php:8.3-fpm AS base
 WORKDIR /var/www
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        git unzip libxml2-dev libzip-dev libpng-dev libjpeg-dev libonig-dev \
+        git unzip default-mysql-client libxml2-dev libzip-dev libpng-dev libjpeg-dev libonig-dev \
     && docker-php-ext-configure gd --with-jpeg \
     && docker-php-ext-install -j"$(nproc)" pdo_mysql mbstring exif pcntl bcmath gd zip \
     && apt-get purge -y --auto-remove \
     && rm -rf /var/lib/apt/lists/*
+
+# `default-mysql-client` : `php artisan migrate` shell-out vers le binaire
+# `mysql` pour charger `database/schema/mysql-schema.sql` (le dump de
+# baseline après le squash des migrations) — `Illuminate\Database\Schema\
+# MySqlSchemaState::load()` fait tourner `mysql ... < dump.sql`, il n'y a pas
+# de chemin pur PHP. Sans ce paquet, la toute première migration sur une base
+# neuve échoue avec `sh: mysql: not found` — invisible tant qu'on ne teste pas
+# un déploiement réellement neuf sur cette image.
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
