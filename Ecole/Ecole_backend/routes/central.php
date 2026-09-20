@@ -44,7 +44,16 @@ Route::prefix('api/v1/admin')->middleware(['auth:sanctum', 'role:super-admin'])-
     Route::get('billing/invoices', 'App\Http\Controllers\Central\BillingController@invoices');
     Route::get('billing/invoices/{invoice}', 'App\Http\Controllers\Central\BillingController@showInvoice');
     Route::post('billing/verify/{invoice}', 'App\Http\Controllers\Central\BillingController@verify');
-    Route::post('billing/cancel', 'App\Http\Controllers\Central\BillingController@cancel');
+    // Nommée explicitement : sans nom, Scramble dérive un operationId depuis
+    // l'URI ("billing.cancel") qui entre en collision avec le nom Laravel bien
+    // réel de la route de retour navigateur ci-dessous (billing/cancel elle
+    // aussi, mais un tout autre endpoint — annulation d'abonnement contre
+    // retour post-paiement). Deux endpoints partageant un operationId cassent
+    // la compilation du client TypeScript généré (`operations['billing.cancel']`
+    // devient un type dupliqué) sans jamais toucher au routage Laravel
+    // lui-même, qui ne voyait qu'un seul nom réel.
+    Route::post('billing/cancel', 'App\Http\Controllers\Central\BillingController@cancel')
+        ->name('billing.subscription.cancel');
 
     // ─── White-label Settings ─────────────────────────────────────────────
     Route::get('tenants/{tenant}/settings', 'App\Http\Controllers\Central\SettingsController@index');
