@@ -1214,7 +1214,23 @@
         "sombre": "Dark",
         "theme_sombre": "Dark theme",
         "systeme": "System",
-        "suit_votre_appareil": "Follows your device"
+        "suit_votre_appareil": "Follows your device",
+        "authentification_a_deux_facteurs": "Two-factor authentication",
+        "activee": "Enabled",
+        "desactivee": "Disabled",
+        "protegez_votre_compte_avec_un_second_facteur": "Protect your account with a second factor, in addition to your password.",
+        "activer_la_2fa": "Enable 2FA",
+        "desactiver_la_2fa": "Disable 2FA",
+        "erreur_lors_de_l_activation_de_la_2fa": "Error enabling 2FA.",
+        "scannez_ce_code_avec_votre_application": "Scan this code with your authenticator app (Google Authenticator, Authy, etc.).",
+        "je_ne_peux_pas_scanner_le_code": "I can't scan the code",
+        "code_de_confirmation": "Confirmation code",
+        "2fa_activee_avec_succes": "2FA enabled successfully.",
+        "code_invalide": "Invalid code. Please try again.",
+        "entrez_un_code_pour_desactiver_la_2fa": "Enter a code from your app to confirm disabling it.",
+        "2fa_desactivee": "2FA disabled.",
+        "annuler": "Cancel",
+        "desactiver": "Disable"
       }
     },
     "parent": {

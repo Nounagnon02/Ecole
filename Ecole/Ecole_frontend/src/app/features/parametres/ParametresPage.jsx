@@ -6,6 +6,7 @@
 
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
+import { QRCodeSVG } from 'qrcode.react';
 import {
   User, Bell, Shield, Palette, Globe, Smartphone,
   Moon, Sun, Save, CheckCircle2, Plus, Trash2, Briefcase
@@ -391,6 +392,176 @@ function NotificationsSection() {
 }
 
 /* ─── Sécurité ────────────────────────────────────────────────────── */
+/**
+ * TwoFactorCard — activation/désactivation de la 2FA pour le compte connecté.
+ *
+ * `updateUser()` (auth-store) reflète l'état localement : sans ça, le badge
+ * de statut resterait sur l'ancien état jusqu'au prochain `checkSession()`
+ * (jusqu'à 5 min, voir SESSION_CHECK_INTERVAL) après une activation réussie.
+ */
+function TwoFactorCard() {
+  const { t } = useTranslation();
+  const user = useAuthStore((s) => s.user);
+  const updateUser = useAuthStore((s) => s.updateUser);
+  const isEnabled = !!user?.two_factor_enabled;
+
+  const [step, setStep] = useState('idle'); // 'idle' | 'setup' | 'disable'
+  const [qrUrl, setQrUrl] = useState('');
+  const [secret, setSecret] = useState('');
+  const [code, setCode] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const reset = () => {
+    setStep('idle');
+    setCode('');
+    setError('');
+    setQrUrl('');
+    setSecret('');
+  };
+
+  const startSetup = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const { data } = await api.post('/auth/2fa/setup');
+      setQrUrl(data.qr_code_url);
+      setSecret(data.secret);
+      setStep('setup');
+    } catch (e) {
+      toast.error(e.message || t('pages.parametres.parametres.erreur_lors_de_l_activation_de_la_2fa'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const confirmSetup = async () => {
+    if (code.length !== 6) return;
+    setLoading(true);
+    setError('');
+    try {
+      await api.post('/auth/2fa/verify', { code });
+      updateUser({ two_factor_enabled: true });
+      toast.success(t('pages.parametres.parametres.2fa_activee_avec_succes'));
+      reset();
+    } catch (e) {
+      setError(e.message || t('pages.parametres.parametres.code_invalide'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const confirmDisable = async () => {
+    if (code.length !== 6) return;
+    setLoading(true);
+    setError('');
+    try {
+      await api.post('/auth/2fa/disable', { code });
+      updateUser({ two_factor_enabled: false });
+      toast.success(t('pages.parametres.parametres.2fa_desactivee'));
+      reset();
+    } catch (e) {
+      setError(e.message || t('pages.parametres.parametres.code_invalide'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Card>
+      <Card.Header
+        title={t('pages.parametres.parametres.authentification_a_deux_facteurs')}
+        action={
+          step === 'idle' ? (
+            <Badge variant={isEnabled ? 'success' : 'default'}>
+              {isEnabled ? t('pages.parametres.parametres.activee') : t('pages.parametres.parametres.desactivee')}
+            </Badge>
+          ) : null
+        }
+      />
+
+      {step === 'idle' && (
+        <div className="space-y-4">
+          <p className="text-sm text-neutral-600 dark:text-neutral-400">
+            {t('pages.parametres.parametres.protegez_votre_compte_avec_un_second_facteur')}
+          </p>
+          {isEnabled ? (
+            <Button variant="danger" onClick={() => setStep('disable')}>
+              {t('pages.parametres.parametres.desactiver_la_2fa')}
+            </Button>
+          ) : (
+            <Button onClick={startSetup} disabled={loading}>
+              {t('pages.parametres.parametres.activer_la_2fa')}
+            </Button>
+          )}
+        </div>
+      )}
+
+      {step === 'setup' && (
+        <div className="space-y-4">
+          <p className="text-sm text-neutral-600 dark:text-neutral-400">
+            {t('pages.parametres.parametres.scannez_ce_code_avec_votre_application')}
+          </p>
+          <div className="flex justify-center rounded-lg bg-white p-4">
+            <QRCodeSVG value={qrUrl} size={180} />
+          </div>
+          <details className="text-xs text-neutral-500">
+            <summary className="cursor-pointer">
+              {t('pages.parametres.parametres.je_ne_peux_pas_scanner_le_code')}
+            </summary>
+            <code className="mt-2 block break-all rounded bg-neutral-100 p-2 dark:bg-neutral-800">
+              {secret}
+            </code>
+          </details>
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+              {t('pages.parametres.parametres.code_de_confirmation')}
+            </label>
+            <Input
+              type="text"
+              inputMode="numeric"
+              maxLength={6}
+              value={code}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              placeholder="000000"
+            />
+          </div>
+          {error && <p className="text-sm text-red-600">{error}</p>}
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={reset}>{t('pages.parametres.parametres.annuler')}</Button>
+            <Button onClick={confirmSetup} disabled={loading || code.length !== 6}>
+              {t('pages.parametres.parametres.confirmer')}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {step === 'disable' && (
+        <div className="space-y-4">
+          <p className="text-sm text-neutral-600 dark:text-neutral-400">
+            {t('pages.parametres.parametres.entrez_un_code_pour_desactiver_la_2fa')}
+          </p>
+          <Input
+            type="text"
+            inputMode="numeric"
+            maxLength={6}
+            value={code}
+            onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+            placeholder="000000"
+          />
+          {error && <p className="text-sm text-red-600">{error}</p>}
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={reset}>{t('pages.parametres.parametres.annuler')}</Button>
+            <Button variant="danger" onClick={confirmDisable} disabled={loading || code.length !== 6}>
+              {t('pages.parametres.parametres.desactiver')}
+            </Button>
+          </div>
+        </div>
+      )}
+    </Card>
+  );
+}
+
 function SecuriteSection() {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
@@ -458,6 +629,8 @@ function SecuriteSection() {
           </div>
         </div>
       </Card>
+
+      <TwoFactorCard />
 
       <Card>
         <Card.Header title={t('pages.parametres.parametres.sessions_actives')} />

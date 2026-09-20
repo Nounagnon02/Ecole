@@ -1214,7 +1214,23 @@
         "sombre": "Sombre",
         "theme_sombre": "Thème sombre",
         "systeme": "Système",
-        "suit_votre_appareil": "Suit votre appareil"
+        "suit_votre_appareil": "Suit votre appareil",
+        "authentification_a_deux_facteurs": "Authentification à deux facteurs",
+        "activee": "Activée",
+        "desactivee": "Désactivée",
+        "protegez_votre_compte_avec_un_second_facteur": "Protégez votre compte avec un second facteur, en plus du mot de passe.",
+        "activer_la_2fa": "Activer la 2FA",
+        "desactiver_la_2fa": "Désactiver la 2FA",
+        "erreur_lors_de_l_activation_de_la_2fa": "Erreur lors de l'activation de la 2FA.",
+        "scannez_ce_code_avec_votre_application": "Scannez ce code avec votre application d'authentification (Google Authenticator, Authy, etc.).",
+        "je_ne_peux_pas_scanner_le_code": "Je ne peux pas scanner le code",
+        "code_de_confirmation": "Code de confirmation",
+        "2fa_activee_avec_succes": "2FA activée avec succès.",
+        "code_invalide": "Code invalide. Veuillez réessayer.",
+        "entrez_un_code_pour_desactiver_la_2fa": "Entrez un code de votre application pour confirmer la désactivation.",
+        "2fa_desactivee": "2FA désactivée.",
+        "annuler": "Annuler",
+        "desactiver": "Désactiver"
       }
     },
     "parent": {

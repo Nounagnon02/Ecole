@@ -192,6 +192,95 @@ describe('ParametresPage — profil enseignant', () => {
   });
 });
 
+describe('ParametresPage — activation de la 2FA', () => {
+  function goToSecurite() {
+    fireEvent.click(screen.getByRole('button', { name: /Sécurité/i }));
+  }
+
+  it('propose d’activer la 2FA quand elle est désactivée, et affiche le QR après /2fa/setup', async () => {
+    resetAuth({
+      user: { id: 1, name: 'Kouassi', role: 'directeur', two_factor_enabled: false },
+      isAuthenticated: true,
+    });
+    http.onPost('/auth/2fa/setup').reply(200, {
+      secret: 'JBSWY3DPEHPK3PXP',
+      qr_code_url: 'otpauth://totp/Ecole:kouassi?secret=JBSWY3DPEHPK3PXP&issuer=Ecole',
+    });
+
+    renderPage();
+    goToSecurite();
+
+    expect(await screen.findByText('Désactivée')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Activer la 2FA/i }));
+
+    await waitFor(() => expect(http.callsTo('post', '/auth/2fa/setup')).toHaveLength(1));
+    expect(await screen.findByText(/Code de confirmation/i)).toBeInTheDocument();
+  });
+
+  it('active la 2FA sur un code valide et met à jour le badge de statut', async () => {
+    resetAuth({
+      user: { id: 1, name: 'Kouassi', role: 'directeur', two_factor_enabled: false },
+      isAuthenticated: true,
+    });
+    http.onPost('/auth/2fa/setup').reply(200, {
+      secret: 'JBSWY3DPEHPK3PXP',
+      qr_code_url: 'otpauth://totp/Ecole:kouassi?secret=JBSWY3DPEHPK3PXP&issuer=Ecole',
+    });
+    http.onPost('/auth/2fa/verify').reply(200, { message: '2FA activée avec succès' });
+
+    renderPage();
+    goToSecurite();
+    fireEvent.click(screen.getByRole('button', { name: /Activer la 2FA/i }));
+    await screen.findByText(/Code de confirmation/i);
+
+    fireEvent.change(screen.getByPlaceholderText('000000'), { target: { value: '654321' } });
+    fireEvent.click(screen.getByRole('button', { name: /Confirmer/i }));
+
+    await waitFor(() => expect(http.callsTo('post', '/auth/2fa/verify')[0].body).toEqual({ code: '654321' }));
+    expect(await screen.findByText('Activée')).toBeInTheDocument();
+    expect(useAuthStore.getState().user.two_factor_enabled).toBe(true);
+  });
+
+  it('propose de désactiver la 2FA quand elle est activée, et le fait sur un code valide', async () => {
+    resetAuth({
+      user: { id: 1, name: 'Kouassi', role: 'directeur', two_factor_enabled: true },
+      isAuthenticated: true,
+    });
+    http.onPost('/auth/2fa/disable').reply(200, { message: '2FA désactivée' });
+
+    renderPage();
+    goToSecurite();
+
+    expect(await screen.findByText('Activée')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Désactiver la 2FA/i }));
+
+    fireEvent.change(screen.getByPlaceholderText('000000'), { target: { value: '111111' } });
+    fireEvent.click(screen.getByRole('button', { name: /^Désactiver$/i }));
+
+    await waitFor(() => expect(http.callsTo('post', '/auth/2fa/disable')[0].body).toEqual({ code: '111111' }));
+    expect(await screen.findByText('Désactivée')).toBeInTheDocument();
+    expect(useAuthStore.getState().user.two_factor_enabled).toBe(false);
+  });
+
+  it('affiche l’erreur du serveur sur un code invalide, sans changer le statut', async () => {
+    resetAuth({
+      user: { id: 1, name: 'Kouassi', role: 'directeur', two_factor_enabled: true },
+      isAuthenticated: true,
+    });
+    http.onPost('/auth/2fa/disable').reply(422, { message: 'Code invalide' });
+
+    renderPage();
+    goToSecurite();
+    fireEvent.click(screen.getByRole('button', { name: /Désactiver la 2FA/i }));
+
+    fireEvent.change(screen.getByPlaceholderText('000000'), { target: { value: '000000' } });
+    fireEvent.click(screen.getByRole('button', { name: /^Désactiver$/i }));
+
+    await waitFor(() => expect(screen.getByText('Code invalide')).toBeInTheDocument());
+    expect(useAuthStore.getState().user.two_factor_enabled).toBe(true);
+  });
+});
+
 describe('ParametresPage — langue de l\'interface', () => {
   beforeEach(() => {
     localStorage.clear();
