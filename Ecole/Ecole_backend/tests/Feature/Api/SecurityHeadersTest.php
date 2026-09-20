@@ -50,4 +50,12 @@ class SecurityHeadersTest extends TestCase
             $response->headers->get('Content-Type') ?? ''
         );
     }
+
+    /** @test */
+    public function api_response_has_x_request_id_header()
+    {
+        $response = $this->getJson('/api/health');
+
+        $response->assertHeader('X-Request-Id');
+    }
 }
