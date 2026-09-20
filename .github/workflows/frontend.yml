@@ -48,6 +48,13 @@ jobs:
       - name: Run ESLint
         run: npm run lint
         continue-on-error: true
+      # Couvre uniquement le client API généré (openapi-typescript) et son
+      # enveloppe typée — voir tsconfig.json `include`, volontairement étroit.
+      # Ne type-vérifie aucune des pages .jsx existantes. Contrairement à
+      # ESLint ci-dessus, bloquant dès le départ : ces fichiers partent d'un
+      # état vérifié sans erreur, pas d'un passif à tolérer.
+      - name: Typecheck (generated API client)
+        run: npm run typecheck
       - name: Check build
         run: npm run build -- --logLevel error
         env:

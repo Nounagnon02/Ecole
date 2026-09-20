@@ -56,7 +56,18 @@ module.exports = {
     'prefer-const': 'warn',
     eqeqeq: ['warn', 'smart'],
   },
-  ignorePatterns: ['dist', 'node_modules', 'coverage', '*.config.js', 'setupTests.js'],
+  ignorePatterns: [
+    'dist', 'node_modules', 'coverage', '*.config.js', 'setupTests.js',
+    // Pas de parser TypeScript ici (voir l'en-tête) : `--ext .ts,.tsx` sur
+    // `lint`/`lint:fix` ne trouvait jusqu'ici aucun fichier .ts à parser.
+    // `api-types.generated.ts` (généré, jamais à la main) et les nouveaux
+    // `.ts` écrits pour le client API généré ont une syntaxe (générics,
+    // annotations de type) que le parser JS par défaut ne sait pas lire.
+    // `tsc --noEmit` (`npm run typecheck`) est leur vérification, pas ESLint.
+    'src/shared/lib/api-types.generated.ts',
+    'src/shared/lib/api-typed.ts',
+    'src/shared/lib/api-typed.test-d.ts',
+  ],
   // Vitest globals for test files (jest-compatible API)
   overrides: [
     {

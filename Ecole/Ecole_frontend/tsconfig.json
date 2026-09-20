@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "noEmit": true,
+    // Pas de `baseUrl`/`paths` pour l'alias `@/*` : aucun des fichiers `.ts`
+    // ci-dessous ne s'en sert (imports relatifs uniquement), et `baseUrl`
+    // seul est déprécié en TS 5.9+. À ajouter (forme moderne, sans `baseUrl`)
+    // si un futur fichier `.ts` en a réellement besoin.
+    //
+    // `allowJs` sans `checkJs` : les nouveaux fichiers `.ts` importent
+    // `api-client.js` (existant, non typé) pour réutiliser ses intercepteurs
+    // (cache IndexedDB, file hors-ligne, retry) — TypeScript doit pouvoir lire
+    // ce fichier pour résoudre l'import, mais ne doit pas essayer de
+    // type-vérifier les ~50 pages `.jsx` non typées du reste du dépôt.
+    "allowJs": true,
+    "checkJs": false
+  },
+  // Volontairement étroit : seuls les fichiers `.ts` réellement écrits pour
+  // le client API généré. Migrer une page `.jsx` vers ce client l'ajoute ici
+  // au fur et à mesure, plutôt que d'inclure tout `src/` d'un coup.
+  "include": [
+    "src/shared/lib/api-types.generated.ts",
+    "src/shared/lib/api-typed.ts",
+    "src/shared/lib/api-typed.test-d.ts"
+  ]
+}
