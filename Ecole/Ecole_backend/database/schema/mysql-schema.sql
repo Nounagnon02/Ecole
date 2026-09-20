@@ -1802,6 +1802,7 @@ CREATE TABLE `transaction_paiements` (
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
+  UNIQUE KEY `transaction_paiements_reference_transaction_unique` (`reference_transaction`),
   KEY `transaction_paiements_id_paiement_eleve_foreign` (`id_paiement_eleve`),
   KEY `transaction_paiements_ecole_id_foreign` (`ecole_id`),
   CONSTRAINT `transaction_paiements_ecole_id_foreign` FOREIGN KEY (`ecole_id`) REFERENCES `ecoles` (`id`) ON DELETE RESTRICT,
@@ -2263,3 +2264,4 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (123,'2026_08_19_13
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (124,'2026_08_25_124352_add_soft_deletes_to_finance_tables',1);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (125,'2026_09_17_120000_widen_livre_publication_year',1);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (126,'2026_09_17_120100_restrict_school_deletion_on_remaining_tables',1);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (127,'2026_09_20_140000_add_unique_index_to_transaction_paiements_reference',2);

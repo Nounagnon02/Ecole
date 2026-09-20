@@ -1697,6 +1697,9 @@ CREATE TABLE "livres"(
   foreign key("ecole_id") references ecoles("id") on delete restrict on update no action
 );
 CREATE INDEX "livres_ecole_id_index" on "livres"("ecole_id");
+CREATE UNIQUE INDEX "transaction_paiements_reference_transaction_unique" on "transaction_paiements"(
+  "reference_transaction"
+);
 
 INSERT INTO migrations VALUES(1,'2013_01_01_000000_create_ecoles_table',1);
 INSERT INTO migrations VALUES(2,'2014_10_12_000000_create_users_table',1);
@@ -1824,3 +1827,4 @@ INSERT INTO migrations VALUES(123,'2026_08_19_130000_add_ecole_id_index_to_tenan
 INSERT INTO migrations VALUES(124,'2026_08_25_124352_add_soft_deletes_to_finance_tables',1);
 INSERT INTO migrations VALUES(125,'2026_09_17_120000_widen_livre_publication_year',1);
 INSERT INTO migrations VALUES(126,'2026_09_17_120100_restrict_school_deletion_on_remaining_tables',1);
+INSERT INTO migrations VALUES(127,'2026_09_20_140000_add_unique_index_to_transaction_paiements_reference',2);

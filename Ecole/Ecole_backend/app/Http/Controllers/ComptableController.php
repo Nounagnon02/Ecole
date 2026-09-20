@@ -344,17 +344,29 @@ class ComptableController extends Controller
     /**
      * Callback FedaPay (retour navigateur après paiement).
      *
-     * FedaPay redirige l'utilisateur vers cette URL après paiement.
-     * On vérifie le statut côté serveur et on met à jour la transaction.
-     * Ensuite on redirige vers l'interface frontend (échéancier).
+     * FedaPay redirige l'utilisateur vers cette URL après paiement. On met à
+     * jour la transaction locale si elle est approuvée, puis on redirige
+     * vers `PaiementCallbackPage` (frontend React, route `/paiement/callback`)
+     * en lui passant le `transaction_id` : cette page re-vérifie elle-même le
+     * statut via `GET /comptable/paiement/verifier/{id}` et l'affiche — elle
+     * ne lit ni ne peut lire un flash Laravel (`->with(...)`), puisque le
+     * frontend est une SPA découplée, pas une vue Blade.
+     *
+     * Corrigé : `route('frontend.echeancier')` ne correspondait à AUCUNE
+     * route Laravel nommée nulle part dans le dépôt (le frontend n'est pas
+     * routé par Laravel) — chaque appel, succès ou échec, levait
+     * `RouteNotFoundException` et renvoyait une 500 au navigateur de
+     * l'utilisateur. Le paiement était bien crédité côté serveur (l'update
+     * et `credit()` s'exécutent avant l'appel qui plante), mais l'utilisateur
+     * ne voyait jamais la confirmation.
      */
     public function paiementCallback(Request $request)
     {
         $transactionId = $request->query('transaction_id');
+        $frontendCallbackUrl = rtrim(config('app.frontend_url'), '/') . '/paiement/callback';
 
         if (!$transactionId) {
-            return redirect()->route('frontend.echeancier')
-                ->with('error', 'Transaction introuvable.');
+            return redirect($frontendCallbackUrl);
         }
 
         try {
@@ -362,9 +374,15 @@ class ComptableController extends Controller
             $result = $fedapay->verifyTransaction($transactionId);
 
             if ($result && $result->status === 'approved') {
-                // Mettre à jour la transaction locale
+                // Mettre à jour la transaction locale — mais seulement si
+                // elle n'est pas déjà approuvée : FedaPay peut renvoyer le
+                // navigateur deux fois vers cette URL (retour + rafraîchissement
+                // de la page), et `credit()` est purement additif. Sans cette
+                // garde (le même principe que `payments.status === 'completed'`
+                // ailleurs dans ce contrôleur), un rejeu créditait le compte
+                // une seconde fois pour un seul paiement réel.
                 $tx = TransactionPaiement::where('reference_transaction', $transactionId)->first();
-                if ($tx) {
+                if ($tx && $tx->statut !== TransactionPaiement::APPROUVE) {
                     $tx->update([
                         'statut' => TransactionPaiement::APPROUVE,
                         'date_paiement' => now(),
@@ -379,16 +397,14 @@ class ComptableController extends Controller
                         $paiement->credit((float) $tx->montant_paye);
                     }
                 }
-
-                return redirect()->route('frontend.echeancier')
-                    ->with('success', 'Paiement confirmé avec succès !');
             }
         } catch (\Exception $e) {
             Log::error('FedaPay callback error: ' . $e->getMessage());
         }
 
-        return redirect()->route('frontend.echeancier')
-            ->with('error', 'Le paiement n\'a pas pu être confirmé. Veuillez réessayer.');
+        // Toujours vers la même page, avec le transaction_id : elle affiche
+        // elle-même le succès/échec/attente en re-vérifiant côté serveur.
+        return redirect($frontendCallbackUrl . '?transaction_id=' . $transactionId);
     }
 
     /**
