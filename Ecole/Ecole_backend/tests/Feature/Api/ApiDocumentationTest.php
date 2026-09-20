@@ -49,4 +49,39 @@ class ApiDocumentationTest extends TestCase
             'Le titre configuré doit apparaître, pas le nom générique de l\'application.'
         );
     }
+
+    /**
+     * Deux `operationId` identiques ne cassent rien côté Laravel (un seul des
+     * deux routes porte un vrai `->name()`), mais côté client généré,
+     * `operations['<id>']` (openapi-typescript) devient un type dupliqué et ne
+     * compile plus -- silencieusement invisible tant que personne ne lance
+     * `tsc` sur le client généré.
+     *
+     * @test
+     */
+    public function every_operation_id_is_unique()
+    {
+        $this->app['env'] = 'local';
+
+        $paths = $this->getJson('/docs/api.json')->json('paths');
+
+        $operationIds = [];
+        foreach ($paths as $uri => $methods) {
+            foreach ($methods as $verb => $operation) {
+                if (! is_array($operation) || ! isset($operation['operationId'])) {
+                    continue;
+                }
+                $operationIds["{$verb} {$uri}"] = $operation['operationId'];
+            }
+        }
+
+        $duplicates = array_diff_assoc($operationIds, array_unique($operationIds));
+
+        $this->assertSame(
+            [],
+            $duplicates,
+            "Chaque route listée ici partage son operationId avec une autre :\n"
+                . collect($duplicates)->map(fn ($id, $route) => "  {$route} => {$id}")->implode("\n")
+        );
+    }
 }
