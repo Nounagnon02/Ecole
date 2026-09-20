@@ -366,4 +366,105 @@ class ComptableControllerTest extends TestCase
         $this->assertNotEquals(500, $response->status());
         $this->assertArrayHasKey('success', $response->json());
     }
+
+    /**
+     * `payments.transaction_id` a une garde applicative
+     * (`if ($payment->status === 'completed') return`) avant de créditer —
+     * `transaction_paiements` n'en avait aucune : `paiementCallback()`
+     * relisait la transaction et créditait `PaiementEleve` sans jamais
+     * vérifier qu'elle n'était pas déjà `APPROUVE`. FedaPay peut renvoyer
+     * deux fois vers cette URL (double clic « retour », rafraîchissement de
+     * la page de callback) : sans garde, la seconde visite crédite le
+     * compte une seconde fois pour un seul paiement réel.
+     *
+     * @test
+     */
+    public function replaying_the_payment_callback_does_not_credit_twice()
+    {
+        $eleve = $this->pupil();
+
+        $paiement = PaiementEleve::factory()->create([
+            'ecole_id' => $this->school->id,
+            'eleve_id' => $eleve->id,
+            'montant' => 50000,
+            'montant_total' => 100000,
+            'montant_paye' => 0,
+            'montant_restant' => 100000,
+            'statut_global' => PaiementEleve::PENDING,
+            'reference' => 'PAY-CALLBACK-REPLAY',
+        ]);
+
+        TransactionPaiement::create([
+            'id_paiement_eleve' => $paiement->id,
+            'tranche' => $paiement->type_paiement,
+            'montant_paye' => 50000,
+            'date_paiement' => now(),
+            'statut' => TransactionPaiement::EN_ATTENTE,
+            'methode_paiement' => 'FEDAPAY',
+            'reference_transaction' => 'TX_CALLBACK_REPLAY',
+            'ecole_id' => $this->school->id,
+        ]);
+
+        Http::fake([
+            'sandbox-api.fedapay.com/v1/transactions/TX_CALLBACK_REPLAY' => Http::response([
+                'transaction' => ['status' => 'approved', 'amount' => 5000000, 'payment_method_type' => 'mobile_money'],
+            ], 200),
+        ]);
+
+        // FedaPay redirige le navigateur vers cette URL — deux fois de suite
+        // (retour + rafraîchissement), avant même que le premier appel ne
+        // recharge la page suivante. La cible doit être `PaiementCallbackPage`
+        // (route frontend `/paiement/callback`, pas une route Laravel nommée
+        // qui n'existe nulle part) — sinon chaque appel lève
+        // `RouteNotFoundException` (500) avant même d'atteindre cette assertion.
+        $this->get('/api/comptable/paiement/callback?transaction_id=TX_CALLBACK_REPLAY')
+            ->assertRedirect(config('app.frontend_url') . '/paiement/callback?transaction_id=TX_CALLBACK_REPLAY');
+        $this->get('/api/comptable/paiement/callback?transaction_id=TX_CALLBACK_REPLAY')
+            ->assertRedirect(config('app.frontend_url') . '/paiement/callback?transaction_id=TX_CALLBACK_REPLAY');
+
+        $paiement->refresh();
+
+        $this->assertSame(
+            50000.0,
+            (float) $paiement->montant_paye,
+            'Un seul paiement réel ne doit créditer le compte qu\'une fois, même si le callback est rejoué.'
+        );
+        $this->assertSame(50000.0, (float) $paiement->montant_restant);
+        $this->assertSame(PaiementEleve::PARTIAL, $paiement->statut_global);
+    }
+
+    /**
+     * `payments.transaction_id` a une contrainte UNIQUE en base ; ce second
+     * chemin de paiement (échéances élèves) n'en avait aucune — écart réel
+     * trouvé en vérifiant l'idempotence des paiements pendant l'audit. La
+     * garde applicative ci-dessus (`replaying_...`) protège le crédit ; celle-ci
+     * protège l'écriture elle-même, y compris hors du chemin `paiementCallback`.
+     *
+     * @test
+     */
+    public function reference_transaction_must_be_unique_at_the_database_level()
+    {
+        $paiement = PaiementEleve::factory()->create([
+            'ecole_id' => $this->school->id,
+            'eleve_id' => $this->pupil()->id,
+        ]);
+
+        TransactionPaiement::create([
+            'id_paiement_eleve' => $paiement->id,
+            'montant_paye' => 10000,
+            'statut' => TransactionPaiement::EN_ATTENTE,
+            'reference_transaction' => 'TX-UNIQUE-TEST',
+            'ecole_id' => $this->school->id,
+        ]);
+
+        $this->expectException(\Illuminate\Database\QueryException::class);
+
+        TransactionPaiement::create([
+            'id_paiement_eleve' => $paiement->id,
+            'montant_paye' => 10000,
+            'statut' => TransactionPaiement::EN_ATTENTE,
+            'reference_transaction' => 'TX-UNIQUE-TEST',
+            'ecole_id' => $this->school->id,
+        ]);
+    }
 }
