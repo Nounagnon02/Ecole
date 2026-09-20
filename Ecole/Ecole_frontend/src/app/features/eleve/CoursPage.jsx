@@ -5,7 +5,9 @@
  * Données dynamiques via API /eleve/cours
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import { useApiQuery } from '@/shared/lib/api-client';
+import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
   BookOpen, FileText, Clock, Download, Eye,
@@ -17,37 +19,34 @@ import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
-import { useApi } from '@/hooks/useApi';
-import logger from '@/shared/lib/logger';
+import { useTranslation } from '@/shared/i18n';
 
 export default function CoursPage() {
-  const { loading, error, get } = useApi();
-  const [cours, setCours] = useState([]);
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [filterMatiere, setFilterMatiere] = useState('');
   const [filterType, setFilterType] = useState('');
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await get('/eleves/me/cours');
-        const items = Array.isArray(res?.data?.data) ? res.data.data
-          : Array.isArray(res?.data) ? res.data
-          : Array.isArray(res) ? res
-          : [];
-        setCours(items.map(c => ({
+  // Le chargement passait par un `useState` doublé d'un `useEffect` de
+  // premier rendu, sans cache ni déduplication : deux composants montés
+  // ensemble lançaient deux requêtes, et un retour sur la page rechargeait
+  // tout (cf. audit P4.1). `unwrapList` traverse les trois formes
+  // d'enveloppe que renvoient les contrôleurs.
+  const requete = useApiQuery(['eleves-me-cours'], '/eleves/me/cours');
+
+  const cours = useMemo(
+    () => (unwrapList(requete.data) ?? []).map(c => ({
           ...c,
           type: c.type || 'cours',
           status: c.status || c.statut || 'prevue',
           duree: c.duree || '—',
           resume: c.resume || c.description || '',
           ressources: c.ressources || c.documents || []
-        })));
-      } catch (e) {
-        logger.error('Erreur chargement cours:', e);
-      }
-    })();
-  }, [get]);
+        })),
+    [requete.data],
+  );
+  const loading = requete.isPending;
+  const error = requete.isError ? (requete.error?.message ?? t('common.load_error')) : null;
 
   const matieres = useMemo(() => [...new Set(cours.map((c) => c.matiere?.nom || c.matiere).filter(Boolean))], [cours]);
 
@@ -77,12 +76,12 @@ export default function CoursPage() {
   const getStatusLabel = (status) => {
     switch (status) {
       case 'termine':
-      case 'terminé': return 'Terminé';
+      case 'terminé': return t('pages.bibliothecaire.emprunts.termine');
       case 'prevue':
-      case 'a_venir': return 'À venir';
-      case 'rendu': return 'Rendu';
+      case 'a_venir': return t('pages.eleve.cours.a_venir');
+      case 'rendu': return t('pages.eleve.cours.rendu');
       case 'a_rendre':
-      case 'en_retard': return 'À rendre';
+      case 'en_retard': return t('pages.eleve.cours.a_rendre');
       default: return status;
     }
   };
@@ -107,8 +106,8 @@ export default function CoursPage() {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Mes Cours</h1>
-        <p className="text-sm text-neutral-500">Consultez vos cours, devoirs et ressources</p>
+        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.eleve.cours.title')}</h1>
+        <p className="text-sm text-neutral-500">{t('pages.eleve.cours.subtitle')}</p>
       </div>
 
       {/* Filtres */}
@@ -117,7 +116,7 @@ export default function CoursPage() {
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
             <Input
-              placeholder="Rechercher un cours..."
+              placeholder={t('common.search_course')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
@@ -126,21 +125,21 @@ export default function CoursPage() {
           <select
             value={filterMatiere}
             onChange={(e) => setFilterMatiere(e.target.value)}
-            aria-label="Filtrer par matière"
+            aria-label={t('common.filter_by_subject')}
             className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
           >
-            <option value="">Toutes les matières</option>
+            <option value="">{t('pages.eleve.cours.toutes_les_matieres')}</option>
             {matieres.map((m) => <option key={m} value={m}>{m}</option>)}
           </select>
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            aria-label="Filtrer par type"
+            aria-label={t('pages.eleve.cours.filtrer_par_type')}
             className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
           >
-            <option value="">Tous les types</option>
-            <option value="cours">Cours</option>
-            <option value="devoir">Devoir</option>
+            <option value="">{t('common.all_types')}</option>
+            <option value="cours">{t('common.courses')}</option>
+            <option value="devoir">{t('pages.eleve.cours.devoir')}</option>
             <option value="tp">TP</option>
           </select>
         </div>
@@ -152,7 +151,7 @@ export default function CoursPage() {
           <Card>
             <div className="text-center py-8 text-neutral-500">
               <BookOpen className="mx-auto h-8 w-8 mb-2" />
-              <p className="text-sm">Aucun cours trouvé</p>
+              <p className="text-sm">{t('common.no_course_found')}</p>
             </div>
           </Card>
         )}
@@ -178,7 +177,7 @@ export default function CoursPage() {
 
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <Badge variant="primary" size="sm">{c.matiere?.nom || c.matiere || 'Matière'}</Badge>
+                    <Badge variant="primary" size="sm">{c.matiere?.nom || c.matiere || t('common.subject')}</Badge>
                     <span className="text-xs text-neutral-500 capitalize">
                       {c.type === 'tp' ? 'TP' : c.type}
                     </span>
@@ -188,7 +187,7 @@ export default function CoursPage() {
                     </div>
                   </div>
                   <h3 className="mt-1 text-base font-semibold text-neutral-900 dark:text-white">
-                    {c.chapitre || c.intitule || c.titre || 'Cours'}
+                    {c.chapitre || c.intitule || c.titre || t('common.courses')}
                   </h3>
                   <p className="mt-1 text-sm text-neutral-500">{c.resume}</p>
 
@@ -231,7 +230,7 @@ export default function CoursPage() {
                     <span className="text-lg font-bold text-[var(--accent)]">{c.note}/20</span>
                   )}
                   <Button variant="ghost" size="sm" icon={<Eye />}>
-                    Voir
+                    {t('common.view')}
                   </Button>
                 </div>
               </div>

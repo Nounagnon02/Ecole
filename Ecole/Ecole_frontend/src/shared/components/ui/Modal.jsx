@@ -7,6 +7,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { cn } from '@/shared/lib/utils';
+import { useTranslation } from '@/shared/i18n';
 
 const sizes = {
   sm: 'max-w-sm',
@@ -27,6 +28,7 @@ export default function Modal({
   className,
   closeOnOverlay = true,
 }) {
+  const { t } = useTranslation();
   const closeRef = useRef(null);
 
   const handleKeyDown = useCallback(
@@ -111,7 +113,7 @@ export default function Modal({
                   <button
                     ref={closeRef}
                     onClick={onClose}
-                    aria-label="Fermer"
+                    aria-label={t('common.close')}
                     className="flex h-9 w-9 items-center justify-center rounded-lg text-[var(--text-tertiary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
                   >
                     <X className="h-4 w-4" />

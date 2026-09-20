@@ -36,6 +36,7 @@ import useUIStore from '@/shared/stores/ui-store';
 import apiClient from '@/shared/lib/api-client';
 import { ROUTE_CONFIG } from '@/features/roles/route-config';
 import { ROLES, normalizeRole } from '@/shared/types/roles';
+import { useTranslation } from '@/shared/i18n';
 
 /* ─── Debounce helper ────────────────────────────────────────────────── */
 function useDebouncedValue(value, delay = 300) {
@@ -120,6 +121,7 @@ function getAllRoutes(userRole) {
 }
 
 export default function CommandPalette() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const { commandPaletteOpen, closeCommandPalette } = useUIStore();
@@ -383,7 +385,7 @@ export default function CommandPalette() {
           {/* Palette */}
           <motion.div
             role="dialog"
-            aria-label="Palette de commandes"
+            aria-label={t('components.command_palette.palette_de_commandes')}
             aria-modal="true"
             initial={{ opacity: 0, scale: 0.96, y: -12 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -405,7 +407,7 @@ export default function CommandPalette() {
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Rechercher élèves, classes, paiements..."
+                  placeholder={t('components.command_palette.rechercher_eleves_classes_paiements')}
                   role="combobox"
                   aria-expanded={hasResults}
                   aria-autocomplete="list"
@@ -427,7 +429,7 @@ export default function CommandPalette() {
                 ref={listRef}
                 id="command-palette-list"
                 role="listbox"
-                aria-label="Résultats de recherche"
+                aria-label={t('components.command_palette.resultats_de_recherche')}
                 className="max-h-80 overflow-y-auto p-2"
               >
                 {!hasResults && debouncedQuery.trim() && !apiLoading && (
@@ -437,14 +439,14 @@ export default function CommandPalette() {
                       Aucun résultat pour &ldquo;{debouncedQuery}&rdquo;
                     </p>
                     <p className="text-xs text-[var(--text-tertiary)]">
-                      Essayez un nom d&apos;élève, de classe ou une action
+                      {t('components.command_palette.essayez_un_nom_d_eleve_de_classe_ou_une_action')}
                     </p>
                   </div>
                 )}
 
                 {!debouncedQuery.trim() && (
                   <div className="mb-2 px-2 py-1.5 text-xs font-medium text-[var(--text-tertiary)] uppercase tracking-wider">
-                    Suggestions
+                    {t('components.command_palette.suggestions')}
                   </div>
                 )}
 
@@ -483,7 +485,7 @@ export default function CommandPalette() {
 
                 {!debouncedQuery.trim() && !hasResults && (
                   <div className="px-4 py-8 text-center text-sm text-[var(--text-tertiary)]">
-                    Tapez pour commencer à rechercher...
+                    {t('components.command_palette.tapez_pour_commencer_a_rechercher')}
                   </div>
                 )}
               </div>
@@ -492,15 +494,15 @@ export default function CommandPalette() {
               <div className="flex items-center gap-4 border-t border-[var(--border-light)] px-4 py-2.5">
                 <div className="flex items-center gap-1.5 text-[11px] text-[var(--text-tertiary)]">
                   <kbd className="rounded border border-[var(--border)] bg-[var(--surface-subtle)] px-1 py-0.5 text-[10px]">↑↓</kbd>
-                  <span>Naviguer</span>
+                  <span>{t('components.command_palette.naviguer')}</span>
                 </div>
                 <div className="flex items-center gap-1.5 text-[11px] text-[var(--text-tertiary)]">
                   <kbd className="rounded border border-[var(--border)] bg-[var(--surface-subtle)] px-1 py-0.5 text-[10px]">↵</kbd>
-                  <span>Ouvrir</span>
+                  <span>{t('components.command_palette.ouvrir')}</span>
                 </div>
                 <div className="flex items-center gap-1.5 text-[11px] text-[var(--text-tertiary)]">
                   <kbd className="rounded border border-[var(--border)] bg-[var(--surface-subtle)] px-1 py-0.5 text-[10px]">Esc</kbd>
-                  <span>Fermer</span>
+                  <span>{t('common.close')}</span>
                 </div>
               </div>
             </div>

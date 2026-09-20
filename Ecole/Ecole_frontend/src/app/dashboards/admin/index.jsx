@@ -6,7 +6,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
   Users,
   Settings,
@@ -25,18 +25,20 @@ import {
   Area, AreaChart
 } from 'recharts';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
 import { cn } from '@/shared/lib/utils';
+import { useTranslation } from '@/shared/i18n';
 import { useDashboardStats } from '@/app/dashboards/hooks/useDashboardData';
+import DashboardShell from '@/app/dashboards/DashboardShell';
 import StatsCard from '@/shared/components/ui/StatsCard';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
-import { RefreshButton } from '@/shared/components/ui';
-import { ErrorDisplay } from '@/shared/components/ui/EmptyState';
 
 // ─── Constantes ───────────────────────────────────────────────
 
+// Les `id`/`key` ci-dessous sont aussi le dernier segment de la clé i18n
+// (`dashboards.admin.tabs.<id>`, `dashboards.admin.stats.<key>`) : le texte
+// affiché vient de `t()`, ces tableaux ne portent plus que la structure.
 const TABS = [
   { id: 'apercu', label: 'Aperçu', icon: Activity },
   { id: 'utilisateurs', label: 'Utilisateurs', icon: Users },
@@ -46,16 +48,25 @@ const TABS = [
 ];
 
 const STATS_META = [
-  { title: 'Utilisateurs Actifs', icon: Users, color: 'primary' },
-  { title: 'Espace Disque', icon: HardDrive, color: 'sky' },
-  { title: 'Erreurs API', icon: AlertTriangle, color: 'red' },
-  { title: 'Uptime', icon: CheckCircle2, color: 'emerald' },
+  { title: 'Utilisateurs Actifs', key: 'utilisateurs_actifs', icon: Users, color: 'primary' },
+  { title: 'Espace Disque', key: 'espace_disque', icon: HardDrive, color: 'sky' },
+  { title: 'Erreurs API', key: 'erreurs_api', icon: AlertTriangle, color: 'red' },
+  { title: 'Uptime', key: 'uptime', icon: CheckCircle2, color: 'emerald' },
 ];
 
 // ─── Sections ─────────────────────────────────────────────────
 
 function ApercuSection({ data, loading, onRefresh }) {
-  const safeStats = data?.stats?.map((s, i) => ({ ...s, icon: STATS_META[i]?.icon, color: STATS_META[i]?.color })) || [];
+  const { t } = useTranslation();
+  // Le titre affiché est traduit côté front, pas celui renvoyé par l'API :
+  // le backend n'a pas de notion de locale, et les deux tableaux restent
+  // alignés par position comme `icon`/`color` juste à côté.
+  const safeStats = data?.stats?.map((s, i) => ({
+    ...s,
+    title: STATS_META[i]?.key ? t(`dashboards.admin.stats.${STATS_META[i].key}`) : s.title,
+    icon: STATS_META[i]?.icon,
+    color: STATS_META[i]?.color,
+  })) || [];
   const safeTraffic = data?.traffic || [];
   const safeLogs = data?.logs || [];
   const safeHealth = data?.health || [];
@@ -82,11 +93,11 @@ function ApercuSection({ data, loading, onRefresh }) {
           <Card.Header>
             <div className="flex items-center justify-between">
               <div>
-                <Card.Title>Activité Plateforme</Card.Title>
-                <Card.Description>Actions auditées — 7 derniers jours</Card.Description>
+                <Card.Title>{t('dashboards.admin.activite_plateforme')}</Card.Title>
+                <Card.Description>{t('dashboards.admin.actions_auditees_7_derniers_jours')}</Card.Description>
               </div>
               <Button variant="ghost" size="sm" onClick={onRefresh} disabled={loading}>
-                <RefreshCw className={cn('h-4 w-4 mr-1', loading && 'animate-spin')} /> Actualiser
+                <RefreshCw className={cn('h-4 w-4 mr-1', loading && 'animate-spin')} /> {t('dashboards.admin.actualiser')}
               </Button>
             </div>
           </Card.Header>
@@ -114,8 +125,8 @@ function ApercuSection({ data, loading, onRefresh }) {
         {/* System health */}
         <Card>
           <Card.Header>
-            <Card.Title>Santé Système</Card.Title>
-            <Card.Description>Indicateurs clés</Card.Description>
+            <Card.Title>{t('dashboards.admin.sante_systeme')}</Card.Title>
+            <Card.Description>{t('dashboards.admin.indicateurs_cles')}</Card.Description>
           </Card.Header>
           <Card.Body className="space-y-4">
             {safeHealth.map((item) => (
@@ -140,7 +151,7 @@ function ApercuSection({ data, loading, onRefresh }) {
       <Card>
         <Card.Header>
           <div className="flex items-center justify-between">
-            <Card.Title>Logs Système — Temps Réel</Card.Title>
+            <Card.Title>{t('dashboards.admin.logs_systeme_temps_reel')}</Card.Title>
             <Badge variant="danger" size="sm">{safeLogs.filter(l => l.level === 'ERROR').length} erreurs</Badge>
           </div>
         </Card.Header>
@@ -165,7 +176,7 @@ function ApercuSection({ data, loading, onRefresh }) {
         </Card.Body>
         <Card.Footer>
           <Button variant="ghost" size="sm" className="w-full">
-            Voir tous les logs <Terminal className="h-4 w-4 ml-1" />
+            {t('dashboards.admin.voir_tous_les_logs')} <Terminal className="h-4 w-4 ml-1" />
           </Button>
         </Card.Footer>
       </Card>
@@ -174,13 +185,13 @@ function ApercuSection({ data, loading, onRefresh }) {
       <Card>
         <Card.Header>
           <div className="flex items-center justify-between">
-            <Card.Title>Utilisateurs Récents</Card.Title>
+            <Card.Title>{t('dashboards.admin.utilisateurs_recents')}</Card.Title>
             <Badge size="sm">{safeUtilisateurs.length} comptes</Badge>
           </div>
         </Card.Header>
         <Card.Body className="p-0">
           {safeUtilisateurs.length === 0 ? (
-            <p className="text-neutral-500 text-center py-8 text-sm">Aucun utilisateur récent</p>
+            <p className="text-neutral-500 text-center py-8 text-sm">{t('dashboards.admin.aucun_utilisateur_recent')}</p>
           ) : (
             <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
               {safeUtilisateurs.map((u) => (
@@ -207,6 +218,7 @@ function ApercuSection({ data, loading, onRefresh }) {
 }
 
 function LogsSection({ data, loading }) {
+  const { t } = useTranslation();
   const logs = data?.logs || [];
   const [niveau, setNiveau] = useState('Tous');
   const [recherche, setRecherche] = useState('');
@@ -222,11 +234,11 @@ function LogsSection({ data, loading }) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Logs Système</h2>
+          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">{t('dashboards.admin.logs_systeme')}</h2>
           <p className="text-sm text-neutral-500 mt-1">Journalisation détaillée — {logs.length} entrées</p>
         </div>
         <Button variant="ghost" size="sm" onClick={() => window.print()}>
-          <Download className="h-4 w-4 mr-1" /> Exporter
+          <Download className="h-4 w-4 mr-1" /> {t('common.export')}
         </Button>
       </div>
 
@@ -236,8 +248,8 @@ function LogsSection({ data, loading }) {
           <input
             value={recherche}
             onChange={(e) => setRecherche(e.target.value)}
-            placeholder="Rechercher dans les logs…"
-            aria-label="Rechercher dans les logs"
+            placeholder={t('dashboards.admin.rechercher_dans_les_logs')}
+            aria-label={t('dashboards.admin.rechercher_dans_les_logs_2')}
             className="w-full pl-9 pr-4 py-2 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
           />
         </div>
@@ -262,9 +274,9 @@ function LogsSection({ data, loading }) {
       <Card>
         <Card.Body className="p-0">
           {loading ? (
-            <p className="text-neutral-500 text-center py-12">Chargement des logs…</p>
+            <p className="text-neutral-500 text-center py-12">{t('dashboards.admin.chargement_des_logs')}</p>
           ) : filtres.length === 0 ? (
-            <p className="text-neutral-500 text-center py-12">Aucune entrée de journal pour ce filtre</p>
+            <p className="text-neutral-500 text-center py-12">{t('dashboards.admin.aucune_entree_de_journal_pour_ce_filtre')}</p>
           ) : (
             <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
               {filtres.map((log) => (
@@ -291,21 +303,22 @@ function LogsSection({ data, loading }) {
 }
 
 function SauvegardesSection() {
+  const { t } = useTranslation();
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Sauvegardes</h2>
-          <p className="text-sm text-neutral-500 mt-1">Gestion des backups</p>
+          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">{t('dashboards.admin.sauvegardes')}</h2>
+          <p className="text-sm text-neutral-500 mt-1">{t('dashboards.admin.gestion_des_backups')}</p>
         </div>
         <Button>
-          <Database className="h-4 w-4 mr-2" /> Sauvegarder
+          <Database className="h-4 w-4 mr-2" /> {t('dashboards.admin.sauvegarder')}
         </Button>
       </div>
       <Card>
         <Card.Body>
           <p className="text-neutral-500 text-center py-12">
-            Backups automatiques, restauration et planification
+            {t('dashboards.admin.backups_automatiques_restauration_et')}
           </p>
         </Card.Body>
       </Card>
@@ -317,6 +330,7 @@ function SauvegardesSection() {
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('apercu');
   const { data, loading, error, refetch } = useDashboardStats('admin');
 
@@ -346,69 +360,27 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <motion.h1
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="font-fraunces text-2xl font-bold text-neutral-900 dark:text-white"
-          >
-            Administration Système
-          </motion.h1>
-          <p className="text-neutral-500 dark:text-neutral-400 mt-1">
-            Gestion de la plateforme — {format(new Date(), 'EEEE d MMMM yyyy', { locale: fr })}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <RefreshButton loading={loading} onRefresh={refetch} />
-          <Button variant="ghost" size="sm">
-            <Bell className="h-4 w-4 mr-1" /> Alertes
-          </Button>
-          <Button variant="ghost" size="sm">
-            <Settings className="h-4 w-4 mr-1" /> Paramètres
-          </Button>
-        </div>
-      </div>
-
-      {error && (
-        <ErrorDisplay message={error} onRetry={refetch} />
-      )}
-
-      <div className="border-b border-neutral-200 dark:border-neutral-800">
-        <nav className="flex gap-1 overflow-x-auto -mb-px">
-          {TABS.map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => handleTabClick(tab.id)}
-                className={cn(
-                  'flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-all whitespace-nowrap',
-                  activeTab === tab.id
-                    ? 'border-[var(--accent)] text-[var(--accent)] dark:text-[var(--accent)]'
-                    : 'border-transparent text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200'
-                )}
-              >
-                <Icon className="h-4 w-4" />
-                {tab.label}
-              </button>
-            );
-          })}
-        </nav>
-      </div>
-
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
-          transition={{ duration: 0.2 }}
-        >
-          {renderSection()}
-        </motion.div>
-      </AnimatePresence>
-    </div>
+    <DashboardShell
+      title={t('dashboards.admin.title')}
+      subtitle={t('dashboards.admin.subtitle')}
+      tabs={TABS.map((tab) => ({ ...tab, label: t(`dashboards.admin.tabs.${tab.id}`) }))}
+      activeTab={activeTab}
+      onTabChange={handleTabClick}
+      loading={loading}
+      error={error}
+      onRefresh={refetch}
+      actions={
+        <>
+    <Button variant="ghost" size="sm">
+    <Bell className="h-4 w-4 mr-1" /> {t('dashboards.admin.alertes')}
+    </Button>
+    <Button variant="ghost" size="sm">
+    <Settings className="h-4 w-4 mr-1" /> {t('dashboards.admin.parametres')}
+    </Button>
+        </>
+      }
+    >
+      {renderSection()}
+    </DashboardShell>
   );
 }

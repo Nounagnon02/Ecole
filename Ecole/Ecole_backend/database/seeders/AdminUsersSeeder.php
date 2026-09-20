@@ -2,17 +2,25 @@
 
 namespace Database\Seeders;
 
+use App\Models\Enseignant;
 use App\Models\User;
 use App\Models\Ecole;
 use App\Support\Roles;
+use Database\Seeders\Concerns\RefusesInProduction;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
 
 class AdminUsersSeeder extends Seeder
 {
+    use RefusesInProduction;
+
     public function run()
     {
+        if ($this->abortIfProduction()) {
+            return;
+        }
+
         $password = 'password';
 
         $roles = [
@@ -34,7 +42,7 @@ class AdminUsersSeeder extends Seeder
 
         foreach ($ecoles as $ecole) {
             foreach ($roles as $role) {
-                User::firstOrCreate(
+                $user = User::firstOrCreate(
                     ['identifiant' => $role . '_ecole' . $ecole->id],
                     [
                         'name'        => ucfirst($role) . ' ' . $ecole->nom,
@@ -46,6 +54,21 @@ class AdminUsersSeeder extends Seeder
                         'is_active'   => true,
                     ]
                 );
+
+                // `role` seul ne donne pas de profil : les endpoints « espace
+                // enseignant » (EnseignantController::notes/classes, …) lisent
+                // $user->enseignant et répondent 404 en son absence. Le compte
+                // de démonstration `enseignant_ecole{id}` n'avait donc jamais
+                // accès à son propre espace. `withoutGlobalScope('ecole')` :
+                // sans contexte authentifié, le scope de BelongsToEcole
+                // résoudrait `null` et referait un nouveau profil à chaque
+                // exécution du seeder.
+                if ($role === Roles::TEACHER) {
+                    Enseignant::withoutGlobalScope('ecole')->firstOrCreate(
+                        ['user_id' => $user->id],
+                        ['ecole_id' => $ecole->id]
+                    );
+                }
             }
         }
 

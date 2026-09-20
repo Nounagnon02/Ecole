@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\PaiementEleve;
 use App\Services\PaiementService;
+use App\Support\SchoolContext;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -31,9 +32,24 @@ class ProcessPaiementJob implements ShouldQueue
     {
         Log::info('Traitement du paiement', ['id' => $this->paiement->id]);
 
+        // La restauration du modèle sérialisé ignore les global scopes, mais
+        // pas la relation `eleve` chargée juste après : sans école liée, elle
+        // revenait vide et la notification partait avec un destinataire null
+        // (audit A2).
+        if (!$this->paiement->ecole_id) {
+            Log::error('Paiement sans école, traitement abandonné', ['id' => $this->paiement->id]);
+
+            return;
+        }
+
+        $eleve = SchoolContext::for(
+            (int) $this->paiement->ecole_id,
+            fn () => $this->paiement->eleve,
+        );
+
         // Notifier l'élève et/ou le parent
         $notificationData = [
-            'user_id' => $this->paiement->eleve->user_id ?? $this->paiement->eleve->tuteur_user_id,
+            'user_id' => $eleve?->user_id ?? $eleve?->tuteur_user_id,
             'type' => 'paiement',
             'title' => 'Paiement enregistré',
             'body' => "Paiement de {$this->paiement->montant} FCFA enregistré",

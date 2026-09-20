@@ -3,10 +3,13 @@
 namespace Database\Seeders;
 
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Database\Seeders\Concerns\RefusesInProduction;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
+    use RefusesInProduction;
+
     /**
      * Seed the application's database.
      *
@@ -14,6 +17,14 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
+        // Chacun des cinq seeders ci-dessous refuse déjà individuellement de
+        // tourner en production (voir Concerns\RefusesInProduction) ; ce garde
+        // n'ajoute rien côté sécurité, il évite juste cinq messages d'erreur
+        // identiques quand `db:seed` est lancé sans argument.
+        if ($this->abortIfProduction()) {
+            return;
+        }
+
         // L'ordre compte : les trois premiers créent l'établissement, les comptes
         // et la démographie ; les deux suivants s'appuient dessus.
         //

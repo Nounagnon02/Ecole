@@ -5,7 +5,9 @@
  * Données via API /surveillant/incidents et /surveillant/statistiques
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import { useApiQuery } from '@/shared/lib/api-client';
+import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
   Scale, AlertTriangle, Search, Plus,
@@ -18,8 +20,7 @@ import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
-import { useApi } from '@/hooks/useApi';
-import logger from '@/shared/lib/logger';
+import { useTranslation } from '@/shared/i18n';
 
 const getGraviteVariant = (g) => {
   switch (g) {
@@ -31,14 +32,11 @@ const getGraviteVariant = (g) => {
   }
 };
 
-const getGraviteLabel = (g) => {
-  switch (g) {
-    case 'legere':
-    case 'faible': return 'Légère';
-    case 'moyenne': return 'Moyenne';
-    case 'grave': return 'Grave';
-    default: return g || '--';
-  }
+const GRAVITE_LABEL_KEYS = {
+  legere: 'pages.censeur.discipline.legere',
+  faible: 'pages.censeur.discipline.legere',
+  moyenne: 'pages.censeur.discipline.moyenne',
+  grave: 'pages.censeur.discipline.grave',
 };
 
 const ALERT_ICONS = {
@@ -54,41 +52,38 @@ const ALERT_COLORS = {
 };
 
 export default function DisciplinePage() {
-  const { loading, error, get } = useApi();
-  const [incidents, setIncidents] = useState([]);
-  const [stats, setStats] = useState(null);
-  const [statsLoading, setStatsLoading] = useState(true);
+  const { t } = useTranslation();
+  const getGraviteLabel = (g) => (GRAVITE_LABEL_KEYS[g] ? t(GRAVITE_LABEL_KEYS[g]) : (g || '--'));
   const [search, setSearch] = useState('');
   const [filterGravite, setFilterGravite] = useState('');
   const [filterStatut, setFilterStatut] = useState('');
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const [incRes, statsRes] = await Promise.all([
-          get('/surveillant/incidents'),
-          get('/surveillant/statistiques'),
-        ]);
+  // Deux requêtes indépendantes plutôt qu'un `Promise.all` derrière un
+  // `useApi()` à l'état partagé : l'échec de l'une ne dit plus rien de
+  // l'autre, et chacune a son entrée de cache (cf. audit P4.1).
+  const requeteIncidents = useApiQuery(['surveillant-incidents'], '/surveillant/incidents');
+  const requeteStats = useApiQuery(['surveillant-statistiques'], '/surveillant/statistiques');
 
-        const items = Array.isArray(incRes?.data?.data) ? incRes.data.data
-          : Array.isArray(incRes?.data) ? incRes.data
-          : Array.isArray(incRes) ? incRes
-          : [];
-        setIncidents(items.map((inc) => ({
-          ...inc,
-          type: inc.description || inc.type || 'Incident',
-          statut: inc.statut || 'en_cours',
-          rapportePar: '--'
-        })));
+  // La projection d'origine est conservée : la page affiche `type`, que le
+  // serveur ne renvoie pas toujours — il faut retomber sur la description.
+  const incidents = useMemo(
+    () => (unwrapList(requeteIncidents.data) ?? []).map((inc) => ({
+      ...inc,
+      type: inc.description || inc.type || 'Incident',
+      statut: inc.statut || 'en_cours',
+      rapportePar: '--',
+    })),
+    [requeteIncidents.data],
+  );
+  // `/surveillant/statistiques` renvoie un objet, pas une liste : pas de
+  // `unwrapList` ici, seulement le déballage de l'enveloppe.
+  const stats = requeteStats.data?.data ?? requeteStats.data ?? null;
+  const statsLoading = requeteStats.isPending;
 
-        setStats(statsRes?.data?.data ?? null);
-      } catch (e) {
-        logger.error('Erreur chargement discipline:', e);
-      } finally {
-        setStatsLoading(false);
-      }
-    })();
-  }, [get]);
+  const loading = requeteIncidents.isPending;
+  const error = requeteIncidents.isError
+    ? (requeteIncidents.error?.message ?? t('common.load_error'))
+    : null;
 
   const incidentStats = useMemo(() => ({
     total: incidents.length,
@@ -128,7 +123,7 @@ export default function DisciplinePage() {
           onClick={() => window.location.reload()}
           className="mt-4 inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors"
         >
-          Réessayer
+          {t('common.retry')}
         </button>
       </div>
     );
@@ -137,16 +132,16 @@ export default function DisciplinePage() {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Discipline</h1>
-        <p className="text-sm text-neutral-500">Gestion des incidents, sanctions et tendances disciplinaires</p>
+        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.censeur.discipline.title')}</h1>
+        <p className="text-sm text-neutral-500">{t('pages.censeur.discipline.subtitle')}</p>
       </div>
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-4">
-        <StatsCard title="Total Incidents" value={String(incidentStats.total)} icon={AlertTriangle} color="primary" />
-        <StatsCard title="En cours" value={String(incidentStats.enCours)} icon={Clock} color="amber" />
-        <StatsCard title="Traités" value={String(incidentStats.traitees)} icon={CheckCircle} color="emerald" />
-        <StatsCard title="Cas graves" value={String(incidentStats.graves)} icon={Scale} color="red" />
+        <StatsCard title={t('pages.censeur.discipline.total_incidents')} value={String(incidentStats.total)} icon={AlertTriangle} color="primary" />
+        <StatsCard title={t('common.status.in_progress')} value={String(incidentStats.enCours)} icon={Clock} color="amber" />
+        <StatsCard title={t('pages.censeur.discipline.traites')} value={String(incidentStats.traitees)} icon={CheckCircle} color="emerald" />
+        <StatsCard title={t('pages.censeur.discipline.cas_graves')} value={String(incidentStats.graves)} icon={Scale} color="red" />
       </div>
 
       {/* Tendances + Alertes */}
@@ -156,7 +151,7 @@ export default function DisciplinePage() {
           <div className="p-4">
             <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-3">
               <TrendingUp className="h-4 w-4 inline mr-1.5 text-neutral-400" />
-              Tendances du mois
+              {t('pages.censeur.discipline.tendances_du_mois')}
             </h3>
             {statsLoading ? (
               <div className="space-y-2">
@@ -165,15 +160,15 @@ export default function DisciplinePage() {
                 ))}
               </div>
             ) : !stats ? (
-              <p className="text-sm text-neutral-400">Statistiques non disponibles</p>
+              <p className="text-sm text-neutral-400">{t('pages.censeur.discipline.statistiques_non_disponibles')}</p>
             ) : (
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-neutral-600 dark:text-neutral-400">Incidents ce mois</span>
+                  <span className="text-sm text-neutral-600 dark:text-neutral-400">{t('pages.censeur.discipline.incidents_ce_mois')}</span>
                   <span className="text-lg font-bold text-neutral-900 dark:text-white">{stats.mois_courant}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-neutral-600 dark:text-neutral-400">Évolution vs mois dernier</span>
+                  <span className="text-sm text-neutral-600 dark:text-neutral-400">{t('pages.censeur.discipline.evolution_vs_mois_dernier')}</span>
                   <span className={cn(
                     'inline-flex items-center gap-1 text-sm font-medium',
                     stats.evolution > 0 ? 'text-red-500' : stats.evolution < 0 ? 'text-emerald-500' : 'text-neutral-500'
@@ -183,17 +178,17 @@ export default function DisciplinePage() {
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-neutral-600 dark:text-neutral-400">Total sanctions</span>
+                  <span className="text-sm text-neutral-600 dark:text-neutral-400">{t('pages.censeur.discipline.total_sanctions')}</span>
                   <span className="text-lg font-bold text-neutral-900 dark:text-white">{stats.total_sanctions}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-neutral-600 dark:text-neutral-400">Total absences</span>
+                  <span className="text-sm text-neutral-600 dark:text-neutral-400">{t('pages.censeur.discipline.total_absences')}</span>
                   <span className="text-lg font-bold text-neutral-900 dark:text-white">{stats.total_absences}</span>
                 </div>
                 {/* Répartition par gravité */}
                 {stats.par_gravite && (
                   <div className="pt-2 border-t border-neutral-100 dark:border-neutral-800">
-                    <p className="text-xs text-neutral-500 mb-2">Répartition par gravité</p>
+                    <p className="text-xs text-neutral-500 mb-2">{t('pages.censeur.discipline.repartition_par_gravite')}</p>
                     <div className="flex gap-2">
                       {Object.entries(stats.par_gravite).map(([key, val]) => (
                         <div key={key} className="flex-1 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 p-2 text-center">
@@ -214,7 +209,7 @@ export default function DisciplinePage() {
           <div className="p-4">
             <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-3">
               <AlertTriangle className="h-4 w-4 inline mr-1.5 text-amber-500" />
-              Alertes automatiques
+              {t('pages.censeur.discipline.alertes_automatiques')}
             </h3>
             {statsLoading ? (
               <div className="space-y-2">
@@ -225,7 +220,7 @@ export default function DisciplinePage() {
             ) : !stats?.alertes || stats.alertes.length === 0 ? (
               <div className="py-8 text-center text-sm text-neutral-400">
                 <CheckCircle className="h-8 w-8 mx-auto mb-2 text-emerald-400" />
-                <p>Aucune alerte pour le moment</p>
+                <p>{t('pages.censeur.discipline.aucune_alerte_pour_le_moment')}</p>
               </div>
             ) : (
               <div className="space-y-2">
@@ -253,7 +248,7 @@ export default function DisciplinePage() {
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
             <Input
-              placeholder="Rechercher un incident..."
+              placeholder={t('pages.censeur.discipline.rechercher_un_incident')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
@@ -263,25 +258,25 @@ export default function DisciplinePage() {
             <select
               value={filterGravite}
               onChange={(e) => setFilterGravite(e.target.value)}
-              aria-label="Filtrer par gravité"
+              aria-label={t('pages.censeur.discipline.filtrer_par_gravite')}
               className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
             >
-              <option value="">Toutes les gravités</option>
-              <option value="faible">Faible</option>
-              <option value="moyenne">Moyenne</option>
-              <option value="grave">Grave</option>
+              <option value="">{t('pages.censeur.discipline.toutes_les_gravites')}</option>
+              <option value="faible">{t('pages.censeur.discipline.faible')}</option>
+              <option value="moyenne">{t('common.average')}</option>
+              <option value="grave">{t('pages.censeur.discipline.grave')}</option>
             </select>
             <select
               value={filterStatut}
               onChange={(e) => setFilterStatut(e.target.value)}
-              aria-label="Filtrer par statut"
+              aria-label={t('common.filter_by_status')}
               className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
             >
-              <option value="">Tous les statuts</option>
-              <option value="en_cours">En cours</option>
-              <option value="traitee">Traitée</option>
+              <option value="">{t('common.all_statuses')}</option>
+              <option value="en_cours">{t('common.status.in_progress')}</option>
+              <option value="traitee">{t('pages.censeur.discipline.traitee')}</option>
             </select>
-            <Button size="sm" icon={<Plus />}>Nouvel incident</Button>
+            <Button size="sm" icon={<Plus />}>{t('pages.censeur.discipline.nouvel_incident')}</Button>
           </div>
         </div>
       </Card>
@@ -292,7 +287,7 @@ export default function DisciplinePage() {
           <Card>
             <div className="text-center py-8 text-neutral-500">
               <Scale className="mx-auto h-8 w-8 mb-2" />
-              <p className="text-sm">Aucun incident trouvé</p>
+              <p className="text-sm">{t('pages.censeur.discipline.aucun_incident_trouve')}</p>
             </div>
           </Card>
         )}
@@ -317,7 +312,7 @@ export default function DisciplinePage() {
                   <span className="text-sm font-semibold text-neutral-900 dark:text-white">{incident.type}</span>
                   <Badge variant={getGraviteVariant(incident.gravite)} size="sm">{getGraviteLabel(incident.gravite)}</Badge>
                   <Badge variant={incident.statut === 'traitee' || incident.statut === 'termine' || incident.statut === 'résolu' ? 'primary' : 'warning'} size="sm">
-                    {incident.statut === 'traitee' || incident.statut === 'termine' || incident.statut === 'résolu' ? 'Traitée' : 'En cours'}
+                    {incident.statut === 'traitee' || incident.statut === 'termine' || incident.statut === 'résolu' ? t('pages.censeur.discipline.traitee') : t('common.status.in_progress')}
                   </Badge>
                 </div>
                 <div className="mt-2 flex flex-wrap items-center gap-4 text-xs text-neutral-500">
@@ -327,7 +322,7 @@ export default function DisciplinePage() {
                   </span>
                 </div>
               </div>
-              <Button variant="ghost" size="sm">Détails</Button>
+              <Button variant="ghost" size="sm">{t('common.details')}</Button>
             </div>
           </Card>
         ))}

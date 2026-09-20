@@ -7,6 +7,7 @@ use App\Models\Notes;
 use App\Models\Eleve;
 use App\Models\Classes;
 use App\Support\AnneeScolaire;
+use App\Http\Requests\Notes\StoreNoteRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -52,32 +53,11 @@ class NotesCrudController extends Controller
         ]);
     }
 
-    public function getNotesByEleves($eleveId)
-    {
-        $eleve = Eleve::find($eleveId);
-        if (!$eleve) {
-            return response()->json(['success' => false, 'message' => 'Élève non trouvé'], 404);
-        }
-        $this->authorize('view', $eleve);
-
-        $notes = Notes::with('eleve')
-            ->where('eleve_id', $eleveId)
-            ->get();
-
-        return response()->json($notes);
-    }
-
-    public function getNotesBySession($sessionId)
-    {
-        $this->authorize('viewAny', Notes::class);
-
-        $notes = Notes::with('eleve')
-            ->where('sessions_id', $sessionId)
-            ->get();
-
-        return response()->json($notes);
-    }
-
+    /**
+     * `getNotesByEleves` et `getNotesBySession` retirées : ni routées, ni
+     * appelées, ni testées. Cette seconde interrogeait au passage
+     * `sessions_id`, une colonne qui n'existe pas.
+     */
     public function show($id)
     {
         $note = Notes::with(['eleve', 'classe', 'matiere', 'enseignant'])->find($id);
@@ -98,31 +78,9 @@ class NotesCrudController extends Controller
     }
 
 
-    public function store(Request $request)
+    public function store(StoreNoteRequest $request)
         {
             $this->authorize('create', Notes::class);
-
-            // Validation des données
-            $validator = Validator::make($request->all(), [
-                'eleve_id' => 'required|school_exists:eleves,id',
-                'classe_id' => 'required|school_exists:classes,id',
-                'matiere_id' => 'required|school_exists:matieres,id',
-                'note' => 'required|numeric|min:0|max:20',
-                'note_sur' => 'required|numeric|min:1|max:20',
-                'type_evaluation' => 'required|in:Devoir1,Devoir2,Interrogation,1ère evaluation,2ème evaluation,3ème evaluation,4ème evaluation,5ème evaluation,6ème evaluation',
-                'date_evaluation' => 'required|date',
-                'periode' => 'required|in:Trimestre 1,Trimestre 2,Trimestre 3',
-                'annee_scolaire' => 'nullable|string|regex:/^\d{4}-\d{4}$/',
-                'observation' => 'nullable|string|max:500'
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Données invalides',
-                    'errors' => $validator->errors()
-                ], 422);
-            }
 
             try {
                 DB::beginTransaction();
@@ -130,6 +88,7 @@ class NotesCrudController extends Controller
                 // Vérifier que l'élève appartient bien à la classe
                 $eleve = Eleve::find($request->eleve_id);
                 if ($eleve->classe_id != $request->classe_id) {
+                    DB::rollBack();
                     return response()->json([
                         'success' => false,
                         'message' => 'L\'élève n\'appartient pas à cette classe'
@@ -142,6 +101,7 @@ class NotesCrudController extends Controller
                     : true;
                 
                 if (!$serieHasMatiere) {
+                    DB::rollBack();
                     return response()->json([
                         'success' => false,
                         'message' => 'Cette matière n\'est pas disponible pour la série de cet élève'
@@ -151,6 +111,7 @@ class NotesCrudController extends Controller
                 // Validation spécifique selon le type d'évaluation
                 $validationResult = $this->validateNoteByType($request);
                 if (!$validationResult['success']) {
+                    DB::rollBack();
                     return response()->json($validationResult, 400);
                 }
 
@@ -180,9 +141,14 @@ class NotesCrudController extends Controller
                 ], 201);
 
             } catch (\Exception $e) {
-                $this->rethrowIfMeaningful($e);
+                // Rollback D'ABORD : `rethrowIfMeaningful` relance
+                // immédiatement les exceptions « signifiantes »
+                // (403/404/422/...) — les relancer avant le rollback
+                // désynchronise la comptabilité de transactions de Laravel
+                // de la connexion PDO réelle.
                 DB::rollBack();
-                
+                $this->rethrowIfMeaningful($e);
+
                 return response()->json([
                     'success' => false,
                     'message' => 'Erreur lors de l\'enregistrement de la note',
@@ -237,6 +203,7 @@ class NotesCrudController extends Controller
 
             $eleve = Eleve::find($request->eleve_id);
             if ($eleve->classe_id != $request->classe_id) {
+                DB::rollBack();
                 return response()->json([
                     'success' => false,
                     'message' => 'L\'élève n\'appartient pas à cette classe'
@@ -248,6 +215,7 @@ class NotesCrudController extends Controller
                 : true;
 
             if (!$serieHasMatiere) {
+                DB::rollBack();
                 return response()->json([
                     'success' => false,
                     'message' => 'Cette matière n\'est pas disponible pour la série de cet élève'
@@ -256,6 +224,7 @@ class NotesCrudController extends Controller
 
             $validationResult = $this->validateNoteByType($request, $id);
             if (!$validationResult['success']) {
+                DB::rollBack();
                 return response()->json($validationResult, 400);
             }
 
@@ -272,9 +241,9 @@ class NotesCrudController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
-            $this->rethrowIfMeaningful($e);
             DB::rollBack();
-            
+            $this->rethrowIfMeaningful($e);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Erreur lors de la mise à jour de la note',
@@ -484,8 +453,8 @@ class NotesCrudController extends Controller
             ], 201);
 
         } catch (\Exception $e) {
-            $this->rethrowIfMeaningful($e);
             DB::rollBack();
+            $this->rethrowIfMeaningful($e);
 
             return response()->json([
                 'success' => false,

@@ -16,6 +16,7 @@ import useAuthStore from '@/shared/stores/auth-store';
 import useRealtimeStore from '@/shared/stores/realtime-store';
 import { startOfflineSync } from '@/shared/lib/offline-queue';
 import { cn } from '@/shared/lib/utils';
+import { useTranslation } from '@/shared/i18n';
 
 /**
  * LoadingSkeleton — Placeholder de chargement
@@ -47,6 +48,7 @@ const pageTransition = {
 };
 
 export default function AppShell({ children }) {
+  const { t } = useTranslation();
   const { sidebarCollapsed, globalLoading } = useUIStore();
   const { user } = useAuthStore();
   const { connect, listenForNotifications, listenForMessages } = useRealtimeStore();
@@ -75,7 +77,7 @@ export default function AppShell({ children }) {
         href="#main-content"
         className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[9999] focus:rounded-md focus:bg-[var(--primary)] focus:px-4 focus:py-2 focus:text-[var(--text-on-primary)] focus:shadow-lg"
       >
-        Aller au contenu principal
+        {t('app_shell.aller_au_contenu_principal')}
       </a>
 
       {/* Sidebar */}

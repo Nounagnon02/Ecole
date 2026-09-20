@@ -2,14 +2,21 @@
 
 namespace Database\Seeders;
 
+use Database\Seeders\Concerns\RefusesInProduction;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class FixParentLinksSeeder extends Seeder
 {
+    use RefusesInProduction;
+
     public function run()
     {
+        if ($this->abortIfProduction()) {
+            return;
+        }
+
         $ecoleId = DB::table('ecoles')->first()->id;
 
         $parents = DB::table('users')

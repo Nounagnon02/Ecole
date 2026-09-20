@@ -120,9 +120,14 @@ class EnseignantDashboardTest extends TestCase
         ]);
 
         // Devoirs : un à venir, un dont l'échéance est atteinte.
+        //
+        // `devoirs.enseignant_id` référence `users` — seule table du schéma
+        // dans ce cas. Le test posait ici un id d'`enseignants` : sur SQLite,
+        // qui n'applique pas les clés étrangères, la ligne passait et validait
+        // le mauvais espace d'identifiants.
         Devoir::create([
             'ecole_id' => $school->id,
-            'enseignant_id' => $enseignant->id,
+            'enseignant_id' => $enseignant->user_id,
             'classe_id' => $classe->id,
             'matiere_id' => $matiere->id,
             'titre' => 'Exercices à venir',
@@ -131,7 +136,7 @@ class EnseignantDashboardTest extends TestCase
         ]);
         Devoir::create([
             'ecole_id' => $school->id,
-            'enseignant_id' => $enseignant->id,
+            'enseignant_id' => $enseignant->user_id,
             'classe_id' => $classe->id,
             'matiere_id' => $matiere->id,
             'titre' => 'Échéance passée',

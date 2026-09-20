@@ -15,6 +15,8 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { makeQueryClient } from './helpers/render';
 import { MemoryRouter } from 'react-router-dom';
 import AffectationsPage from '@/app/features/affectations/AffectationsPage';
 import { installHttpMock } from './helpers/http-mock';
@@ -86,10 +88,14 @@ afterEach(() => {
 });
 
 function renderPage() {
+  // La page passe par react-query : un QueryClient neuf à chaque test, pour
+  // qu'aucune réponse ne survive d'un cas au suivant.
   return render(
-    <MemoryRouter>
-      <AffectationsPage />
-    </MemoryRouter>
+    <QueryClientProvider client={makeQueryClient()}>
+      <MemoryRouter>
+        <AffectationsPage />
+      </MemoryRouter>
+    </QueryClientProvider>
   );
 }
 
@@ -224,7 +230,7 @@ describe('AffectationsPage — Maternelle & Primaire', () => {
   async function openMpTab() {
     renderPage();
     await waitFor(() => expect(screen.getByText('Adjovi Rose')).toBeInTheDocument());
-    fireEvent.click(screen.getByRole('button', { name: 'Maternelle & Primaire' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Maternelle & Primaire' }));
     await waitFor(() => expect(screen.getByText('Dossou Aline')).toBeInTheDocument());
   }
 

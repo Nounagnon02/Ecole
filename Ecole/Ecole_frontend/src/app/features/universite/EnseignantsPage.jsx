@@ -5,7 +5,9 @@
  * Données dynamiques via API /api/universite/enseignants
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import { useApiQuery } from '@/shared/lib/api-client';
+import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
   Users, Plus, Search, BookOpen, GraduationCap,
@@ -16,8 +18,7 @@ import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
-import { useApi } from '@/hooks/useApi';
-import logger from '@/shared/lib/logger';
+import { useTranslation } from '@/shared/i18n';
 
 const GRADE_BADGE = {
   professeur: { variant: 'primary', label: 'Professeur' },
@@ -30,19 +31,18 @@ const GRADE_BADGE = {
 };
 
 export default function EnseignantsPage() {
-  const { loading, error, get } = useApi();
-  const [enseignants, setEnseignants] = useState([]);
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await get('/universite/enseignants');
-        const items = Array.isArray(res?.data?.data) ? res.data.data
-          : Array.isArray(res?.data) ? res.data
-          : Array.isArray(res) ? res
-          : [];
-        setEnseignants(items.map((e) => ({
+  // Le chargement passait par un `useState` doublé d'un `useEffect` de
+  // premier rendu, sans cache ni déduplication : deux composants montés
+  // ensemble lançaient deux requêtes, et un retour sur la page rechargeait
+  // tout (cf. audit P4.1). `unwrapList` traverse les trois formes
+  // d'enveloppe que renvoient les contrôleurs.
+  const requete = useApiQuery(['universite-enseignants'], '/universite/enseignants');
+
+  const enseignants = useMemo(
+    () => (unwrapList(requete.data) ?? []).map((e) => ({
           ...e,
           grade: e.grade || e.titre || '—',
           departement: e.departement?.nom || e.departement_nom || '—',
@@ -50,12 +50,11 @@ export default function EnseignantsPage() {
           specialite: e.specialite || e.discipline || '—',
           cours: e.cours_count ?? e.cours ?? 0,
           etudiants: e.etudiants_count ?? e.etudiants ?? 0
-        })));
-      } catch (e) {
-        logger.error('Erreur chargement enseignants:', e);
-      }
-    })();
-  }, [get]);
+        })),
+    [requete.data],
+  );
+  const loading = requete.isPending;
+  const error = requete.isError ? (requete.error?.message ?? t('common.load_error')) : null;
 
   const stats = useMemo(() => ({
     total: enseignants.length,
@@ -98,24 +97,24 @@ export default function EnseignantsPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Enseignants</h1>
-          <p className="text-sm text-neutral-500">Profils et affectations des enseignants chercheurs</p>
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.universite.enseignants.title')}</h1>
+          <p className="text-sm text-neutral-500">{t('pages.universite.enseignants.subtitle')}</p>
         </div>
-        <Button size="sm" icon={<Plus />}>Ajouter un enseignant</Button>
+        <Button size="sm" icon={<Plus />}>{t('pages.universite.enseignants.ajouter_un_enseignant')}</Button>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-4">
-        <StatsCard title="Total" value={String(stats.total)} icon={Users} color="primary" />
-        <StatsCard title="Professeurs" value={String(stats.professeurs)} icon={GraduationCap} color="sky" />
-        <StatsCard title="Maîtres de Conf." value={String(stats.maitresConferences)} icon={BookOpen} color="emerald" />
-        <StatsCard title="Assistants" value={String(stats.assistants)} icon={Users} color="amber" />
+        <StatsCard title={t('common.total')} value={String(stats.total)} icon={Users} color="primary" />
+        <StatsCard title={t('pages.universite.enseignants.professeurs')} value={String(stats.professeurs)} icon={GraduationCap} color="sky" />
+        <StatsCard title={t('pages.universite.enseignants.maitres_de_conf')} value={String(stats.maitresConferences)} icon={BookOpen} color="emerald" />
+        <StatsCard title={t('pages.universite.enseignants.assistants')} value={String(stats.assistants)} icon={Users} color="amber" />
       </div>
 
       <Card>
         <div className="relative max-w-sm">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
           <Input
-            placeholder="Rechercher un enseignant..."
+            placeholder={t('pages.universite.enseignants.rechercher_un_enseignant')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
@@ -129,7 +128,7 @@ export default function EnseignantsPage() {
             <Card>
               <div className="text-center py-8 text-neutral-500">
                 <Users className="mx-auto h-8 w-8 mb-2" />
-                <p className="text-sm">Aucun enseignant trouvé</p>
+                <p className="text-sm">{t('pages.universite.enseignants.aucun_enseignant_trouve')}</p>
               </div>
             </Card>
           </div>
@@ -156,11 +155,11 @@ export default function EnseignantsPage() {
               <div className="flex items-center gap-3 text-xs mb-3">
                 <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg p-2 text-center flex-1">
                   <span className="block font-bold text-neutral-900 dark:text-white">{e.cours}</span>
-                  <span className="text-neutral-500">Cours</span>
+                  <span className="text-neutral-500">{t('common.courses')}</span>
                 </div>
                 <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg p-2 text-center flex-1">
                   <span className="block font-bold text-neutral-900 dark:text-white">{e.etudiants}</span>
-                  <span className="text-neutral-500">Étud.</span>
+                  <span className="text-neutral-500">{t('pages.universite.enseignants.etud')}</span>
                 </div>
               </div>
 

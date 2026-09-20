@@ -70,7 +70,13 @@ class AnalyticsController extends Controller
 
     public function auditLogs(Request $request)
     {
-        $query = AuditLog::with('user')
+        // `withoutGlobalScope('ecole')` : vue plateforme, volontairement
+        // trans-établissement. C'est la seule lecture d'audit qui doit franchir
+        // la frontière d'une école, et la route est gardée par
+        // `role:super-admin` (routes/central.php). Partout ailleurs le scope de
+        // `AuditLog` s'applique — cf. audit A3.
+        $query = AuditLog::withoutGlobalScope('ecole')
+            ->with('user')
             ->orderBy('created_at', 'desc');
 
         // Filtrer par événement

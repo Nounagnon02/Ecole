@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\User;
+use App\Support\SchoolContext;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -33,15 +34,30 @@ class ExportReportJob implements ShouldQueue
 
     public function handle(): void
     {
+        // Un worker n'a pas d'utilisateur authentifié : sans école liée, le
+        // scope `ecole` des modèles interrogés plus bas retombe sur
+        // `whereRaw('1 = 0')` et l'export sortait réduit à sa ligne d'en-tête —
+        // puis l'utilisateur était notifié que son fichier était « prêt »
+        // (audit A2). `$this->user` est sérialisé avec le job, l'école en
+        // découle.
+        if (!$this->user->ecole_id) {
+            Log::error('Export annulé : utilisateur sans école', [
+                'user_id' => $this->user->id,
+                'type'    => $this->type,
+            ]);
+
+            return;
+        }
+
         $filename = "exports/{$this->type}_{$this->user->id}_{$this->user->ecole_id}.{$this->format}";
 
         // Logique d'export selon le type
-        $data = match ($this->type) {
+        $data = SchoolContext::for((int) $this->user->ecole_id, fn () => match ($this->type) {
             'eleves' => $this->exportEleves(),
             'notes' => $this->exportNotes(),
             'paiements' => $this->exportPaiements(),
             default => throw new \InvalidArgumentException("Type d'export invalide: {$this->type}"),
-        };
+        });
 
         Storage::disk('local')->put($filename, $data);
 
@@ -65,12 +81,12 @@ class ExportReportJob implements ShouldQueue
     protected function exportEleves(): string
     {
         // Implémentation CSV de base
-        // Colonnes réelles : la clé de classe est `class_id`, le matricule
+        // Colonnes réelles : la clé de classe est `classe_id`, le matricule
         // `numero_matricule`, le nom de classe `nom_classe`, et nom/prénom/
         // téléphone/email vivent sur `users`. Cet export ne produisait que
         // des champs vides.
         $eleves = \App\Models\Eleve::with(['classe:id,nom_classe', 'user:id,name,prenom,telephone,email'])
-            ->when($this->filters['classe_id'] ?? null, fn($q, $id) => $q->where('class_id', $id))
+            ->when($this->filters['classe_id'] ?? null, fn($q, $id) => $q->where('classe_id', $id))
             ->get();
 
         $csv = "Matricule,Nom,Prénom,Classe,Sexe,Téléphone,Email\n";

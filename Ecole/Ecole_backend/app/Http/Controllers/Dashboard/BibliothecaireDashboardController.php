@@ -97,7 +97,10 @@ class BibliothecaireDashboardController extends Controller
                     'classe' => $e->eleve?->classe?->nom_classe,
                     'ouvrage' => $e->livre?->titre,
                     'dateRetour' => $e->date_retour_prevue?->format('d/m/Y'),
-                    'jours_retard' => (int) today()->diffInDays($e->date_retour_prevue),
+                    // Carbon 3 : `diffInDays()` est signé. `today()->diffInDays($échéance)`
+                    // avec une échéance passée donnait un retard négatif ; on part
+                    // de l'échéance pour obtenir le nombre de jours écoulés.
+                    'jours_retard' => (int) $e->date_retour_prevue->diffInDays(today()),
                 ]);
 
             $nouveautes = \App\Models\Livre::latest('created_at')

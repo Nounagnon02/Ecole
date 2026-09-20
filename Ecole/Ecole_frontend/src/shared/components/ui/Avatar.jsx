@@ -5,6 +5,7 @@
  */
 
 import { cn, getInitials, stringToColor } from '@/shared/lib/utils';
+import { useTranslation } from '@/shared/i18n';
 
 const sizes = {
   sm: 'h-7 w-7 text-[10px]',
@@ -20,6 +21,7 @@ export default function Avatar({
   className,
   status,
 }) {
+  const { t } = useTranslation();
   const initials = getInitials(name);
   const bgColor = stringToColor(name);
 
@@ -28,7 +30,7 @@ export default function Avatar({
       <div className="relative inline-flex shrink-0">
         <img
           src={src}
-          alt={name || 'Avatar'}
+          alt={name || t('components.avatar.avatar')}
           className={cn(
             'rounded-full object-cover',
             sizes[size],

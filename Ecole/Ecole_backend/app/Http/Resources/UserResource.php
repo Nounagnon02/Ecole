@@ -28,9 +28,11 @@ class UserResource extends JsonResource
             'updated_at' => $this->updated_at?->diffForHumans(),
             // Relations conditionnelles
             'ecole' => EcoleResource::make($this->whenLoaded('ecole')),
-            'permissions' => $this->when($this->relationLoaded('permissions'), fn() =>
-                $this->getAllPermissions()->pluck('name')
-            ),
+            // `permissions` venait de `spatie/laravel-permission`, dépendance
+            // installée mais jamais utilisée : `User` ne porte pas `HasRoles`,
+            // la relation n'existait pas et `getAllPermissions()` non plus. La
+            // clé n'était donc jamais émise. Les droits passent par la colonne
+            // `role` et le middleware `CheckRole` (cf. audit P3.4).
         ];
     }
 }

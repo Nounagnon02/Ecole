@@ -7,7 +7,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDashboardStats } from '../hooks/useDashboardData';
-import { motion, AnimatePresence } from 'framer-motion';
+import DashboardShell from '../DashboardShell';
+import { motion } from 'framer-motion';
 import {
   BookOpen, Users, AlertTriangle, BarChart3, Gavel, CalendarX 
 } from 'lucide-react';
@@ -15,16 +16,12 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip,
   ResponsiveContainer, PieChart, Pie, Cell
 } from 'recharts';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
-import { cn } from '@/shared/lib/utils';
 import StatsCard from '@/shared/components/ui/StatsCard';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Table from '@/shared/components/ui/Table';
-import { RefreshButton } from '@/shared/components/ui';
-import { ErrorDisplay } from '@/shared/components/ui/EmptyState';
+import { useTranslation } from '@/shared/i18n';
 
 const TABS = [
   { id: 'apercu', label: 'Aperçu', icon: BarChart3 },
@@ -33,15 +30,16 @@ const TABS = [
 ];
 
 const STATS_META = [
-  { title: 'Total Élèves', icon: Users, color: 'primary' },
-  { title: 'Sanctions du Mois', icon: Gavel, color: 'amber' },
-  { title: 'Absences Non Justifiées', icon: CalendarX, color: 'red' },
-  { title: 'Avertissements', icon: AlertTriangle, color: 'sky' },
+  { title: 'Total Élèves', key: 'total_eleves', icon: Users, color: 'primary' },
+  { title: 'Sanctions du Mois', key: 'sanctions_du_mois', icon: Gavel, color: 'amber' },
+  { title: 'Absences Non Justifiées', key: 'absences_non_justifiees', icon: CalendarX, color: 'red' },
+  { title: 'Avertissements', key: 'avertissements', icon: AlertTriangle, color: 'sky' },
 ];
 
 const SANCTIONS_COLORS = ['var(--accent)', 'var(--red)', 'var(--amber)', 'var(--green)'];
 
 function ApercuSection({ stats, evolution, types_sanctions, sanctions, absencesParClasse, sanctionsAttente, recidivistes }) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -55,8 +53,8 @@ function ApercuSection({ stats, evolution, types_sanctions, sanctions, absencesP
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2">
           <Card.Header>
-            <Card.Title>Évolution Disciplinaire</Card.Title>
-            <Card.Description>Sanctions et avertissements — 6 derniers mois</Card.Description>
+            <Card.Title>{t('dashboards.censeur.evolution_disciplinaire')}</Card.Title>
+            <Card.Description>{t('dashboards.censeur.sanctions_et_avertissements_6_derniers_mois')}</Card.Description>
           </Card.Header>
           <Card.Body>
             <div className="h-[260px]">
@@ -76,8 +74,8 @@ function ApercuSection({ stats, evolution, types_sanctions, sanctions, absencesP
 
         <Card>
           <Card.Header>
-            <Card.Title>Répartition</Card.Title>
-            <Card.Description>Types de sanctions</Card.Description>
+            <Card.Title>{t('dashboards.censeur.repartition')}</Card.Title>
+            <Card.Description>{t('dashboards.censeur.types_de_sanctions')}</Card.Description>
           </Card.Header>
           <Card.Body>
             <div className="h-[200px]">
@@ -110,19 +108,19 @@ function ApercuSection({ stats, evolution, types_sanctions, sanctions, absencesP
       <Card>
         <Card.Header>
           <div className="flex items-center justify-between">
-            <Card.Title>Sanctions Récentes</Card.Title>
+            <Card.Title>{t('dashboards.censeur.sanctions_recentes')}</Card.Title>
             <Badge variant="warning" size="sm">{sanctions.filter(s => s.statut === 'En cours').length} en cours</Badge>
           </div>
         </Card.Header>
         <Card.Body className="p-0">
           <Table>
             <Table.Header>
-              <Table.Head>Élève</Table.Head>
-              <Table.Head>Classe</Table.Head>
-              <Table.Head>Motif</Table.Head>
-              <Table.Head>Sanction</Table.Head>
-              <Table.Head>Date</Table.Head>
-              <Table.Head>Statut</Table.Head>
+              <Table.Head>{t('common.student')}</Table.Head>
+              <Table.Head>{t('common.class')}</Table.Head>
+              <Table.Head>{t('common.reason')}</Table.Head>
+              <Table.Head>{t('dashboards.censeur.sanction')}</Table.Head>
+              <Table.Head>{t('common.date')}</Table.Head>
+              <Table.Head>{t('common.status_label')}</Table.Head>
             </Table.Header>
             <Table.Body>
               {sanctions.map((s) => (
@@ -147,8 +145,8 @@ function ApercuSection({ stats, evolution, types_sanctions, sanctions, absencesP
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card>
           <Card.Header>
-            <Card.Title>Absences par Classe</Card.Title>
-            <Card.Description>Non justifiées ce mois-ci</Card.Description>
+            <Card.Title>{t('dashboards.censeur.absences_par_classe')}</Card.Title>
+            <Card.Description>{t('dashboards.censeur.non_justifiees_ce_mois_ci')}</Card.Description>
           </Card.Header>
           <Card.Body>
             {absencesParClasse.length > 0 ? (
@@ -171,7 +169,7 @@ function ApercuSection({ stats, evolution, types_sanctions, sanctions, absencesP
             ) : (
               <div className="flex flex-col items-center justify-center py-8 text-[var(--text-tertiary)]">
                 <CalendarX className="h-8 w-8 mb-2 opacity-30" />
-                <p className="text-sm">Aucune absence non justifiée ce mois</p>
+                <p className="text-sm">{t('dashboards.censeur.aucune_absence_non_justifiee_ce_mois')}</p>
               </div>
             )}
           </Card.Body>
@@ -180,7 +178,7 @@ function ApercuSection({ stats, evolution, types_sanctions, sanctions, absencesP
         <Card>
           <Card.Header>
             <div className="flex items-center justify-between">
-              <Card.Title>Sanctions en Attente</Card.Title>
+              <Card.Title>{t('dashboards.censeur.sanctions_en_attente')}</Card.Title>
               {sanctionsAttente.length > 0 && (
                 <Badge variant="warning" size="sm">{sanctionsAttente.length}</Badge>
               )}
@@ -190,9 +188,9 @@ function ApercuSection({ stats, evolution, types_sanctions, sanctions, absencesP
             {sanctionsAttente.length > 0 ? (
             <Table>
               <Table.Header>
-                <Table.Head>Élève</Table.Head>
-                <Table.Head>Sanction</Table.Head>
-                <Table.Head>Date</Table.Head>
+                <Table.Head>{t('common.student')}</Table.Head>
+                <Table.Head>{t('dashboards.censeur.sanction')}</Table.Head>
+                <Table.Head>{t('common.date')}</Table.Head>
               </Table.Header>
               <Table.Body>
                 {sanctionsAttente.map((s) => (
@@ -207,7 +205,7 @@ function ApercuSection({ stats, evolution, types_sanctions, sanctions, absencesP
             ) : (
               <div className="flex flex-col items-center justify-center py-8 text-[var(--text-tertiary)]">
                 <Gavel className="h-8 w-8 mb-2 opacity-30" />
-                <p className="text-sm">Aucune sanction à suivre</p>
+                <p className="text-sm">{t('dashboards.censeur.aucune_sanction_a_suivre')}</p>
               </div>
             )}
           </Card.Body>
@@ -215,16 +213,16 @@ function ApercuSection({ stats, evolution, types_sanctions, sanctions, absencesP
 
         <Card>
           <Card.Header>
-            <Card.Title>Récidivistes</Card.Title>
-            <Card.Description>2 sanctions ou plus</Card.Description>
+            <Card.Title>{t('dashboards.censeur.recidivistes')}</Card.Title>
+            <Card.Description>{t('dashboards.censeur.2_sanctions_ou_plus')}</Card.Description>
           </Card.Header>
           <Card.Body className="p-0">
             {recidivistes.length > 0 ? (
             <Table>
               <Table.Header>
-                <Table.Head>Élève</Table.Head>
-                <Table.Head>Classe</Table.Head>
-                <Table.Head>Sanctions</Table.Head>
+                <Table.Head>{t('common.student')}</Table.Head>
+                <Table.Head>{t('common.class')}</Table.Head>
+                <Table.Head>{t('dashboards.censeur.sanctions')}</Table.Head>
               </Table.Header>
               <Table.Body>
                 {recidivistes.map((r) => (
@@ -241,7 +239,7 @@ function ApercuSection({ stats, evolution, types_sanctions, sanctions, absencesP
             ) : (
               <div className="flex flex-col items-center justify-center py-8 text-[var(--text-tertiary)]">
                 <AlertTriangle className="h-8 w-8 mb-2 opacity-30" />
-                <p className="text-sm">Aucun récidiviste</p>
+                <p className="text-sm">{t('dashboards.censeur.aucun_recidiviste')}</p>
               </div>
             )}
           </Card.Body>
@@ -253,10 +251,16 @@ function ApercuSection({ stats, evolution, types_sanctions, sanctions, absencesP
 
 export default function CenseurDashboard() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('apercu');
   const { data, loading, error, refetch } = useDashboardStats('censeur');
 
-  const stats = data?.stats?.map((s, i) => ({ ...s, icon: STATS_META[i]?.icon, color: STATS_META[i]?.color })) || [];
+  const stats = data?.stats?.map((s, i) => ({
+    ...s,
+    title: STATS_META[i]?.key ? t(`dashboards.censeur.stats.${STATS_META[i].key}`) : s.title,
+    icon: STATS_META[i]?.icon,
+    color: STATS_META[i]?.color,
+  })) || [];
   const evolution = data?.evolution || [];
   const types_sanctions = data?.types_sanctions || [];
   const sanctions = data?.sanctions || [];
@@ -278,53 +282,22 @@ export default function CenseurDashboard() {
  };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <motion.h1 initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-            className="text-2xl font-bold text-neutral-900 dark:text-white"
-          >
-            Censeur
-          </motion.h1>
-          <p className="text-neutral-500 dark:text-neutral-400 mt-1">
-            Discipline et absences — {format(new Date(), 'EEEE d MMMM yyyy', { locale: fr })}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <RefreshButton loading={loading} onRefresh={refetch} />
-          <Button variant="ghost" size="sm"><BookOpen className="h-4 w-4 mr-1" /> Règlement</Button>
-        </div>
-      </div>
-
-      {error && (
-        <ErrorDisplay message={error} onRetry={refetch} />
-      )}
-
-      <div className="border-b border-neutral-200 dark:border-neutral-800">
-        <nav className="flex gap-1 overflow-x-auto -mb-px">
-          {TABS.map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <button key={tab.id} onClick={() => handleTabClick(tab.id)}
-                className={cn(
-                  'flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-all whitespace-nowrap',
-                  activeTab === tab.id
-                    ? 'border-[var(--accent)] text-[var(--accent)] dark:text-[var(--accent)]'
-                    : 'border-transparent text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200'
-                )}
-              >
-                <Icon className="h-4 w-4" /> {tab.label}
-              </button>
-            );
- })}
-        </nav>
-      </div>
-
-      <AnimatePresence mode="wait">
-        <motion.div key={activeTab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }}>
-          {renderSection()}
-        </motion.div>
-      </AnimatePresence>
-    </div>
+    <DashboardShell
+      title={t('dashboards.censeur.title')}
+      subtitle={t('dashboards.censeur.subtitle')}
+      tabs={TABS.map((tab) => ({ ...tab, label: t(`dashboards.censeur.tabs.${tab.id}`) }))}
+      activeTab={activeTab}
+      onTabChange={handleTabClick}
+      loading={loading}
+      error={error}
+      onRefresh={refetch}
+      actions={
+        <>
+    <Button variant="ghost" size="sm"><BookOpen className="h-4 w-4 mr-1" /> {t('dashboards.censeur.reglement')}</Button>
+        </>
+      }
+    >
+      {renderSection()}
+    </DashboardShell>
   );
 }

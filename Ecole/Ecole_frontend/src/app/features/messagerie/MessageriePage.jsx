@@ -18,6 +18,8 @@
  */
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useApiQuery } from '@/shared/lib/api-client';
+import { useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import {
   Search, Send, Paperclip, Trash2, Star, MessageSquare, Users,
@@ -29,10 +31,11 @@ import Badge from '@/shared/components/ui/Badge';
 import Avatar from '@/shared/components/ui/Avatar';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
-import { useApi } from '@/hooks/useApi';
+import { api } from '@/shared/services/api';
 import useAuthStore from '@/shared/stores/auth-store';
 import { unwrapList } from '@/shared/lib/unwrap';
 import logger from '@/shared/lib/logger';
+import { useTranslation } from '@/shared/i18n';
 
 /**
  * Normalise une ligne de conversation en objet UI. Le backend expose
@@ -54,108 +57,133 @@ function mapConversations(items) {
 }
 
 export default function MessageriePage() {
-  const { loading, error, get, post, put } = useApi();
+  const { t } = useTranslation();
   // Nécessaire pour distinguer les messages envoyés de ceux reçus : l'API
   // renvoie l'identifiant de l'auteur dans `expediteur`.
   const currentUserId = useAuthStore((s) => s.user?.id);
-  const [conversations, setConversations] = useState([]);
   const [selectedConv, setSelectedConv] = useState(null);
-  const [messages, setMessages] = useState([]);
   const [search, setSearch] = useState('');
   const [messageText, setMessageText] = useState('');
   const [filter, setFilter] = useState('inbox');
-  const [loadingConv, setLoadingConv] = useState(false);
-  const [loadingMsg, setLoadingMsg] = useState(false);
   const [showContacts, setShowContacts] = useState(false);
-  const [contacts, setContacts] = useState([]);
-  const [loadingContacts, setLoadingContacts] = useState(false);
 
-  const refreshConversations = useCallback(async () => {
-    setLoadingConv(true);
-    try {
-      const res = await get('/messages/conversations');
-      const mapped = mapConversations(unwrapList(res?.data ?? res));
-      setConversations(mapped);
-      return mapped;
-    } catch (e) {
-      logger.error('Erreur chargement conversations:', e);
-      return [];
-    } finally {
-      setLoadingConv(false);
-    }
-  }, [get]);
+  const queryClient = useQueryClient();
 
-  // Chargement initial : la première conversation est sélectionnée — la
-  // version MAPPÉE (avec `id`/`name`), jamais la ligne brute de l'API.
+  // ─── Conversations ───────────────────────────────────────────
+  //
+  // La liste vivait dans un `useState` alimenté par un `useEffect`, avec un
+  // `refreshConversations` appelé à la main depuis trois endroits. react-query
+  // la tient : une clé, un cache, une invalidation (cf. audit P4.1).
+  const requeteConversations = useApiQuery(['messages', 'conversations'], '/messages/conversations');
+
+  const conversations = useMemo(
+    () => mapConversations(unwrapList(requeteConversations.data) ?? []),
+    [requeteConversations.data],
+  );
+  const loadingConv = requeteConversations.isPending;
+  const loading = requeteConversations.isPending;
+  const error = requeteConversations.isError
+    ? (requeteConversations.error?.message ?? t('common.load_error'))
+    : null;
+
+  const refreshConversations = useCallback(
+    () => queryClient.invalidateQueries({ queryKey: ['messages', 'conversations'] }),
+    [queryClient],
+  );
+
+  // Première conversation sélectionnée d'office — la version MAPPÉE (avec
+  // `id`/`name`), jamais la ligne brute de l'API.
   useEffect(() => {
-    (async () => {
-      const mapped = await refreshConversations();
-      if (mapped.length > 0) {
-        setSelectedConv((prev) => prev ?? mapped[0]);
-      }
-    })();
-  }, [refreshConversations]);
+    if (!selectedConv && conversations.length > 0) {
+      setSelectedConv(conversations[0]);
+    }
+  }, [conversations, selectedConv]);
 
-  // Chargement du fil, puis marquage lu et rafraîchissement des badges.
+  // ─── Fil de la conversation ──────────────────────────────────
+  //
+  // Requête dépendante : la clé porte la conversation, donc en changer change
+  // d'entrée de cache au lieu d'écraser la précédente.
+  const requeteFil = useApiQuery(
+    ['messages', 'conversation', selectedConv?.id],
+    `/messages/conversation/${selectedConv?.id}`,
+    { queryOptions: { enabled: !!selectedConv } },
+  );
+
+  const messages = useMemo(() => {
+    if (!selectedConv) return [];
+    return (unwrapList(requeteFil.data) ?? []).map((m) => ({
+      id: m.id,
+      from: String(m.expediteur) === String(currentUserId) ? 'me' : 'them',
+      text: m.contenu || '',
+      time: m.created_at || new Date().toISOString(),
+    }));
+  }, [requeteFil.data, selectedConv, currentUserId]);
+
+  const loadingMsg = !!selectedConv && requeteFil.isPending;
+
+  /** Ajoute un message au fil en cache, sans aller-retour. */
+  const appendMessage = useCallback((brut) => {
+    queryClient.setQueryData(['messages', 'conversation', selectedConv?.id], (ancien) => {
+      const liste = unwrapList(ancien) ?? [];
+      return { data: [...liste, brut] };
+    });
+  }, [queryClient, selectedConv]);
+
+  // À l'ouverture d'un fil, il est marqué lu côté serveur, et le badge
+  // correspondant descend à zéro dans le cache.
+  //
+  // Mise à jour directe plutôt qu'invalidation : recharger toute la liste pour
+  // un compteur la fait clignoter le temps de l'aller-retour, alors que la
+  // valeur est connue d'avance.
   useEffect(() => {
-    if (!selectedConv) {
-      setMessages([]);
-      return;
-    }
-    setLoadingMsg(true);
-    (async () => {
-      try {
-        const res = await get(`/messages/conversation/${selectedConv.id}`);
-        const items = unwrapList(res?.data ?? res);
-        setMessages(items.map((m) => ({
-          id: m.id,
-          from: String(m.expediteur) === String(currentUserId) ? 'me' : 'them',
-          text: m.contenu || '',
-          time: m.created_at || new Date().toISOString()
-        })));
-        // À l'ouverture, le fil est marqué lu : les badges non-lus doivent
-        // redescendre côté serveur et dans la liste.
-        put(`/messages/conversation/${selectedConv.id}/read`).catch(() => {});
-        refreshConversations().catch(() => {});
-      } catch (e) {
-        logger.error('Erreur chargement messages:', e);
-        setMessages([]);
-      } finally {
-        setLoadingMsg(false);
-      }
-    })();
-  }, [selectedConv, get, put, currentUserId, refreshConversations]);
+    if (!selectedConv || !requeteFil.isSuccess) return;
 
-  const openContacts = useCallback(async () => {
-    setShowContacts(true);
-    setLoadingContacts(true);
-    try {
-      const res = await get('/messages/contacts');
-      setContacts(unwrapList(res?.data ?? res));
-    } catch (e) {
-      logger.error('Erreur chargement contacts:', e);
-    } finally {
-      setLoadingContacts(false);
-    }
-  }, [get]);
+    api.put(`/messages/conversation/${selectedConv.id}/read`).catch(() => {});
+
+    queryClient.setQueryData(['messages', 'conversations'], (ancien) => {
+      const liste = unwrapList(ancien) ?? [];
+      return {
+        data: liste.map((c) =>
+          String(c.contact_id ?? c.id) === String(selectedConv.id) ? { ...c, non_lus: 0 } : c,
+        ),
+      };
+    });
+  }, [selectedConv, requeteFil.isSuccess, queryClient]);
+
+  // ─── Contacts ────────────────────────────────────────────────
+  //
+  // Chargés seulement quand le contacteur s'ouvre.
+  const requeteContacts = useApiQuery(['messages', 'contacts'], '/messages/contacts', {
+    queryOptions: { enabled: showContacts },
+  });
+
+  const contacts = useMemo(() => unwrapList(requeteContacts.data) ?? [], [requeteContacts.data]);
+  const loadingContacts = showContacts && requeteContacts.isPending;
+
+  const openContacts = useCallback(() => setShowContacts(true), []);
 
   const startConversation = useCallback((contact) => {
     setShowContacts(false);
     const thread = {
       id: contact.id,
-      name: contact.name || 'Conversation',
-      role: contact.role || 'Utilisateur',
+      name: contact.name || t('pages.messagerie.messagerie.conversation'),
+      role: contact.role || t('common.user'),
       lastMessage: '',
       date: new Date().toISOString(),
       unread: 0,
       online: false,
       avatar: null,
     };
-    setConversations((prev) =>
-      prev.some((c) => c.id === contact.id) ? prev : [thread, ...prev]
-    );
+    // Conversation locale, pas encore connue du serveur : on la pose en tête
+    // du cache pour qu'elle apparaisse immédiatement dans la liste.
+    queryClient.setQueryData(['messages', 'conversations'], (ancien) => {
+      const liste = unwrapList(ancien) ?? [];
+      return liste.some((c) => String(c.contact_id ?? c.id) === String(contact.id))
+        ? ancien
+        : { data: [{ id: contact.id, contact_id: contact.id, contact_nom: thread.name, role: thread.role, dernier_message: '', non_lus: 0 }, ...liste] };
+    });
     setSelectedConv(thread);
-  }, []);
+  }, [queryClient, t]);
 
   const filtered = useMemo(() =>
     conversations.filter((c) =>
@@ -168,21 +196,20 @@ export default function MessageriePage() {
     const text = messageText.trim();
     setMessageText('');
     try {
-      const res = await post('/messages', {
+      const res = await api.post('/messages', {
         destinataire: String(selectedConv.id),
         contenu: text
       });
       const newMsg = res?.data?.data || res?.data || res;
-      setMessages((prev) => [...prev, {
+      appendMessage({
         id: newMsg.id || Date.now(),
-        from: 'me',
-        text,
-        time: newMsg.created_at || new Date().toISOString()
-      }]);
-      // Met à jour la liste des conversations localement, sans recharger.
-      setConversations((prev) => prev.map((c) =>
-        c.id === selectedConv.id ? { ...c, lastMessage: text, date: new Date().toISOString(), unread: 0 } : c
-      ));
+        expediteur: currentUserId,
+        contenu: text,
+        created_at: newMsg.created_at || new Date().toISOString(),
+      });
+      // Les badges et l'aperçu viennent du serveur : on invalide plutôt
+      // que de recopier l'état à la main.
+      refreshConversations();
     } catch (e) {
       logger.error('Erreur envoi message:', e);
       setMessageText(text);
@@ -206,7 +233,7 @@ export default function MessageriePage() {
           onClick={() => window.location.reload()}
           className="mt-4 inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors"
         >
-          Réessayer
+          {t('common.retry')}
         </button>
       </div>
     );
@@ -221,7 +248,7 @@ export default function MessageriePage() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
               <Input
-                placeholder="Rechercher..."
+                placeholder={t('common.search_ellipsis')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-9"
@@ -239,7 +266,7 @@ export default function MessageriePage() {
                       : 'text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800'
                   )}
                 >
-                  {f === 'inbox' ? 'Boîte' : f === 'starred' ? 'Favoris' : 'Archive'}
+                  {f === 'inbox' ? t('pages.messagerie.messagerie.boite') : f === 'starred' ? t('pages.messagerie.messagerie.favoris') : t('pages.messagerie.messagerie.archive')}
                 </button>
               ))}
             </div>
@@ -254,7 +281,7 @@ export default function MessageriePage() {
             {filtered.length === 0 && !loadingConv && (
               <div className="text-center py-8 text-neutral-500">
                 <MessageSquare className="mx-auto h-8 w-8 mb-2" />
-                <p className="text-sm">Aucune conversation</p>
+                <p className="text-sm">{t('pages.messagerie.messagerie.aucune_conversation')}</p>
               </div>
             )}
             {filtered.map((conv) => (
@@ -284,7 +311,7 @@ export default function MessageriePage() {
                         {formatRelativeTime(conv.date)}
                       </span>
                     </div>
-                    <p className="text-xs text-neutral-500 truncate">{conv.lastMessage || 'Aucun message'}</p>
+                    <p className="text-xs text-neutral-500 truncate">{conv.lastMessage || t('pages.messagerie.messagerie.aucun_message')}</p>
                   </div>
                   {conv.unread > 0 && (
                     <Badge variant="primary" size="sm" className="shrink-0">{conv.unread}</Badge>
@@ -296,7 +323,7 @@ export default function MessageriePage() {
 
           <div className="border-t border-neutral-200 p-3 dark:border-neutral-700">
             <Button variant="ghost" size="sm" icon={<Users />} className="w-full justify-start" onClick={openContacts}>
-              Nouvelle conversation
+              {t('pages.messagerie.messagerie.nouvelle_conversation')}
             </Button>
           </div>
 
@@ -304,8 +331,8 @@ export default function MessageriePage() {
           {showContacts && (
             <div className="absolute inset-0 z-10 flex flex-col rounded-xl border border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-900">
               <div className="flex items-center justify-between border-b border-neutral-200 p-3 dark:border-neutral-700">
-                <p className="text-sm font-semibold text-neutral-900 dark:text-white">Nouvelle conversation</p>
-                <button onClick={() => setShowContacts(false)} aria-label="Fermer">
+                <p className="text-sm font-semibold text-neutral-900 dark:text-white">{t('pages.messagerie.messagerie.nouvelle_conversation')}</p>
+                <button onClick={() => setShowContacts(false)} aria-label={t('pages.messagerie.messagerie.fermer')}>
                   <X className="h-4 w-4 text-neutral-400" />
                 </button>
               </div>
@@ -316,7 +343,7 @@ export default function MessageriePage() {
                   </div>
                 )}
                 {!loadingContacts && contacts.length === 0 && (
-                  <p className="p-4 text-sm text-neutral-400">Aucun contact disponible</p>
+                  <p className="p-4 text-sm text-neutral-400">{t('pages.messagerie.messagerie.aucun_contact_disponible')}</p>
                 )}
                 {contacts.map((contact) => (
                   <button
@@ -367,7 +394,7 @@ export default function MessageriePage() {
                 {messages.length === 0 && !loadingMsg && (
                   <div className="text-center py-8 text-neutral-400">
                     <MessageSquare className="mx-auto h-12 w-12 mb-3" />
-                    <p className="text-sm">Aucun message pour cette conversation</p>
+                    <p className="text-sm">{t('pages.messagerie.messagerie.aucun_message_pour_cette_conversation')}</p>
                   </div>
                 )}
                 {messages.map((msg) => (
@@ -401,7 +428,7 @@ export default function MessageriePage() {
                     type="text"
                     value={messageText}
                     onChange={(e) => setMessageText(e.target.value)}
-                    placeholder="Écrivez votre message..."
+                    placeholder={t('pages.messagerie.messagerie.ecrivez_votre_message')}
                     className="flex-1 rounded-xl border border-neutral-300 bg-white px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && messageText.trim()) {
@@ -410,7 +437,7 @@ export default function MessageriePage() {
                     }}
                   />
                   <Button size="sm" icon={<Send />} disabled={!messageText.trim()} onClick={sendMessage}>
-                    Envoyer
+                    {t('pages.messagerie.messagerie.envoyer')}
                   </Button>
                 </div>
               </div>
@@ -419,7 +446,7 @@ export default function MessageriePage() {
             <div className="flex-1 flex items-center justify-center text-neutral-400">
               <div className="text-center">
                 <MessageSquare className="mx-auto h-12 w-12 mb-3" />
-                <p className="text-sm">Sélectionnez une conversation</p>
+                <p className="text-sm">{t('pages.messagerie.messagerie.selectionnez_une_conversation')}</p>
               </div>
             </div>
           )}

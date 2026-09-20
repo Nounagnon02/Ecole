@@ -22,6 +22,8 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { makeQueryClient } from './helpers/render';
 import { MemoryRouter } from 'react-router-dom';
 import PlanningPage from '@/app/features/universite/PlanningPage';
 import TachesPage from '@/app/features/universite/TachesPage';
@@ -43,7 +45,13 @@ afterEach(() => {
 });
 
 function renderPage(element) {
-  return render(<MemoryRouter>{element}</MemoryRouter>);
+  // Ces pages passent par react-query : il leur faut un QueryClient, neuf à
+  // chaque test pour qu'aucune réponse ne survive d'un cas au suivant.
+  return render(
+    <QueryClientProvider client={makeQueryClient()}>
+      <MemoryRouter>{element}</MemoryRouter>
+    </QueryClientProvider>,
+  );
 }
 
 /** Le spinner d'attente : `<Loader2 className="… animate-spin" />`. */

@@ -9,6 +9,8 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { makeQueryClient } from './helpers/render';
 import { MemoryRouter, Routes, Route, useLocation } from 'react-router-dom';
 import DirecteurDashboard from '@/app/dashboards/directeur';
 import EleveDashboard from '@/app/dashboards/eleve';
@@ -16,7 +18,7 @@ import ParentDashboard from '@/app/dashboards/parent';
 import EnseignantDashboard from '@/app/dashboards/enseignant';
 import AdminDashboard from '@/app/dashboards/admin';
 import useAuthStore from '@/shared/stores/auth-store';
-import { clearDashboardCache } from '@/shared/lib/dashboard-cache';
+import { clearDashboardCache } from '@/shared/lib/query-client';
 import { installHttpMock } from './helpers/http-mock';
 
 const DIRECTEUR_ENDPOINT = '/dashboard/directeur/data';
@@ -29,15 +31,21 @@ function LocationProbe() {
   return <div data-testid="url">{location.pathname}</div>;
 }
 
-function renderDashboard(element) {
+function renderDashboard(element, client = makeQueryClient()) {
+  // `useDashboardData` s'appuie désormais sur react-query plutôt que sur un
+  // cache maison : il faut un QueryClient, neuf à chaque test par défaut pour
+  // qu'aucune réponse ne survive d'un cas au suivant. Les cas qui vérifient
+  // la mise en cache en partagent un explicitement.
   return render(
-    <MemoryRouter initialEntries={['/tableau']}>
-      <LocationProbe />
-      <Routes>
-        <Route path="/tableau" element={element} />
-        <Route path="*" element={<div>AUTRE-ECRAN</div>} />
-      </Routes>
-    </MemoryRouter>
+    <QueryClientProvider client={client}>
+      <MemoryRouter initialEntries={['/tableau']}>
+        <LocationProbe />
+        <Routes>
+          <Route path="/tableau" element={element} />
+          <Route path="*" element={<div>AUTRE-ECRAN</div>} />
+        </Routes>
+      </MemoryRouter>
+    </QueryClientProvider>
   );
 }
 
@@ -130,19 +138,19 @@ describe('DirecteurDashboard', () => {
 
     renderDashboard(<DirecteurDashboard />);
 
-    await waitFor(() => expect(screen.getByText(/Erreur de chargement/i)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
   });
 
   it('signale aussi un 403 et une erreur réseau', async () => {
     http.onGet(DIRECTEUR_ENDPOINT).reply(403, { message: 'Action non autorisée.' });
     const first = renderDashboard(<DirecteurDashboard />);
-    await waitFor(() => expect(screen.getByText(/Erreur de chargement/i)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
     first.unmount();
 
     clearDashboardCache();
     http.onGet(DIRECTEUR_ENDPOINT).networkError('Network Error');
     renderDashboard(<DirecteurDashboard />);
-    await waitFor(() => expect(screen.getByText(/Erreur de chargement/i)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
   });
 
   it('relance l’appel au clic sur Actualiser, en ignorant le cache', async () => {
@@ -166,7 +174,7 @@ describe('DirecteurDashboard', () => {
     renderDashboard(<DirecteurDashboard />);
     await waitFor(() => expect(screen.getByText('412')).toBeInTheDocument());
 
-    fireEvent.click(screen.getByRole('button', { name: /Élèves/i }));
+    fireEvent.click(screen.getByRole('tab', { name: /Élèves/i }));
 
     await waitFor(() => expect(screen.getByTestId('url').textContent).toBe('/eleves'));
   });
@@ -226,7 +234,7 @@ describe('EleveDashboard', () => {
     renderDashboard(<EleveDashboard />);
     await waitFor(() => expect(screen.getByText('Aucun cours planifié')).toBeInTheDocument());
 
-    fireEvent.click(screen.getByRole('button', { name: /Mes Notes/i }));
+    fireEvent.click(screen.getByRole('tab', { name: /Mes Notes/i }));
 
     await waitFor(() => expect(screen.getByText('Aucune note disponible')).toBeInTheDocument());
   });
@@ -237,7 +245,7 @@ describe('EleveDashboard', () => {
     renderDashboard(<EleveDashboard />);
     await waitFor(() => expect(screen.getByText('13.5/20')).toBeInTheDocument());
 
-    fireEvent.click(screen.getByRole('button', { name: /Mes Notes/i }));
+    fireEvent.click(screen.getByRole('tab', { name: /Mes Notes/i }));
 
     await waitFor(() => expect(screen.getByText('15/20')).toBeInTheDocument());
     expect(screen.getByText('9/20')).toBeInTheDocument();
@@ -252,7 +260,7 @@ describe('EleveDashboard', () => {
     await waitFor(() =>
       expect(screen.getByText(/Base de données indisponible/)).toBeInTheDocument()
     );
-    expect(screen.getByText(/Erreur de chargement/)).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toBeInTheDocument();
   });
 
   it('rend l’erreur sur 401 sans afficher de fausses données', async () => {
@@ -260,7 +268,7 @@ describe('EleveDashboard', () => {
 
     renderDashboard(<EleveDashboard />);
 
-    await waitFor(() => expect(screen.getByText(/Erreur de chargement/)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
     expect(screen.queryByText('13.5/20')).not.toBeInTheDocument();
   });
 
@@ -270,7 +278,7 @@ describe('EleveDashboard', () => {
     renderDashboard(<EleveDashboard />);
     await waitFor(() => expect(screen.getByText('13.5/20')).toBeInTheDocument());
 
-    fireEvent.click(screen.getByRole('button', { name: /Emploi du Temps/i }));
+    fireEvent.click(screen.getByRole('tab', { name: /Emploi du Temps/i }));
 
     await waitFor(() => expect(screen.getByTestId('url').textContent).toBe('/emploi-du-temps'));
   });
@@ -280,11 +288,14 @@ describe('cache des tableaux de bord', () => {
   it('sert la réponse en cache sans rappeler l’API au remontage', async () => {
     http.onGet(ELEVE_ENDPOINT).reply(200, { data: ELEVE_PAYLOAD });
 
-    const first = renderDashboard(<EleveDashboard />);
+    // Un seul client pour les deux montages : c'est lui qui porte le cache.
+    const client = makeQueryClient();
+
+    const first = renderDashboard(<EleveDashboard />, client);
     await waitFor(() => expect(screen.getByText('13.5/20')).toBeInTheDocument());
     first.unmount();
 
-    renderDashboard(<EleveDashboard />);
+    renderDashboard(<EleveDashboard />, client);
     await waitFor(() => expect(screen.getByText('13.5/20')).toBeInTheDocument());
 
     expect(http.callsTo('get', ELEVE_ENDPOINT)).toHaveLength(1);
@@ -470,7 +481,7 @@ describe('EnseignantDashboard', () => {
     renderDashboard(<EnseignantDashboard />);
     await waitFor(() => expect(screen.getByText('Mes Élèves')).toBeInTheDocument());
 
-    fireEvent.click(screen.getByRole('button', { name: /Notes/i }));
+    fireEvent.click(screen.getByRole('tab', { name: /Notes/i }));
 
     await waitFor(() => expect(screen.getByText('Aho Kossi')).toBeInTheDocument());
     expect(screen.getByText('Aho Ama')).toBeInTheDocument();
@@ -493,7 +504,11 @@ describe('EnseignantDashboard', () => {
 
     renderDashboard(<EnseignantDashboard />);
 
-    await waitFor(() => expect(screen.getByText(/Erreur de chargement/)).toBeInTheDocument());
+    // `DashboardShell` signale l'échec par le bandeau `ErrorDisplay`, en
+    // `role="alert"`, là où ce tableau de bord posait un libellé maison. Tous
+    // les rôles rendent désormais l'erreur de la même façon.
+    await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
+    expect(screen.getByRole('button', { name: /réessayer/i })).toBeInTheDocument();
   });
 });
 
@@ -562,7 +577,7 @@ describe('AdminDashboard', () => {
     renderDashboard(<AdminDashboard />);
     await waitFor(() => expect(screen.getByText('Utilisateurs Actifs')).toBeInTheDocument());
 
-    fireEvent.click(screen.getByRole('button', { name: /Logs Système/i }));
+    fireEvent.click(screen.getByRole('tab', { name: /Logs Système/i }));
 
     // La bascule d'onglet passe par une animation (AnimatePresence) : on
     // attend un marqueur propre à la section Logs, pas un texte présent
@@ -585,7 +600,7 @@ describe('AdminDashboard', () => {
     renderDashboard(<AdminDashboard />);
     await waitFor(() => expect(screen.getByText('Utilisateurs Actifs')).toBeInTheDocument());
 
-    fireEvent.click(screen.getByRole('button', { name: /Logs Système/i }));
+    fireEvent.click(screen.getByRole('tab', { name: /Logs Système/i }));
 
     await waitFor(() => expect(screen.getByText(/Aucune entrée de journal/)).toBeInTheDocument());
   });

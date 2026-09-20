@@ -5,7 +5,9 @@
  * Données dynamiques via API /api/universite/departements
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import { useApiQuery } from '@/shared/lib/api-client';
+import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
   BookOpen, Plus, Search, Users,   User, GraduationCap, Mail, Phone, Loader2, AlertCircle
@@ -15,24 +17,22 @@ import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
-import { useApi } from '@/hooks/useApi';
-import logger from '@/shared/lib/logger';
+import { useTranslation } from '@/shared/i18n';
 
 export default function DepartementsPage() {
-  const { loading, error, get } = useApi();
-  const [departements, setDepartements] = useState([]);
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [filterFaculte, setFilterFaculte] = useState('');
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await get('/universite/departements');
-        const items = Array.isArray(res?.data?.data) ? res.data.data
-          : Array.isArray(res?.data) ? res.data
-          : Array.isArray(res) ? res
-          : [];
-        setDepartements(items.map((d) => ({
+  // Le chargement passait par un `useState` doublé d'un `useEffect` de
+  // premier rendu, sans cache ni déduplication : deux composants montés
+  // ensemble lançaient deux requêtes, et un retour sur la page rechargeait
+  // tout (cf. audit P4.1). `unwrapList` traverse les trois formes
+  // d'enveloppe que renvoient les contrôleurs.
+  const requete = useApiQuery(['universite-departements'], '/universite/departements');
+
+  const departements = useMemo(
+    () => (unwrapList(requete.data) ?? []).map((d) => ({
           ...d,
           chef: d.chef || d.responsable || '—',
           code: d.code || d.sigle || '—',
@@ -40,12 +40,11 @@ export default function DepartementsPage() {
           etudiants: d.etudiants_count ?? d.etudiants ?? 0,
           cours: d.cours_count ?? d.cours ?? 0,
           faculte_nom: d.faculte?.nom || d.faculte_nom || '—'
-        })));
-      } catch (e) {
-        logger.error('Erreur chargement départements:', e);
-      }
-    })();
-  }, [get]);
+        })),
+    [requete.data],
+  );
+  const loading = requete.isPending;
+  const error = requete.isError ? (requete.error?.message ?? t('common.load_error')) : null;
 
   const facultes = useMemo(() =>
     [...new Set(departements.map((d) => d.faculte_nom).filter(Boolean))],
@@ -88,16 +87,16 @@ export default function DepartementsPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Départements</h1>
-          <p className="text-sm text-neutral-500">Gestion des départements par faculté</p>
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.universite.departements.title')}</h1>
+          <p className="text-sm text-neutral-500">{t('pages.universite.departements.subtitle')}</p>
         </div>
-        <Button size="sm" icon={<Plus />}>Nouveau département</Button>
+        <Button size="sm" icon={<Plus />}>{t('pages.universite.departements.nouveau_departement')}</Button>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <StatsCard title="Départements" value={String(stats.total)} icon={BookOpen} color="primary" />
-        <StatsCard title="Enseignants" value={String(stats.enseignants)} icon={Users} color="emerald" />
-        <StatsCard title="Étudiants" value={String(stats.etudiants)} icon={GraduationCap} color="amber" />
+        <StatsCard title={t('pages.universite.departements.departements')} value={String(stats.total)} icon={BookOpen} color="primary" />
+        <StatsCard title={t('common.teachers')} value={String(stats.enseignants)} icon={Users} color="emerald" />
+        <StatsCard title={t('common.students')} value={String(stats.etudiants)} icon={GraduationCap} color="amber" />
       </div>
 
       <Card>
@@ -105,7 +104,7 @@ export default function DepartementsPage() {
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
             <Input
-              placeholder="Rechercher un département..."
+              placeholder={t('pages.universite.departements.rechercher_un_departement')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
@@ -114,10 +113,10 @@ export default function DepartementsPage() {
           <select
             value={filterFaculte}
             onChange={(e) => setFilterFaculte(e.target.value)}
-            aria-label="Filtrer par faculté"
+            aria-label={t('pages.universite.departements.filtrer_par_faculte')}
             className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
           >
-            <option value="">Toutes facultés</option>
+            <option value="">{t('pages.universite.departements.toutes_facultes')}</option>
             {facultes.map((f) => <option key={f} value={f}>{f}</option>)}
           </select>
         </div>
@@ -128,7 +127,7 @@ export default function DepartementsPage() {
           <Card>
             <div className="text-center py-8 text-neutral-500">
               <BookOpen className="mx-auto h-8 w-8 mb-2" />
-              <p className="text-sm">Aucun département trouvé</p>
+              <p className="text-sm">{t('pages.universite.departements.aucun_departement_trouve')}</p>
             </div>
           </Card>
         )}
@@ -159,7 +158,7 @@ export default function DepartementsPage() {
                   </div>
                 )}
               </div>
-              <Button variant="ghost" size="sm">Gérer</Button>
+              <Button variant="ghost" size="sm">{t('pages.universite.departements.gerer')}</Button>
             </div>
           </Card>
         ))}

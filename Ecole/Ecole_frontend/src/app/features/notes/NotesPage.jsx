@@ -19,8 +19,10 @@ import Button from '@/shared/components/ui/Button';
 import Table from '@/shared/components/ui/Table';
 import Input from '@/shared/components/ui/Input';
 import { Skeleton } from '@/shared/components/ui/Skeleton';
+import { useTranslation } from '@/shared/i18n';
 
 export default function NotesPage() {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [filterMatiere, setFilterMatiere] = useState('');
   const [filterClasse, setFilterClasse] = useState('');
@@ -172,27 +174,27 @@ export default function NotesPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Notes</h1>
-          <p className="text-sm text-neutral-500">Consultez et gérez les notes des élèves</p>
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.notes.notes.title')}</h1>
+          <p className="text-sm text-neutral-500">{t('pages.notes.notes.subtitle')}</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" onClick={refetch} disabled={isLoading}>
             <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} />
           </Button>
           <Button variant="outline" size="sm" icon={<FileSpreadsheet />} onClick={handleExport}>
-            Exporter
+            {t('common.export')}
           </Button>
-          <Button variant="outline" size="sm" icon={<Download />}>Importer</Button>
-          <Button size="sm" icon={<Plus />}>Nouvelle Note</Button>
+          <Button variant="outline" size="sm" icon={<Download />}>{t('pages.notes.notes.importer')}</Button>
+          <Button size="sm" icon={<Plus />}>{t('pages.notes.notes.nouvelle_note')}</Button>
         </div>
       </div>
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatsCard title="Moyenne Générale" value={`${moyenneGenerale}/20`} icon={Award} color="primary" />
-        <StatsCard title="Total Évaluations" value={String(notes.length)} icon={BookOpen} color="emerald" />
-        <StatsCard title="Taux de Réussite" value={`${tauxReussite}%`} icon={TrendingUp} color="sky" />
-        <StatsCard title="Échecs" value={`${100 - tauxReussite}%`} icon={TrendingDown} color="red" />
+        <StatsCard title={t('pages.notes.notes.moyenne_generale')} value={`${moyenneGenerale}/20`} icon={Award} color="primary" />
+        <StatsCard title={t('pages.notes.notes.total_evaluations')} value={String(notes.length)} icon={BookOpen} color="emerald" />
+        <StatsCard title={t('pages.notes.notes.taux_de_reussite')} value={`${tauxReussite}%`} icon={TrendingUp} color="sky" />
+        <StatsCard title={t('pages.notes.notes.echecs')} value={`${100 - tauxReussite}%`} icon={TrendingDown} color="red" />
       </div>
 
       {/* Tabs */}
@@ -207,7 +209,7 @@ export default function NotesPage() {
           )}
         >
           <BookOpen className="h-4 w-4 inline mr-1.5" />
-          Notes
+          {t('pages.notes.notes.notes')}
         </button>
         <button
           onClick={() => setTab('classement')}
@@ -219,7 +221,7 @@ export default function NotesPage() {
           )}
         >
           <Trophy className="h-4 w-4 inline mr-1.5" />
-          Classement
+          {t('pages.notes.notes.classement')}
         </button>
         <button
           onClick={() => setTab('bulletins')}
@@ -231,7 +233,7 @@ export default function NotesPage() {
           )}
         >
           <FileText className="h-4 w-4 inline mr-1.5" />
-          Bulletins
+          {t('pages.notes.notes.bulletins')}
         </button>
       </div>
 
@@ -244,7 +246,7 @@ export default function NotesPage() {
               <div className="relative flex-1 max-w-sm">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
                 <Input
-                  placeholder="Rechercher un élève..."
+                  placeholder={t('common.search_student')}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="pl-9"
@@ -253,19 +255,19 @@ export default function NotesPage() {
               <select
                 value={filterClasse}
                 onChange={(e) => setFilterClasse(e.target.value)}
-                aria-label="Filtrer par classe"
+                aria-label={t('common.filter_by_class')}
                 className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm text-neutral-700 outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
               >
-                <option value="">Toutes les classes</option>
+                <option value="">{t('common.all_classes')}</option>
                 {classes.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
               <select
                 value={filterMatiere}
                 onChange={(e) => setFilterMatiere(e.target.value)}
-                aria-label="Filtrer par matière"
+                aria-label={t('common.filter_by_subject')}
                 className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm text-neutral-700 outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
               >
-                <option value="">Toutes les matières</option>
+                <option value="">{t('pages.notes.notes.toutes_les_matieres')}</option>
                 {matieres.map((m) => <option key={m} value={m}>{m}</option>)}
               </select>
             </div>
@@ -275,20 +277,20 @@ export default function NotesPage() {
           <Card padding={false}>
             {error && (
               <div className="p-6 text-center text-sm text-red-500">
-                Erreur : {error.message ?? 'Impossible de récupérer les notes'}
+                Erreur : {error.message ?? t('pages.notes.notes.impossible_de_recuperer_les_notes')}
               </div>
             )}
             <Table>
               <Table.Header>
-                <Table.Head>Élève</Table.Head>
-                <Table.Head>Classe</Table.Head>
-                <Table.Head>matière</Table.Head>
-                <Table.Head>Note</Table.Head>
-                <Table.Head>Type</Table.Head>
-                <Table.Head>Période</Table.Head>
-                <Table.Head>Date</Table.Head>
-                <Table.Head className="text-center">Statut</Table.Head>
-                <Table.Head className="text-right">Action</Table.Head>
+                <Table.Head>{t('common.student')}</Table.Head>
+                <Table.Head>{t('common.class')}</Table.Head>
+                <Table.Head>{t('pages.notes.notes.matiere')}</Table.Head>
+                <Table.Head>{t('common.grade')}</Table.Head>
+                <Table.Head>{t('common.type')}</Table.Head>
+                <Table.Head>{t('pages.notes.notes.periode')}</Table.Head>
+                <Table.Head>{t('common.date')}</Table.Head>
+                <Table.Head className="text-center">{t('common.status_label')}</Table.Head>
+                <Table.Head className="text-right">{t('pages.notes.notes.action')}</Table.Head>
               </Table.Header>
               <Table.Body>
                 {isLoading && Array.from({ length: 5 }).map((_, i) => (
@@ -301,7 +303,7 @@ export default function NotesPage() {
                 {!isLoading && filtered.length === 0 && (
                   <Table.Row>
                     <td colSpan={9} className="p-8 text-center text-sm text-neutral-500">
-                      Aucune note trouvée
+                      {t('pages.notes.notes.aucune_note_trouvee')}
                     </td>
                   </Table.Row>
                 )}
@@ -333,9 +335,9 @@ export default function NotesPage() {
                     <Table.Cell className="text-xs text-neutral-500">{n.date_evaluation}</Table.Cell>
                     <Table.Cell className="text-center">
                       {n.locked ? (
-                        <Lock className="h-4 w-4 text-amber-500 mx-auto" title="Verrouillée" />
+                        <Lock className="h-4 w-4 text-amber-500 mx-auto" title={t('pages.notes.notes.verrouillee')} />
                       ) : (
-                        <Unlock className="h-4 w-4 text-neutral-300 mx-auto" title="Déverrouillée" />
+                        <Unlock className="h-4 w-4 text-neutral-300 mx-auto" title={t('pages.notes.notes.deverrouillee')} />
                       )}
                     </Table.Cell>
                     <Table.Cell className="text-right">
@@ -347,7 +349,7 @@ export default function NotesPage() {
                             ? 'text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-500/10'
                             : 'text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800'
                         )}
-                        title={n.locked ? 'Déverrouiller' : 'Verrouiller'}
+                        title={n.locked ? t('pages.notes.notes.deverrouiller') : t('pages.notes.notes.verrouiller')}
                       >
                         {n.locked ? <Unlock className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
                       </button>
@@ -367,27 +369,27 @@ export default function NotesPage() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">
                 <Trophy className="h-5 w-5 inline mr-2 text-amber-500" />
-                Classement des élèves
+                {t('pages.notes.notes.classement_des_eleves')}
               </h3>
               <div className="flex items-center gap-2">
                 <select
                   value={classementClasse}
                   onChange={(e) => setClassementClasse(e.target.value)}
-                  aria-label="Sélectionner une classe"
+                  aria-label={t('pages.notes.notes.selectionner_une_classe')}
                   className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm text-neutral-700 outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
                 >
-                  <option value="">Sélectionner une classe</option>
+                  <option value="">{t('pages.notes.notes.selectionner_une_classe')}</option>
                   {classes.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
                 <select
                   value={classementPeriode}
                   onChange={(e) => setClassementPeriode(e.target.value)}
-                  aria-label="Filtrer par période"
+                  aria-label={t('pages.notes.notes.filtrer_par_periode')}
                   className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm text-neutral-700 outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
                 >
-                  <option value="Trimestre 1">Trimestre 1</option>
-                  <option value="Trimestre 2">Trimestre 2</option>
-                  <option value="Trimestre 3">Trimestre 3</option>
+                  <option value="Trimestre 1">{t('pages.notes.notes.trimestre_1')}</option>
+                  <option value="Trimestre 2">{t('pages.notes.notes.trimestre_2')}</option>
+                  <option value="Trimestre 3">{t('pages.notes.notes.trimestre_3')}</option>
                 </select>
                 <Button
                   size="sm"
@@ -402,7 +404,7 @@ export default function NotesPage() {
 
             {!classementClasse && (
               <div className="py-12 text-center text-sm text-neutral-500">
-                Sélectionnez une classe et une période pour voir le classement
+                {t('pages.notes.notes.selectionnez_une_classe_et_une_periode_pour')}
               </div>
             )}
 
@@ -421,11 +423,11 @@ export default function NotesPage() {
                 </div>
                 <Table>
                   <Table.Header>
-                    <Table.Head className="w-12">Rang</Table.Head>
-                    <Table.Head>Élève</Table.Head>
-                    <Table.Head>Matricule</Table.Head>
-                    <Table.Head className="text-right">Moyenne</Table.Head>
-                    <Table.Head className="text-right">Notes</Table.Head>
+                    <Table.Head className="w-12">{t('common.rank')}</Table.Head>
+                    <Table.Head>{t('common.student')}</Table.Head>
+                    <Table.Head>{t('common.matricule')}</Table.Head>
+                    <Table.Head className="text-right">{t('common.average')}</Table.Head>
+                    <Table.Head className="text-right">{t('pages.notes.notes.notes')}</Table.Head>
                   </Table.Header>
                   <Table.Body>
                     {classement.classement?.map((row) => (
@@ -482,32 +484,32 @@ export default function NotesPage() {
             <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
               <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">
                 <FileText className="h-5 w-5 inline mr-2 text-[var(--accent)]" />
-                Bulletins
+                {t('pages.notes.notes.bulletins')}
               </h3>
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <select
                   value={bulletinClasse}
                   onChange={(e) => setBulletinClasse(e.target.value)}
-                  aria-label="Sélectionner une classe"
+                  aria-label={t('pages.notes.notes.selectionner_une_classe')}
                   className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm text-neutral-700 outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
                 >
-                  <option value="">Sélectionner une classe</option>
+                  <option value="">{t('pages.notes.notes.selectionner_une_classe')}</option>
                   {classes.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
                 <select
                   value={bulletinPeriode}
                   onChange={(e) => setBulletinPeriode(e.target.value)}
-                  aria-label="Filtrer par période"
+                  aria-label={t('pages.notes.notes.filtrer_par_periode')}
                   className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm text-neutral-700 outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
                 >
-                  <option value="Trimestre 1">Trimestre 1</option>
-                  <option value="Trimestre 2">Trimestre 2</option>
-                  <option value="Trimestre 3">Trimestre 3</option>
+                  <option value="Trimestre 1">{t('pages.notes.notes.trimestre_1')}</option>
+                  <option value="Trimestre 2">{t('pages.notes.notes.trimestre_2')}</option>
+                  <option value="Trimestre 3">{t('pages.notes.notes.trimestre_3')}</option>
                 </select>
                 <select
                   value={bulletinAnnee}
                   onChange={(e) => setBulletinAnnee(e.target.value)}
-                  aria-label="Sélectionner une année"
+                  aria-label={t('pages.notes.notes.selectionner_une_annee')}
                   className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm text-neutral-700 outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
                 >
                   {annees.map((a) => <option key={a} value={a}>{a}</option>)}
@@ -522,7 +524,7 @@ export default function NotesPage() {
                 onClick={handleRecalculer}
                 disabled={!bulletinClasse || recalculerMutation.isPending}
               >
-                Recalculer l'instantané
+                {t('pages.notes.notes.recalculer_l_instantane')}
               </Button>
               <Button
                 size="sm"
@@ -530,19 +532,19 @@ export default function NotesPage() {
                 onClick={handleVerrouiller}
                 disabled={!bulletinClasse || verrouillerMutation.isPending}
               >
-                Verrouiller le bulletin
+                {t('pages.notes.notes.verrouiller_le_bulletin')}
               </Button>
             </div>
           </Card>
 
           <Card>
             <div className="border-b border-neutral-200 p-4 dark:border-neutral-800">
-              <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">Moyennes de la classe</h3>
+              <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">{t('pages.notes.notes.moyennes_de_la_classe')}</h3>
               <p className="text-xs text-neutral-500">Instantané {bulletinPeriode} · {bulletinAnnee}</p>
             </div>
             {!bulletinClasse && (
               <div className="py-10 text-center text-sm text-neutral-500">
-                Sélectionnez une classe pour consulter les moyennes
+                {t('pages.notes.notes.selectionnez_une_classe_pour_consulter_les')}
               </div>
             )}
             {bulletinClasse && moyennesLoading && (
@@ -554,16 +556,16 @@ export default function NotesPage() {
             )}
             {bulletinClasse && !moyennesLoading && moyennesGenerales.length === 0 && (
               <div className="py-10 text-center text-sm text-neutral-500">
-                Aucun instantané pour cette classe et cette période. Cliquez sur « Recalculer l'instantané ».
+                {t('pages.notes.notes.aucun_instantane_pour_cette_classe_et_cette')}
               </div>
             )}
             {bulletinClasse && !moyennesLoading && moyennesGenerales.length > 0 && (
               <Table>
                 <Table.Header>
-                  <Table.Head className="w-12">Rang</Table.Head>
-                  <Table.Head>Élève</Table.Head>
-                  <Table.Head className="text-right">Moyenne Générale</Table.Head>
-                  <Table.Head className="text-right">Effectif</Table.Head>
+                  <Table.Head className="w-12">{t('common.rank')}</Table.Head>
+                  <Table.Head>{t('common.student')}</Table.Head>
+                  <Table.Head className="text-right">{t('pages.notes.notes.moyenne_generale')}</Table.Head>
+                  <Table.Head className="text-right">{t('pages.notes.notes.effectif')}</Table.Head>
                 </Table.Header>
                 <Table.Body>
                   {moyennesGenerales.map((row) => (
@@ -589,12 +591,12 @@ export default function NotesPage() {
 
           <Card>
             <div className="border-b border-neutral-200 p-4 dark:border-neutral-800">
-              <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">Bulletins verrouillés</h3>
+              <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">{t('pages.notes.notes.bulletins_verrouilles')}</h3>
               <p className="text-xs text-neutral-500">Archives immuables {bulletinPeriode} · {bulletinAnnee}</p>
             </div>
             {!bulletinClasse && (
               <div className="py-10 text-center text-sm text-neutral-500">
-                Sélectionnez une classe pour consulter les bulletins
+                {t('pages.notes.notes.selectionnez_une_classe_pour_consulter_les_2')}
               </div>
             )}
             {bulletinClasse && bulletinsLoading && (
@@ -606,17 +608,17 @@ export default function NotesPage() {
             )}
             {bulletinClasse && !bulletinsLoading && bulletins.length === 0 && (
               <div className="py-10 text-center text-sm text-neutral-500">
-                Aucun bulletin verrouillé. Recalculez l'instantané puis verrouillez le bulletin.
+                {t('pages.notes.notes.aucun_bulletin_verrouille_recalculez_l')}
               </div>
             )}
             {bulletinClasse && !bulletinsLoading && bulletins.length > 0 && (
               <Table>
                 <Table.Header>
-                  <Table.Head className="w-12">Rang</Table.Head>
-                  <Table.Head>Élève</Table.Head>
-                  <Table.Head className="text-right">Moyenne Générale</Table.Head>
-                  <Table.Head>Mention</Table.Head>
-                  <Table.Head className="text-right">Statut</Table.Head>
+                  <Table.Head className="w-12">{t('common.rank')}</Table.Head>
+                  <Table.Head>{t('common.student')}</Table.Head>
+                  <Table.Head className="text-right">{t('pages.notes.notes.moyenne_generale')}</Table.Head>
+                  <Table.Head>{t('pages.notes.notes.mention')}</Table.Head>
+                  <Table.Head className="text-right">{t('common.status_label')}</Table.Head>
                 </Table.Header>
                 <Table.Body>
                   {bulletins.map((b) => (
@@ -639,7 +641,7 @@ export default function NotesPage() {
                       </Table.Cell>
                       <Table.Cell className="text-right">
                         <Badge variant={b.publie ? 'success' : 'neutral'} size="sm">
-                          {b.publie ? 'Publié' : 'Verrouillé'}
+                          {b.publie ? t('pages.notes.notes.publie') : t('pages.notes.notes.verrouille')}
                         </Badge>
                       </Table.Cell>
                     </Table.Row>
