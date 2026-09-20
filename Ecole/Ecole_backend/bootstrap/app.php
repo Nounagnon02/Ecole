@@ -40,6 +40,11 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->use([
+            // En tout premier : fournit l'ID de corrélation (log context,
+            // tag Sentry, en-tête `X-Request-Id`) que tout le reste — y
+            // compris les middlewares suivants — peut ensuite s'attendre à
+            // trouver déjà en place.
+            \App\Http\Middleware\AssignCorrelationId::class,
             \App\Http\Middleware\TrustProxies::class,
             // CORS géré par le middleware natif, qui applique la whitelist de
             // config/cors.php. Ne jamais le remplacer par un middleware qui

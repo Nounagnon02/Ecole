@@ -1,5 +1,6 @@
 <?php
 
+use Monolog\Formatter\JsonFormatter;
 use Monolog\Handler\NullHandler;
 use Monolog\Handler\StreamHandler;
 use Monolog\Handler\SyslogUdpHandler;
@@ -61,6 +62,20 @@ return [
             'driver' => 'single',
             'path' => storage_path('logs/laravel.log'),
             'level' => env('LOG_LEVEL', 'debug'),
+        ],
+
+        // `LOG_CHANNEL=json` (fichier séparé, pas le même que `single` : les
+        // deux formats ne se mélangent pas dans un seul flux) — pensé pour un
+        // environnement où un collecteur de logs (Datadog, CloudWatch, etc.)
+        // lit ce fichier, pas pour le développement local. `AssignCorrelationId`
+        // pose `correlation_id` dans le contexte de chaque requête via
+        // `Log::withContext()` : ce channel l'expose comme un vrai champ JSON,
+        // filtrable, plutôt qu'une sous-chaîne à `grep` dans du texte plat.
+        'json' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/laravel-json.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'formatter' => JsonFormatter::class,
         ],
 
         'daily' => [
