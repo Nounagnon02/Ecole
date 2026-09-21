@@ -75,6 +75,16 @@ jobs:
           cache-dependency-path: Ecole/Ecole_frontend/package-lock.json
       - name: Install dependencies
         run: npm ci
+      # `test` tourne dans un job isolé de `lint` (checkout et `npm ci`
+      # propres, sans les artefacts du job précédent) : sans ceci,
+      # `production-bundle.test.js` (le garde-fou contre la régression
+      # « page blanche » décrite dans vite.config.js) ne trouverait jamais de
+      # `build/` et se contenterait de passer en silence, sans jamais
+      # réellement vérifier quoi que ce soit.
+      - name: Build (pour le test du bundle de production)
+        run: npm run build -- --logLevel error
+        env:
+          CI: true
       - name: Run Vitest
         run: npm test
         env:
