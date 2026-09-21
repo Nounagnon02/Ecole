@@ -32,6 +32,7 @@ import {
   Stethoscope,
   Calculator,
   FileSpreadsheet,
+  History,
 } from 'lucide-react';
 import useAuthStore from '@/shared/stores/auth-store';
 import useUIStore from '@/shared/stores/ui-store';
@@ -57,6 +58,7 @@ const ROLE_MENUS = {
     { icon: Calendar, label: 'nav.emploi_du_temps', path: '/emploi-du-temps' },
     { icon: DollarSign, label: 'nav.paiements', path: '/paiements' },
     { icon: MessageSquare, label: 'nav.messagerie', path: '/communications' },
+    { icon: History, label: 'nav.audit_log', path: '/admin/journal-audit' },
     { icon: Settings, label: 'nav.parametres', path: '/parametres' },
   ],
   [ROLES.ENSEIGNANT]: [
@@ -180,6 +182,7 @@ const ROLE_MENUS = {
   [ROLES.ADMIN]: [
     { icon: LayoutDashboard, label: 'nav.dashboard', path: '/admin/dashboard' },
     { icon: Users, label: 'nav.eleves', path: '/admin/utilisateurs' },
+    { icon: History, label: 'nav.audit_log', path: '/admin/journal-audit' },
     { icon: Settings, label: 'nav.parametres', path: '/admin/configuration' },
   ],
 };

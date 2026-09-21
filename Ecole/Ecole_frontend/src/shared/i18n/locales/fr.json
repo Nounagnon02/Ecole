@@ -20,7 +20,8 @@
     "infirmerie": "Infirmerie",
     "transport": "Transport",
     "parametres": "Paramètres",
-    "profil": "Mon profil"
+    "profil": "Mon profil",
+    "audit_log": "Journal d'audit"
   },
   "common": {
     "loading": "Chargement...",
@@ -1665,6 +1666,37 @@
         "repetez_le_mot_de_passe": "Répétez le mot de passe",
         "retour_a_la_connexion": "Retour à la connexion",
         "for": "Pour"
+      }
+    },
+    "audit": {
+      "audit": {
+        "title": "Journal d'audit",
+        "subtitle": "Qui a créé, modifié ou supprimé quoi dans votre établissement",
+        "filter_event": "Type d'action",
+        "all_events": "Toutes les actions",
+        "event_created": "Création",
+        "event_updated": "Modification",
+        "event_deleted": "Suppression",
+        "filter_type": "Type d'élément",
+        "filter_type_placeholder": "Ex : Notes, User",
+        "from": "Du",
+        "to": "Au",
+        "reset_filters": "Réinitialiser les filtres",
+        "column_date": "Date",
+        "column_user": "Utilisateur",
+        "column_event": "Action",
+        "column_item": "Élément",
+        "column_details": "Détails",
+        "unknown_user": "Utilisateur supprimé",
+        "system": "Système",
+        "view_details": "Voir le détail",
+        "hide_details": "Masquer le détail",
+        "before": "Avant",
+        "after": "Après",
+        "no_details": "Aucun détail enregistré pour cette entrée",
+        "empty": "Aucune activité trouvée pour ces filtres",
+        "page_label": "Page {current} sur {last}",
+        "total_label": "{n} au total"
       }
     }
   },

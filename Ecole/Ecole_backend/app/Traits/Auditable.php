@@ -40,8 +40,13 @@ trait Auditable
      */
     protected static function logAudit(string $event, $model, ?array $old, ?array $new): void
     {
-        // Ignorer les colonnes sensibles/bruit
-        $ignore = ['updated_at', 'password', 'remember_token'];
+        // Ignorer les colonnes sensibles/bruit. `getOriginal()`/`getChanges()`
+        // ignorent $hidden (qui ne s'applique qu'à toArray()/toJson()) : sans
+        // cette liste, un changement de mot de passe ou de secret 2FA
+        // écrirait sa valeur (chiffrée, mais quand même) dans `audit_logs` --
+        // une deuxième copie du secret, dans une table pensée pour être
+        // consultée bien plus largement que `users` lui-même.
+        $ignore = ['updated_at', 'password', 'remember_token', 'two_factor_secret'];
         $old = $old ? array_diff_key($old, array_flip($ignore)) : null;
         $new = $new ? array_diff_key($new, array_flip($ignore)) : null;
 
@@ -55,8 +60,14 @@ trait Auditable
                 'event' => $event,
                 'auditable_type' => get_class($model),
                 'auditable_id' => $model->id ?? $model->getKey(),
-                'old_values' => $old ? json_encode($old) : null,
-                'new_values' => $new ? json_encode($new) : null,
+                // `AuditLog::$casts` encode déjà ce champ en JSON à
+                // l'écriture ; l'encoder ici aussi le fait deux fois --
+                // relu, `old_values`/`new_values` renvoyait alors une chaîne
+                // JSON encore encodée, pas un tableau. Jamais vu jusqu'ici
+                // faute d'un seul lecteur de ces deux colonnes dans tout le
+                // dépôt.
+                'old_values' => $old ?: null,
+                'new_values' => $new ?: null,
                 'ip_address' => $request?->ip(),
                 'user_agent' => $request?->userAgent(),
             ]);

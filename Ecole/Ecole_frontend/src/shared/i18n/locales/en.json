@@ -20,7 +20,8 @@
     "infirmerie": "Infirmary",
     "transport": "Transport",
     "parametres": "Settings",
-    "profil": "My Profile"
+    "profil": "My Profile",
+    "audit_log": "Audit log"
   },
   "common": {
     "loading": "Loading...",
@@ -1665,6 +1666,37 @@
         "repetez_le_mot_de_passe": "Repeat the password",
         "retour_a_la_connexion": "Back to login",
         "for": "For"
+      }
+    },
+    "audit": {
+      "audit": {
+        "title": "Audit log",
+        "subtitle": "Who created, changed, or deleted what in your school",
+        "filter_event": "Action type",
+        "all_events": "All actions",
+        "event_created": "Created",
+        "event_updated": "Updated",
+        "event_deleted": "Deleted",
+        "filter_type": "Item type",
+        "filter_type_placeholder": "E.g.: Notes, User",
+        "from": "From",
+        "to": "To",
+        "reset_filters": "Reset filters",
+        "column_date": "Date",
+        "column_user": "User",
+        "column_event": "Action",
+        "column_item": "Item",
+        "column_details": "Details",
+        "unknown_user": "Deleted user",
+        "system": "System",
+        "view_details": "View details",
+        "hide_details": "Hide details",
+        "before": "Before",
+        "after": "After",
+        "no_details": "No details recorded for this entry",
+        "empty": "No activity found for these filters",
+        "page_label": "Page {current} of {last}",
+        "total_label": "{n} total"
       }
     }
   },
