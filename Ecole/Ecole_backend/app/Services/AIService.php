@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Support\Alerting;
+use App\Support\CircuitBreaker;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -19,6 +21,8 @@ use Illuminate\Support\Facades\Log;
  */
 class AIService
 {
+    private const CIRCUIT = 'anthropic';
+
     protected string $apiKey;
     protected string $model;
     protected int $maxTokens;
@@ -43,12 +47,16 @@ class AIService
             return $this->fallbackResponse('Clé API IA non configurée');
         }
 
+        if (CircuitBreaker::isOpen(self::CIRCUIT)) {
+            return $this->fallbackResponse('Service IA temporairement indisponible');
+        }
+
         try {
             $response = Http::withHeaders([
                 'x-api-key' => $this->apiKey,
                 'anthropic-version' => '2023-06-01',
                 'content-type' => 'application/json',
-            ])->post('https://api.anthropic.com/v1/messages', array_merge([
+            ])->timeout(30)->retry(2, 200, throw: false)->post('https://api.anthropic.com/v1/messages', array_merge([
                 'model' => $options['model'] ?? $this->model,
                 'max_tokens' => $options['max_tokens'] ?? $this->maxTokens,
                 // `temperature` retiré : les modèles courants rejettent une
@@ -64,6 +72,8 @@ class AIService
             ], $options));
 
             if ($response->successful()) {
+                CircuitBreaker::recordSuccess(self::CIRCUIT);
+
                 $data = $response->json();
 
                 return [
@@ -79,10 +89,18 @@ class AIService
                 'body' => $response->body(),
             ]);
 
+            // Un 4xx (clé invalide, requête malformée, 429 de débit) est un
+            // résultat métier, pas une panne du fournisseur -- seul un 5xx
+            // fait progresser le coupe-circuit vers l'ouverture.
+            if ($response->serverError()) {
+                $this->recordFailure();
+            }
+
             return $this->fallbackResponse('Erreur API IA : ' . $response->status());
 
         } catch (\Exception $e) {
             Log::error('IA Service exception', ['error' => $e->getMessage()]);
+            $this->recordFailure($e->getMessage());
             return $this->fallbackResponse('Service IA temporairement indisponible');
         }
     }
@@ -218,6 +236,17 @@ Style professionnel et bienveillant.";
     /**
      * Fallback si l'API n'est pas configurée
      */
+    private function recordFailure(?string $exceptionMessage = null): void
+    {
+        CircuitBreaker::recordFailure(self::CIRCUIT);
+
+        if (CircuitBreaker::isOpen(self::CIRCUIT)) {
+            Alerting::anomaly('Coupe-circuit API Anthropic ouvert', [
+                'exception' => $exceptionMessage,
+            ]);
+        }
+    }
+
     protected function fallbackResponse(string $reason): array
     {
         return [
