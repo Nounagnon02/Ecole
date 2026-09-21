@@ -20,7 +20,8 @@
     "infirmerie": "العيادة",
     "transport": "النقل",
     "parametres": "الإعدادات",
-    "profil": "ملفي الشخصي"
+    "profil": "ملفي الشخصي",
+    "audit_log": "سجل التدقيق"
   },
   "common": {
     "loading": "جارٍ التحميل...",
@@ -1665,6 +1666,37 @@
         "repetez_le_mot_de_passe": "أعد كتابة كلمة المرور",
         "retour_a_la_connexion": "العودة إلى تسجيل الدخول",
         "for": "من أجل"
+      }
+    },
+    "audit": {
+      "audit": {
+        "title": "سجل التدقيق",
+        "subtitle": "من أنشأ أو عدّل أو حذف ماذا في مدرستك",
+        "filter_event": "نوع الإجراء",
+        "all_events": "كل الإجراءات",
+        "event_created": "إنشاء",
+        "event_updated": "تعديل",
+        "event_deleted": "حذف",
+        "filter_type": "نوع العنصر",
+        "filter_type_placeholder": "مثال: Notes، User",
+        "from": "من",
+        "to": "إلى",
+        "reset_filters": "إعادة ضبط عوامل التصفية",
+        "column_date": "التاريخ",
+        "column_user": "المستخدم",
+        "column_event": "الإجراء",
+        "column_item": "العنصر",
+        "column_details": "التفاصيل",
+        "unknown_user": "مستخدم محذوف",
+        "system": "النظام",
+        "view_details": "عرض التفاصيل",
+        "hide_details": "إخفاء التفاصيل",
+        "before": "قبل",
+        "after": "بعد",
+        "no_details": "لا توجد تفاصيل مسجلة لهذا الإدخال",
+        "empty": "لم يتم العثور على أي نشاط لعوامل التصفية هذه",
+        "page_label": "صفحة {current} من {last}",
+        "total_label": "المجموع {n}"
       }
     }
   },

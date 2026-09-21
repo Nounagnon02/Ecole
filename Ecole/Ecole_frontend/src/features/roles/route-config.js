@@ -344,6 +344,11 @@ export const ROUTE_CONFIG = {
     component: lazy(() => import('@/app/features/admin/ConfigurationPage')),
     roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
   },
+  auditLog: {
+    path: '/admin/journal-audit',
+    component: lazy(() => import('@/app/features/admin/AuditLogPage')),
+    roles: [...ROLE_GROUPS.ADMIN],
+  },
   adminPlans: {
     path: '/admin/plans',
     component: lazy(() => import('@/app/features/admin/PlansPage')),
