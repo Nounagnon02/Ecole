@@ -21,6 +21,9 @@ class PaymentController extends Controller
     /** Rôles autorisés à gérer les paiements de toute l'école. */
     private const MANAGER_ROLES = ['directeur', 'comptable', 'secretaire', 'super-admin'];
 
+    /** Fenêtre de réutilisation d'une ouverture de paiement identique (idempotence). */
+    private const DUPLICATE_INIT_WINDOW_MINUTES = 10;
+
     protected PaymentProvider $provider;
 
     public function __construct()
@@ -108,6 +111,42 @@ class PaymentController extends Controller
                 }
             }
 
+            // FedaPay ne documente aucune clé d'idempotence côté fournisseur
+            // (vérifié dans leur documentation) : un double clic ou un retry
+            // réseau du client sur cet endpoint rouvrirait sans cela une
+            // deuxième transaction FedaPay pour la même intention de
+            // paiement. On rend l'opération idempotente ici, côté
+            // application, en réutilisant une ouverture identique toute
+            // récente plutôt que d'en créer une nouvelle.
+            $doublon = Payment::where('eleve_id', $request->eleve_id)
+                ->when(
+                    $request->filled('paiement_eleve_id'),
+                    fn ($query) => $query->where('paiement_eleve_id', $request->paiement_eleve_id),
+                    fn ($query) => $query->whereNull('paiement_eleve_id'),
+                )
+                ->where('amount', $request->amount)
+                ->where('type', $request->type)
+                ->where('status', 'pending')
+                ->whereNotNull('transaction_id')
+                ->where('created_at', '>=', now()->subMinutes(self::DUPLICATE_INIT_WINDOW_MINUTES))
+                ->latest()
+                ->first();
+
+            if ($doublon) {
+                DB::commit();
+
+                return response()->json([
+                    'success' => true,
+                    'data' => [
+                        'payment_id' => $doublon->id,
+                        'transaction_id' => $doublon->transaction_id,
+                        'checkout_url' => $doublon->checkout_url,
+                        'amount' => $doublon->amount,
+                    ],
+                    'message' => 'Paiement déjà initialisé',
+                ]);
+            }
+
             // Créer l'enregistrement de paiement
             $payment = Payment::create([
                 'eleve_id' => $request->eleve_id,
@@ -138,7 +177,10 @@ class PaymentController extends Controller
             ]);
 
             if ($result['success']) {
-                $payment->update(['transaction_id' => $result['transaction_id']]);
+                $payment->update([
+                    'transaction_id' => $result['transaction_id'],
+                    'checkout_url' => $result['payment_url'],
+                ]);
             }
 
             DB::commit();

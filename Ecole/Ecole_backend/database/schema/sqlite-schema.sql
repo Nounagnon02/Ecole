@@ -1585,6 +1585,7 @@ CREATE TABLE "payments"(
   "eleve_id" integer not null,
   "ecole_id" integer not null,
   "transaction_id" varchar,
+  "checkout_url" varchar,
   "amount" numeric not null,
   "currency" varchar not null default('XOF'),
   "type" varchar not null,
@@ -1828,3 +1829,4 @@ INSERT INTO migrations VALUES(124,'2026_08_25_124352_add_soft_deletes_to_finance
 INSERT INTO migrations VALUES(125,'2026_09_17_120000_widen_livre_publication_year',1);
 INSERT INTO migrations VALUES(126,'2026_09_17_120100_restrict_school_deletion_on_remaining_tables',1);
 INSERT INTO migrations VALUES(127,'2026_09_20_140000_add_unique_index_to_transaction_paiements_reference',2);
+INSERT INTO migrations VALUES(128,'2026_09_21_102706_add_checkout_url_to_payments_table',2);

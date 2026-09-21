@@ -63,10 +63,71 @@ class PaymentTransactionSafetyTest extends TestCase
 
         $this->assertTrue($response->json('success'));
         $this->assertSame('TX_INIT_1', $response->json('data.transaction_id'));
+        $this->assertSame('https://sandbox.fedapay.com/pay/TX_INIT_1', $response->json('data.checkout_url'));
         $this->assertDatabaseHas('payments', [
             'eleve_id' => $this->eleve->id,
             'transaction_id' => 'TX_INIT_1',
+            'checkout_url' => 'https://sandbox.fedapay.com/pay/TX_INIT_1',
         ]);
+    }
+
+    /**
+     * FedaPay ne documente aucune clé d'idempotence côté fournisseur (vérifié
+     * dans leur documentation) : un double clic ou un retry réseau doit donc
+     * être absorbé avant même d'atteindre FedaPay, pas seulement une fois la
+     * transaction revenue.
+     *
+     * @test
+     */
+    public function a_rapid_duplicate_request_reuses_the_same_transaction_instead_of_opening_a_second_one()
+    {
+        Http::fake([
+            'sandbox-api.fedapay.com/v1/transactions' => Http::response([
+                'transaction' => ['id' => 'TX_DOUBLE_CLICK', 'url' => 'https://sandbox.fedapay.com/pay/TX_DOUBLE_CLICK'],
+            ], 200),
+        ]);
+
+        $payload = [
+            'eleve_id' => $this->eleve->id,
+            'amount' => 25000,
+            'description' => 'Scolarité 1er trimestre',
+            'type' => 'scolarite',
+        ];
+
+        $first = $this->actingAs($this->accountant)->postJson('/api/payments/initialize', $payload)->assertOk();
+        $second = $this->actingAs($this->accountant)->postJson('/api/payments/initialize', $payload)->assertOk();
+
+        $this->assertSame($first->json('data.payment_id'), $second->json('data.payment_id'));
+        $this->assertSame('TX_DOUBLE_CLICK', $second->json('data.transaction_id'));
+        Http::assertSentCount(1);
+        $this->assertSame(1, Payment::where('eleve_id', $this->eleve->id)->count());
+    }
+
+    /**
+     * Une intention de paiement différente (montant distinct) ne doit jamais
+     * être fusionnée avec une autre, même toute récente.
+     *
+     * @test
+     */
+    public function a_different_amount_is_never_treated_as_a_duplicate()
+    {
+        Http::fake([
+            'sandbox-api.fedapay.com/v1/transactions' => Http::sequence()
+                ->push(['transaction' => ['id' => 'TX_A', 'url' => 'https://sandbox.fedapay.com/pay/TX_A']])
+                ->push(['transaction' => ['id' => 'TX_B', 'url' => 'https://sandbox.fedapay.com/pay/TX_B']]),
+        ]);
+
+        $base = [
+            'eleve_id' => $this->eleve->id,
+            'description' => 'Scolarité 1er trimestre',
+            'type' => 'scolarite',
+        ];
+
+        $this->actingAs($this->accountant)->postJson('/api/payments/initialize', $base + ['amount' => 25000])->assertOk();
+        $this->actingAs($this->accountant)->postJson('/api/payments/initialize', $base + ['amount' => 30000])->assertOk();
+
+        Http::assertSentCount(2);
+        $this->assertSame(2, Payment::where('eleve_id', $this->eleve->id)->count());
     }
 
     /** @test */
