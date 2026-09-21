@@ -28,7 +28,7 @@ module.exports = {
     sourceType: 'module',
     ecmaFeatures: { jsx: true },
   },
-  extends: ['eslint:recommended'],
+  extends: ['eslint:recommended', 'plugin:storybook/recommended'],
   plugins: ['react'],
   settings: { react: { version: 'detect' } },
   rules: {

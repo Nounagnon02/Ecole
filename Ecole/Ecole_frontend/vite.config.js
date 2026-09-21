@@ -1,9 +1,12 @@
+/// <reference types="vitest/config" />
 /// <reference types="vitest" />
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { storybookTest } from '@storybook/addon-vitest/vitest-plugin';
+import { playwright } from '@vitest/browser-playwright';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -93,18 +96,50 @@ export default defineConfig({
     },
   },
   test: {
-    globals: true,
-    environment: 'jsdom',
-    setupFiles: './src/setupTests.js',
-    css: true,
-    include: ['src/**/*.{test,spec}.{js,jsx}'],
-    deps: {
-      inline: [/shared/],
-      esbuild: {
-        loader: {
-          '.js': 'jsx',
+    projects: [
+      {
+        // Suite existante (Vitest + jsdom), inchangée hormis son nom. `npm test`
+        // ne lance que ce projet (`--project unit`) : hermétique, sans
+        // navigateur à installer, et sans le démarrage à froid de Chromium qui
+        // faisait dépasser les timeouts des tests jsdom lancés en parallèle.
+        extends: true,
+        test: {
+          name: 'unit',
+          globals: true,
+          environment: 'jsdom',
+          setupFiles: './src/setupTests.js',
+          css: true,
+          include: ['src/**/*.{test,spec}.{js,jsx}'],
+          deps: {
+            inline: [/shared/],
+            esbuild: {
+              loader: {
+                '.js': 'jsx',
+              },
+            },
+          },
         },
       },
-    },
+      {
+        // Fait tourner chaque story comme un test (rendu réel dans Chromium
+        // headless via Playwright, pas jsdom). Lancé à part via
+        // `npm run test:storybook` : exige `npx playwright install chromium`.
+        extends: true,
+        plugins: [
+          storybookTest({
+            configDir: path.join(__dirname, '.storybook'),
+          }),
+        ],
+        test: {
+          name: 'storybook',
+          browser: {
+            enabled: true,
+            headless: true,
+            provider: playwright({}),
+            instances: [{ browser: 'chromium' }],
+          },
+        },
+      },
+    ],
   },
 });

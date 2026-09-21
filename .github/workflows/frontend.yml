@@ -94,13 +94,43 @@ jobs:
       # Le rapport reste facultatif jusqu'à ce que le paquet soit déclaré.
       - name: Coverage report (non-blocking)
         continue-on-error: true
-        run: npx vitest run --coverage
+        run: npx vitest run --project unit --coverage
+        env:
+          CI: true
+
+  # Chaque story est rendue comme un test dans un vrai Chromium (pas jsdom) :
+  # un composant qui plante au rendu, ou une story cassée par un changement
+  # de props, échoue ici. Job séparé de `test` car il exige un navigateur
+  # installé et ne doit pas ralentir ni fragiliser la suite unitaire.
+  storybook:
+    runs-on: ubuntu-22.04
+    needs: lint
+    strategy:
+      matrix:
+        node-version: [20]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          cache-dependency-path: Ecole/Ecole_frontend/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Playwright
+        run: npx playwright install --with-deps chromium
+      - name: Run Storybook tests
+        run: npm run test:storybook
+        env:
+          CI: true
+      - name: Build Storybook
+        run: npm run build-storybook
         env:
           CI: true
 
   e2e:
     runs-on: ubuntu-22.04
-    needs: test
+    needs: [test, storybook]
     strategy:
       matrix:
         node-version: [20]
