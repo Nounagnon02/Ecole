@@ -4,6 +4,7 @@ use App\Http\Controllers\{
     EcoleController,
     CommunicationsController,
     ContributionsController,
+    HealthController,
     Payment\PaymentController,
     Payment\PaymentQueryController,
     MessageController,
@@ -153,9 +154,8 @@ Route::post('/payments/webhook', [PaymentController::class, 'webhook'])
     ->middleware('throttle:webhooks')
     ->name('payment.webhook');
 
-// Sonde de santé. Exposée aussi sous /api/v1/ (déclaré dans routes/api.php),
-// les sondes d'infrastructure et les tests ciblant cette version.
-Route::get('/health', fn() => response()->json([
-    'status' => 'UP',
-    'timestamp' => now()->toIso8601String(),
-]))->name('health');
+// Sonde de santé. C'est l'unique endpoint de santé de l'API : les sondes
+// d'infrastructure et la suite de tests ciblent cette URL. Interroge
+// vraiment la DB, le cache et la file (HealthController) plutôt que de
+// répondre 'UP' sans jamais rien vérifier.
+Route::get('/health', [HealthController::class, 'check'])->name('health');
