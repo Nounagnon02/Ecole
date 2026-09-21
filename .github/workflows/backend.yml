@@ -47,7 +47,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: 8.2
-          extensions: mbstring, dom, fileinfo, pdo, pdo_sqlite, sqlite3, bcmath, ctype, json, xml, zip
+          extensions: mbstring, dom, fileinfo, pdo, pdo_sqlite, sqlite3, bcmath, ctype, json, xml, zip, gd, calendar
           tools: composer:v2
       - name: Install dependencies
         run: composer install --no-progress --prefer-dist --optimize-autoloader
@@ -64,7 +64,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: 8.2
-          extensions: mbstring, dom, fileinfo, pdo, pdo_sqlite, sqlite3, bcmath, ctype, json, xml, zip
+          extensions: mbstring, dom, fileinfo, pdo, pdo_sqlite, sqlite3, bcmath, ctype, json, xml, zip, gd, calendar
           coverage: xdebug
           tools: composer:v2
       - name: Get composer cache
@@ -124,7 +124,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: 8.2
-          extensions: mbstring, dom, fileinfo, pdo, pdo_mysql, mysqli, bcmath, ctype, json, xml, zip
+          extensions: mbstring, dom, fileinfo, pdo, pdo_mysql, mysqli, bcmath, ctype, json, xml, zip, gd, calendar
           coverage: none
           tools: composer:v2
       - name: Get composer cache
@@ -170,7 +170,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: 8.2
-          extensions: mbstring, dom, fileinfo, pdo, pdo_sqlite, sqlite3, bcmath, ctype, json, xml, zip
+          extensions: mbstring, dom, fileinfo, pdo, pdo_sqlite, sqlite3, bcmath, ctype, json, xml, zip, gd, calendar
           tools: composer:v2
       - name: Install dependencies
         run: composer install --no-progress --prefer-dist --optimize-autoloader
@@ -185,6 +185,63 @@ jobs:
       # inutile de la tester séparément.
       - name: Worker drains the queue and stops
         run: php artisan queue:work --stop-when-empty --max-time=60
+
+  # La couverture de lignes ne dit pas si un test vérifie le bon
+  # comportement, seulement qu'il exécute la ligne -- cette mission a
+  # trouvé plusieurs bugs réels (garde de rollback, contexte d'école
+  # ambiant...) précisément dans du code déjà "couvert". Pest Mutate
+  # (pestphp/pest-plugin-mutate, qui pilote Infection en interne) mute le
+  # code et vérifie que la suite échoue sur chaque mutant : un mutant
+  # survivant est un test qui n'aurait pas vu le bug équivalent.
+  #
+  # `infection/infection` invoqué directement ne fonctionne pas ici : Pest
+  # bloque l'exécution de `vendor/bin/phpunit` en direct
+  # (Pest\Exceptions\InvalidPestCommand), puisque ses fonctions `test()`/
+  # `it()` dépendent de son propre bootstrap. `pest --mutate` est
+  # l'intégration officiellement supportée.
+  #
+  # Périmètre volontairement étroit : seules les classes ajoutées ou
+  # renforcées pendant cet audit, chacune avec un test dédié qui l'exerce
+  # directement. Un essai sur tout `App\Support` (mesuré une fois pour
+  # calibrer ce choix) est retombé à 32,83 % -- la plupart de ce dossier
+  # préexistait à cette mission sans viser une couverture mutationnelle,
+  # et un tel score en CI dès le premier passage produirait un signal
+  # inexploitable, comme l'aurait fait un premier passage PHPStan sur ce
+  # même dépôt jamais analysé statiquement. Élargir ce périmètre est un
+  # choix légitime une fois d'autres classes durcies par un test dédié.
+  #
+  # `--class` ne s'additionne pas d'un appel à l'autre (dernière valeur
+  # gagnante) : chaque classe passe par sa propre étape. Le premier passage
+  # relance toute la suite sous couverture (~1-2 min) ; Pest met en cache
+  # cette couverture, donc les étapes suivantes sont nettement plus rapides
+  # tant que le code et les tests n'ont pas changé entre les deux.
+  mutation:
+    runs-on: ubuntu-22.04
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.2
+          extensions: mbstring, dom, fileinfo, pdo, pdo_sqlite, sqlite3, bcmath, ctype, json, xml, zip, gd, calendar
+          coverage: xdebug
+          tools: composer:v2
+      - name: Install dependencies
+        run: composer install --no-progress --prefer-dist --optimize-autoloader
+      - name: Prepare environment
+        run: |
+          cp .env.example .env 2>/dev/null || true
+          php artisan key:generate --ansi
+      # Score mesuré au moment de l'écriture : 100 % (4/4 mutants tués).
+      - name: Mutation testing — App\Support\Alerting
+        run: php -d memory_limit=1G vendor/bin/pest --mutate --coverage --class='App\Support\Alerting' --min=100 --no-progress
+      # Score mesuré : 80 % (16/20). Les 4 survivants sont soit un cast
+      # défensif équivalent au comportement sans cast avec le pilote de
+      # cache utilisé en test (RemoveBooleanCast/RemoveIntegerCast), soit un
+      # décalage d'une seconde sur le délai de répit du coupe-circuit
+      # (60 s → 59/61 s) sans conséquence observable -- pas de vrai trou.
+      - name: Mutation testing — App\Support\CircuitBreaker
+        run: php -d memory_limit=1G vendor/bin/pest --mutate --coverage --class='App\Support\CircuitBreaker' --min=75 --no-progress
 
   # Le bug le plus répété de l'audit initial (`exists:` au lieu de
   # `school_exists:`, laissant valider l'ID d'une ressource d'un autre
