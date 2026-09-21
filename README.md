@@ -4,6 +4,8 @@ Gestion d'établissements scolaires multi-écoles (Bénin), du maternel au
 supérieur : élèves, notes et bulletins, paiements, bibliothèque, infirmerie,
 transport, messagerie. Quatre surfaces partagent une même API.
 
+Pour contribuer : [CONTRIBUTING.md](./CONTRIBUTING.md).
+
 ## Les quatre surfaces
 
 | Surface | Pile | Emplacement |
@@ -32,8 +34,8 @@ npm start
 ## Tests
 
 ```bash
-cd Ecole/Ecole_backend  && vendor/bin/pest          # 467 tests
-cd Ecole/Ecole_frontend && npm test                 # 360 tests
+cd Ecole/Ecole_backend  && vendor/bin/pest          # 658 tests
+cd Ecole/Ecole_frontend && npm test                 # 465 tests
 cd Ecole/Ecole_frontend && npm run test:e2e         # 78 tests Playwright
 ```
 
@@ -70,6 +72,7 @@ permissions. Le référentiel des rôles vit dans `app/Support/Roles.php`.
 |---|---|
 | [`docs/production-secrets.md`](./docs/production-secrets.md) | Gestion des secrets et procédure de rotation — **à lire avant tout déploiement** |
 | [`docs/backups.md`](./docs/backups.md) | Sauvegardes chiffrées, restauration, exercice trimestriel |
+| [`docs/adr/`](./docs/adr) | Décisions d'architecture (pourquoi, pas seulement quoi) |
 | [`docs/reference/`](./docs/reference) | Conception du cloisonnement, API universitaire, structure des migrations |
 | [`docs/archive/`](./docs/archive) | Audits, plans et rapports historiques, conservés pour mémoire |
 
