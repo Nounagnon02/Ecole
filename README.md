@@ -69,6 +69,7 @@ permissions. Le référentiel des rôles vit dans `app/Support/Roles.php`.
 | Chemin | Contenu |
 |---|---|
 | [`docs/production-secrets.md`](./docs/production-secrets.md) | Gestion des secrets et procédure de rotation — **à lire avant tout déploiement** |
+| [`docs/backups.md`](./docs/backups.md) | Sauvegardes chiffrées, restauration, exercice trimestriel |
 | [`docs/reference/`](./docs/reference) | Conception du cloisonnement, API universitaire, structure des migrations |
 | [`docs/archive/`](./docs/archive) | Audits, plans et rapports historiques, conservés pour mémoire |
 

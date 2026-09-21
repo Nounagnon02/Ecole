@@ -99,6 +99,12 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withSchedule(function (\Illuminate\Console\Scheduling\Schedule $schedule) {
         // Nettoyage des sessions expirées (AUTH-18) — toutes les heures.
         $schedule->job(new \App\Jobs\CleanupExpiredSessions)->hourly();
+
+        // Sauvegarde chiffrée quotidienne (config/backup.php). `withoutOverlapping`
+        // : un dump qui traîne au-delà de 24h ne doit pas en chevaucher un
+        // second plutôt que de saturer le disque temporaire ou la bande
+        // passante vers le disque distant.
+        $schedule->command('backup:run')->dailyAt('02:00')->withoutOverlapping();
     })
     ->withExceptions(function (Exceptions $exceptions) {
         // Sans DSN configuré (`SENTRY_LARAVEL_DSN`), le SDK ne fait rien :
