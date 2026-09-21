@@ -150,4 +150,24 @@ class PaymentWebhookUnauthenticatedTest extends TestCase
             'CONTENT_TYPE' => 'application/json',
         ], '{}')->assertStatus(401);
     }
+
+    /**
+     * Une signature invalide n'est pas seulement rejetée : elle doit se voir
+     * quelque part (jamais consultée sans alerte avant cet ajout).
+     *
+     * @test
+     */
+    public function a_rejected_signature_raises_an_anomaly_alert()
+    {
+        $this->pendingPayment();
+        \Illuminate\Support\Facades\Log::spy();
+
+        $this->call('POST', '/api/payments/webhook', [], [], [], [
+            'CONTENT_TYPE' => 'application/json',
+        ], '{}')->assertStatus(401);
+
+        \Illuminate\Support\Facades\Log::shouldHaveReceived('critical')->withArgs(
+            fn ($message) => str_contains($message, 'Webhook de paiement rejeté')
+        )->once();
+    }
 }

@@ -13,6 +13,7 @@ use App\Models\Eleve;
 use App\Http\Requests\Payment\InitializePaymentRequest;
 use App\Http\Requests\Payment\MobileMoneyRequest;
 use App\Services\Billing\PaymentProvider;
+use App\Support\Alerting;
 use App\Support\SchoolContext;
 
 class PaymentController extends Controller
@@ -306,6 +307,11 @@ class PaymentController extends Controller
         // Un en-tête absent donne null, que `hash_equals` n'accepte pas : le
         // comparer tel quel émet une dépréciation avant de retomber sur false.
         if (!is_string($signature) || !hash_equals($expectedSignature, $signature)) {
+            Alerting::anomaly('Webhook de paiement rejeté (signature invalide)', [
+                'ip' => $request->ip(),
+                'signature_present' => is_string($signature),
+            ]);
+
             return response()->json(['error' => 'Invalid signature'], 401);
         }
 
