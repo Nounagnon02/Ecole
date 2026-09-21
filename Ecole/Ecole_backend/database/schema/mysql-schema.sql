@@ -1342,6 +1342,7 @@ CREATE TABLE `payments` (
   `paiement_eleve_id` bigint unsigned DEFAULT NULL,
   `ecole_id` bigint unsigned NOT NULL,
   `transaction_id` varchar(191) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `checkout_url` varchar(191) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `amount` decimal(10,2) NOT NULL,
   `currency` varchar(3) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'XOF',
   `type` enum('scolarite','cantine','transport','autre') COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -2265,3 +2266,4 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (124,'2026_08_25_12
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (125,'2026_09_17_120000_widen_livre_publication_year',1);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (126,'2026_09_17_120100_restrict_school_deletion_on_remaining_tables',1);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (127,'2026_09_20_140000_add_unique_index_to_transaction_paiements_reference',2);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (128,'2026_09_21_102706_add_checkout_url_to_payments_table',2);

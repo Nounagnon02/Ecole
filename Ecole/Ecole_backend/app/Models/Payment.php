@@ -15,6 +15,7 @@ class Payment extends Model
         'paiement_eleve_id',
         'ecole_id',
         'transaction_id',
+        'checkout_url',
         'amount',
         'currency',
         'type',
