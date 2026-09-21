@@ -71,6 +71,14 @@ class PasswordResetController extends Controller
     public function reset(Request $request)
     {
         $request->validate([
+            // `users.ecole_id` existe, mais cette recherche doit rester
+            // globale par nature : à ce stade (avant toute authentification)
+            // aucun contexte d'école n'est résolu, et `email` est unique sur
+            // toute la table (`users_email_unique`), pas par établissement.
+            // `school_exists:` retournerait `1 = 0` faute de contexte et
+            // casserait la réinitialisation pour tout le monde — même
+            // exemption documentée que `User` dans BelongsToEcole.
+            // nosemgrep: laravel-exists-without-tenant-scope
             'email' => 'required|email|exists:users,email',
             'token' => 'required|string',
             'password' => 'required|string|min:8|confirmed',
