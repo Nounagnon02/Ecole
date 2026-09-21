@@ -247,7 +247,7 @@ class AuthController extends Controller
             'email' => 'nullable|email|unique:users,email',
             'identifiant' => 'required|string|unique:users,identifiant',
             'password' => ['required', 'string', Password::defaults()],
-            'ecole_id' => 'required|exists:ecoles,id',
+            'ecole_id' => 'required|school_exists:ecoles,id',
             'telephone' => 'nullable|string',
         ]);
 
@@ -321,7 +321,7 @@ class AuthController extends Controller
     public function selectSchool(Request $request)
     {
         $request->validate([
-            'ecole_id' => 'required|exists:ecoles,id',
+            'ecole_id' => 'required|school_exists:ecoles,id',
         ]);
 
         $user = Auth::user();

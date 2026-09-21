@@ -186,6 +186,24 @@ jobs:
       - name: Worker drains the queue and stops
         run: php artisan queue:work --stop-when-empty --max-time=60
 
+  # Le bug le plus répété de l'audit initial (`exists:` au lieu de
+  # `school_exists:`, laissant valider l'ID d'une ressource d'un autre
+  # établissement) trouvé 4 fois indépendamment en lecture manuelle. Cette
+  # règle Semgrep le détecte automatiquement à chaque PR au lieu d'attendre
+  # le prochain audit.
+  sast:
+    runs-on: ubuntu-22.04
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install Semgrep
+        run: pip install semgrep
+      - name: Run custom tenant-scope rule
+        run: semgrep --config .semgrep/laravel-tenant-scope.yml app/ --error
+
   # `docker build` est la seule façon de voir que le Dockerfile suit encore le
   # projet (extensions PHP, chemins copiés). L'image n'est pas publiée : on
   # valide la construction, pas la livraison.
@@ -202,7 +220,7 @@ jobs:
 
   deploy:
     runs-on: ubuntu-22.04
-    needs: [test, test-mysql, queue]
+    needs: [test, test-mysql, queue, sast]
     if: github.ref == 'refs/heads/main' && inputs.deploy
     steps:
       - uses: actions/checkout@v4

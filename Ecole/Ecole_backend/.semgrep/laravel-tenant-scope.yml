@@ -1,0 +1,38 @@
+rules:
+  - id: laravel-exists-without-tenant-scope
+    languages: [generic]
+    severity: WARNING
+    paths:
+      # Non ancrés à la racine du dépôt (`**/` en tête) : ce dossier `app/`
+      # est celui du sous-projet Laravel (`Ecole/Ecole_backend/app`), pas
+      # celui de la racine du monorepo — semgrep détecte la racine du dépôt
+      # Git, qui est un niveau au-dessus.
+      include:
+        - "**/app/**/*.php"
+      exclude:
+        # Couche plateforme de `stancl/tenancy` (tenants/plans/modules/domains) :
+        # au-dessus du cloisonnement par `ecole_id`, jamais dans son périmètre.
+        # Vérifié en marchant chaque occurrence de `exists:` de ces deux
+        # répertoires (18 au total sur tout `app/`) : aucune ne référence une
+        # table portant `ecole_id`.
+        - "**/app/Http/Controllers/Central/**"
+        - "**/app/Modules/Central/**"
+    message: >
+      Règle de validation `exists:` sans cloisonnement par école. Si la table
+      visée porte une colonne `ecole_id`, un utilisateur d'un établissement
+      peut ainsi valider l'identifiant d'une ressource appartenant à un autre
+      établissement (c'est exactement le bug corrigé dans ~110 règles à
+      travers 27 fichiers, cf. app/Validation/SchoolExistsRule.php).
+
+      Remplacer par `school_exists:table,colonne` : comportement strictement
+      identique sur une table sans `ecole_id` (plans, tenants, modules,
+      ecoles — la règle ne fait rien de plus que `exists:` dans ce cas), et
+      cloisonné par établissement sur une table qui en a une.
+
+      Si ce `exists:` est un cas légitime — une table de niveau plateforme,
+      ou une recherche qui doit rester globale par nature (ex. retrouver un
+      compte par email avant toute authentification, comme la
+      réinitialisation de mot de passe) — ajouter sur la même ligne
+      `// nosemgrep: laravel-exists-without-tenant-scope` suivi d'une courte
+      justification, plutôt que de supprimer l'alerte silencieusement.
+    pattern-regex: '[|''"]exists:[a-zA-Z_]+,[a-zA-Z_.]+[''"]'
