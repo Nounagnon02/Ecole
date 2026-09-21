@@ -45,6 +45,18 @@ class CircuitBreakerTest extends TestCase
     }
 
     /** @test */
+    public function the_default_threshold_is_five_consecutive_failures()
+    {
+        for ($i = 0; $i < 4; $i++) {
+            CircuitBreaker::recordFailure('test-service');
+        }
+        $this->assertFalse(CircuitBreaker::isOpen('test-service'), 'Ne doit pas encore ouvrir après seulement 4 échecs.');
+
+        CircuitBreaker::recordFailure('test-service');
+        $this->assertTrue(CircuitBreaker::isOpen('test-service'), 'Doit ouvrir au 5e échec consécutif par défaut.');
+    }
+
+    /** @test */
     public function each_service_has_an_independent_circuit()
     {
         CircuitBreaker::recordFailure('fedapay', threshold: 1, cooldownSeconds: 60);
