@@ -793,7 +793,69 @@
       "configuration": {
         "title": "الإعدادات",
         "subtitle": "إعدادات النظام العامة",
-        "reinitialiser": "إعادة تعيين"
+        "reinitialiser": "إعادة تعيين",
+        "sections": {
+          "general": {
+            "title": "عام",
+            "description": "الإعدادات العامة للتطبيق",
+            "fields": {
+              "nom_app": "اسم التطبيق",
+              "annee_scolaire": "السنة الدراسية الحالية",
+              "langue": "اللغة الافتراضية",
+              "fuseau": "المنطقة الزمنية"
+            }
+          },
+          "scolarite": {
+            "title": "الدراسة",
+            "description": "إعداد الأطوار والمستويات الدراسية",
+            "fields": {
+              "cycles": "الأطوار النشطة",
+              "notes_max": "العلامة القصوى",
+              "seuil_reussite": "عتبة النجاح (%)",
+              "moyenne_requise": "المعدل العام المطلوب"
+            }
+          },
+          "notifications": {
+            "title": "الإشعارات",
+            "description": "إعداد التنبيهات والتذكيرات",
+            "fields": {
+              "notif_email": "إشعارات البريد الإلكتروني",
+              "notif_email_value": "مفعّلة",
+              "notif_sms": "إشعارات الرسائل القصيرة",
+              "notif_sms_value": "معطّلة",
+              "rappel_paiement": "تذكيرات الدفع",
+              "rappel_paiement_value": "7 أيام قبل الموعد النهائي",
+              "rappel_absence": "تنبيهات الغياب",
+              "rappel_absence_value": "بعد 3 غيابات متتالية"
+            }
+          },
+          "securite": {
+            "title": "الأمان",
+            "description": "سياسات الأمان والوصول",
+            "fields": {
+              "2fa": "المصادقة الثنائية",
+              "2fa_value": "اختيارية",
+              "session": "أقصى مدة للجلسة",
+              "session_value": "24 ساعة",
+              "tentatives": "المحاولات قبل الإغلاق",
+              "mdp_expire": "انتهاء صلاحية كلمة المرور",
+              "mdp_expire_value": "90 يومًا"
+            }
+          },
+          "paiement": {
+            "title": "المدفوعات",
+            "description": "إعداد وسائل الدفع",
+            "fields": {
+              "devise": "العملة",
+              "mobile_money": "Mobile Money",
+              "mobile_money_value": "مفعّل (Orange Money، MTN MoMo)",
+              "delai_paiement": "مهلة الدفع",
+              "delai_paiement_value": "30 يومًا بعد الفوترة",
+              "frais_retard": "غرامة التأخير (%)",
+              "frais_retard_value": "2% شهريًا"
+            }
+          }
+        }
       }
     },
     "bibliothecaire": {
@@ -1446,7 +1508,29 @@
         "l_enseignant": "الأستاذ",
         "maternelle_primaire": "الروض / الابتدائي",
         "classe_de": "قسم",
-        "aucun_enseignant_mp": "لا يوجد أستاذ في الروض / الابتدائي"
+        "aucun_enseignant_mp": "لا يوجد أستاذ في الروض / الابتدائي",
+        "secondaire": "الثانوي",
+        "maternelle_et_primaire": "الحضانة والابتدائي",
+        "enseignants_title": "المعلمون",
+        "selectionnez_un_enseignant_pour_voir_ses_cours": "اختر معلمًا لعرض حصصه",
+        "choisir_un_enseignant": "اختر معلمًا",
+        "affecter_un_cours": "إسناد حصة",
+        "classe_serie_matiere_cascade": "الصف ← الشعبة ← المادة (يجب أن تنتمي المادة إلى الشعبة)",
+        "classe_label": "الصف",
+        "choisir_une_classe": "اختر صفًا",
+        "serie_label": "الشعبة",
+        "matiere_label": "المادة",
+        "affecter": "إسناد",
+        "cours_de": "حصص",
+        "selectionnez_un_enseignant_pour_afficher_ses_affectations": "اختر معلمًا لعرض إسناداته",
+        "aucune_affectation_pour_cet_enseignant": "لا توجد إسنادات لهذا المعلم",
+        "retirer": "إزالة",
+        "cette_matiere": "هذه المادة",
+        "en": "في",
+        "enseignants_maternelle_et_primaire": "معلمو الحضانة والابتدائي",
+        "chaque_enseignant_couvre_une_classe": "يغطي كل معلم صفًا كاملاً — غيّر صفه هنا",
+        "affectation_count_singular": "{n} إسناد",
+        "affectation_count_plural": "{n} إسناد"
       }
     },
     "ai": {

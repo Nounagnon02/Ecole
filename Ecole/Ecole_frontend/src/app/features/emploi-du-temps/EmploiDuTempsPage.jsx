@@ -21,7 +21,6 @@ import { useTranslation } from '@/shared/i18n';
 
 /* ─── Jours et créneaux ───────────────────────────────────────────── */
 const JOURS = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
-const JOURS_LABELS = { lundi: 'Lundi', mardi: 'Mardi', mercredi: 'Mercredi', jeudi: 'Jeudi', vendredi: 'Vendredi', samedi: 'Samedi' };
 const CRENEAUX = [
   { heure: '08h00 - 09h00', label: '1ère heure' },
   { heure: '09h00 - 10h00', label: '2ème heure' },
@@ -224,7 +223,7 @@ export default function EmploiDuTempsPage() {
             <div className="bg-neutral-100 dark:bg-neutral-800 p-3" />
             {JOURS.map((jour) => (
               <div key={jour} className="bg-neutral-100 dark:bg-neutral-800 p-3 text-center">
-                <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">{JOURS_LABELS[jour]}</span>
+                <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">{t(`emploi_du_temps.${jour}`)}</span>
               </div>
             ))}
           </div>

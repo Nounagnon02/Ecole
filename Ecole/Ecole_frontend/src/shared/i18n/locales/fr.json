@@ -793,7 +793,69 @@
       "configuration": {
         "title": "Configuration",
         "subtitle": "Paramètres globaux du système",
-        "reinitialiser": "Réinitialiser"
+        "reinitialiser": "Réinitialiser",
+        "sections": {
+          "general": {
+            "title": "Général",
+            "description": "Paramètres généraux de l'application",
+            "fields": {
+              "nom_app": "Nom de l'application",
+              "annee_scolaire": "Année scolaire en cours",
+              "langue": "Langue par défaut",
+              "fuseau": "Fuseau horaire"
+            }
+          },
+          "scolarite": {
+            "title": "Scolarité",
+            "description": "Configuration des cycles et niveaux",
+            "fields": {
+              "cycles": "Cycles actifs",
+              "notes_max": "Note maximale",
+              "seuil_reussite": "Seuil de réussite (%)",
+              "moyenne_requise": "Moyenne générale requise"
+            }
+          },
+          "notifications": {
+            "title": "Notifications",
+            "description": "Configuration des alertes et rappels",
+            "fields": {
+              "notif_email": "Notifications par email",
+              "notif_email_value": "Activées",
+              "notif_sms": "Notifications par SMS",
+              "notif_sms_value": "Désactivées",
+              "rappel_paiement": "Rappels de paiement",
+              "rappel_paiement_value": "7 jours avant échéance",
+              "rappel_absence": "Alertes absences",
+              "rappel_absence_value": "Après 3 absences consécutives"
+            }
+          },
+          "securite": {
+            "title": "Sécurité",
+            "description": "Politiques de sécurité et d'accès",
+            "fields": {
+              "2fa": "Authentification à deux facteurs",
+              "2fa_value": "Optionnelle",
+              "session": "Durée de session max",
+              "session_value": "24 heures",
+              "tentatives": "Tentatives avant verrouillage",
+              "mdp_expire": "Expiration mot de passe",
+              "mdp_expire_value": "90 jours"
+            }
+          },
+          "paiement": {
+            "title": "Paiements",
+            "description": "Configuration des moyens de paiement",
+            "fields": {
+              "devise": "Devise",
+              "mobile_money": "Mobile Money",
+              "mobile_money_value": "Activé (Orange Money, MTN MoMo)",
+              "delai_paiement": "Délai de paiement",
+              "delai_paiement_value": "30 jours après facturation",
+              "frais_retard": "Pénalité de retard (%)",
+              "frais_retard_value": "2% par mois"
+            }
+          }
+        }
       }
     },
     "bibliothecaire": {
@@ -1446,7 +1508,29 @@
         "l_enseignant": "l’enseignant",
         "maternelle_primaire": "Maternelle / Primaire",
         "classe_de": "Classe de",
-        "aucun_enseignant_mp": "Aucun enseignant Maternelle / Primaire"
+        "aucun_enseignant_mp": "Aucun enseignant Maternelle / Primaire",
+        "secondaire": "Secondaire",
+        "maternelle_et_primaire": "Maternelle & Primaire",
+        "enseignants_title": "Enseignants",
+        "selectionnez_un_enseignant_pour_voir_ses_cours": "Sélectionnez un enseignant pour voir ses cours",
+        "choisir_un_enseignant": "Choisir un enseignant",
+        "affecter_un_cours": "Affecter un cours",
+        "classe_serie_matiere_cascade": "Classe → série → matière (la matière doit appartenir à la série)",
+        "classe_label": "Classe",
+        "choisir_une_classe": "Choisir une classe",
+        "serie_label": "Série",
+        "matiere_label": "Matière",
+        "affecter": "Affecter",
+        "cours_de": "Cours de",
+        "selectionnez_un_enseignant_pour_afficher_ses_affectations": "Sélectionnez un enseignant pour afficher ses affectations",
+        "aucune_affectation_pour_cet_enseignant": "Aucune affectation pour cet enseignant",
+        "retirer": "Retirer",
+        "cette_matiere": "cette matière",
+        "en": "en",
+        "enseignants_maternelle_et_primaire": "Enseignants Maternelle & Primaire",
+        "chaque_enseignant_couvre_une_classe": "Chaque enseignant couvre une classe entière — changez sa classe ici",
+        "affectation_count_singular": "{n} affectation",
+        "affectation_count_plural": "{n} affectations"
       }
     },
     "ai": {

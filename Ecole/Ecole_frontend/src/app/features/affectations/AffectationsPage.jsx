@@ -208,7 +208,7 @@ export default function AffectationsPage() {
         <RefreshCw className="h-8 w-8 mb-2 text-red-400" />
         <p className="text-sm">{error}</p>
         <Button variant="outline" size="sm" className="mt-4" onClick={loadAll}>
-          Réessayer
+          {t('common.retry')}
         </Button>
       </div>
     );
@@ -244,8 +244,8 @@ export default function AffectationsPage() {
 
       <Tabs defaultValue="secondaire">
         <Tabs.List variant="pills">
-          <Tabs.Trigger value="secondaire">Secondaire</Tabs.Trigger>
-          <Tabs.Trigger value="mp">Maternelle &amp; Primaire</Tabs.Trigger>
+          <Tabs.Trigger value="secondaire">{t('pages.affectations.affectations.secondaire')}</Tabs.Trigger>
+          <Tabs.Trigger value="mp">{t('pages.affectations.affectations.maternelle_et_primaire')}</Tabs.Trigger>
         </Tabs.List>
 
         {/* ─── Secondaire : triplet classe × série × matière ─────────── */}
@@ -253,14 +253,14 @@ export default function AffectationsPage() {
           <div className="grid gap-6 lg:grid-cols-2">
             <Card>
               <Card.Header>
-                <Card.Title>Enseignants</Card.Title>
-                <Card.Description>Sélectionnez un enseignant pour voir ses cours</Card.Description>
+                <Card.Title>{t('pages.affectations.affectations.enseignants_title')}</Card.Title>
+                <Card.Description>{t('pages.affectations.affectations.selectionnez_un_enseignant_pour_voir_ses_cours')}</Card.Description>
               </Card.Header>
               <Card.Body>
                 <Select
-                  aria-label="Enseignant"
-                  label="Enseignant"
-                  placeholder="Choisir un enseignant"
+                  aria-label={t('pages.affectations.affectations.enseignant')}
+                  label={t('pages.affectations.affectations.enseignant')}
+                  placeholder={t('pages.affectations.affectations.choisir_un_enseignant')}
                   options={teacherOptions}
                   value={selectedTeacherId}
                   onChange={(e) => setSelectedTeacherId(e.target.value)}
@@ -286,16 +286,16 @@ export default function AffectationsPage() {
 
             <Card>
               <Card.Header>
-                <Card.Title>Affecter un cours</Card.Title>
+                <Card.Title>{t('pages.affectations.affectations.affecter_un_cours')}</Card.Title>
                 <Card.Description>
-                  Classe → série → matière (la matière doit appartenir à la série)
+                  {t('pages.affectations.affectations.classe_serie_matiere_cascade')}
                 </Card.Description>
               </Card.Header>
               <Card.Body className="space-y-4">
                 <Select
-                  aria-label="Classe"
-                  label="Classe"
-                  placeholder="Choisir une classe"
+                  aria-label={t('pages.affectations.affectations.classe_label')}
+                  label={t('pages.affectations.affectations.classe_label')}
+                  placeholder={t('pages.affectations.affectations.choisir_une_classe')}
                   options={classeOptions}
                   value={classeId}
                   onChange={(e) => {
@@ -305,8 +305,8 @@ export default function AffectationsPage() {
                   }}
                 />
                 <Select
-                  aria-label="Série"
-                  label="Série"
+                  aria-label={t('pages.affectations.affectations.serie_label')}
+                  label={t('pages.affectations.affectations.serie_label')}
                   placeholder={classeId ? t('pages.affectations.affectations.choisir_une_serie') : t('pages.affectations.affectations.choisissez_d_abord_une_classe')}
                   options={seriesOptions}
                   value={serieId}
@@ -317,8 +317,8 @@ export default function AffectationsPage() {
                   }}
                 />
                 <Select
-                  aria-label="Matière"
-                  label="Matière"
+                  aria-label={t('pages.affectations.affectations.matiere_label')}
+                  label={t('pages.affectations.affectations.matiere_label')}
                   placeholder={serieId ? t('pages.affectations.affectations.choisir_une_matiere') : t('pages.affectations.affectations.choisissez_d_abord_une_serie')}
                   options={matieresOptions}
                   value={matiereId}
@@ -332,7 +332,7 @@ export default function AffectationsPage() {
                   icon={<Plus className="h-4 w-4" />}
                   className="w-full"
                 >
-                  Affecter
+                  {t('pages.affectations.affectations.affecter')}
                 </Button>
               </Card.Body>
             </Card>
@@ -340,20 +340,25 @@ export default function AffectationsPage() {
 
           <Card className="mt-6">
             <Card.Header>
-              <Card.Title>Cours de {selectedTeacher ? NOM_ENSEIGNANT(selectedTeacher) : t('pages.affectations.affectations.l_enseignant')}</Card.Title>
+              <Card.Title>{t('pages.affectations.affectations.cours_de')} {selectedTeacher ? NOM_ENSEIGNANT(selectedTeacher) : t('pages.affectations.affectations.l_enseignant')}</Card.Title>
               <Card.Description>
-                {affectations.length} affectation{affectations.length > 1 ? 's' : ''}
+                {t(
+                  affectations.length > 1
+                    ? 'pages.affectations.affectations.affectation_count_plural'
+                    : 'pages.affectations.affectations.affectation_count_singular',
+                  { n: affectations.length },
+                )}
               </Card.Description>
             </Card.Header>
             <Card.Body className="p-0">
               {!selectedTeacher ? (
                 <div className="py-10 text-center text-sm text-neutral-500">
-                  Sélectionnez un enseignant pour afficher ses affectations
+                  {t('pages.affectations.affectations.selectionnez_un_enseignant_pour_afficher_ses_affectations')}
                 </div>
               ) : affectations.length === 0 ? (
                 <div className="py-10 text-center text-sm text-neutral-500">
                   <Users className="mx-auto h-8 w-8 mb-2" />
-                  Aucune affectation pour cet enseignant
+                  {t('pages.affectations.affectations.aucune_affectation_pour_cet_enseignant')}
                 </div>
               ) : (
                 <ul className="divide-y divide-neutral-100 dark:divide-neutral-800">
@@ -380,7 +385,7 @@ export default function AffectationsPage() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        aria-label={`Retirer ${a.matiere?.nom || 'cette matière'} en ${a.classe?.nom_classe || 'classe'}`}
+                        aria-label={`${t('pages.affectations.affectations.retirer')} ${a.matiere?.nom || t('pages.affectations.affectations.cette_matiere')} ${t('pages.affectations.affectations.en')} ${a.classe?.nom_classe || t('pages.affectations.affectations.classe_label')}`}
                         onClick={() => handleDelete(a.id)}
                       >
                         <Trash2 className="h-4 w-4 text-red-500" />
@@ -397,9 +402,9 @@ export default function AffectationsPage() {
         <Tabs.Content value="mp">
           <Card>
             <Card.Header>
-              <Card.Title>Enseignants Maternelle &amp; Primaire</Card.Title>
+              <Card.Title>{t('pages.affectations.affectations.enseignants_maternelle_et_primaire')}</Card.Title>
               <Card.Description>
-                Chaque enseignant couvre une classe entière — changez sa classe ici
+                {t('pages.affectations.affectations.chaque_enseignant_couvre_une_classe')}
               </Card.Description>
             </Card.Header>
             <Card.Body className="p-0">
