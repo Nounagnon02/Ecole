@@ -793,7 +793,69 @@
       "configuration": {
         "title": "Configuration",
         "subtitle": "Global system settings",
-        "reinitialiser": "Reset"
+        "reinitialiser": "Reset",
+        "sections": {
+          "general": {
+            "title": "General",
+            "description": "General application settings",
+            "fields": {
+              "nom_app": "Application name",
+              "annee_scolaire": "Current school year",
+              "langue": "Default language",
+              "fuseau": "Time zone"
+            }
+          },
+          "scolarite": {
+            "title": "Academics",
+            "description": "Cycle and grade-level configuration",
+            "fields": {
+              "cycles": "Active cycles",
+              "notes_max": "Maximum grade",
+              "seuil_reussite": "Passing threshold (%)",
+              "moyenne_requise": "Required overall average"
+            }
+          },
+          "notifications": {
+            "title": "Notifications",
+            "description": "Alert and reminder configuration",
+            "fields": {
+              "notif_email": "Email notifications",
+              "notif_email_value": "Enabled",
+              "notif_sms": "SMS notifications",
+              "notif_sms_value": "Disabled",
+              "rappel_paiement": "Payment reminders",
+              "rappel_paiement_value": "7 days before the due date",
+              "rappel_absence": "Absence alerts",
+              "rappel_absence_value": "After 3 consecutive absences"
+            }
+          },
+          "securite": {
+            "title": "Security",
+            "description": "Security and access policies",
+            "fields": {
+              "2fa": "Two-factor authentication",
+              "2fa_value": "Optional",
+              "session": "Maximum session duration",
+              "session_value": "24 hours",
+              "tentatives": "Attempts before lockout",
+              "mdp_expire": "Password expiration",
+              "mdp_expire_value": "90 days"
+            }
+          },
+          "paiement": {
+            "title": "Payments",
+            "description": "Payment method configuration",
+            "fields": {
+              "devise": "Currency",
+              "mobile_money": "Mobile Money",
+              "mobile_money_value": "Enabled (Orange Money, MTN MoMo)",
+              "delai_paiement": "Payment deadline",
+              "delai_paiement_value": "30 days after invoicing",
+              "frais_retard": "Late penalty (%)",
+              "frais_retard_value": "2% per month"
+            }
+          }
+        }
       }
     },
     "bibliothecaire": {
@@ -1446,7 +1508,29 @@
         "l_enseignant": "the teacher",
         "maternelle_primaire": "Nursery / Primary",
         "classe_de": "Class of",
-        "aucun_enseignant_mp": "No Nursery / Primary teacher"
+        "aucun_enseignant_mp": "No Nursery / Primary teacher",
+        "secondaire": "Secondary",
+        "maternelle_et_primaire": "Nursery & Primary",
+        "enseignants_title": "Teachers",
+        "selectionnez_un_enseignant_pour_voir_ses_cours": "Select a teacher to see their classes",
+        "choisir_un_enseignant": "Choose a teacher",
+        "affecter_un_cours": "Assign a class",
+        "classe_serie_matiere_cascade": "Class → track → subject (the subject must belong to the track)",
+        "classe_label": "Class",
+        "choisir_une_classe": "Choose a class",
+        "serie_label": "Track",
+        "matiere_label": "Subject",
+        "affecter": "Assign",
+        "cours_de": "Classes for",
+        "selectionnez_un_enseignant_pour_afficher_ses_affectations": "Select a teacher to see their assignments",
+        "aucune_affectation_pour_cet_enseignant": "No assignments for this teacher",
+        "retirer": "Remove",
+        "cette_matiere": "this subject",
+        "en": "in",
+        "enseignants_maternelle_et_primaire": "Nursery & Primary Teachers",
+        "chaque_enseignant_couvre_une_classe": "Each teacher covers one whole class — change their class here",
+        "affectation_count_singular": "{n} assignment",
+        "affectation_count_plural": "{n} assignments"
       }
     },
     "ai": {

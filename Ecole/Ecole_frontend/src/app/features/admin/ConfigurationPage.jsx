@@ -13,68 +13,83 @@ import Card from '@/shared/components/ui/Card';
 import Button from '@/shared/components/ui/Button';
 import { useTranslation } from '@/shared/i18n';
 
-const CONFIG_SECTIONS = [
-  {
-    id: 'general',
-    titre: 'Général',
-    icon: Settings,
-    description: 'Paramètres généraux de l\'application',
-    fields: [
-      { id: 'nom_app', label: 'Nom de l\'application', value: 'École - Gestion Scolaire', type: 'text' },
-      { id: 'annee_scolaire', label: 'Année scolaire en cours', value: '2025-2026', type: 'text' },
-      { id: 'langue', label: 'Langue par défaut', value: 'Français', type: 'select', options: ['Français', 'English'] },
-      { id: 'fuseau', label: 'Fuseau horaire', value: 'Africa/Abidjan (UTC+0)', type: 'text' },
-    ]
-  },
-  {
-    id: 'scolarite',
-    titre: 'Scolarité',
-    icon: BookOpen,
-    description: 'Configuration des cycles et niveaux',
-    fields: [
-      { id: 'cycles', label: 'Cycles actifs', value: 'Primaire, Secondaire, Université', type: 'text' },
-      { id: 'notes_max', label: 'Note maximale', value: '20', type: 'text' },
-      { id: 'seuil_reussite', label: 'Seuil de réussite (%)', value: '50', type: 'text' },
-      { id: 'moyenne_requise', label: 'Moyenne générale requise', value: '10/20', type: 'text' },
-    ]
-  },
-  {
-    id: 'notifications',
-    titre: 'Notifications',
-    icon: Bell,
-    description: 'Configuration des alertes et rappels',
-    fields: [
-      { id: 'notif_email', label: 'Notifications par email', value: 'Activées', type: 'toggle', enabled: true },
-      { id: 'notif_sms', label: 'Notifications par SMS', value: 'Désactivées', type: 'toggle', enabled: false },
-      { id: 'rappel_paiement', label: 'Rappels de paiement', value: '7 jours avant échéance', type: 'text' },
-      { id: 'rappel_absence', label: 'Alertes absences', value: 'Après 3 absences consécutives', type: 'text' },
-    ]
-  },
-  {
-    id: 'securite',
-    titre: 'Sécurité',
-    icon: Shield,
-    description: 'Politiques de sécurité et d\'accès',
-    fields: [
-      { id: '2fa', label: 'Authentification à deux facteurs', value: 'Optionnelle', type: 'select', options: ['Désactivée', 'Optionnelle', 'Obligatoire'] },
-      { id: 'session', label: 'Durée de session max', value: '24 heures', type: 'text' },
-      { id: 'tentatives', label: 'Tentatives avant verrouillage', value: '5', type: 'text' },
-      { id: 'mdp_expire', label: 'Expiration mot de passe', value: '90 jours', type: 'text' },
-    ]
-  },
-  {
-    id: 'paiement',
-    titre: 'Paiements',
-    icon: Database,
-    description: 'Configuration des moyens de paiement',
-    fields: [
-      { id: 'devise', label: 'Devise', value: 'XOF (Franc CFA)', type: 'text' },
-      { id: 'mobile_money', label: 'Mobile Money', value: 'Activé (Orange Money, MTN MoMo)', type: 'toggle', enabled: true },
-      { id: 'delai_paiement', label: 'Délai de paiement', value: '30 jours après facturation', type: 'text' },
-      { id: 'frais_retard', label: 'Pénalité de retard (%)', value: '2% par mois', type: 'text' },
-    ]
-  },
-];
+/**
+ * Les libellés viennent de `t()`, mais les identifiants de champ (`id`) et
+ * les valeurs non linguistiques (nombres, dates, identifiants techniques,
+ * noms de marque) restent tels quels : une année scolaire, un fuseau
+ * horaire ou « XOF » ne se traduisent pas. Seules les valeurs qui sont de
+ * vraies phrases françaises ont une clé `..._value` dédiée -- le genre
+ * grammatical diffère d'un champ à l'autre (« Désactivées » au féminin
+ * pluriel pour des notifications, « Désactivée » au féminin singulier pour
+ * une authentification), donc chacune a sa propre clé plutôt qu'un
+ * vocabulaire partagé qui serait faux dans au moins un des deux cas.
+ */
+function useConfigSections() {
+  const { t } = useTranslation();
+
+  return [
+    {
+      id: 'general',
+      titre: t('pages.admin.configuration.sections.general.title'),
+      icon: Settings,
+      description: t('pages.admin.configuration.sections.general.description'),
+      fields: [
+        { id: 'nom_app', label: t('pages.admin.configuration.sections.general.fields.nom_app'), value: 'École - Gestion Scolaire', type: 'text' },
+        { id: 'annee_scolaire', label: t('pages.admin.configuration.sections.general.fields.annee_scolaire'), value: '2025-2026', type: 'text' },
+        { id: 'langue', label: t('pages.admin.configuration.sections.general.fields.langue'), value: 'Français', type: 'select', options: ['Français', 'English'] },
+        { id: 'fuseau', label: t('pages.admin.configuration.sections.general.fields.fuseau'), value: 'Africa/Abidjan (UTC+0)', type: 'text' },
+      ]
+    },
+    {
+      id: 'scolarite',
+      titre: t('pages.admin.configuration.sections.scolarite.title'),
+      icon: BookOpen,
+      description: t('pages.admin.configuration.sections.scolarite.description'),
+      fields: [
+        { id: 'cycles', label: t('pages.admin.configuration.sections.scolarite.fields.cycles'), value: 'Primaire, Secondaire, Université', type: 'text' },
+        { id: 'notes_max', label: t('pages.admin.configuration.sections.scolarite.fields.notes_max'), value: '20', type: 'text' },
+        { id: 'seuil_reussite', label: t('pages.admin.configuration.sections.scolarite.fields.seuil_reussite'), value: '50', type: 'text' },
+        { id: 'moyenne_requise', label: t('pages.admin.configuration.sections.scolarite.fields.moyenne_requise'), value: '10/20', type: 'text' },
+      ]
+    },
+    {
+      id: 'notifications',
+      titre: t('pages.admin.configuration.sections.notifications.title'),
+      icon: Bell,
+      description: t('pages.admin.configuration.sections.notifications.description'),
+      fields: [
+        { id: 'notif_email', label: t('pages.admin.configuration.sections.notifications.fields.notif_email'), value: t('pages.admin.configuration.sections.notifications.fields.notif_email_value'), type: 'toggle', enabled: true },
+        { id: 'notif_sms', label: t('pages.admin.configuration.sections.notifications.fields.notif_sms'), value: t('pages.admin.configuration.sections.notifications.fields.notif_sms_value'), type: 'toggle', enabled: false },
+        { id: 'rappel_paiement', label: t('pages.admin.configuration.sections.notifications.fields.rappel_paiement'), value: t('pages.admin.configuration.sections.notifications.fields.rappel_paiement_value'), type: 'text' },
+        { id: 'rappel_absence', label: t('pages.admin.configuration.sections.notifications.fields.rappel_absence'), value: t('pages.admin.configuration.sections.notifications.fields.rappel_absence_value'), type: 'text' },
+      ]
+    },
+    {
+      id: 'securite',
+      titre: t('pages.admin.configuration.sections.securite.title'),
+      icon: Shield,
+      description: t('pages.admin.configuration.sections.securite.description'),
+      fields: [
+        { id: '2fa', label: t('pages.admin.configuration.sections.securite.fields.2fa'), value: t('pages.admin.configuration.sections.securite.fields.2fa_value'), type: 'select', options: ['Désactivée', 'Optionnelle', 'Obligatoire'] },
+        { id: 'session', label: t('pages.admin.configuration.sections.securite.fields.session'), value: t('pages.admin.configuration.sections.securite.fields.session_value'), type: 'text' },
+        { id: 'tentatives', label: t('pages.admin.configuration.sections.securite.fields.tentatives'), value: '5', type: 'text' },
+        { id: 'mdp_expire', label: t('pages.admin.configuration.sections.securite.fields.mdp_expire'), value: t('pages.admin.configuration.sections.securite.fields.mdp_expire_value'), type: 'text' },
+      ]
+    },
+    {
+      id: 'paiement',
+      titre: t('pages.admin.configuration.sections.paiement.title'),
+      icon: Database,
+      description: t('pages.admin.configuration.sections.paiement.description'),
+      fields: [
+        { id: 'devise', label: t('pages.admin.configuration.sections.paiement.fields.devise'), value: 'XOF (Franc CFA)', type: 'text' },
+        { id: 'mobile_money', label: t('pages.admin.configuration.sections.paiement.fields.mobile_money'), value: t('pages.admin.configuration.sections.paiement.fields.mobile_money_value'), type: 'toggle', enabled: true },
+        { id: 'delai_paiement', label: t('pages.admin.configuration.sections.paiement.fields.delai_paiement'), value: t('pages.admin.configuration.sections.paiement.fields.delai_paiement_value'), type: 'text' },
+        { id: 'frais_retard', label: t('pages.admin.configuration.sections.paiement.fields.frais_retard'), value: t('pages.admin.configuration.sections.paiement.fields.frais_retard_value'), type: 'text' },
+      ]
+    },
+  ];
+}
 
 const SECTION_COLORS = {
   general: 'bg-[var(--primary-subtle)] text-[var(--primary)]',
@@ -86,6 +101,7 @@ const SECTION_COLORS = {
 
 export default function ConfigurationPage() {
   const { t } = useTranslation();
+  const CONFIG_SECTIONS = useConfigSections();
   const [activeSection, setActiveSection] = useState(CONFIG_SECTIONS[0].id);
 
   return (
