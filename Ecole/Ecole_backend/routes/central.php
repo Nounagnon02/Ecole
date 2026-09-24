@@ -74,7 +74,7 @@ Route::prefix('api/v1/admin')->middleware(['auth:sanctum', 'role:super-admin'])-
 |--------------------------------------------------------------------------
 |
 */
-Route::prefix('api/v1/onboarding')->middleware('throttle:10,1')->group(function () {
+Route::prefix('api/v1/onboarding')->middleware('throttle:10,1,onboarding')->group(function () {
     Route::get('init', 'App\Http\Controllers\Central\OnboardingController@init');
     Route::post('step/school', 'App\Http\Controllers\Central\OnboardingController@stepSchool');
     Route::post('step/plan', 'App\Http\Controllers\Central\OnboardingController@stepPlan');
