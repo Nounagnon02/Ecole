@@ -77,12 +77,13 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // ============ NOTES ============
-    Route::prefix('notes')->middleware('throttle:60,1')->group(function () {
+    Route::prefix('notes')->middleware('throttle:60,1,notes')->group(function () {
         Route::get('/eleve/{eleveId?}', [NotesCrudController::class, 'index']);
         Route::post('/store', [NotesCrudController::class, 'store'])->middleware('role:directeur,enseignant');
         Route::post('/auto-save', [NotesAutoSaveController::class, 'save'])->middleware('role:directeur,enseignant');
-        Route::post('/import', [NotesImportController::class, 'import'])->middleware(['role:directeur,enseignant', 'throttle:5,1']);
-        Route::post('/import-csv', [NotesImportController::class, 'importCsv'])->middleware(['role:directeur,enseignant', 'throttle:5,1']);
+        // Un compteur pour les deux formats : 5 imports par minute au total.
+        Route::post('/import', [NotesImportController::class, 'import'])->middleware(['role:directeur,enseignant', 'throttle:5,1,notes-import']);
+        Route::post('/import-csv', [NotesImportController::class, 'importCsv'])->middleware(['role:directeur,enseignant', 'throttle:5,1,notes-import']);
         Route::post('/bulk', [NotesCrudController::class, 'bulkStore'])->middleware('role:directeur,enseignant');
         Route::get('/grille/{classeId}', [NotesCrudController::class, 'grilleSaisie'])->middleware('role:directeur,enseignant');
         Route::get('/export', [NotesImportController::class, 'export'])->middleware('role:directeur,enseignant');
@@ -134,7 +135,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ============ BULLETINS ============
     Route::get('/bulletins/eleve/{eleveId}/{periode}', [BulletinController::class, 'getBulletin'])
-        ->middleware(['role:directeur,parent,eleve', 'throttle:60,1']);
+        ->middleware(['role:directeur,parent,eleve', 'throttle:60,1,bulletins']);
 
     // ============ CAHIER DE TEXTE ============
     Route::prefix('cahier-texte')->group(function () {

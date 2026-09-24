@@ -67,8 +67,7 @@ L'image de production n'avait jamais été lancée pour de vrai. Corrigé dans l
 3. Le tableau de bord parent répondait 500 : l'extension PHP `calendar` (`easter_days()`, calendrier officiel) manquait, dans l'image de production comme dans celle de développement.
 4. `php artisan route:cache` échouait : noms de route `matieres.*` et `notes.*` en double entre `routes/tenant.php` et le module université. `railway.json` l'enchaîne avec `&&` avant `artisan serve` : le serveur ne pouvait pas démarrer. Le déploiement SSH le lance sur une ligne à part : les routes y restaient simplement non mises en cache. Test de non-régression : `tests/Feature/RouteNamesTest.php`.
 5. Le pool php-fpm de 5 workers (voir résultats).
-
-**Observation, non corrigée** : les limites `throttle:60,1` partagent un seul compteur par utilisateur entre toutes les routes qui les portent (`/auth/me`, `/comptable/*`, `/notes/*`, bulletins). Mesuré : 30 appels à `/auth/me` consomment 30 des 60 requêtes par minute de `/comptable/finances`. Aucun 429 avec des parcours réalistes, mais un premier modèle qui rappelait `/auth/me` à chaque écran en a provoqué 102 avec seulement 50 utilisateurs. À garder en tête si un écran se met à enchaîner les appels.
+6. Corrigé ensuite : toutes les limites `throttle:N,M` partageaient un seul compteur par utilisateur, ou par IP pour un invité, quelles que soient la route et la limite. Mesuré : 30 appels à `/auth/me` consommaient 30 des 60 requêtes par minute de `/comptable/finances`. Conséquences réelles : un enseignant qui venait de parcourir ses notes se voyait refuser l'import de notes (limite de 5 déjà consommée), et trois sélections d'école depuis l'IP d'un établissement bloquaient la réinitialisation de mot de passe pour tout l'établissement. Chaque limite a désormais son propre compteur (`throttle:5,1,notes-import`). Test : `tests/Feature/Api/RateLimitBucketsTest.php`.
 
 ## Limites
 
