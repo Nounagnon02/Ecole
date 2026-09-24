@@ -47,10 +47,19 @@ Route::middleware(['auth:sanctum', 'role:recteur,doyen,professeur,etudiant,perso
     Route::apiResource('enseignants', UnivEnseignantController::class)->middleware('role:recteur,doyen,super-admin');
 
     // Matières/UE
-    Route::apiResource('matieres', UnivMatiereController::class)->middleware('role:recteur,doyen,professeur,super-admin');
+    //
+    // `->names()` explicite : sans lui, ces ressources reprennent le nom par
+    // défaut `matieres.*` / `notes.*`, déjà pris par l'API tenant de
+    // routes/tenant.php — et `route:cache` refuse deux routes de même nom
+    // (voir tests/Feature/RouteNamesTest.php).
+    Route::apiResource('matieres', UnivMatiereController::class)
+        ->names('universite.matieres')
+        ->middleware('role:recteur,doyen,professeur,super-admin');
 
     // Notes
-    Route::apiResource('notes', UnivNoteController::class)->middleware('role:recteur,doyen,professeur,super-admin');
+    Route::apiResource('notes', UnivNoteController::class)
+        ->names('universite.notes')
+        ->middleware('role:recteur,doyen,professeur,super-admin');
 
     /*
     |----------------------------------------------------------------------
