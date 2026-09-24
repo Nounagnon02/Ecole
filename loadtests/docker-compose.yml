@@ -1,0 +1,103 @@
+# Cible des tests de charge : la pile de PRODUCTION (image php-fpm du
+# Dockerfile de production + nginx + MySQL + Redis), pas la pile de
+# développement de `../docker-compose.yml`. Celle-ci lance `artisan serve` avec
+# `APP_DEBUG=true` : la mesurer ne dirait rien de la capacité réelle.
+#
+# Usage complet : voir README.md dans ce dossier.
+#
+# Rien ici n'est destiné au déploiement. Les identifiants MySQL `root/root` sont
+# ceux de la pile de développement, pour une base locale jetable qui n'écoute
+# jamais hors de ce réseau Docker.
+
+name: ecole-loadtest
+
+services:
+  mysql:
+    image: mysql:8.0
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ecole
+    volumes:
+      - loadtest-mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot", "--silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: ../Ecole/Ecole_backend
+      dockerfile: Dockerfile
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      # Pas de clé dans le dépôt (même une clé jetable déclencherait, à raison,
+      # les scanners de secrets) : à générer avant de lancer, voir le README.
+      APP_KEY: ${LOADTEST_APP_KEY:?voir loadtests/README.md — exporter LOADTEST_APP_KEY}
+      APP_URL: http://localhost:18081
+      LOG_CHANNEL: stderr
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: ecole
+      DB_USERNAME: root
+      DB_PASSWORD: root
+      CACHE_STORE: redis
+      CACHE_DRIVER: redis
+      SESSION_DRIVER: redis
+      QUEUE_CONNECTION: redis
+      REDIS_CLIENT: predis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: "null"
+    volumes:
+      # Le client `mysql` de l'image de production (MariaDB) vérifie le
+      # certificat TLS du serveur et rejette celui, auto-signé, de cette base
+      # jetable : `migrate` échoue au chargement de database/schema/
+      # mysql-schema.sql. Une vraie base de production a un certificat valide —
+      # ce contournement est propre à ce banc d'essai, jamais dans l'image.
+      # /var/www est le HOME de www-data, l'utilisateur de l'image.
+      - ./my.cnf:/var/www/.my.cnf:ro
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # nginx voit le même `public/` que php-fpm au même chemin (/var/www/public) :
+  # `SCRIPT_FILENAME $realpath_root...` de nginx.conf doit désigner un fichier
+  # qui existe côté php-fpm.
+  nginx:
+    image: nginx:1.27-alpine
+    ports:
+      - "127.0.0.1:18081:80"
+    volumes:
+      - ../Ecole/Ecole_backend/docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ../Ecole/Ecole_backend/public:/var/www/public:ro
+    depends_on:
+      - app
+
+  # `docker compose run --rm k6 run /scripts/smoke.js`
+  k6:
+    image: grafana/k6:latest
+    profiles: ["k6"]
+    environment:
+      BASE_URL: http://nginx
+    volumes:
+      - ./scenarios:/scripts:ro
+      - ./data:/data:ro
+    depends_on:
+      - nginx
+
+volumes:
+  loadtest-mysql:
