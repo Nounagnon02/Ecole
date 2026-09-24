@@ -13,8 +13,11 @@ git config core.hooksPath .githooks
 ```
 
 Il lance un scan de secrets (gitleaks) sur ce qui est indexé, reformate le
-PHP modifié (Pint) et corrige ce qu'ESLint peut corriger sur le JS/JSX
-modifié, en ré-indexant à chaque fois. Rien ne bloque si l'outil n'est pas
+PHP indexé (Pint) et corrige ce qu'ESLint peut corriger sur le JS/JSX
+indexé, en ré-indexant le résultat. Un fichier indexé en partie
+(`git add -p`) n'est jamais corrigé ni ré-indexé — ESLint vérifie tout de
+même sa version indexée — et aucun fichier hors du commit n'est modifié.
+Rien ne bloque si l'outil n'est pas
 installé localement — sauf une vraie fuite de secret, qui bloque toujours.
 La CI reste le filet de sécurité pour le reste.
 
