@@ -91,9 +91,11 @@ les mises à jour de sécurité.
 Pour attraper une fuite (ou une erreur de style) avant même de pousser :
 `git config core.hooksPath .githooks` (une fois, par dépôt local) active un
 hook de pre-commit qui lance le même scan de secrets sur ce qui est indexé,
-reformate les fichiers PHP modifiés (Pint) et corrige ce qu'ESLint peut
-corriger sur les fichiers JS/JSX modifiés — en ré-indexant le résultat à
-chaque fois. Aucune étape ne bloque si son outil n'est pas installé
+reformate les fichiers PHP indexés (Pint) et corrige ce qu'ESLint peut
+corriger sur les fichiers JS/JSX indexés — en ré-indexant le résultat. Un
+fichier indexé en partie (`git add -p`) n'est jamais corrigé ni ré-indexé
+(ESLint vérifie tout de même sa version indexée), et aucun fichier hors du
+commit n'est modifié. Aucune étape ne bloque si son outil n'est pas installé
 localement (secrets exceptés, si `gitleaks` en trouve un vrai), et le lint ne
 bloque que sur de vraies erreurs, jamais sur un simple avertissement — la CI
 reste le filet de sécurité pour tout le reste.

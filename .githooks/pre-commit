@@ -15,6 +15,33 @@
 # le lire.
 
 ROOT="$(git rev-parse --show-toplevel)"
+cd "$ROOT" || exit 1
+
+# Seul ce qui part dans le commit est corrigé, et seulement quand c'est sans
+# risque. Un fichier indexé en partie (`git add -p`) garde des modifications
+# volontairement laissées hors du commit : le corriger puis le ré-indexer en
+# entier les y ferait partir. Ceux-là ne sont que vérifiés (ESLint, sur la
+# version indexée) ou signalés (Pint). Aucun fichier hors du commit n'est modifié.
+#
+# split_staged <pathspec>... remplit $fully (indexés en entier) et $partly
+# (indexés en partie), un chemin par ligne.
+split_staged() {
+  fully=''
+  partly=''
+  staged=$(git diff --cached --name-only --diff-filter=ACM -- "$@")
+  [ -z "$staged" ] && return 0
+  while IFS= read -r f; do
+    if git diff --quiet -- "$f"; then
+      fully="$fully$f
+"
+    else
+      partly="$partly$f
+"
+    fi
+  done <<EOF
+$staged
+EOF
+}
 
 # --- Secrets (gitleaks) -----------------------------------------------
 # Seule étape qui bloquait déjà le commit avant l'ajout du format/lint
@@ -29,16 +56,20 @@ elif ! gitleaks protect --staged --redact --config "$ROOT/.gitleaks.toml"; then
 fi
 
 # --- Format PHP (Pint) --------------------------------------------------
-# `--dirty` : ne reformate que les fichiers déjà modifiés (indexés ou non),
-# jamais tout le dépôt -- un commit qui touche un seul contrôleur ne doit pas
-# réécrire des fichiers sans rapport. Les fichiers réellement reformatés sont
-# ré-indexés, pour que la version corrigée parte dans le commit plutôt que la
-# version brute laissée dans l'arbre de travail.
-staged_php=$(git diff --cached --name-only --diff-filter=ACM -- 'Ecole/Ecole_backend/*.php' || true)
-if [ -n "$staged_php" ]; then
+# Les fichiers indexés en entier, et eux seuls, sont reformatés puis
+# ré-indexés, pour que la version corrigée parte dans le commit. (L'ancien
+# `pint --dirty` reformatait aussi les fichiers modifiés mais non indexés.)
+split_staged 'Ecole/Ecole_backend/*.php'
+if [ -n "$fully$partly" ]; then
   if [ -x "$ROOT/Ecole/Ecole_backend/vendor/bin/pint" ]; then
-    (cd "$ROOT/Ecole/Ecole_backend" && vendor/bin/pint --dirty --quiet) || true
-    echo "$staged_php" | while IFS= read -r f; do git add "$ROOT/$f"; done
+    if [ -n "$fully" ]; then
+      printf '%s' "$fully" | sed 's#^Ecole/Ecole_backend/##' | tr '\n' '\0' \
+        | (cd "$ROOT/Ecole/Ecole_backend" && xargs -0 vendor/bin/pint --quiet) || true
+      printf '%s' "$fully" | tr '\n' '\0' | xargs -0 git add --
+    fi
+    if [ -n "$partly" ]; then
+      printf '[pre-commit] Pint : indexés en partie, non reformatés :\n%s' "$partly"
+    fi
   else
     echo "[pre-commit] Pint introuvable (composer install côté backend) -- format ignoré localement."
   fi
@@ -50,16 +81,24 @@ fi
 # avertissements (`no-unused-vars`, etc.) -- CI elle-même les traite en
 # `continue-on-error` (voir frontend.yml), un hook local ne doit pas être
 # plus strict que la CI qu'il imite.
-staged_js=$(git diff --cached --name-only --diff-filter=ACM -- 'Ecole/Ecole_frontend/src/*.js' 'Ecole/Ecole_frontend/src/*.jsx' || true)
-if [ -n "$staged_js" ]; then
+split_staged 'Ecole/Ecole_frontend/src/*.js' 'Ecole/Ecole_frontend/src/*.jsx'
+if [ -n "$fully$partly" ]; then
   if [ -x "$ROOT/Ecole/Ecole_frontend/node_modules/.bin/eslint" ]; then
-    (
-      cd "$ROOT/Ecole/Ecole_frontend"
-      relative=$(echo "$staged_js" | sed 's#^Ecole/Ecole_frontend/##')
-      echo "$relative" | xargs node_modules/.bin/eslint --fix --quiet
-    )
-    lint_status=$?
-    echo "$staged_js" | while IFS= read -r f; do git add "$ROOT/$f"; done
+    lint_status=0
+    if [ -n "$fully" ]; then
+      printf '%s' "$fully" | sed 's#^Ecole/Ecole_frontend/##' | tr '\n' '\0' \
+        | (cd "$ROOT/Ecole/Ecole_frontend" && xargs -0 node_modules/.bin/eslint --fix --quiet) || lint_status=1
+      printf '%s' "$fully" | tr '\n' '\0' | xargs -0 git add --
+    fi
+    # Indexés en partie : pas de `--fix`, mais la version indexée, celle qui
+    # part dans le commit, est vérifiée quand même.
+    while IFS= read -r f; do
+      [ -z "$f" ] && continue
+      git show ":$f" | (cd "$ROOT/Ecole/Ecole_frontend" \
+        && node_modules/.bin/eslint --quiet --stdin --stdin-filename "${f#Ecole/Ecole_frontend/}") || lint_status=1
+    done <<EOF
+$partly
+EOF
     if [ "$lint_status" -ne 0 ]; then
       echo "[pre-commit] ESLint a trouvé de vraies erreurs (pas de simples avertissements) -- commit bloqué."
       exit 1
