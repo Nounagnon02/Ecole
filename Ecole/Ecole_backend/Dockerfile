@@ -15,10 +15,15 @@ FROM php:8.3-fpm AS base
 
 WORKDIR /var/www
 
+# `calendar` : `App\Support\CalendrierOfficiel` appelle `easter_days()` (Pâques,
+# Pentecôte). Sans elle, tout tableau de bord qui charge le calendrier officiel
+# — celui du parent, notamment — répond 500 en production ; jamais vu tant que
+# l'image n'avait pas été lancée pour de vrai (les tests tournent sur une
+# machine qui a déjà l'extension).
 RUN apt-get update && apt-get install -y --no-install-recommends \
         git unzip default-mysql-client libxml2-dev libzip-dev libpng-dev libjpeg-dev libonig-dev \
     && docker-php-ext-configure gd --with-jpeg \
-    && docker-php-ext-install -j"$(nproc)" pdo_mysql mbstring exif pcntl bcmath gd zip \
+    && docker-php-ext-install -j"$(nproc)" pdo_mysql mbstring exif pcntl bcmath gd zip calendar \
     && apt-get purge -y --auto-remove \
     && rm -rf /var/lib/apt/lists/*
 
@@ -43,6 +48,11 @@ RUN composer install \
         --no-interaction
 
 COPY . .
+
+# Sans ce fichier, php-fpm tourne sur le défaut du paquet Debian
+# (pm.max_children = 5) — jamais choisi, voir docker/prod/www.conf pour la
+# mesure qui justifie ces valeurs.
+COPY docker/prod/www.conf /usr/local/etc/php-fpm.d/www.conf
 
 RUN composer dump-autoload --optimize --no-dev \
     && mkdir -p storage/framework/{cache,sessions,views} storage/logs bootstrap/cache \

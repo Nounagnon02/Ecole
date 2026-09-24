@@ -8,10 +8,11 @@ FROM php:8.3-cli
 
 WORKDIR /var/www/html
 
+# `calendar` : voir le Dockerfile de production — `easter_days()` en dépend.
 RUN apt-get update && apt-get install -y --no-install-recommends \
         git unzip default-mysql-client libxml2-dev libzip-dev libpng-dev libjpeg-dev libonig-dev \
     && docker-php-ext-configure gd --with-jpeg \
-    && docker-php-ext-install -j"$(nproc)" pdo_mysql mbstring exif pcntl bcmath gd zip \
+    && docker-php-ext-install -j"$(nproc)" pdo_mysql mbstring exif pcntl bcmath gd zip calendar \
     && apt-get purge -y --auto-remove \
     && rm -rf /var/lib/apt/lists/*
 
