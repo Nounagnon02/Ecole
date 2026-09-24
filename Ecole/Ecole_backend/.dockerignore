@@ -13,6 +13,7 @@ storage/framework/cache/*
 storage/framework/sessions/*
 storage/framework/views/*
 storage/app/public/*
+storage/framework/testing/*
 bootstrap/cache/*
 
 tests/
