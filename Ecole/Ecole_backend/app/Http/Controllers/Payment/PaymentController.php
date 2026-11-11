@@ -21,9 +21,6 @@ class PaymentController extends Controller
     /** Rôles autorisés à gérer les paiements de toute l'école. */
     private const MANAGER_ROLES = ['directeur', 'comptable', 'secretaire', 'super-admin'];
 
-    /** Fenêtre de réutilisation d'une ouverture de paiement identique (idempotence). */
-    private const DUPLICATE_INIT_WINDOW_MINUTES = 10;
-
     protected PaymentProvider $provider;
 
     public function __construct()
@@ -126,9 +123,7 @@ class PaymentController extends Controller
                 )
                 ->where('amount', $request->amount)
                 ->where('type', $request->type)
-                ->where('status', 'pending')
-                ->whereNotNull('transaction_id')
-                ->where('created_at', '>=', now()->subMinutes(self::DUPLICATE_INIT_WINDOW_MINUTES))
+                ->awaitingGateway()
                 ->latest()
                 ->first();
 
@@ -145,6 +140,12 @@ class PaymentController extends Controller
                     ],
                     'message' => 'Paiement déjà initialisé',
                 ]);
+            }
+
+            if ($refus = $this->refusSurEcheance($request)) {
+                DB::rollBack();
+
+                return response()->json(['success' => false, 'message' => $refus], 422);
             }
 
             // Créer l'enregistrement de paiement
@@ -211,6 +212,47 @@ class PaymentController extends Controller
             Log::error('Payment initialization error', ['error' => $e->getMessage()]);
             return response()->json(['success' => false, 'message' => 'Erreur lors de l\'initialisation du paiement'], 500);
         }
+    }
+
+    /**
+     * Motif de refus d'une ouverture rattachée à une échéance, ou null.
+     *
+     * On ne peut engager que ce qui reste dû, diminué de ce qui attend déjà la
+     * réponse de la passerelle : sans cela, deux ouvertures successives
+     * (montants différents, donc non reconnues comme doublon) encaissaient
+     * plus que l'échéance, et le trop-perçu disparaissait dans `credit()`, qui
+     * borne le reste à zéro.
+     */
+    private function refusSurEcheance(InitializePaymentRequest $request): ?string
+    {
+        if (! $request->filled('paiement_eleve_id')) {
+            return null;
+        }
+
+        $echeance = PaiementEleve::find($request->paiement_eleve_id);
+        $reste = (float) ($echeance?->montant_restant ?? 0);
+
+        if ($reste <= 0) {
+            return 'Cette échéance est déjà soldée.';
+        }
+
+        $fcfa = fn (float $montant) => number_format($montant, 0, ',', ' ').' FCFA';
+        $montant = (float) $request->amount;
+
+        if ($montant > $reste) {
+            return "Le montant dépasse le reste à payer de cette échéance ({$fcfa($reste)}).";
+        }
+
+        $enCours = (float) Payment::where('paiement_eleve_id', $echeance->id)->awaitingGateway()->sum('amount');
+        $disponible = $reste - $enCours;
+
+        if ($enCours > 0 && $montant > $disponible) {
+            return $disponible > 0
+                ? "Un paiement de {$fcfa($enCours)} est déjà en cours sur cette échéance. Terminez-le, ou payez au plus {$fcfa($disponible)}."
+                : "Un paiement de {$fcfa($enCours)} est déjà en cours sur cette échéance. Terminez-le avant d'en ouvrir un autre.";
+        }
+
+        return null;
     }
 
     /**
