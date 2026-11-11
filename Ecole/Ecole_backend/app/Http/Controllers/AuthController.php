@@ -102,6 +102,7 @@ class AuthController extends Controller
                 'requires_2fa_setup' => true,
                 'user' => $this->profiles->payload($user),
                 'message' => 'Authentification à deux facteurs obligatoire pour ce rôle',
+                'requires_password_change' => (bool) $user->password_change_required,
             ];
 
             if ($this->isStatefulClient($request)) {
@@ -123,6 +124,10 @@ class AuthController extends Controller
             'role'        => $user->role,
             'ecole_id'    => $user->ecole_id,
             'redirect_to' => $this->auth->redirectRouteFor($user->role),
+            // Mot de passe provisoire : EnsurePasswordChanged ferme le reste
+            // de l'API ; le signaler ici évite au client de naviguer vers un
+            // tableau de bord qui ne répondra que des 403.
+            'requires_password_change' => (bool) $user->password_change_required,
         ];
 
         // Client stateful (SPA sur domaine déclaré dans sanctum.stateful) :

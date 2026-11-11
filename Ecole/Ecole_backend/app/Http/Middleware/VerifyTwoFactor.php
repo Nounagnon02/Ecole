@@ -26,6 +26,8 @@ class VerifyTwoFactor
     private const MANDATORY_SETUP_ALLOWED_PATHS = [
         '*/auth/2fa/setup',
         '*/auth/2fa/verify',
+        // Un mot de passe provisoire se remplace avant d'activer la 2FA.
+        '*/auth/change-password',
         '*/auth/me',
         '*/auth/logout',
     ];

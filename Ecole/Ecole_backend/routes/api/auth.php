@@ -29,6 +29,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/auth/me', [AuthController::class, 'getProfile'])->middleware('throttle:60,1,auth-me');
     Route::put('/auth/profile', [AuthController::class, 'updateProfile'])->middleware('throttle:60,1,auth-profile');
     Route::post('/auth/logout', [AuthController::class, 'logout'])->middleware('throttle:60,1,auth-logout');
+    Route::post('/auth/change-password', \App\Http\Controllers\Api\PasswordChangeController::class)->middleware('throttle:10,1,change-password');
 
     // 2FA
     Route::post('/auth/2fa/setup', [TwoFactorController::class, 'showSetup'])->middleware('throttle:60,1,2fa-setup');

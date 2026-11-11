@@ -77,6 +77,8 @@ return Application::configure(basePath: dirname(__DIR__))
             // métier. Placé avant EcoleScope pour court-circuiter sans
             // résoudre de contexte d'établissement.
             '2fa.verify',
+            // Mot de passe provisoire : le compte ne peut que le remplacer.
+            \App\Http\Middleware\EnsurePasswordChanged::class,
             \App\Http\Middleware\EcoleScope::class,
         ]);
 
