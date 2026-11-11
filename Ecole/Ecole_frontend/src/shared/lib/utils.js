@@ -83,3 +83,19 @@ export function stringToColor(str) {
   ];
   return colors[Math.abs(hash) % colors.length];
 }
+
+/**
+ * Texte affichable d'une valeur que l'API renvoie tantôt en chaîne, tantôt en
+ * objet lié (`classe: { id, nom_classe }`, `enseignant: { nom, prenom }`…).
+ * React refuse de rendre un objet : la page entière disparaissait.
+ */
+export function libelle(valeur) {
+  if (valeur === null || valeur === undefined) return '';
+  if (typeof valeur !== 'object') return String(valeur);
+  if (Array.isArray(valeur)) return valeur.map(libelle).filter(Boolean).join(', ');
+  const nomPersonne = [valeur.prenom, valeur.nom ?? valeur.name].filter(Boolean).join(' ');
+  return String(
+    valeur.nom_classe ?? valeur.libelle ?? valeur.intitule ?? valeur.titre
+      ?? (nomPersonne || undefined) ?? valeur.code ?? ''
+  );
+}
