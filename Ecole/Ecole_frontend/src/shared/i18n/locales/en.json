@@ -1650,7 +1650,8 @@
         "enseignants_maternelle_et_primaire": "Nursery & Primary Teachers",
         "chaque_enseignant_couvre_une_classe": "Each teacher covers one whole class — change their class here",
         "affectation_count_singular": "{n} assignment",
-        "affectation_count_plural": "{n} assignments"
+        "affectation_count_plural": "{n} assignments",
+        "classe_sans_serie": "No series is attached to this class, so no subject can be assigned to it. Attach its subjects first in the school configuration."
       }
     },
     "ai": {

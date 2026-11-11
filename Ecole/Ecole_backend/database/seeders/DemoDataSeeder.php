@@ -117,6 +117,9 @@ class DemoDataSeeder extends Seeder
         }
         echo "✓ Liens classe-matière créés\n";
 
+        // ─── 4 bis. Séries des classes ─────────────────────────────────
+        echo '✓ '.self::linkSeries((int) $ecoleId)." liens série-matière créés\n";
+
         // ─── 5. Teachers ──────────────────────────────────────────────
         $teachers = [
             ['name' => 'KOUASSI Yao', 'prenom' => 'Yao', 'email' => 'yao.kouassi@ecole.bj', 'specialite' => 'Mathématiques', 'sexe' => 'M'],
@@ -484,6 +487,66 @@ class DemoDataSeeder extends Seeder
         echo "✓ Paiements: {$paiementCount} effectués\n";
 
         echo "\n✅ Base de données peuplée avec succès!\n";
+    }
+
+    /**
+     * Série d'une classe d'après son nom. Avant la seconde, l'application
+     * range les classes dans une série de cycle (« Maternelle », « Primaire »,
+     * « Collège ») ; à partir de la seconde, c'est la lettre finale.
+     */
+    public static function serieNameForClass(string $nom): string
+    {
+        if (in_array($nom, ['Petite Section', 'Moyenne Section', 'Grande Section'], true)) {
+            return 'Maternelle';
+        }
+
+        if (in_array($nom, ['CP', 'CE1', 'CE2', 'CM1', 'CM2'], true)) {
+            return 'Primaire';
+        }
+
+        if (preg_match('/^(2nde|1ère|Tle)\s+([A-Z])\d*$/u', $nom, $m)) {
+            return 'Série '.$m[2];
+        }
+
+        return 'Collège';
+    }
+
+    /**
+     * Reporter les matières de chaque classe (`classe_matieres`) dans
+     * `serie_matieres`, sous la série de la classe.
+     *
+     * Le jeu de démonstration ne remplissait que la première table. Or les
+     * affectations d'enseignants, côté page comme côté API, ne lisent que la
+     * seconde : aucune classe n'avait de série, la liste restait vide et
+     * aucun enseignant ne pouvait être affecté (audit BUG-009).
+     *
+     * Rejouable sans doublon. Renvoie le nombre de liens créés.
+     */
+    public static function linkSeries(int $ecoleId): int
+    {
+        $series = DB::table('series')->where('ecole_id', $ecoleId)->pluck('id', 'nom');
+        $classes = DB::table('classes')->where('ecole_id', $ecoleId)->pluck('nom_classe', 'id');
+        $crees = 0;
+
+        foreach (DB::table('classe_matieres')->where('ecole_id', $ecoleId)->get() as $lien) {
+            $serieId = $series[self::serieNameForClass((string) ($classes[$lien->classe_id] ?? ''))] ?? null;
+
+            if (! $serieId) {
+                continue;
+            }
+
+            $crees += DB::table('serie_matieres')->insertOrIgnore([
+                'ecole_id' => $ecoleId,
+                'serie_id' => $serieId,
+                'matiere_id' => $lien->matiere_id,
+                'classe_id' => $lien->classe_id,
+                'coefficient' => $lien->coefficient,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        return $crees;
     }
 
     private function categorieForClass($nom)

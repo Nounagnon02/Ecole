@@ -12,7 +12,7 @@
  * rattachée à la série de la classe (cascade classe -> série -> matière).
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { GraduationCap, Trash2, Plus, Users, Loader2, RefreshCw, BookOpen } from 'lucide-react';
 import Card from '@/shared/components/ui/Card';
@@ -119,18 +119,36 @@ export default function AffectationsPage() {
     () => classes.find((c) => String(c.id) === String(classeId)) || null,
     [classes, classeId]
   );
+  // L'API passe par le pivot `serie_matieres` : la série revient une fois par
+  // matière de la classe, et porte les matières de toutes ses classes
+  // (`pivot.classe_id`). On dédoublonne, et on ne garde que cette classe.
+  const seriesDeLaClasse = useMemo(() => {
+    const vues = new Map();
+    (currentClasse?.series ?? []).forEach((s) => { if (!vues.has(s.id)) vues.set(s.id, s); });
+    return [...vues.values()];
+  }, [currentClasse]);
   const seriesOptions = useMemo(
-    () => (currentClasse?.series ?? []).map((s) => ({ value: s.id, label: s.nom })),
-    [currentClasse]
+    () => seriesDeLaClasse.map((s) => ({ value: s.id, label: s.nom })),
+    [seriesDeLaClasse]
   );
   const currentSerie = useMemo(
-    () => (currentClasse?.series ?? []).find((s) => String(s.id) === String(serieId)) || null,
-    [currentClasse, serieId]
+    () => seriesDeLaClasse.find((s) => String(s.id) === String(serieId)) || null,
+    [seriesDeLaClasse, serieId]
   );
-  const matieresOptions = useMemo(
-    () => (currentSerie?.matieres ?? []).map((m) => ({ value: m.id, label: m.nom })),
-    [currentSerie]
-  );
+  const matieresOptions = useMemo(() => {
+    const vues = new Map();
+    (currentSerie?.matieres ?? [])
+      .filter((m) => m.pivot?.classe_id == null || String(m.pivot.classe_id) === String(classeId))
+      .forEach((m) => { if (!vues.has(m.id)) vues.set(m.id, { value: m.id, label: m.nom }); });
+    return [...vues.values()];
+  }, [currentSerie, classeId]);
+  const classeSansSerie = Boolean(currentClasse) && seriesDeLaClasse.length === 0;
+
+  // Avant la seconde, une classe n'a qu'une série (son cycle) : la demander
+  // serait une question sans choix.
+  useEffect(() => {
+    if (seriesDeLaClasse.length === 1 && !serieId) setSerieId(String(seriesDeLaClasse[0].id));
+  }, [seriesDeLaClasse, serieId]);
 
   const canAdd = Boolean(selectedTeacher && classeId && serieId && matiereId);
 
@@ -316,6 +334,11 @@ export default function AffectationsPage() {
                     setMatiereId('');
                   }}
                 />
+                {classeSansSerie && (
+                  <p role="status" className="rounded-md border border-[var(--border)] bg-[var(--surface-subtle)] p-3 text-sm text-[var(--text-secondary)]">
+                    {t('pages.affectations.affectations.classe_sans_serie')}
+                  </p>
+                )}
                 <Select
                   aria-label={t('pages.affectations.affectations.matiere_label')}
                   label={t('pages.affectations.affectations.matiere_label')}

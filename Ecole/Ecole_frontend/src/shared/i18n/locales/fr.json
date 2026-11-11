@@ -1650,7 +1650,8 @@
         "enseignants_maternelle_et_primaire": "Enseignants maternelle & primaire",
         "chaque_enseignant_couvre_une_classe": "Chaque enseignant couvre une classe entière — changez sa classe ici",
         "affectation_count_singular": "{n} affectation",
-        "affectation_count_plural": "{n} affectations"
+        "affectation_count_plural": "{n} affectations",
+        "classe_sans_serie": "Aucune série n’est rattachée à cette classe, donc aucune matière ne peut y être affectée. Rattachez d’abord ses matières dans la configuration de l’école."
       }
     },
     "ai": {
