@@ -29,6 +29,16 @@ const STATUT_COLORS = {
   suspendu: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400',
 };
 
+/**
+ * Un élève est-il dans les effectifs ?
+ *
+ * Le retrait écrit `eleves.statut = 'inactive'`. La page lisait
+ * `user.is_active`, que la liste ne renvoie pas : un élève retiré restait
+ * affiché « actif », sans message, et le directeur ne savait pas si son
+ * action avait eu lieu.
+ */
+const estActif = (eleve) => (eleve.statut ? eleve.statut !== 'inactive' : eleve.user?.is_active !== false);
+
 export default function ElevesPage() {
   const { t } = useTranslation();
   const [search, setSearch] = useState('');
@@ -48,9 +58,21 @@ export default function ElevesPage() {
     }
     try {
       await apiClient.post(`/eleves/${eleve.id}/deactivate`);
-      queryClient.invalidateQueries({ queryKey: ['eleves'] });
+      await queryClient.invalidateQueries({ queryKey: ['eleves'] });
+      toast.success(t('pages.eleves.eleves.eleve_retire', { nom }));
     } catch (e) {
       toast.error(e?.response?.data?.message ?? t('pages.eleves.eleves.impossible_de_retirer_l_eleve'));
+    }
+  };
+
+  const handleReintegrer = async (eleve) => {
+    const nom = `${eleve.user?.name ?? ''} ${eleve.user?.prenom ?? ''}`.trim() || `élève n°${eleve.id}`;
+    try {
+      await apiClient.post(`/eleves/${eleve.id}/activate`);
+      await queryClient.invalidateQueries({ queryKey: ['eleves'] });
+      toast.success(t('pages.eleves.eleves.eleve_reintegre', { nom }));
+    } catch (e) {
+      toast.error(e?.response?.data?.message ?? t('pages.eleves.eleves.impossible_de_reintegrer_l_eleve'));
     }
   };
 
@@ -69,7 +91,7 @@ export default function ElevesPage() {
     [eleves, search, filterClasse]
   );
 
-  const actifs = eleves.filter((e) => e.user?.is_active !== false).length;
+  const actifs = eleves.filter(estActif).length;
   const inactifs = eleves.length - actifs;
   const moyenneGenerale = eleves.length > 0
     ? (eleves.reduce((acc, e) => acc + (e.moyenne ?? 0), 0) / eleves.length).toFixed(1)
@@ -178,22 +200,29 @@ export default function ElevesPage() {
                 <Table.Cell>
                   <span className={cn(
                     'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium',
-                    eleve.user?.is_active !== false ? STATUT_COLORS.actif : STATUT_COLORS.inactif
+                    estActif(eleve) ? STATUT_COLORS.actif : STATUT_COLORS.inactif
                   )}>
-                    {eleve.user?.is_active !== false ? 'actif' : 'inactif'}
+                    {estActif(eleve) ? 'actif' : 'inactif'}
                   </span>
                 </Table.Cell>
                 <Table.Cell className="text-right">
                   <div className="flex justify-end gap-1">
                     <Button variant="ghost" size="sm" icon={<MoreHorizontal />} title={t('pages.eleves.eleves.plus_d_actions')} />
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      icon={<Trash2 />}
-                      title={t('pages.eleves.eleves.retirer_des_effectifs')}
-                      className="text-red-500 hover:text-red-600"
-                      onClick={() => handleRetirer(eleve)}
-                    />
+                    {estActif(eleve) ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        icon={<Trash2 />}
+                        title={t('pages.eleves.eleves.retirer_des_effectifs')}
+                        aria-label={t('pages.eleves.eleves.retirer_des_effectifs')}
+                        className="text-red-500 hover:text-red-600"
+                        onClick={() => handleRetirer(eleve)}
+                      />
+                    ) : (
+                      <Button variant="outline" size="sm" onClick={() => handleReintegrer(eleve)}>
+                        {t('pages.eleves.eleves.reintegrer')}
+                      </Button>
+                    )}
                   </div>
                 </Table.Cell>
               </Table.Row>
