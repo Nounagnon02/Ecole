@@ -20,7 +20,7 @@ import { useTranslation } from '@/shared/i18n';
 export const telephoneBeninValide = (saisie) =>
   /^(\+229|00229|229)?(01\d{8}|\d{8})$/.test(String(saisie ?? '').replace(/[\s.\-()]/g, ''));
 
-const VIDE = { name: '', prenom: '', classe_id: '', sexe: '', date_naissance: '', parentNom: '', parentPrenom: '', parentTelephone: '' };
+const VIDE = { name: '', prenom: '', numero_matricule: '', classe_id: '', sexe: '', date_naissance: '', parentNom: '', parentPrenom: '', parentTelephone: '' };
 
 export default function InscriptionDialog({ open, onClose, onDone }) {
   const { t } = useTranslation();
@@ -72,6 +72,8 @@ export default function InscriptionDialog({ open, onClose, onDone }) {
         name: champs.name.trim(),
         prenom: champs.prenom.trim(),
         classe_id: Number(champs.classe_id),
+        // Vide : l'API en produit un.
+        ...(champs.numero_matricule.trim() ? { numero_matricule: champs.numero_matricule.trim() } : {}),
         ...(champs.sexe ? { sexe: champs.sexe } : {}),
         ...(champs.date_naissance ? { date_naissance: champs.date_naissance } : {}),
         ...(avecParent ? { parent: {
@@ -84,7 +86,10 @@ export default function InscriptionDialog({ open, onClose, onDone }) {
       onDone?.(data);
     } catch (err) {
       const details = err?.errors ?? err?.response?.data?.errors;
-      setErreur(details ? Object.values(details).flat().join(' ') : (err?.response?.data?.message ?? err?.message ?? p('echec')));
+      if (details?.numero_matricule) setErreurs((c) => ({ ...c, numero_matricule: details.numero_matricule[0] }));
+      // Le refus du matricule s'affiche sous son champ ; le reste, en bas.
+      const autres = details ? Object.entries(details).filter(([cle]) => cle !== 'numero_matricule').flatMap(([, v]) => v) : null;
+      setErreur(autres ? (autres.join(' ') || null) : (err?.response?.data?.message ?? err?.message ?? p('echec')));
     } finally {
       setEnvoi(false);
     }
@@ -131,6 +136,7 @@ export default function InscriptionDialog({ open, onClose, onDone }) {
                 {...champ('sexe')}
               />
               <Input type="date" label={p('date_naissance')} {...champ('date_naissance')} />
+              <Input label={p('matricule')} helperText={p('matricule_aide')} autoComplete="off" maxLength={50} {...champ('numero_matricule')} />
             </div>
           </fieldset>
           <fieldset className="space-y-3">

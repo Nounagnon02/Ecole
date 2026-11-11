@@ -15,7 +15,8 @@ import useAuthStore from '@/shared/stores/auth-store';
 import useCommandK from '@/shared/hooks/useCommandK';
 import AppShell from '@/shared/components/layout/AppShell';
 import CommandPalette from '@/shared/components/ui/CommandPalette';
-import ProtectedRoute, { TWO_FACTOR_SETUP_PATH } from '@/shared/components/auth/ProtectedRoute';
+import ProtectedRoute, { TWO_FACTOR_SETUP_PATH, PASSWORD_CHANGE_PATH } from '@/shared/components/auth/ProtectedRoute';
+import PasswordChangePage from '@/app/features/auth/PasswordChangePage';
 import TwoFactorSetupPage from '@/app/features/auth/TwoFactorSetupPage';
 import LoginForm from '@/shared/components/auth/LoginForm';
 import ForgotPassword from '@/app/features/auth/ForgotPassword';
@@ -159,6 +160,10 @@ function App() {
         <Route path="/403" element={<ForbiddenPage />} />
 
         {/* ─── Activation imposée de la 2FA — connecté, mais hors coque ─── */}
+        <Route
+          path={PASSWORD_CHANGE_PATH}
+          element={<ProtectedRoute><PasswordChangePage /></ProtectedRoute>}
+        />
         <Route
           path={TWO_FACTOR_SETUP_PATH}
           element={<ProtectedRoute><TwoFactorSetupPage /></ProtectedRoute>}

@@ -177,6 +177,23 @@
       "communication": "Communication",
       "planning": "Planning",
       "droits": "École. All rights reserved."
+    },
+    "password_change": {
+      "intro_title": "Choose your password",
+      "intro_text": "The password you were given is provisional. Replace it with your own to reach your space.",
+      "title": "New password",
+      "subtitle": "Only you should know it.",
+      "actuel": "Provisional password",
+      "nouveau": "New password",
+      "regle": "At least 8 characters.",
+      "confirmation": "Confirm the new password",
+      "submit": "Save my password",
+      "logout": "Sign out",
+      "actuel_requis": "Enter the password you were given.",
+      "trop_court": "The password must be at least 8 characters long.",
+      "identique": "Choose a password different from the provisional one.",
+      "confirmation_differente": "The two passwords do not match.",
+      "echec": "The password could not be saved."
     }
   },
   "eleve": {
@@ -1094,13 +1111,15 @@
         "telephone_invalide": "Invalid number: 10 digits, starting with 01.",
         "echec": "The enrolment could not be saved.",
         "fait": "{nom} is enrolled.",
-        "une_seule_fois": "Write these down and hand them to the family: provisional passwords will not be shown again.",
+        "une_seule_fois": "Write these down and hand them to the family: provisional passwords will not be shown again. Each person will have to choose their own at first sign-in.",
         "acces_eleve": "Pupil access",
         "acces_parent": "Parent access",
         "identifiant": "Identifier",
         "mot_de_passe": "Provisional password",
         "parent_deja_connu": "This parent already has an account and keeps their password.",
-        "terminer": "Done"
+        "terminer": "Done",
+        "matricule": "Registration number (optional)",
+        "matricule_aide": "Leave empty to have it generated."
       }
     },
     "emploi_du_temps": {

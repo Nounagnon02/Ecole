@@ -255,6 +255,22 @@ const useAuthStore = create(
       },
 
       /**
+       * L'API a refusé un appel parce que le mot de passe est provisoire
+       * (403 requires_password_change) : ProtectedRoute mène alors à l'écran
+       * de changement.
+       */
+      requirePasswordChange: () => {
+        const { user } = get();
+        if (user && !user.password_change_required) set({ user: { ...user, password_change_required: true } });
+      },
+
+      /** Le mot de passe provisoire vient d'être remplacé : l'accès est rétabli. */
+      completePasswordChange: () => {
+        const { user } = get();
+        set({ user: user ? { ...user, password_change_required: false } : user, sessionLastVerified: Date.now() });
+      },
+
+      /**
        * La 2FA vient d'être activée (/auth/2fa/verify) : l'accès est rétabli.
        */
       completeTwoFactorSetup: () => {

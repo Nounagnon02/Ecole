@@ -177,6 +177,23 @@
       "communication": "Communication",
       "planning": "Planning",
       "droits": "École. Tous droits réservés."
+    },
+    "password_change": {
+      "intro_title": "Choisissez votre mot de passe",
+      "intro_text": "Le mot de passe qui vous a été remis est provisoire. Remplacez-le par le vôtre pour accéder à votre espace.",
+      "title": "Nouveau mot de passe",
+      "subtitle": "Vous seul devez le connaître.",
+      "actuel": "Mot de passe provisoire",
+      "nouveau": "Nouveau mot de passe",
+      "regle": "Au moins 8 caractères.",
+      "confirmation": "Confirmez le nouveau mot de passe",
+      "submit": "Enregistrer mon mot de passe",
+      "logout": "Se déconnecter",
+      "actuel_requis": "Saisissez le mot de passe qui vous a été remis.",
+      "trop_court": "Le mot de passe doit compter au moins 8 caractères.",
+      "identique": "Choisissez un mot de passe différent du mot de passe provisoire.",
+      "confirmation_differente": "Les deux mots de passe ne correspondent pas.",
+      "echec": "Le mot de passe n’a pas pu être enregistré."
     }
   },
   "eleve": {
@@ -1094,13 +1111,15 @@
         "telephone_invalide": "Numéro invalide : 10 chiffres, en commençant par 01.",
         "echec": "L’inscription n’a pas pu être enregistrée.",
         "fait": "{nom} est inscrit(e).",
-        "une_seule_fois": "Notez ces accès et remettez-les à la famille : les mots de passe provisoires ne seront plus affichés.",
+        "une_seule_fois": "Notez ces accès et remettez-les à la famille : les mots de passe provisoires ne seront plus affichés. Chacun devra choisir le sien à sa première connexion.",
         "acces_eleve": "Accès de l’élève",
         "acces_parent": "Accès du parent",
         "identifiant": "Identifiant",
         "mot_de_passe": "Mot de passe provisoire",
         "parent_deja_connu": "Ce parent a déjà un compte : il garde son mot de passe.",
-        "terminer": "Terminer"
+        "terminer": "Terminer",
+        "matricule": "Matricule (facultatif)",
+        "matricule_aide": "Laissez vide pour qu’il soit généré."
       }
     },
     "emploi_du_temps": {

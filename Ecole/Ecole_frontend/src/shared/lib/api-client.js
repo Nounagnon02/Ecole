@@ -134,6 +134,11 @@ apiClient.interceptors.response.use(
       useAuthStore.getState().requireTwoFactorSetup?.();
     }
 
+    // Même logique pour un mot de passe provisoire pas encore remplacé.
+    if (error.response?.status === 403 && error.response?.data?.requires_password_change) {
+      useAuthStore.getState().requirePasswordChange?.();
+    }
+
     // 429 — Rate limit (max 3 retries to avoid infinite loops)
     if (error.response?.status === 429) {
       originalRequest._retryCount = (originalRequest._retryCount || 0) + 1;
