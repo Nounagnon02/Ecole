@@ -71,6 +71,10 @@ class BeninEducationSeeder extends Seeder
             ]);
             $parentIds[] = DB::table('parents')->insertGetId([
                 'user_id' => $userId,
+                // Sans école, le filtre par établissement écarte la fiche : le
+                // parent de démonstration PAR001 voyait « Aucun enfant lié à
+                // votre compte » et un tableau de bord vide.
+                'ecole_id' => $ecole,
                 'created_at' => now(),
                 'updated_at' => now()
             ]);
