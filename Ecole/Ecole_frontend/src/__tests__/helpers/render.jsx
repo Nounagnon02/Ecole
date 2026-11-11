@@ -32,6 +32,7 @@ export function resetAuth(overrides = {}) {
     sessionLastVerified: null,
     pendingSchools: null,
     pendingToken: null,
+    twoFactorSetupRequired: false,
     step: 'initial',
     ...overrides,
   });

@@ -136,6 +136,16 @@
     "register": "Sign up",
     "login_title": "Welcome back",
     "login_subtitle": "Enter your credentials to access your account",
+    "two_factor_setup": {
+      "title": "Turn on two-step verification",
+      "subtitle": "You only do this once. After that, this code is asked for after your password each time you sign in.",
+      "intro_title": "Protect access to your school.",
+      "intro_text": "Your role ({role}) gives access to sensitive data: grades, payments, records. A code shown on your phone is therefore required in addition to your password.",
+      "step_install": "Install an authenticator app (Google Authenticator, Microsoft Authenticator…).",
+      "step_scan": "Scan the QR code with that app.",
+      "step_code": "Enter the 6-digit code it shows.",
+      "logout": "Sign out"
+    },
     "login_form": {
       "votre_ecole": "Your school",
       "vous_etes_associe_a_plusieurs_etablissements": "You are associated with several schools.",

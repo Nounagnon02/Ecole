@@ -11,9 +11,12 @@ import { Navigate, useLocation } from 'react-router-dom';
 import useAuthStore, { SESSION_CHECK_INTERVAL } from '@/shared/stores/auth-store';
 import { LoadingSpinner } from '@/shared/components/ui/Skeleton';
 
+export const TWO_FACTOR_SETUP_PATH = '/activation-2fa';
+
 export default function ProtectedRoute({ children, allowedRoles, role }) {
-  const { isAuthenticated, isLoading, user, hasAnyRole, checkSession, sessionLastVerified } =
-    useAuthStore();
+  const {
+    isAuthenticated, isLoading, user, hasAnyRole, checkSession, sessionLastVerified, twoFactorSetupRequired,
+  } = useAuthStore();
   const location = useLocation();
   const checkingRef = useRef(false);
   const [isChecking, setIsChecking] = useState(true);
@@ -45,6 +48,12 @@ export default function ProtectedRoute({ children, allowedRoles, role }) {
   /* ─── Non authentifié ─────────────────────────────────────────────── */
   if (!isAuthenticated) {
     return <Navigate to="/connexion" replace />;
+  }
+
+  /* ─── 2FA obligatoire pas encore activée ──────────────────────────── */
+  // L'API refuserait tout appel : on mène directement à l'activation.
+  if (twoFactorSetupRequired && location.pathname !== TWO_FACTOR_SETUP_PATH) {
+    return <Navigate to={TWO_FACTOR_SETUP_PATH} replace />;
   }
 
   /* ─── Vérification des rôles ──────────────────────────────────────── */

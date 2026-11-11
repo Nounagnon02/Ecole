@@ -126,6 +126,14 @@ apiClient.interceptors.response.use(
       return Promise.reject(apiError);
     }
 
+    // 403 « 2FA obligatoire mais pas encore activée » : ce n'est pas un refus
+    // définitif, c'est une étape manquante. On le signale au store, et
+    // ProtectedRoute envoie la personne sur l'écran d'activation au lieu de
+    // la laisser devant un tableau de bord vide. L'erreur suit son cours.
+    if (error.response?.status === 403 && error.response?.data?.requires_2fa_setup) {
+      useAuthStore.getState().requireTwoFactorSetup?.();
+    }
+
     // 429 — Rate limit (max 3 retries to avoid infinite loops)
     if (error.response?.status === 429) {
       originalRequest._retryCount = (originalRequest._retryCount || 0) + 1;

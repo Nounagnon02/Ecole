@@ -6,7 +6,7 @@
 
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { QRCodeSVG } from 'qrcode.react';
+import TwoFactorSetupForm from '@/shared/components/auth/TwoFactorSetupForm';
 import {
   User, Bell, Shield, Palette, Globe, Smartphone,
   Moon, Sun, Save, CheckCircle2, Plus, Trash2, Briefcase
@@ -86,8 +86,8 @@ export default function ParametresPage() {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.parametres.parametres.title')}</h1>
-        <p className="text-sm text-neutral-500">{t('pages.parametres.parametres.subtitle')}</p>
+        <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.parametres.parametres.title')}</h1>
+        <p className="text-sm text-[var(--text-secondary)]">{t('pages.parametres.parametres.subtitle')}</p>
       </div>
 
       <div className="flex flex-col gap-6 lg:flex-row">
@@ -101,7 +101,7 @@ export default function ParametresPage() {
                 className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
                   activeSection === section.id
                     ? 'bg-[var(--accent-subtle)] text-[var(--accent)] dark:bg-[var(--accent-subtle)]0/10 dark:text-[var(--accent)]'
-                    : 'text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800'
+                    : 'text-[var(--text-secondary)] hover:bg-[var(--surface-subtle)]  '
                 }`}
               >
                 <section.icon className="h-4 w-4" />
@@ -190,7 +190,7 @@ function ProfilSection({ user, onSave, saving, saved }) {
           <Avatar src={avatarDraft || user?.avatar || null} name={user?.name || 'User'} size="xl" />
           <div className="space-y-1">
             <label className="inline-block">
-              <span className="inline-flex cursor-pointer items-center justify-center rounded-xl border border-neutral-200 px-4 h-9 text-sm font-medium text-neutral-700 transition hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800">
+              <span className="inline-flex cursor-pointer items-center justify-center rounded-xl border border-[var(--border)] px-4 h-9 text-sm font-medium text-[var(--text-primary)] transition hover:bg-[var(--surface)]   ">
                 {t('pages.parametres.parametres.changer_la_photo')}
               </span>
               <input
@@ -205,7 +205,7 @@ function ProfilSection({ user, onSave, saving, saved }) {
                 {t('common.cancel')}
               </Button>
             )}
-            <p className="text-xs text-neutral-500">{t('pages.parametres.parametres.png_jpg_max_2_mo')}</p>
+            <p className="text-xs text-[var(--text-secondary)]">{t('pages.parametres.parametres.png_jpg_max_2_mo')}</p>
           </div>
         </div>
       </Card>
@@ -215,19 +215,19 @@ function ProfilSection({ user, onSave, saving, saved }) {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">{t('pages.parametres.parametres.prenom')}</label>
+              <label className="text-sm font-medium text-[var(--text-primary)] ">{t('pages.parametres.parametres.prenom')}</label>
               <Input name="prenom" defaultValue={user?.prenom || ''} />
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">{t('pages.parametres.parametres.nom')}</label>
+              <label className="text-sm font-medium text-[var(--text-primary)] ">{t('pages.parametres.parametres.nom')}</label>
               <Input name="name" defaultValue={user?.name || ''} />
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">{t('pages.parametres.parametres.email')}</label>
+              <label className="text-sm font-medium text-[var(--text-primary)] ">{t('pages.parametres.parametres.email')}</label>
               <Input type="email" name="email" defaultValue={user?.email || ''} />
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">{t('pages.parametres.parametres.telephone')}</label>
+              <label className="text-sm font-medium text-[var(--text-primary)] ">{t('pages.parametres.parametres.telephone')}</label>
               <Input name="telephone" defaultValue={user?.telephone || ''} />
             </div>
           </div>
@@ -236,17 +236,17 @@ function ProfilSection({ user, onSave, saving, saved }) {
             <>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">{t('pages.parametres.parametres.specialite')}</label>
+                  <label className="text-sm font-medium text-[var(--text-primary)] ">{t('pages.parametres.parametres.specialite')}</label>
                   <Input name="specialite" defaultValue={user?.profil?.specialite || ''} />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">{t('pages.parametres.parametres.grade')}</label>
+                  <label className="text-sm font-medium text-[var(--text-primary)] ">{t('pages.parametres.parametres.grade')}</label>
                   <Input name="grade" defaultValue={user?.profil?.grade || ''} />
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                <label className="text-sm font-medium text-[var(--text-primary)] ">
                   {t('pages.parametres.parametres.matieres_maitrisees')}
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -260,7 +260,7 @@ function ProfilSection({ user, onSave, saving, saved }) {
                         className={`rounded-full border px-3 py-1 text-sm transition-all ${
                           active
                             ? 'border-[var(--accent)] bg-[var(--accent-subtle)] text-[var(--accent)]'
-                            : 'border-neutral-200 text-neutral-600 hover:border-neutral-300 dark:border-neutral-700 dark:text-neutral-400'
+                            : 'border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--border-heavy)]  '
                         }`}
                       >
                         {m.nom}
@@ -268,14 +268,14 @@ function ProfilSection({ user, onSave, saving, saved }) {
                     );
                   })}
                   {matieres.length === 0 && (
-                    <p className="text-xs text-neutral-500">{t('pages.parametres.parametres.chargement_des_matieres')}</p>
+                    <p className="text-xs text-[var(--text-secondary)]">{t('pages.parametres.parametres.chargement_des_matieres')}</p>
                   )}
                 </div>
               </div>
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <label className="flex items-center gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                  <label className="flex items-center gap-2 text-sm font-medium text-[var(--text-primary)] ">
                     <Briefcase className="h-4 w-4" /> {t('pages.parametres.parametres.experiences_professionnelles')}
                   </label>
                   <Button type="button" size="sm" variant="outline" onClick={addExperience} icon={<Plus className="h-4 w-4" />}>
@@ -283,13 +283,13 @@ function ProfilSection({ user, onSave, saving, saved }) {
                   </Button>
                 </div>
                 {experiences.length === 0 && (
-                  <p className="text-xs text-neutral-500">{t('pages.parametres.parametres.aucune_experience_renseignee')}</p>
+                  <p className="text-xs text-[var(--text-secondary)]">{t('pages.parametres.parametres.aucune_experience_renseignee')}</p>
                 )}
                 {experiences.map((exp, i) => (
-                  <div key={i} className="rounded-xl border border-neutral-200 p-3 space-y-3 dark:border-neutral-700">
+                  <div key={i} className="rounded-xl border border-[var(--border)] p-3 space-y-3 ">
                     <div className="grid gap-3 sm:grid-cols-2">
                       <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-neutral-500">{t('pages.parametres.parametres.poste')}</label>
+                        <label className="text-xs font-medium text-[var(--text-secondary)]">{t('pages.parametres.parametres.poste')}</label>
                         <Input
                           value={exp.poste}
                           onChange={(e) => updateExperience(i, 'poste', e.target.value)}
@@ -297,7 +297,7 @@ function ProfilSection({ user, onSave, saving, saved }) {
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-neutral-500">{t('common.school')}</label>
+                        <label className="text-xs font-medium text-[var(--text-secondary)]">{t('common.school')}</label>
                         <Input
                           value={exp.etablissement}
                           onChange={(e) => updateExperience(i, 'etablissement', e.target.value)}
@@ -305,7 +305,7 @@ function ProfilSection({ user, onSave, saving, saved }) {
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-neutral-500">{t('pages.parametres.parametres.debut')}</label>
+                        <label className="text-xs font-medium text-[var(--text-secondary)]">{t('pages.parametres.parametres.debut')}</label>
                         <Input
                           type="date"
                           value={exp.date_debut}
@@ -313,7 +313,7 @@ function ProfilSection({ user, onSave, saving, saved }) {
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-neutral-500">{t('pages.parametres.parametres.fin_optionnel')}</label>
+                        <label className="text-xs font-medium text-[var(--text-secondary)]">{t('pages.parametres.parametres.fin_optionnel')}</label>
                         <Input
                           type="date"
                           value={exp.date_fin}
@@ -322,12 +322,12 @@ function ProfilSection({ user, onSave, saving, saved }) {
                       </div>
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-xs font-medium text-neutral-500">{t('pages.parametres.parametres.description_optionnel')}</label>
+                      <label className="text-xs font-medium text-[var(--text-secondary)]">{t('pages.parametres.parametres.description_optionnel')}</label>
                       <textarea
                         value={exp.description}
                         onChange={(e) => updateExperience(i, 'description', e.target.value)}
                         rows={2}
-                        className="w-full rounded-xl border border-neutral-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+                        className="w-full rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40   "
                         placeholder={t('pages.parametres.parametres.missions_classes_encadrees')}
                       />
                     </div>
@@ -377,12 +377,12 @@ function NotificationsSection() {
         {toggles.map((item) => (
           <div key={item.label} className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-neutral-900 dark:text-white">{item.label}</p>
-              <p className="text-xs text-neutral-500">{item.desc}</p>
+              <p className="text-sm font-medium text-[var(--text-primary)] ">{item.label}</p>
+              <p className="text-xs text-[var(--text-secondary)]">{item.desc}</p>
             </div>
             <label className="relative inline-flex cursor-pointer items-center">
               <input type="checkbox" defaultChecked={item.enabled} className="peer sr-only" />
-              <div className="h-6 w-11 rounded-full bg-neutral-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all peer-checked:bg-[var(--accent-subtle)]0 peer-checked:after:translate-x-full dark:bg-neutral-700" />
+              <div className="h-6 w-11 rounded-full bg-[var(--surface-subtle)] after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-[var(--surface-raised)] after:transition-all peer-checked:bg-[var(--accent-subtle)]0 peer-checked:after:translate-x-full " />
             </label>
           </div>
         ))}
@@ -406,8 +406,6 @@ function TwoFactorCard() {
   const isEnabled = !!user?.two_factor_enabled;
 
   const [step, setStep] = useState('idle'); // 'idle' | 'setup' | 'disable'
-  const [qrUrl, setQrUrl] = useState('');
-  const [secret, setSecret] = useState('');
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -416,39 +414,11 @@ function TwoFactorCard() {
     setStep('idle');
     setCode('');
     setError('');
-    setQrUrl('');
-    setSecret('');
   };
 
-  const startSetup = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const { data } = await api.post('/auth/2fa/setup');
-      setQrUrl(data.qr_code_url);
-      setSecret(data.secret);
-      setStep('setup');
-    } catch (e) {
-      toast.error(e.message || t('pages.parametres.parametres.erreur_lors_de_l_activation_de_la_2fa'));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const confirmSetup = async () => {
-    if (code.length !== 6) return;
-    setLoading(true);
-    setError('');
-    try {
-      await api.post('/auth/2fa/verify', { code });
-      updateUser({ two_factor_enabled: true });
-      toast.success(t('pages.parametres.parametres.2fa_activee_avec_succes'));
-      reset();
-    } catch (e) {
-      setError(e.message || t('pages.parametres.parametres.code_invalide'));
-    } finally {
-      setLoading(false);
-    }
+  const onActivated = () => {
+    toast.success(t('pages.parametres.parametres.2fa_activee_avec_succes'));
+    reset();
   };
 
   const confirmDisable = async () => {
@@ -482,7 +452,7 @@ function TwoFactorCard() {
 
       {step === 'idle' && (
         <div className="space-y-4">
-          <p className="text-sm text-neutral-600 dark:text-neutral-400">
+          <p className="text-sm text-[var(--text-secondary)] ">
             {t('pages.parametres.parametres.protegez_votre_compte_avec_un_second_facteur')}
           </p>
           {isEnabled ? (
@@ -490,55 +460,18 @@ function TwoFactorCard() {
               {t('pages.parametres.parametres.desactiver_la_2fa')}
             </Button>
           ) : (
-            <Button onClick={startSetup} disabled={loading}>
+            <Button onClick={() => setStep('setup')}>
               {t('pages.parametres.parametres.activer_la_2fa')}
             </Button>
           )}
         </div>
       )}
 
-      {step === 'setup' && (
-        <div className="space-y-4">
-          <p className="text-sm text-neutral-600 dark:text-neutral-400">
-            {t('pages.parametres.parametres.scannez_ce_code_avec_votre_application')}
-          </p>
-          <div className="flex justify-center rounded-lg bg-white p-4">
-            <QRCodeSVG value={qrUrl} size={180} />
-          </div>
-          <details className="text-xs text-neutral-500">
-            <summary className="cursor-pointer">
-              {t('pages.parametres.parametres.je_ne_peux_pas_scanner_le_code')}
-            </summary>
-            <code className="mt-2 block break-all rounded bg-neutral-100 p-2 dark:bg-neutral-800">
-              {secret}
-            </code>
-          </details>
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
-              {t('pages.parametres.parametres.code_de_confirmation')}
-            </label>
-            <Input
-              type="text"
-              inputMode="numeric"
-              maxLength={6}
-              value={code}
-              onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-              placeholder="000000"
-            />
-          </div>
-          {error && <p className="text-sm text-red-600">{error}</p>}
-          <div className="flex justify-end gap-2">
-            <Button variant="ghost" onClick={reset}>{t('pages.parametres.parametres.annuler')}</Button>
-            <Button onClick={confirmSetup} disabled={loading || code.length !== 6}>
-              {t('pages.parametres.parametres.confirmer')}
-            </Button>
-          </div>
-        </div>
-      )}
+      {step === 'setup' && <TwoFactorSetupForm onActivated={onActivated} onCancel={reset} />}
 
       {step === 'disable' && (
         <div className="space-y-4">
-          <p className="text-sm text-neutral-600 dark:text-neutral-400">
+          <p className="text-sm text-[var(--text-secondary)] ">
             {t('pages.parametres.parametres.entrez_un_code_pour_desactiver_la_2fa')}
           </p>
           <Input
@@ -608,16 +541,16 @@ function SecuriteSection() {
         <Card.Header title={t('pages.parametres.parametres.mot_de_passe')} />
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">{t('pages.parametres.parametres.mot_de_passe_actuel')}</label>
+            <label className="text-sm font-medium text-[var(--text-primary)] ">{t('pages.parametres.parametres.mot_de_passe_actuel')}</label>
             <Input type="password" placeholder="••••••••" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">{t('pages.parametres.parametres.nouveau_mot_de_passe')}</label>
+              <label className="text-sm font-medium text-[var(--text-primary)] ">{t('pages.parametres.parametres.nouveau_mot_de_passe')}</label>
               <Input type="password" placeholder="••••••••" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">{t('pages.parametres.parametres.confirmer')}</label>
+              <label className="text-sm font-medium text-[var(--text-primary)] ">{t('pages.parametres.parametres.confirmer')}</label>
               <Input type="password" placeholder="••••••••" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
             </div>
           </div>
@@ -635,22 +568,22 @@ function SecuriteSection() {
       <Card>
         <Card.Header title={t('pages.parametres.parametres.sessions_actives')} />
         <div className="space-y-3">
-          <div className="flex items-center justify-between rounded-lg border border-neutral-200 p-3 dark:border-neutral-700">
+          <div className="flex items-center justify-between rounded-lg border border-[var(--border)] p-3 ">
             <div className="flex items-center gap-3">
-              <Smartphone className="h-5 w-5 text-neutral-400" />
+              <Smartphone className="h-5 w-5 text-[var(--text-tertiary)]" />
               <div>
-                <p className="text-sm font-medium text-neutral-900 dark:text-white">{t('pages.parametres.parametres.chrome_sur_windows')}</p>
-                <p className="text-xs text-neutral-500">{t('pages.parametres.parametres.ip_192_168_1_42_derniere_activite_il_y_a_2_min')}</p>
+                <p className="text-sm font-medium text-[var(--text-primary)] ">{t('pages.parametres.parametres.chrome_sur_windows')}</p>
+                <p className="text-xs text-[var(--text-secondary)]">{t('pages.parametres.parametres.ip_192_168_1_42_derniere_activite_il_y_a_2_min')}</p>
               </div>
             </div>
             <Badge variant="outline" className="text-emerald-600">{t('pages.parametres.parametres.active')}</Badge>
           </div>
-          <div className="flex items-center justify-between rounded-lg border border-neutral-200 p-3 dark:border-neutral-700">
+          <div className="flex items-center justify-between rounded-lg border border-[var(--border)] p-3 ">
             <div className="flex items-center gap-3">
-              <Smartphone className="h-5 w-5 text-neutral-400" />
+              <Smartphone className="h-5 w-5 text-[var(--text-tertiary)]" />
               <div>
-                <p className="text-sm font-medium text-neutral-900 dark:text-white">{t('pages.parametres.parametres.safari_sur_macos')}</p>
-                <p className="text-xs text-neutral-500">{t('pages.parametres.parametres.ip_10_0_0_15_derniere_activite_il_y_a_3_jours')}</p>
+                <p className="text-sm font-medium text-[var(--text-primary)] ">{t('pages.parametres.parametres.safari_sur_macos')}</p>
+                <p className="text-xs text-[var(--text-secondary)]">{t('pages.parametres.parametres.ip_10_0_0_15_derniere_activite_il_y_a_3_jours')}</p>
               </div>
             </div>
             <Button variant="ghost" size="sm">{t('pages.parametres.parametres.revoquer')}</Button>
@@ -676,11 +609,11 @@ function ApparenceSection() {
           ].map((theme) => (
             <button
               key={theme.id}
-              className="flex flex-col items-center gap-2 rounded-xl border-2 border-neutral-200 p-4 hover:border-[var(--accent)]/30 transition-all dark:border-neutral-700 dark:hover:border-[var(--accent)]"
+              className="flex flex-col items-center gap-2 rounded-xl border-2 border-[var(--border)] p-4 hover:border-[var(--accent)]/30 transition-all  dark:hover:border-[var(--accent)]"
             >
-              <theme.icon className="h-6 w-6 text-neutral-600 dark:text-neutral-400" />
-              <span className="text-sm font-medium text-neutral-900 dark:text-white">{theme.label}</span>
-              <span className="text-xs text-neutral-500">{theme.desc}</span>
+              <theme.icon className="h-6 w-6 text-[var(--text-secondary)] " />
+              <span className="text-sm font-medium text-[var(--text-primary)] ">{theme.label}</span>
+              <span className="text-xs text-[var(--text-secondary)]">{theme.desc}</span>
             </button>
           ))}
         </div>
@@ -689,12 +622,12 @@ function ApparenceSection() {
       <Card>
         <Card.Header title={t('pages.parametres.parametres.police')} />
         <div className="flex items-center gap-4">
-          <select className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300">
+          <select className="h-10 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40   ">
             <option>{t('pages.parametres.parametres.inter_par_defaut')}</option>
             <option>Plus Jakarta Sans</option>
             <option>Roboto</option>
           </select>
-          <select className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300">
+          <select className="h-10 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40   ">
             <option>{t('pages.parametres.parametres.normale')}</option>
             <option>{t('pages.parametres.parametres.grande')}</option>
             <option>{t('pages.parametres.parametres.tres_grande')}</option>
@@ -714,8 +647,8 @@ function PreferencesSection() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-neutral-900 dark:text-white">{t('pages.parametres.parametres.langue')}</p>
-            <p className="text-xs text-neutral-500">{t('pages.parametres.parametres.langue_de_l_interface')}</p>
+            <p className="text-sm font-medium text-[var(--text-primary)] ">{t('pages.parametres.parametres.langue')}</p>
+            <p className="text-xs text-[var(--text-secondary)]">{t('pages.parametres.parametres.langue_de_l_interface')}</p>
           </div>
           {/* Seul réglage de cette section réellement branché : la locale vit
               dans le provider i18n, qui la mémorise et fixe `lang`/`dir`. */}
@@ -723,7 +656,7 @@ function PreferencesSection() {
             value={locale}
             onChange={(e) => setLocale(e.target.value)}
             aria-label={t('pages.parametres.parametres.langue')}
-            className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+            className="h-10 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40   "
           >
             {LOCALES.map(({ code, label }) => (
               <option key={code} value={code}>{label}</option>
@@ -732,20 +665,20 @@ function PreferencesSection() {
         </div>
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-neutral-900 dark:text-white">{t('pages.parametres.parametres.fuseau_horaire')}</p>
-            <p className="text-xs text-neutral-500">UTC+0 (Abidjan, GMT)</p>
+            <p className="text-sm font-medium text-[var(--text-primary)] ">{t('pages.parametres.parametres.fuseau_horaire')}</p>
+            <p className="text-xs text-[var(--text-secondary)]">UTC+0 (Abidjan, GMT)</p>
           </div>
-          <select className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300">
+          <select className="h-10 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40   ">
             <option>UTC+0 (Abidjan)</option>
             <option>UTC+1 (Paris)</option>
           </select>
         </div>
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-neutral-900 dark:text-white">{t('pages.parametres.parametres.format_de_date')}</p>
-            <p className="text-xs text-neutral-500">JJ/MM/AAAA</p>
+            <p className="text-sm font-medium text-[var(--text-primary)] ">{t('pages.parametres.parametres.format_de_date')}</p>
+            <p className="text-xs text-[var(--text-secondary)]">JJ/MM/AAAA</p>
           </div>
-          <select className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300">
+          <select className="h-10 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40   ">
             <option>JJ/MM/AAAA</option>
             <option>MM/JJ/AAAA</option>
             <option>AAAA-MM-JJ</option>
@@ -753,10 +686,10 @@ function PreferencesSection() {
         </div>
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-neutral-900 dark:text-white">{t('pages.parametres.parametres.devise')}</p>
-            <p className="text-xs text-neutral-500">{t('pages.parametres.parametres.format_d_affichage_des_montants')}</p>
+            <p className="text-sm font-medium text-[var(--text-primary)] ">{t('pages.parametres.parametres.devise')}</p>
+            <p className="text-xs text-[var(--text-secondary)]">{t('pages.parametres.parametres.format_d_affichage_des_montants')}</p>
           </div>
-          <select className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300">
+          <select className="h-10 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40   ">
             <option>XOF (CFA)</option>
             <option>EUR (€)</option>
             <option>USD ($)</option>
