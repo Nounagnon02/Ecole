@@ -34,14 +34,14 @@ export default function PlansPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--text-tertiary)]" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
+      <div className="flex flex-col items-center justify-center h-64 text-[var(--text-secondary)]">
         <AlertCircle className="h-8 w-8 mb-2 text-red-400" />
         <p className="text-sm">{error}</p>
       </div>
@@ -52,15 +52,15 @@ export default function PlansPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.admin.plans.title')}</h1>
-          <p className="text-sm text-neutral-500 mt-1">{t('pages.admin.plans.subtitle')}</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.admin.plans.title')}</h1>
+          <p className="text-sm text-[var(--text-secondary)] mt-1">{t('pages.admin.plans.subtitle')}</p>
         </div>
         <Button icon={<Plus className="h-4 w-4" />}>{t('pages.admin.plans.nouveau_plan')}</Button>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
         {plans.length === 0 && (
-          <div className="lg:col-span-3 text-center py-12 text-sm text-neutral-500">{t('pages.admin.plans.aucun_plan_disponible')}</div>
+          <div className="lg:col-span-3 text-center py-12 text-sm text-[var(--text-secondary)]">{t('pages.admin.plans.aucun_plan_disponible')}</div>
         )}
         {plans.map((plan, i) => (
           <motion.div
@@ -80,8 +80,8 @@ export default function PlansPage() {
               <Card.Body className="p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">{plan.name}</h3>
-                    <p className="text-sm text-neutral-500">{plan.slug}</p>
+                    <h3 className="text-lg font-semibold text-[var(--text-primary)] ">{plan.name}</h3>
+                    <p className="text-sm text-[var(--text-secondary)]">{plan.slug}</p>
                   </div>
                   <Badge variant={plan.is_active ? 'success' : 'neutral'} size="sm">
                     {plan.is_active ? t('common.status.active') : t('common.status.inactive')}
@@ -89,27 +89,27 @@ export default function PlansPage() {
                 </div>
 
                 <div className="mb-4">
-                  <p className="text-3xl font-bold text-neutral-900 dark:text-white">
+                  <p className="text-3xl font-bold text-[var(--text-primary)] ">
                     {plan.price_monthly === 0 || plan.price_monthly === '0.00' ? t('pages.admin.plans.gratuit') : `${Number(plan.price_monthly).toLocaleString()} FCFA`}
                   </p>
-                  <p className="text-xs text-neutral-500">{t('pages.admin.plans.mois')}</p>
+                  <p className="text-xs text-[var(--text-secondary)]">{t('pages.admin.plans.mois')}</p>
                   {plan.price_yearly > 0 && (
-                    <p className="text-xs text-neutral-400 mt-1">
+                    <p className="text-xs text-[var(--text-tertiary)] mt-1">
                       {Number(plan.price_yearly).toLocaleString()} FCFA/an
                     </p>
                   )}
                 </div>
 
                 <div className="space-y-2 mb-4 text-sm">
-                  <div className="flex items-center gap-2 text-neutral-600 dark:text-neutral-400">
+                  <div className="flex items-center gap-2 text-[var(--text-secondary)] ">
                     <Users className="h-4 w-4" />
                     <span>Jusqu'à {plan.max_students ?? '∞'} élèves</span>
                   </div>
-                  <div className="flex items-center gap-2 text-neutral-600 dark:text-neutral-400">
+                  <div className="flex items-center gap-2 text-[var(--text-secondary)] ">
                     <Building2 className="h-4 w-4" />
                     <span>Jusqu'à {plan.max_schools ?? 1} établissement(s)</span>
                   </div>
-                  <div className="flex items-center gap-2 text-neutral-600 dark:text-neutral-400">
+                  <div className="flex items-center gap-2 text-[var(--text-secondary)] ">
                     <CreditCard className="h-4 w-4" />
                     <span>{plan.tenants_count ?? 0} abonné(s)</span>
                   </div>
@@ -117,13 +117,13 @@ export default function PlansPage() {
 
                 <div className="space-y-2 mb-6">
                   {(plan.features || []).map((f, j) => (
-                    <div key={j} className="flex items-start gap-2 text-sm text-neutral-700 dark:text-neutral-300">
+                    <div key={j} className="flex items-start gap-2 text-sm text-[var(--text-primary)] ">
                       <CheckCircle2 className="h-4 w-4 text-emerald-500 mt-0.5 shrink-0" />
                       <span>{typeof f === 'string' ? f : f.name || f}</span>
                     </div>
                   ))}
                   {(!plan.features || plan.features.length === 0) && (
-                    <p className="text-xs text-neutral-400 italic">{t('pages.admin.plans.aucune_fonctionnalite_listee')}</p>
+                    <p className="text-xs text-[var(--text-tertiary)] italic">{t('pages.admin.plans.aucune_fonctionnalite_listee')}</p>
                   )}
                 </div>
 

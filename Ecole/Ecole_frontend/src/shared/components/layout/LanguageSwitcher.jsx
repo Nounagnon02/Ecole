@@ -27,7 +27,7 @@ export default function LanguageSwitcher({ className = '' }) {
         className="cursor-pointer bg-transparent text-xs font-medium outline-none"
       >
         {LOCALES.map(({ code, label }) => (
-          <option key={code} value={code} className="bg-white text-neutral-900 dark:bg-neutral-900 dark:text-neutral-100">
+          <option key={code} value={code} className="bg-[var(--surface-raised)] text-[var(--text-primary)]  ">
             {label}
           </option>
         ))}

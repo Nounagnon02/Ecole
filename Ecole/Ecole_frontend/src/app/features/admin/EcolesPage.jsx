@@ -39,7 +39,7 @@ function EcoleSkeleton() {
           <Skeleton className="h-5 w-48" />
           <Skeleton className="h-3 w-64" />
           <Skeleton className="h-3 w-40" />
-          <div className="flex gap-4 pt-2 border-t border-neutral-100 dark:border-neutral-800">
+          <div className="flex gap-4 pt-2 border-t border-[var(--border-light)] ">
             <Skeleton className="h-3 w-20" />
             <Skeleton className="h-3 w-20" />
             <Skeleton className="h-3 w-20" />

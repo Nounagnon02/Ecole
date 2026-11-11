@@ -78,14 +78,14 @@ export default function AbsencesPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--text-tertiary)]" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
+      <div className="flex flex-col items-center justify-center h-64 text-[var(--text-secondary)]">
         <AlertCircle className="h-8 w-8 mb-2 text-red-400" />
         <p className="text-sm">{error}</p>
         <button
@@ -101,8 +101,8 @@ export default function AbsencesPage() {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.censeur.absences.title')}</h1>
-        <p className="text-sm text-neutral-500">{t('pages.censeur.absences.subtitle')}</p>
+        <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.censeur.absences.title')}</h1>
+        <p className="text-sm text-[var(--text-secondary)]">{t('pages.censeur.absences.subtitle')}</p>
       </div>
 
       {/* Stats */}
@@ -117,7 +117,7 @@ export default function AbsencesPage() {
       <Card>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
             <Input
               placeholder={t('common.search_student')}
               value={search}
@@ -130,7 +130,7 @@ export default function AbsencesPage() {
               value={filterStatut}
               onChange={(e) => setFilterStatut(e.target.value)}
               aria-label={t('common.filter_by_status')}
-              className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+              className="h-10 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40   "
             >
               <option value="">{t('pages.censeur.absences.toutes_les_absences')}</option>
               <option value="justifiee">{t('pages.censeur.absences.justifiees')}</option>
@@ -145,7 +145,7 @@ export default function AbsencesPage() {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-neutral-200 dark:border-neutral-700 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+              <tr className="border-b border-[var(--border)]  text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
                 <th scope="col" className="pb-3 pr-4">{t('common.student')}</th>
                 <th scope="col" className="pb-3 pr-4">{t('common.class')}</th>
                 <th scope="col" className="pb-3 pr-4">{t('common.date')}</th>
@@ -158,17 +158,17 @@ export default function AbsencesPage() {
             <tbody>
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center text-sm text-neutral-500">
+                  <td colSpan={7} className="py-8 text-center text-sm text-[var(--text-secondary)]">
                     {t('pages.censeur.absences.aucune_absence_trouvee')}
                   </td>
                 </tr>
               )}
               {filtered.map((a) => (
-                <tr key={a.id} className="border-b border-neutral-100 dark:border-neutral-800">
+                <tr key={a.id} className="border-b border-[var(--border-light)] ">
                   <td className="py-3 pr-4">
                     <div className="flex items-center gap-3">
                       <Avatar name={`${a.eleve?.prenom || ''} ${a.eleve?.nom || ''}`} size="sm" />
-                      <span className="text-sm font-medium text-neutral-900 dark:text-white">
+                      <span className="text-sm font-medium text-[var(--text-primary)] ">
                         {a.eleve?.prenom} {a.eleve?.nom}
                       </span>
                     </div>
@@ -177,12 +177,12 @@ export default function AbsencesPage() {
                     <Badge variant="outline" size="sm">{a.eleve?.classe?.nom_classe || '—'}</Badge>
                   </td>
                   <td className="py-3 pr-4">
-                    <span className="text-xs text-neutral-600 dark:text-neutral-400">
+                    <span className="text-xs text-[var(--text-secondary)] ">
                       {a.date ? formatDate(a.date) : '—'}
                     </span>
                   </td>
                   <td className="py-3 pr-4">
-                    <span className="text-sm text-neutral-700 dark:text-neutral-300">{getTypeLabel(a.type)}</span>
+                    <span className="text-sm text-[var(--text-primary)] ">{getTypeLabel(a.type)}</span>
                   </td>
                   <td className="py-3 pr-4">
                     {a.justifiee ? (
@@ -192,7 +192,7 @@ export default function AbsencesPage() {
                     )}
                   </td>
                   <td className="py-3 pr-4">
-                    <span className="text-sm text-neutral-600 dark:text-neutral-400">{a.motif || '—'}</span>
+                    <span className="text-sm text-[var(--text-secondary)] ">{a.motif || '—'}</span>
                   </td>
                   <td className="py-3 text-right">
                     <Button variant="ghost" size="sm" icon={<FileText />} title={t('common.details')} />

@@ -138,7 +138,7 @@ function ApercuSection({ stats, inscriptions, facultes, activites, loading }) {
           ) : (
           <div className="space-y-1">
             {activites.map((a) => (
-              <div key={a.id} className="flex items-center gap-3 rounded-lg border border-neutral-100 bg-neutral-50/50 px-4 py-3 dark:border-neutral-800 dark:bg-neutral-900/30">
+              <div key={a.id} className="flex items-center gap-3 rounded-lg border border-[var(--border-light)] bg-[var(--surface)]/50 px-4 py-3  ">
                 <div className={cn(
                   'flex h-8 w-8 items-center justify-center rounded-full',
                   a.type === 'inscription' && 'bg-[var(--emerald-subtle)] text-[var(--emerald)]',
@@ -154,10 +154,10 @@ function ApercuSection({ stats, inscriptions, facultes, activites, loading }) {
                   {a.type === 'cours' && <BookOpen className="h-4 w-4" />}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-neutral-900 dark:text-white truncate">{a.message}</p>
-                  <p className="text-xs text-neutral-400">{a.temps}</p>
+                  <p className="text-sm font-medium text-[var(--text-primary)]  truncate">{a.message}</p>
+                  <p className="text-xs text-[var(--text-tertiary)]">{a.temps}</p>
                 </div>
-                <ChevronRight className="h-4 w-4 text-neutral-300" />
+                <ChevronRight className="h-4 w-4 text-[var(--text-secondary)]" />
               </div>
             ))}
           </div>

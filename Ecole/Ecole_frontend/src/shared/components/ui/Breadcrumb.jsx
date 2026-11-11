@@ -167,25 +167,25 @@ export default function Breadcrumb({ items: propItems, className }) {
             <li key={`${item.label}-${index}`} className="flex items-center gap-1">
               {index > 0 && (
                 <ChevronRight
-                  className="h-3.5 w-3.5 shrink-0 text-neutral-500"
+                  className="h-3.5 w-3.5 shrink-0 text-[var(--text-secondary)]"
                   aria-hidden="true"
                 />
               )}
 
               {isLast || !item.href ? (
                 <span
-                  className="truncate font-medium text-neutral-900 dark:text-white"
+                  className="truncate font-medium text-[var(--text-primary)] "
                   aria-current={isLast ? 'page' : undefined}
                 >
                   {index === 0 && (
-                    <LayoutDashboard className="mr-1.5 inline h-3.5 w-3.5 text-neutral-400" />
+                    <LayoutDashboard className="mr-1.5 inline h-3.5 w-3.5 text-[var(--text-tertiary)]" />
                   )}
                   {item.label}
                 </span>
               ) : (
                 <Link
                   to={item.href}
-                  className="truncate text-neutral-500 transition-colors hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200"
+                  className="truncate text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]  "
                 >
                   {item.label}
                 </Link>

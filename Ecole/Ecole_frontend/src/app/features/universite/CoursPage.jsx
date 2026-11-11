@@ -67,14 +67,14 @@ export default function CoursPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--text-tertiary)]" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
+      <div className="flex flex-col items-center justify-center h-64 text-[var(--text-secondary)]">
         <AlertCircle className="h-8 w-8 mb-2 text-red-400" />
         <p className="text-sm">{error}</p>
       </div>
@@ -85,8 +85,8 @@ export default function CoursPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.universite.cours.title')}</h1>
-          <p className="text-sm text-neutral-500">{t('pages.universite.cours.subtitle')}</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.universite.cours.title')}</h1>
+          <p className="text-sm text-[var(--text-secondary)]">{t('pages.universite.cours.subtitle')}</p>
         </div>
         <Button size="sm" icon={<Plus />}>{t('pages.universite.cours.ajouter_un_cours')}</Button>
       </div>
@@ -101,7 +101,7 @@ export default function CoursPage() {
       <Card>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
             <Input
               placeholder={t('common.search_course')}
               value={search}
@@ -118,7 +118,7 @@ export default function CoursPage() {
                   'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
                   filterNiveau === (n === 'Tous' ? '' : n)
                     ? 'bg-[var(--primary-subtle)] text-[var(--accent)] bg-[var(--primary-subtle)] dark:text-[var(--accent)]'
-                    : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700'
+                    : 'bg-[var(--surface-subtle)] text-[var(--text-secondary)] hover:bg-[var(--surface-subtle)]   '
                 )}
               >
                 {n}
@@ -132,7 +132,7 @@ export default function CoursPage() {
         {filtered.length === 0 && (
           <div className="sm:col-span-2 lg:col-span-3">
             <Card>
-              <div className="text-center py-8 text-neutral-500">
+              <div className="text-center py-8 text-[var(--text-secondary)]">
                 <BookOpen className="mx-auto h-8 w-8 mb-2" />
                 <p className="text-sm">{t('common.no_course_found')}</p>
               </div>
@@ -149,14 +149,14 @@ export default function CoursPage() {
                 {c.statut === 'actif' ? t('common.status.in_progress') : t('pages.universite.cours.termine')}
               </Badge>
             </div>
-            <h3 className="font-semibold text-sm text-neutral-900 dark:text-white">{c.intitule}</h3>
-            <p className="text-xs text-neutral-500 mb-1">{c.code} · {c.professeur || c.enseignant || '—'}</p>
+            <h3 className="font-semibold text-sm text-[var(--text-primary)] ">{c.intitule}</h3>
+            <p className="text-xs text-[var(--text-secondary)] mb-1">{c.code} · {c.professeur || c.enseignant || '—'}</p>
             <div className="flex items-center gap-2 mb-3">
               <Badge variant="outline" size="sm">{c.niveau}</Badge>
               <Badge variant="outline" size="sm">{c.semestre}</Badge>
-              <span className="text-xs text-neutral-400">{c.filiere || ''}</span>
+              <span className="text-xs text-[var(--text-tertiary)]">{c.filiere || ''}</span>
             </div>
-            <div className="flex justify-between text-xs text-neutral-600 dark:text-neutral-400 pt-2 border-t border-neutral-100 dark:border-neutral-800">
+            <div className="flex justify-between text-xs text-[var(--text-secondary)]  pt-2 border-t border-[var(--border-light)] ">
               <span className="flex items-center gap-1"><GraduationCap className="h-3 w-3" /> {c.credits} crédits</span>
               <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {c.heures}h</span>
               <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {c.etudiants}</span>

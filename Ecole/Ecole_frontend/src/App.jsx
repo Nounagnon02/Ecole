@@ -41,7 +41,7 @@ function UnauthorizedPage() {
           <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
         </svg>
       </div>
-      <h1 className="font-fraunces text-2xl font-semibold text-[var(--text-primary)]">
+      <h1 className="font-heading text-2xl font-semibold text-[var(--text-primary)]">
         {t('error.unauthorized')}
       </h1>
       <p className="max-w-sm text-sm text-[var(--text-secondary)]">
@@ -49,7 +49,7 @@ function UnauthorizedPage() {
       </p>
       <Link
         to="/connexion"
-        className="mt-2 rounded-lg bg-[var(--accent)] px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[var(--accent-hover)]"
+        className="mt-2 rounded-lg bg-[var(--action)] px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[var(--action-hover)]"
       >
         {t('error.go_home')}
       </Link>

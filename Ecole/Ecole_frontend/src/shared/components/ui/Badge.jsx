@@ -25,12 +25,12 @@ const variants = {
 
 const dotColors = {
   default: 'bg-[var(--text-tertiary)]',
-  primary: 'bg-[var(--primary)]',
+  primary: 'bg-[var(--action)]',
   success: 'bg-[var(--green)]',
   warning: 'bg-[var(--amber)]',
   danger: 'bg-[var(--red)]',
   info: 'bg-[var(--blue)]',
-  accent: 'bg-[var(--accent)]',
+  accent: 'bg-[var(--action)]',
   emerald: 'bg-[var(--emerald)]',
   sky: 'bg-[var(--sky)]',
   purple: 'bg-[var(--purple)]',
@@ -38,7 +38,7 @@ const dotColors = {
 };
 
 const sizes = {
-  sm: 'px-1.5 py-0.5 text-[10px]',
+  sm: 'px-2 py-0.5 text-xs',
   md: 'px-2.5 py-1 text-xs',
   lg: 'px-3 py-1.5 text-sm',
 };
@@ -56,7 +56,7 @@ export default function Badge({
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-full font-medium whitespace-nowrap',
+        'inline-flex items-center gap-1.5 rounded font-semibold whitespace-nowrap',
         variants[variant],
         sizes[size],
         className

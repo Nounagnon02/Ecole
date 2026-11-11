@@ -196,7 +196,7 @@ function ClassesTable({ classes, loading }) {
             {!loading && filtered.map((cl) => (
               <Table.Row key={cl.id}>
                 <Table.Cell>
-                  <span className="font-medium text-neutral-900 dark:text-white">{cl.nom_classe}</span>
+                  <span className="font-medium text-[var(--text-primary)] ">{cl.nom_classe}</span>
                 </Table.Cell>
                 <Table.Cell>{cl.effectif ?? cl.eleves_count ?? '—'}</Table.Cell>
                 <Table.Cell>
@@ -206,7 +206,7 @@ function ClassesTable({ classes, loading }) {
             ))}
             {!loading && filtered.length === 0 && (
               <Table.Row>
-                <td colSpan={3} className="p-6 text-center text-sm text-neutral-500">{t('dashboards.directeur.aucune_classe')}</td>
+                <td colSpan={3} className="p-6 text-center text-sm text-[var(--text-secondary)]">{t('dashboards.directeur.aucune_classe')}</td>
               </Table.Row>
             )}
           </Table.Body>

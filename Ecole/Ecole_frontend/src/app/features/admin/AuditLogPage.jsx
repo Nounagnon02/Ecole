@@ -38,12 +38,12 @@ function DiffRow({ label, values }) {
 
   return (
     <div>
-      <p className="text-[10px] font-semibold uppercase tracking-wide text-neutral-400">{label}</p>
+      <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-tertiary)]">{label}</p>
       <dl className="mt-1 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
         {Object.entries(values).map(([champ, valeur]) => (
           <div key={champ} className="contents">
-            <dt className="font-medium text-neutral-500 dark:text-neutral-400">{champ}</dt>
-            <dd className="truncate text-neutral-700 dark:text-neutral-300">
+            <dt className="font-medium text-[var(--text-secondary)] ">{champ}</dt>
+            <dd className="truncate text-[var(--text-primary)] ">
               {typeof valeur === 'object' && valeur !== null ? JSON.stringify(valeur) : String(valeur ?? '—')}
             </dd>
           </div>
@@ -98,8 +98,8 @@ export default function AuditLogPage() {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.audit.audit.title')}</h1>
-        <p className="text-sm text-neutral-500">{t('pages.audit.audit.subtitle')}</p>
+        <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.audit.audit.title')}</h1>
+        <p className="text-sm text-[var(--text-secondary)]">{t('pages.audit.audit.subtitle')}</p>
       </div>
 
       <Card>
@@ -143,15 +143,15 @@ export default function AuditLogPage() {
       <Card className="p-0">
         {requete.isPending ? (
           <div className="flex items-center justify-center py-16">
-            <Loader2 className="h-6 w-6 animate-spin text-neutral-400" />
+            <Loader2 className="h-6 w-6 animate-spin text-[var(--text-tertiary)]" />
           </div>
         ) : requete.isError ? (
-          <div className="flex flex-col items-center justify-center py-16 text-neutral-500">
+          <div className="flex flex-col items-center justify-center py-16 text-[var(--text-secondary)]">
             <RefreshCw className="mb-2 h-6 w-6 text-red-400" />
             <p className="text-sm">{requete.error?.message ?? t('common.load_error')}</p>
           </div>
         ) : entries.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-neutral-500">
+          <div className="flex flex-col items-center justify-center py-16 text-[var(--text-secondary)]">
             <History className="mb-2 h-8 w-8" />
             <p className="text-sm">{t('pages.audit.audit.empty')}</p>
           </div>
@@ -159,7 +159,7 @@ export default function AuditLogPage() {
           <>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
-                <thead className="border-b border-neutral-100 text-xs uppercase tracking-wide text-neutral-400 dark:border-neutral-800">
+                <thead className="border-b border-[var(--border-light)] text-xs uppercase tracking-wide text-[var(--text-tertiary)] ">
                   <tr>
                     <th className="px-4 py-3 font-medium">{t('pages.audit.audit.column_date')}</th>
                     <th className="px-4 py-3 font-medium">{t('pages.audit.audit.column_user')}</th>
@@ -168,7 +168,7 @@ export default function AuditLogPage() {
                     <th className="px-4 py-3 font-medium text-right">{t('pages.audit.audit.column_details')}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
+                <tbody className="divide-y divide-[var(--border-light)] ">
                   {entries.map((entry) => {
                     const estOuvert = openRow === entry.id;
                     const auMoinsUnDetail = (entry.old_values && Object.keys(entry.old_values).length > 0)
@@ -176,8 +176,8 @@ export default function AuditLogPage() {
 
                     return (
                       <Fragment key={entry.id}>
-                        <tr className="hover:bg-neutral-50 dark:hover:bg-neutral-900/40">
-                          <td className="whitespace-nowrap px-4 py-3 text-neutral-500">{formatDate(entry.created_at, true)}</td>
+                        <tr className="hover:bg-[var(--surface)] ">
+                          <td className="whitespace-nowrap px-4 py-3 text-[var(--text-secondary)]">{formatDate(entry.created_at, true)}</td>
                           <td className="px-4 py-3">
                             {entry.user ? `${entry.user.name} ${entry.user.prenom ?? ''}`.trim() : t('pages.audit.audit.unknown_user')}
                           </td>
@@ -186,7 +186,7 @@ export default function AuditLogPage() {
                               {t(`pages.audit.audit.event_${entry.event}`)}
                             </Badge>
                           </td>
-                          <td className="px-4 py-3 text-neutral-600 dark:text-neutral-300">
+                          <td className="px-4 py-3 text-[var(--text-secondary)] ">
                             {nomCourt(entry.auditable_type)} #{entry.auditable_id}
                           </td>
                           <td className="px-4 py-3 text-right">
@@ -204,14 +204,14 @@ export default function AuditLogPage() {
                         </tr>
                         {estOuvert && (
                           <tr>
-                            <td colSpan={5} className="bg-neutral-50 px-4 py-4 dark:bg-neutral-900/40">
+                            <td colSpan={5} className="bg-[var(--surface)] px-4 py-4 ">
                               {auMoinsUnDetail ? (
                                 <div className="grid gap-4 sm:grid-cols-2">
                                   <DiffRow label={t('pages.audit.audit.before')} values={entry.old_values} />
                                   <DiffRow label={t('pages.audit.audit.after')} values={entry.new_values} />
                                 </div>
                               ) : (
-                                <p className="text-xs text-neutral-400">{t('pages.audit.audit.no_details')}</p>
+                                <p className="text-xs text-[var(--text-tertiary)]">{t('pages.audit.audit.no_details')}</p>
                               )}
                             </td>
                           </tr>
@@ -223,7 +223,7 @@ export default function AuditLogPage() {
               </table>
             </div>
 
-            <div className="flex items-center justify-between border-t border-neutral-100 px-4 py-3 text-xs text-neutral-500 dark:border-neutral-800">
+            <div className="flex items-center justify-between border-t border-[var(--border-light)] px-4 py-3 text-xs text-[var(--text-secondary)] ">
               <span>{t('pages.audit.audit.total_label', { n: total })}</span>
               <div className="flex items-center gap-3">
                 <span>{t('pages.audit.audit.page_label', { current: currentPage, last: lastPage })}</span>

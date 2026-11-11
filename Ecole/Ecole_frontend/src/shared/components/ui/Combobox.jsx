@@ -161,7 +161,7 @@ export default function Combobox({
                   aria-selected={opt.value === value}
                   onClick={() => handleSelect(opt)}
                   className={cn(
-                    'flex w-full items-center rounded-lg px-3 py-2.5 text-left text-sm transition-colors',
+                    'flex w-full items-center rounded-lg px-3 py-2.5 text-start text-sm transition-colors',
                     opt.value === value
                       ? 'bg-[var(--accent-subtle)] font-medium text-[var(--accent)]'
                       : 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover)]'

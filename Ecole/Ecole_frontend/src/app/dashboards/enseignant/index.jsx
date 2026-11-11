@@ -99,16 +99,16 @@ function ApercuSection({ stats, emploiTemps, devoirs, loading }) {
                 <p className="text-sm">{t('dashboards.enseignant.aucun_cours_prevu_aujourd_hui')}</p>
               </div>
             ) : (
-            <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
+            <div className="divide-y divide-[var(--border-light)] ">
               {(emploiTemps[0]?.cours || []).map((cours, i) => (
-                <div key={i} className="flex items-center gap-4 px-6 py-4 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors">
+                <div key={i} className="flex items-center gap-4 px-6 py-4 hover:bg-[var(--surface)]  transition-colors">
                   <div className="flex flex-col items-center justify-center w-16 h-14 rounded-xl bg-[var(--accent-subtle)] text-[var(--accent)]">
                     <span className="text-xs font-semibold">{cours.heure?.split('h')[0]}h</span>
                     <span className="text-[10px]">{cours.heure?.split('-')[1]}</span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-neutral-900 dark:text-white">{cours.matiere}</p>
-                    <p className="text-xs text-neutral-500 mt-0.5">{cours.classe} · {cours.salle}</p>
+                    <p className="text-sm font-medium text-[var(--text-primary)] ">{cours.matiere}</p>
+                    <p className="text-xs text-[var(--text-secondary)] mt-0.5">{cours.classe} · {cours.salle}</p>
                   </div>
                   <Button variant="ghost" size="sm">
                     <Eye className="h-4 w-4" />
@@ -149,9 +149,9 @@ function ApercuSection({ stats, emploiTemps, devoirs, loading }) {
                 <p className="text-sm">{t('dashboards.enseignant.aucun_devoir_a_corriger')}</p>
               </div>
             ) : (
-            <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
+            <div className="divide-y divide-[var(--border-light)] ">
               {devoirs.map((d) => (
-                <div key={d.id} className="flex items-center gap-4 px-6 py-4 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors">
+                <div key={d.id} className="flex items-center gap-4 px-6 py-4 hover:bg-[var(--surface)]  transition-colors">
                   <div className={cn(
                     'flex items-center justify-center w-10 h-10 rounded-xl',
                     d.etat === 'à préparer' ? 'bg-[var(--amber-subtle)] text-[var(--amber)]'
@@ -160,8 +160,8 @@ function ApercuSection({ stats, emploiTemps, devoirs, loading }) {
                     <FileText className="h-5 w-5" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-neutral-900 dark:text-white">{d.titre}</p>
-                    <p className="text-xs text-neutral-500 mt-0.5">{d.classe} · {d.date}</p>
+                    <p className="text-sm font-medium text-[var(--text-primary)] ">{d.titre}</p>
+                    <p className="text-xs text-[var(--text-secondary)] mt-0.5">{d.classe} · {d.date}</p>
                   </div>
                   <Badge variant={d.etat === 'à préparer' ? 'warning' : 'info'} size="sm">
                     {d.etat}
@@ -183,8 +183,8 @@ function NotesSection({ notes, loading }) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">{t('dashboards.enseignant.saisie_des_notes')}</h2>
-          <p className="text-sm text-neutral-500 mt-1">{t('dashboards.enseignant.gerer_les_evaluations_et_notes')}</p>
+          <h2 className="font-heading text-xl font-semibold text-[var(--text-primary)] ">{t('dashboards.enseignant.saisie_des_notes')}</h2>
+          <p className="text-sm text-[var(--text-secondary)] mt-1">{t('dashboards.enseignant.gerer_les_evaluations_et_notes')}</p>
         </div>
         <Button>
           <PenLine className="h-4 w-4 mr-2" /> {t('dashboards.enseignant.saisir_des_notes')}
@@ -217,7 +217,7 @@ function NotesSection({ notes, loading }) {
               ))}
               {!loading && notes.length === 0 && (
                 <Table.Row>
-                  <td colSpan={6} className="p-6 text-center text-sm text-neutral-500">{t('dashboards.enseignant.aucune_note_saisie')}</td>
+                  <td colSpan={6} className="p-6 text-center text-sm text-[var(--text-secondary)]">{t('dashboards.enseignant.aucune_note_saisie')}</td>
                 </Table.Row>
               )}
               {!loading && notes.map((n) => (
@@ -225,7 +225,7 @@ function NotesSection({ notes, loading }) {
                   <Table.Cell>
                     <div className="flex items-center gap-2">
                       <Avatar name={n.eleve} size="sm" />
-                      <span className="font-medium text-neutral-900 dark:text-white">{n.eleve}</span>
+                      <span className="font-medium text-[var(--text-primary)] ">{n.eleve}</span>
                     </div>
                   </Table.Cell>
                   <Table.Cell>{n.classe}</Table.Cell>
@@ -240,7 +240,7 @@ function NotesSection({ notes, loading }) {
                       {n.note}
                     </span>
                   </Table.Cell>
-                  <Table.Cell className="text-neutral-400">{n.date}</Table.Cell>
+                  <Table.Cell className="text-[var(--text-tertiary)]">{n.date}</Table.Cell>
                   <Table.Cell>
                     <Badge variant={
                       n.appreciation === 'Excellent' ? 'success'
@@ -267,8 +267,8 @@ function CahierSection() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">{t('dashboards.enseignant.cahier_de_textes')}</h2>
-          <p className="text-sm text-neutral-500 mt-1">{t('dashboards.enseignant.suivi_des_lecons_et_seances')}</p>
+          <h2 className="font-heading text-xl font-semibold text-[var(--text-primary)] ">{t('dashboards.enseignant.cahier_de_textes')}</h2>
+          <p className="text-sm text-[var(--text-secondary)] mt-1">{t('dashboards.enseignant.suivi_des_lecons_et_seances')}</p>
         </div>
         <Button>
           <PenLine className="h-4 w-4 mr-2" /> {t('dashboards.enseignant.nouvelle_seance')}
@@ -276,7 +276,7 @@ function CahierSection() {
       </div>
       <Card>
         <Card.Body>
-          <p className="text-neutral-500 text-center py-12">
+          <p className="text-[var(--text-secondary)] text-center py-12">
             {t('dashboards.enseignant.cahier_de_textes_numerique_lecons_seances_et')}
           </p>
         </Card.Body>
@@ -292,8 +292,8 @@ function EmploiSection({ emploiTemps }) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">{t('dashboards.enseignant.emploi_du_temps')}</h2>
-          <p className="text-sm text-neutral-500 mt-1">{t('dashboards.enseignant.planning_hebdomadaire_des_cours')}</p>
+          <h2 className="font-heading text-xl font-semibold text-[var(--text-primary)] ">{t('dashboards.enseignant.emploi_du_temps')}</h2>
+          <p className="text-sm text-[var(--text-secondary)] mt-1">{t('dashboards.enseignant.planning_hebdomadaire_des_cours')}</p>
         </div>
       </div>
       {planning.length === 0 ? (
@@ -310,14 +310,14 @@ function EmploiSection({ emploiTemps }) {
             </Card.Header>
             <Card.Body>
               {jour.cours.length === 0 ? (
-                <p className="text-xs text-neutral-400 text-center py-4">{t('dashboards.enseignant.pas_de_cours')}</p>
+                <p className="text-xs text-[var(--text-tertiary)] text-center py-4">{t('dashboards.enseignant.pas_de_cours')}</p>
               ) : (
                 <div className="space-y-3">
                   {jour.cours.map((cours, i) => (
-                    <div key={i} className="p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-100 dark:border-neutral-800">
+                    <div key={i} className="p-3 rounded-xl bg-[var(--surface)]  border border-[var(--border-light)] ">
                       <p className="text-xs font-semibold text-[var(--accent)] dark:text-[var(--accent)]">{cours.heure}</p>
-                      <p className="text-sm font-medium text-neutral-900 dark:text-white mt-1">{cours.matiere}</p>
-                      <p className="text-xs text-neutral-500 mt-0.5">{cours.classe} · {cours.salle}</p>
+                      <p className="text-sm font-medium text-[var(--text-primary)]  mt-1">{cours.matiere}</p>
+                      <p className="text-xs text-[var(--text-secondary)] mt-0.5">{cours.classe} · {cours.salle}</p>
                     </div>
                   ))}
                 </div>

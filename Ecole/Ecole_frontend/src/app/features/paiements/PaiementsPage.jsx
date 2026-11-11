@@ -6,6 +6,7 @@
 
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
+import { useSearchParams } from 'react-router-dom';
 import {
   DollarSign, Search, Download, Plus, CreditCard,
   TrendingUp, TrendingDown, Receipt, RefreshCw, Calendar, Eye,
@@ -32,14 +33,16 @@ const STATUT_COLORS = {
   en_attente: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400',
   'en attente': 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400',
   echec: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400',
-  remboursé: 'bg-neutral-100 text-neutral-700 dark:bg-neutral-500/20 dark:text-neutral-400',
+  remboursé: 'bg-[var(--surface-subtle)] text-[var(--text-primary)]  ',
 };
 
 export default function PaiementsPage() {
   const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [filterStatut, setFilterStatut] = useState('');
-  const [tab, setTab] = useState('paiements'); // 'paiements' | 'echeancier'
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = searchParams.get('tab') === 'echeancier' ? 'echeancier' : 'paiements';
+  const setTab = value => setSearchParams(previous => { const next = new URLSearchParams(previous); next.set('tab', value); return next; }); // 'paiements' | 'echeancier'
   const [echeanceSearch, setEcheanceSearch] = useState('');
   const [echeanceEleve, setEcheanceEleve] = useState(null);
   const [echeanceData, setEcheanceData] = useState(null);
@@ -118,7 +121,7 @@ export default function PaiementsPage() {
         const ALLOWED_HOSTS = ['fedapay.com', 'checkout.fedapay.com'];
         try {
           const url = new URL(res.data.payment_url);
-          if (!ALLOWED_HOSTS.some(h => url.hostname.endsWith(h))) {
+          if (url.protocol !== 'https:' || !ALLOWED_HOSTS.some(h => url.hostname === h || url.hostname.endsWith('.' + h))) {
             toast.error(t('pages.paiements.paiements.url_de_paiement_invalide'));
             return;
           }
@@ -141,8 +144,8 @@ export default function PaiementsPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.paiements.paiements.title')}</h1>
-          <p className="text-sm text-neutral-500">{t('pages.paiements.paiements.subtitle')}</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.paiements.paiements.title')}</h1>
+          <p className="text-sm text-[var(--text-secondary)]">{t('pages.paiements.paiements.subtitle')}</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" onClick={refetch} disabled={isLoading}>
@@ -163,14 +166,14 @@ export default function PaiementsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-4 border-b border-neutral-200 dark:border-neutral-800">
+      <div className="flex gap-4 border-b border-[var(--border)] ">
         <button
           onClick={() => setTab('paiements')}
           className={cn(
             'pb-2 text-sm font-medium border-b-2 transition-colors',
             tab === 'paiements'
               ? 'border-[var(--accent)] text-[var(--accent)]'
-              : 'border-transparent text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'
+              : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] '
           )}
         >
           <CreditCard className="h-4 w-4 inline mr-1.5" />
@@ -182,7 +185,7 @@ export default function PaiementsPage() {
             'pb-2 text-sm font-medium border-b-2 transition-colors',
             tab === 'echeancier'
               ? 'border-[var(--accent)] text-[var(--accent)]'
-              : 'border-transparent text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'
+              : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] '
           )}
         >
           <Calendar className="h-4 w-4 inline mr-1.5" />
@@ -197,7 +200,7 @@ export default function PaiementsPage() {
           <Card>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               <div className="relative flex-1 max-w-sm">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
                 <Input
                   placeholder={t('common.search_student')}
                   value={search}
@@ -209,7 +212,7 @@ export default function PaiementsPage() {
                 value={filterStatut}
                 onChange={(e) => setFilterStatut(e.target.value)}
                 aria-label={t('common.filter_by_status')}
-                className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+                className="h-10 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40   "
               >
                 <option value="">{t('common.all_statuses')}</option>
                 <option value="payee">{t('pages.paiements.paiements.paye')}</option>
@@ -246,31 +249,31 @@ export default function PaiementsPage() {
                 ))}
                 {!isLoading && filtered.length === 0 && (
                   <Table.Row>
-                    <td colSpan={7} className="p-8 text-center text-sm text-neutral-500">
+                    <td colSpan={7} className="p-8 text-center text-sm text-[var(--text-secondary)]">
                       {t('pages.paiements.paiements.aucun_paiement_trouve')}
                     </td>
                   </Table.Row>
                 )}
                 {!isLoading && filtered.map((p) => (
                   <Table.Row key={p.id}>
-                    <Table.Cell className="text-xs font-mono text-neutral-500">
+                    <Table.Cell className="text-xs font-mono text-[var(--text-secondary)]">
                       {p.reference ?? `PAY-${p.id}`}
                     </Table.Cell>
                     <Table.Cell>
-                      <span className="font-medium text-neutral-900 dark:text-white">
+                      <span className="font-medium text-[var(--text-primary)] ">
                         {p.eleve?.user?.name} {p.eleve?.user?.prenom}
                       </span>
-                      <span className="ml-2 text-xs text-neutral-500">
+                      <span className="ml-2 text-xs text-[var(--text-secondary)]">
                         {p.eleve?.classe?.nom_classe}
                       </span>
                     </Table.Cell>
                     <Table.Cell>{p.type_paiement}</Table.Cell>
                     <Table.Cell>
-                      <span className="font-semibold text-neutral-900 dark:text-white">
+                      <span className="font-semibold text-[var(--text-primary)] ">
                         {formatCurrency(p.montant)}
                       </span>
                     </Table.Cell>
-                    <Table.Cell className="text-xs text-neutral-500">{p.date_paiement}</Table.Cell>
+                    <Table.Cell className="text-xs text-[var(--text-secondary)]">{p.date_paiement}</Table.Cell>
                     <Table.Cell>
                       <span className={cn(
                         'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium',
@@ -282,7 +285,7 @@ export default function PaiementsPage() {
                     <Table.Cell className="text-right">
                       <button
                         onClick={() => handleRecu(p.id)}
-                        className="p-1.5 rounded-lg text-neutral-400 hover:text-[var(--accent)] hover:bg-[var(--accent-subtle)] transition-colors"
+                        className="p-1.5 rounded-lg text-[var(--text-tertiary)] hover:text-[var(--accent)] hover:bg-[var(--accent-subtle)] transition-colors"
                         title={t('pages.paiements.paiements.voir_le_recu')}
                       >
                         <Eye className="h-4 w-4" />
@@ -303,7 +306,7 @@ export default function PaiementsPage() {
           <Card>
             <div className="p-4 space-y-3">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
                 <Input
                   placeholder={t('common.search_student')}
                   value={echeanceSearch}
@@ -320,15 +323,15 @@ export default function PaiementsPage() {
                       'w-full text-left px-3 py-2 rounded-lg text-sm transition-colors',
                       echeanceEleve === e.id
                         ? 'bg-[var(--accent-subtle)] text-[var(--accent)] font-medium'
-                        : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800'
+                        : 'text-[var(--text-primary)]  hover:bg-[var(--surface-subtle)] '
                     )}
                   >
                     {e.name}
-                    <span className="ml-2 text-xs text-neutral-400">{e.classe}</span>
+                    <span className="ml-2 text-xs text-[var(--text-tertiary)]">{e.classe}</span>
                   </button>
                 ))}
                 {filteredEleves.length === 0 && (
-                  <p className="text-sm text-neutral-500 text-center py-4">{t('common.no_student_found')}</p>
+                  <p className="text-sm text-[var(--text-secondary)] text-center py-4">{t('common.no_student_found')}</p>
                 )}
               </div>
             </div>
@@ -338,7 +341,7 @@ export default function PaiementsPage() {
           <Card>
             <div className="p-4">
               {!echeanceEleve && (
-                <div className="py-16 text-center text-sm text-neutral-500">
+                <div className="py-16 text-center text-sm text-[var(--text-secondary)]">
                   {t('pages.paiements.paiements.selectionnez_un_eleve_pour_voir_son_echeancier')}
                 </div>
               )}
@@ -355,27 +358,27 @@ export default function PaiementsPage() {
                 <div className="space-y-4">
                   {/* Résumé */}
                   <div className="flex flex-wrap gap-4">
-                    <div className="flex-1 min-w-[140px] rounded-xl border border-neutral-200 dark:border-neutral-800 p-3">
-                      <p className="text-xs text-neutral-500">{t('pages.paiements.paiements.total_du')}</p>
-                      <p className="text-lg font-bold text-neutral-900 dark:text-white">
+                    <div className="flex-1 min-w-[140px] rounded-xl border border-[var(--border)]  p-3">
+                      <p className="text-xs text-[var(--text-secondary)]">{t('pages.paiements.paiements.total_du')}</p>
+                      <p className="text-lg font-bold text-[var(--text-primary)] ">
                         {formatCurrency(echeanceData.resume.total_du)}
                       </p>
                     </div>
                     <div className="flex-1 min-w-[140px] rounded-xl border border-emerald-200 dark:border-emerald-800 p-3">
-                      <p className="text-xs text-neutral-500">{t('pages.paiements.paiements.paye')}</p>
+                      <p className="text-xs text-[var(--text-secondary)]">{t('pages.paiements.paiements.paye')}</p>
                       <p className="text-lg font-bold text-emerald-600">
                         {formatCurrency(echeanceData.resume.total_paye)}
                       </p>
                     </div>
                     <div className="flex-1 min-w-[140px] rounded-xl border border-amber-200 dark:border-amber-800 p-3">
-                      <p className="text-xs text-neutral-500">{t('common.balance')}</p>
+                      <p className="text-xs text-[var(--text-secondary)]">{t('common.balance')}</p>
                       <p className="text-lg font-bold text-amber-600">
                         {formatCurrency(echeanceData.resume.solde)}
                       </p>
                     </div>
-                    <div className="flex-1 min-w-[140px] rounded-xl border border-neutral-200 dark:border-neutral-800 p-3">
-                      <p className="text-xs text-neutral-500">{t('pages.paiements.paiements.echeances')}</p>
-                      <p className="text-lg font-bold text-neutral-900 dark:text-white">
+                    <div className="flex-1 min-w-[140px] rounded-xl border border-[var(--border)]  p-3">
+                      <p className="text-xs text-[var(--text-secondary)]">{t('pages.paiements.paiements.echeances')}</p>
+                      <p className="text-lg font-bold text-[var(--text-primary)] ">
                         {echeanceData.resume.nb_payees}/{echeanceData.resume.nb_echeances}
                       </p>
                     </div>
@@ -383,11 +386,11 @@ export default function PaiementsPage() {
 
                   {/* Info élève */}
                   <div className="text-sm">
-                    <span className="font-medium text-neutral-900 dark:text-white">
+                    <span className="font-medium text-[var(--text-primary)] ">
                       {echeanceData.eleve.nom}
                     </span>
-                    <span className="ml-2 text-neutral-500">{echeanceData.eleve.classe}</span>
-                    <span className="ml-2 text-xs text-neutral-400 font-mono">· {echeanceData.eleve.matricule}</span>
+                    <span className="ml-2 text-[var(--text-secondary)]">{echeanceData.eleve.classe}</span>
+                    <span className="ml-2 text-xs text-[var(--text-tertiary)] font-mono">· {echeanceData.eleve.matricule}</span>
                   </div>
 
                   {/* Tableau des échéances */}
@@ -403,19 +406,19 @@ export default function PaiementsPage() {
                     <Table.Body>
                       {(Array.isArray(echeanceData?.echeances) ? echeanceData.echeances : []).length === 0 && (
                         <Table.Row>
-                          <td colSpan={6} className="p-8 text-center text-sm text-neutral-500">
+                          <td colSpan={6} className="p-8 text-center text-sm text-[var(--text-secondary)]">
                             {t('pages.paiements.paiements.aucune_echeance')}
                           </td>
                         </Table.Row>
                       )}
                       {(Array.isArray(echeanceData?.echeances) ? echeanceData.echeances : []).map((e) => (
                         <Table.Row key={e.id}>
-                          <Table.Cell className="text-xs font-mono text-neutral-500">{e.reference}</Table.Cell>
+                          <Table.Cell className="text-xs font-mono text-[var(--text-secondary)]">{e.reference}</Table.Cell>
                           <Table.Cell>{e.type}</Table.Cell>
-                          <Table.Cell className="font-semibold text-neutral-900 dark:text-white">
+                          <Table.Cell className="font-semibold text-[var(--text-primary)] ">
                             {formatCurrency(e.montant)}
                           </Table.Cell>
-                          <Table.Cell className="text-xs text-neutral-500">{e.date}</Table.Cell>
+                          <Table.Cell className="text-xs text-[var(--text-secondary)]">{e.date}</Table.Cell>
                           <Table.Cell>
                             <span className={cn(
                               'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium',
@@ -438,7 +441,7 @@ export default function PaiementsPage() {
                               )}
                               <button
                                 onClick={() => handleRecu(e.id)}
-                                className="p-1.5 rounded-lg text-neutral-400 hover:text-[var(--accent)] hover:bg-[var(--accent-subtle)] transition-colors"
+                                className="p-1.5 rounded-lg text-[var(--text-tertiary)] hover:text-[var(--accent)] hover:bg-[var(--accent-subtle)] transition-colors"
                                 title={t('pages.paiements.paiements.voir_le_recu')}
                               >
                                 <Eye className="h-4 w-4" />

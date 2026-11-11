@@ -86,7 +86,7 @@ export default function LazyImage({
 
   return (
     <div
-      className={cn('relative overflow-hidden bg-neutral-100 dark:bg-neutral-800', className)}
+      className={cn('relative overflow-hidden bg-[var(--surface-subtle)] ', className)}
       style={aspectRatio ? { aspectRatio: `${width} / ${height}` } : undefined}
     >
       {/* Placeholder / blur-up */}
@@ -104,7 +104,7 @@ export default function LazyImage({
 
       {/* Error state */}
       {error && (
-        <div className="absolute inset-0 flex items-center justify-center text-neutral-400 dark:text-neutral-600">
+        <div className="absolute inset-0 flex items-center justify-center text-[var(--text-tertiary)] ">
           <ImageIcon className="h-8 w-8" />
         </div>
       )}

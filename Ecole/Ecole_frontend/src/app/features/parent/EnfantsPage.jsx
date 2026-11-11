@@ -75,14 +75,14 @@ export default function EnfantsPage() {
   if (loading && !selectedEnfant) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--text-tertiary)]" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
+      <div className="flex flex-col items-center justify-center h-64 text-[var(--text-secondary)]">
         <Clock className="h-8 w-8 mb-2 text-red-400" />
         <p className="text-sm">{error}</p>
         <button
@@ -98,15 +98,15 @@ export default function EnfantsPage() {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.parent.enfants.title')}</h1>
-        <p className="text-sm text-neutral-500">{t('pages.parent.enfants.subtitle')}</p>
+        <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.parent.enfants.title')}</h1>
+        <p className="text-sm text-[var(--text-secondary)]">{t('pages.parent.enfants.subtitle')}</p>
       </div>
 
       {/* Sélection enfant */}
       <div className="flex gap-3">
         {enfants.length === 0 ? (
           <Card className="flex-1">
-            <div className="text-center py-8 text-neutral-500">
+            <div className="text-center py-8 text-[var(--text-secondary)]">
               <User className="mx-auto h-8 w-8 mb-2" />
               <p className="text-sm">{t('pages.parent.enfants.aucun_enfant_lie_a_votre_compte')}</p>
             </div>
@@ -120,17 +120,17 @@ export default function EnfantsPage() {
                 'flex items-center gap-3 rounded-xl border-2 p-3 transition-all flex-1',
                 selectedEnfant?.id === enfant.id
                   ? 'border-[var(--accent)] bg-[var(--accent-subtle)] dark:bg-[var(--accent-subtle)]0/5'
-                  : 'border-neutral-200 hover:border-[var(--accent)]/30 dark:border-neutral-700 hover:border-[var(--accent)]'
+                  : 'border-[var(--border)] hover:border-[var(--accent)]/30  hover:border-[var(--accent)]'
               )}
             >
               <Avatar name={enfant.nom} size="md" />
               <div className="text-left">
-                <p className="text-sm font-semibold text-neutral-900 dark:text-white">{enfant.nom}</p>
-                <p className="text-xs text-neutral-500">{enfant.classe?.nom || enfant.classe_nom || '—'}</p>
+                <p className="text-sm font-semibold text-[var(--text-primary)] ">{enfant.nom}</p>
+                <p className="text-xs text-[var(--text-secondary)]">{enfant.classe?.nom || enfant.classe_nom || '—'}</p>
               </div>
               <div className="ml-auto text-right">
                 <p className="text-sm font-bold text-[var(--accent)]">{enfant.moyenne?.toFixed(1) || '—'}</p>
-                <p className="text-xs text-neutral-500">Rang: {enfant.rang || '—'}e</p>
+                <p className="text-xs text-[var(--text-secondary)]">Rang: {enfant.rang || '—'}e</p>
               </div>
             </button>
           ))
@@ -155,7 +155,7 @@ export default function EnfantsPage() {
       {/* Tabs : Notes | Emploi du temps | Paiements | Absences */}
       {selectedEnfant && (
         <Card>
-          <div className="flex gap-1 border-b border-neutral-200 dark:border-neutral-700 pb-0 mb-4">
+          <div className="flex gap-1 border-b border-[var(--border)]  pb-0 mb-4">
             {[
               { id: 'notes', label: t('pages.parent.enfants.notes'), icon: BookOpen },
               { id: 'edt', label: t('pages.parent.enfants.emploi_du_temps'), icon: Calendar },
@@ -169,7 +169,7 @@ export default function EnfantsPage() {
                   'px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px flex items-center gap-1.5',
                   activeTab === tab.id
                     ? 'border-[var(--accent)] text-[var(--accent)] dark:text-[var(--accent)]'
-                    : 'border-transparent text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'
+                    : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] '
                 )}
               >
                 <tab.icon className="h-4 w-4" />
@@ -181,20 +181,20 @@ export default function EnfantsPage() {
           {activeTab === 'notes' && (
             <div className="space-y-3">
               {notes.length === 0 ? (
-                <div className="text-center py-8 text-neutral-500">
+                <div className="text-center py-8 text-[var(--text-secondary)]">
                   <BookOpen className="mx-auto h-8 w-8 mb-2" />
                   <p className="text-sm">{t('pages.parent.enfants.aucune_note_disponible')}</p>
                 </div>
               ) : (
                 notes.map((n, i) => (
-                  <div key={i} className="flex items-center justify-between rounded-xl bg-neutral-50 dark:bg-neutral-800/50 p-3">
+                  <div key={i} className="flex items-center justify-between rounded-xl bg-[var(--surface)]  p-3">
                     <div className="flex items-center gap-3">
                       <div className="h-10 w-10 rounded-lg bg-[var(--primary-subtle)] bg-[var(--primary-subtle)] flex items-center justify-center">
                         <BookOpen className="h-5 w-5 text-[var(--accent)]" />
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-neutral-900 dark:text-white">{n.matiere?.nom || n.matiere || t('common.subject')}</p>
-                        <p className="text-xs text-neutral-500">{n.appreciation || n.type_evaluation || t('pages.parent.enfants.evaluation')}</p>
+                        <p className="text-sm font-medium text-[var(--text-primary)] ">{n.matiere?.nom || n.matiere || t('common.subject')}</p>
+                        <p className="text-xs text-[var(--text-secondary)]">{n.appreciation || n.type_evaluation || t('pages.parent.enfants.evaluation')}</p>
                       </div>
                     </div>
                     <div className="text-right">
@@ -204,7 +204,7 @@ export default function EnfantsPage() {
                       )}>
                         {n.note}/{n.note_sur || 20}
                       </p>
-                      <p className="text-xs text-neutral-500">Moy. classe: {n.moyenne_classe || n.moyenne || '—'}</p>
+                      <p className="text-xs text-[var(--text-secondary)]">Moy. classe: {n.moyenne_classe || n.moyenne || '—'}</p>
                     </div>
                   </div>
                 ))
@@ -215,13 +215,13 @@ export default function EnfantsPage() {
           {activeTab === 'edt' && (
             <div className="grid grid-cols-5 gap-2">
               {Object.entries(edt).map(([jour, cours]) => (
-                <div key={jour} className="rounded-xl border border-neutral-200 dark:border-neutral-700 p-3">
-                  <p className="text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-2">{jour}</p>
+                <div key={jour} className="rounded-xl border border-[var(--border)]  p-3">
+                  <p className="text-xs font-semibold text-[var(--text-primary)]  mb-2">{jour}</p>
                   <div className="space-y-1.5">
                     {(cours || []).map((c, idx) => (
                       <div key={idx} className={cn(
                         'rounded-lg px-2 py-1 text-[11px] font-medium',
-                        c === '—' ? 'text-neutral-300 dark:text-neutral-600' : 'bg-[var(--accent-subtle)] text-[var(--accent)] bg-[var(--primary-subtle)] dark:text-[var(--accent)]'
+                        c === '—' ? 'text-[var(--text-secondary)] ' : 'bg-[var(--accent-subtle)] text-[var(--accent)] bg-[var(--primary-subtle)] dark:text-[var(--accent)]'
                       )}>
                         {c.matiere?.nom || c.matiere || c}
                       </div>
@@ -235,22 +235,22 @@ export default function EnfantsPage() {
           {activeTab === 'absences' && (
             <div className="space-y-3">
               {absences.length === 0 ? (
-                <div className="text-center py-8 text-neutral-500">
+                <div className="text-center py-8 text-[var(--text-secondary)]">
                   <AlertTriangle className="mx-auto h-8 w-8 mb-2" />
                   <p className="text-sm">{t('pages.parent.enfants.aucune_absence')}</p>
                 </div>
               ) : (
                 absences.map((a) => (
-                  <div key={a.id} className="flex items-center justify-between rounded-xl bg-neutral-50 dark:bg-neutral-800/50 p-3">
+                  <div key={a.id} className="flex items-center justify-between rounded-xl bg-[var(--surface)]  p-3">
                     <div className="flex items-center gap-3">
                       <div className="h-10 w-10 rounded-lg bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
                         <AlertTriangle className="h-5 w-5 text-red-500" />
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-neutral-900 dark:text-white">
+                        <p className="text-sm font-medium text-[var(--text-primary)] ">
                           {a.type || t('pages.parent.enfants.absence')} - {formatDate(a.date)}
                         </p>
-                        <p className="text-xs text-neutral-500">
+                        <p className="text-xs text-[var(--text-secondary)]">
                           {a.justifiee ? t('pages.parent.enfants.justifiee') : t('pages.parent.enfants.non_justifiee')} - {a.motif || t('pages.parent.enfants.sans_motif')}
                         </p>
                       </div>
@@ -267,34 +267,34 @@ export default function EnfantsPage() {
           {activeTab === 'paiements' && (
             <div className="space-y-3">
               {paiements.length === 0 ? (
-                <div className="rounded-xl bg-neutral-50 dark:bg-neutral-800/50 p-4">
+                <div className="rounded-xl bg-[var(--surface)]  p-4">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">{t('pages.parent.enfants.frais_de_scolarite')}</span>
+                    <span className="text-sm font-medium text-[var(--text-primary)] ">{t('pages.parent.enfants.frais_de_scolarite')}</span>
                     <Badge variant={selectedEnfant.frais.paye >= selectedEnfant.frais.total ? 'primary' : 'warning'}>
                       {selectedEnfant.frais.paye >= selectedEnfant.frais.total ? t('common.status.paid') : t('pages.parent.enfants.partiel')}
                     </Badge>
                   </div>
-                  <div className="h-2 rounded-full bg-neutral-200 dark:bg-neutral-700 overflow-hidden">
+                  <div className="h-2 rounded-full bg-[var(--surface-subtle)]  overflow-hidden">
                     <div
                       className="h-full rounded-full bg-[var(--accent-subtle)]0"
                       style={{ width: `${selectedEnfant.frais.total > 0 ? (selectedEnfant.frais.paye / selectedEnfant.frais.total) * 100 : 0}%` }}
                     />
                   </div>
-                  <div className="flex justify-between mt-1 text-xs text-neutral-500">
+                  <div className="flex justify-between mt-1 text-xs text-[var(--text-secondary)]">
                     <span>Payé: {formatNumber(selectedEnfant.frais.paye)} FCFA</span>
                     <span>Total: {formatNumber(selectedEnfant.frais.total)} FCFA</span>
                   </div>
                 </div>
               ) : (
                 paiements.map((p) => (
-                  <div key={p.id} className="flex items-center justify-between rounded-xl bg-neutral-50 dark:bg-neutral-800/50 p-3">
+                  <div key={p.id} className="flex items-center justify-between rounded-xl bg-[var(--surface)]  p-3">
                     <div className="flex items-center gap-3">
                       <div className="h-10 w-10 rounded-lg bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center">
                         <FileText className="h-5 w-5 text-amber-500" />
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-neutral-900 dark:text-white">{p.type || t('pages.parent.enfants.frais')}</p>
-                        <p className="text-xs text-neutral-500">{formatDate(p.date)}</p>
+                        <p className="text-sm font-medium text-[var(--text-primary)] ">{p.type || t('pages.parent.enfants.frais')}</p>
+                        <p className="text-xs text-[var(--text-secondary)]">{formatDate(p.date)}</p>
                       </div>
                     </div>
                     <div className="text-right">

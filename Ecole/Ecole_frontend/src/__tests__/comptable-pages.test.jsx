@@ -98,10 +98,10 @@ describe('FacturesPage', () => {
 
     // Les cartes de synthèse sont câblées sur le statut réellement reçu,
     // plus sur une colonne fantôme.
-    expect(screen.getByText('Total Facturé')).toBeInTheDocument();
+    expect(screen.getByText('Total facturé')).toBeInTheDocument();
     expect(screen.getByText('Payé')).toBeInTheDocument();
     expect(screen.getByText('Impayé')).toBeInTheDocument();
-    expect(screen.getByText('Taux Recouvrement')).toBeInTheDocument();
+    expect(screen.getByText('Taux recouvrement')).toBeInTheDocument();
   });
 
   it('filtre par recherche sur le nom du client', async () => {

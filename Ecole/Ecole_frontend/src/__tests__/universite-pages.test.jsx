@@ -527,7 +527,7 @@ describe('MesCoursPage', () => {
     renderPage(<MesCoursPage />);
 
     await waitFor(() => expect(screen.getByText('Aucun cours trouvé')).toBeInTheDocument());
-    expect(screen.getByText('Mes Cours')).toBeInTheDocument();
+    expect(screen.getByText('Mes cours')).toBeInTheDocument();
   });
 
   it('rend le 404 « aucun profil universitaire » comme une erreur, pas comme un vide', async () => {

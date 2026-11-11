@@ -79,14 +79,14 @@ export default function EnseignantsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--text-tertiary)]" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
+      <div className="flex flex-col items-center justify-center h-64 text-[var(--text-secondary)]">
         <AlertCircle className="h-8 w-8 mb-2 text-red-400" />
         <p className="text-sm">{error}</p>
       </div>
@@ -97,8 +97,8 @@ export default function EnseignantsPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.universite.enseignants.title')}</h1>
-          <p className="text-sm text-neutral-500">{t('pages.universite.enseignants.subtitle')}</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.universite.enseignants.title')}</h1>
+          <p className="text-sm text-[var(--text-secondary)]">{t('pages.universite.enseignants.subtitle')}</p>
         </div>
         <Button size="sm" icon={<Plus />}>{t('pages.universite.enseignants.ajouter_un_enseignant')}</Button>
       </div>
@@ -112,7 +112,7 @@ export default function EnseignantsPage() {
 
       <Card>
         <div className="relative max-w-sm">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
           <Input
             placeholder={t('pages.universite.enseignants.rechercher_un_enseignant')}
             value={search}
@@ -126,7 +126,7 @@ export default function EnseignantsPage() {
         {filtered.length === 0 && (
           <div className="sm:col-span-2 lg:col-span-3">
             <Card>
-              <div className="text-center py-8 text-neutral-500">
+              <div className="text-center py-8 text-[var(--text-secondary)]">
                 <Users className="mx-auto h-8 w-8 mb-2" />
                 <p className="text-sm">{t('pages.universite.enseignants.aucun_enseignant_trouve')}</p>
               </div>
@@ -144,26 +144,26 @@ export default function EnseignantsPage() {
                 <Badge variant={gradeConf.variant} size="sm">{gradeConf.label}</Badge>
               </div>
 
-              <h3 className="font-semibold text-neutral-900 dark:text-white mb-1">
+              <h3 className="font-semibold text-[var(--text-primary)]  mb-1">
                 {e.prenom ? `${e.prenom} ${e.nom}` : e.nom}
               </h3>
-              <p className="text-xs text-neutral-500 mb-1">{e.specialite}</p>
-              <p className="text-xs text-neutral-400 mb-3 flex items-center gap-1">
+              <p className="text-xs text-[var(--text-secondary)] mb-1">{e.specialite}</p>
+              <p className="text-xs text-[var(--text-tertiary)] mb-3 flex items-center gap-1">
                 <Building2 className="h-3 w-3" /> {e.departement}
               </p>
 
               <div className="flex items-center gap-3 text-xs mb-3">
-                <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg p-2 text-center flex-1">
-                  <span className="block font-bold text-neutral-900 dark:text-white">{e.cours}</span>
-                  <span className="text-neutral-500">{t('common.courses')}</span>
+                <div className="bg-[var(--surface)]  rounded-lg p-2 text-center flex-1">
+                  <span className="block font-bold text-[var(--text-primary)] ">{e.cours}</span>
+                  <span className="text-[var(--text-secondary)]">{t('common.courses')}</span>
                 </div>
-                <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg p-2 text-center flex-1">
-                  <span className="block font-bold text-neutral-900 dark:text-white">{e.etudiants}</span>
-                  <span className="text-neutral-500">{t('pages.universite.enseignants.etud')}</span>
+                <div className="bg-[var(--surface)]  rounded-lg p-2 text-center flex-1">
+                  <span className="block font-bold text-[var(--text-primary)] ">{e.etudiants}</span>
+                  <span className="text-[var(--text-secondary)]">{t('pages.universite.enseignants.etud')}</span>
                 </div>
               </div>
 
-              <div className="space-y-1 text-xs text-neutral-500">
+              <div className="space-y-1 text-xs text-[var(--text-secondary)]">
                 {e.email && <span className="flex items-center gap-1"><Mail className="h-3 w-3" /> {e.email}</span>}
                 {e.telephone && <span className="flex items-center gap-1"><Phone className="h-3 w-3" /> {e.telephone}</span>}
               </div>

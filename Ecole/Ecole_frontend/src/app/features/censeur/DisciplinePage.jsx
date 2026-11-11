@@ -109,14 +109,14 @@ export default function DisciplinePage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--text-tertiary)]" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
+      <div className="flex flex-col items-center justify-center h-64 text-[var(--text-secondary)]">
         <AlertTriangle className="h-8 w-8 mb-2 text-red-400" />
         <p className="text-sm">{error}</p>
         <button
@@ -132,8 +132,8 @@ export default function DisciplinePage() {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.censeur.discipline.title')}</h1>
-        <p className="text-sm text-neutral-500">{t('pages.censeur.discipline.subtitle')}</p>
+        <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.censeur.discipline.title')}</h1>
+        <p className="text-sm text-[var(--text-secondary)]">{t('pages.censeur.discipline.subtitle')}</p>
       </div>
 
       {/* Stats */}
@@ -149,51 +149,51 @@ export default function DisciplinePage() {
         {/* Tendances */}
         <Card>
           <div className="p-4">
-            <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-3">
-              <TrendingUp className="h-4 w-4 inline mr-1.5 text-neutral-400" />
+            <h3 className="text-sm font-semibold text-[var(--text-primary)]  mb-3">
+              <TrendingUp className="h-4 w-4 inline mr-1.5 text-[var(--text-tertiary)]" />
               {t('pages.censeur.discipline.tendances_du_mois')}
             </h3>
             {statsLoading ? (
               <div className="space-y-2">
                 {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="h-5 bg-neutral-100 dark:bg-neutral-800 rounded animate-pulse" />
+                  <div key={i} className="h-5 bg-[var(--surface-subtle)]  rounded animate-pulse" />
                 ))}
               </div>
             ) : !stats ? (
-              <p className="text-sm text-neutral-400">{t('pages.censeur.discipline.statistiques_non_disponibles')}</p>
+              <p className="text-sm text-[var(--text-tertiary)]">{t('pages.censeur.discipline.statistiques_non_disponibles')}</p>
             ) : (
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-neutral-600 dark:text-neutral-400">{t('pages.censeur.discipline.incidents_ce_mois')}</span>
-                  <span className="text-lg font-bold text-neutral-900 dark:text-white">{stats.mois_courant}</span>
+                  <span className="text-sm text-[var(--text-secondary)] ">{t('pages.censeur.discipline.incidents_ce_mois')}</span>
+                  <span className="text-lg font-bold text-[var(--text-primary)] ">{stats.mois_courant}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-neutral-600 dark:text-neutral-400">{t('pages.censeur.discipline.evolution_vs_mois_dernier')}</span>
+                  <span className="text-sm text-[var(--text-secondary)] ">{t('pages.censeur.discipline.evolution_vs_mois_dernier')}</span>
                   <span className={cn(
                     'inline-flex items-center gap-1 text-sm font-medium',
-                    stats.evolution > 0 ? 'text-red-500' : stats.evolution < 0 ? 'text-emerald-500' : 'text-neutral-500'
+                    stats.evolution > 0 ? 'text-red-500' : stats.evolution < 0 ? 'text-emerald-500' : 'text-[var(--text-secondary)]'
                   )}>
                     {stats.evolution > 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
                     {stats.evolution > 0 ? '+' : ''}{stats.evolution}%
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-neutral-600 dark:text-neutral-400">{t('pages.censeur.discipline.total_sanctions')}</span>
-                  <span className="text-lg font-bold text-neutral-900 dark:text-white">{stats.total_sanctions}</span>
+                  <span className="text-sm text-[var(--text-secondary)] ">{t('pages.censeur.discipline.total_sanctions')}</span>
+                  <span className="text-lg font-bold text-[var(--text-primary)] ">{stats.total_sanctions}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-neutral-600 dark:text-neutral-400">{t('pages.censeur.discipline.total_absences')}</span>
-                  <span className="text-lg font-bold text-neutral-900 dark:text-white">{stats.total_absences}</span>
+                  <span className="text-sm text-[var(--text-secondary)] ">{t('pages.censeur.discipline.total_absences')}</span>
+                  <span className="text-lg font-bold text-[var(--text-primary)] ">{stats.total_absences}</span>
                 </div>
                 {/* Répartition par gravité */}
                 {stats.par_gravite && (
-                  <div className="pt-2 border-t border-neutral-100 dark:border-neutral-800">
-                    <p className="text-xs text-neutral-500 mb-2">{t('pages.censeur.discipline.repartition_par_gravite')}</p>
+                  <div className="pt-2 border-t border-[var(--border-light)] ">
+                    <p className="text-xs text-[var(--text-secondary)] mb-2">{t('pages.censeur.discipline.repartition_par_gravite')}</p>
                     <div className="flex gap-2">
                       {Object.entries(stats.par_gravite).map(([key, val]) => (
-                        <div key={key} className="flex-1 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 p-2 text-center">
-                          <p className="text-lg font-bold text-neutral-900 dark:text-white">{val}</p>
-                          <p className="text-[10px] text-neutral-500 capitalize">{key}</p>
+                        <div key={key} className="flex-1 rounded-lg bg-[var(--surface)]  p-2 text-center">
+                          <p className="text-lg font-bold text-[var(--text-primary)] ">{val}</p>
+                          <p className="text-[10px] text-[var(--text-secondary)] capitalize">{key}</p>
                         </div>
                       ))}
                     </div>
@@ -207,18 +207,18 @@ export default function DisciplinePage() {
         {/* Alertes */}
         <Card>
           <div className="p-4">
-            <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-3">
+            <h3 className="text-sm font-semibold text-[var(--text-primary)]  mb-3">
               <AlertTriangle className="h-4 w-4 inline mr-1.5 text-amber-500" />
               {t('pages.censeur.discipline.alertes_automatiques')}
             </h3>
             {statsLoading ? (
               <div className="space-y-2">
                 {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="h-16 bg-neutral-100 dark:bg-neutral-800 rounded animate-pulse" />
+                  <div key={i} className="h-16 bg-[var(--surface-subtle)]  rounded animate-pulse" />
                 ))}
               </div>
             ) : !stats?.alertes || stats.alertes.length === 0 ? (
-              <div className="py-8 text-center text-sm text-neutral-400">
+              <div className="py-8 text-center text-sm text-[var(--text-tertiary)]">
                 <CheckCircle className="h-8 w-8 mx-auto mb-2 text-emerald-400" />
                 <p>{t('pages.censeur.discipline.aucune_alerte_pour_le_moment')}</p>
               </div>
@@ -246,7 +246,7 @@ export default function DisciplinePage() {
       <Card>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
             <Input
               placeholder={t('pages.censeur.discipline.rechercher_un_incident')}
               value={search}
@@ -259,7 +259,7 @@ export default function DisciplinePage() {
               value={filterGravite}
               onChange={(e) => setFilterGravite(e.target.value)}
               aria-label={t('pages.censeur.discipline.filtrer_par_gravite')}
-              className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+              className="h-10 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40   "
             >
               <option value="">{t('pages.censeur.discipline.toutes_les_gravites')}</option>
               <option value="faible">{t('pages.censeur.discipline.faible')}</option>
@@ -270,7 +270,7 @@ export default function DisciplinePage() {
               value={filterStatut}
               onChange={(e) => setFilterStatut(e.target.value)}
               aria-label={t('common.filter_by_status')}
-              className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+              className="h-10 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40   "
             >
               <option value="">{t('common.all_statuses')}</option>
               <option value="en_cours">{t('common.status.in_progress')}</option>
@@ -285,7 +285,7 @@ export default function DisciplinePage() {
       <div className="space-y-3">
         {filtered.length === 0 && (
           <Card>
-            <div className="text-center py-8 text-neutral-500">
+            <div className="text-center py-8 text-[var(--text-secondary)]">
               <Scale className="mx-auto h-8 w-8 mb-2" />
               <p className="text-sm">{t('pages.censeur.discipline.aucun_incident_trouve')}</p>
             </div>
@@ -298,24 +298,24 @@ export default function DisciplinePage() {
                 'h-12 w-12 rounded-xl flex items-center justify-center shrink-0',
                 incident.gravite === 'grave' ? 'bg-red-100 dark:bg-red-900/20' :
                 incident.gravite === 'moyenne' ? 'bg-amber-100 dark:bg-amber-900/20' :
-                'bg-neutral-100 dark:bg-neutral-800'
+                'bg-[var(--surface-subtle)] '
               )}>
                 <AlertTriangle className={cn(
                   'h-6 w-6',
                   incident.gravite === 'grave' ? 'text-red-500' :
                   incident.gravite === 'moyenne' ? 'text-amber-500' :
-                  'text-neutral-400'
+                  'text-[var(--text-tertiary)]'
                 )} />
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-sm font-semibold text-neutral-900 dark:text-white">{incident.type}</span>
+                  <span className="text-sm font-semibold text-[var(--text-primary)] ">{incident.type}</span>
                   <Badge variant={getGraviteVariant(incident.gravite)} size="sm">{getGraviteLabel(incident.gravite)}</Badge>
                   <Badge variant={incident.statut === 'traitee' || incident.statut === 'termine' || incident.statut === 'résolu' ? 'primary' : 'warning'} size="sm">
                     {incident.statut === 'traitee' || incident.statut === 'termine' || incident.statut === 'résolu' ? t('pages.censeur.discipline.traitee') : t('common.status.in_progress')}
                   </Badge>
                 </div>
-                <div className="mt-2 flex flex-wrap items-center gap-4 text-xs text-neutral-500">
+                <div className="mt-2 flex flex-wrap items-center gap-4 text-xs text-[var(--text-secondary)]">
                   <span className="flex items-center gap-1">
                     <Clock className="h-3 w-3" />
                     {incident.date ? formatDate(incident.date) : '--'}

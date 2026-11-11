@@ -1,342 +1,123 @@
-/**
- * Header — Barre supérieure Érudit
- *
- * Navigation, recherche ⌘K, notifications, thème, menu utilisateur.
- */
-
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Menu,
-  Search,
-  Bell,
-  LogOut,
-  User,
-  Settings,
-  ChevronDown,
-  Moon,
-  Sun,
-} from 'lucide-react';
+import { useState, useRef, useEffect, useMemo } from 'react';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { Menu, X, Search, Bell, LogOut, Settings, ChevronDown, Moon, Sun, MoreHorizontal } from 'lucide-react';
 import useAuthStore from '@/shared/stores/auth-store';
 import useUIStore from '@/shared/stores/ui-store';
 import useRealtimeStore from '@/shared/stores/realtime-store';
 import { ROLE_LABELS } from '@/shared/types/roles';
-import { cn } from '@/shared/lib/utils';
+import { ROLE_REDIRECT_MAP } from '@/features/roles/route-config';
+import { getRoleNavigation } from '@/features/roles/navigation-config';
 import { useTranslation } from '@/shared/i18n';
+import Brand from '@/shared/components/ui/Brand';
 import LanguageSwitcher from './LanguageSwitcher';
 
-/* ─── Animation variants ────────────────────────────────────────────────── */
-const dropdownVariants = {
-  hidden: { opacity: 0, y: 8, scale: 0.96 },
-  visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.15 } },
-  exit: { opacity: 0, y: 8, scale: 0.96, transition: { duration: 0.1 } },
-};
-
-function timeAgo(dateStr) {
-  if (!dateStr) return '';
-  const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
-  if (seconds < 60) return "à l'instant";
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `il y a ${minutes} min`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `il y a ${hours}h`;
-  const days = Math.floor(hours / 24);
-  if (days < 7) return `il y a ${days}j`;
-  return new Date(dateStr).toLocaleDateString('fr-FR');
-}
-
+/** Navigation C : les modules supplémentaires restent accessibles dans « Plus ». */
 export default function Header() {
   const { user, logout } = useAuthStore();
-  const listenForNotifications = useRealtimeStore((s) => s.listenForNotifications);
-  const notifications = useRealtimeStore((s) => s.notifications);
-  const {
-    sidebarCollapsed,
-    setSidebarCollapsed,
-    toggleSidebar,
-    toggleCommandPalette,
-    theme,
-    setTheme,
-  } = useUIStore();
+  const { theme, setTheme, toggleCommandPalette } = useUIStore();
+  const notifications = useRealtimeStore(s => s.notifications);
+  const { t, locale } = useTranslation();
+  const location = useLocation();
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const ref = useRef(null);
+  const menuButton = useRef(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+  const items = useMemo(() => getRoleNavigation(user?.role), [user?.role]);
+  const visible = items.slice(0, 6);
+  const overflow = items.slice(6);
+  const moreActive = overflow.some(item => location.pathname === item.path);
+  const name = user?.name || [user?.prenom, user?.nom].filter(Boolean).join(' ') || t('common.user');
+  const school = user?.ecole?.nom || user?.ecole?.name || user?.ecole?.nom_ecole;
+  const unread = notifications.filter(n => !n.read_at).length;
+  const isDark = theme === 'dark' || (theme === 'system' && document.documentElement.classList.contains('dark'));
 
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [notifOpen, setNotifOpen] = useState(false);
-  const userMenuRef = useRef(null);
-  const notifRef = useRef(null);
-
-  // Fermer les menus au clic extérieur
   useEffect(() => {
-    function handleClickOutside(e) {
-      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
-        setUserMenuOpen(false);
-      }
-      if (notifRef.current && !notifRef.current.contains(e.target)) {
-        setNotifOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  // Raccourcis clavier
+    setMobileOpen(false);
+    ref.current?.querySelectorAll('details[open]').forEach(details => { details.open = false; });
+  }, [location.pathname]);
   useEffect(() => {
-    function handleKeyDown(e) {
-      // Escape → fermer les menus
-      if (e.key === 'Escape') {
-        setUserMenuOpen(false);
-        setNotifOpen(false);
-      }
-    }
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, []);
+    const dismiss = event => {
+      ref.current?.querySelectorAll('details[open]').forEach(details => {
+        if (event.type === 'keydown' || !details.contains(event.target)) {
+          details.open = false;
+          if (event.type === 'keydown') details.querySelector('summary')?.focus();
+        }
+      });
+      if (event.type === 'keydown') {
+        setMobileOpen(false);
+        if (mobileOpen) menuButton.current?.focus();
+      } else if (!ref.current?.contains(event.target)) setMobileOpen(false);
+    };
+    const keydown = event => { if (event.key === 'Escape') dismiss(event); };
+    document.addEventListener('pointerdown', dismiss);
+    document.addEventListener('keydown', keydown);
+    return () => { document.removeEventListener('pointerdown', dismiss); document.removeEventListener('keydown', keydown); };
+  }, [mobileOpen]);
 
-  // Subscribe to real-time notifications
-  useEffect(() => {
-    if (user?.id) listenForNotifications(user.id);
-  }, [user?.id, listenForNotifications]);
-
-  const handleLogout = useCallback(async () => {
-    await logout();
-    navigate('/connexion');
-  }, [logout, navigate]);
-
-  const unreadCount = notifications.filter((n) => !n.read_at).length;
+  const links = list => list.map(({ path, label, icon: Icon }) => (
+    <NavLink key={path} to={path} end className="ecole-nav-link">
+      <Icon size={17} aria-hidden="true" /><span>{t(label)}</span>
+    </NavLink>
+  ));
 
   return (
-    <header
-      className={cn(
-        'sticky top-0 z-30 flex h-14 items-center gap-4 border-b border-[var(--border)] bg-[var(--surface)]/80 px-4 backdrop-blur-lg transition-all duration-300',
-        'lg:px-6'
-      )}
-    >
-      {/* Left section */}
-      <div className="flex items-center gap-3">
-        {/* Mobile menu toggle */}
-        <button
-          onClick={toggleSidebar}
-          className="flex h-9 w-9 items-center justify-center rounded-lg text-[var(--text-tertiary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] md:hidden"
-          aria-label={t('header.toggle_menu')}
-        >
-          <Menu className="h-5 w-5" />
-        </button>
-
-        {/* Desktop collapse toggle */}
-        <button
-          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-          className={cn(
-            'hidden h-9 w-9 items-center justify-center rounded-lg text-[var(--text-tertiary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] lg:flex'
-          )}
-          aria-label={sidebarCollapsed ? t('header.toggle_menu') : t('header.toggle_menu')}
-        >
-          <Menu className="h-5 w-5" />
-        </button>
-
-        {/* Page title placeholder */}
-        <h1 className="hidden text-sm font-medium text-[var(--text-secondary)] sm:block" />
-      </div>
-
-      {/* Spacer */}
-      <div className="flex-1" />
-
-      {/* Right section */}
-      <div className="flex items-center gap-1.5">
-        {/* Command Palette trigger (⌘K) */}
-        <button
-          onClick={toggleCommandPalette}
-          className="relative hidden h-8 w-56 items-center gap-2 rounded-lg border border-[var(--border-light)] bg-[var(--surface-subtle)] px-3 text-sm text-[var(--text-tertiary)] transition-all duration-200 hover:border-[var(--border)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-secondary)] lg:flex lg:w-56"
-        >
-          <Search className="h-3.5 w-3.5 shrink-0" />
-          <span className="flex-1 text-left">{t('common.search')}...</span>
-          <kbd className="flex items-center gap-0.5 rounded border border-[var(--border)] bg-[var(--surface-subtle)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--text-tertiary)]">⌘K
-          </kbd>
-        </button>
-
-<LanguageSwitcher />
-
-        {/* Theme toggle */}
-        <button
-          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-          className="flex h-9 w-9 items-center justify-center rounded-lg text-[var(--text-tertiary)] transition-all hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
-          aria-label={t('header.toggle_theme')}
-        >
-          <AnimatePresence mode="wait">
-            {theme === 'dark' ? (
-              <motion.span
-                key="sun"
-                initial={{ rotate: -90, opacity: 0, scale: 0.5 }}
-                animate={{ rotate: 0, opacity: 1, scale: 1 }}
-                exit={{ rotate: 90, opacity: 0, scale: 0.5 }}
-                transition={{ duration: 0.2 }}
-              >
-                <Sun className="h-4 w-4" />
-              </motion.span>
-            ) : (
-              <motion.span
-                key="moon"
-                initial={{ rotate: 90, opacity: 0, scale: 0.5 }}
-                animate={{ rotate: 0, opacity: 1, scale: 1 }}
-                exit={{ rotate: -90, opacity: 0, scale: 0.5 }}
-                transition={{ duration: 0.2 }}
-              >
-                <Moon className="h-4 w-4" />
-              </motion.span>
-            )}
-          </AnimatePresence>
-        </button>
-
-{/* Notifications */}
-        <div className="relative" ref={notifRef}>
-          <button
-            onClick={() => setNotifOpen(!notifOpen)}
-            className="relative flex h-9 w-9 items-center justify-center rounded-lg text-[var(--text-tertiary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
-            aria-label={t('header.notifications')}
-          >
-            <Bell className="h-4 w-4" />
-            {unreadCount > 0 && (
-              <motion.span
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                className="absolute right-1.5 top-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[var(--red)] px-1 text-[10px] font-bold text-white"
-              >
-                {unreadCount}
-              </motion.span>
-            )}
+    <header className="ecole-header" ref={ref}>
+      <div className="ecole-header-top">
+        <Link to={ROLE_REDIRECT_MAP[user?.role] || '/'} aria-label={t('nav.dashboard')}><Brand /></Link>
+        <div className="ecole-school"><p>{school || t('c.school_space')}</p><p>{ROLE_LABELS[user?.role] || user?.role}</p></div>
+        <div className="ecole-header-actions">
+          <button type="button" className="ecole-header-button" onClick={toggleCommandPalette} aria-label={t('header.search')}>
+            <Search size={19} aria-hidden="true" /><span className="ecole-header-search-label text-sm">{t('common.search')}</span>
           </button>
-
-          <AnimatePresence>
-            {notifOpen && (
-              <motion.div
-                variants={dropdownVariants}
-                initial="hidden"
-                animate="visible"
-                exit="exit"
-                className="absolute right-0 top-full mt-2 w-80 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface-raised)] shadow-[var(--shadow-4)]"
-              >
-                <div className="flex items-center justify-between border-b border-[var(--border-light)] px-4 py-3">
-                  <span className="text-sm font-semibold text-[var(--text-primary)]">{t('header.notifications')}</span>
-                  <span className="text-xs text-[var(--accent)]">{unreadCount} {t('header.unread')}</span>
-                </div>
-                <div className="max-h-72 overflow-y-auto">
-                  {notifications.map((notif, i) => (
-                    <motion.button
-                      key={notif.id ?? notif.created_at ?? i}
-                      initial={{ opacity: 0, x: -8 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.03 }}
-                      className="flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-[var(--surface-hover)]"
-                    >
-                      <div
-                        className={cn(
-                          'mt-1.5 h-2 w-2 shrink-0 rounded-full',
-                          !notif.read_at ? 'bg-[var(--accent)]' : 'bg-[var(--text-tertiary)]'
-                        )}
-                      />
-                      <div className="min-w-0 flex-1">
-                        <p
-                          className={cn(
-                            'text-sm',
-                            !notif.read_at ? 'font-medium text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'
-                          )}
-                        >
-                          {notif.title || notif.message}
-                        </p>
-                        <p className="mt-0.5 text-xs text-[var(--text-tertiary)]">{timeAgo(notif.created_at)}</p>
-                      </div>
-                    </motion.button>
-                  ))}
-                </div>
-                <div className="border-t border-[var(--border-light)] p-2">
-                  <button className="flex w-full items-center justify-center rounded-lg px-4 py-2 text-sm font-medium text-[var(--accent)] transition-colors hover:bg-[var(--accent-subtle)]">
-                    {t('header.view_all')}
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        {/* User menu */}
-        <div className="relative" ref={userMenuRef}>
-          <button
-            onClick={() => setUserMenuOpen(!userMenuOpen)}
-            className="group flex items-center gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-[var(--surface-hover)]"
-          >
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--accent-subtle)] text-xs font-medium text-[var(--accent)]">
-              {user?.name?.[0]?.toUpperCase() || 'U'}
-            </div>
-            <div className="hidden text-left lg:block">
-              <p className="text-sm font-medium leading-tight text-[var(--text-primary)]">
-                {user?.name || t('common.user')}
-              </p>
-              <p className="text-xs leading-tight text-[var(--text-tertiary)]">
-                {ROLE_LABELS[user?.role] || user?.role || '—'}
-              </p>
-            </div>
-            <ChevronDown
-              className={cn(
-                'hidden h-3 w-3 text-[var(--text-tertiary)] transition-transform duration-200 lg:block',
-                userMenuOpen && 'rotate-180'
-              )}
-            />
+          <div className="ecole-header-language"><LanguageSwitcher className="!text-inherit min-h-11" /></div>
+          <button type="button" className="ecole-header-button" onClick={() => setTheme(isDark ? 'light' : 'dark')} aria-label={t('header.toggle_theme')}>
+            {isDark ? <Sun size={19} aria-hidden="true" /> : <Moon size={19} aria-hidden="true" />}
           </button>
-
-          <AnimatePresence>
-            {userMenuOpen && (
-              <motion.div
-                variants={dropdownVariants}
-                initial="hidden"
-                animate="visible"
-                exit="exit"
-                className="absolute right-0 top-full mt-2 w-56 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface-raised)] shadow-[var(--shadow-4)]"
-              >
-                <div className="border-b border-[var(--border-light)] px-4 py-3">
-                  <p className="text-sm font-medium text-[var(--text-primary)]">{user?.nom || t('common.user')}</p>
-                  <p className="text-xs text-[var(--text-tertiary)]">{user?.email || ''}</p>
-                </div>
-
-                <div className="p-1">
-                  <button
-                    onClick={() => { setUserMenuOpen(false); navigate('/profil'); }}
-                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
-                  >
-                    <User className="h-4 w-4" />
-                    {t('header.mon_profil')}
-                  </button>
-                  <button
-                    onClick={() => { setUserMenuOpen(false); navigate('/parametres'); }}
-                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
-                  >
-                    <Settings className="h-4 w-4" />
-                    {t('header.parametres')}
-                  </button>
-
-                  <div className="my-1 border-t border-[var(--border-light)]" />
-
-                  <button
-                    onClick={handleLogout}
-                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-[var(--red)] transition-colors hover:bg-[var(--red-subtle)]"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    {t('auth.logout')}
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <details className="relative">
+            <summary className="ecole-header-button list-none relative" aria-label={t('header.notifications')}>
+              <Bell size={19} aria-hidden="true" />
+              {unread > 0 && <span className="absolute top-0 end-0 rounded bg-[var(--highlight)] text-[#17302e] px-1 text-xs font-bold">{unread}</span>}
+            </summary>
+            <div className="ecole-popover" aria-label={t('header.notifications')}>
+              <p className="px-3 py-2 font-semibold">{t('header.notifications')}</p>
+              {notifications.length === 0 ? <p className="px-3 py-4 text-sm text-[var(--text-secondary)]">{t('c.no_notifications')}</p> : notifications.map((n,i) => (
+                <article key={n.id || i} className="border-t border-[var(--border-light)] p-3">
+                  <p className="text-sm">{n.title || n.message}</p>
+                  {n.created_at && !Number.isNaN(Date.parse(n.created_at)) && <time className="text-xs text-[var(--text-secondary)]" dateTime={n.created_at}>{new Intl.DateTimeFormat(locale, { dateStyle:'short', timeStyle:'short' }).format(new Date(n.created_at))}</time>}
+                </article>
+              ))}
+            </div>
+          </details>
+          <details className="relative">
+            <summary className="ecole-header-button list-none" aria-label={t('c.account')}>
+              <span className="flex size-8 items-center justify-center rounded bg-white/15 font-semibold" aria-hidden="true">{name[0]?.toUpperCase()}</span>
+              <span className="ecole-header-user-label max-w-36 truncate text-sm">{name}</span><ChevronDown size={14} aria-hidden="true" />
+            </summary>
+            <div className="ecole-popover">
+              <p className="px-3 py-2 font-semibold break-words">{name}</p>
+              <p className="px-3 pb-3 text-sm text-[var(--text-secondary)]">{ROLE_LABELS[user?.role] || user?.role}</p>
+              <Link to="/parametres"><Settings size={17} aria-hidden="true" />{t('header.parametres')}</Link>
+              <button type="button" disabled={loggingOut} className="text-[var(--red)]" onClick={async () => { setLoggingOut(true); try { await logout(); navigate('/connexion'); } finally { setLoggingOut(false); } }}><LogOut size={17} aria-hidden="true" />{t('auth.logout')}</button>
+            </div>
+          </details>
+          <button ref={menuButton} type="button" className="ecole-header-button ecole-mobile-menu" onClick={() => setMobileOpen(!mobileOpen)} aria-expanded={mobileOpen} aria-controls="mobile-navigation" aria-label={mobileOpen ? t('common.close') : t('header.toggle_menu')}>
+            {mobileOpen ? <X size={22} /> : <Menu size={22} />}
+          </button>
         </div>
       </div>
-
-      {/* Mobile search — visible uniquement < lg */}
-      <button
-        onClick={toggleCommandPalette}
-        className="flex h-9 w-9 items-center justify-center rounded-lg text-[var(--text-tertiary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] lg:hidden"
-        aria-label={t('header.search')}
-      >
-        <Search className="h-4 w-4" />
-      </button>
+      <nav className="ecole-navigation" aria-label={t('sidebar.navigation_principale')}>
+        <div className="ecole-navigation-inner">
+          {links(visible)}
+          {overflow.length > 0 && <details className="relative">
+            <summary className={'ecole-nav-link list-none cursor-pointer ' + (moreActive ? 'is-active' : '')}><MoreHorizontal size={18} aria-hidden="true" />{t('c.more')}<ChevronDown size={14} aria-hidden="true" /></summary>
+            <div className="ecole-popover">{links(overflow)}</div>
+          </details>}
+        </div>
+      </nav>
+      {mobileOpen && <nav id="mobile-navigation" className="ecole-mobile-navigation lg:hidden" aria-label={t('sidebar.navigation_principale')}>
+        {links(items)}<LanguageSwitcher />
+      </nav>}
     </header>
   );
 }

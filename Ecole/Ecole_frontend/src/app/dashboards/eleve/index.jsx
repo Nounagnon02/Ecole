@@ -112,20 +112,20 @@ function ApercuSection({ data, loading }) {
                 {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-12 rounded-lg" />)}
               </div>
             ) : emploi.length === 0 ? (
-              <p className="p-6 text-center text-sm text-neutral-400">{t('dashboards.eleve.aucun_cours_planifie')}</p>
+              <p className="p-6 text-center text-sm text-[var(--text-tertiary)]">{t('dashboards.eleve.aucun_cours_planifie')}</p>
             ) : (
-              <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
+              <div className="divide-y divide-[var(--border-light)] ">
                 {emploi.slice(0, 5).map((cours, i) => (
-                  <div key={i} className="flex items-center gap-4 px-6 py-3.5 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors">
+                  <div key={i} className="flex items-center gap-4 px-6 py-3.5 hover:bg-[var(--surface)]  transition-colors">
                     <div className="flex flex-col items-center w-12">
                       <span className="text-xs font-semibold text-[var(--accent)]">{cours.heure_debut}</span>
-                      <span className="text-[10px] text-neutral-400">{cours.heure_fin}</span>
+                      <span className="text-[10px] text-[var(--text-tertiary)]">{cours.heure_fin}</span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-neutral-900 dark:text-white">{cours.matiere?.nom}</p>
-                      <p className="text-xs text-neutral-500">{cours.enseignant?.user?.name} · {cours.salle}</p>
+                      <p className="text-sm font-medium text-[var(--text-primary)] ">{cours.matiere?.nom}</p>
+                      <p className="text-xs text-[var(--text-secondary)]">{cours.enseignant?.user?.name} · {cours.salle}</p>
                     </div>
-                    <span className="text-xs text-neutral-400">{cours.jour}</span>
+                    <span className="text-xs text-[var(--text-tertiary)]">{cours.jour}</span>
                   </div>
                 ))}
               </div>
@@ -143,7 +143,7 @@ function NotesSection({ data, loading }) {
 
   return (
     <div className="space-y-6">
-      <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">{t('dashboards.eleve.mes_notes')}</h2>
+      <h2 className="font-heading text-xl font-semibold text-[var(--text-primary)] ">{t('dashboards.eleve.mes_notes')}</h2>
       <Card padding={false}>
         <Table>
           <Table.Header>
@@ -159,7 +159,7 @@ function NotesSection({ data, loading }) {
             ))}
             {!loading && matieres.length === 0 && (
               <Table.Row>
-                <td colSpan={3} className="p-8 text-center text-sm text-neutral-500">{t('dashboards.eleve.aucune_note_disponible')}</td>
+                <td colSpan={3} className="p-8 text-center text-sm text-[var(--text-secondary)]">{t('dashboards.eleve.aucune_note_disponible')}</td>
               </Table.Row>
             )}
             {!loading && matieres.map((m, i) => (
@@ -173,7 +173,7 @@ function NotesSection({ data, loading }) {
                     {m.note}/20
                   </span>
                 </Table.Cell>
-                <Table.Cell className="text-neutral-500">×{m.coeff}</Table.Cell>
+                <Table.Cell className="text-[var(--text-secondary)]">×{m.coeff}</Table.Cell>
               </Table.Row>
             ))}
           </Table.Body>

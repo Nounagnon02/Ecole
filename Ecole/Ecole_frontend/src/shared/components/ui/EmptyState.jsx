@@ -38,15 +38,15 @@ function EmptyState({
       role="status"
     >
       {Icon && (
-        <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800">
-          <Icon className={cn('text-neutral-400 dark:text-neutral-500', s.icon)} />
+        <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-[var(--surface-subtle)] ">
+          <Icon className={cn('text-[var(--text-tertiary)] ', s.icon)} />
         </div>
       )}
-      <h3 className={cn('font-semibold text-neutral-700 dark:text-neutral-300', s.title)}>
+      <h3 className={cn('font-semibold text-[var(--text-primary)] ', s.title)}>
         {title}
       </h3>
       {message && (
-        <p className="mt-1 max-w-sm text-sm text-neutral-500 dark:text-neutral-400">
+        <p className="mt-1 max-w-sm text-sm text-[var(--text-secondary)] ">
           {message}
         </p>
       )}
@@ -54,7 +54,7 @@ function EmptyState({
         <button
           type="button"
           onClick={action.onClick}
-          className="mt-4 rounded-lg bg-[var(--accent)] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[var(--accent-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50"
+          className="mt-4 rounded-lg bg-[var(--action)] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[var(--action-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50"
         >
           {action.label}
         </button>

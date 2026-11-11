@@ -94,9 +94,9 @@ function ApercuSection({ stats, activite, categories, emprunts, retardsListe, no
                 <div key={item.name} className="flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2">
                     <span className="h-2 w-2 rounded-full" style={{ backgroundColor: CAT_COLORS[i] }} />
-                    <span className="text-neutral-600 dark:text-neutral-400">{item.name}</span>
+                    <span className="text-[var(--text-secondary)] ">{item.name}</span>
                   </div>
-                  <span className="font-medium text-neutral-900 dark:text-white">{item.value}%</span>
+                  <span className="font-medium text-[var(--text-primary)] ">{item.value}%</span>
                 </div>
               ))}
             </div>
@@ -126,11 +126,11 @@ function ApercuSection({ stats, activite, categories, emprunts, retardsListe, no
             <Table.Body>
               {emprunts.map((e) => (
                 <Table.Row key={e.id}>
-                  <Table.Cell><span className="font-medium text-neutral-900 dark:text-white">{e.eleve}</span></Table.Cell>
+                  <Table.Cell><span className="font-medium text-[var(--text-primary)] ">{e.eleve}</span></Table.Cell>
                   <Table.Cell>{e.classe}</Table.Cell>
                   <Table.Cell className="max-w-[160px] truncate">{e.ouvrage}</Table.Cell>
-                  <Table.Cell className="text-neutral-400">{e.dateEmprunt}</Table.Cell>
-                  <Table.Cell className="text-neutral-400">{e.dateRetour}</Table.Cell>
+                  <Table.Cell className="text-[var(--text-tertiary)]">{e.dateEmprunt}</Table.Cell>
+                  <Table.Cell className="text-[var(--text-tertiary)]">{e.dateRetour}</Table.Cell>
                   <Table.Cell>
                     <Badge variant={e.statut === 'Retourné' ? 'success' : e.statut === 'En cours' ? 'warning' : 'danger'} size="sm">
                       {e.statut}
@@ -164,7 +164,7 @@ function ApercuSection({ stats, activite, categories, emprunts, retardsListe, no
               <Table.Body>
                 {retardsListe.map((r) => (
                   <Table.Row key={r.id}>
-                    <Table.Cell><span className="font-medium text-neutral-900 dark:text-white">{r.eleve}</span></Table.Cell>
+                    <Table.Cell><span className="font-medium text-[var(--text-primary)] ">{r.eleve}</span></Table.Cell>
                     <Table.Cell className="max-w-[160px] truncate">{r.ouvrage}</Table.Cell>
                     <Table.Cell>
                       <Badge variant={r.jours_retard >= 7 ? 'danger' : 'warning'} size="sm">{r.jours_retard} j</Badge>
@@ -198,8 +198,8 @@ function ApercuSection({ stats, activite, categories, emprunts, retardsListe, no
                 {nouveautes.map((n) => (
                   <Table.Row key={n.id}>
                     <Table.Cell>
-                      <span className="font-medium text-neutral-900 dark:text-white">{n.titre}</span>
-                      <span className="block text-xs text-neutral-400">{n.categorie}</span>
+                      <span className="font-medium text-[var(--text-primary)] ">{n.titre}</span>
+                      <span className="block text-xs text-[var(--text-tertiary)]">{n.categorie}</span>
                     </Table.Cell>
                     <Table.Cell>{n.auteur}</Table.Cell>
                   </Table.Row>
@@ -227,12 +227,12 @@ function ApercuSection({ stats, activite, categories, emprunts, retardsListe, no
                 const max = Math.max(...populaires.map((x) => x.emprunts), 1);
                 return (
                   <div key={p.titre} className="flex items-center justify-between text-sm">
-                    <span className="text-neutral-600 dark:text-neutral-400 truncate">{i + 1}. {p.titre}</span>
+                    <span className="text-[var(--text-secondary)]  truncate">{i + 1}. {p.titre}</span>
                     <div className="flex items-center gap-2">
-                      <div className="w-20 h-1.5 rounded-full bg-neutral-100 dark:bg-neutral-800 overflow-hidden">
-                        <div className="h-full rounded-full bg-[var(--accent)]" style={{ width: `${(p.emprunts / max) * 100}%` }} />
+                      <div className="w-20 h-1.5 rounded-full bg-[var(--surface-subtle)]  overflow-hidden">
+                        <div className="h-full rounded-full bg-[var(--action)]" style={{ width: `${(p.emprunts / max) * 100}%` }} />
                       </div>
-                      <span className="w-6 text-right font-medium text-neutral-900 dark:text-white">{p.emprunts}</span>
+                      <span className="w-6 text-right font-medium text-[var(--text-primary)] ">{p.emprunts}</span>
                     </div>
                   </div>
                 );

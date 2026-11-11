@@ -69,14 +69,14 @@ export default function DepartementsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--text-tertiary)]" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
+      <div className="flex flex-col items-center justify-center h-64 text-[var(--text-secondary)]">
         <AlertCircle className="h-8 w-8 mb-2 text-red-400" />
         <p className="text-sm">{error}</p>
       </div>
@@ -87,8 +87,8 @@ export default function DepartementsPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.universite.departements.title')}</h1>
-          <p className="text-sm text-neutral-500">{t('pages.universite.departements.subtitle')}</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.universite.departements.title')}</h1>
+          <p className="text-sm text-[var(--text-secondary)]">{t('pages.universite.departements.subtitle')}</p>
         </div>
         <Button size="sm" icon={<Plus />}>{t('pages.universite.departements.nouveau_departement')}</Button>
       </div>
@@ -102,7 +102,7 @@ export default function DepartementsPage() {
       <Card>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
             <Input
               placeholder={t('pages.universite.departements.rechercher_un_departement')}
               value={search}
@@ -114,7 +114,7 @@ export default function DepartementsPage() {
             value={filterFaculte}
             onChange={(e) => setFilterFaculte(e.target.value)}
             aria-label={t('pages.universite.departements.filtrer_par_faculte')}
-            className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+            className="h-10 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40   "
           >
             <option value="">{t('pages.universite.departements.toutes_facultes')}</option>
             {facultes.map((f) => <option key={f} value={f}>{f}</option>)}
@@ -125,7 +125,7 @@ export default function DepartementsPage() {
       <div className="space-y-3">
         {filtered.length === 0 && (
           <Card>
-            <div className="text-center py-8 text-neutral-500">
+            <div className="text-center py-8 text-[var(--text-secondary)]">
               <BookOpen className="mx-auto h-8 w-8 mb-2" />
               <p className="text-sm">{t('pages.universite.departements.aucun_departement_trouve')}</p>
             </div>
@@ -139,20 +139,20 @@ export default function DepartementsPage() {
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-sm font-semibold text-neutral-900 dark:text-white">{d.nom}</span>
+                  <span className="text-sm font-semibold text-[var(--text-primary)] ">{d.nom}</span>
                   <Badge variant="primary" size="sm">{d.code}</Badge>
                   <Badge variant="outline" size="sm">{d.faculte_nom}</Badge>
                 </div>
-                <div className="mt-1 flex items-center gap-3 text-xs text-neutral-500">
+                <div className="mt-1 flex items-center gap-3 text-xs text-[var(--text-secondary)]">
                   <span className="flex items-center gap-1"><User className="h-3 w-3" /> Chef : {d.chef}</span>
                 </div>
                 <div className="mt-2 flex gap-3 text-xs">
-                  <span className="text-neutral-600 dark:text-neutral-400"><strong>{d.enseignants}</strong> enseignants</span>
-                  <span className="text-neutral-600 dark:text-neutral-400"><strong>{d.etudiants}</strong> étudiants</span>
-                  <span className="text-neutral-600 dark:text-neutral-400"><strong>{d.cours}</strong> cours</span>
+                  <span className="text-[var(--text-secondary)] "><strong>{d.enseignants}</strong> enseignants</span>
+                  <span className="text-[var(--text-secondary)] "><strong>{d.etudiants}</strong> étudiants</span>
+                  <span className="text-[var(--text-secondary)] "><strong>{d.cours}</strong> cours</span>
                 </div>
                 {(d.email || d.telephone) && (
-                  <div className="mt-2 space-y-1 text-xs text-neutral-500">
+                  <div className="mt-2 space-y-1 text-xs text-[var(--text-secondary)]">
                     {d.email && <span className="flex items-center gap-1"><Mail className="h-3 w-3" /> {d.email}</span>}
                     {d.telephone && <span className="flex items-center gap-1"><Phone className="h-3 w-3" /> {d.telephone}</span>}
                   </div>

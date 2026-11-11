@@ -103,14 +103,14 @@ export default function DossiersPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--text-tertiary)]" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
+      <div className="flex flex-col items-center justify-center h-64 text-[var(--text-secondary)]">
         <AlertCircle className="h-8 w-8 mb-2 text-red-400" />
         <p className="text-sm">{error}</p>
         <button
@@ -128,10 +128,10 @@ export default function DossiersPage() {
       {/* Header */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] ">
             {t(tab === 'dossiers' ? 'pages.infirmier.dossiers.title' : 'pages.infirmier.vaccinations.title')}
           </h1>
-          <p className="text-sm text-neutral-500">
+          <p className="text-sm text-[var(--text-secondary)]">
             {t(tab === 'dossiers' ? 'pages.infirmier.dossiers.subtitle' : 'pages.infirmier.vaccinations.subtitle')}
           </p>
         </div>
@@ -141,14 +141,14 @@ export default function DossiersPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-4 border-b border-neutral-200 dark:border-neutral-800">
+      <div className="flex gap-4 border-b border-[var(--border)] ">
         <button
           onClick={() => setTab('dossiers')}
           className={cn(
             'pb-2 text-sm font-medium border-b-2 transition-colors',
             tab === 'dossiers'
               ? 'border-[var(--accent)] text-[var(--accent)]'
-              : 'border-transparent text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'
+              : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] '
           )}
         >
           <FileText className="h-4 w-4 inline mr-1.5" />
@@ -160,7 +160,7 @@ export default function DossiersPage() {
             'pb-2 text-sm font-medium border-b-2 transition-colors',
             tab === 'vaccinations'
               ? 'border-[var(--accent)] text-[var(--accent)]'
-              : 'border-transparent text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'
+              : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] '
           )}
         >
           <Syringe className="h-4 w-4 inline mr-1.5" />
@@ -181,7 +181,7 @@ export default function DossiersPage() {
           <Card>
             <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
               <div className="relative max-w-sm flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
                 <Input
                   placeholder={t('common.search_student')}
                   value={search}
@@ -193,7 +193,7 @@ export default function DossiersPage() {
                 value={filterAllergie}
                 onChange={(e) => setFilterAllergie(e.target.value)}
                 aria-label={t('pages.infirmier.dossiers.filtrer_par_allergie')}
-                className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+                className="h-10 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40   "
               >
                 <option value="">{t('pages.infirmier.dossiers.toutes_les_allergies')}</option>
                 <option value="oui">{t('pages.infirmier.dossiers.avec_allergies')}</option>
@@ -206,7 +206,7 @@ export default function DossiersPage() {
             {filtered.length === 0 && (
               <div className="md:col-span-2">
                 <Card>
-                  <div className="text-center py-8 text-neutral-500">
+                  <div className="text-center py-8 text-[var(--text-secondary)]">
                     <FileText className="mx-auto h-8 w-8 mb-2" />
                     <p className="text-sm">{t('pages.infirmier.dossiers.aucun_dossier_trouve')}</p>
                   </div>
@@ -218,33 +218,33 @@ export default function DossiersPage() {
                 <div className="flex items-start gap-3 mb-4">
                   <Avatar name={`${d.eleve?.prenom || ''} ${d.eleve?.nom || ''}`} size="md" />
                   <div>
-                    <h3 className="font-semibold text-neutral-900 dark:text-white">
+                    <h3 className="font-semibold text-[var(--text-primary)] ">
                       {d.eleve?.prenom} {d.eleve?.nom}
                     </h3>
-                    <p className="text-xs text-neutral-500">{d.eleve?.classe?.nom_classe || '—'}</p>
+                    <p className="text-xs text-[var(--text-secondary)]">{d.eleve?.classe?.nom_classe || '—'}</p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
-                    <span className="flex items-center gap-1 text-xs text-neutral-500 mb-1">
+                    <span className="flex items-center gap-1 text-xs text-[var(--text-secondary)] mb-1">
                       <Droplets className="h-3 w-3" /> {t('pages.infirmier.dossiers.groupe_sanguin')}
                     </span>
-                    <span className="font-medium text-neutral-700 dark:text-neutral-300">{d.groupe_sanguin || '—'}</span>
+                    <span className="font-medium text-[var(--text-primary)] ">{d.groupe_sanguin || '—'}</span>
                   </div>
                   <div>
-                    <span className="flex items-center gap-1 text-xs text-neutral-500 mb-1">
+                    <span className="flex items-center gap-1 text-xs text-[var(--text-secondary)] mb-1">
                       <AlertCircle className="h-3 w-3" /> {t('pages.infirmier.dossiers.allergies')}
                     </span>
                     <span className={cn(
                       'font-medium',
-                      d.allergies && d.allergies !== 'Aucune' ? 'text-amber-600' : 'text-neutral-700 dark:text-neutral-300'
+                      d.allergies && d.allergies !== 'Aucune' ? 'text-amber-600' : 'text-[var(--text-primary)] '
                     )}>
                       {d.allergies || t('pages.infirmier.dossiers.aucune')}
                     </span>
                   </div>
                   <div>
-                    <span className="flex items-center gap-1 text-xs text-neutral-500 mb-1">
+                    <span className="flex items-center gap-1 text-xs text-[var(--text-secondary)] mb-1">
                       <Shield className="h-3 w-3" /> {t('pages.infirmier.dossiers.vaccins')}
                     </span>
                     <span className={cn(
@@ -255,18 +255,18 @@ export default function DossiersPage() {
                     </span>
                   </div>
                   <div>
-                    <span className="flex items-center gap-1 text-xs text-neutral-500 mb-1">
+                    <span className="flex items-center gap-1 text-xs text-[var(--text-secondary)] mb-1">
                       <Calendar className="h-3 w-3" /> {t('pages.infirmier.dossiers.derniere_visite')}
                     </span>
-                    <span className="font-medium text-neutral-700 dark:text-neutral-300">
+                    <span className="font-medium text-[var(--text-primary)] ">
                       {d.derniere_visite ? formatDate(d.derniere_visite) : '—'}
                     </span>
                   </div>
                 </div>
 
                 {d.maladies_chroniques && (
-                  <div className="mt-3 pt-3 border-t border-neutral-100 dark:border-neutral-800">
-                    <p className="text-xs text-neutral-500">
+                  <div className="mt-3 pt-3 border-t border-[var(--border-light)] ">
+                    <p className="text-xs text-[var(--text-secondary)]">
                       <span className="font-medium">{t('pages.infirmier.dossiers.maladies_chroniques')}</span> {d.maladies_chroniques}
                     </p>
                   </div>
@@ -294,8 +294,8 @@ export default function DossiersPage() {
 
           {vaccinsParEleve.length === 0 && (
             <Card>
-              <div className="text-center py-12 text-neutral-500">
-                <Syringe className="mx-auto h-10 w-10 mb-3 text-neutral-300" />
+              <div className="text-center py-12 text-[var(--text-secondary)]">
+                <Syringe className="mx-auto h-10 w-10 mb-3 text-[var(--text-secondary)]" />
                 <p className="text-sm">{t('pages.infirmier.dossiers.aucune_vaccination_enregistree')}</p>
               </div>
             </Card>
@@ -311,14 +311,14 @@ export default function DossiersPage() {
                     {/* Header élève */}
                     <button
                       onClick={() => setExpandedEleve(isExpanded ? null : (groupe.eleve?.id))}
-                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors"
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[var(--surface)]  transition-colors"
                     >
                       <Avatar name={`${groupe.eleve?.prenom || ''} ${groupe.eleve?.nom || ''}`} size="sm" />
                       <div className="flex-1 text-left">
-                        <span className="font-medium text-neutral-900 dark:text-white">
+                        <span className="font-medium text-[var(--text-primary)] ">
                           {groupe.eleve?.prenom} {groupe.eleve?.nom}
                         </span>
-                        <span className="ml-2 text-xs text-neutral-500">
+                        <span className="ml-2 text-xs text-[var(--text-secondary)]">
                           {groupe.eleve?.classe?.nom_classe || '—'} · {groupe.vaccins.length} vaccin(s)
                         </span>
                       </div>
@@ -326,34 +326,34 @@ export default function DossiersPage() {
                         {recent?.date_rappel && new Date(recent.date_rappel) < new Date() && (
                           <Badge variant="danger" size="sm">{t('pages.infirmier.dossiers.rappel')}</Badge>
                         )}
-                        {isExpanded ? <ChevronUp className="h-4 w-4 text-neutral-400" /> : <ChevronDown className="h-4 w-4 text-neutral-400" />}
+                        {isExpanded ? <ChevronUp className="h-4 w-4 text-[var(--text-tertiary)]" /> : <ChevronDown className="h-4 w-4 text-[var(--text-tertiary)]" />}
                       </div>
                     </button>
 
                     {/* Timeline */}
                     {isExpanded && (
                       <div className="px-4 pb-4">
-                        <div className="relative pl-6 border-l-2 border-neutral-200 dark:border-neutral-700 space-y-4 mt-2">
+                        <div className="relative pl-6 border-l-2 border-[var(--border)]  space-y-4 mt-2">
                           {groupe.vaccins.map((v, idx) => {
                             const rappelDepasse = v.date_rappel && new Date(v.date_rappel) < new Date();
                             return (
                               <div key={v.id || idx} className="relative">
                                 {/* Point sur la timeline */}
                                 <div className={cn(
-                                  'absolute -left-[25px] top-1 w-3 h-3 rounded-full border-2 border-white dark:border-neutral-900',
+                                  'absolute -left-[25px] top-1 w-3 h-3 rounded-full border-2 border-white ',
                                   rappelDepasse ? 'bg-red-500' : v.date_rappel ? 'bg-amber-400' : 'bg-emerald-500'
                                 )} />
 
-                                <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg p-3">
+                                <div className="bg-[var(--surface)]  rounded-lg p-3">
                                   <div className="flex items-start justify-between gap-2">
                                     <div>
-                                      <p className="text-sm font-semibold text-neutral-900 dark:text-white">
+                                      <p className="text-sm font-semibold text-[var(--text-primary)] ">
                                         {v.nom_vaccin}
                                         {v.effets_secondaires && (
                                           <span className="ml-2 text-xs text-amber-600">{t('pages.infirmier.dossiers.effets_secondaires_signales')}</span>
                                         )}
                                       </p>
-                                      <div className="flex flex-wrap gap-3 mt-1 text-xs text-neutral-500">
+                                      <div className="flex flex-wrap gap-3 mt-1 text-xs text-[var(--text-secondary)]">
                                         <span className="flex items-center gap-1">
                                           <Clock className="h-3 w-3" />
                                           {v.date_vaccination ? formatDate(v.date_vaccination) : '—'}

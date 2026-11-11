@@ -99,14 +99,14 @@ export default function TachesPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--text-tertiary)]" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
+      <div className="flex flex-col items-center justify-center h-64 text-[var(--text-secondary)]">
         <AlertCircle className="h-8 w-8 mb-2 text-red-400" />
         <p className="text-sm">{error}</p>
       </div>
@@ -117,8 +117,8 @@ export default function TachesPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.universite.taches.title')}</h1>
-          <p className="text-sm text-neutral-500">{t('pages.universite.taches.subtitle')}</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.universite.taches.title')}</h1>
+          <p className="text-sm text-[var(--text-secondary)]">{t('pages.universite.taches.subtitle')}</p>
         </div>
         <Button size="sm" icon={<Plus />}>{t('pages.universite.taches.nouvelle_tache')}</Button>
       </div>
@@ -133,7 +133,7 @@ export default function TachesPage() {
       <Card>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
             <Input
               placeholder={t('pages.universite.taches.rechercher_une_tache')}
               value={search}
@@ -145,7 +145,7 @@ export default function TachesPage() {
             value={filterStatut}
             onChange={(e) => setFilterStatut(e.target.value)}
             aria-label={t('common.filter_by_status')}
-            className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+            className="h-10 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40   "
           >
             <option value="">{t('common.all_statuses')}</option>
             <option value="en_cours">{t('common.status.in_progress')}</option>
@@ -161,7 +161,7 @@ export default function TachesPage() {
       <div className="space-y-3">
         {filtered.length === 0 && (
           <Card>
-            <div className="text-center py-8 text-neutral-500">
+            <div className="text-center py-8 text-[var(--text-secondary)]">
               <CheckSquare className="mx-auto h-8 w-8 mb-2" />
               <p className="text-sm">{t('pages.universite.taches.aucune_tache_trouvee')}</p>
             </div>
@@ -184,7 +184,7 @@ export default function TachesPage() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-sm font-semibold text-neutral-900 dark:text-white">{tache.titre}</span>
+                    <span className="text-sm font-semibold text-[var(--text-primary)] ">{tache.titre}</span>
                     <Badge variant={tache.statut === 'termine' ? 'primary' : 'warning'} size="sm">
                       {tache.statut === 'termine' ? t('pages.universite.taches.terminee') : t('common.status.in_progress')}
                     </Badge>
@@ -193,7 +193,7 @@ export default function TachesPage() {
                     </Badge>
                     <Badge variant="outline" size="sm" className="capitalize">{tache.type}</Badge>
                   </div>
-                  <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-neutral-500">
+                  <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-[var(--text-secondary)]">
                     <span className="flex items-center gap-1"><FileText className="h-3 w-3" /> {tache.cours}</span>
                     <span className={cn(
                       'flex items-center gap-1',

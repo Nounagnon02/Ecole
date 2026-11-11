@@ -42,14 +42,14 @@ export default function StatistiquesPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--text-tertiary)]" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
+      <div className="flex flex-col items-center justify-center h-64 text-[var(--text-secondary)]">
         <AlertCircle className="h-8 w-8 mb-2 text-red-400" />
         <p className="text-sm">{error}</p>
       </div>
@@ -60,7 +60,7 @@ export default function StatistiquesPage() {
 
   // Calculer la répartition des rôles à partir des données API si disponibles
   const repartitionRoles = data.repartition_roles || data.roles_distribution || [
-    { role: t('pages.admin.statistiques.eleves'), count: data.total_eleves || data.total_students || 0, pct: 0, color: 'bg-[var(--primary)]' },
+    { role: t('pages.admin.statistiques.eleves'), count: data.total_eleves || data.total_students || 0, pct: 0, color: 'bg-[var(--action)]' },
     { role: t('common.teachers'), count: data.total_enseignants || data.total_teachers || 0, pct: 0, color: 'bg-emerald-500' },
     { role: t('pages.admin.statistiques.parents'), count: data.total_parents || 0, pct: 0, color: 'bg-amber-500' },
     { role: t('pages.admin.statistiques.personnel'), count: data.total_personnel || 0, pct: 0, color: 'bg-sky-500' },
@@ -76,8 +76,8 @@ export default function StatistiquesPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.admin.statistiques.title')}</h1>
-          <p className="text-sm text-neutral-500">{t('pages.admin.statistiques.subtitle')}</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.admin.statistiques.title')}</h1>
+          <p className="text-sm text-[var(--text-secondary)]">{t('pages.admin.statistiques.subtitle')}</p>
         </div>
         <Badge variant="primary" size="sm">
           <Clock className="h-3 w-3 mr-1" />
@@ -138,15 +138,15 @@ export default function StatistiquesPage() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
-          <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-4">{t('pages.admin.statistiques.repartition_des_utilisateurs')}</h3>
+          <h3 className="text-sm font-semibold text-[var(--text-primary)]  mb-4">{t('pages.admin.statistiques.repartition_des_utilisateurs')}</h3>
           <div className="space-y-4">
             {rolesWithPct.map((item) => (
               <div key={item.role}>
                 <div className="flex justify-between text-xs mb-1">
-                  <span className="text-neutral-600 dark:text-neutral-400">{item.role}</span>
-                  <span className="font-medium text-neutral-900 dark:text-white">{formatNumber(item.count)} ({item.pct}%)</span>
+                  <span className="text-[var(--text-secondary)] ">{item.role}</span>
+                  <span className="font-medium text-[var(--text-primary)] ">{formatNumber(item.count)} ({item.pct}%)</span>
                 </div>
-                <div className="h-2 bg-neutral-200 dark:bg-neutral-700 rounded-full overflow-hidden">
+                <div className="h-2 bg-[var(--surface-subtle)]  rounded-full overflow-hidden">
                   <div className={cn('h-full rounded-full transition-all', item.color)} style={{ width: `${item.pct}%` }} />
                 </div>
               </div>
@@ -155,11 +155,11 @@ export default function StatistiquesPage() {
         </Card>
 
         <Card>
-          <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-4">{t('pages.admin.statistiques.activite_recente')}</h3>
+          <h3 className="text-sm font-semibold text-[var(--text-primary)]  mb-4">{t('pages.admin.statistiques.activite_recente')}</h3>
           <div className="space-y-3">
             {data.recent_activities?.length > 0 ? (
               data.recent_activities.map((a, i) => {
-                const cfg = ACTIVITE_CONFIG[a.type] || { icon: Activity, color: 'text-neutral-500 bg-neutral-100 dark:bg-neutral-800' };
+                const cfg = ACTIVITE_CONFIG[a.type] || { icon: Activity, color: 'text-[var(--text-secondary)] bg-[var(--surface-subtle)] ' };
                 const IconComponent = cfg.icon;
                 return (
                   <div key={i} className="flex items-start gap-3">
@@ -167,15 +167,15 @@ export default function StatistiquesPage() {
                       <IconComponent className="h-4 w-4" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-neutral-900 dark:text-white">{a.action}</p>
-                      <p className="text-xs text-neutral-500">{a.entite || a.entity}</p>
+                      <p className="text-sm font-medium text-[var(--text-primary)] ">{a.action}</p>
+                      <p className="text-xs text-[var(--text-secondary)]">{a.entite || a.entity}</p>
                     </div>
-                    <span className="text-xs text-neutral-400 shrink-0">{a.date}</span>
+                    <span className="text-xs text-[var(--text-tertiary)] shrink-0">{a.date}</span>
                   </div>
                 );
               })
             ) : (
-              <p className="text-sm text-neutral-400 text-center py-4">{t('pages.admin.statistiques.aucune_activite_recente')}</p>
+              <p className="text-sm text-[var(--text-tertiary)] text-center py-4">{t('pages.admin.statistiques.aucune_activite_recente')}</p>
             )}
           </div>
         </Card>
@@ -188,8 +188,8 @@ export default function StatistiquesPage() {
               <CheckCircle className="h-5 w-5 text-emerald-500" />
             </div>
             <div>
-              <p className="text-xs text-neutral-500">{t('pages.admin.statistiques.taux_de_presence')}</p>
-              <p className="text-lg font-bold text-neutral-900 dark:text-white">{data.attendance_rate ?? '—'}%</p>
+              <p className="text-xs text-[var(--text-secondary)]">{t('pages.admin.statistiques.taux_de_presence')}</p>
+              <p className="text-lg font-bold text-[var(--text-primary)] ">{data.attendance_rate ?? '—'}%</p>
             </div>
           </div>
         </Card>
@@ -199,8 +199,8 @@ export default function StatistiquesPage() {
               <BookOpen className="h-5 w-5 text-amber-500" />
             </div>
             <div>
-              <p className="text-xs text-neutral-500">{t('pages.admin.statistiques.cours_programmes')}</p>
-              <p className="text-lg font-bold text-neutral-900 dark:text-white">{data.total_courses ? formatNumber(data.total_courses) : '—'}</p>
+              <p className="text-xs text-[var(--text-secondary)]">{t('pages.admin.statistiques.cours_programmes')}</p>
+              <p className="text-lg font-bold text-[var(--text-primary)] ">{data.total_courses ? formatNumber(data.total_courses) : '—'}</p>
             </div>
           </div>
         </Card>
@@ -210,8 +210,8 @@ export default function StatistiquesPage() {
               <GraduationCap className="h-5 w-5 text-sky-500" />
             </div>
             <div>
-              <p className="text-xs text-neutral-500">Diplômés {new Date().getFullYear()}</p>
-              <p className="text-lg font-bold text-neutral-900 dark:text-white">{data.graduates ?? '—'}</p>
+              <p className="text-xs text-[var(--text-secondary)]">Diplômés {new Date().getFullYear()}</p>
+              <p className="text-lg font-bold text-[var(--text-primary)] ">{data.graduates ?? '—'}</p>
             </div>
           </div>
         </Card>

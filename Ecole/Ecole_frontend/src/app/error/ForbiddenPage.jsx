@@ -44,12 +44,12 @@ export default function ForbiddenPage() {
         </span>
 
         {/* Titre */}
-        <h1 className="mb-2 text-2xl font-bold text-neutral-900 dark:text-neutral-100">
+        <h1 className="mb-2 text-2xl font-bold text-[var(--text-primary)] ">
           {t('error.403.title')}
         </h1>
 
         {/* Description */}
-        <p className="mb-8 text-sm leading-relaxed text-neutral-500 dark:text-neutral-400">
+        <p className="mb-8 text-sm leading-relaxed text-[var(--text-secondary)] ">
           {t('error.403.description')}
         </p>
 
@@ -57,14 +57,14 @@ export default function ForbiddenPage() {
         <div className="flex flex-wrap items-center justify-center gap-3">
           <Link
             to="/"
-            className="inline-flex items-center gap-2 rounded-lg bg-[var(--accent)] px-6 py-2.5 text-sm font-medium text-white transition-all hover:bg-[var(--accent-hover)] motion-safe:active:scale-95"
+            className="inline-flex items-center gap-2 rounded-lg bg-[var(--action)] px-6 py-2.5 text-sm font-medium text-white transition-all hover:bg-[var(--action-hover)] motion-safe:active:scale-95"
           >
             {t('error.go_home')}
           </Link>
           <button
             type="button"
             onClick={() => window.history.back()}
-            className="inline-flex items-center gap-2 rounded-lg border border-[var(--border)] bg-white px-6 py-2.5 text-sm font-medium text-neutral-700 transition-all hover:bg-neutral-50 motion-safe:active:scale-95 dark:border-[var(--border)] dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
+            className="inline-flex items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface-raised)] px-6 py-2.5 text-sm font-medium text-[var(--text-primary)] transition-all hover:bg-[var(--surface)] motion-safe:active:scale-95 dark:border-[var(--border)]   "
           >
             {t('error.go_back')}
           </button>
@@ -84,7 +84,7 @@ export function ForbiddenError() {
   const { t } = useTranslation();
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-neutral-50 px-6 text-center dark:bg-neutral-950">
+    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[var(--surface)] px-6 text-center ">
       <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-red-50 text-red-600 dark:bg-red-950/30 dark:text-red-400">
         <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
           <path
@@ -94,15 +94,15 @@ export function ForbiddenError() {
           />
         </svg>
       </div>
-      <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
+      <h1 className="text-2xl font-bold text-[var(--text-primary)] ">
         {t('error.unauthorized')}
       </h1>
-      <p className="max-w-sm text-sm text-neutral-500">
+      <p className="max-w-sm text-sm text-[var(--text-secondary)]">
         {t('error.403.description')}
       </p>
       <Link
         to="/"
-        className="mt-2 rounded-lg bg-[var(--accent)] px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[var(--accent-hover)]"
+        className="mt-2 rounded-lg bg-[var(--action)] px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[var(--action-hover)]"
       >
         {t('error.go_home')}
       </Link>

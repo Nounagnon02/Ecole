@@ -95,9 +95,9 @@ function ApercuSection({ stats, evolution, types_sanctions, sanctions, absencesP
                 <div key={item.name} className="flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2">
                     <span className="h-2 w-2 rounded-full" style={{ backgroundColor: SANCTIONS_COLORS[i] }} />
-                    <span className="text-neutral-600 dark:text-neutral-400">{item.name}</span>
+                    <span className="text-[var(--text-secondary)] ">{item.name}</span>
                   </div>
-                  <span className="font-medium text-neutral-900 dark:text-white">{item.value}%</span>
+                  <span className="font-medium text-[var(--text-primary)] ">{item.value}%</span>
                 </div>
               ))}
             </div>
@@ -125,11 +125,11 @@ function ApercuSection({ stats, evolution, types_sanctions, sanctions, absencesP
             <Table.Body>
               {sanctions.map((s) => (
                 <Table.Row key={s.id}>
-                  <Table.Cell><span className="font-medium text-neutral-900 dark:text-white">{s.eleve}</span></Table.Cell>
+                  <Table.Cell><span className="font-medium text-[var(--text-primary)] ">{s.eleve}</span></Table.Cell>
                   <Table.Cell>{s.classe}</Table.Cell>
                   <Table.Cell className="max-w-[160px] truncate">{s.motif}</Table.Cell>
                   <Table.Cell>{s.sanction}</Table.Cell>
-                  <Table.Cell className="text-neutral-400">{s.date}</Table.Cell>
+                  <Table.Cell className="text-[var(--text-tertiary)]">{s.date}</Table.Cell>
                   <Table.Cell>
                     <Badge variant={s.statut === 'Exécuté' ? 'success' : s.statut === 'En cours' ? 'warning' : 'neutral'} size="sm">
                       {s.statut}
@@ -155,12 +155,12 @@ function ApercuSection({ stats, evolution, types_sanctions, sanctions, absencesP
                 const max = Math.max(...absencesParClasse.map((c) => c.absences), 1);
                 return (
                   <div key={item.name} className="flex items-center justify-between text-sm">
-                    <span className="text-neutral-600 dark:text-neutral-400">{item.name}</span>
+                    <span className="text-[var(--text-secondary)] ">{item.name}</span>
                     <div className="flex items-center gap-2">
-                      <div className="w-24 h-1.5 rounded-full bg-neutral-100 dark:bg-neutral-800 overflow-hidden">
+                      <div className="w-24 h-1.5 rounded-full bg-[var(--surface-subtle)]  overflow-hidden">
                         <div className="h-full rounded-full bg-[var(--red)]" style={{ width: `${(item.absences / max) * 100}%` }} />
                       </div>
-                      <span className="w-6 text-right font-medium text-neutral-900 dark:text-white">{item.absences}</span>
+                      <span className="w-6 text-right font-medium text-[var(--text-primary)] ">{item.absences}</span>
                     </div>
                   </div>
                 );
@@ -195,9 +195,9 @@ function ApercuSection({ stats, evolution, types_sanctions, sanctions, absencesP
               <Table.Body>
                 {sanctionsAttente.map((s) => (
                   <Table.Row key={s.id}>
-                    <Table.Cell><span className="font-medium text-neutral-900 dark:text-white">{s.eleve}</span></Table.Cell>
+                    <Table.Cell><span className="font-medium text-[var(--text-primary)] ">{s.eleve}</span></Table.Cell>
                     <Table.Cell>{s.sanction}</Table.Cell>
-                    <Table.Cell className="text-neutral-400">{s.date}</Table.Cell>
+                    <Table.Cell className="text-[var(--text-tertiary)]">{s.date}</Table.Cell>
                   </Table.Row>
                 ))}
               </Table.Body>
@@ -227,7 +227,7 @@ function ApercuSection({ stats, evolution, types_sanctions, sanctions, absencesP
               <Table.Body>
                 {recidivistes.map((r) => (
                   <Table.Row key={r.eleve}>
-                    <Table.Cell><span className="font-medium text-neutral-900 dark:text-white">{r.eleve}</span></Table.Cell>
+                    <Table.Cell><span className="font-medium text-[var(--text-primary)] ">{r.eleve}</span></Table.Cell>
                     <Table.Cell>{r.classe}</Table.Cell>
                     <Table.Cell>
                       <Badge variant={r.sanctions >= 3 ? 'danger' : 'warning'} size="sm">{r.sanctions}</Badge>

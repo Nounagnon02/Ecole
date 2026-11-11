@@ -143,7 +143,7 @@ function TabsTrigger({ children, value, variant, className, disabled }) {
       {isActive && variant === 'underline' && (
         <motion.div
           layoutId="tab-indicator"
-          className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--accent)]"
+          className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--action)]"
           transition={{ type: 'spring', stiffness: 500, damping: 35 }}
         />
       )}

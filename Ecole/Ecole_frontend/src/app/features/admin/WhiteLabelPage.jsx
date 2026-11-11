@@ -114,14 +114,14 @@ export default function WhiteLabelPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--text-tertiary)]" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
+      <div className="flex flex-col items-center justify-center h-64 text-[var(--text-secondary)]">
         <AlertCircle className="h-8 w-8 mb-2 text-red-400" />
         <p className="text-sm">{error}</p>
       </div>
@@ -132,8 +132,8 @@ export default function WhiteLabelPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.admin.white_label.title')}</h1>
-          <p className="text-sm text-neutral-500 mt-1">{t('pages.admin.white_label.subtitle')}</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.admin.white_label.title')}</h1>
+          <p className="text-sm text-[var(--text-secondary)] mt-1">{t('pages.admin.white_label.subtitle')}</p>
         </div>
         <Button onClick={handleSave} disabled={saving || !selectedTenant}>
           {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
@@ -146,15 +146,15 @@ export default function WhiteLabelPage() {
         <div className="lg:col-span-2 space-y-6">
           {/* Tenant selector */}
           <Card>
-            <div className="border-b border-neutral-200 p-4 dark:border-neutral-700">
-              <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">{t('common.school')}</h3>
-              <p className="text-xs text-neutral-500 mt-0.5">{t('pages.admin.white_label.selectionnez_l_etablissement_a_personnaliser')}</p>
+            <div className="border-b border-[var(--border)] p-4 ">
+              <h3 className="text-sm font-semibold text-[var(--text-primary)] ">{t('common.school')}</h3>
+              <p className="text-xs text-[var(--text-secondary)] mt-0.5">{t('pages.admin.white_label.selectionnez_l_etablissement_a_personnaliser')}</p>
             </div>
             <div className="p-4">
               <select
                 value={selectedTenant}
                 onChange={(e) => setSelectedTenant(e.target.value)}
-                className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--surface-raised)] px-4 py-2.5 text-sm text-[var(--text-primary)]   "
               >
                 {ecoles.map((e) => (
                   <option key={e.id} value={String(e.id)}>{e.nom}</option>
@@ -165,12 +165,12 @@ export default function WhiteLabelPage() {
 
           {/* Brand name */}
           <Card>
-            <div className="border-b border-neutral-200 p-4 dark:border-neutral-700">
+            <div className="border-b border-[var(--border)] p-4 ">
               <div className="flex items-center gap-2">
-                <Type className="h-5 w-5 text-neutral-500" />
+                <Type className="h-5 w-5 text-[var(--text-secondary)]" />
                 <div>
-                  <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">{t('pages.admin.white_label.nom_de_la_marque')}</h3>
-                  <p className="text-xs text-neutral-500 mt-0.5">{t('pages.admin.white_label.affiche_dans_l_en_tete_et_les_communications')}</p>
+                  <h3 className="text-sm font-semibold text-[var(--text-primary)] ">{t('pages.admin.white_label.nom_de_la_marque')}</h3>
+                  <p className="text-xs text-[var(--text-secondary)] mt-0.5">{t('pages.admin.white_label.affiche_dans_l_en_tete_et_les_communications')}</p>
                 </div>
               </div>
             </div>
@@ -185,12 +185,12 @@ export default function WhiteLabelPage() {
 
           {/* Colors */}
           <Card>
-            <div className="border-b border-neutral-200 p-4 dark:border-neutral-700">
+            <div className="border-b border-[var(--border)] p-4 ">
               <div className="flex items-center gap-2">
-                <Palette className="h-5 w-5 text-neutral-500" />
+                <Palette className="h-5 w-5 text-[var(--text-secondary)]" />
                 <div>
-                  <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">{t('pages.admin.white_label.couleurs')}</h3>
-                  <p className="text-xs text-neutral-500 mt-0.5">{t('pages.admin.white_label.personnalisez_les_couleurs_principales')}</p>
+                  <h3 className="text-sm font-semibold text-[var(--text-primary)] ">{t('pages.admin.white_label.couleurs')}</h3>
+                  <p className="text-xs text-[var(--text-secondary)] mt-0.5">{t('pages.admin.white_label.personnalisez_les_couleurs_principales')}</p>
                 </div>
               </div>
             </div>
@@ -203,11 +203,11 @@ export default function WhiteLabelPage() {
                       setPrimaryColor(preset.primary);
                       setSecondaryColor(preset.secondary);
                     }}
-                    className="flex items-center gap-2 rounded-xl border border-neutral-200 px-3 py-2 text-xs font-medium text-neutral-600 hover:border-neutral-300 dark:border-neutral-700 dark:text-neutral-400"
+                    className="flex items-center gap-2 rounded-xl border border-[var(--border)] px-3 py-2 text-xs font-medium text-[var(--text-secondary)] hover:border-[var(--border-heavy)]  "
                   >
                     <div className="flex -space-x-1">
-                      <div className="h-4 w-4 rounded-full border-2 border-white dark:border-neutral-900" style={{ background: preset.primary }} />
-                      <div className="h-4 w-4 rounded-full border-2 border-white dark:border-neutral-900" style={{ background: preset.secondary }} />
+                      <div className="h-4 w-4 rounded-full border-2 border-white " style={{ background: preset.primary }} />
+                      <div className="h-4 w-4 rounded-full border-2 border-white " style={{ background: preset.secondary }} />
                     </div>
                     {preset.name}
                   </button>
@@ -216,27 +216,27 @@ export default function WhiteLabelPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-medium text-neutral-500 mb-1.5">{t('pages.admin.white_label.couleur_primaire')}</label>
+                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">{t('pages.admin.white_label.couleur_primaire')}</label>
                   <div className="flex items-center gap-3">
                     <input
                       type="color"
                       value={primaryColor}
                       onChange={(e) => setPrimaryColor(e.target.value)}
-                      className="h-10 w-10 rounded-lg border border-neutral-200 cursor-pointer"
+                      className="h-10 w-10 rounded-lg border border-[var(--border)] cursor-pointer"
                     />
-                    <span className="text-sm font-mono text-neutral-500">{primaryColor}</span>
+                    <span className="text-sm font-mono text-[var(--text-secondary)]">{primaryColor}</span>
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-neutral-500 mb-1.5">{t('pages.admin.white_label.couleur_secondaire')}</label>
+                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">{t('pages.admin.white_label.couleur_secondaire')}</label>
                   <div className="flex items-center gap-3">
                     <input
                       type="color"
                       value={secondaryColor}
                       onChange={(e) => setSecondaryColor(e.target.value)}
-                      className="h-10 w-10 rounded-lg border border-neutral-200 cursor-pointer"
+                      className="h-10 w-10 rounded-lg border border-[var(--border)] cursor-pointer"
                     />
-                    <span className="text-sm font-mono text-neutral-500">{secondaryColor}</span>
+                    <span className="text-sm font-mono text-[var(--text-secondary)]">{secondaryColor}</span>
                   </div>
                 </div>
               </div>
@@ -245,26 +245,26 @@ export default function WhiteLabelPage() {
 
           {/* Logo upload */}
           <Card>
-            <div className="border-b border-neutral-200 p-4 dark:border-neutral-700">
+            <div className="border-b border-[var(--border)] p-4 ">
               <div className="flex items-center gap-2">
-                <Image className="h-5 w-5 text-neutral-500" />
+                <Image className="h-5 w-5 text-[var(--text-secondary)]" />
                 <div>
-                  <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">{t('pages.admin.white_label.logo_favicon')}</h3>
-                  <p className="text-xs text-neutral-500 mt-0.5">{t('pages.admin.white_label.telechargez_le_logo_et_l_icone_de_l')}</p>
+                  <h3 className="text-sm font-semibold text-[var(--text-primary)] ">{t('pages.admin.white_label.logo_favicon')}</h3>
+                  <p className="text-xs text-[var(--text-secondary)] mt-0.5">{t('pages.admin.white_label.telechargez_le_logo_et_l_icone_de_l')}</p>
                 </div>
               </div>
             </div>
             <div className="p-4">
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-xs font-medium text-neutral-500 mb-2">{t('pages.admin.white_label.logo_png_svg_max_2_mo')}</label>
-                  <div className="flex items-center justify-center h-32 rounded-xl border-2 border-dashed border-neutral-200 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800/50">
+                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-2">{t('pages.admin.white_label.logo_png_svg_max_2_mo')}</label>
+                  <div className="flex items-center justify-center h-32 rounded-xl border-2 border-dashed border-[var(--border)] bg-[var(--surface)]  ">
                     {logoUrl ? (
                       <img src={logoUrl} alt={t('pages.admin.white_label.logo')} className="max-h-24 max-w-full rounded" />
                     ) : (
                       <div className="text-center">
-                        <Image className="h-8 w-8 text-neutral-300 mx-auto mb-1" />
-                        <p className="text-xs text-neutral-400">{t('pages.admin.white_label.cliquez_pour_uploader')}</p>
+                        <Image className="h-8 w-8 text-[var(--text-secondary)] mx-auto mb-1" />
+                        <p className="text-xs text-[var(--text-tertiary)]">{t('pages.admin.white_label.cliquez_pour_uploader')}</p>
                       </div>
                     )}
                   </div>
@@ -274,14 +274,14 @@ export default function WhiteLabelPage() {
                   </Button>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-neutral-500 mb-2">{t('pages.admin.white_label.favicon_png_ico_max_1_mo')}</label>
-                  <div className="flex items-center justify-center h-32 rounded-xl border-2 border-dashed border-neutral-200 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800/50">
+                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-2">{t('pages.admin.white_label.favicon_png_ico_max_1_mo')}</label>
+                  <div className="flex items-center justify-center h-32 rounded-xl border-2 border-dashed border-[var(--border)] bg-[var(--surface)]  ">
                     {faviconUrl ? (
                       <img src={faviconUrl} alt={t('pages.admin.white_label.favicon')} className="h-16 w-16 rounded" />
                     ) : (
                       <div className="text-center">
-                        <Globe className="h-8 w-8 text-neutral-300 mx-auto mb-1" />
-                        <p className="text-xs text-neutral-400">{t('pages.admin.white_label.cliquez_pour_uploader')}</p>
+                        <Globe className="h-8 w-8 text-[var(--text-secondary)] mx-auto mb-1" />
+                        <p className="text-xs text-[var(--text-tertiary)]">{t('pages.admin.white_label.cliquez_pour_uploader')}</p>
                       </div>
                     )}
                   </div>
@@ -298,41 +298,41 @@ export default function WhiteLabelPage() {
         {/* Right column — preview */}
         <div className="space-y-6">
           <Card>
-            <div className="border-b border-neutral-200 p-4 dark:border-neutral-700">
+            <div className="border-b border-[var(--border)] p-4 ">
               <div className="flex items-center gap-2">
-                <Eye className="h-5 w-5 text-neutral-500" />
+                <Eye className="h-5 w-5 text-[var(--text-secondary)]" />
                 <div>
-                  <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">{t('pages.admin.white_label.apercu')}</h3>
-                  <p className="text-xs text-neutral-500 mt-0.5">{t('pages.admin.white_label.rendu_en_direct')}</p>
+                  <h3 className="text-sm font-semibold text-[var(--text-primary)] ">{t('pages.admin.white_label.apercu')}</h3>
+                  <p className="text-xs text-[var(--text-secondary)] mt-0.5">{t('pages.admin.white_label.rendu_en_direct')}</p>
                 </div>
               </div>
             </div>
             <div className="p-4">
               {/* Mock preview */}
-              <div className="rounded-xl border border-neutral-200 overflow-hidden dark:border-neutral-700">
+              <div className="rounded-xl border border-[var(--border)] overflow-hidden ">
                 <div className="h-2" style={{ background: `linear-gradient(90deg, ${primaryColor}, ${secondaryColor})` }} />
-                <div className="p-4 bg-white dark:bg-neutral-900">
+                <div className="p-4 bg-[var(--surface-raised)] ">
                   <div className="flex items-center gap-3 mb-3">
                     <div className="h-8 w-8 rounded-lg flex items-center justify-center text-white text-xs font-bold" style={{ background: primaryColor }}>
                       {brandName.charAt(0) || 'É'}
                     </div>
-                    <span className="text-sm font-semibold text-neutral-900 dark:text-white">{brandName}</span>
+                    <span className="text-sm font-semibold text-[var(--text-primary)] ">{brandName}</span>
                   </div>
-                  <div className="h-2 w-3/4 rounded-full bg-neutral-100 mb-2 dark:bg-neutral-800" />
-                  <div className="h-2 w-1/2 rounded-full bg-neutral-100 dark:bg-neutral-800" />
+                  <div className="h-2 w-3/4 rounded-full bg-[var(--surface-subtle)] mb-2 " />
+                  <div className="h-2 w-1/2 rounded-full bg-[var(--surface-subtle)] " />
                   <div className="mt-3 flex gap-2">
                     <div className="h-6 w-16 rounded-md" style={{ background: primaryColor }} />
-                    <div className="h-6 w-16 rounded-md border border-neutral-200 dark:border-neutral-700" />
+                    <div className="h-6 w-16 rounded-md border border-[var(--border)] " />
                   </div>
                 </div>
               </div>
 
               <div className="mt-4 space-y-3">
-                <div className="flex items-center gap-3 text-sm text-neutral-500">
+                <div className="flex items-center gap-3 text-sm text-[var(--text-secondary)]">
                   <Monitor className="h-4 w-4" />
                   <span>{t('pages.admin.white_label.web')}</span>
                 </div>
-                <div className="flex items-center gap-3 text-sm text-neutral-500">
+                <div className="flex items-center gap-3 text-sm text-[var(--text-secondary)]">
                   <Smartphone className="h-4 w-4" />
                   <span>{t('pages.admin.white_label.mobile')}</span>
                 </div>

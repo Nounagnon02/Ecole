@@ -92,14 +92,14 @@ export default function PlanningPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--text-tertiary)]" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
+      <div className="flex flex-col items-center justify-center h-64 text-[var(--text-secondary)]">
         <AlertCircle className="h-8 w-8 mb-2 text-red-400" />
         <p className="text-sm">{error}</p>
       </div>
@@ -110,8 +110,8 @@ export default function PlanningPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.universite.planning.title')}</h1>
-          <p className="text-sm text-neutral-500">{t('pages.universite.planning.subtitle')}</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.universite.planning.title')}</h1>
+          <p className="text-sm text-[var(--text-secondary)]">{t('pages.universite.planning.subtitle')}</p>
         </div>
         <Button size="sm" icon={<Plus />}>{t('pages.universite.planning.nouvel_evenement')}</Button>
       </div>
@@ -126,7 +126,7 @@ export default function PlanningPage() {
       <Card>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
             <Input
               placeholder={t('pages.universite.planning.rechercher_un_evenement')}
               value={search}
@@ -143,7 +143,7 @@ export default function PlanningPage() {
                   'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
                   filterType === key
                     ? 'bg-[var(--primary-subtle)] text-[var(--accent)] dark:bg-[var(--accent-subtle)]0/10 dark:text-[var(--accent)]'
-                    : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700'
+                    : 'bg-[var(--surface-subtle)] text-[var(--text-secondary)] hover:bg-[var(--surface-subtle)]   '
                 )}
               >
                 {cfg.label}
@@ -156,7 +156,7 @@ export default function PlanningPage() {
       <div className="space-y-3">
         {filtered.length === 0 && (
           <Card>
-            <div className="text-center py-8 text-neutral-500">
+            <div className="text-center py-8 text-[var(--text-secondary)]">
               <CalendarDays className="mx-auto h-8 w-8 mb-2" />
               <p className="text-sm">{t('pages.universite.planning.aucun_evenement_trouve')}</p>
             </div>
@@ -168,22 +168,22 @@ export default function PlanningPage() {
           return (
             <Card key={evt.id} hover>
               <div className="flex items-start gap-4">
-                <div className="flex flex-col items-center justify-center w-14 h-14 rounded-xl bg-neutral-100 dark:bg-neutral-800 shrink-0">
-                  <span className="text-lg font-bold text-neutral-900 dark:text-white leading-none">
+                <div className="flex flex-col items-center justify-center w-14 h-14 rounded-xl bg-[var(--surface-subtle)]  shrink-0">
+                  <span className="text-lg font-bold text-[var(--text-primary)]  leading-none">
                     {evt.date.getDate()}
                   </span>
-                  <span className="text-[10px] text-neutral-500 uppercase mt-0.5">
+                  <span className="text-[10px] text-[var(--text-secondary)] uppercase mt-0.5">
                     {evt.date.toLocaleDateString('fr-FR', { month: 'short' })}
                   </span>
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-sm font-semibold text-neutral-900 dark:text-white">{evt.titre}</span>
+                    <span className="text-sm font-semibold text-[var(--text-primary)] ">{evt.titre}</span>
                     <Badge variant={evt.statut === 'termine' ? 'primary' : 'warning'} size="sm">
                       {evt.statut === 'termine' ? t('pages.universite.planning.termine') : t('pages.universite.planning.planifie')}
                     </Badge>
                   </div>
-                  <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-neutral-500">
+                  <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-[var(--text-secondary)]">
                     <span className={cn('inline-flex items-center gap-1 px-1.5 py-0.5 rounded', cfg.color)}>
                       <IconComponent className="h-3 w-3" />
                       {cfg.label}

@@ -239,12 +239,12 @@ export default function Sidebar() {
         {/* Logo */}
         <div className="flex h-14 shrink-0 items-center border-b border-[var(--sidebar-border)] px-4">
           <div className="flex items-center gap-3 overflow-hidden">
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[var(--accent)]">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[var(--action)]">
               <GraduationCap className="h-4 w-4 text-white" />
             </div>
             <AnimatePresence>
               {!sidebarCollapsed && (
-                <span className="whitespace-nowrap font-fraunces text-sm font-semibold text-[var(--text-primary)]">
+                <span className="whitespace-nowrap font-heading text-sm font-semibold text-[var(--text-primary)]">
                   École
                 </span>
               )}

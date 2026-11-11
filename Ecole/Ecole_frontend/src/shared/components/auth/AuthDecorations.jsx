@@ -10,9 +10,9 @@
 export function TopDecorativeBand() {
   return (
     <div className="absolute top-0 left-0 right-0 h-1 flex pointer-events-none">
-      <div className="flex-1 bg-[var(--primary)]" />
-      <div className="w-24 bg-[var(--accent)]" />
-      <div className="flex-1 bg-[var(--primary)]" />
+      <div className="flex-1 bg-[var(--action)]" />
+      <div className="w-24 bg-[var(--action)]" />
+      <div className="flex-1 bg-[var(--action)]" />
     </div>
   );
 }

@@ -234,7 +234,7 @@ describe('EleveDashboard', () => {
     renderDashboard(<EleveDashboard />);
     await waitFor(() => expect(screen.getByText('Aucun cours planifié')).toBeInTheDocument());
 
-    fireEvent.click(screen.getByRole('tab', { name: /Mes Notes/i }));
+    fireEvent.click(screen.getByRole('tab', { name: /Mes notes/i }));
 
     await waitFor(() => expect(screen.getByText('Aucune note disponible')).toBeInTheDocument());
   });
@@ -245,7 +245,7 @@ describe('EleveDashboard', () => {
     renderDashboard(<EleveDashboard />);
     await waitFor(() => expect(screen.getByText('13.5/20')).toBeInTheDocument());
 
-    fireEvent.click(screen.getByRole('tab', { name: /Mes Notes/i }));
+    fireEvent.click(screen.getByRole('tab', { name: /Mes notes/i }));
 
     await waitFor(() => expect(screen.getByText('15/20')).toBeInTheDocument());
     expect(screen.getByText('9/20')).toBeInTheDocument();
@@ -278,7 +278,7 @@ describe('EleveDashboard', () => {
     renderDashboard(<EleveDashboard />);
     await waitFor(() => expect(screen.getByText('13.5/20')).toBeInTheDocument());
 
-    fireEvent.click(screen.getByRole('tab', { name: /Emploi du Temps/i }));
+    fireEvent.click(screen.getByRole('tab', { name: /Emploi du temps/i }));
 
     await waitFor(() => expect(screen.getByTestId('url').textContent).toBe('/emploi-du-temps'));
   });
@@ -370,8 +370,8 @@ describe('ParentDashboard', () => {
       },
     ],
     stats: [
-      { title: 'Enfants Scolarisés', value: 2 },
-      { title: 'Moyenne Générale', value: 12.5 },
+      { title: 'Enfants scolarisés', value: 2 },
+      { title: 'Moyenne générale', value: 12.5 },
     ],
     evolution: [{ mois: 'Fév', Kossi: 14 }],
     communications: [],
@@ -396,7 +396,7 @@ describe('ParentDashboard', () => {
     expect(screen.getAllByText('père')).toHaveLength(1);
     expect(screen.getAllByText('Contact principal')).toHaveLength(1);
     expect(screen.getAllByText('mère')).toHaveLength(1);
-    expect(screen.getByText('Enfants Scolarisés')).toBeInTheDocument();
+    expect(screen.getByText('Enfants scolarisés')).toBeInTheDocument();
   });
 
   it('affiche l’état vide quand le parent n’a pas d’enfants', async () => {
@@ -415,10 +415,10 @@ describe('EnseignantDashboard', () => {
 
   const ENSEIGNANT_PAYLOAD = {
     stats: [
-      { title: 'Mes Élèves', value: '2', trend: 0, trendLabel: 'dans mes classes' },
-      { title: 'Cours Cette Semaine', value: '2', trend: 0, trendLabel: 'créneaux planifiés' },
-      { title: 'Moyenne Classe', value: '14,00', trend: 0, trendLabel: 'mes notes' },
-      { title: 'Devoirs à Corriger', value: '1', trend: 0, trendLabel: 'échéance atteinte' },
+      { title: 'Mes élèves', value: '2', trend: 0, trendLabel: 'dans mes classes' },
+      { title: 'Cours cette semaine', value: '2', trend: 0, trendLabel: 'créneaux planifiés' },
+      { title: 'Moyenne classe', value: '14,00', trend: 0, trendLabel: 'mes notes' },
+      { title: 'Devoirs à corriger', value: '1', trend: 0, trendLabel: 'échéance atteinte' },
     ],
     emploi_temps: [
       {
@@ -456,10 +456,10 @@ describe('EnseignantDashboard', () => {
 
     renderDashboard(<EnseignantDashboard />);
 
-    await waitFor(() => expect(screen.getByText('Mes Élèves')).toBeInTheDocument());
-    expect(screen.getByText('Cours Cette Semaine')).toBeInTheDocument();
-    expect(screen.getByText('Moyenne Classe')).toBeInTheDocument();
-    expect(screen.getByText('Devoirs à Corriger')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText('Mes élèves')).toBeInTheDocument());
+    expect(screen.getByText('Cours cette semaine')).toBeInTheDocument();
+    expect(screen.getByText('Moyenne classe')).toBeInTheDocument();
+    expect(screen.getByText('Devoirs à corriger')).toBeInTheDocument();
     expect(screen.getAllByText('2').length).toBeGreaterThan(0);
     expect(screen.getByText('14,00')).toBeInTheDocument();
   });
@@ -479,7 +479,7 @@ describe('EnseignantDashboard', () => {
     http.onGet(ENSEIGNANT_ENDPOINT).reply(200, { data: ENSEIGNANT_PAYLOAD });
 
     renderDashboard(<EnseignantDashboard />);
-    await waitFor(() => expect(screen.getByText('Mes Élèves')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Mes élèves')).toBeInTheDocument());
 
     fireEvent.click(screen.getByRole('tab', { name: /Notes/i }));
 
@@ -517,8 +517,8 @@ describe('AdminDashboard', () => {
 
   const ADMIN_PAYLOAD = {
     stats: [
-      { title: 'Utilisateurs Actifs', value: '1 240', trend: 12, trendLabel: 'nouveaux / 7j' },
-      { title: 'Espace Disque', value: '62%', trend: 0, trendLabel: 'utilisé' },
+      { title: 'Utilisateurs actifs', value: '1 240', trend: 12, trendLabel: 'nouveaux / 7j' },
+      { title: 'Espace disque', value: '62%', trend: 0, trendLabel: 'utilisé' },
       { title: 'Erreurs API', value: '3', trend: 0, trendLabel: 'dans le journal' },
       { title: 'Uptime', value: '12j 4h', trend: 0, trendLabel: 'serveur' },
     ],
@@ -553,9 +553,9 @@ describe('AdminDashboard', () => {
 
     renderDashboard(<AdminDashboard />);
 
-    await waitFor(() => expect(screen.getByText('Utilisateurs Actifs')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Utilisateurs actifs')).toBeInTheDocument());
     expect(screen.getByText('1 240')).toBeInTheDocument();
-    expect(screen.getByText('Activité Plateforme')).toBeInTheDocument();
+    expect(screen.getByText('Activité plateforme')).toBeInTheDocument();
     expect(screen.getByText('Disque')).toBeInTheDocument();
     expect(screen.getByText('1 erreurs')).toBeInTheDocument();
     expect(screen.getByText('Faille SQL')).toBeInTheDocument();
@@ -567,7 +567,7 @@ describe('AdminDashboard', () => {
     renderDashboard(<AdminDashboard />);
 
     await waitFor(() => expect(screen.getByText('Aho Kossi')).toBeInTheDocument());
-    expect(screen.getByText('Utilisateurs Récents')).toBeInTheDocument();
+    expect(screen.getByText('Utilisateurs récents')).toBeInTheDocument();
     expect(screen.getByText(/k\.aho@ecole\.bj/)).toBeInTheDocument();
   });
 
@@ -575,9 +575,9 @@ describe('AdminDashboard', () => {
     http.onGet(ADMIN_ENDPOINT).reply(200, { data: ADMIN_PAYLOAD });
 
     renderDashboard(<AdminDashboard />);
-    await waitFor(() => expect(screen.getByText('Utilisateurs Actifs')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Utilisateurs actifs')).toBeInTheDocument());
 
-    fireEvent.click(screen.getByRole('tab', { name: /Logs Système/i }));
+    fireEvent.click(screen.getByRole('tab', { name: /Logs système/i }));
 
     // La bascule d'onglet passe par une animation (AnimatePresence) : on
     // attend un marqueur propre à la section Logs, pas un texte présent
@@ -598,9 +598,9 @@ describe('AdminDashboard', () => {
     });
 
     renderDashboard(<AdminDashboard />);
-    await waitFor(() => expect(screen.getByText('Utilisateurs Actifs')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Utilisateurs actifs')).toBeInTheDocument());
 
-    fireEvent.click(screen.getByRole('tab', { name: /Logs Système/i }));
+    fireEvent.click(screen.getByRole('tab', { name: /Logs système/i }));
 
     await waitFor(() => expect(screen.getByText(/Aucune entrée de journal/)).toBeInTheDocument());
   });

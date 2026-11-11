@@ -79,14 +79,14 @@ export default function SoinsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--text-tertiary)]" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
+      <div className="flex flex-col items-center justify-center h-64 text-[var(--text-secondary)]">
         <AlertCircle className="h-8 w-8 mb-2 text-red-400" />
         <p className="text-sm">{error}</p>
       </div>
@@ -97,8 +97,8 @@ export default function SoinsPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.infirmier.soins.title')}</h1>
-          <p className="text-sm text-neutral-500">{t('pages.infirmier.soins.subtitle')}</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.infirmier.soins.title')}</h1>
+          <p className="text-sm text-[var(--text-secondary)]">{t('pages.infirmier.soins.subtitle')}</p>
         </div>
         <Button size="sm" icon={<Plus />}>{t('pages.infirmier.soins.nouveau_soin')}</Button>
       </div>
@@ -115,7 +115,7 @@ export default function SoinsPage() {
       <Card>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
             <Input
               placeholder={t('common.search_student')}
               value={search}
@@ -128,7 +128,7 @@ export default function SoinsPage() {
               value={filterUrgence}
               onChange={(e) => setFilterUrgence(e.target.value)}
               aria-label={t('pages.infirmier.soins.filtrer_par_type_d_urgence')}
-              className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+              className="h-10 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40   "
             >
               <option value="">{t('common.all_types')}</option>
               <option value="urgence">{t('pages.infirmier.soins.urgence')}</option>
@@ -138,7 +138,7 @@ export default function SoinsPage() {
               value={filterStatut}
               onChange={(e) => setFilterStatut(e.target.value)}
               aria-label={t('common.filter_by_status')}
-              className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+              className="h-10 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40   "
             >
               <option value="">{t('common.all_statuses')}</option>
               <option value="traite">{t('pages.infirmier.soins.traite')}</option>
@@ -152,7 +152,7 @@ export default function SoinsPage() {
       <div className="space-y-3">
         {filtered.length === 0 && (
           <Card>
-            <div className="text-center py-8 text-neutral-500">
+            <div className="text-center py-8 text-[var(--text-secondary)]">
               <Heart className="mx-auto h-8 w-8 mb-2" />
               <p className="text-sm">{t('pages.infirmier.soins.aucun_soin_trouve')}</p>
             </div>
@@ -166,7 +166,7 @@ export default function SoinsPage() {
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-sm font-semibold text-neutral-900 dark:text-white">{soin.motif || t('pages.infirmier.soins.consultation')}</span>
+                  <span className="text-sm font-semibold text-[var(--text-primary)] ">{soin.motif || t('pages.infirmier.soins.consultation')}</span>
                   <Badge variant={soin.traitement ? 'primary' : 'warning'} size="sm">
                     {soin.traitement ? t('pages.infirmier.soins.traite') : t('common.status.in_progress')}
                   </Badge>
@@ -175,9 +175,9 @@ export default function SoinsPage() {
                   </Badge>
                 </div>
                 {soin.diagnostic && (
-                  <p className="text-xs text-neutral-500 mt-1 italic">{soin.diagnostic}</p>
+                  <p className="text-xs text-[var(--text-secondary)] mt-1 italic">{soin.diagnostic}</p>
                 )}
-                <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-neutral-500">
+                <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-[var(--text-secondary)]">
                   <span className="flex items-center gap-1">
                     <Avatar name={`${soin.eleve?.prenom || ''} ${soin.eleve?.nom || ''}`} size="xs" />
                     {soin.eleve?.prenom} {soin.eleve?.nom} · {soin.eleve?.classe?.nom_classe || '—'}

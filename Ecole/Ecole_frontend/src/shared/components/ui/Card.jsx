@@ -22,7 +22,7 @@ function Card({ children, className, variant = 'default', hover = false, padding
   return (
     <div
       className={cn(
-        'rounded-xl transition-all duration-200',
+        'rounded-lg transition-colors duration-150',
         variantStyles[variant] || variantStyles.default,
         hover &&
           'cursor-pointer hover:shadow-[var(--shadow-4)]',
@@ -42,7 +42,7 @@ Card.Header = forwardRef(function CardHeader({ children, title, className, actio
     <div
       ref={ref}
       className={cn(
-        'flex items-center justify-between gap-4',
+        'flex flex-wrap items-center justify-between gap-4',
         padding && 'px-5 pt-5 lg:px-6 lg:pt-6',
         className
       )}
@@ -69,7 +69,7 @@ Card.Footer = forwardRef(function CardFooter({ children, className, padding = tr
     <div
       ref={ref}
       className={cn(
-        'flex items-center gap-3',
+        'flex flex-wrap items-center gap-3',
         padding && 'px-5 pb-5 pt-0 lg:px-6 lg:pb-6',
         className
       )}
@@ -83,7 +83,7 @@ Card.Title = forwardRef(function CardTitle({ children, className, as: Component 
   return (
     <Component
       ref={ref}
-      className={cn('font-fraunces text-lg font-semibold leading-tight text-[var(--text-primary)]', className)}
+      className={cn('font-heading text-lg font-semibold leading-tight text-[var(--text-primary)]', className)}
     >
       {children}
     </Component>

@@ -9,8 +9,8 @@ import { cn } from '@/shared/lib/utils';
 
 function Separator({ orientation = 'horizontal', variant = 'default', className }) {
   const variantStyles = {
-    default: 'bg-neutral-200 dark:bg-neutral-800',
-    subtle: 'bg-neutral-100 dark:bg-neutral-800/50',
+    default: 'bg-[var(--surface-subtle)] ',
+    subtle: 'bg-[var(--surface-subtle)] ',
     gradient: 'bg-gradient-to-r from-transparent via-neutral-200 to-transparent dark:via-neutral-800',
   };
 

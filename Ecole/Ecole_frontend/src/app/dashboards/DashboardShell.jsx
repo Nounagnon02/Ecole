@@ -50,14 +50,14 @@ export default function DashboardShell({
           <motion.h1
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-2xl font-bold text-neutral-900 dark:text-white"
+            className="text-2xl font-bold text-[var(--text-primary)] "
           >
             {title}
           </motion.h1>
           {/* Le sous-titre est facultatif et peut être un nœud : le tableau de
               bord directeur n'affiche que la date, celui de l'élève y glisse
               sa classe. */}
-          <p className="text-neutral-500 dark:text-neutral-400 mt-1">
+          <p className="text-[var(--text-secondary)]  mt-1">
             {subtitle ? <>{subtitle} — </> : null}
             {format(new Date(), 'EEEE d MMMM yyyy', { locale: fr })}
           </p>
@@ -71,7 +71,7 @@ export default function DashboardShell({
       {error && <ErrorDisplay message={error} onRetry={onRefresh} />}
 
       {tabs.length > 0 && (
-        <div className="border-b border-neutral-200 dark:border-neutral-800">
+        <div className="border-b border-[var(--border)] ">
           {/* `role="tablist"` et les `aria-*` manquaient partout : la barre
               n'était qu'une rangée de boutons pour un lecteur d'écran. */}
           <nav className="flex gap-1 overflow-x-auto -mb-px" role="tablist" aria-label={title}>
@@ -91,7 +91,7 @@ export default function DashboardShell({
                     'flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-all whitespace-nowrap',
                     actif
                       ? 'border-[var(--accent)] text-[var(--accent)] dark:text-[var(--accent)]'
-                      : 'border-transparent text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200',
+                      : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]  ',
                   )}
                 >
                   {Icon && <Icon className="h-4 w-4" />} {tab.label}

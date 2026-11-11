@@ -79,7 +79,7 @@ function Tooltip({ children, content, side = 'top', className }) {
         role="tooltip"
         className={cn(
           'pointer-events-none absolute z-50 whitespace-nowrap',
-          'rounded-lg bg-neutral-900 px-2.5 py-1.5 text-xs font-medium text-white shadow-lg dark:bg-neutral-50 dark:text-neutral-900',
+          'rounded-lg bg-[var(--surface-raised)] px-2.5 py-1.5 text-xs font-medium text-white shadow-lg  ',
           'transition-all duration-150',
           isVisible ? 'opacity-100' : 'opacity-0',
           sideStyles[side]
