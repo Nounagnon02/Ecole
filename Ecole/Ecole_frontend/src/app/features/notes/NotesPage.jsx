@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/shared/lib/utils';
 import { useApiQuery, useApiMutation, api } from '@/shared/lib/api-client';
+import { unwrapList } from '@/shared/lib/unwrap';
 import StatsCard from '@/shared/components/ui/StatsCard';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
@@ -30,13 +31,20 @@ export default function NotesPage() {
   const [classementClasse, setClassementClasse] = useState('');
   const [classementPeriode, setClassementPeriode] = useState('Trimestre 1');
 
+  const [page, setPage] = useState(1);
+
   const { data: notesData, isLoading, error, refetch } = useApiQuery(
-    ['notes'],
-    '/notes/eleve',
+    ['notes', page],
+    page > 1 ? `/notes/eleve?page=${page}` : '/notes/eleve',
   );
 
-  const notes = Array.isArray(notesData?.data) ? notesData.data
-    : Array.isArray(notesData) ? notesData : [];
+  // L'API renvoie une enveloppe contenant un paginateur Laravel
+  // (`data.data.data`). Ne lire que `data` donnait une liste vide : la page
+  // affichait « 0 évaluation » alors que la base en contenait des centaines.
+  const notes = useMemo(() => unwrapList(notesData), [notesData]);
+  const paginateur = notesData?.data && !Array.isArray(notesData.data) ? notesData.data : null;
+  const dernierePage = paginateur?.last_page ?? 1;
+  const totalNotes = paginateur?.total ?? notes.length;
 
   const matiereMap = useMemo(() => {
     const map = new Map();
@@ -82,9 +90,11 @@ export default function NotesPage() {
     ? (notes.reduce((a, n) => a + parseFloat(n.note ?? 0), 0) / notes.length).toFixed(1)
     : '—';
 
+  // Sans note, un taux n'a pas de sens : « 0 % de réussite, 100 % d'échecs »
+  // était affiché sur une classe qui n'avait simplement pas encore été notée.
   const tauxReussite = notes.length > 0
     ? Math.round((notes.filter((n) => parseFloat(n.note) >= 10).length / notes.length) * 100)
-    : 0;
+    : null;
 
   const handleExport = () => {
     const params = new URLSearchParams();
@@ -192,9 +202,9 @@ export default function NotesPage() {
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatsCard title={t('pages.notes.notes.moyenne_generale')} value={`${moyenneGenerale}/20`} icon={Award} color="primary" />
-        <StatsCard title={t('pages.notes.notes.total_evaluations')} value={String(notes.length)} icon={BookOpen} color="emerald" />
-        <StatsCard title={t('pages.notes.notes.taux_de_reussite')} value={`${tauxReussite}%`} icon={TrendingUp} color="sky" />
-        <StatsCard title={t('pages.notes.notes.echecs')} value={`${100 - tauxReussite}%`} icon={TrendingDown} color="red" />
+        <StatsCard title={t('pages.notes.notes.total_evaluations')} value={String(totalNotes)} icon={BookOpen} color="emerald" />
+        <StatsCard title={t('pages.notes.notes.taux_de_reussite')} value={tauxReussite === null ? '—' : `${tauxReussite}%`} icon={TrendingUp} color="sky" />
+        <StatsCard title={t('pages.notes.notes.echecs')} value={tauxReussite === null ? '—' : `${100 - tauxReussite}%`} icon={TrendingDown} color="red" />
       </div>
 
       {/* Tabs */}
@@ -358,6 +368,26 @@ export default function NotesPage() {
                 ))}
               </Table.Body>
             </Table>
+            {dernierePage > 1 && (
+              <nav
+                className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--border)] px-4 py-3"
+                aria-label={t('pages.notes.notes.pagination')}
+              >
+                <p className="text-sm text-[var(--text-secondary)]" role="status">
+                  {t('pages.notes.notes.page_x_sur_y', { page, total: dernierePage })}
+                  {' · '}
+                  {t('pages.notes.notes.stats_sur_la_page', { n: notes.length })}
+                </p>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" disabled={page <= 1 || isLoading} onClick={() => setPage((p) => Math.max(1, p - 1))}>
+                    {t('pages.notes.notes.page_precedente')}
+                  </Button>
+                  <Button variant="outline" size="sm" disabled={page >= dernierePage || isLoading} onClick={() => setPage((p) => Math.min(dernierePage, p + 1))}>
+                    {t('pages.notes.notes.page_suivante')}
+                  </Button>
+                </div>
+              </nav>
+            )}
           </Card>
         </>
       )}
