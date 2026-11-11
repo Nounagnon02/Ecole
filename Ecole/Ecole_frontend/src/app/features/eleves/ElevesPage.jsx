@@ -22,6 +22,9 @@ import Input from '@/shared/components/ui/Input';
 import { Skeleton } from '@/shared/components/ui/Skeleton';
 import { toast } from 'sonner';
 import { useTranslation } from '@/shared/i18n';
+import useAuthStore from '@/shared/stores/auth-store';
+import { ROLES, ROLE_GROUPS } from '@/shared/types/roles';
+import InscriptionDialog from './InscriptionDialog';
 
 const STATUT_COLORS = {
   actif: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400',
@@ -43,6 +46,9 @@ export default function ElevesPage() {
   const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [filterClasse, setFilterClasse] = useState('');
+  const [inscription, setInscription] = useState(false);
+  // Mêmes rôles que `ElevePolicy::create` côté API.
+  const peutInscrire = useAuthStore((etat) => etat.hasAnyRole([...ROLE_GROUPS.DIRECTION, ROLES.SECRETAIRE]));
 
   const { data: elevesData, isLoading, error, refetch } = useApiQuery(
     ['eleves'],
@@ -104,8 +110,27 @@ export default function ElevesPage() {
     { title: t('pages.eleves.eleves.moyenne_generale'), value: `${moyenneGenerale}/20`, icon: GraduationCap, color: 'sky' },
   ];
 
+  // Export de la liste affichée (filtres compris). Séparateur « ; » et BOM :
+  // c'est ce qu'ouvre correctement un tableur réglé en français.
+  const exporter = () => {
+    const cellule = (v) => { const texte = String(v ?? ''); return /[;"\n]/.test(texte) ? `"${texte.replace(/"/g, '""')}"` : texte; };
+    const lignes = [
+      ['Matricule', 'Nom', 'Prénom', 'Classe', 'Statut'],
+      ...filtered.map((e) => [e.numero_matricule, e.user?.name, e.user?.prenom, e.classe?.nom_classe, estActif(e) ? t('pages.eleves.eleves.actifs') : t('pages.eleves.eleves.inactifs')]),
+    ];
+    const url = URL.createObjectURL(new Blob(['\uFEFF' + lignes.map((l) => l.map(cellule).join(';')).join('\r\n')], { type: 'text/csv;charset=utf-8' }));
+    const lien = document.createElement('a');
+    lien.href = url;
+    lien.download = `eleves-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(lien);
+    lien.click();
+    lien.remove();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+      <InscriptionDialog open={inscription} onClose={() => setInscription(false)} onDone={() => refetch()} />
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.eleves.eleves.title')}</h1>
@@ -115,8 +140,10 @@ export default function ElevesPage() {
           <Button variant="ghost" size="sm" onClick={refetch} disabled={isLoading}>
             <RefreshCw className={cn('h-4 w-4 mr-1', isLoading && 'animate-spin')} />
           </Button>
-          <Button variant="outline" size="sm" icon={<Download />}>{t('common.export')}</Button>
-          <Button size="sm" icon={<Plus />}>{t('pages.eleves.eleves.nouvel_eleve')}</Button>
+          <Button variant="outline" size="sm" icon={<Download />} onClick={exporter} disabled={filtered.length === 0}>{t('common.export')}</Button>
+          {peutInscrire && (
+            <Button size="sm" icon={<Plus />} onClick={() => setInscription(true)}>{t('pages.eleves.eleves.nouvel_eleve')}</Button>
+          )}
         </div>
       </div>
 
