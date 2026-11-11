@@ -55,6 +55,7 @@
     "assistant": "Assistant"
   },
   "common": {
+    "coming_soon": "Coming soon",
     "loading": "Loading...",
     "save": "Save",
     "cancel": "Cancel",
