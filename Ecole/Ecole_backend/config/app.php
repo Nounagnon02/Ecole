@@ -84,7 +84,9 @@ return [
     |
     */
 
-    'timezone' => 'UTC',
+    // Le Bénin est à UTC+1, sans heure d'été. En UTC, un paiement fait à
+    // 00 h 30 était daté de la veille sur le reçu.
+    'timezone' => env('APP_TIMEZONE', 'Africa/Porto-Novo'),
 
     /*
     |--------------------------------------------------------------------------
@@ -97,7 +99,7 @@ return [
     |
     */
 
-    'locale' => 'en',
+    'locale' => env('APP_LOCALE', 'fr'),
 
     /*
     |--------------------------------------------------------------------------
@@ -178,7 +180,6 @@ return [
     | Laravel 11. Les providers du framework sont découverts automatiquement.
     |
     */
-
 
     /*
     |--------------------------------------------------------------------------
