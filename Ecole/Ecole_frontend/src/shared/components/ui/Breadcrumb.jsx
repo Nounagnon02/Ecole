@@ -82,6 +82,9 @@ const PATH_LABEL_MAP = Object.entries(ROUTE_CONFIG).reduce((map, [key, cfg]) => 
 /* ─── Segments ignorés ───────────────────────────────────────────── */
 const IGNORE_SEGMENTS = new Set(['dashboard']);
 
+/* ─── Adresses qui existent réellement dans l'application ───────── */
+const ROUTES_CONNUES = new Set(Object.values(ROUTE_CONFIG).map((route) => route.path));
+
 /* ─── Extraire le premier segment comme qualifiant de groupe ─────── */
 function inferGroupLabel(segment) {
   const groupLabels = {
@@ -139,9 +142,17 @@ export default function Breadcrumb({ items: propItems, className }) {
         (i === 0 ? inferGroupLabel(seg) : null) ||
         segmentToLabel(seg);
 
+      // Un niveau intermédiaire n'est un lien que s'il mène quelque part :
+      // `/parent`, `/directeur`, `/admin`… ne sont pas des pages et renvoyaient
+      // vers la page 404. Le groupe pointe vers son tableau de bord quand il
+      // existe ; sinon il reste un simple texte.
+      const cible = ROUTES_CONNUES.has(accumulated)
+        ? accumulated
+        : ROUTES_CONNUES.has(`${accumulated}/dashboard`) ? `${accumulated}/dashboard` : undefined;
+
       items.push({
         label,
-        href: isLast ? undefined : accumulated,
+        href: isLast ? undefined : cible,
       });
     }
 
