@@ -62,6 +62,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/', [EleveController::class, 'index'])->middleware('role:directeur,enseignant,secretaire,comptable,surveillant,censeur');
         // L'inscription est le travail du secrétariat (ElevePolicy::create).
         Route::post('/store', [EleveController::class, 'store'])->middleware('role:directeur,secretaire');
+        Route::get('/{id}/fiche', [EleveController::class, 'fiche']); // ElevePolicy::view
         Route::get('/{id}', [EleveController::class, 'show']); // ElevePolicy::view appliquée dans le contrôleur
         Route::put('/update/{id}', [EleveController::class, 'update'])->middleware('role:directeur,secretaire');
 
