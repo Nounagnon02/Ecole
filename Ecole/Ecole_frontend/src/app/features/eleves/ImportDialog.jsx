@@ -48,15 +48,17 @@ export default function ImportDialog({ open, onClose, onDone }) {
   const [erreur, setErreur] = useState(null);
   const [envoi, setEnvoi] = useState(false);
   const [accesRecuperes, setAccesRecuperes] = useState(false);
+  const [creerClasses, setCreerClasses] = useState(false);
 
   useEffect(() => {
-    if (open) { setFichier(null); setControle(null); setResultat(null); setErreur(null); setEnvoi(false); setAccesRecuperes(false); }
+    if (open) { setFichier(null); setControle(null); setResultat(null); setErreur(null); setEnvoi(false); setAccesRecuperes(false); setCreerClasses(false); }
   }, [open]);
 
-  const envoyer = async (choisi, simulation) => {
+  const envoyer = async (choisi, simulation, avecClasses = creerClasses) => {
     const corps = new FormData();
     corps.append('file', choisi);
     if (simulation) corps.append('simulation', '1');
+    if (avecClasses) corps.append('creer_classes', '1');
     setEnvoi(true);
     setErreur(null);
     try {
@@ -77,7 +79,16 @@ export default function ImportDialog({ open, onClose, onDone }) {
     if (!choisi) return;
     setFichier(choisi);
     setControle(null);
-    setControle(await envoyer(choisi, true));
+    setCreerClasses(false);
+    setControle(await envoyer(choisi, true, false));
+  };
+
+  // L'agent a vu la liste des classes inconnues et demande leur création :
+  // le fichier est recontrôlé avec cette option, puis importé avec elle.
+  const basculerClasses = async (evenement) => {
+    const voulu = evenement.target.checked;
+    setCreerClasses(voulu);
+    setControle(await envoyer(fichier, true, voulu));
   };
 
   const importer = async () => {
@@ -135,6 +146,17 @@ export default function ImportDialog({ open, onClose, onDone }) {
           </div>
           {fichier && <p className="text-sm text-[var(--text-primary)]">{p('fichier_choisi', { nom: fichier.name })}</p>}
           {erreur && <p role="alert" className="text-sm text-[var(--error)]">{erreur}</p>}
+
+          {fichier && (creerClasses || controle?.classes_inconnues?.length > 0) && (
+            <label className="flex items-start gap-2 rounded-md border border-[var(--border)] p-3 text-sm text-[var(--text-primary)]">
+              <input type="checkbox" className="mt-0.5" checked={creerClasses} onChange={basculerClasses} disabled={envoi} />
+              <span>
+                {creerClasses
+                  ? p('classes_a_creer', { classes: (controle?.classes_creees ?? []).join(', ') })
+                  : p('creer_classes', { nombre: controle.classes_inconnues.length, classes: controle.classes_inconnues.join(', ') })}
+              </span>
+            </label>
+          )}
 
           {controle?.success && (
             <div role="status" className="rounded-md border border-[var(--border)] bg-[var(--surface-subtle)] p-3 text-sm text-[var(--text-primary)]">

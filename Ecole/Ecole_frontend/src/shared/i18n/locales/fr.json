@@ -52,7 +52,8 @@
     "configuration": "Configuration",
     "identite": "Identité visuelle",
     "affectations": "Affectations",
-    "assistant": "Assistant"
+    "assistant": "Assistant",
+    "personnel": "Personnel"
   },
   "common": {
     "coming_soon": "Bientôt disponible",
@@ -1127,7 +1128,7 @@
         "aide": "Un seul fichier CSV pour les élèves, les parents, les enseignants et le personnel : une ligne par personne, avec son rôle dans la première colonne.",
         "aide_eleve": "Élève : nom, prénom et classe. Le matricule est généré s’il est vide. Le parent indiqué sur la ligne est créé, ou retrouvé par son téléphone.",
         "aide_personnel": "Parent, enseignant, personnel : nom et téléphone, qui servira d’identifiant. Les comptes du personnel sont réservés à la direction.",
-        "aide_tout_ou_rien": "Le fichier est d’abord contrôlé. Si une seule ligne pose problème, rien n’est créé. 200 lignes au plus par fichier.",
+        "aide_tout_ou_rien": "Le fichier est d’abord contrôlé. Si une seule ligne pose problème, rien n’est créé. Une école entière tient en un fichier (2 000 lignes au plus).",
         "modele": "Télécharger le modèle",
         "choisir": "Choisir un fichier CSV",
         "autre_fichier": "Choisir un autre fichier",
@@ -1155,7 +1156,9 @@
           "infirmier": "infirmier(s)",
           "bibliothecaire": "bibliothécaire(s)",
           "directeur": "directeur(s)"
-        }
+        },
+        "creer_classes": "Créer les {nombre} classe(s) absentes de l’école : {classes}. Vérifiez qu’il ne s’agit pas de fautes de frappe.",
+        "classes_a_creer": "Les classes suivantes seront créées : {classes}."
       }
     },
     "emploi_du_temps": {
@@ -1908,6 +1911,35 @@
         "page_label": "Page {current} sur {last}",
         "total_label": "{n} au total"
       }
+    },
+    "personnel": {
+      "title": "Personnel",
+      "subtitle": "Les comptes des enseignants et de l’administration de l’école.",
+      "ajouter": "Ajouter un membre",
+      "titre_fait": "Compte créé",
+      "rechercher": "Rechercher un membre",
+      "aucun": "Aucun membre du personnel.",
+      "nom": "Nom",
+      "prenom": "Prénom",
+      "role": "Rôle",
+      "choisir_role": "Choisir un rôle",
+      "telephone": "Téléphone",
+      "telephone_aide": "10 chiffres, en commençant par 01. Il servira d’identifiant.",
+      "email": "Adresse e-mail (facultatif)",
+      "identifiant": "Identifiant",
+      "etat": "État",
+      "actif": "Actif",
+      "jamais_connecte": "Jamais connecté",
+      "desactive": "Désactivé",
+      "creer": "Créer le compte",
+      "role_requis": "Choisissez un rôle.",
+      "nom_requis": "Indiquez le nom.",
+      "telephone_invalide": "Numéro invalide : 10 chiffres, en commençant par 01.",
+      "echec": "Le compte n’a pas pu être créé.",
+      "fait": "Le compte de {nom} est créé.",
+      "une_seule_fois": "Notez ces accès et remettez-les à la personne : le mot de passe provisoire ne sera plus affiché, et devra être remplacé à la première connexion.",
+      "mot_de_passe": "Mot de passe provisoire",
+      "terminer": "Terminer"
     }
   },
   "app_shell": {

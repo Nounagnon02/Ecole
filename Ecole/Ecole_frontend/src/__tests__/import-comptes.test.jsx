@@ -94,6 +94,29 @@ describe('import de comptes par CSV', () => {
     expect(within(dialogue).queryByRole('button', { name: /Importer les/ })).not.toBeInTheDocument();
   });
 
+  it('propose de créer les classes inconnues, recontrôle, puis importe avec cette option', async () => {
+    http.onPost('/imports/comptes').reply(200, {
+      success: false, simulation: true, total: 2, crees: {}, acces: [], classes_inconnues: ['5ème B', 'CE1 A'], classes_creees: [],
+      erreurs: [{ ligne: 2, message: 'Classe « 5ème B » introuvable dans l’école.' }],
+    });
+    const dialogue = await ouvrir();
+    choisir(dialogue);
+    const caseClasses = await within(dialogue).findByRole('checkbox', { name: /Créer les 2 classe\(s\) absentes de l’école : 5ème B, CE1 A/ });
+    expect(envois()[0].body.get('creer_classes')).toBeNull();
+
+    http.onPost('/imports/comptes').reply(200, { success: true, simulation: true, total: 2, crees: { eleve: 2 }, erreurs: [], acces: [], classes_inconnues: [], classes_creees: ['5ème B', 'CE1 A'] });
+    fireEvent.click(caseClasses);
+
+    expect(await within(dialogue).findByText(/Les classes suivantes seront créées : 5ème B, CE1 A\./)).toBeInTheDocument();
+    expect(envois()[1].body.get('creer_classes')).toBe('1');
+    expect(envois()[1].body.get('simulation')).toBe('1');
+
+    fireEvent.click(within(dialogue).getByRole('button', { name: /Importer les 2 lignes/ }));
+    await waitFor(() => expect(envois()).toHaveLength(3));
+    expect(envois()[2].body.get('creer_classes')).toBe('1');
+    expect(envois()[2].body.get('simulation')).toBeNull();
+  });
+
   it('prévient avant de fermer sans avoir récupéré les accès', async () => {
     http.onPost('/imports/comptes').reply(200, { success: true, simulation: false, total: 1, crees: { eleve: 1 }, erreurs: [], acces: [{ role: 'eleve', nom: 'A', identifiant: 'E1', mot_de_passe_provisoire: 'P1', nouveau: true }] });
     const confirmer = vi.spyOn(window, 'confirm').mockReturnValue(false);

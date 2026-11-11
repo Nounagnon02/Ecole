@@ -168,6 +168,13 @@ export const ROUTE_CONFIG = {
     roles: [...ROLE_GROUPS.ENSEIGNANTS],
   },
 
+  // ─── PERSONNEL (direction) ───────────────────────────────────────────
+  personnel: {
+    path: '/personnel',
+    component: lazy(() => import('@/app/features/personnel/PersonnelPage')),
+    roles: [...ROLE_GROUPS.DIRECTION],
+  },
+
   // ─── FEATURES PARENT ─────────────────────────────────────────────────
   parentEnfants: {
     path: '/parent/enfants',
