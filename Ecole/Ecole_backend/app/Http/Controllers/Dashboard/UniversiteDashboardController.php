@@ -42,7 +42,10 @@ class UniversiteDashboardController extends Controller
                 ]);
 
             // Stats par faculté
-            $facultes = $facultesModel::withCount(['departements'])
+            // `departements` est lu plus bas pour chaque faculté. Sans ce chargement
+            // anticipé, l'application — qui interdit le chargement à la demande hors
+            // production — répondait 500 aux cinq rôles de l'université.
+            $facultes = $facultesModel::with('departements:id,faculte_id')->withCount(['departements'])
                 ->get()
                 ->map(function ($f) use ($etudiantsModel, $enseignantsModel) {
                     $deptIds = $f->departements->pluck('id');
