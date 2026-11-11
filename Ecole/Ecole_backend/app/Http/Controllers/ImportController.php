@@ -35,4 +35,32 @@ class ImportController extends Controller
             'details' => $results
         ]);
     }
+
+    /**
+     * Inscription en masse : élèves, parents, enseignants et personnel dans un
+     * seul fichier CSV. `simulation=1` contrôle le fichier sans rien créer.
+     * POST /api/imports/comptes
+     */
+    public function importComptes(Request $request, \App\Services\Import\ComptesImport $import)
+    {
+        $request->validate([
+            'file' => 'required|file|max:1024|extensions:csv,txt',
+            'simulation' => 'nullable|boolean',
+        ]);
+
+        // Un hachage de mot de passe par compte : laisser le temps d'un fichier plein.
+        @set_time_limit(300);
+
+        $resultat = $import->importer(
+            (string) file_get_contents($request->file('file')->getRealPath()),
+            $request->user(),
+            $request->boolean('simulation'),
+        );
+
+        if ($resultat['success'] && ! $resultat['simulation']) {
+            \Cache::forget('dashboard_directeur_'.($request->user()->ecole_id ?? 'global'));
+        }
+
+        return response()->json($resultat, $resultat['success'] ? 200 : 422);
+    }
 }
