@@ -37,7 +37,7 @@ const getGraviteColor = (gravite) => {
     case 'grave': return 'text-red-500 bg-red-100 dark:bg-red-900/20';
     case 'moyenne': return 'text-amber-500 bg-amber-100 dark:bg-amber-900/20';
     case 'faible': return 'text-emerald-500 bg-emerald-100 dark:bg-emerald-900/20';
-    default: return 'text-neutral-500 bg-neutral-100 dark:bg-neutral-800';
+    default: return 'text-[var(--text-secondary)] bg-[var(--surface-subtle)] ';
   }
 };
 
@@ -83,14 +83,14 @@ export default function SurveillancePage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--text-tertiary)]" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
+      <div className="flex flex-col items-center justify-center h-64 text-[var(--text-secondary)]">
         <AlertCircle className="h-8 w-8 mb-2 text-red-400" />
         <p className="text-sm">{error}</p>
         <button
@@ -106,8 +106,8 @@ export default function SurveillancePage() {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.surveillant.surveillance.title')}</h1>
-        <p className="text-sm text-neutral-500">{t('pages.surveillant.surveillance.subtitle')}</p>
+        <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.surveillant.surveillance.title')}</h1>
+        <p className="text-sm text-[var(--text-secondary)]">{t('pages.surveillant.surveillance.subtitle')}</p>
       </div>
 
       {/* Stats */}
@@ -126,7 +126,7 @@ export default function SurveillancePage() {
               value={filterGravite}
               onChange={(e) => setFilterGravite(e.target.value)}
               aria-label={t('pages.surveillant.surveillance.filtrer_par_gravite')}
-              className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+              className="h-10 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40   "
             >
               <option value="">{t('pages.surveillant.surveillance.toutes_les_gravites')}</option>
               <option value="faible">{t('pages.surveillant.surveillance.faible')}</option>
@@ -142,7 +142,7 @@ export default function SurveillancePage() {
       <div className="grid gap-3">
         {filtered.length === 0 && (
           <Card>
-            <div className="text-center py-8 text-neutral-500">
+            <div className="text-center py-8 text-[var(--text-secondary)]">
               <Shield className="mx-auto h-8 w-8 mb-2" />
               <p className="text-sm">{t('pages.surveillant.surveillance.aucun_incident_trouve')}</p>
             </div>
@@ -155,21 +155,21 @@ export default function SurveillancePage() {
                 'h-12 w-12 rounded-xl flex items-center justify-center shrink-0',
                 s.gravite === 'grave' ? 'bg-red-100 dark:bg-red-900/20' :
                 s.gravite === 'moyenne' ? 'bg-amber-100 dark:bg-amber-900/20' :
-                'bg-neutral-100 dark:bg-neutral-800'
+                'bg-[var(--surface-subtle)] '
               )}>
                 <Shield className={cn(
                   'h-6 w-6',
                   s.gravite === 'grave' ? 'text-red-500' :
                   s.gravite === 'moyenne' ? 'text-amber-500' :
-                  'text-neutral-400'
+                  'text-[var(--text-tertiary)]'
                 )} />
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-sm font-semibold text-neutral-900 dark:text-white">{s.description}</span>
+                  <span className="text-sm font-semibold text-[var(--text-primary)] ">{s.description}</span>
                   <Badge variant={getStatutVariant(s.statut)} size="sm">{statutLabel(s.statut)}</Badge>
                 </div>
-                <div className="mt-2 flex items-center gap-4 text-sm text-neutral-600 dark:text-neutral-400">
+                <div className="mt-2 flex items-center gap-4 text-sm text-[var(--text-secondary)] ">
                   <span className={cn('inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium', getGraviteColor(s.gravite))}>
                     {s.gravite ? `Gravité: ${s.gravite}` : t('pages.surveillant.surveillance.non_definie')}
                   </span>

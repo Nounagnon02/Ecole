@@ -89,14 +89,14 @@ export default function UtilisateursPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--text-tertiary)]" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
+      <div className="flex flex-col items-center justify-center h-64 text-[var(--text-secondary)]">
         <AlertCircle className="h-8 w-8 mb-2 text-red-400" />
         <p className="text-sm">{error}</p>
       </div>
@@ -107,8 +107,8 @@ export default function UtilisateursPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.admin.utilisateurs.title')}</h1>
-          <p className="text-sm text-neutral-500">{t('pages.admin.utilisateurs.subtitle')}</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.admin.utilisateurs.title')}</h1>
+          <p className="text-sm text-[var(--text-secondary)]">{t('pages.admin.utilisateurs.subtitle')}</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" icon={<Ban />}>{t('pages.admin.utilisateurs.desactiver')}</Button>
@@ -126,7 +126,7 @@ export default function UtilisateursPage() {
       <Card>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
             <Input
               placeholder={t('pages.admin.utilisateurs.rechercher_un_utilisateur')}
               value={search}
@@ -139,7 +139,7 @@ export default function UtilisateursPage() {
               value={filterRole}
               onChange={(e) => setFilterRole(e.target.value)}
               aria-label={t('pages.admin.utilisateurs.filtrer_par_role')}
-              className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+              className="h-10 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm outline-none focus:ring-[var(--accent)]/40   "
             >
               <option value="">{t('pages.admin.utilisateurs.tous_les_roles')}</option>
               {ROLES_DISPLAY.map((r) => (
@@ -150,7 +150,7 @@ export default function UtilisateursPage() {
               value={filterStatut}
               onChange={(e) => setFilterStatut(e.target.value)}
               aria-label={t('common.filter_by_status')}
-              className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+              className="h-10 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm outline-none focus:ring-[var(--accent)]/40   "
             >
               <option value="">{t('common.all_statuses')}</option>
               <option value="actif">{t('pages.admin.utilisateurs.actif')}</option>
@@ -164,7 +164,7 @@ export default function UtilisateursPage() {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-neutral-200 dark:border-neutral-700 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+              <tr className="border-b border-[var(--border)]  text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
                 <th scope="col" className="pb-3 pr-4">{t('pages.admin.utilisateurs.utilisateur')}</th>
                 <th scope="col" className="pb-3 pr-4">{t('pages.admin.utilisateurs.role')}</th>
                 <th scope="col" className="pb-3 pr-4">{t('common.school')}</th>
@@ -176,7 +176,7 @@ export default function UtilisateursPage() {
             <tbody>
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-sm text-neutral-500">
+                  <td colSpan={6} className="py-8 text-center text-sm text-[var(--text-secondary)]">
                     {t('pages.admin.utilisateurs.aucun_utilisateur_trouve')}
                   </td>
                 </tr>
@@ -184,13 +184,13 @@ export default function UtilisateursPage() {
               {filtered.map((u) => {
                 const RoleIcon = ROLE_ICONS[u.role] || Users;
                 return (
-                  <tr key={u.id} className="border-b border-neutral-100 dark:border-neutral-800">
+                  <tr key={u.id} className="border-b border-[var(--border-light)] ">
                     <td className="py-3 pr-4">
                       <div className="flex items-center gap-3">
                         <Avatar name={u.nom} size="sm" />
                         <div>
-                          <span className="text-sm font-medium text-neutral-900 dark:text-white block">{u.nom}</span>
-                          <span className="text-xs text-neutral-500">{u.email}</span>
+                          <span className="text-sm font-medium text-[var(--text-primary)]  block">{u.nom}</span>
+                          <span className="text-xs text-[var(--text-secondary)]">{u.email}</span>
                         </div>
                       </div>
                     </td>
@@ -199,13 +199,13 @@ export default function UtilisateursPage() {
                         <RoleIcon className="h-3 w-3" /> {u.role}
                       </Badge>
                     </td>
-                    <td className="py-3 pr-4 text-sm text-neutral-600 dark:text-neutral-400">{u.ecole}</td>
+                    <td className="py-3 pr-4 text-sm text-[var(--text-secondary)] ">{u.ecole}</td>
                     <td className="py-3 pr-4">
                       <Badge variant={u.statut === 'actif' ? 'primary' : 'outline'} size="sm">
                         {u.statut === 'actif' ? t('common.status.active') : t('common.status.inactive')}
                       </Badge>
                     </td>
-                    <td className="py-3 pr-4 text-sm text-neutral-600 dark:text-neutral-400">
+                    <td className="py-3 pr-4 text-sm text-[var(--text-secondary)] ">
                       {u.derniereConnexion ? (
                         <span className="flex items-center gap-1">
                           <Clock className="h-3 w-3" />

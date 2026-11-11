@@ -89,14 +89,14 @@ export default function CoursPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--text-tertiary)]" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
+      <div className="flex flex-col items-center justify-center h-64 text-[var(--text-secondary)]">
         <AlertCircle className="h-8 w-8 mb-2 text-red-400" />
         <p className="text-sm">{error}</p>
       </div>
@@ -106,15 +106,15 @@ export default function CoursPage() {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.eleve.cours.title')}</h1>
-        <p className="text-sm text-neutral-500">{t('pages.eleve.cours.subtitle')}</p>
+        <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.eleve.cours.title')}</h1>
+        <p className="text-sm text-[var(--text-secondary)]">{t('pages.eleve.cours.subtitle')}</p>
       </div>
 
       {/* Filtres */}
       <Card>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
             <Input
               placeholder={t('common.search_course')}
               value={search}
@@ -126,7 +126,7 @@ export default function CoursPage() {
             value={filterMatiere}
             onChange={(e) => setFilterMatiere(e.target.value)}
             aria-label={t('common.filter_by_subject')}
-            className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+            className="h-10 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40   "
           >
             <option value="">{t('pages.eleve.cours.toutes_les_matieres')}</option>
             {matieres.map((m) => <option key={m} value={m}>{m}</option>)}
@@ -135,7 +135,7 @@ export default function CoursPage() {
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
             aria-label={t('pages.eleve.cours.filtrer_par_type')}
-            className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+            className="h-10 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40   "
           >
             <option value="">{t('common.all_types')}</option>
             <option value="cours">{t('common.courses')}</option>
@@ -149,7 +149,7 @@ export default function CoursPage() {
       <div className="space-y-3">
         {filtered.length === 0 && (
           <Card>
-            <div className="text-center py-8 text-neutral-500">
+            <div className="text-center py-8 text-[var(--text-secondary)]">
               <BookOpen className="mx-auto h-8 w-8 mb-2" />
               <p className="text-sm">{t('common.no_course_found')}</p>
             </div>
@@ -178,33 +178,33 @@ export default function CoursPage() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
                     <Badge variant="primary" size="sm">{c.matiere?.nom || c.matiere || t('common.subject')}</Badge>
-                    <span className="text-xs text-neutral-500 capitalize">
+                    <span className="text-xs text-[var(--text-secondary)] capitalize">
                       {c.type === 'tp' ? 'TP' : c.type}
                     </span>
-                    <div className="flex items-center gap-1 text-xs text-neutral-400">
+                    <div className="flex items-center gap-1 text-xs text-[var(--text-tertiary)]">
                       <Clock className="h-3 w-3" />
                       {c.duree}
                     </div>
                   </div>
-                  <h3 className="mt-1 text-base font-semibold text-neutral-900 dark:text-white">
+                  <h3 className="mt-1 text-base font-semibold text-[var(--text-primary)] ">
                     {c.chapitre || c.intitule || c.titre || t('common.courses')}
                   </h3>
-                  <p className="mt-1 text-sm text-neutral-500">{c.resume}</p>
+                  <p className="mt-1 text-sm text-[var(--text-secondary)]">{c.resume}</p>
 
                   <div className="mt-3 flex items-center gap-4">
-                    <span className="text-xs text-neutral-500 flex items-center gap-1">
+                    <span className="text-xs text-[var(--text-secondary)] flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
                       {c.date > new Date() ? 'Prévu le ' : 'Le '}
                       {formatDate(c.date)}
                     </span>
-                    <span className="text-xs text-neutral-500">{c.prof || c.enseignant || '—'}</span>
+                    <span className="text-xs text-[var(--text-secondary)]">{c.prof || c.enseignant || '—'}</span>
                   </div>
 
                   {/* Ressources */}
                   {c.ressources?.length > 0 && (
                     <div className="mt-3 flex flex-wrap gap-2">
                       {c.ressources.map((r) => (
-                        <button key={r} className="inline-flex items-center gap-1 rounded-lg bg-neutral-100 dark:bg-neutral-800 px-2.5 py-1 text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:bg-[var(--accent-subtle)] hover:text-[var(--accent)] hover:bg-[var(--accent-subtle)] dark:hover:text-[var(--accent)] transition-colors">
+                        <button key={r} className="inline-flex items-center gap-1 rounded-lg bg-[var(--surface-subtle)]  px-2.5 py-1 text-xs font-medium text-[var(--text-secondary)]  hover:bg-[var(--accent-subtle)] hover:text-[var(--accent)] hover:bg-[var(--accent-subtle)] dark:hover:text-[var(--accent)] transition-colors">
                           <Download className="h-3 w-3" />
                           {r}
                         </button>

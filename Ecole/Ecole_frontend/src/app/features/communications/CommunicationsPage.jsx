@@ -181,14 +181,14 @@ export default function CommunicationsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--text-tertiary)]" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
+      <div className="flex flex-col items-center justify-center h-64 text-[var(--text-secondary)]">
         <AlertCircle className="h-8 w-8 mb-2 text-red-400" />
         <p className="text-sm">{error}</p>
         <button
@@ -205,8 +205,8 @@ export default function CommunicationsPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.communications.communications.title')}</h1>
-          <p className="text-sm text-neutral-500">{t('pages.communications.communications.subtitle')}</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.communications.communications.title')}</h1>
+          <p className="text-sm text-[var(--text-secondary)]">{t('pages.communications.communications.subtitle')}</p>
         </div>
         <Button size="sm" icon={<Plus />} onClick={toggleForm} aria-expanded={formOpen}>
           {t('pages.communications.communications.nouvelle_publication')}
@@ -306,7 +306,7 @@ export default function CommunicationsPage() {
               className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all ${
                 activeCategory === id
                   ? 'bg-[var(--accent-subtle)]0 text-white shadow-sm'
-                  : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700'
+                  : 'bg-[var(--surface-subtle)] text-[var(--text-secondary)] hover:bg-[var(--surface-subtle)]   '
               }`}
             >
               <cfg.icon className="h-4 w-4" />
@@ -323,11 +323,11 @@ export default function CommunicationsPage() {
             {Array.from({ length: 3 }).map((_, i) => (
               <Card key={i}>
                 <div className="flex items-start gap-4">
-                  <div className="h-10 w-10 rounded-full bg-neutral-200 animate-pulse dark:bg-neutral-700" />
+                  <div className="h-10 w-10 rounded-full bg-[var(--surface-subtle)] animate-pulse " />
                   <div className="flex-1 space-y-2">
-                    <div className="h-4 w-1/4 bg-neutral-200 animate-pulse dark:bg-neutral-700 rounded" />
-                    <div className="h-4 w-3/4 bg-neutral-200 animate-pulse dark:bg-neutral-700 rounded" />
-                    <div className="h-4 w-1/2 bg-neutral-200 animate-pulse dark:bg-neutral-700 rounded" />
+                    <div className="h-4 w-1/4 bg-[var(--surface-subtle)] animate-pulse  rounded" />
+                    <div className="h-4 w-3/4 bg-[var(--surface-subtle)] animate-pulse  rounded" />
+                    <div className="h-4 w-1/2 bg-[var(--surface-subtle)] animate-pulse  rounded" />
                   </div>
                 </div>
               </Card>
@@ -336,7 +336,7 @@ export default function CommunicationsPage() {
         )}
         {!loadingPosts && sorted.length === 0 && (
           <Card>
-            <div className="text-center py-8 text-neutral-500">
+            <div className="text-center py-8 text-[var(--text-secondary)]">
               <MessageSquare className="mx-auto h-8 w-8 mb-2" />
               <p className="text-sm">{t('pages.communications.communications.aucune_communication_trouvee')}</p>
             </div>
@@ -359,18 +359,18 @@ export default function CommunicationsPage() {
                 <Avatar name={post.auteur} size="md" />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-neutral-900 dark:text-white">
+                    <span className="text-sm font-semibold text-[var(--text-primary)] ">
                       {post.auteur}
                     </span>
                     <Badge variant="ghost" className="text-xs">{post.role}</Badge>
-                    <span className="text-xs text-neutral-500">
+                    <span className="text-xs text-[var(--text-secondary)]">
                       {formatRelativeTime(post.date)}
                     </span>
                   </div>
-                  <h3 className="mt-1 text-base font-semibold text-neutral-900 dark:text-white">
+                  <h3 className="mt-1 text-base font-semibold text-[var(--text-primary)] ">
                     {post.title}
                   </h3>
-                  <p className="mt-2 text-sm text-neutral-600 leading-relaxed dark:text-neutral-400">
+                  <p className="mt-2 text-sm text-[var(--text-secondary)] leading-relaxed ">
                     {post.content}
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2">
@@ -378,7 +378,7 @@ export default function CommunicationsPage() {
                       <Badge key={tag} variant="outline" size="sm">{tag}</Badge>
                     ))}
                   </div>
-                  <div className="mt-4 flex items-center gap-4 text-xs text-neutral-500">
+                  <div className="mt-4 flex items-center gap-4 text-xs text-[var(--text-secondary)]">
                     <button className="inline-flex items-center gap-1.5 hover:text-[var(--accent)] transition-colors">
                       <Heart className="h-4 w-4" />
                       {post.likes}

@@ -108,8 +108,8 @@ export default function ConfigurationPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.admin.configuration.title')}</h1>
-          <p className="text-sm text-neutral-500">{t('pages.admin.configuration.subtitle')}</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.admin.configuration.title')}</h1>
+          <p className="text-sm text-[var(--text-secondary)]">{t('pages.admin.configuration.subtitle')}</p>
         </div>
         <Button size="sm" icon={<Save />}>{t('common.save')}</Button>
       </div>
@@ -128,7 +128,7 @@ export default function ConfigurationPage() {
                     'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-left',
                     activeSection === section.id
                       ? 'bg-[var(--primary-subtle)] text-[var(--primary)]'
-                      : 'text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800'
+                      : 'text-[var(--text-secondary)] hover:bg-[var(--surface-subtle)]  '
                   )}
                 >
                   <div className={cn('h-8 w-8 rounded-lg flex items-center justify-center', SECTION_COLORS[section.id])}>
@@ -136,9 +136,9 @@ export default function ConfigurationPage() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm">{section.titre}</p>
-                    <p className="text-[10px] text-neutral-400 truncate">{section.description}</p>
+                    <p className="text-[10px] text-[var(--text-tertiary)] truncate">{section.description}</p>
                   </div>
-                  <ChevronRight className={cn('h-4 w-4 transition-colors', activeSection === section.id ? 'text-[var(--primary)]' : 'text-neutral-300 dark:text-neutral-600')} />
+                  <ChevronRight className={cn('h-4 w-4 transition-colors', activeSection === section.id ? 'text-[var(--primary)]' : 'text-[var(--text-secondary)] ')} />
                 </button>
               );
             })}
@@ -156,30 +156,30 @@ export default function ConfigurationPage() {
                     <IconComponent className="h-5 w-5" />
                   </div>
                   <div>
-                    <h2 className="text-base font-semibold text-neutral-900 dark:text-white">{section.titre}</h2>
-                    <p className="text-xs text-neutral-500">{section.description}</p>
+                    <h2 className="text-base font-semibold text-[var(--text-primary)] ">{section.titre}</h2>
+                    <p className="text-xs text-[var(--text-secondary)]">{section.description}</p>
                   </div>
                 </div>
 
                 <div className="space-y-4">
                   {section.fields.map((field) => (
-                    <div key={field.id} className="flex items-center justify-between py-2 border-b border-neutral-100 dark:border-neutral-800 last:border-0">
+                    <div key={field.id} className="flex items-center justify-between py-2 border-b border-[var(--border-light)]  last:border-0">
                       <div>
-                        <label className="text-sm font-medium text-neutral-900 dark:text-white">{field.label}</label>
+                        <label className="text-sm font-medium text-[var(--text-primary)] ">{field.label}</label>
                       </div>
                       <div className="flex items-center gap-3">
                         {field.type === 'toggle' ? (
                           <button className={cn(
                             'relative h-6 w-11 rounded-full transition-colors',
-                            field.enabled ? 'bg-[var(--accent)]' : 'bg-neutral-300 dark:bg-neutral-700'
+                            field.enabled ? 'bg-[var(--action)]' : 'bg-[var(--border-heavy)] '
                           )}>
                             <span className={cn(
-                              'absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform',
+                              'absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-[var(--surface-raised)] shadow-sm transition-transform',
                               field.enabled ? 'translate-x-5' : ''
                             )} />
                           </button>
                         ) : (
-                          <span className="text-sm text-neutral-600 dark:text-neutral-400">{field.value}</span>
+                          <span className="text-sm text-[var(--text-secondary)] ">{field.value}</span>
                         )}
                         {field.type !== 'toggle' && (
                           <Button variant="ghost" size="sm" icon={<Settings className="h-3 w-3" />} title={t('common.edit')} />
@@ -189,7 +189,7 @@ export default function ConfigurationPage() {
                   ))}
                 </div>
 
-                <div className="mt-6 pt-4 border-t border-neutral-200 dark:border-neutral-700">
+                <div className="mt-6 pt-4 border-t border-[var(--border)] ">
                   <div className="flex gap-2 justify-end">
                     <Button variant="outline" size="sm">{t('pages.admin.configuration.reinitialiser')}</Button>
                     <Button size="sm" icon={<Save />}>{t('common.save')}</Button>

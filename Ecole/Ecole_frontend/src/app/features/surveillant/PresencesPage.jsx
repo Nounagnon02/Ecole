@@ -106,14 +106,14 @@ export default function PresencesPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--text-tertiary)]" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
+      <div className="flex flex-col items-center justify-center h-64 text-[var(--text-secondary)]">
         <XCircle className="h-8 w-8 mb-2 text-red-400" />
         <p className="text-sm">{error}</p>
       </div>
@@ -142,8 +142,8 @@ export default function PresencesPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.surveillant.presences.title')}</h1>
-          <p className="text-sm text-neutral-500">{t('pages.surveillant.presences.subtitle', { date: formatDate(today) })}</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.surveillant.presences.title')}</h1>
+          <p className="text-sm text-[var(--text-secondary)]">{t('pages.surveillant.presences.subtitle', { date: formatDate(today) })}</p>
         </div>
         <Button variant="outline" size="sm" icon={<Download />}>{t('common.export')}</Button>
       </div>
@@ -160,7 +160,7 @@ export default function PresencesPage() {
       <Card>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
             <Input
               placeholder={t('common.search_student')}
               value={search}
@@ -172,7 +172,7 @@ export default function PresencesPage() {
             value={filterClasse}
             onChange={(e) => setFilterClasse(e.target.value)}
             aria-label={t('common.filter_by_class')}
-            className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+            className="h-10 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40   "
           >
             <option value="">{t('common.all_classes')}</option>
             {classesList.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -181,7 +181,7 @@ export default function PresencesPage() {
             value={filterStatut}
             onChange={(e) => setFilterStatut(e.target.value)}
             aria-label={t('common.filter_by_status')}
-            className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+            className="h-10 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40   "
           >
             <option value="">{t('common.all_statuses')}</option>
             <option value="present">{t('pages.surveillant.presences.present')}</option>
@@ -196,7 +196,7 @@ export default function PresencesPage() {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-neutral-200 dark:border-neutral-700 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+              <tr className="border-b border-[var(--border)]  text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
                 <th scope="col" className="pb-3 pr-4">{t('common.student')}</th>
                 <th scope="col" className="pb-3 pr-4">{t('common.class')}</th>
                 <th scope="col" className="pb-3 pr-4">{t('common.status_label')}</th>
@@ -208,17 +208,17 @@ export default function PresencesPage() {
             <tbody>
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-sm text-neutral-500">
+                  <td colSpan={6} className="py-8 text-center text-sm text-[var(--text-secondary)]">
                     {t('pages.surveillant.presences.aucune_presence_trouvee')}
                   </td>
                 </tr>
               )}
               {filtered.map((p) => (
-                <tr key={p.id} className="border-b border-neutral-100 dark:border-neutral-800">
+                <tr key={p.id} className="border-b border-[var(--border-light)] ">
                   <td className="py-3 pr-4">
                     <div className="flex items-center gap-3">
                       <Avatar name={p.nom} size="sm" />
-                      <span className="text-sm font-medium text-neutral-900 dark:text-white">{p.nom}</span>
+                      <span className="text-sm font-medium text-[var(--text-primary)] ">{p.nom}</span>
                     </div>
                   </td>
                   <td className="py-3 pr-4">
@@ -231,10 +231,10 @@ export default function PresencesPage() {
                     </span>
                   </td>
                   <td className="py-3 pr-4">
-                    <span className="text-sm text-neutral-600 dark:text-neutral-400">{p.heureArrivee || '—'}</span>
+                    <span className="text-sm text-[var(--text-secondary)] ">{p.heureArrivee || '—'}</span>
                   </td>
                   <td className="py-3 pr-4">
-                    <span className="text-sm text-neutral-500 italic">{p.motif || '—'}</span>
+                    <span className="text-sm text-[var(--text-secondary)] italic">{p.motif || '—'}</span>
                   </td>
                   <td className="py-3 text-right">
                     <Button variant="ghost" size="sm">{t('common.edit')}</Button>

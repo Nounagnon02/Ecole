@@ -132,14 +132,14 @@ export default function EmploiDuTempsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--text-tertiary)]" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
+      <div className="flex flex-col items-center justify-center h-64 text-[var(--text-secondary)]">
         <Clock className="h-8 w-8 mb-2 text-red-400" />
         <p className="text-sm">{error}</p>
       </div>
@@ -151,8 +151,8 @@ export default function EmploiDuTempsPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.emploi_du_temps.emploi_du_temps.title')}</h1>
-          <p className="text-sm text-neutral-500">{t('pages.emploi_du_temps.emploi_du_temps.subtitle')}</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.emploi_du_temps.emploi_du_temps.title')}</h1>
+          <p className="text-sm text-[var(--text-secondary)]">{t('pages.emploi_du_temps.emploi_du_temps.subtitle')}</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" icon={<Download />}>
@@ -170,28 +170,28 @@ export default function EmploiDuTempsPage() {
           <div className="flex items-center gap-3">
             <button
               onClick={() => setSemaine(Math.max(0, semaine - 1))}
-              className="rounded-lg p-2 text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+              className="rounded-lg p-2 text-[var(--text-secondary)] hover:bg-[var(--surface-subtle)]  transition-colors"
             >
               <ChevronLeft className="h-5 w-5" />
             </button>
             <div className="text-center">
-              <p className="text-sm font-medium text-neutral-900 dark:text-white">{semaineLabel}</p>
-              <p className="text-xs text-neutral-500">{t('pages.emploi_du_temps.emploi_du_temps.annee_scolaire_2025_2026')}</p>
+              <p className="text-sm font-medium text-[var(--text-primary)] ">{semaineLabel}</p>
+              <p className="text-xs text-[var(--text-secondary)]">{t('pages.emploi_du_temps.emploi_du_temps.annee_scolaire_2025_2026')}</p>
             </div>
             <button
               onClick={() => setSemaine(Math.min(4, semaine + 1))}
-              className="rounded-lg p-2 text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+              className="rounded-lg p-2 text-[var(--text-secondary)] hover:bg-[var(--surface-subtle)]  transition-colors"
             >
               <ChevronRight className="h-5 w-5" />
             </button>
           </div>
           <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-neutral-400" />
+            <Filter className="h-4 w-4 text-[var(--text-tertiary)]" />
             <select
               value={filterMatiere}
               onChange={(e) => setFilterMatiere(e.target.value)}
               aria-label={t('common.filter_by_subject')}
-              className="h-9 rounded-lg border border-neutral-300 bg-white px-2.5 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+              className="h-9 rounded-lg border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-2.5 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40   "
             >
               {matieresList.map((m) => <option key={m} value={m}>{m}</option>)}
             </select>
@@ -199,7 +199,7 @@ export default function EmploiDuTempsPage() {
               value={filterClasse}
               onChange={(e) => setFilterClasse(e.target.value)}
               aria-label={t('common.filter_by_class')}
-              className="h-9 rounded-lg border border-neutral-300 bg-white px-2.5 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+              className="h-9 rounded-lg border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-2.5 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40   "
             >
               {classesList.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
@@ -207,7 +207,7 @@ export default function EmploiDuTempsPage() {
               value={filterEnseignant}
               onChange={(e) => setFilterEnseignant(e.target.value)}
               aria-label={t('pages.emploi_du_temps.emploi_du_temps.filtrer_par_enseignant')}
-              className="h-9 rounded-lg border border-neutral-300 bg-white px-2.5 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+              className="h-9 rounded-lg border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-2.5 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40   "
             >
               {enseignantsList.map((e) => <option key={e} value={e}>{e}</option>)}
             </select>
@@ -219,11 +219,11 @@ export default function EmploiDuTempsPage() {
       <div className="overflow-x-auto">
         <div className="min-w-[800px]">
           {/* En-têtes des jours */}
-          <div className="grid grid-cols-[100px_repeat(6,1fr)] gap-px bg-neutral-200 dark:bg-neutral-700 rounded-t-2xl overflow-hidden">
-            <div className="bg-neutral-100 dark:bg-neutral-800 p-3" />
+          <div className="grid grid-cols-[100px_repeat(6,1fr)] gap-px bg-[var(--surface-subtle)]  rounded-t-2xl overflow-hidden">
+            <div className="bg-[var(--surface-subtle)]  p-3" />
             {JOURS.map((jour) => (
-              <div key={jour} className="bg-neutral-100 dark:bg-neutral-800 p-3 text-center">
-                <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">{t(`emploi_du_temps.${jour}`)}</span>
+              <div key={jour} className="bg-[var(--surface-subtle)]  p-3 text-center">
+                <span className="text-xs font-semibold text-[var(--text-primary)] ">{t(`emploi_du_temps.${jour}`)}</span>
               </div>
             ))}
           </div>
@@ -233,16 +233,16 @@ export default function EmploiDuTempsPage() {
             <div
               key={cIdx}
               className={cn(
-                'grid grid-cols-[100px_repeat(6,1fr)] gap-px bg-neutral-200 dark:bg-neutral-700',
+                'grid grid-cols-[100px_repeat(6,1fr)] gap-px bg-[var(--surface-subtle)] ',
                 cIdx === CRENEAUX.length - 1 && 'rounded-b-2xl overflow-hidden'
               )}
             >
               {/* Colonne heure */}
               <div className={cn(
-                'bg-white dark:bg-neutral-900 p-2 flex flex-col items-center justify-center',
+                'bg-[var(--surface-raised)]  p-2 flex flex-col items-center justify-center',
                 creneau.pause && 'bg-amber-50 dark:bg-amber-900/10'
               )}>
-                <span className="text-[11px] font-medium text-neutral-800 dark:text-neutral-200">{creneau.heure}</span>
+                <span className="text-[11px] font-medium text-[var(--text-primary)] ">{creneau.heure}</span>
                 {creneau.pause && <span className="text-[10px] text-amber-600 mt-0.5">{t('pages.emploi_du_temps.emploi_du_temps.pause')}</span>}
               </div>
 
@@ -261,19 +261,19 @@ export default function EmploiDuTempsPage() {
                   );
                 }
                 if (!cr) {
-                  return <div key={jIdx} className="bg-white dark:bg-neutral-900" />;
+                  return <div key={jIdx} className="bg-[var(--surface-raised)] " />;
                 }
                 return (
-                  <div key={jIdx} className="bg-white dark:bg-neutral-900 p-2 hover:bg-[var(--accent-subtle)] hover:bg-[var(--accent-subtle)] transition-colors cursor-pointer group">
+                  <div key={jIdx} className="bg-[var(--surface-raised)]  p-2 hover:bg-[var(--accent-subtle)] hover:bg-[var(--accent-subtle)] transition-colors cursor-pointer group">
                     <div className="space-y-1">
                       <p className="text-xs font-semibold text-[var(--accent)] dark:text-[var(--accent)] leading-tight">
                         {cr.matiere}
                       </p>
-                      <div className="flex items-center gap-1 text-[10px] text-neutral-500">
+                      <div className="flex items-center gap-1 text-[10px] text-[var(--text-secondary)]">
                         <User className="h-3 w-3" />
                         <span className="truncate">{cr.professeur}</span>
                       </div>
-                      <div className="flex items-center gap-1 text-[10px] text-neutral-400">
+                      <div className="flex items-center gap-1 text-[10px] text-[var(--text-tertiary)]">
                         <MapPin className="h-3 w-3" />
                         <span>{cr.salle}</span>
                       </div>
@@ -290,9 +290,9 @@ export default function EmploiDuTempsPage() {
       </div>
 
       {/* Légende */}
-      <div className="flex flex-wrap gap-4 text-xs text-neutral-500">
+      <div className="flex flex-wrap gap-4 text-xs text-[var(--text-secondary)]">
         <div className="flex items-center gap-1.5">
-          <div className="h-2.5 w-2.5 rounded bg-white dark:bg-neutral-900 border border-neutral-300" />
+          <div className="h-2.5 w-2.5 rounded bg-[var(--surface-raised)]  border border-[var(--border-heavy)]" />
           <span>{t('pages.emploi_du_temps.emploi_du_temps.disponible')}</span>
         </div>
         <div className="flex items-center gap-1.5">
@@ -300,7 +300,7 @@ export default function EmploiDuTempsPage() {
           <span>{t('pages.emploi_du_temps.emploi_du_temps.pause')}</span>
         </div>
         {hasData && <span className="text-amber-500 text-xs">{t('pages.emploi_du_temps.emploi_du_temps.donnees_chargees_depuis_l_api')}</span>}
-        {!hasData && <span className="text-neutral-400 text-xs">{t('pages.emploi_du_temps.emploi_du_temps.mode_demo_api_indisponible')}</span>}
+        {!hasData && <span className="text-[var(--text-tertiary)] text-xs">{t('pages.emploi_du_temps.emploi_du_temps.mode_demo_api_indisponible')}</span>}
       </div>
     </motion.div>
   );

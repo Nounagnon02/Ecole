@@ -73,14 +73,14 @@ export default function BillingPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--text-tertiary)]" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
+      <div className="flex flex-col items-center justify-center h-64 text-[var(--text-secondary)]">
         <AlertCircle className="h-8 w-8 mb-2 text-red-400" />
         <p className="text-sm">{error}</p>
       </div>
@@ -90,8 +90,8 @@ export default function BillingPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.admin.billing.title')}</h1>
-        <p className="text-sm text-neutral-500 mt-1">{t('pages.admin.billing.subtitle')}</p>
+        <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.admin.billing.title')}</h1>
+        <p className="text-sm text-[var(--text-secondary)] mt-1">{t('pages.admin.billing.subtitle')}</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -110,9 +110,9 @@ export default function BillingPage() {
       </div>
 
       <Card>
-        <div className="border-b border-neutral-200 p-4 dark:border-neutral-700">
-          <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">{t('pages.admin.billing.revenus')}</h3>
-          <p className="text-xs text-neutral-500">{t('pages.admin.billing.evolution_sur_6_mois')}</p>
+        <div className="border-b border-[var(--border)] p-4 ">
+          <h3 className="text-sm font-semibold text-[var(--text-primary)] ">{t('pages.admin.billing.revenus')}</h3>
+          <p className="text-xs text-[var(--text-secondary)]">{t('pages.admin.billing.evolution_sur_6_mois')}</p>
         </div>
         <div className="p-4">
           <div className="h-[250px]">
@@ -137,11 +137,11 @@ export default function BillingPage() {
       </Card>
 
       <Card>
-        <div className="border-b border-neutral-200 p-4 dark:border-neutral-700">
+        <div className="border-b border-[var(--border)] p-4 ">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">{t('pages.admin.billing.factures_recentes')}</h3>
-              <p className="text-xs text-neutral-500">{t('pages.admin.billing.historique_des_transactions')}</p>
+              <h3 className="text-sm font-semibold text-[var(--text-primary)] ">{t('pages.admin.billing.factures_recentes')}</h3>
+              <p className="text-xs text-[var(--text-secondary)]">{t('pages.admin.billing.historique_des_transactions')}</p>
             </div>
             <div className="flex items-center gap-2">
               <Input
@@ -155,23 +155,23 @@ export default function BillingPage() {
           </div>
         </div>
         <div className="p-0">
-          <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
+          <div className="divide-y divide-[var(--border-light)] ">
             {filtered.length === 0 && (
-              <div className="px-6 py-8 text-center text-sm text-neutral-500">{t('pages.admin.billing.aucune_facture_trouvee')}</div>
+              <div className="px-6 py-8 text-center text-sm text-[var(--text-secondary)]">{t('pages.admin.billing.aucune_facture_trouvee')}</div>
             )}
             {filtered.map((inv) => {
               const statusConf = STATUS_BADGE[inv.status] || STATUS_BADGE.pending;
               return (
-                <div key={inv.id} className="flex items-center gap-4 px-6 py-4 hover:bg-neutral-50 dark:hover:bg-neutral-800/50">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-neutral-100 dark:bg-neutral-800">
-                    <FileText className="h-5 w-5 text-neutral-500" />
+                <div key={inv.id} className="flex items-center gap-4 px-6 py-4 hover:bg-[var(--surface)] ">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--surface-subtle)] ">
+                    <FileText className="h-5 w-5 text-[var(--text-secondary)]" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-neutral-900 dark:text-white truncate">{inv.school || inv.tenant_name || '—'}</p>
-                    <p className="text-xs text-neutral-500">{inv.invoice_number || inv.invoice} · {inv.date ? format(new Date(inv.date), 'yyyy-MM-dd') : '—'} · {inv.payment_method || inv.method || '—'}</p>
+                    <p className="text-sm font-medium text-[var(--text-primary)]  truncate">{inv.school || inv.tenant_name || '—'}</p>
+                    <p className="text-xs text-[var(--text-secondary)]">{inv.invoice_number || inv.invoice} · {inv.date ? format(new Date(inv.date), 'yyyy-MM-dd') : '—'} · {inv.payment_method || inv.method || '—'}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-semibold text-neutral-900 dark:text-white">{Number(inv.amount || 0).toLocaleString()} FCFA</p>
+                    <p className="text-sm font-semibold text-[var(--text-primary)] ">{Number(inv.amount || 0).toLocaleString()} FCFA</p>
                   </div>
                   <Badge variant={statusConf.variant} size="sm">{statusConf.label}</Badge>
                 </div>

@@ -11,9 +11,9 @@ import { cn } from '@/shared/lib/utils';
 import { useTranslation } from '@/shared/i18n';
 
 const sizes = {
-  sm: 'h-8 px-3 text-xs',
-  md: 'h-10 px-4 text-sm',
-  lg: 'h-12 px-5 text-base',
+  sm: 'min-h-11 px-3 text-sm',
+  md: 'min-h-11 px-4 text-base',
+  lg: 'min-h-[52px] px-4 text-base',
 };
 
 const Input = forwardRef(function Input(
@@ -53,7 +53,7 @@ const Input = forwardRef(function Input(
       )}
       <div className="relative">
         {icon && (
-          <div className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]">
+          <div className="pointer-events-none absolute start-3.5 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]">
             {iconIsElement ? icon : <IconComponent className="h-4 w-4" />}
           </div>
         )}
@@ -73,8 +73,8 @@ const Input = forwardRef(function Input(
             error
               ? 'border-[var(--red)] focus-visible:border-[var(--red)] focus-visible:ring-[var(--red-subtle)]'
               : 'border-[var(--border)] hover:border-[var(--border-heavy)]',
-            icon && 'pl-10',
-            isPassword && 'pr-10',
+            icon && 'ps-10',
+            isPassword && 'pe-12',
             sizes[size],
             className
           )}
@@ -84,8 +84,7 @@ const Input = forwardRef(function Input(
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] transition-colors hover:text-[var(--text-primary)]"
-            tabIndex={-1}
+            className="absolute end-0 top-1/2 flex h-11 w-11 items-center justify-center -translate-y-1/2 text-[var(--text-tertiary)] transition-colors hover:text-[var(--text-primary)]"
             aria-label={showPassword ? t('components.input.masquer_le_mot_de_passe') : t('components.input.afficher_le_mot_de_passe')}
           >
             {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}

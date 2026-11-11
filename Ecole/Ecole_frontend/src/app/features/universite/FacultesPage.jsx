@@ -62,14 +62,14 @@ export default function FacultesPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--text-tertiary)]" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
+      <div className="flex flex-col items-center justify-center h-64 text-[var(--text-secondary)]">
         <AlertCircle className="h-8 w-8 mb-2 text-red-400" />
         <p className="text-sm">{error}</p>
       </div>
@@ -80,8 +80,8 @@ export default function FacultesPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.universite.facultes.title')}</h1>
-          <p className="text-sm text-neutral-500">{t('pages.universite.facultes.subtitle')}</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.universite.facultes.title')}</h1>
+          <p className="text-sm text-[var(--text-secondary)]">{t('pages.universite.facultes.subtitle')}</p>
         </div>
         <Button size="sm" icon={<Plus />}>{t('pages.universite.facultes.ajouter_une_faculte')}</Button>
       </div>
@@ -95,7 +95,7 @@ export default function FacultesPage() {
 
       <Card>
         <div className="relative max-w-sm">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
           <Input
             placeholder={t('pages.universite.facultes.rechercher_une_faculte')}
             value={search}
@@ -109,7 +109,7 @@ export default function FacultesPage() {
         {filtered.length === 0 && (
           <div className="sm:col-span-2 lg:col-span-3">
             <Card>
-              <div className="text-center py-8 text-neutral-500">
+              <div className="text-center py-8 text-[var(--text-secondary)]">
                 <Building2 className="mx-auto h-8 w-8 mb-2" />
                 <p className="text-sm">{t('pages.universite.facultes.aucune_faculte_trouvee')}</p>
               </div>
@@ -124,25 +124,25 @@ export default function FacultesPage() {
               </div>
               <Badge variant="primary" size="sm">{f.code}</Badge>
             </div>
-            <h3 className="font-semibold text-neutral-900 dark:text-white mb-1">{f.nom}</h3>
-            <p className="text-xs text-neutral-500 mb-3">Doyen : {f.doyen}</p>
+            <h3 className="font-semibold text-[var(--text-primary)]  mb-1">{f.nom}</h3>
+            <p className="text-xs text-[var(--text-secondary)] mb-3">Doyen : {f.doyen}</p>
 
             <div className="grid grid-cols-3 gap-2 text-center text-xs mb-3">
-              <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg p-2">
-                <span className="block font-bold text-neutral-900 dark:text-white">{f.departements}</span>
-                <span className="text-neutral-500">{t('pages.universite.facultes.dept')}</span>
+              <div className="bg-[var(--surface)]  rounded-lg p-2">
+                <span className="block font-bold text-[var(--text-primary)] ">{f.departements}</span>
+                <span className="text-[var(--text-secondary)]">{t('pages.universite.facultes.dept')}</span>
               </div>
-              <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg p-2">
-                <span className="block font-bold text-neutral-900 dark:text-white">{f.enseignants}</span>
-                <span className="text-neutral-500">{t('pages.universite.facultes.ens')}</span>
+              <div className="bg-[var(--surface)]  rounded-lg p-2">
+                <span className="block font-bold text-[var(--text-primary)] ">{f.enseignants}</span>
+                <span className="text-[var(--text-secondary)]">{t('pages.universite.facultes.ens')}</span>
               </div>
-              <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg p-2">
-                <span className="block font-bold text-neutral-900 dark:text-white">{f.etudiants}</span>
-                <span className="text-neutral-500">{t('pages.universite.facultes.etud')}</span>
+              <div className="bg-[var(--surface)]  rounded-lg p-2">
+                <span className="block font-bold text-[var(--text-primary)] ">{f.etudiants}</span>
+                <span className="text-[var(--text-secondary)]">{t('pages.universite.facultes.etud')}</span>
               </div>
             </div>
 
-            <div className="space-y-1 text-xs text-neutral-500">
+            <div className="space-y-1 text-xs text-[var(--text-secondary)]">
               {f.email && <span className="flex items-center gap-1"><Mail className="h-3 w-3" /> {f.email}</span>}
               {f.telephone && <span className="flex items-center gap-1"><Phone className="h-3 w-3" /> {f.telephone}</span>}
             </div>

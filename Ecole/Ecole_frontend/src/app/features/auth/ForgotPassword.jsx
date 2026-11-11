@@ -94,14 +94,14 @@ export default function ForgotPassword() {
             animate={{ opacity: 1, y: 0 }}
             className="w-full max-w-md"
           >
-            <div className="border border-[var(--border)] border-t-4 border-t-[var(--accent)] bg-white dark:bg-[var(--surface-raised)] shadow-3 p-10 text-center">
+            <div className="border border-[var(--border)] border-t-4 border-t-[var(--accent)] bg-[var(--surface-raised)] dark:bg-[var(--surface-raised)] shadow-3 p-10 text-center">
               <div className="flex justify-center mb-6">
                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--green-subtle)] text-[var(--green)]">
                   <CheckCircle2 className="h-8 w-8" />
                 </div>
               </div>
 
-              <h1 className="font-fraunces text-2xl font-semibold text-[var(--text-primary)]">
+              <h1 className="font-heading text-2xl font-semibold text-[var(--text-primary)]">
                 {t('pages.auth.forgot_password.email_envoye')}
               </h1>
               <p className="mt-3 text-sm text-[var(--text-secondary)] leading-relaxed">
@@ -155,7 +155,7 @@ export default function ForgotPassword() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.6 }}
-            className="font-fraunces text-2xl italic leading-relaxed text-center text-[var(--text-secondary)] max-w-md"
+            className="font-heading text-2xl italic leading-relaxed text-center text-[var(--text-secondary)] max-w-md"
           >
             &laquo;&nbsp;Le seul véritable apprentissage<br />vient de l'éducation.&nbsp;&raquo;
           </motion.blockquote>
@@ -177,7 +177,7 @@ export default function ForgotPassword() {
             animate="visible"
             className="relative w-full max-w-sm"
           >
-            <div className="relative border border-[var(--border)] border-t-4 border-t-[var(--primary)] bg-white dark:bg-[var(--surface-raised)] shadow-3">
+            <div className="relative border border-[var(--border)] border-t-4 border-t-[var(--primary)] bg-[var(--surface-raised)] dark:bg-[var(--surface-raised)] shadow-3">
               <div className="flex justify-center -mt-3 mb-6">
                 <DividerOrnament className="h-2.5 w-20 text-[var(--primary)] opacity-25" />
               </div>
@@ -191,7 +191,7 @@ export default function ForgotPassword() {
                     <ArrowLeft className="h-3.5 w-3.5" />
                     {t('pages.auth.forgot_password.retour_a_la_connexion')}
                   </Link>
-                  <h1 className="font-fraunces text-2xl font-semibold text-[var(--text-primary)]">
+                  <h1 className="font-heading text-2xl font-semibold text-[var(--text-primary)]">
                     {t('pages.auth.forgot_password.mot_de_passe_oublie')}
                   </h1>
                   <p className="mt-1.5 text-sm text-[var(--text-secondary)]">

@@ -132,10 +132,10 @@ function ApercuSection({ data, loading, onRefresh }) {
             {safeHealth.map((item) => (
               <div key={item.label}>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-medium text-neutral-500">{item.label}</span>
-                  <span className="text-xs text-neutral-700 dark:text-neutral-300">{item.value}</span>
+                  <span className="text-xs font-medium text-[var(--text-secondary)]">{item.label}</span>
+                  <span className="text-xs text-[var(--text-primary)] ">{item.value}</span>
                 </div>
-                <div className="h-2 rounded-full bg-neutral-100 dark:bg-neutral-800">
+                <div className="h-2 rounded-full bg-[var(--surface-subtle)] ">
                   <div
                     className={cn('h-full rounded-full transition-all', item.color)}
                     style={{ width: item.width }}
@@ -156,9 +156,9 @@ function ApercuSection({ data, loading, onRefresh }) {
           </div>
         </Card.Header>
         <Card.Body className="p-0">
-          <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
+          <div className="divide-y divide-[var(--border-light)] ">
             {safeLogs.slice(0, 4).map((log) => (
-              <div key={log.id} className="flex items-start gap-3 px-6 py-3 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 text-sm font-mono">
+              <div key={log.id} className="flex items-start gap-3 px-6 py-3 hover:bg-[var(--surface)]  text-sm font-mono">
                 <span className={cn(
                   'text-xs font-semibold uppercase min-w-[4rem]',
                   log.level === 'ERROR' && 'text-[var(--red)]',
@@ -167,9 +167,9 @@ function ApercuSection({ data, loading, onRefresh }) {
                 )}>
                   {log.level}
                 </span>
-                <span className="text-neutral-500 text-xs min-w-[5rem]">{log.time}</span>
-                <span className="text-neutral-700 dark:text-neutral-300 flex-1">{log.message}</span>
-                <span className="text-neutral-400 text-xs">{log.module}</span>
+                <span className="text-[var(--text-secondary)] text-xs min-w-[5rem]">{log.time}</span>
+                <span className="text-[var(--text-primary)]  flex-1">{log.message}</span>
+                <span className="text-[var(--text-tertiary)] text-xs">{log.module}</span>
               </div>
             ))}
           </div>
@@ -191,21 +191,21 @@ function ApercuSection({ data, loading, onRefresh }) {
         </Card.Header>
         <Card.Body className="p-0">
           {safeUtilisateurs.length === 0 ? (
-            <p className="text-neutral-500 text-center py-8 text-sm">{t('dashboards.admin.aucun_utilisateur_recent')}</p>
+            <p className="text-[var(--text-secondary)] text-center py-8 text-sm">{t('dashboards.admin.aucun_utilisateur_recent')}</p>
           ) : (
-            <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
+            <div className="divide-y divide-[var(--border-light)] ">
               {safeUtilisateurs.map((u) => (
-                <div key={u.id} className="flex items-center gap-3 px-6 py-3 hover:bg-neutral-50 dark:hover:bg-neutral-800/50">
-                  <div className="h-9 w-9 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
-                    <Users className="h-4 w-4 text-neutral-500" />
+                <div key={u.id} className="flex items-center gap-3 px-6 py-3 hover:bg-[var(--surface)] ">
+                  <div className="h-9 w-9 rounded-full bg-[var(--surface-subtle)]  flex items-center justify-center">
+                    <Users className="h-4 w-4 text-[var(--text-secondary)]" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-neutral-900 dark:text-white truncate">{u.name}</p>
-                    <p className="text-xs text-neutral-500 truncate">{u.email} · {u.ecole}</p>
+                    <p className="text-sm font-medium text-[var(--text-primary)]  truncate">{u.name}</p>
+                    <p className="text-xs text-[var(--text-secondary)] truncate">{u.email} · {u.ecole}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge size="sm" variant={u.is_active ? 'success' : 'default'}>{u.role}</Badge>
-                    <span className="text-xs text-neutral-400">{format(new Date(u.created_at), 'dd/MM/yyyy')}</span>
+                    <span className="text-xs text-[var(--text-tertiary)]">{format(new Date(u.created_at), 'dd/MM/yyyy')}</span>
                   </div>
                 </div>
               ))}
@@ -234,8 +234,8 @@ function LogsSection({ data, loading }) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">{t('dashboards.admin.logs_systeme')}</h2>
-          <p className="text-sm text-neutral-500 mt-1">Journalisation détaillée — {logs.length} entrées</p>
+          <h2 className="font-heading text-xl font-semibold text-[var(--text-primary)] ">{t('dashboards.admin.logs_systeme')}</h2>
+          <p className="text-sm text-[var(--text-secondary)] mt-1">Journalisation détaillée — {logs.length} entrées</p>
         </div>
         <Button variant="ghost" size="sm" onClick={() => window.print()}>
           <Download className="h-4 w-4 mr-1" /> {t('common.export')}
@@ -244,13 +244,13 @@ function LogsSection({ data, loading }) {
 
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Terminal className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
+          <Terminal className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)]" />
           <input
             value={recherche}
             onChange={(e) => setRecherche(e.target.value)}
             placeholder={t('dashboards.admin.rechercher_dans_les_logs')}
             aria-label={t('dashboards.admin.rechercher_dans_les_logs_2')}
-            className="w-full pl-9 pr-4 py-2 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+            className="w-full pl-9 pr-4 py-2 rounded-lg border border-[var(--border)]  bg-[var(--surface-raised)]  text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
           />
         </div>
         <div className="flex gap-1">
@@ -261,8 +261,8 @@ function LogsSection({ data, loading }) {
               className={cn(
                 'px-3 py-2 rounded-lg text-xs font-medium transition-colors',
                 niveau === n
-                  ? 'bg-[var(--accent)] text-white'
-                  : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700'
+                  ? 'bg-[var(--action)] text-white'
+                  : 'bg-[var(--surface-subtle)]  text-[var(--text-secondary)]  hover:bg-[var(--surface-subtle)] '
               )}
             >
               {n}
@@ -274,13 +274,13 @@ function LogsSection({ data, loading }) {
       <Card>
         <Card.Body className="p-0">
           {loading ? (
-            <p className="text-neutral-500 text-center py-12">{t('dashboards.admin.chargement_des_logs')}</p>
+            <p className="text-[var(--text-secondary)] text-center py-12">{t('dashboards.admin.chargement_des_logs')}</p>
           ) : filtres.length === 0 ? (
-            <p className="text-neutral-500 text-center py-12">{t('dashboards.admin.aucune_entree_de_journal_pour_ce_filtre')}</p>
+            <p className="text-[var(--text-secondary)] text-center py-12">{t('dashboards.admin.aucune_entree_de_journal_pour_ce_filtre')}</p>
           ) : (
-            <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
+            <div className="divide-y divide-[var(--border-light)] ">
               {filtres.map((log) => (
-                <div key={log.id} className="flex items-start gap-3 px-6 py-3 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 text-sm font-mono">
+                <div key={log.id} className="flex items-start gap-3 px-6 py-3 hover:bg-[var(--surface)]  text-sm font-mono">
                   <span className={cn(
                     'text-xs font-semibold uppercase min-w-[4rem]',
                     log.level === 'ERROR' && 'text-[var(--red)]',
@@ -289,9 +289,9 @@ function LogsSection({ data, loading }) {
                   )}>
                     {log.level}
                   </span>
-                  <span className="text-neutral-500 text-xs min-w-[5rem]">{log.time}</span>
-                  <span className="text-neutral-700 dark:text-neutral-300 flex-1">{log.message}</span>
-                  <span className="text-neutral-400 text-xs">{log.module}</span>
+                  <span className="text-[var(--text-secondary)] text-xs min-w-[5rem]">{log.time}</span>
+                  <span className="text-[var(--text-primary)]  flex-1">{log.message}</span>
+                  <span className="text-[var(--text-tertiary)] text-xs">{log.module}</span>
                 </div>
               ))}
             </div>
@@ -308,8 +308,8 @@ function SauvegardesSection() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">{t('dashboards.admin.sauvegardes')}</h2>
-          <p className="text-sm text-neutral-500 mt-1">{t('dashboards.admin.gestion_des_backups')}</p>
+          <h2 className="font-heading text-xl font-semibold text-[var(--text-primary)] ">{t('dashboards.admin.sauvegardes')}</h2>
+          <p className="text-sm text-[var(--text-secondary)] mt-1">{t('dashboards.admin.gestion_des_backups')}</p>
         </div>
         <Button>
           <Database className="h-4 w-4 mr-2" /> {t('dashboards.admin.sauvegarder')}
@@ -317,7 +317,7 @@ function SauvegardesSection() {
       </div>
       <Card>
         <Card.Body>
-          <p className="text-neutral-500 text-center py-12">
+          <p className="text-[var(--text-secondary)] text-center py-12">
             {t('dashboards.admin.backups_automatiques_restauration_et')}
           </p>
         </Card.Body>

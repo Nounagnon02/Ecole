@@ -62,14 +62,14 @@ export default function CataloguePage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--text-tertiary)]" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
+      <div className="flex flex-col items-center justify-center h-64 text-[var(--text-secondary)]">
         <AlertCircle className="h-8 w-8 mb-2 text-red-400" />
         <p className="text-sm">{error}</p>
       </div>
@@ -80,8 +80,8 @@ export default function CataloguePage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.bibliothecaire.catalogue.title')}</h1>
-          <p className="text-sm text-neutral-500">{t('pages.bibliothecaire.catalogue.subtitle')}</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.bibliothecaire.catalogue.title')}</h1>
+          <p className="text-sm text-[var(--text-secondary)]">{t('pages.bibliothecaire.catalogue.subtitle')}</p>
         </div>
         <Button size="sm" icon={<Plus />}>{t('pages.bibliothecaire.catalogue.ajouter_un_ouvrage')}</Button>
       </div>
@@ -98,7 +98,7 @@ export default function CataloguePage() {
       <Card>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
             <Input
               placeholder={t('pages.bibliothecaire.catalogue.rechercher_un_titre_ou_un_auteur')}
               value={search}
@@ -115,7 +115,7 @@ export default function CataloguePage() {
                   'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
                   filterCategorie === (cat === 'Toutes' ? '' : cat)
                     ? 'bg-[var(--primary-subtle)] text-[var(--accent)] dark:text-[var(--accent)]'
-                    : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700'
+                    : 'bg-[var(--surface-subtle)] text-[var(--text-secondary)] hover:bg-[var(--surface-subtle)]   '
                 )}
               >
                 {cat}
@@ -130,7 +130,7 @@ export default function CataloguePage() {
         {filtered.length === 0 && (
           <div className="sm:col-span-2 lg:col-span-3">
             <Card>
-              <div className="text-center py-8 text-neutral-500">
+              <div className="text-center py-8 text-[var(--text-secondary)]">
                 <BookOpen className="mx-auto h-8 w-8 mb-2" />
                 <p className="text-sm">{t('pages.bibliothecaire.catalogue.aucun_ouvrage_trouve')}</p>
               </div>
@@ -142,12 +142,12 @@ export default function CataloguePage() {
             <div className="h-10 w-10 rounded-xl bg-[var(--primary-subtle)] flex items-center justify-center mb-3">
               <BookOpen className="h-5 w-5 text-[var(--accent)]" />
             </div>
-            <h3 className="font-semibold text-sm text-neutral-900 dark:text-white mb-1">{o.titre}</h3>
-            <p className="text-xs text-neutral-500 mb-2">par {o.auteur || t('pages.bibliothecaire.catalogue.inconnu')}</p>
+            <h3 className="font-semibold text-sm text-[var(--text-primary)]  mb-1">{o.titre}</h3>
+            <p className="text-xs text-[var(--text-secondary)] mb-2">par {o.auteur || t('pages.bibliothecaire.catalogue.inconnu')}</p>
             <div className="flex items-center gap-2 mb-2">
               {o.categorie && <Badge variant="outline" size="sm">{o.categorie}</Badge>}
               {o.annee_publication && (
-                <span className="text-[10px] text-neutral-400">{o.annee_publication}</span>
+                <span className="text-[10px] text-[var(--text-tertiary)]">{o.annee_publication}</span>
               )}
             </div>
             <div className="flex items-center justify-between text-xs">
@@ -158,9 +158,9 @@ export default function CataloguePage() {
                 {o.disponible ? t('pages.bibliothecaire.catalogue.disponible') : t('pages.bibliothecaire.catalogue.epuise')}
                 {o.nombre_exemplaires ? ` (${o.nombre_exemplaires} ex.)` : ''}
               </span>
-              {o.isbn && <span className="text-neutral-400">ISBN: {o.isbn.slice(-8)}</span>}
+              {o.isbn && <span className="text-[var(--text-tertiary)]">ISBN: {o.isbn.slice(-8)}</span>}
             </div>
-            <div className="mt-3 pt-3 border-t border-neutral-100 dark:border-neutral-800 flex gap-2">
+            <div className="mt-3 pt-3 border-t border-[var(--border-light)]  flex gap-2">
               <Button variant="outline" size="sm" icon={<Eye />}>{t('common.details')}</Button>
               <Button variant="ghost" size="sm" disabled={!o.disponible}>
                 {t('pages.bibliothecaire.catalogue.emprunter')}

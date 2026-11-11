@@ -79,12 +79,12 @@ function ApercuSection({ stats, presences, retards, data }) {
             {data?.points_surveillance && data.points_surveillance.length > 0 ? (
             <div className="space-y-4">
               {data.points_surveillance.map((point) => (
-                <div key={point.zone} className="flex items-center justify-between rounded-lg border border-neutral-100 bg-neutral-50 p-3 dark:border-neutral-800 dark:bg-neutral-900/50">
+                <div key={point.zone} className="flex items-center justify-between rounded-lg border border-[var(--border-light)] bg-[var(--surface)] p-3  ">
                   <div className="flex items-center gap-3">
-                    <MapPin className="h-4 w-4 text-neutral-400" />
+                    <MapPin className="h-4 w-4 text-[var(--text-tertiary)]" />
                     <div>
-                      <p className="text-sm font-medium text-neutral-900 dark:text-white">{point.zone}</p>
-                      <p className="text-xs text-neutral-500">{point.personnels} agent{point.personnels > 1 ? 's' : ''} affecté{point.personnels > 1 ? 's' : ''}</p>
+                      <p className="text-sm font-medium text-[var(--text-primary)] ">{point.zone}</p>
+                      <p className="text-xs text-[var(--text-secondary)]">{point.personnels} agent{point.personnels > 1 ? 's' : ''} affecté{point.personnels > 1 ? 's' : ''}</p>
                     </div>
                   </div>
                   <Badge variant={point.etat === 'Actif' ? 'success' : 'neutral'} size="sm">{point.etat}</Badge>
@@ -120,7 +120,7 @@ function ApercuSection({ stats, presences, retards, data }) {
             <Table.Body>
               {retards.map((r) => (
                 <Table.Row key={r.id}>
-                  <Table.Cell><span className="font-medium text-neutral-900 dark:text-white">{r.eleve}</span></Table.Cell>
+                  <Table.Cell><span className="font-medium text-[var(--text-primary)] ">{r.eleve}</span></Table.Cell>
                   <Table.Cell>{r.classe}</Table.Cell>
                   <Table.Cell>{r.temps}</Table.Cell>
                   <Table.Cell>{r.motif}</Table.Cell>
@@ -155,7 +155,7 @@ function ApercuSection({ stats, presences, retards, data }) {
               <Table.Body>
                 {data.absents_jour.map((a) => (
                   <Table.Row key={a.id}>
-                    <Table.Cell><span className="font-medium text-neutral-900 dark:text-white">{a.eleve}</span></Table.Cell>
+                    <Table.Cell><span className="font-medium text-[var(--text-primary)] ">{a.eleve}</span></Table.Cell>
                     <Table.Cell>{a.classe}</Table.Cell>
                     <Table.Cell>
                       {a.justifiee ? <Badge variant="success" size="sm">{t('dashboards.surveillant.oui')}</Badge> : <Badge variant="danger" size="sm">{t('dashboards.surveillant.non')}</Badge>}
@@ -193,8 +193,8 @@ function ApercuSection({ stats, presences, retards, data }) {
               <Table.Body>
                 {data.incidents.map((i) => (
                   <Table.Row key={i.id}>
-                    <Table.Cell className="max-w-[180px] truncate"><span className="font-medium text-neutral-900 dark:text-white">{i.description}</span></Table.Cell>
-                    <Table.Cell className="text-neutral-400">{i.date}</Table.Cell>
+                    <Table.Cell className="max-w-[180px] truncate"><span className="font-medium text-[var(--text-primary)] ">{i.description}</span></Table.Cell>
+                    <Table.Cell className="text-[var(--text-tertiary)]">{i.date}</Table.Cell>
                     <Table.Cell>
                       <Badge variant={i.gravite === 'Majeure' ? 'danger' : i.gravite === 'Moyenne' ? 'warning' : 'neutral'} size="sm">{i.gravite}</Badge>
                     </Table.Cell>
@@ -230,8 +230,8 @@ function ApercuSection({ stats, presences, retards, data }) {
               <Table.Body>
                 {data.absences_non_justifiees.map((a) => (
                   <Table.Row key={a.id}>
-                    <Table.Cell><span className="font-medium text-neutral-900 dark:text-white">{a.eleve}</span></Table.Cell>
-                    <Table.Cell className="text-neutral-400">{a.date}</Table.Cell>
+                    <Table.Cell><span className="font-medium text-[var(--text-primary)] ">{a.eleve}</span></Table.Cell>
+                    <Table.Cell className="text-[var(--text-tertiary)]">{a.date}</Table.Cell>
                   </Table.Row>
                 ))}
               </Table.Body>

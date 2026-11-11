@@ -71,7 +71,7 @@ function StatusDot({ status, size }) {
   return (
     <span
       className={cn(
-        'absolute -right-0.5 -bottom-0.5 rounded-full border-white dark:border-neutral-900',
+        'absolute -right-0.5 -bottom-0.5 rounded-full border-white ',
         status === 'online' && 'bg-emerald-500',
         status === 'away' && 'bg-amber-500',
         status === 'busy' && 'bg-red-500',

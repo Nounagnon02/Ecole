@@ -10,7 +10,7 @@ import { cn } from '@/shared/lib/utils';
 
 function Table({ children, className, wrapperClassName, stickyHeader = false }) {
   return (
-    <div className={cn('w-full overflow-auto rounded-xl border border-neutral-200 dark:border-neutral-800', wrapperClassName)}>
+    <div className={cn('w-full overflow-auto rounded-xl border border-[var(--border)] ', wrapperClassName)}>
       <table className={cn('w-full caption-bottom text-sm', className)}>
         {children}
       </table>
@@ -23,7 +23,7 @@ Table.Header = forwardRef(function TableHeader({ children, className, sticky = f
     <thead
       ref={ref}
       className={cn(
-        'border-b border-neutral-200 dark:border-neutral-800',
+        'border-b border-[var(--border)] ',
         sticky && 'sticky top-0 z-10',
         className
       )}
@@ -38,18 +38,18 @@ Table.Head = forwardRef(function TableHead(
   ref
 ) {
   const alignments = {
-    left: 'text-left',
+    left: 'text-start',
     center: 'text-center',
-    right: 'text-right',
+    right: 'text-end',
   };
 
   return (
     <th
       ref={ref}
       className={cn(
-        'h-11 px-4 align-middle text-xs font-semibold uppercase tracking-widest text-neutral-500 dark:text-neutral-400',
+        'h-11 px-4 align-middle text-xs font-semibold uppercase tracking-widest text-[var(--text-secondary)] ',
         alignments[align],
-        sortable && 'cursor-pointer select-none hover:text-neutral-700 dark:hover:text-neutral-200',
+        sortable && 'cursor-pointer select-none hover:text-[var(--text-primary)] ',
         className
       )}
       onClick={sortable ? onSort : undefined}
@@ -62,7 +62,7 @@ Table.Head = forwardRef(function TableHead(
               width="8"
               height="4"
               viewBox="0 0 8 4"
-              className={cn('transition-colors', sortDir === 'asc' ? 'text-[var(--accent)]' : 'text-neutral-300 dark:text-neutral-600')}
+              className={cn('transition-colors', sortDir === 'asc' ? 'text-[var(--accent)]' : 'text-[var(--text-secondary)] ')}
             >
               <path d="M4 0l4 4H0z" fill="currentColor" />
             </svg>
@@ -70,7 +70,7 @@ Table.Head = forwardRef(function TableHead(
               width="8"
               height="4"
               viewBox="0 0 8 4"
-              className={cn('transition-colors', sortDir === 'desc' ? 'text-[var(--accent)]' : 'text-neutral-300 dark:text-neutral-600')}
+              className={cn('transition-colors', sortDir === 'desc' ? 'text-[var(--accent)]' : 'text-[var(--text-secondary)] ')}
             >
               <path d="M4 4L0 0h8z" fill="currentColor" />
             </svg>
@@ -78,10 +78,10 @@ Table.Head = forwardRef(function TableHead(
         )}
         {sortable && !sortDir && (
           <span className="inline-flex flex-col leading-none opacity-0 group-hover:opacity-100">
-            <svg width="8" height="4" viewBox="0 0 8 4" className="text-neutral-300 dark:text-neutral-600">
+            <svg width="8" height="4" viewBox="0 0 8 4" className="text-[var(--text-secondary)] ">
               <path d="M4 0l4 4H0z" fill="currentColor" />
             </svg>
-            <svg width="8" height="4" viewBox="0 0 8 4" className="text-neutral-300 dark:text-neutral-600">
+            <svg width="8" height="4" viewBox="0 0 8 4" className="text-[var(--text-secondary)] ">
               <path d="M4 4L0 0h8z" fill="currentColor" />
             </svg>
           </span>
@@ -108,14 +108,14 @@ Table.Row = forwardRef(function TableRow(
       ref={ref}
       onClick={onClick}
       className={cn(
-        'border-b border-neutral-100 transition-colors last:border-b-0 dark:border-neutral-800',
+        'border-b border-[var(--border-light)] transition-colors last:border-b-0 ',
         'group',
         onClick && 'cursor-pointer',
         selected
           ? 'bg-[var(--accent-subtle)]'
           : highlight
             ? 'bg-[var(--accent-subtle)]/70'
-            : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/40',
+            : 'hover:bg-[var(--surface)] ',
         className
       )}
     >
@@ -126,16 +126,16 @@ Table.Row = forwardRef(function TableRow(
 
 Table.Cell = forwardRef(function TableCell({ children, className, align = 'left' }, ref) {
   const alignments = {
-    left: 'text-left',
+    left: 'text-start',
     center: 'text-center',
-    right: 'text-right',
+    right: 'text-end',
   };
 
   return (
     <td
       ref={ref}
       className={cn(
-        'p-4 align-middle text-neutral-700 dark:text-neutral-300',
+        'p-4 align-middle text-[var(--text-primary)] ',
         alignments[align],
         className
       )}

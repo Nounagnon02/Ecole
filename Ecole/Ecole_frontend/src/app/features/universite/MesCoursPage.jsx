@@ -65,14 +65,14 @@ export default function MesCoursPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--text-tertiary)]" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
+      <div className="flex flex-col items-center justify-center h-64 text-[var(--text-secondary)]">
         <AlertCircle className="h-8 w-8 mb-2 text-red-400" />
         <p className="text-sm">{error}</p>
       </div>
@@ -83,8 +83,8 @@ export default function MesCoursPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.universite.mes_cours.title')}</h1>
-          <p className="text-sm text-neutral-500">{t('pages.universite.mes_cours.subtitle')}</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.universite.mes_cours.title')}</h1>
+          <p className="text-sm text-[var(--text-secondary)]">{t('pages.universite.mes_cours.subtitle')}</p>
         </div>
       </div>
 
@@ -97,7 +97,7 @@ export default function MesCoursPage() {
 
       <Card>
         <div className="relative max-w-sm">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
           <Input
             placeholder={t('common.search_course')}
             value={search}
@@ -110,7 +110,7 @@ export default function MesCoursPage() {
       <div className="space-y-3">
         {filtered.length === 0 && (
           <Card>
-            <div className="text-center py-8 text-neutral-500">
+            <div className="text-center py-8 text-[var(--text-secondary)]">
               <BookOpen className="mx-auto h-8 w-8 mb-2" />
               <p className="text-sm">{t('common.no_course_found')}</p>
             </div>
@@ -121,19 +121,19 @@ export default function MesCoursPage() {
             <div className="flex items-start gap-4">
               <div className={cn(
                 'h-12 w-12 rounded-xl flex items-center justify-center shrink-0',
-                c.statut === 'termine' || c.statut === 'terminé' ? 'bg-neutral-100 dark:bg-neutral-800' : 'bg-[var(--primary-subtle)] bg-[var(--primary-subtle)]'
+                c.statut === 'termine' || c.statut === 'terminé' ? 'bg-[var(--surface-subtle)] ' : 'bg-[var(--primary-subtle)] bg-[var(--primary-subtle)]'
               )}>
-                <BookOpen className={cn('h-6 w-6', c.statut === 'termine' || c.statut === 'terminé' ? 'text-neutral-400' : 'text-[var(--accent)]')} />
+                <BookOpen className={cn('h-6 w-6', c.statut === 'termine' || c.statut === 'terminé' ? 'text-[var(--text-tertiary)]' : 'text-[var(--accent)]')} />
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-sm font-semibold text-neutral-900 dark:text-white">{c.intitule}</span>
+                  <span className="text-sm font-semibold text-[var(--text-primary)] ">{c.intitule}</span>
                   <Badge variant="outline" size="sm">{c.code}</Badge>
                   <Badge variant={c.statut === 'termine' || c.statut === 'terminé' ? 'outline' : 'primary'} size="sm">
                     {c.statut === 'termine' || c.statut === 'terminé' ? t('pages.universite.mes_cours.termine') : t('common.status.in_progress')}
                   </Badge>
                 </div>
-                <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-neutral-500">
+                <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-[var(--text-secondary)]">
                   <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {c.horaire}</span>
                   <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> {c.salle}</span>
                   <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {c.etudiants} étudiants</span>
@@ -145,10 +145,10 @@ export default function MesCoursPage() {
                 {/* Barre de progression */}
                 <div className="mt-3">
                   <div className="flex items-center justify-between text-xs mb-1">
-                    <span className="text-neutral-500">{t('pages.universite.mes_cours.progression')}</span>
-                    <span className="font-medium text-neutral-700 dark:text-neutral-300">{c.progression}%</span>
+                    <span className="text-[var(--text-secondary)]">{t('pages.universite.mes_cours.progression')}</span>
+                    <span className="font-medium text-[var(--text-primary)] ">{c.progression}%</span>
                   </div>
-                  <div className="h-2 bg-neutral-200 dark:bg-neutral-700 rounded-full overflow-hidden">
+                  <div className="h-2 bg-[var(--surface-subtle)]  rounded-full overflow-hidden">
                     <div
                       className={cn(
                         'h-full rounded-full transition-all',

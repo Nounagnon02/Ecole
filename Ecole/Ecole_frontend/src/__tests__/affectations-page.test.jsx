@@ -139,7 +139,7 @@ describe('AffectationsPage — lecture', () => {
     await waitFor(() => expect(screen.getByText('Erreur interne du serveur.')).toBeInTheDocument());
     expect(screen.getByRole('button', { name: 'Réessayer' })).toBeInTheDocument();
     // Jamais un état vide déguisé en succès.
-    expect(screen.queryByText('Aucun enseignant Maternelle / Primaire')).not.toBeInTheDocument();
+    expect(screen.queryByText('Aucun enseignant maternelle / primaire')).not.toBeInTheDocument();
   });
 });
 
@@ -230,7 +230,7 @@ describe('AffectationsPage — Maternelle & Primaire', () => {
   async function openMpTab() {
     renderPage();
     await waitFor(() => expect(screen.getByText('Adjovi Rose')).toBeInTheDocument());
-    fireEvent.click(screen.getByRole('tab', { name: 'Maternelle & Primaire' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Maternelle & primaire' }));
     await waitFor(() => expect(screen.getByText('Dossou Aline')).toBeInTheDocument());
   }
 

@@ -62,14 +62,14 @@ export default function InscriptionsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--text-tertiary)]" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
+      <div className="flex flex-col items-center justify-center h-64 text-[var(--text-secondary)]">
         <AlertCircle className="h-8 w-8 mb-2 text-red-400" />
         <p className="text-sm">{error}</p>
       </div>
@@ -80,8 +80,8 @@ export default function InscriptionsPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.secretaire.inscriptions.title')}</h1>
-          <p className="text-sm text-neutral-500">{t('pages.secretaire.inscriptions.subtitle')}</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.secretaire.inscriptions.title')}</h1>
+          <p className="text-sm text-[var(--text-secondary)]">{t('pages.secretaire.inscriptions.subtitle')}</p>
         </div>
         <Button size="sm" icon={<Plus />}>{t('pages.secretaire.inscriptions.nouvelle_inscription')}</Button>
       </div>
@@ -97,7 +97,7 @@ export default function InscriptionsPage() {
       <Card>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
             <Input
               placeholder={t('common.search_student')}
               value={search}
@@ -109,7 +109,7 @@ export default function InscriptionsPage() {
             value={filterStatut}
             onChange={(e) => setFilterStatut(e.target.value)}
             aria-label={t('common.filter_by_status')}
-            className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+            className="h-10 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40   "
           >
             <option value="">{t('common.all_statuses')}</option>
             <option value="complete">{t('pages.secretaire.inscriptions.complet')}</option>
@@ -122,7 +122,7 @@ export default function InscriptionsPage() {
       <div className="space-y-3">
         {filtered.length === 0 && (
           <Card>
-            <div className="text-center py-8 text-neutral-500">
+            <div className="text-center py-8 text-[var(--text-secondary)]">
               <UserPlus className="mx-auto h-8 w-8 mb-2" />
               <p className="text-sm">{t('pages.secretaire.inscriptions.aucune_inscription_trouvee')}</p>
             </div>
@@ -134,7 +134,7 @@ export default function InscriptionsPage() {
               <Avatar name={`${ins.eleve?.prenom || ''} ${ins.eleve?.nom || ''}`} size="md" />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-sm font-semibold text-neutral-900 dark:text-white">
+                  <span className="text-sm font-semibold text-[var(--text-primary)] ">
                     {ins.eleve?.prenom} {ins.eleve?.nom}
                   </span>
                   <Badge variant={ins.dossier_complet ? 'primary' : 'warning'} size="sm">
@@ -144,7 +144,7 @@ export default function InscriptionsPage() {
                     <Badge variant="outline" size="sm">{ins.eleve.classe.nom_classe}</Badge>
                   )}
                 </div>
-                <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-neutral-500">
+                <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-[var(--text-secondary)]">
                   {ins.nom_pere && (
                     <span className="flex items-center gap-1">
                       <UserCheck className="h-3 w-3" />
@@ -168,7 +168,7 @@ export default function InscriptionsPage() {
                     'inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full',
                     ins.dossier_complet
                       ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400'
-                      : 'bg-neutral-100 text-neutral-400 dark:bg-neutral-800 dark:text-neutral-500'
+                      : 'bg-[var(--surface-subtle)] text-[var(--text-tertiary)]  '
                   )}>
                     {ins.dossier_complet ? <CheckCircle className="h-2.5 w-2.5" /> : <XCircle className="h-2.5 w-2.5" />}
                     {ins.dossier_complet ? t('pages.secretaire.inscriptions.dossier_complet') : t('pages.secretaire.inscriptions.dossier_incomplet')}

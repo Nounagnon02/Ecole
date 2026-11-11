@@ -125,13 +125,13 @@ export default function ResetPassword() {
             animate={{ opacity: 1, y: 0 }}
             className="w-full max-w-md"
           >
-            <div className="border border-[var(--border)] border-t-4 border-t-[var(--red)] bg-white dark:bg-[var(--surface-raised)] shadow-3 p-10 text-center">
+            <div className="border border-[var(--border)] border-t-4 border-t-[var(--red)] bg-[var(--surface-raised)] dark:bg-[var(--surface-raised)] shadow-3 p-10 text-center">
               <div className="flex justify-center mb-6">
                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--red-subtle)] text-[var(--red)]">
                   <AlertCircle className="h-8 w-8" />
                 </div>
               </div>
-              <h1 className="font-fraunces text-2xl font-semibold text-[var(--text-primary)]">
+              <h1 className="font-heading text-2xl font-semibold text-[var(--text-primary)]">
                 {t('pages.auth.reset_password.lien_invalide')}
               </h1>
               <p className="mt-3 text-sm text-[var(--text-secondary)] leading-relaxed">
@@ -140,7 +140,7 @@ export default function ResetPassword() {
               <div className="mt-8">
                 <Link
                   to="/forgot-password"
-                  className="inline-flex items-center gap-2 rounded-lg bg-[var(--accent)] px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[var(--accent-hover)]"
+                  className="inline-flex items-center gap-2 rounded-lg bg-[var(--action)] px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[var(--action-hover)]"
                 >
                   <ArrowLeft className="h-4 w-4" />
                   {t('pages.auth.reset_password.nouvelle_demande')}
@@ -166,13 +166,13 @@ export default function ResetPassword() {
             animate={{ opacity: 1, y: 0 }}
             className="w-full max-w-md"
           >
-            <div className="border border-[var(--border)] border-t-4 border-t-[var(--green)] bg-white dark:bg-[var(--surface-raised)] shadow-3 p-10 text-center">
+            <div className="border border-[var(--border)] border-t-4 border-t-[var(--green)] bg-[var(--surface-raised)] dark:bg-[var(--surface-raised)] shadow-3 p-10 text-center">
               <div className="flex justify-center mb-6">
                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--green-subtle)] text-[var(--green)]">
                   <CheckCircle2 className="h-8 w-8" />
                 </div>
               </div>
-              <h1 className="font-fraunces text-2xl font-semibold text-[var(--text-primary)]">
+              <h1 className="font-heading text-2xl font-semibold text-[var(--text-primary)]">
                 {t('pages.auth.reset_password.mot_de_passe_reinitialise')}
               </h1>
               <p className="mt-3 text-sm text-[var(--text-secondary)] leading-relaxed">
@@ -181,7 +181,7 @@ export default function ResetPassword() {
               <div className="mt-8">
                 <button
                   onClick={() => navigate('/connexion', { replace: true })}
-                  className="inline-flex items-center gap-2 rounded-lg bg-[var(--accent)] px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[var(--accent-hover)]"
+                  className="inline-flex items-center gap-2 rounded-lg bg-[var(--action)] px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[var(--action-hover)]"
                 >
                   {t('pages.auth.reset_password.se_connecter')}
                   <ArrowLeft className="h-4 w-4 rotate-180" />
@@ -222,7 +222,7 @@ export default function ResetPassword() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.5 }}
-            className="font-fraunces text-2xl font-semibold text-[var(--text-primary)] mt-6"
+            className="font-heading text-2xl font-semibold text-[var(--text-primary)] mt-6"
           >
             {t('pages.auth.reset_password.nouveau_mot_de_passe')}
           </motion.h2>
@@ -244,14 +244,14 @@ export default function ResetPassword() {
             animate="visible"
             className="relative w-full max-w-sm"
           >
-            <div className="relative border border-[var(--border)] border-t-4 border-t-[var(--primary)] bg-white dark:bg-[var(--surface-raised)] shadow-3">
+            <div className="relative border border-[var(--border)] border-t-4 border-t-[var(--primary)] bg-[var(--surface-raised)] dark:bg-[var(--surface-raised)] shadow-3">
               <div className="flex justify-center -mt-3 mb-6">
                 <DividerOrnament className="h-2.5 w-20 text-[var(--primary)] opacity-25" />
               </div>
 
               <div className="px-10 pt-4 pb-6">
                 <motion.div variants={fadeUp}>
-                  <h1 className="font-fraunces text-2xl font-semibold text-[var(--text-primary)]">
+                  <h1 className="font-heading text-2xl font-semibold text-[var(--text-primary)]">
                     {t('pages.auth.reset_password.reinitialiser')}
                   </h1>
                   <p className="mt-1.5 text-sm text-[var(--text-secondary)]">

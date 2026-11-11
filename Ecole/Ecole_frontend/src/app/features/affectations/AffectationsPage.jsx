@@ -197,14 +197,14 @@ export default function AffectationsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--text-tertiary)]" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
+      <div className="flex flex-col items-center justify-center h-64 text-[var(--text-secondary)]">
         <RefreshCw className="h-8 w-8 mb-2 text-red-400" />
         <p className="text-sm">{error}</p>
         <Button variant="outline" size="sm" className="mt-4" onClick={loadAll}>
@@ -227,10 +227,10 @@ export default function AffectationsPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] ">
             {t('pages.affectations.affectations.title')}
           </h1>
-          <p className="text-sm text-neutral-500">
+          <p className="text-sm text-[var(--text-secondary)]">
             {t('pages.affectations.affectations.subtitle')}
           </p>
         </div>
@@ -267,15 +267,15 @@ export default function AffectationsPage() {
                 />
 
                 {selectedTeacher && (
-                  <div className="mt-4 flex items-center gap-3 rounded-xl border border-neutral-200 p-4 dark:border-neutral-700">
+                  <div className="mt-4 flex items-center gap-3 rounded-xl border border-[var(--border)] p-4 ">
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--accent-subtle)] text-[var(--accent)]">
                       <GraduationCap className="h-5 w-5" />
                     </div>
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-neutral-900 dark:text-white">
+                      <p className="truncate text-sm font-semibold text-[var(--text-primary)] ">
                         {NOM_ENSEIGNANT(selectedTeacher)}
                       </p>
-                      <p className="text-xs text-neutral-500">
+                      <p className="text-xs text-[var(--text-secondary)]">
                         {selectedTeacher.specialite || selectedTeacher.grade || t('pages.affectations.affectations.enseignant')}
                       </p>
                     </div>
@@ -352,29 +352,29 @@ export default function AffectationsPage() {
             </Card.Header>
             <Card.Body className="p-0">
               {!selectedTeacher ? (
-                <div className="py-10 text-center text-sm text-neutral-500">
+                <div className="py-10 text-center text-sm text-[var(--text-secondary)]">
                   {t('pages.affectations.affectations.selectionnez_un_enseignant_pour_afficher_ses_affectations')}
                 </div>
               ) : affectations.length === 0 ? (
-                <div className="py-10 text-center text-sm text-neutral-500">
+                <div className="py-10 text-center text-sm text-[var(--text-secondary)]">
                   <Users className="mx-auto h-8 w-8 mb-2" />
                   {t('pages.affectations.affectations.aucune_affectation_pour_cet_enseignant')}
                 </div>
               ) : (
-                <ul className="divide-y divide-neutral-100 dark:divide-neutral-800">
+                <ul className="divide-y divide-[var(--border-light)] ">
                   {affectations.map((a) => (
                     <li
                       key={a.id}
                       className="flex items-center gap-4 px-4 py-3"
                     >
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-neutral-100 text-neutral-500 dark:bg-neutral-800">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--surface-subtle)] text-[var(--text-secondary)] ">
                         <BookOpen className="h-4 w-4" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-neutral-900 dark:text-white">
+                        <p className="truncate text-sm font-medium text-[var(--text-primary)] ">
                           {a.matiere?.nom || t('common.subject')}
                         </p>
-                        <p className="truncate text-xs text-neutral-500">
+                        <p className="truncate text-xs text-[var(--text-secondary)]">
                           {a.classe?.nom_classe || t('common.class')}
                           {a.serie?.nom ? ` · ${a.serie.nom}` : ''}
                         </p>
@@ -409,12 +409,12 @@ export default function AffectationsPage() {
             </Card.Header>
             <Card.Body className="p-0">
               {mpTeachers.length === 0 ? (
-                <div className="py-10 text-center text-sm text-neutral-500">
+                <div className="py-10 text-center text-sm text-[var(--text-secondary)]">
                   <Users className="mx-auto h-8 w-8 mb-2" />
                   {t('pages.affectations.affectations.aucun_enseignant_mp')}
                 </div>
               ) : (
-                <ul className="divide-y divide-neutral-100 dark:divide-neutral-800">
+                <ul className="divide-y divide-[var(--border-light)] ">
                   {mpTeachers.map((enseignant) => (
                     <li key={enseignant.id} className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center">
                       <div className="flex items-center gap-3">
@@ -422,10 +422,10 @@ export default function AffectationsPage() {
                           <GraduationCap className="h-4 w-4" />
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-neutral-900 dark:text-white">
+                          <p className="text-sm font-medium text-[var(--text-primary)] ">
                             {NOM_ENSEIGNANT(enseignant)}
                           </p>
-                          <p className="text-xs text-neutral-500">
+                          <p className="text-xs text-[var(--text-secondary)]">
                             {enseignant.classe?.categorie_classe || t('pages.affectations.affectations.maternelle_primaire')}
                           </p>
                         </div>

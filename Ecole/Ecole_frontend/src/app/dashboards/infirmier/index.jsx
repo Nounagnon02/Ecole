@@ -38,7 +38,7 @@ const STATS_META = [
 ];
 
 const MOTIF_COLORS = [
-  'bg-[var(--accent)]',
+  'bg-[var(--action)]',
   'bg-[var(--amber)]',
   'bg-[var(--red)]',
   'bg-[var(--emerald)]',
@@ -94,18 +94,18 @@ function ApercuSection({ stats, frequentation, visites, motifs, urgencesJour, al
                 const max = Math.max(...(motifs?.map((m) => m.count) || [1]), 1);
                 return (
                   <div key={item.motif} className="flex items-center justify-between text-sm">
-                    <span className="text-neutral-600 dark:text-neutral-400">{item.motif}</span>
+                    <span className="text-[var(--text-secondary)] ">{item.motif}</span>
                     <div className="flex items-center gap-2">
-                      <div className="w-24 h-1.5 rounded-full bg-neutral-100 dark:bg-neutral-800 overflow-hidden">
+                      <div className="w-24 h-1.5 rounded-full bg-[var(--surface-subtle)]  overflow-hidden">
                         <div className={`h-full rounded-full ${MOTIF_COLORS[i % MOTIF_COLORS.length]}`} style={{ width: `${(item.count / max) * 100}%` }} />
                       </div>
-                      <span className="w-6 text-right font-medium text-neutral-900 dark:text-white">{item.count}</span>
+                      <span className="w-6 text-right font-medium text-[var(--text-primary)] ">{item.count}</span>
                     </div>
                   </div>
                 );
               })}
               {!motifs?.length && (
-                <p className="text-sm text-neutral-400 dark:text-neutral-500">{t('dashboards.infirmier.aucune_consultation_ce_mois_ci')}</p>
+                <p className="text-sm text-[var(--text-tertiary)] ">{t('dashboards.infirmier.aucune_consultation_ce_mois_ci')}</p>
               )}
             </div>
           </Card.Body>
@@ -132,11 +132,11 @@ function ApercuSection({ stats, frequentation, visites, motifs, urgencesJour, al
             <Table.Body>
               {visites.map((v) => (
                 <Table.Row key={v.id}>
-                  <Table.Cell><span className="font-medium text-neutral-900 dark:text-white">{v.eleve}</span></Table.Cell>
+                  <Table.Cell><span className="font-medium text-[var(--text-primary)] ">{v.eleve}</span></Table.Cell>
                   <Table.Cell>{v.classe}</Table.Cell>
                   <Table.Cell>{v.motif}</Table.Cell>
                   <Table.Cell>{v.soin}</Table.Cell>
-                  <Table.Cell className="text-neutral-400">{v.heure}</Table.Cell>
+                  <Table.Cell className="text-[var(--text-tertiary)]">{v.heure}</Table.Cell>
                   <Table.Cell>
                     <Badge variant={v.statut === 'Traité' ? 'success' : 'warning'} size="sm">{v.statut}</Badge>
                   </Table.Cell>
@@ -168,9 +168,9 @@ function ApercuSection({ stats, frequentation, visites, motifs, urgencesJour, al
               <Table.Body>
                 {urgencesJour.map((u) => (
                   <Table.Row key={u.id}>
-                    <Table.Cell><span className="font-medium text-neutral-900 dark:text-white">{u.eleve}</span></Table.Cell>
+                    <Table.Cell><span className="font-medium text-[var(--text-primary)] ">{u.eleve}</span></Table.Cell>
                     <Table.Cell className="max-w-[160px] truncate">{u.motif}</Table.Cell>
-                    <Table.Cell className="text-neutral-400">{u.heure}</Table.Cell>
+                    <Table.Cell className="text-[var(--text-tertiary)]">{u.heure}</Table.Cell>
                   </Table.Row>
                 ))}
               </Table.Body>
@@ -203,7 +203,7 @@ function ApercuSection({ stats, frequentation, visites, motifs, urgencesJour, al
               <Table.Body>
                 {alertesMedicales.map((a) => (
                   <Table.Row key={a.id}>
-                    <Table.Cell><span className="font-medium text-neutral-900 dark:text-white">{a.eleve}</span></Table.Cell>
+                    <Table.Cell><span className="font-medium text-[var(--text-primary)] ">{a.eleve}</span></Table.Cell>
                     <Table.Cell className="max-w-[180px] truncate">{a.allergies || a.maladie}</Table.Cell>
                   </Table.Row>
                 ))}
@@ -234,8 +234,8 @@ function ApercuSection({ stats, frequentation, visites, motifs, urgencesJour, al
                 {soinsRecurrents.map((s) => (
                   <Table.Row key={s.eleve}>
                     <Table.Cell>
-                      <span className="font-medium text-neutral-900 dark:text-white">{s.eleve}</span>
-                      <span className="block text-xs text-neutral-400">{s.dernier_motif}</span>
+                      <span className="font-medium text-[var(--text-primary)] ">{s.eleve}</span>
+                      <span className="block text-xs text-[var(--text-tertiary)]">{s.dernier_motif}</span>
                     </Table.Cell>
                     <Table.Cell>
                       <Badge variant={s.visites >= 3 ? 'danger' : 'warning'} size="sm">{s.visites}</Badge>

@@ -109,9 +109,9 @@ function ApercuSection({ stats, caData, repartition, factures, impayes, tresorer
                 <div key={item.name} className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-2">
                     <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: ['var(--accent)', 'var(--green)', 'var(--amber)', 'var(--red)'][i] }} />
-                    <span className="text-neutral-600 dark:text-neutral-400">{item.name}</span>
+                    <span className="text-[var(--text-secondary)] ">{item.name}</span>
                   </div>
-                  <span className="font-medium text-neutral-900 dark:text-white">{item.value}%</span>
+                  <span className="font-medium text-[var(--text-primary)] ">{item.value}%</span>
                 </div>
               ))}
             </div>
@@ -133,20 +133,20 @@ function ApercuSection({ stats, caData, repartition, factures, impayes, tresorer
           </Card.Header>
           <Card.Body className="space-y-4">
             <div>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400">{t('dashboards.comptable.encaissements')}</p>
+              <p className="text-xs text-[var(--text-secondary)] ">{t('dashboards.comptable.encaissements')}</p>
               <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
                 {(tresorerie?.encaissements_mois || 0).toLocaleString()} F
               </p>
             </div>
             <div>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400">{t('dashboards.comptable.depenses_du_mois')}</p>
+              <p className="text-xs text-[var(--text-secondary)] ">{t('dashboards.comptable.depenses_du_mois')}</p>
               <p className="text-xl font-bold text-red-600 dark:text-red-400">
                 {(tresorerie?.depenses_mois || 0).toLocaleString()} F
               </p>
             </div>
-            <div className="rounded-lg border border-neutral-100 bg-neutral-50 p-3 dark:border-neutral-800 dark:bg-neutral-900/50">
-              <p className="text-xs text-neutral-500 dark:text-neutral-400">{t('common.balance')}</p>
-              <p className="text-2xl font-bold text-neutral-900 dark:text-white">
+            <div className="rounded-lg border border-[var(--border-light)] bg-[var(--surface)] p-3  ">
+              <p className="text-xs text-[var(--text-secondary)] ">{t('common.balance')}</p>
+              <p className="text-2xl font-bold text-[var(--text-primary)] ">
                 {(tresorerie?.solde || 0).toLocaleString()} F
               </p>
             </div>
@@ -174,7 +174,7 @@ function ApercuSection({ stats, caData, repartition, factures, impayes, tresorer
               <Table.Body>
                 {impayes.map((f) => (
                   <Table.Row key={f.id}>
-                    <Table.Cell><span className="font-medium text-neutral-900 dark:text-white">{f.eleve}</span></Table.Cell>
+                    <Table.Cell><span className="font-medium text-[var(--text-primary)] ">{f.eleve}</span></Table.Cell>
                     <Table.Cell>{f.classe}</Table.Cell>
                     <Table.Cell>{f.type}</Table.Cell>
                     <Table.Cell>
@@ -216,7 +216,7 @@ function ApercuSection({ stats, caData, repartition, factures, impayes, tresorer
             <Table.Body>
               {factures.map((f) => (
                 <Table.Row key={f.id}>
-                  <Table.Cell><span className="font-medium text-neutral-900 dark:text-white">{f.eleve}</span></Table.Cell>
+                  <Table.Cell><span className="font-medium text-[var(--text-primary)] ">{f.eleve}</span></Table.Cell>
                   <Table.Cell>{f.classe}</Table.Cell>
                   <Table.Cell>{(f.montant ?? 0).toLocaleString()} F</Table.Cell>
                   <Table.Cell>
@@ -224,7 +224,7 @@ function ApercuSection({ stats, caData, repartition, factures, impayes, tresorer
                       {f.statut}
                     </Badge>
                   </Table.Cell>
-                  <Table.Cell className="text-neutral-400">{f.echeance}</Table.Cell>
+                  <Table.Cell className="text-[var(--text-tertiary)]">{f.echeance}</Table.Cell>
                 </Table.Row>
               ))}
             </Table.Body>

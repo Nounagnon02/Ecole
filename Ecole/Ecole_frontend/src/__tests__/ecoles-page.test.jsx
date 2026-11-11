@@ -120,7 +120,7 @@ describe('EcolesPage', () => {
     fireEvent.click(screen.getByRole('button', { name: /ajouter une école/i }));
 
     const modale = screen.getByRole('dialog');
-    fireEvent.change(within(modale).getByPlaceholderText('Ex: Complexe Scolaire Lumière'), { target: { value: 'Nouvelle École' } });
+    fireEvent.change(within(modale).getByPlaceholderText('Ex: Complexe scolaire Lumière'), { target: { value: 'Nouvelle École' } });
     fireEvent.change(within(modale).getByPlaceholderText('contact@ecole.bj'), { target: { value: 'nouvelle@test.bj' } });
     fireEvent.change(within(modale).getByPlaceholderText('Cotonou, Bénin'), { target: { value: 'Rue 1' } });
 
@@ -146,7 +146,7 @@ describe('EcolesPage', () => {
     fireEvent.click(screen.getByRole('button', { name: /ajouter une école/i }));
 
     const modale = screen.getByRole('dialog');
-    fireEvent.change(within(modale).getByPlaceholderText('Ex: Complexe Scolaire Lumière'), { target: { value: 'Doublon' } });
+    fireEvent.change(within(modale).getByPlaceholderText('Ex: Complexe scolaire Lumière'), { target: { value: 'Doublon' } });
     fireEvent.change(within(modale).getByPlaceholderText('contact@ecole.bj'), { target: { value: 'deja@pris.bj' } });
     fireEvent.click(within(modale).getByRole('button', { name: /créer l'école/i }));
 

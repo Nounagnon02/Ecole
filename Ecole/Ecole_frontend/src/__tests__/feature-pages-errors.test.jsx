@@ -269,7 +269,7 @@ describe('AbsencesPage', () => {
     renderPage(<AbsencesPage />);
 
     await waitFor(() => expect(screen.getAllByText(/Kponou/).length).toBe(2));
-    expect(screen.getByText('Total Absences')).toBeInTheDocument();
+    expect(screen.getByText('Total absences')).toBeInTheDocument();
     expect(screen.queryByText('Aucune absence trouvée')).not.toBeInTheDocument();
   });
 

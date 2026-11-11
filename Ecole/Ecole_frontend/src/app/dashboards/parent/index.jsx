@@ -112,7 +112,7 @@ function ApercuSection({ data, loading }) {
                   {childKeys.slice(0, 4).map((key, i) => (
                     <div key={key} className="flex items-center gap-1">
                       <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: i === 0 ? 'var(--accent)' : i === 1 ? 'var(--emerald)' : 'var(--amber)' }} />
-                      <span className="text-neutral-500">{key}</span>
+                      <span className="text-[var(--text-secondary)]">{key}</span>
                     </div>
                   ))}
                 </div>
@@ -176,15 +176,15 @@ function ApercuSection({ data, loading }) {
               safeEnfants.map((enfant) => (
                 <div
                   key={enfant.id}
-                  className="p-4 rounded-xl border border-neutral-100 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors cursor-pointer"
+                  className="p-4 rounded-xl border border-[var(--border-light)]  hover:bg-[var(--surface)]  transition-colors cursor-pointer"
                 >
                   <div className="flex items-center gap-3">
                     <Avatar name={enfant.nom} size="lg" />
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-neutral-900 dark:text-white">
+                      <p className="font-semibold text-[var(--text-primary)] ">
                         {enfant.nom} {enfant.prenom}
                       </p>
-                      <p className="text-xs text-neutral-500">{enfant.classe}</p>
+                      <p className="text-xs text-[var(--text-secondary)]">{enfant.classe}</p>
                       <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                         {enfant.role && (
                           <Badge variant={roleVariant(enfant.role)} size="sm">{enfant.role}</Badge>
@@ -200,7 +200,7 @@ function ApercuSection({ data, loading }) {
                     <Badge variant="primary" size="sm">{enfant.moyenne ?? '—'}</Badge>
                   </div>
                   <div className="mt-3 flex items-center justify-between text-sm">
-                    <span className="text-neutral-500">Rang: <strong className="text-neutral-700 dark:text-neutral-300">{enfant.rang ?? '—'}</strong></span>
+                    <span className="text-[var(--text-secondary)]">Rang: <strong className="text-[var(--text-primary)] ">{enfant.rang ?? '—'}</strong></span>
                     <Button variant="ghost" size="sm">
                       <Eye className="h-4 w-4" />
                     </Button>
@@ -230,24 +230,24 @@ function ApercuSection({ data, loading }) {
               <p className="text-sm">{t('dashboards.parent.aucun_echange_recent')}</p>
             </div>
           ) : (
-          <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
+          <div className="divide-y divide-[var(--border-light)] ">
             {safeCommunications.map((msg) => (
               <div
                 key={msg.id}
                 className={cn(
-                  'flex items-center gap-4 px-6 py-4 transition-colors cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800/50',
+                  'flex items-center gap-4 px-6 py-4 transition-colors cursor-pointer hover:bg-[var(--surface)] ',
                   msg.urgent && 'bg-red-50/30 dark:bg-red-500/5'
                 )}
               >
                 <Avatar name={msg.from} size="sm" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm text-neutral-900 dark:text-white">{msg.sujet}</span>
+                    <span className="font-medium text-sm text-[var(--text-primary)] ">{msg.sujet}</span>
                     {msg.urgent && <Badge variant="danger" size="sm">{t('dashboards.parent.urgent')}</Badge>}
                   </div>
-                  <p className="text-xs text-neutral-500 mt-0.5">{msg.from} · {msg.role}</p>
+                  <p className="text-xs text-[var(--text-secondary)] mt-0.5">{msg.from} · {msg.role}</p>
                 </div>
-                <span className="text-xs text-neutral-400">{msg.date}</span>
+                <span className="text-xs text-[var(--text-tertiary)]">{msg.date}</span>
               </div>
             ))}
           </div>

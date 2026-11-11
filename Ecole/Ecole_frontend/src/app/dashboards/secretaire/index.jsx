@@ -84,13 +84,13 @@ function ApercuSection({ stats, fluxInscriptions, rendezVous, inscriptions, plan
           <Card.Body>
             <div className="space-y-3">
               {rendezVous.map((rv) => (
-                <div key={rv.id} className="flex items-start gap-3 rounded-lg border border-neutral-100 bg-neutral-50 p-3 dark:border-neutral-800 dark:bg-neutral-900/50">
+                <div key={rv.id} className="flex items-start gap-3 rounded-lg border border-[var(--border-light)] bg-[var(--surface)] p-3  ">
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent-subtle)] text-xs font-semibold text-[var(--accent)]">
                     {rv.heure?.split(':')[0] ?? '--'}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-neutral-900 dark:text-white">{rv.visiteur}</p>
-                    <p className="text-xs text-neutral-500 truncate">{rv.motif}</p>
+                    <p className="text-sm font-medium text-[var(--text-primary)] ">{rv.visiteur}</p>
+                    <p className="text-xs text-[var(--text-secondary)] truncate">{rv.motif}</p>
                   </div>
                   <Badge variant={rv.statut === 'Confirmé' ? 'success' : 'warning'} size="sm">{rv.statut}</Badge>
                 </div>
@@ -119,10 +119,10 @@ function ApercuSection({ stats, fluxInscriptions, rendezVous, inscriptions, plan
             <Table.Body>
               {inscriptions.map((ins) => (
                 <Table.Row key={ins.id}>
-                  <Table.Cell><span className="font-medium text-neutral-900 dark:text-white">{ins.nom}</span></Table.Cell>
+                  <Table.Cell><span className="font-medium text-[var(--text-primary)] ">{ins.nom}</span></Table.Cell>
                   <Table.Cell>{ins.classe}</Table.Cell>
                   <Table.Cell><Badge variant={ins.type === 'Nouveau' ? 'primary' : ins.type === 'Transfert' ? 'warning' : 'neutral'} size="sm">{ins.type}</Badge></Table.Cell>
-                  <Table.Cell className="text-neutral-400">{ins.date}</Table.Cell>
+                  <Table.Cell className="text-[var(--text-tertiary)]">{ins.date}</Table.Cell>
                   <Table.Cell>
                     <Badge variant={ins.statut === 'Complété' ? 'success' : 'warning'} size="sm">{ins.statut}</Badge>
                   </Table.Cell>
@@ -156,10 +156,10 @@ function ApercuSection({ stats, fluxInscriptions, rendezVous, inscriptions, plan
               <Table.Body>
                 {planningRendezVous.map((rv) => (
                   <Table.Row key={rv.id}>
-                    <Table.Cell><span className="font-medium text-neutral-900 dark:text-white">{rv.visiteur}</span></Table.Cell>
+                    <Table.Cell><span className="font-medium text-[var(--text-primary)] ">{rv.visiteur}</span></Table.Cell>
                     <Table.Cell className="max-w-[180px] truncate">{rv.motif}</Table.Cell>
-                    <Table.Cell className="text-neutral-400">{rv.date}</Table.Cell>
-                    <Table.Cell className="text-neutral-400">{rv.heure}</Table.Cell>
+                    <Table.Cell className="text-[var(--text-tertiary)]">{rv.date}</Table.Cell>
+                    <Table.Cell className="text-[var(--text-tertiary)]">{rv.heure}</Table.Cell>
                   </Table.Row>
                 ))}
               </Table.Body>
@@ -193,9 +193,9 @@ function ApercuSection({ stats, fluxInscriptions, rendezVous, inscriptions, plan
               <Table.Body>
                 {certificatsAttente.map((c) => (
                   <Table.Row key={c.id}>
-                    <Table.Cell><span className="font-medium text-neutral-900 dark:text-white">{c.eleve}</span></Table.Cell>
+                    <Table.Cell><span className="font-medium text-[var(--text-primary)] ">{c.eleve}</span></Table.Cell>
                     <Table.Cell>{c.type}</Table.Cell>
-                    <Table.Cell className="text-neutral-400">{c.date}</Table.Cell>
+                    <Table.Cell className="text-[var(--text-tertiary)]">{c.date}</Table.Cell>
                   </Table.Row>
                 ))}
               </Table.Body>

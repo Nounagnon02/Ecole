@@ -33,7 +33,7 @@ function Switch({ checked, onCheckedChange, size = 'md', label, disabled, classN
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface)]',
           sizeConfig.track,
           checked
-            ? 'bg-[var(--accent)]'
+            ? 'bg-[var(--action)]'
             : 'bg-[var(--border-heavy)]'
         )}
       >
@@ -41,7 +41,7 @@ function Switch({ checked, onCheckedChange, size = 'md', label, disabled, classN
           layout
           transition={{ type: 'spring', stiffness: 500, damping: 30 }}
           className={cn(
-            'inline-block rounded-full bg-white shadow-sm',
+            'inline-block rounded-full bg-[var(--surface-raised)] shadow-sm',
             sizeConfig.thumb,
             checked && sizeConfig.translateX,
             !checked && 'translate-x-0.5'

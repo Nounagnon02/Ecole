@@ -219,14 +219,14 @@ export default function MessageriePage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-12rem)]">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--text-tertiary)]" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-[calc(100vh-12rem)] text-neutral-500">
+      <div className="flex flex-col items-center justify-center h-[calc(100vh-12rem)] text-[var(--text-secondary)]">
         <AlertCircle className="h-8 w-8 mb-2 text-red-400" />
         <p className="text-sm">{error}</p>
         <button
@@ -244,9 +244,9 @@ export default function MessageriePage() {
       <div className="flex flex-col lg:flex-row h-[calc(100vh-12rem)] gap-4">
         {/* Liste des conversations */}
         <Card className="relative w-full lg:w-80 shrink-0 flex flex-col max-h-48 lg:max-h-none">
-          <div className="border-b border-neutral-200 p-3 dark:border-neutral-700">
+          <div className="border-b border-[var(--border)] p-3 ">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
               <Input
                 placeholder={t('common.search_ellipsis')}
                 value={search}
@@ -263,7 +263,7 @@ export default function MessageriePage() {
                     'flex-1 rounded-lg px-2 py-1 text-xs font-medium transition-colors',
                     filter === f
                       ? 'bg-[var(--primary-subtle)] text-[var(--accent)] dark:bg-[var(--accent-subtle)]0/10 dark:text-[var(--accent)]'
-                      : 'text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800'
+                      : 'text-[var(--text-secondary)] hover:bg-[var(--surface-subtle)] '
                   )}
                 >
                   {f === 'inbox' ? t('pages.messagerie.messagerie.boite') : f === 'starred' ? t('pages.messagerie.messagerie.favoris') : t('pages.messagerie.messagerie.archive')}
@@ -275,11 +275,11 @@ export default function MessageriePage() {
           <div className="flex-1 overflow-y-auto">
             {loadingConv && (
               <div className="flex items-center justify-center p-8">
-                <Loader2 className="h-6 w-6 animate-spin text-neutral-400" />
+                <Loader2 className="h-6 w-6 animate-spin text-[var(--text-tertiary)]" />
               </div>
             )}
             {filtered.length === 0 && !loadingConv && (
-              <div className="text-center py-8 text-neutral-500">
+              <div className="text-center py-8 text-[var(--text-secondary)]">
                 <MessageSquare className="mx-auto h-8 w-8 mb-2" />
                 <p className="text-sm">{t('pages.messagerie.messagerie.aucune_conversation')}</p>
               </div>
@@ -289,10 +289,10 @@ export default function MessageriePage() {
                 key={conv.id}
                 onClick={() => setSelectedConv(conv)}
                 className={cn(
-                  'w-full border-b border-neutral-100 p-3 text-left transition-colors dark:border-neutral-800',
+                  'w-full border-b border-[var(--border-light)] p-3 text-left transition-colors ',
                   selectedConv?.id === conv.id
                     ? 'bg-[var(--accent-subtle)] dark:bg-[var(--accent-subtle)]0/5'
-                    : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/50'
+                    : 'hover:bg-[var(--surface)] '
                 )}
               >
                 <div className="flex items-start gap-3">
@@ -304,14 +304,14 @@ export default function MessageriePage() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-neutral-900 dark:text-white truncate">
+                      <span className="text-sm font-medium text-[var(--text-primary)]  truncate">
                         {conv.name}
                       </span>
-                      <span className="text-[10px] text-neutral-400 shrink-0">
+                      <span className="text-[10px] text-[var(--text-tertiary)] shrink-0">
                         {formatRelativeTime(conv.date)}
                       </span>
                     </div>
-                    <p className="text-xs text-neutral-500 truncate">{conv.lastMessage || t('pages.messagerie.messagerie.aucun_message')}</p>
+                    <p className="text-xs text-[var(--text-secondary)] truncate">{conv.lastMessage || t('pages.messagerie.messagerie.aucun_message')}</p>
                   </div>
                   {conv.unread > 0 && (
                     <Badge variant="primary" size="sm" className="shrink-0">{conv.unread}</Badge>
@@ -321,7 +321,7 @@ export default function MessageriePage() {
             ))}
           </div>
 
-          <div className="border-t border-neutral-200 p-3 dark:border-neutral-700">
+          <div className="border-t border-[var(--border)] p-3 ">
             <Button variant="ghost" size="sm" icon={<Users />} className="w-full justify-start" onClick={openContacts}>
               {t('pages.messagerie.messagerie.nouvelle_conversation')}
             </Button>
@@ -329,32 +329,32 @@ export default function MessageriePage() {
 
           {/* Contacteur — nouvelle conversation */}
           {showContacts && (
-            <div className="absolute inset-0 z-10 flex flex-col rounded-xl border border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-900">
-              <div className="flex items-center justify-between border-b border-neutral-200 p-3 dark:border-neutral-700">
-                <p className="text-sm font-semibold text-neutral-900 dark:text-white">{t('pages.messagerie.messagerie.nouvelle_conversation')}</p>
+            <div className="absolute inset-0 z-10 flex flex-col rounded-xl border border-[var(--border)] bg-[var(--surface-raised)]  ">
+              <div className="flex items-center justify-between border-b border-[var(--border)] p-3 ">
+                <p className="text-sm font-semibold text-[var(--text-primary)] ">{t('pages.messagerie.messagerie.nouvelle_conversation')}</p>
                 <button onClick={() => setShowContacts(false)} aria-label={t('pages.messagerie.messagerie.fermer')}>
-                  <X className="h-4 w-4 text-neutral-400" />
+                  <X className="h-4 w-4 text-[var(--text-tertiary)]" />
                 </button>
               </div>
               <div className="flex-1 overflow-y-auto">
                 {loadingContacts && (
                   <div className="flex items-center justify-center p-8">
-                    <Loader2 className="h-6 w-6 animate-spin text-neutral-400" />
+                    <Loader2 className="h-6 w-6 animate-spin text-[var(--text-tertiary)]" />
                   </div>
                 )}
                 {!loadingContacts && contacts.length === 0 && (
-                  <p className="p-4 text-sm text-neutral-400">{t('pages.messagerie.messagerie.aucun_contact_disponible')}</p>
+                  <p className="p-4 text-sm text-[var(--text-tertiary)]">{t('pages.messagerie.messagerie.aucun_contact_disponible')}</p>
                 )}
                 {contacts.map((contact) => (
                   <button
                     key={contact.id}
                     onClick={() => startConversation(contact)}
-                    className="flex w-full items-center gap-3 p-3 text-left transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800/50"
+                    className="flex w-full items-center gap-3 p-3 text-left transition-colors hover:bg-[var(--surface)] "
                   >
                     <Avatar name={contact.name} size="sm" />
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-neutral-900 dark:text-white">{contact.name}</p>
-                      <p className="text-xs text-neutral-500">{contact.role}</p>
+                      <p className="truncate text-sm font-medium text-[var(--text-primary)] ">{contact.name}</p>
+                      <p className="text-xs text-[var(--text-secondary)]">{contact.role}</p>
                     </div>
                   </button>
                 ))}
@@ -368,12 +368,12 @@ export default function MessageriePage() {
           {selectedConv ? (
             <>
               {/* Header conversation */}
-              <div className="flex items-center justify-between border-b border-neutral-200 p-4 dark:border-neutral-700">
+              <div className="flex items-center justify-between border-b border-[var(--border)] p-4 ">
                 <div className="flex items-center gap-3">
                   <Avatar name={selectedConv.name} size="sm" />
                   <div>
-                    <p className="text-sm font-semibold text-neutral-900 dark:text-white">{selectedConv.name}</p>
-                    <p className="text-xs text-neutral-500">{selectedConv.role}</p>
+                    <p className="text-sm font-semibold text-[var(--text-primary)] ">{selectedConv.name}</p>
+                    <p className="text-xs text-[var(--text-secondary)]">{selectedConv.role}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-1">
@@ -388,11 +388,11 @@ export default function MessageriePage() {
               <div className="flex-1 overflow-y-auto p-4 space-y-3">
                 {loadingMsg && (
                   <div className="flex items-center justify-center h-32">
-                    <Loader2 className="h-6 w-6 animate-spin text-neutral-400" />
+                    <Loader2 className="h-6 w-6 animate-spin text-[var(--text-tertiary)]" />
                   </div>
                 )}
                 {messages.length === 0 && !loadingMsg && (
-                  <div className="text-center py-8 text-neutral-400">
+                  <div className="text-center py-8 text-[var(--text-tertiary)]">
                     <MessageSquare className="mx-auto h-12 w-12 mb-3" />
                     <p className="text-sm">{t('pages.messagerie.messagerie.aucun_message_pour_cette_conversation')}</p>
                   </div>
@@ -406,12 +406,12 @@ export default function MessageriePage() {
                       'max-w-[70%] rounded-2xl px-4 py-2.5',
                       msg.from === 'me'
                         ? 'bg-[var(--accent-subtle)]0 text-white rounded-br-md'
-                        : 'bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100 rounded-bl-md'
+                        : 'bg-[var(--surface-subtle)] text-[var(--text-primary)]   rounded-bl-md'
                     )}>
                       <p className="text-sm leading-relaxed">{msg.text}</p>
                       <p className={cn(
                         'text-[10px] mt-1',
-                        msg.from === 'me' ? 'text-[var(--accent)]/60' : 'text-neutral-400'
+                        msg.from === 'me' ? 'text-[var(--accent)]/60' : 'text-[var(--text-tertiary)]'
                       )}>
                         {formatRelativeTime(msg.time)}
                       </p>
@@ -421,7 +421,7 @@ export default function MessageriePage() {
               </div>
 
               {/* Input */}
-              <div className="border-t border-neutral-200 p-4 dark:border-neutral-700">
+              <div className="border-t border-[var(--border)] p-4 ">
                 <div className="flex items-center gap-2">
                   <Button variant="ghost" size="sm" icon={<Paperclip />} />
                   <input
@@ -429,7 +429,7 @@ export default function MessageriePage() {
                     value={messageText}
                     onChange={(e) => setMessageText(e.target.value)}
                     placeholder={t('pages.messagerie.messagerie.ecrivez_votre_message')}
-                    className="flex-1 rounded-xl border border-neutral-300 bg-white px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+                    className="flex-1 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40   "
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && messageText.trim()) {
                         sendMessage();
@@ -443,7 +443,7 @@ export default function MessageriePage() {
               </div>
             </>
           ) : (
-            <div className="flex-1 flex items-center justify-center text-neutral-400">
+            <div className="flex-1 flex items-center justify-center text-[var(--text-tertiary)]">
               <div className="text-center">
                 <MessageSquare className="mx-auto h-12 w-12 mb-3" />
                 <p className="text-sm">{t('pages.messagerie.messagerie.selectionnez_une_conversation')}</p>

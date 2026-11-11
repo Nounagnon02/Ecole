@@ -73,7 +73,7 @@ function renderPage() {
 
 /** Ouvre le formulaire de rédaction et rend le `<form>`. */
 async function openForm() {
-  fireEvent.click(screen.getByRole('button', { name: /Nouvelle Publication/i }));
+  fireEvent.click(screen.getByRole('button', { name: /Nouvelle publication/i }));
   return screen.getByRole('form', { name: 'Nouvelle publication' });
 }
 

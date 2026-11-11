@@ -43,7 +43,7 @@ describe('AffectationsPage — i18n', () => {
   it('affiche les onglets et cartes en français par défaut', async () => {
     monter('fr');
     await waitFor(() => expect(screen.getByText('Secondaire')).toBeInTheDocument());
-    expect(screen.getByText('Maternelle & Primaire')).toBeInTheDocument();
+    expect(screen.getByText('Maternelle & primaire')).toBeInTheDocument();
     expect(screen.getByText('Affecter un cours')).toBeInTheDocument();
   });
 

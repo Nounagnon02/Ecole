@@ -50,8 +50,8 @@ function Pagination({ currentPage, totalPages, totalItems, onChange }) {
   }, [currentPage, totalPages]);
 
   return (
-    <div className="flex flex-col items-center justify-between gap-3 border-t border-neutral-200 px-4 py-3 sm:flex-row dark:border-neutral-800">
-      <p className="text-xs text-neutral-500 dark:text-neutral-400">
+    <div className="flex flex-col items-center justify-between gap-3 border-t border-[var(--border)] px-4 py-3 sm:flex-row ">
+      <p className="text-xs text-[var(--text-secondary)] ">
         {totalItems} résultat{totalItems > 1 ? 's' : ''}
         {' · '}Page {currentPage}/{totalPages}
       </p>
@@ -61,7 +61,7 @@ function Pagination({ currentPage, totalPages, totalItems, onChange }) {
           type="button"
           disabled={currentPage <= 1}
           onClick={() => onChange(currentPage - 1)}
-          className="flex h-11 w-11 items-center justify-center rounded-lg text-neutral-500 transition-colors hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-30 dark:text-neutral-400 dark:hover:bg-neutral-800"
+          className="flex h-11 w-11 items-center justify-center rounded-lg text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-subtle)] disabled:cursor-not-allowed disabled:opacity-30  "
           aria-label={t('components.data_table.page_precedente')}
         >
           <ChevronLeft className="h-4 w-4" />
@@ -69,7 +69,7 @@ function Pagination({ currentPage, totalPages, totalItems, onChange }) {
 
         {pages.map((p, i) =>
           p < 0 ? (
-            <span key={p} className="flex h-8 w-8 items-center justify-center text-xs text-neutral-400">
+            <span key={p} className="flex h-8 w-8 items-center justify-center text-xs text-[var(--text-tertiary)]">
               …
             </span>
           ) : (
@@ -77,11 +77,12 @@ function Pagination({ currentPage, totalPages, totalItems, onChange }) {
               key={p}
               type="button"
               onClick={() => onChange(p)}
+              aria-current={p === currentPage ? 'page' : undefined}
               className={cn(
                 'flex h-11 min-w-[2.75rem] items-center justify-center rounded-lg px-2 text-xs font-medium transition-all',
                 p === currentPage
-                  ? 'bg-[var(--accent)] text-white shadow-sm'
-                  : 'text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800'
+                  ? 'bg-[var(--action)] text-white shadow-sm'
+                  : 'text-[var(--text-secondary)] hover:bg-[var(--surface-subtle)]  '
               )}
             >
               {p}
@@ -93,7 +94,7 @@ function Pagination({ currentPage, totalPages, totalItems, onChange }) {
           type="button"
           disabled={currentPage >= totalPages}
           onClick={() => onChange(currentPage + 1)}
-          className="flex h-11 w-11 items-center justify-center rounded-lg text-neutral-500 transition-colors hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-30 dark:text-neutral-400 dark:hover:bg-neutral-800"
+          className="flex h-11 w-11 items-center justify-center rounded-lg text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-subtle)] disabled:cursor-not-allowed disabled:opacity-30  "
           aria-label={t('components.data_table.page_suivante')}
         >
           <ChevronRight className="h-4 w-4" />
@@ -125,11 +126,11 @@ function EmptyState({ message, icon: Icon }) {
       <td colSpan={99}>
         <div className="flex flex-col items-center justify-center py-16 text-center">
           {Icon && (
-            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-neutral-100 dark:bg-neutral-800">
-              <Icon className="h-6 w-6 text-neutral-400" />
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--surface-subtle)] ">
+              <Icon className="h-6 w-6 text-[var(--text-tertiary)]" />
             </div>
           )}
-          <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">
+          <p className="text-sm font-medium text-[var(--text-secondary)] ">
             {message}
           </p>
         </div>
@@ -159,7 +160,7 @@ const DataTable = forwardRef(function DataTable(
     pagination = true,
     selectable = false,
     exportable = false,
-    itemsPerPage = 10,
+    itemsPerPage = 25,
 
     /* ─── États ─── */
     emptyMessage = 'Aucune donnée',
@@ -171,6 +172,7 @@ const DataTable = forwardRef(function DataTable(
   ref
 ) {
   const { t } = useTranslation();
+  const [pageSize, setPageSize] = useState(itemsPerPage);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   const [currentPage, setCurrentPage] = useState(1);
@@ -178,6 +180,8 @@ const DataTable = forwardRef(function DataTable(
 
   /* ─── Résoudre la valeur d'une colonne ────────────────────────────── */
   const resolveValue = useCallback((item, column) => {
+    if (!column) return undefined;
+    if (typeof column === 'string') column = { key: column };
     if (typeof column.accessor === 'function') return column.accessor(item);
     if (typeof column.accessor === 'string') {
       return column.accessor.split('.').reduce((o, k) => (o ? o[k] : undefined), item);
@@ -209,12 +213,13 @@ const DataTable = forwardRef(function DataTable(
   }, [filteredData, sortConfig, columns, resolveValue]);
 
   /* ─── Pagination ─────────────────────────────────────────────────── */
-  const pageCount = Math.max(1, Math.ceil(sortedData.length / itemsPerPage));
+  const pageCount = Math.max(1, Math.ceil(sortedData.length / pageSize));
+  const safePage = Math.min(currentPage, pageCount);
   const paginatedData = useMemo(() => {
     if (!pagination) return sortedData;
-    const start = (currentPage - 1) * itemsPerPage;
-    return sortedData.slice(start, start + itemsPerPage);
-  }, [sortedData, currentPage, itemsPerPage, pagination]);
+    const start = (safePage - 1) * pageSize;
+    return sortedData.slice(start, start + pageSize);
+  }, [sortedData, safePage, pageSize, pagination]);
 
   /* ─── Sort handler ────────────────────────────────────────────────── */
   const handleSort = useCallback(
@@ -288,7 +293,7 @@ const DataTable = forwardRef(function DataTable(
     const active = sortConfig.key === columnKey;
     const dir = sortConfig.direction;
     return (
-      <span className="ml-1.5 inline-flex flex-col leading-none text-neutral-400">
+      <span className="ml-1.5 inline-flex flex-col leading-none text-[var(--text-tertiary)]">
         <ChevronUp
           className={cn('h-3 w-3 -mb-0.5', active && dir === 'asc' && 'text-[var(--accent)]')}
         />
@@ -305,24 +310,24 @@ const DataTable = forwardRef(function DataTable(
     <div
       ref={ref}
       className={cn(
-        'overflow-hidden rounded-xl border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-950',
+        'overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface-raised)]  ',
         'shadow-sm dark:shadow-neutral-950/50',
         className
       )}
     >
       {/* ─── Toolbar ──────────────────────────────────────────────────── */}
       {(searchable || exportable) && (
-        <div className="flex flex-col items-start justify-between gap-3 border-b border-neutral-200 px-4 py-3 sm:flex-row sm:items-center dark:border-neutral-800">
+        <div className="flex flex-col items-start justify-between gap-3 border-b border-[var(--border)] px-4 py-3 sm:flex-row sm:items-center ">
           {searchable && (
             <div className="relative w-full max-w-xs">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+              <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
               <input
                 type="text"
                 value={searchTerm}
                 onChange={handleSearch}
                 placeholder={t('components.data_table.rechercher')}
                 aria-label={t('components.data_table.rechercher_dans_le_tableau')}
-                className="w-full rounded-lg border border-neutral-200 bg-white py-2 pl-9 pr-3 text-sm text-neutral-900 outline-none transition-colors placeholder:text-neutral-400 focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent-subtle)] dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:placeholder:text-neutral-500 dark:focus:border-[var(--accent)] dark:focus:ring-[var(--accent-subtle)]"
+                className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface-raised)] py-2 ps-9 pe-3 text-sm text-[var(--text-primary)] outline-none transition-colors placeholder:text-[var(--text-tertiary)] focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent-subtle)]     dark:focus:border-[var(--accent)] dark:focus:ring-[var(--accent-subtle)]"
               />
             </div>
           )}
@@ -336,29 +341,32 @@ const DataTable = forwardRef(function DataTable(
       )}
 
       {/* ─── Table ────────────────────────────────────────────────────── */}
-      <div className="overflow-x-auto">
+      <div className="ecole-table-scroll" tabIndex={0} role="region" aria-label={t('c.table_region')}>
         <table className="w-full border-collapse text-sm">
           <thead>
-            <tr className="border-b border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900/50">
+            <tr className="border-b border-[var(--border)] bg-[var(--surface)]  ">
               {selectable && (
-                <th className="w-10 px-2 py-3 text-left">
+                <th className="w-10 px-2 py-3 text-start">
                   <input
                     type="checkbox"
+                    aria-label={t('c.select_all')}
                     checked={allSelected}
                     onChange={toggleAll}
-                    className="h-4 w-4 rounded border-neutral-300 text-[var(--accent)] focus:ring-[var(--accent)] dark:border-neutral-600"
+                    className="h-4 w-4 rounded border-[var(--border-heavy)] text-[var(--accent)] focus:ring-[var(--accent)] "
                   />
                 </th>
               )}
               {columns.map((col) => (
                 <th
                   key={col.key}
-                  onClick={() => handleSort(col.key)}
+                  onClick={sortable && col.sortable !== false ? () => handleSort(col.key) : undefined}
+                  tabIndex={sortable && col.sortable !== false ? 0 : undefined}
+                  onKeyDown={e => { if (sortable && col.sortable !== false && ['Enter', ' '].includes(e.key)) { e.preventDefault(); handleSort(col.key); } }}
                   aria-sort={col.sortable !== false ? getAriaSort(col.key) : undefined}
                   scope="col"
                   className={cn(
-                    'px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400',
-                    sortable && col.sortable !== false && 'cursor-pointer select-none hover:text-neutral-700 dark:hover:text-neutral-300'
+                    'px-4 py-3 text-start text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] ',
+                    sortable && col.sortable !== false && 'cursor-pointer select-none hover:text-[var(--text-primary)] '
                   )}
                 >
                   <span className="inline-flex items-center">
@@ -368,13 +376,13 @@ const DataTable = forwardRef(function DataTable(
                 </th>
               ))}
               {showActions && (
-                <th className="w-24 px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+                <th className="w-24 px-4 py-3 text-end text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] ">
                   {t('common.actions')}
                 </th>
               )}
             </tr>
           </thead>
-          <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
+          <tbody className="divide-y divide-[var(--border-light)] ">
             {loading ? (
               <LoadingRows columnsCount={columns.length + (selectable ? 1 : 0) + (showActions ? 1 : 0)} />
             ) : paginatedData.length === 0 ? (
@@ -393,36 +401,37 @@ const DataTable = forwardRef(function DataTable(
                       onRowClick && 'cursor-pointer',
                       selected
                         ? 'bg-[var(--accent-subtle)]'
-                        : 'hover:bg-neutral-50 dark:hover:bg-neutral-900/50'
+                        : 'hover:bg-[var(--surface)] '
                     )}
                   >
                     {selectable && (
                       <td className="px-2 py-3">
                         <input
                           type="checkbox"
+                          aria-label={t('c.select_row', { name: resolveValue(item, columns[0]) || id })}
                           checked={selected}
                           onChange={() => toggleOne(id)}
                           onClick={(e) => e.stopPropagation()}
-                          className="h-4 w-4 rounded border-neutral-300 text-[var(--accent)] focus:ring-[var(--accent)] dark:border-neutral-600"
+                          className="h-4 w-4 rounded border-[var(--border-heavy)] text-[var(--accent)] focus:ring-[var(--accent)] "
                         />
                       </td>
                     )}
                     {columns.map((col) => (
-                      <td key={col.key} className={cn('px-4 py-3 text-neutral-700 dark:text-neutral-300', col.className)}>
+                      <td key={col.key} className={cn('px-4 py-3 text-[var(--text-primary)] ', col.className)}>
                         {col.render
                           ? col.render(resolveValue(item, col), item)
                           : (resolveValue(item, col) ?? '—')}
                       </td>
                     ))}
                     {showActions && (
-                      <td className="px-4 py-3 text-right">
+                      <td className="px-4 py-3 text-end">
                         <div className="flex items-center justify-end gap-1">
                           {onView && (
                             <button
                               type="button"
                               onClick={(e) => { e.stopPropagation(); onView(item); }}
-                              className="flex h-11 w-11 items-center justify-center rounded-lg text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-600 dark:hover:bg-neutral-800 dark:hover:text-neutral-300"
-                              aria-label={`Voir ${resolveValue(item, columns[0]?.accessor || columns[0]?.key) || t('components.data_table.l_element')}`}
+                              className="flex h-11 w-11 items-center justify-center rounded-lg text-[var(--text-tertiary)] transition-colors hover:bg-[var(--surface-subtle)] hover:text-[var(--text-secondary)]  "
+                              aria-label={`Voir ${resolveValue(item, columns[0]) || t('components.data_table.l_element')}`}
                               title={t('common.view')}
                             >
                               <Eye className="h-4 w-4" />
@@ -432,8 +441,8 @@ const DataTable = forwardRef(function DataTable(
                             <button
                               type="button"
                               onClick={(e) => { e.stopPropagation(); onEdit(item); }}
-                              className="flex h-11 w-11 items-center justify-center rounded-lg text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-[var(--accent)] dark:hover:bg-neutral-800 dark:hover:text-[var(--accent)]"
-                              aria-label={`Modifier ${resolveValue(item, columns[0]?.accessor || columns[0]?.key) || t('components.data_table.l_element')}`}
+                              className="flex h-11 w-11 items-center justify-center rounded-lg text-[var(--text-tertiary)] transition-colors hover:bg-[var(--surface-subtle)] hover:text-[var(--accent)]  dark:hover:text-[var(--accent)]"
+                              aria-label={`Modifier ${resolveValue(item, columns[0]) || t('components.data_table.l_element')}`}
                               title={t('common.edit')}
                             >
                               <Edit2 className="h-4 w-4" />
@@ -443,8 +452,8 @@ const DataTable = forwardRef(function DataTable(
                             <button
                               type="button"
                               onClick={(e) => { e.stopPropagation(); onDelete(item); }}
-                              className="flex h-11 w-11 items-center justify-center rounded-lg text-neutral-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30 dark:hover:text-red-400"
-                              aria-label={`Supprimer ${resolveValue(item, columns[0]?.accessor || columns[0]?.key) || t('components.data_table.l_element')}`}
+                              className="flex h-11 w-11 items-center justify-center rounded-lg text-[var(--text-tertiary)] transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30 dark:hover:text-red-400"
+                              aria-label={`Supprimer ${resolveValue(item, columns[0]) || t('components.data_table.l_element')}`}
                               title={t('common.delete')}
                             >
                               <Trash2 className="h-4 w-4" />
@@ -463,12 +472,20 @@ const DataTable = forwardRef(function DataTable(
 
       {/* ─── Pagination ──────────────────────────────────────────────────── */}
       {pagination && !loading && sortedData.length > 0 && (
+        <div>
+          <label className="flex items-center gap-3 border-t border-[var(--border)] px-4 pt-3 text-sm">
+            {t('c.rows_per_page')}
+            <select aria-label={t('c.rows_per_page')} className="min-h-11 rounded-md border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3" value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}>
+              {[...new Set([itemsPerPage, 25, 50, 100])].sort((a,b) => a-b).map(n => <option key={n} value={n}>{n}</option>)}
+            </select>
+          </label>
         <Pagination
-          currentPage={currentPage}
+          currentPage={safePage}
           totalPages={pageCount}
           totalItems={sortedData.length}
           onChange={setCurrentPage}
         />
+        </div>
       )}
     </div>
   );

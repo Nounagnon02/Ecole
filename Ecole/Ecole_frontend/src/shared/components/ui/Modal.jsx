@@ -2,7 +2,7 @@
  * Modal — Boîte de dialogue Érudit
  */
 
-import { useEffect, useCallback, useRef } from 'react';
+import { useEffect, useCallback, useRef, useId } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
@@ -30,6 +30,7 @@ export default function Modal({
 }) {
   const { t } = useTranslation();
   const closeRef = useRef(null);
+  const titleId = useId();
 
   const handleKeyDown = useCallback(
     (e) => {
@@ -56,6 +57,7 @@ export default function Modal({
   );
 
   useEffect(() => {
+    const previousFocus = document.activeElement;
     if (open) {
       document.addEventListener('keydown', handleKeyDown);
       document.body.style.overflow = 'hidden';
@@ -64,6 +66,7 @@ export default function Modal({
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = '';
+      if (open) previousFocus?.focus();
     };
   }, [open, handleKeyDown]);
 
@@ -85,13 +88,13 @@ export default function Modal({
           <motion.div
             role="dialog"
             aria-modal="true"
-            aria-labelledby={title ? 'modal-title' : undefined}
+            aria-labelledby={title ? titleId : undefined}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 8 }}
             transition={{ duration: 0.2 }}
             className={cn(
-              'relative w-full overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface-raised)] shadow-[var(--shadow-5)]',
+              'relative w-full max-h-[90dvh] overflow-y-auto rounded-xl border border-[var(--border)] bg-[var(--surface-raised)] shadow-[var(--shadow-5)]',
               sizes[size],
               className
             )}
@@ -101,7 +104,7 @@ export default function Modal({
               <div className="flex items-center justify-between border-b border-[var(--border-light)] px-5 py-4">
                 <div>
                   {title && (
-                    <h2 id="modal-title" className="font-fraunces text-lg font-semibold text-[var(--text-primary)]">
+                    <h2 id={titleId} className="font-heading text-lg font-semibold text-[var(--text-primary)]">
                       {title}
                     </h2>
                   )}
@@ -114,7 +117,7 @@ export default function Modal({
                     ref={closeRef}
                     onClick={onClose}
                     aria-label={t('common.close')}
-                    className="flex h-9 w-9 items-center justify-center rounded-lg text-[var(--text-tertiary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
+                    className="flex h-11 w-11 items-center justify-center rounded-lg text-[var(--text-tertiary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -127,7 +130,7 @@ export default function Modal({
 
             {/* Footer */}
             {footer && (
-              <div className="flex items-center justify-end gap-3 border-t border-[var(--border-light)] px-5 py-4">
+              <div className="flex flex-wrap items-center justify-end gap-3 border-t border-[var(--border-light)] px-5 py-4">
                 {footer}
               </div>
             )}

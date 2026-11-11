@@ -65,14 +65,14 @@ export default function DocumentsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--text-tertiary)]" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
+      <div className="flex flex-col items-center justify-center h-64 text-[var(--text-secondary)]">
         <AlertCircle className="h-8 w-8 mb-2 text-red-400" />
         <p className="text-sm">{error}</p>
         <button
@@ -96,8 +96,8 @@ export default function DocumentsPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.secretaire.documents.title')}</h1>
-          <p className="text-sm text-neutral-500">{t('pages.secretaire.documents.subtitle')}</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.secretaire.documents.title')}</h1>
+          <p className="text-sm text-[var(--text-secondary)]">{t('pages.secretaire.documents.subtitle')}</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" icon={<FolderOpen />}>{t('pages.secretaire.documents.dossiers')}</Button>
@@ -116,7 +116,7 @@ export default function DocumentsPage() {
       <Card>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
             <Input
               placeholder={t('pages.secretaire.documents.rechercher_un_courrier')}
               value={search}
@@ -129,7 +129,7 @@ export default function DocumentsPage() {
               value={filterCategorie}
               onChange={(e) => setFilterCategorie(e.target.value)}
               aria-label={t('pages.secretaire.documents.filtrer_par_categorie')}
-              className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+              className="h-10 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40   "
             >
               <option value="">{t('common.all_types')}</option>
               <option value="entrant">{t('pages.secretaire.documents.entrant')}</option>
@@ -144,7 +144,7 @@ export default function DocumentsPage() {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-neutral-200 dark:border-neutral-700 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+              <tr className="border-b border-[var(--border)]  text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
                 <th scope="col" className="pb-3 pr-4">{t('pages.secretaire.documents.objet')}</th>
                 <th scope="col" className="pb-3 pr-4">{t('pages.secretaire.documents.expediteur')}</th>
                 <th scope="col" className="pb-3 pr-4">{t('pages.secretaire.documents.destinataire')}</th>
@@ -156,26 +156,26 @@ export default function DocumentsPage() {
             <tbody>
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-sm text-neutral-500">
+                  <td colSpan={6} className="py-8 text-center text-sm text-[var(--text-secondary)]">
                     {t('pages.secretaire.documents.aucun_courrier_trouve')}
                   </td>
                 </tr>
               )}
               {filtered.map((doc) => (
-                <tr key={doc.id} className="border-b border-neutral-100 dark:border-neutral-800">
+                <tr key={doc.id} className="border-b border-[var(--border-light)] ">
                   <td className="py-3 pr-4">
                     <div className="flex items-center gap-3">
                       <div className={cn('h-8 w-8 rounded-lg flex items-center justify-center', typeCfg('pdf').color)}>
                         <IconComponent type="pdf" />
                       </div>
-                      <span className="text-sm font-medium text-neutral-900 dark:text-white">{doc.objet || t('pages.secretaire.documents.sans_objet')}</span>
+                      <span className="text-sm font-medium text-[var(--text-primary)] ">{doc.objet || t('pages.secretaire.documents.sans_objet')}</span>
                     </div>
                   </td>
                   <td className="py-3 pr-4">
-                    <span className="text-sm text-neutral-600 dark:text-neutral-400">{doc.expediteur || '—'}</span>
+                    <span className="text-sm text-[var(--text-secondary)] ">{doc.expediteur || '—'}</span>
                   </td>
                   <td className="py-3 pr-4">
-                    <span className="text-sm text-neutral-600 dark:text-neutral-400">{doc.destinataire || '—'}</span>
+                    <span className="text-sm text-[var(--text-secondary)] ">{doc.destinataire || '—'}</span>
                   </td>
                   <td className="py-3 pr-4">
                     <Badge variant={doc.type === 'entrant' ? 'primary' : 'warning'} size="sm">
@@ -183,7 +183,7 @@ export default function DocumentsPage() {
                     </Badge>
                   </td>
                   <td className="py-3 pr-4">
-                    <span className="text-sm text-neutral-600 dark:text-neutral-400">
+                    <span className="text-sm text-[var(--text-secondary)] ">
                       {doc.date_reception ? formatDate(doc.date_reception) : '—'}
                     </span>
                   </td>

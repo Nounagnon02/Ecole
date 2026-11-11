@@ -340,7 +340,7 @@ export default function CommandPalette() {
         }`}
       >
         <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${
-          isActive ? 'bg-[var(--accent)] text-white' : 'bg-[var(--border-light)] text-[var(--text-tertiary)]'
+          isActive ? 'bg-[var(--action)] text-white' : 'bg-[var(--border-light)] text-[var(--text-tertiary)]'
         }`}>
           <item.icon className="h-3.5 w-3.5" />
         </span>

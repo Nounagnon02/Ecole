@@ -25,7 +25,7 @@ import { useTranslation } from '@/shared/i18n';
 
 const STATUT_COLORS = {
   actif: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400',
-  inactif: 'bg-neutral-100 text-neutral-700 dark:bg-neutral-500/20 dark:text-neutral-400',
+  inactif: 'bg-[var(--surface-subtle)] text-[var(--text-primary)]  ',
   suspendu: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400',
 };
 
@@ -86,8 +86,8 @@ export default function ElevesPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.eleves.eleves.title')}</h1>
-          <p className="text-sm text-neutral-500">{t('pages.eleves.eleves.subtitle')}</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.eleves.eleves.title')}</h1>
+          <p className="text-sm text-[var(--text-secondary)]">{t('pages.eleves.eleves.subtitle')}</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" onClick={refetch} disabled={isLoading}>
@@ -107,7 +107,7 @@ export default function ElevesPage() {
       <Card>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
             <Input
               placeholder={t('common.search_student')}
               value={search}
@@ -119,7 +119,7 @@ export default function ElevesPage() {
             value={filterClasse}
             onChange={(e) => setFilterClasse(e.target.value)}
             aria-label={t('common.filter_by_class')}
-            className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm text-neutral-700 outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+            className="h-10 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--accent)]/40   "
           >
             <option value="">{t('common.all_classes')}</option>
             {classes.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -151,7 +151,7 @@ export default function ElevesPage() {
             ))}
             {!isLoading && filtered.length === 0 && (
               <Table.Row>
-                <td colSpan={5} className="p-8 text-center text-sm text-neutral-500">
+                <td colSpan={5} className="p-8 text-center text-sm text-[var(--text-secondary)]">
                   {t('common.no_student_found')}
                 </td>
               </Table.Row>
@@ -162,17 +162,17 @@ export default function ElevesPage() {
                   <div className="flex items-center gap-3">
                     <Avatar name={`${eleve.user?.name ?? ''} ${eleve.user?.prenom ?? ''}`} size="sm" />
                     <div>
-                      <p className="font-medium text-neutral-900 dark:text-white">
+                      <p className="font-medium text-[var(--text-primary)] ">
                         {eleve.user?.name} {eleve.user?.prenom}
                       </p>
-                      <p className="text-xs text-neutral-500">{eleve.user?.email}</p>
+                      <p className="text-xs text-[var(--text-secondary)]">{eleve.user?.email}</p>
                     </div>
                   </div>
                 </Table.Cell>
                 <Table.Cell>
                   <Badge variant="outline">{eleve.classe?.nom_classe ?? '—'}</Badge>
                 </Table.Cell>
-                <Table.Cell className="text-xs font-mono text-neutral-500">
+                <Table.Cell className="text-xs font-mono text-[var(--text-secondary)]">
                   {eleve.numero_matricule ?? '—'}
                 </Table.Cell>
                 <Table.Cell>

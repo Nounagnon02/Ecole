@@ -1,7 +1,7 @@
 /**
- * Button — Bouton Érudit
+ * Button — Bouton de la proposition C
  *
- * Variants : primary (cinabre) | secondary (teal) | ghost | outline | danger
+ * Variants : primary (vert) | secondary | ghost | outline | danger
  * Sizes    : sm | md | lg
  */
 
@@ -10,9 +10,9 @@ import { cn } from '@/shared/lib/utils';
 
 const variants = {
   primary:
-    'bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)] active:bg-[var(--accent-active)] shadow-[var(--shadow-1)] hover:shadow-[var(--shadow-2)]',
+    'bg-[var(--action)] text-white hover:bg-[var(--action-hover)] active:bg-[var(--action-active)] shadow-[var(--shadow-1)] hover:shadow-[var(--shadow-2)]',
   secondary:
-    'bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] active:bg-[var(--primary-active)]',
+    'bg-[var(--action)] text-white hover:bg-[var(--action-hover)] active:bg-[var(--action-active)]',
   ghost:
     'text-[var(--text-secondary)] hover:bg-[var(--surface-hover)] active:bg-[var(--surface-subtle)]',
   outline:
@@ -22,9 +22,9 @@ const variants = {
 };
 
 const sizes = {
-  sm: 'h-8 px-3 text-xs gap-1.5 rounded-lg',
-  md: 'h-10 px-4 text-sm gap-2 rounded-lg',
-  lg: 'h-12 px-6 text-base gap-2.5 rounded-xl',
+  sm: 'min-h-11 px-3 py-2 text-sm gap-1.5 rounded-md',
+  md: 'min-h-11 px-4 py-2.5 text-sm gap-2 rounded-md',
+  lg: 'min-h-[52px] px-6 py-3 text-base gap-2.5 rounded-md',
 };
 
 const Button = forwardRef(function Button(
@@ -48,7 +48,7 @@ const Button = forwardRef(function Button(
       disabled={disabled || loading}
       aria-busy={loading ? 'true' : undefined}
       className={cn(
-        'inline-flex items-center justify-center font-medium transition-all duration-150',
+        'inline-flex items-center justify-center font-semibold transition-all duration-150',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-ring)]',
         'disabled:pointer-events-none disabled:opacity-50',
         'select-none',
@@ -66,7 +66,7 @@ const Button = forwardRef(function Button(
       ) : icon ? (
         <span className="shrink-0">{icon}</span>
       ) : null}
-      {children && <span className="truncate">{children}</span>}
+      {children && <span>{children}</span>}
     </button>
   );
 });

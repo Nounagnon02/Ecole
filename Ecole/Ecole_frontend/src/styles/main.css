@@ -6,6 +6,7 @@
 @import "tailwindcss";
 @import "./design-tokens.css";
 @import "./type.css";
+@import "./proposition-c.css";
 
 /* ─── Dark mode piloté par la classe .dark ──────────────────────────────
    Par défaut Tailwind v4 fait suivre `dark:` à prefers-color-scheme.
@@ -16,9 +17,16 @@
 
 /* ─── Tailwind v4 theme extension ────────────────────────────────────── */
 @theme {
-  --font-fraunces: 'Fraunces', Georgia, 'Times New Roman', serif;
-  --font-inter: 'Inter', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  --font-heading: 'Figtree', 'Segoe UI', Arial, sans-serif;
+  --font-fraunces: 'Figtree', 'Segoe UI', Arial, sans-serif;
+  --font-inter: 'Figtree', 'Segoe UI', Arial, sans-serif;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 8px;
+  --radius-2xl: 12px;
+  --font-mono: ui-monospace, Consolas, monospace;
 }
 
 /* ==========================================================================
@@ -61,7 +69,7 @@
 
   /* ─── Focus ring — accent ──────────────────────────────────────────────── */
   *:focus-visible {
-    outline: 2px solid var(--accent-ring);
+    outline: 3px solid var(--accent-ring);
     outline-offset: 2px;
     border-radius: 4px;
   }
@@ -111,19 +119,6 @@
     background-color: var(--surface);
   }
 
-  /* ─── Subtle background texture (paper grain) ──────────────────────────── */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: -1;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.02'/%3E%3C/svg%3E");
-  }
-
-  .dark body::before {
-    opacity: 0.04;
-  }
 }
 
 /* ==========================================================================

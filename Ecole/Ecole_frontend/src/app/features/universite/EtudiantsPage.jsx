@@ -72,14 +72,14 @@ export default function EtudiantsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--text-tertiary)]" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
+      <div className="flex flex-col items-center justify-center h-64 text-[var(--text-secondary)]">
         <AlertCircle className="h-8 w-8 mb-2 text-red-400" />
         <p className="text-sm">{error}</p>
       </div>
@@ -90,8 +90,8 @@ export default function EtudiantsPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.universite.etudiants.title')}</h1>
-          <p className="text-sm text-neutral-500">{t('pages.universite.etudiants.subtitle')}</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.universite.etudiants.title')}</h1>
+          <p className="text-sm text-[var(--text-secondary)]">{t('pages.universite.etudiants.subtitle')}</p>
         </div>
         <Button size="sm" icon={<Plus />}>{t('pages.universite.etudiants.ajouter_un_etudiant')}</Button>
       </div>
@@ -106,7 +106,7 @@ export default function EtudiantsPage() {
       <Card>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
             <Input
               placeholder={t('pages.universite.etudiants.rechercher_un_etudiant')}
               value={search}
@@ -123,7 +123,7 @@ export default function EtudiantsPage() {
                   'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
                   filterNiveau === (n === 'Tous' ? '' : n)
                     ? 'bg-[var(--primary-subtle)] text-[var(--accent)] dark:text-[var(--accent)]'
-                    : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700'
+                    : 'bg-[var(--surface-subtle)] text-[var(--text-secondary)] hover:bg-[var(--surface-subtle)]   '
                 )}
               >
                 {n}
@@ -138,7 +138,7 @@ export default function EtudiantsPage() {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-neutral-200 dark:border-neutral-700 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+              <tr className="border-b border-[var(--border)]  text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
                 <th scope="col" className="pb-3 pr-4">{t('pages.universite.etudiants.etudiant')}</th>
                 <th scope="col" className="pb-3 pr-4">{t('common.matricule')}</th>
                 <th scope="col" className="pb-3 pr-4">{t('pages.universite.etudiants.niveau')}</th>
@@ -153,31 +153,31 @@ export default function EtudiantsPage() {
             <tbody>
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={9} className="py-8 text-center text-sm text-neutral-500">
+                  <td colSpan={9} className="py-8 text-center text-sm text-[var(--text-secondary)]">
                     {t('pages.universite.etudiants.aucun_etudiant_trouve')}
                   </td>
                 </tr>
               )}
               {filtered.map((e) => (
-                <tr key={e.id} className="border-b border-neutral-100 dark:border-neutral-800">
+                <tr key={e.id} className="border-b border-[var(--border-light)] ">
                   <td className="py-3 pr-4">
                     <div className="flex items-center gap-3">
                       <div className="h-8 w-8 rounded-full bg-[var(--primary-subtle)] flex items-center justify-center text-xs font-bold text-[var(--accent)]">
                         {e.nom?.charAt(0) || '?'}
                       </div>
-                      <span className="text-sm font-medium text-neutral-900 dark:text-white">{e.nom}</span>
+                      <span className="text-sm font-medium text-[var(--text-primary)] ">{e.nom}</span>
                     </div>
                   </td>
-                  <td className="py-3 pr-4 text-sm text-neutral-600 dark:text-neutral-400">{e.matricule}</td>
+                  <td className="py-3 pr-4 text-sm text-[var(--text-secondary)] ">{e.matricule}</td>
                   <td className="py-3 pr-4"><Badge variant="outline" size="sm">{e.niveau}</Badge></td>
-                  <td className="py-3 pr-4 text-sm text-neutral-600 dark:text-neutral-400">{e.filiere}</td>
+                  <td className="py-3 pr-4 text-sm text-[var(--text-secondary)] ">{e.filiere}</td>
                   <td className="py-3 pr-4"><Badge variant="primary" size="sm">{e.faculte}</Badge></td>
                   <td className="py-3 pr-4">
-                    <div className="flex flex-col text-xs text-neutral-500">
+                    <div className="flex flex-col text-xs text-[var(--text-secondary)]">
                       {e.email && <span className="flex items-center gap-1"><Mail className="h-3 w-3" /> {e.email}</span>}
                     </div>
                   </td>
-                  <td className="py-3 pr-4 text-sm text-neutral-600 dark:text-neutral-400">
+                  <td className="py-3 pr-4 text-sm text-[var(--text-secondary)] ">
                     {e.dateInscription ? new Date(e.dateInscription).toLocaleDateString('fr-FR') : '—'}
                   </td>
                   <td className="py-3 pr-4">
