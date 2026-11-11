@@ -1217,7 +1217,7 @@
         "reference": "Référence",
         "recu": "Reçu",
         "aucun_paiement_trouve": "Aucun paiement trouvé",
-        "voir_le_recu": "Voir le reçu",
+        "voir_le_recu": "Télécharger le reçu",
         "selectionnez_un_eleve_pour_voir_son_echeancier": "Sélectionnez un élève pour voir son échéancier",
         "total_du": "Total dû",
         "echeances": "Échéances",
@@ -1227,7 +1227,8 @@
         "url_de_paiement_invalide": "URL de paiement invalide",
         "impossible_d_initialiser_le_paiement": "Impossible d'initialiser le paiement",
         "erreur_lors_de_l_initialisation_du_paiement": "Erreur lors de l'initialisation du paiement",
-        "impossible_de_recuperer_les_paiements": "Impossible de récupérer les paiements"
+        "impossible_de_recuperer_les_paiements": "Impossible de récupérer les paiements",
+        "recu_indisponible": "Le reçu n’a pas pu être téléchargé."
       },
       "callback": {
         "status": {
@@ -1429,7 +1430,7 @@
         "reste_sur_echeance": "Reste à payer sur cette échéance : {montant}.",
         "montant_a_payer": "Montant à payer (FCFA)",
         "paiement_partiel_possible": "Vous pouvez payer en plusieurs fois.",
-        "suite": "Vous choisirez votre opérateur (MTN, Moov, Celtiis) et confirmerez sur votre téléphone à l’étape suivante.",
+        "suite": "Vous choisirez votre opérateur (MTN, Moov, Celtiis) et confirmerez sur votre téléphone à l’étape suivante. L’opérateur de paiement y ajoute ses frais, affichés avant validation.",
         "continuer": "Continuer vers le paiement",
         "montant_minimal": "Le montant minimal est de {montant}.",
         "montant_trop_eleve": "Le montant ne peut pas dépasser le reste à payer ({montant}).",

@@ -103,3 +103,24 @@ describe('encaissement au guichet', () => {
     expect(screen.queryByRole('button', { name: /^Encaisser$/ })).not.toBeInTheDocument();
   });
 });
+
+describe('reçu', () => {
+  it('se télécharge sous un nom lisible au lieu d’ouvrir un onglet sur l’API', async () => {
+    http.onGet('/comptable/paiements/2/recu').reply(200, '<html>Reçu</html>');
+    const ouvrir = vi.spyOn(window, 'open').mockImplementation(() => null);
+    URL.createObjectURL = vi.fn(() => 'blob:recu');
+    URL.revokeObjectURL = vi.fn();
+    const noms = [];
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function clic() { noms.push(this.download); });
+
+    render(
+      <MemoryRouter initialEntries={['/paiements']}>
+        <QueryClientProvider client={makeQueryClient()}><PaiementsPage /></QueryClientProvider>
+      </MemoryRouter>,
+    );
+    fireEvent.click(await screen.findByRole('button', { name: /Télécharger le reçu/ }));
+
+    await waitFor(() => expect(noms).toEqual(['recu-PAY-2026-0001.html']));
+    expect(ouvrir).not.toHaveBeenCalled();
+  });
+});

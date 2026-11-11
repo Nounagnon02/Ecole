@@ -1217,7 +1217,7 @@
         "reference": "المرجع",
         "recu": "الإيصال",
         "aucun_paiement_trouve": "لم يتم العثور على أي دفعة",
-        "voir_le_recu": "عرض الإيصال",
+        "voir_le_recu": "تنزيل الإيصال",
         "selectionnez_un_eleve_pour_voir_son_echeancier": "اختر طالباً لعرض جدول دفعاته",
         "total_du": "المجموع المستحق",
         "echeances": "الاستحقاقات",
@@ -1227,7 +1227,8 @@
         "url_de_paiement_invalide": "رابط الدفع غير صالح",
         "impossible_d_initialiser_le_paiement": "تعذّر بدء الدفع",
         "erreur_lors_de_l_initialisation_du_paiement": "حدث خطأ أثناء بدء الدفع",
-        "impossible_de_recuperer_les_paiements": "تعذّر جلب المدفوعات"
+        "impossible_de_recuperer_les_paiements": "تعذّر جلب المدفوعات",
+        "recu_indisponible": "تعذّر تنزيل الإيصال."
       },
       "callback": {
         "status": {
@@ -1429,7 +1430,7 @@
         "reste_sur_echeance": "المتبقي من هذا القسط: {montant}.",
         "montant_a_payer": "المبلغ المراد دفعه (FCFA)",
         "paiement_partiel_possible": "يمكنك الدفع على عدة مرات.",
-        "suite": "ستختار المشغّل (MTN، Moov، Celtiis) وتؤكد على هاتفك في الخطوة التالية.",
+        "suite": "ستختار المشغّل (MTN، Moov، Celtiis) وتؤكد على هاتفك في الخطوة التالية. يضيف مشغّل الدفع رسومه هناك، وتُعرض قبل التأكيد.",
         "continuer": "المتابعة إلى الدفع",
         "montant_minimal": "الحد الأدنى للمبلغ هو {montant}.",
         "montant_trop_eleve": "لا يمكن أن يتجاوز المبلغ المتبقي ({montant}).",
