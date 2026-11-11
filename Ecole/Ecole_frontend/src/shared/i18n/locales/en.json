@@ -52,7 +52,8 @@
     "configuration": "Configuration",
     "identite": "Branding",
     "affectations": "Assignments",
-    "assistant": "Assistant"
+    "assistant": "Assistant",
+    "personnel": "Staff"
   },
   "common": {
     "coming_soon": "Coming soon",
@@ -1127,7 +1128,7 @@
         "aide": "One CSV file for pupils, parents, teachers and staff: one row per person, with their role in the first column.",
         "aide_eleve": "Pupil: last name, first name and class. The registration number is generated when empty. The parent on the row is created, or found by phone number.",
         "aide_personnel": "Parent, teacher, staff: last name and phone number, which becomes the identifier. Staff accounts are reserved for the direction.",
-        "aide_tout_ou_rien": "The file is checked first. If a single row is wrong, nothing is created. 200 rows at most per file.",
+        "aide_tout_ou_rien": "The file is checked first. If a single row is wrong, nothing is created. A whole school fits in one file (2,000 rows at most).",
         "modele": "Download the template",
         "choisir": "Choose a CSV file",
         "autre_fichier": "Choose another file",
@@ -1155,7 +1156,9 @@
           "infirmier": "nurse(s)",
           "bibliothecaire": "librarian(s)",
           "directeur": "director(s)"
-        }
+        },
+        "creer_classes": "Create the {nombre} class(es) missing from the school: {classes}. Check they are not typos.",
+        "classes_a_creer": "These classes will be created: {classes}."
       }
     },
     "emploi_du_temps": {
@@ -1908,6 +1911,35 @@
         "page_label": "Page {current} of {last}",
         "total_label": "{n} total"
       }
+    },
+    "personnel": {
+      "title": "Staff",
+      "subtitle": "Accounts of the school’s teachers and administration.",
+      "ajouter": "Add a member",
+      "titre_fait": "Account created",
+      "rechercher": "Search a member",
+      "aucun": "No staff member.",
+      "nom": "Last name",
+      "prenom": "First name",
+      "role": "Role",
+      "choisir_role": "Choose a role",
+      "telephone": "Phone",
+      "telephone_aide": "10 digits, starting with 01. It will be the identifier.",
+      "email": "Email address (optional)",
+      "identifiant": "Identifier",
+      "etat": "Status",
+      "actif": "Active",
+      "jamais_connecte": "Never signed in",
+      "desactive": "Disabled",
+      "creer": "Create the account",
+      "role_requis": "Choose a role.",
+      "nom_requis": "Enter the last name.",
+      "telephone_invalide": "Invalid number: 10 digits, starting with 01.",
+      "echec": "The account could not be created.",
+      "fait": "The account of {nom} is created.",
+      "une_seule_fois": "Write these down and hand them over: the provisional password will not be shown again, and must be replaced at first sign-in.",
+      "mot_de_passe": "Provisional password",
+      "terminer": "Done"
     }
   },
   "app_shell": {
