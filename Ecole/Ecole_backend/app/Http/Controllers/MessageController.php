@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Message;
 use App\Models\User;
+use App\Support\MessagingContacts;
 use Illuminate\Http\Request;
 
 /**
@@ -137,6 +138,15 @@ class MessageController extends Controller
             ], 422);
         }
 
+        // Même règle que la liste des contacts : masquer un destinataire dans
+        // l'interface sans refuser l'envoi ne protégerait personne.
+        if (! MessagingContacts::canWrite(auth()->user(), $destinataire)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Vous ne pouvez pas écrire à cette personne.',
+            ], 403);
+        }
+
         $message = Message::create([
             'expediteur'   => $this->currentUserId(),
             'destinataire' => (string) $destinataire->id,
@@ -181,9 +191,8 @@ class MessageController extends Controller
      */
     public function getUsers()
     {
-        $users = User::where('ecole_id', auth()->user()?->ecole_id)
-            ->where('is_active', true)
-            ->where('id', '!=', auth()->id())
+        // Les contacts dépendent du rôle : voir MessagingContacts.
+        $users = MessagingContacts::query(auth()->user())
             ->orderBy('name')
             ->get(['id', 'name', 'prenom', 'role'])
             ->map(fn($u) => [
