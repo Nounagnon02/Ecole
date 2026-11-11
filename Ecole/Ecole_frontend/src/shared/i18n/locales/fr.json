@@ -1266,6 +1266,26 @@
           "texte": "Consultez vos paiements : s’il a été débité, il y apparaîtra. Sinon, contactez la comptabilité de l’école."
         },
         "lien": "Retour aux paiements"
+      },
+      "encaissement": {
+        "encaisser": "Encaisser",
+        "titre": "Enregistrer un versement",
+        "reste": "{type} · reste dû : {montant}",
+        "montant": "Montant reçu (FCFA)",
+        "mode": "Mode de règlement",
+        "modes": {
+          "ESPECES": "Espèces",
+          "CHEQUE": "Chèque",
+          "VIREMENT": "Virement",
+          "MOBILE_MONEY": "Mobile money"
+        },
+        "reference": "Référence (facultatif)",
+        "reference_aide": "Numéro du chèque, du virement ou de la transaction.",
+        "enregistrer": "Enregistrer le versement",
+        "montant_requis": "Indiquez le montant reçu.",
+        "montant_trop_eleve": "Le versement ne peut pas dépasser le reste dû ({montant}).",
+        "echec": "Le versement n’a pas pu être enregistré.",
+        "succes": "Versement enregistré · {reference}"
       }
     },
     "parametres": {

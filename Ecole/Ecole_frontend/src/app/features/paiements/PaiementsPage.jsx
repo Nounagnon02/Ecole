@@ -24,6 +24,7 @@ import Input from '@/shared/components/ui/Input';
 import { Skeleton } from '@/shared/components/ui/Skeleton';
 import { toast } from 'sonner';
 import { useTranslation } from '@/shared/i18n';
+import EncaissementDialog from './EncaissementDialog';
 
 const STATUT_COLORS = {
   payee: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400',
@@ -47,6 +48,7 @@ export default function PaiementsPage() {
   const [echeanceEleve, setEcheanceEleve] = useState(null);
   const [echeanceData, setEcheanceData] = useState(null);
   const [echeanceLoading, setEcheanceLoading] = useState(false);
+  const [aEncaisser, setAEncaisser] = useState(null);
 
   const { data: paiementsData, isLoading, error, refetch } = useApiQuery(
     ['paiements'],
@@ -112,6 +114,13 @@ export default function PaiementsPage() {
     } finally {
       setEcheanceLoading(false);
     }
+  };
+
+  const versementEnregistre = (resultat) => {
+    setAEncaisser(null);
+    toast.success(t('pages.paiements.encaissement.succes', { reference: resultat?.reference ?? '' }));
+    if (echeanceEleve) loadEcheancier(echeanceEleve);
+    refetch();
   };
 
   const handlePaiement = async (echeanceId) => {
@@ -429,6 +438,11 @@ export default function PaiementsPage() {
                           </Table.Cell>
                           <Table.Cell className="text-right">
                             <div className="flex items-center justify-end gap-2">
+                              {['en_attente', 'partiel'].includes(e.statut) && Number(e.reste ?? 0) > 0 && (
+                                <Button size="sm" variant="outline" onClick={() => setAEncaisser(e)}>
+                                  {t('pages.paiements.encaissement.encaisser')}
+                                </Button>
+                              )}
                               {['en_attente', 'partiel'].includes(e.statut) && (
                                 <Button
                                   size="sm"
@@ -458,6 +472,8 @@ export default function PaiementsPage() {
           </Card>
         </div>
       )}
+
+      <EncaissementDialog echeance={aEncaisser} onClose={() => setAEncaisser(null)} onDone={versementEnregistre} />
     </motion.div>
   );
 }
