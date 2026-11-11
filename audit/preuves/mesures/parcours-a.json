@@ -1,0 +1,122 @@
+[
+ {
+  "id": "A1",
+  "titre": "Formulaire de connexion vide",
+  "statut": "VALIDÉ",
+  "detail": "messages: Veuillez entrer votre identifiant ou email / Veuillez entrer votre mot de passe ; appels API: 0"
+ },
+ {
+  "id": "A2",
+  "titre": "Mauvais mot de passe",
+  "statut": "VALIDÉ",
+  "detail": "reste sur /connexion ; message: « Identifiants incorrects »"
+ },
+ {
+  "id": "A3",
+  "titre": "Identifiant inconnu : le message ne révèle pas si le compte existe",
+  "statut": "VALIDÉ",
+  "detail": "compte existant: « Identifiants incorrects » ; compte inconnu: « Identifiants incorrects »"
+ },
+ {
+  "id": "A4",
+  "titre": "Route protégée sans session",
+  "statut": "VALIDÉ",
+  "detail": "arrivée /connexion"
+ },
+ {
+  "id": "A5",
+  "titre": "Mot de passe oublié",
+  "statut": "VALIDÉ",
+  "detail": "API: 200 POST /api/auth/forgot-password ; écran: Français English العربية Email envoyé Si un compte existe avec l'adresse enseignantecole1@gmail.cj, vous recevrez un email contenant un lien pour réinitialiser votre mot de passe. Vérifiez votre boîte de réception et vos"
+ },
+ {
+  "id": "A6",
+  "titre": "Connexion valide puis déconnexion",
+  "statut": "ERREUR",
+  "detail": "locator.click: Timeout 30000ms exceeded."
+ },
+ {
+  "id": "A7",
+  "titre": "Expiration de session en cours d’utilisation",
+  "statut": "VALIDÉ",
+  "detail": "arrivée /connexion ; écran: École UNE ÉCOLE, UN LIEN COMMUN La vie de l’école, au même endroit. Notes, bulletins, paiements et messages : un espace clair pour les familles et les équipes é"
+ },
+ {
+  "id": "B1",
+  "titre": "Publication vide refusée",
+  "statut": "VALIDÉ",
+  "detail": "API: 422 /api/communications ; message affiché: « The titre field is required. / The contenu field is required. / The titre field is required. (and 1 more error) » ; BOUTONS: Nouvelle publication | Publier | Annuler | Tout | Important | Informations | Événements || CHAMPS: input#:r3:[Titre de la publication] | textarea#communication-contenu[Que souhaitez-vous | select#communication-categorie[categ"
+ },
+ {
+  "id": "B2",
+  "titre": "Publier une annonce (accents, apostrophe)",
+  "statut": "VALIDÉ",
+  "detail": "POST: 201 (double-clic → 1 envoi(s)) ; occurrences à l'écran: 1 ; message: "
+ },
+ {
+  "id": "B3",
+  "titre": "L’annonce persiste après rechargement",
+  "statut": "VALIDÉ",
+  "detail": "occurrences après rechargement: 1"
+ },
+ {
+  "id": "B4",
+  "titre": "L’annonce est visible par PAR001",
+  "statut": "VALIDÉ",
+  "detail": "occurrences: 1 ; bouton « Nouvelle publication » proposé à ce rôle: OUI"
+ },
+ {
+  "id": "B5",
+  "titre": "L’annonce est visible par EL001",
+  "statut": "VALIDÉ",
+  "detail": "occurrences: 1 ; bouton « Nouvelle publication » proposé à ce rôle: OUI"
+ },
+ {
+  "id": "C1",
+  "titre": "Modifier son téléphone (numéro béninois à 10 chiffres)",
+  "statut": "VALIDÉ",
+  "detail": "API: 200 PUT /api/auth/profile ; message: « Profil mis à jour » ; valeur après rechargement: « 0197123456 »"
+ },
+ {
+  "id": "C2",
+  "titre": "Changer de langue : anglais puis arabe",
+  "statut": "PARTIEL",
+  "detail": "langues: fr,en,ar ; menu en anglais: Dashboard | Classes | Students | Grades | Schedule | Announcements | | | ; h1: Settings ; arabe: dir=rtl, lang=ar, débordement -4px, conservé après rechargement: ar ; textes latins restants: Paramètres, Profil, Notifications, Sécurité, Apparence, Préférences, Mathématiques, Français"
+ },
+ {
+  "id": "C3",
+  "titre": "Thème sombre conservé après rechargement",
+  "statut": "VALIDÉ",
+  "detail": "sombre après clic: true ; après rechargement: true"
+ },
+ {
+  "id": "C4",
+  "titre": "Recherche globale (Ctrl+K)",
+  "statut": "ERREUR",
+  "detail": "locator.innerText: Timeout 30000ms exceeded."
+ },
+ {
+  "id": "C5",
+  "titre": "Bouton « Rechercher » de l’en-tête et notifications",
+  "statut": "ERREUR",
+  "detail": "locator.click: Timeout 30000ms exceeded."
+ },
+ {
+  "id": "D1",
+  "titre": "Coupure réseau : bandeau et page déjà ouverte",
+  "statut": "VALIDÉ",
+  "detail": "bandeau: « Hors connexion. Les informations affichées peuvent ne plus être à jour. Vérifiez le statut d’enregistrement avant de quitter une saisie. »"
+ },
+ {
+  "id": "D2",
+  "titre": "Publier pendant la coupure, puis retour du réseau",
+  "statut": "VALIDÉ",
+  "detail": "pendant la coupure: « AUCUN MESSAGE » ; saisie conservée à l’écran: oui ; annonce présente après retour du réseau: oui"
+ },
+ {
+  "id": "D3",
+  "titre": "Naviguer vers une autre page pendant la coupure",
+  "statut": "OBSERVÉ",
+  "detail": "page /eleves ; contenu: "
+ }
+]

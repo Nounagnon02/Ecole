@@ -1,0 +1,7 @@
+directeur_ecole1: accueil /directeur/dashboard, 12 routes autorisées, 0 avec refus API, 0 bloquées
+directeurM_ecole1: accueil /directeur/dashboard, 12 routes autorisées, 0 avec refus API, 0 bloquées
+directeurP_ecole1: accueil /directeur/dashboard, 12 routes autorisées, 0 avec refus API, 0 bloquées
+directeurS_ecole1: accueil /directeur/dashboard, 12 routes autorisées, 0 avec refus API, 0 bloquées
+censeur_ecole1: accueil /censeur/dashboard, 9 routes autorisées, 3 avec refus API, 0 bloquées
+secretaire_ecole1: accueil /secretaire/dashboard, 12 routes autorisées, 4 avec refus API, 0 bloquées
+comptable_ecole1: accueil /comptable/dashboard, 11 routes autorisées, 3 avec refus API, 0 bloquées

@@ -1,0 +1,1153 @@
+{
+ "compte": "EL001",
+ "accueilAttendu": "/eleve/dashboard",
+ "login": {
+  "arrivee": "/eleve/dashboard",
+  "ok": true,
+  "ms": 2345,
+  "erreur": ""
+ },
+ "nav": [
+  {
+   "href": "/eleve/dashboard",
+   "texte": "Tableau de bord"
+  },
+  {
+   "href": "/eleve/cours",
+   "texte": "Matières"
+  },
+  {
+   "href": "/emploi-du-temps",
+   "texte": "Emploi du temps"
+  },
+  {
+   "href": "/notes",
+   "texte": "Notes"
+  },
+  {
+   "href": "/paiements",
+   "texte": "Paiements"
+  },
+  {
+   "href": "/communications",
+   "texte": "Annonces"
+  },
+  {
+   "href": "/parametres",
+   "texte": "Paramètres"
+  },
+  {
+   "href": "/messagerie",
+   "texte": "Messagerie"
+  },
+  {
+   "href": "/eleve/tutor",
+   "texte": "Assistant"
+  }
+ ],
+ "pages": [
+  {
+   "route": "/directeur/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/enseignant/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/eleve/dashboard",
+   "arrivee": "/eleve/dashboard",
+   "acces": "autorisé",
+   "ms": 1505,
+   "h1": "Mon espace élève",
+   "nbH1": 1,
+   "boutons": 5,
+   "onglets": 4,
+   "liens": [
+    "/eleve/dashboard"
+   ],
+   "champs": 0,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 0,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": false,
+   "alerte": [],
+   "debord1280": -4,
+   "apiErreurs": [],
+   "apiAppels": 4,
+   "console": [],
+   "debord390": -4,
+   "vues": [
+    {
+     "onglet": "Aperçu",
+     "clics": [
+      {
+       "bouton": "Actualiser",
+       "effet": "api 200 GET /api/dashboard/eleve"
+      }
+     ],
+     "apiErreurs": [],
+     "console": [],
+     "debord": -4,
+     "boutonsVus": 1
+    },
+    {
+     "onglet": "Mes notes",
+     "clics": [
+      {
+       "bouton": "Actualiser",
+       "effet": "api 200 GET /api/dashboard/eleve"
+      }
+     ],
+     "apiErreurs": [],
+     "console": [],
+     "debord": 0,
+     "boutonsVus": 1
+    },
+    {
+     "onglet": "Emploi du temps",
+     "clics": [
+      {
+       "bouton": "Exporter",
+       "effet": "navigation /emploi-du-temps"
+      },
+      {
+       "bouton": "Ajouter un cours",
+       "effet": "navigation /emploi-du-temps"
+      }
+     ],
+     "apiErreurs": [],
+     "console": [],
+     "debord": -4,
+     "boutonsVus": 4
+    },
+    {
+     "onglet": "",
+     "clics": [
+      {
+       "bouton": "Exporter",
+       "clicForce": true,
+       "effet": "navigation /emploi-du-temps"
+      }
+     ],
+     "erreur": "locator.click: Timeout 2000ms exceeded.\nCall log:\n  - waiting for locator('#main",
+     "apiErreurs": [],
+     "console": [],
+     "debord": -4,
+     "boutonsVus": 4
+    }
+   ]
+  },
+  {
+   "route": "/parent/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/admin/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/comptable/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/surveillant/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/censeur/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/infirmier/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/bibliothecaire/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/secretaire/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/eleves",
+   "arrivee": "/eleves",
+   "acces": "autorisé",
+   "ms": 9843,
+   "h1": "",
+   "nbH1": 0,
+   "boutons": 0,
+   "onglets": 0,
+   "liens": [],
+   "champs": 0,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 0,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": false,
+   "alerte": [],
+   "debord1280": 0,
+   "apiErreurs": [],
+   "apiAppels": 0,
+   "console": [],
+   "debord390": 0,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [],
+     "boutonsVus": 0
+    }
+   ]
+  },
+  {
+   "route": "/notes",
+   "arrivee": "/notes",
+   "acces": "autorisé",
+   "ms": 2523,
+   "h1": "Notes",
+   "nbH1": 1,
+   "boutons": 7,
+   "onglets": 0,
+   "liens": [
+    "/eleve/dashboard"
+   ],
+   "champs": 3,
+   "tableaux": 1,
+   "lignes": 1,
+   "boutonsSansNom": 1,
+   "champsSansLabel": 1,
+   "imagesSansAlt": 0,
+   "petitesCibles": 3,
+   "clesNonTraduites": [],
+   "texteVide": true,
+   "alerte": [],
+   "debord1280": 0,
+   "apiErreurs": [],
+   "apiAppels": 4,
+   "console": [],
+   "debord390": 23,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [
+      {
+       "bouton": "(sans nom)",
+       "effet": "api 200 GET /api/notes/eleve"
+      },
+      {
+       "bouton": "Exporter",
+       "effet": "popup: http://localhost:3002/api/notes/export"
+      },
+      {
+       "bouton": "Importer",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Nouvelle note",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Notes",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Classement",
+       "effet": "changement d’affichage"
+      },
+      {
+       "bouton": "Bulletins",
+       "effet": "changement d’affichage"
+      }
+     ],
+     "boutonsVus": 7
+    }
+   ]
+  },
+  {
+   "route": "/paiements",
+   "arrivee": "/paiements",
+   "acces": "autorisé",
+   "ms": 1531,
+   "h1": "Paiements",
+   "nbH1": 1,
+   "boutons": 6,
+   "onglets": 0,
+   "liens": [
+    "/eleve/dashboard"
+   ],
+   "champs": 2,
+   "tableaux": 1,
+   "lignes": 1,
+   "boutonsSansNom": 1,
+   "champsSansLabel": 1,
+   "imagesSansAlt": 0,
+   "petitesCibles": 2,
+   "clesNonTraduites": [],
+   "texteVide": true,
+   "alerte": [],
+   "debord1280": -4,
+   "apiErreurs": [
+    "403 GET /api/comptable/paiements"
+   ],
+   "apiAppels": 4,
+   "console": [
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+   ],
+   "debord390": 27,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [
+      {
+       "bouton": "(sans nom)",
+       "console": [
+        "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+       ],
+       "effet": "api 403 GET /api/comptable/paiements"
+      },
+      {
+       "bouton": "Factures",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Exporter",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Nouveau paiement",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Paiements",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Échéancier",
+       "effet": "changement d’affichage"
+      }
+     ],
+     "boutonsVus": 6
+    }
+   ]
+  },
+  {
+   "route": "/communications",
+   "arrivee": "/communications",
+   "acces": "autorisé",
+   "ms": 1707,
+   "h1": "Communications",
+   "nbH1": 1,
+   "boutons": 5,
+   "onglets": 0,
+   "liens": [
+    "/eleve/dashboard"
+   ],
+   "champs": 0,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 0,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": true,
+   "alerte": [],
+   "debord1280": 0,
+   "apiErreurs": [],
+   "apiAppels": 4,
+   "console": [],
+   "debord390": 0,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [
+      {
+       "bouton": "Nouvelle publication",
+       "effet": "changement d’affichage"
+      },
+      {
+       "bouton": "Publier",
+       "console": [
+        "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+       ],
+       "effet": "api 403 POST /api/communications"
+      },
+      {
+       "bouton": "Annuler",
+       "effet": "changement d’affichage"
+      },
+      {
+       "bouton": "Informations",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Événements",
+       "effet": "AUCUN EFFET VISIBLE"
+      }
+     ],
+     "boutonsVus": 5
+    }
+   ]
+  },
+  {
+   "route": "/emploi-du-temps",
+   "arrivee": "/emploi-du-temps",
+   "acces": "autorisé",
+   "ms": 1562,
+   "h1": "Emploi du temps",
+   "nbH1": 1,
+   "boutons": 4,
+   "onglets": 0,
+   "liens": [
+    "/eleve/dashboard"
+   ],
+   "champs": 3,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 2,
+   "champsSansLabel": 0,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": false,
+   "alerte": [],
+   "debord1280": -4,
+   "apiErreurs": [],
+   "apiAppels": 4,
+   "console": [],
+   "debord390": 145,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [
+      {
+       "bouton": "Exporter",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Ajouter un cours",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "AUCUN EFFET VISIBLE"
+      }
+     ],
+     "boutonsVus": 4
+    }
+   ]
+  },
+  {
+   "route": "/parametres",
+   "arrivee": "/parametres",
+   "acces": "autorisé",
+   "ms": 1663,
+   "h1": "Paramètres",
+   "nbH1": 1,
+   "boutons": 6,
+   "onglets": 0,
+   "liens": [
+    "/eleve/dashboard"
+   ],
+   "champs": 5,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 4,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": false,
+   "alerte": [],
+   "debord1280": 0,
+   "apiErreurs": [],
+   "apiAppels": 3,
+   "console": [],
+   "debord390": -4,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [
+      {
+       "bouton": "Profil",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Notifications",
+       "effet": "changement d’affichage"
+      },
+      {
+       "bouton": "Sécurité",
+       "effet": "changement d’affichage"
+      },
+      {
+       "bouton": "Apparence",
+       "effet": "changement d’affichage"
+      },
+      {
+       "bouton": "Préférences",
+       "effet": "changement d’affichage"
+      }
+     ],
+     "boutonsVus": 6
+    }
+   ]
+  },
+  {
+   "route": "/messagerie",
+   "arrivee": "/messagerie",
+   "acces": "autorisé",
+   "ms": 1563,
+   "h1": "",
+   "nbH1": 0,
+   "boutons": 4,
+   "onglets": 0,
+   "liens": [
+    "/eleve/dashboard"
+   ],
+   "champs": 1,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 1,
+   "imagesSansAlt": 0,
+   "petitesCibles": 3,
+   "clesNonTraduites": [],
+   "texteVide": true,
+   "alerte": [],
+   "debord1280": -4,
+   "apiErreurs": [],
+   "apiAppels": 4,
+   "console": [],
+   "debord390": 0,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [
+      {
+       "bouton": "Boîte",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Favoris",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Archive",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Nouvelle conversation",
+       "effet": "api 200 GET /api/messages/contacts"
+      }
+     ],
+     "boutonsVus": 4
+    }
+   ]
+  },
+  {
+   "route": "/affectations",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/enseignant/classes",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/parent/enfants",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/eleve/cours",
+   "arrivee": "/eleve/cours",
+   "acces": "autorisé",
+   "ms": 4354,
+   "h1": "Mes cours",
+   "nbH1": 1,
+   "boutons": 0,
+   "onglets": 0,
+   "liens": [
+    "/eleve/dashboard",
+    "/eleve"
+   ],
+   "champs": 3,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 1,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": true,
+   "alerte": [],
+   "debord1280": 0,
+   "apiErreurs": [],
+   "apiAppels": 4,
+   "console": [],
+   "debord390": 0,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [],
+     "boutonsVus": 0
+    }
+   ]
+  },
+  {
+   "route": "/comptable/transactions",
+   "arrivee": "/comptable/transactions",
+   "acces": "autorisé",
+   "ms": 1859,
+   "h1": "",
+   "nbH1": 0,
+   "boutons": 0,
+   "onglets": 0,
+   "liens": [],
+   "champs": 0,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 0,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": false,
+   "alerte": [],
+   "debord1280": 0,
+   "apiErreurs": [],
+   "apiAppels": 1,
+   "console": [],
+   "debord390": 0,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [],
+     "boutonsVus": 0
+    }
+   ]
+  },
+  {
+   "route": "/comptable/factures",
+   "arrivee": "/comptable/factures",
+   "acces": "autorisé",
+   "ms": 5978,
+   "h1": "",
+   "nbH1": 0,
+   "boutons": 0,
+   "onglets": 0,
+   "liens": [],
+   "champs": 0,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 0,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": false,
+   "alerte": [],
+   "debord1280": 0,
+   "apiErreurs": [],
+   "apiAppels": 0,
+   "console": [],
+   "debord390": 0,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [],
+     "boutonsVus": 0
+    }
+   ]
+  },
+  {
+   "route": "/surveillant/surveillance",
+   "arrivee": "/surveillant/surveillance",
+   "acces": "autorisé",
+   "ms": 13018,
+   "h1": "",
+   "nbH1": 0,
+   "boutons": 0,
+   "onglets": 0,
+   "liens": [],
+   "champs": 0,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 0,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": false,
+   "alerte": [],
+   "debord1280": 0,
+   "apiErreurs": [],
+   "apiAppels": 0,
+   "console": [],
+   "debord390": 0,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [],
+     "boutonsVus": 0
+    }
+   ]
+  },
+  {
+   "route": "/surveillant/presences",
+   "arrivee": "/surveillant/presences",
+   "acces": "autorisé",
+   "ms": 11044,
+   "h1": "",
+   "nbH1": 0,
+   "boutons": 0,
+   "onglets": 0,
+   "liens": [],
+   "champs": 0,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 0,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": false,
+   "alerte": [],
+   "debord1280": 0,
+   "apiErreurs": [],
+   "apiAppels": 0,
+   "console": [],
+   "debord390": 0,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [],
+     "boutonsVus": 0
+    }
+   ]
+  },
+  {
+   "route": "/censeur/discipline",
+   "arrivee": "/censeur/discipline",
+   "acces": "autorisé",
+   "ms": 4717,
+   "h1": "",
+   "nbH1": 0,
+   "boutons": 0,
+   "onglets": 0,
+   "liens": [],
+   "champs": 0,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 0,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": false,
+   "alerte": [],
+   "debord1280": 0,
+   "apiErreurs": [],
+   "apiAppels": 0,
+   "console": [],
+   "debord390": 0,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [],
+     "boutonsVus": 0
+    }
+   ]
+  },
+  {
+   "route": "/censeur/absences",
+   "arrivee": "/unauthorized",
+   "acces": "refusé",
+   "redirectionTardive": true
+  },
+  {
+   "route": "/infirmier/soins",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/infirmier/dossiers",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/bibliothecaire/catalogue",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/bibliothecaire/emprunts",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/secretaire/inscriptions",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/secretaire/planning",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/secretaire/documents",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/universite/facultes",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/universite/departements",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/universite/etudiants",
+   "arrivee": "/universite/etudiants",
+   "acces": "autorisé",
+   "ms": 6243,
+   "h1": "",
+   "nbH1": 0,
+   "boutons": 0,
+   "onglets": 0,
+   "liens": [],
+   "champs": 0,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 0,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": false,
+   "alerte": [],
+   "debord1280": 0,
+   "apiErreurs": [],
+   "apiAppels": 0,
+   "console": [],
+   "debord390": 0,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [],
+     "boutonsVus": 0
+    }
+   ]
+  },
+  {
+   "route": "/universite/enseignants",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/universite/cours",
+   "arrivee": "/unauthorized",
+   "acces": "refusé",
+   "redirectionTardive": true
+  },
+  {
+   "route": "/universite/mes-cours",
+   "arrivee": "/universite/mes-cours",
+   "acces": "autorisé",
+   "ms": 6132,
+   "h1": "",
+   "nbH1": 0,
+   "boutons": 0,
+   "onglets": 0,
+   "liens": [],
+   "champs": 0,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 0,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": false,
+   "alerte": [],
+   "debord1280": 0,
+   "apiErreurs": [],
+   "apiAppels": 0,
+   "console": [],
+   "debord390": 0,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [],
+     "boutonsVus": 0
+    }
+   ]
+  },
+  {
+   "route": "/universite/notes",
+   "arrivee": "/unauthorized",
+   "acces": "refusé",
+   "redirectionTardive": true
+  },
+  {
+   "route": "/universite/taches",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/universite/planning",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/universite/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/paiement/callback",
+   "arrivee": "/paiement/callback",
+   "acces": "autorisé",
+   "ms": 1472,
+   "h1": "Confirmation indisponible",
+   "nbH1": 1,
+   "boutons": 1,
+   "onglets": 0,
+   "liens": [
+    "/eleve/dashboard",
+    "/paiement"
+   ],
+   "champs": 0,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 0,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": false,
+   "alerte": [],
+   "debord1280": 0,
+   "apiErreurs": [],
+   "apiAppels": 3,
+   "console": [],
+   "debord390": 0,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [
+      {
+       "bouton": "Retour à l'échéancier",
+       "console": [
+        "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+       ],
+       "effet": "navigation /paiements + api 403 GET /api/comptable/paiements"
+      }
+     ],
+     "boutonsVus": 1
+    }
+   ]
+  },
+  {
+   "route": "/directeur/ai-insights",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/enseignant/ai-assistant",
+   "arrivee": "/unauthorized",
+   "acces": "refusé",
+   "redirectionTardive": true
+  },
+  {
+   "route": "/parent/ai-report",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/eleve/tutor",
+   "arrivee": "/eleve/tutor",
+   "acces": "autorisé",
+   "ms": 1538,
+   "h1": "Tuteur IA",
+   "nbH1": 1,
+   "boutons": 7,
+   "onglets": 0,
+   "liens": [
+    "/eleve/dashboard",
+    "/eleve"
+   ],
+   "champs": 1,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 1,
+   "champsSansLabel": 1,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": false,
+   "alerte": [],
+   "debord1280": -4,
+   "apiErreurs": [],
+   "apiAppels": 3,
+   "console": [],
+   "debord390": 0,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [
+      {
+       "bouton": "Chat IA",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Analyses",
+       "effet": "changement d’affichage"
+      },
+      {
+       "bouton": "Analyser",
+       "console": [
+        "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+       ],
+       "effet": "api 403 GET /api/v1/ia/predictive"
+      }
+     ],
+     "boutonsVus": 7
+    }
+   ]
+  },
+  {
+   "route": "/admin/ecoles",
+   "arrivee": "/admin/ecoles",
+   "acces": "autorisé",
+   "ms": 12639,
+   "h1": "",
+   "nbH1": 0,
+   "boutons": 0,
+   "onglets": 0,
+   "liens": [],
+   "champs": 0,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 0,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": false,
+   "alerte": [],
+   "debord1280": 0,
+   "apiErreurs": [],
+   "apiAppels": 0,
+   "console": [],
+   "debord390": 0,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [],
+     "boutonsVus": 0
+    }
+   ]
+  },
+  {
+   "route": "/admin/utilisateurs",
+   "arrivee": "/unauthorized",
+   "acces": "refusé",
+   "redirectionTardive": true
+  },
+  {
+   "route": "/admin/statistiques",
+   "arrivee": "/unauthorized",
+   "acces": "refusé",
+   "redirectionTardive": true
+  },
+  {
+   "route": "/admin/configuration",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/admin/journal-audit",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/admin/plans",
+   "arrivee": "/admin/plans",
+   "acces": "autorisé",
+   "ms": 5768,
+   "h1": "",
+   "nbH1": 0,
+   "boutons": 0,
+   "onglets": 0,
+   "liens": [],
+   "champs": 0,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 0,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": false,
+   "alerte": [],
+   "debord1280": 0,
+   "apiErreurs": [],
+   "apiAppels": 2,
+   "console": [],
+   "debord390": 0,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [],
+     "boutonsVus": 0
+    }
+   ]
+  },
+  {
+   "route": "/admin/billing",
+   "arrivee": "/unauthorized",
+   "acces": "refusé",
+   "redirectionTardive": true
+  },
+  {
+   "route": "/admin/modules",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/admin/white-label",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  }
+ ],
+ "termine": true
+}

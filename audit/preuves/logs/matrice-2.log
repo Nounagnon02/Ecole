@@ -1,0 +1,7 @@
+surveillant_ecole1: accueil /surveillant/dashboard, 9 routes autorisées, 3 avec refus API, 0 bloquées
+infirmier_ecole1: accueil /infirmier/dashboard, 9 routes autorisées, 3 avec refus API, 0 bloquées
+bibliothecaire_ecole1: accueil /bibliothecaire/dashboard, 9 routes autorisées, 3 avec refus API, 0 bloquées
+enseignant_ecole1: accueil /enseignant/dashboard, 9 routes autorisées, 0 avec refus API, 0 bloquées
+PAR001: accueil /parent/dashboard, 11 routes autorisées, 2 avec refus API, 0 bloquées
+EL001: accueil /eleve/dashboard, 10 routes autorisées, 1 avec refus API, 0 bloquées
+admin_ecole1: accueil /admin/dashboard, 9 routes autorisées, 3 avec refus API, 0 bloquées

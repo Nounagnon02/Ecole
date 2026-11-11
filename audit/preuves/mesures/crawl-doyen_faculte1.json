@@ -1,0 +1,1128 @@
+{
+ "compte": "doyen_faculte1",
+ "accueilAttendu": "/universite/dashboard",
+ "login": {
+  "arrivee": "/universite/dashboard",
+  "ok": true,
+  "ms": 2410,
+  "erreur": ""
+ },
+ "nav": [
+  {
+   "href": "/universite/dashboard",
+   "texte": "Tableau de bord"
+  },
+  {
+   "href": "/universite/departements",
+   "texte": "Départements"
+  },
+  {
+   "href": "/universite/etudiants",
+   "texte": "Étudiants"
+  },
+  {
+   "href": "/universite/cours",
+   "texte": "Cours"
+  },
+  {
+   "href": "/emploi-du-temps",
+   "texte": "Emploi du temps"
+  },
+  {
+   "href": "/communications",
+   "texte": "Annonces"
+  },
+  {
+   "href": "/messagerie",
+   "texte": "Messagerie"
+  },
+  {
+   "href": "/parametres",
+   "texte": "Paramètres"
+  },
+  {
+   "href": "/universite/facultes",
+   "texte": "Facultés"
+  },
+  {
+   "href": "/universite/enseignants",
+   "texte": "Enseignants"
+  }
+ ],
+ "pages": [
+  {
+   "route": "/directeur/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/enseignant/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/eleve/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/parent/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/admin/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/comptable/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/surveillant/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/censeur/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/infirmier/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/bibliothecaire/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/secretaire/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/eleves",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/notes",
+   "arrivee": "/notes",
+   "acces": "autorisé",
+   "ms": 1506,
+   "h1": "Notes",
+   "nbH1": 1,
+   "boutons": 7,
+   "onglets": 0,
+   "liens": [
+    "/universite/dashboard"
+   ],
+   "champs": 3,
+   "tableaux": 1,
+   "lignes": 1,
+   "boutonsSansNom": 1,
+   "champsSansLabel": 1,
+   "imagesSansAlt": 0,
+   "petitesCibles": 3,
+   "clesNonTraduites": [],
+   "texteVide": true,
+   "alerte": [],
+   "debord1280": -4,
+   "apiErreurs": [
+    "403 GET /api/notes/eleve"
+   ],
+   "apiAppels": 4,
+   "console": [
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+   ],
+   "debord390": 23,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [
+      {
+       "bouton": "(sans nom)",
+       "console": [
+        "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+       ],
+       "effet": "api 403 GET /api/notes/eleve"
+      },
+      {
+       "bouton": "Exporter",
+       "effet": "popup: http://localhost:3002/api/notes/export"
+      },
+      {
+       "bouton": "Importer",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Nouvelle note",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Notes",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Classement",
+       "effet": "changement d’affichage"
+      },
+      {
+       "bouton": "Bulletins",
+       "effet": "changement d’affichage"
+      }
+     ],
+     "boutonsVus": 7
+    }
+   ]
+  },
+  {
+   "route": "/paiements",
+   "arrivee": "/paiements",
+   "acces": "autorisé",
+   "ms": 3077,
+   "h1": "",
+   "nbH1": 0,
+   "boutons": 0,
+   "onglets": 0,
+   "liens": [],
+   "champs": 0,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 0,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": false,
+   "alerte": [],
+   "debord1280": 0,
+   "apiErreurs": [],
+   "apiAppels": 0,
+   "console": [],
+   "debord390": 0,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [],
+     "boutonsVus": 0
+    }
+   ]
+  },
+  {
+   "route": "/communications",
+   "arrivee": "/communications",
+   "acces": "autorisé",
+   "ms": 1823,
+   "h1": "Communications",
+   "nbH1": 1,
+   "boutons": 5,
+   "onglets": 0,
+   "liens": [
+    "/universite/dashboard"
+   ],
+   "champs": 0,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 0,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": true,
+   "alerte": [],
+   "debord1280": 0,
+   "apiErreurs": [],
+   "apiAppels": 4,
+   "console": [],
+   "debord390": 0,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [
+      {
+       "bouton": "Nouvelle publication",
+       "effet": "changement d’affichage"
+      },
+      {
+       "bouton": "Publier",
+       "console": [
+        "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+       ],
+       "effet": "api 403 POST /api/communications"
+      },
+      {
+       "bouton": "Annuler",
+       "effet": "changement d’affichage"
+      },
+      {
+       "bouton": "Informations",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Événements",
+       "effet": "AUCUN EFFET VISIBLE"
+      }
+     ],
+     "boutonsVus": 5
+    }
+   ]
+  },
+  {
+   "route": "/emploi-du-temps",
+   "arrivee": "/emploi-du-temps",
+   "acces": "autorisé",
+   "ms": 1442,
+   "h1": "",
+   "nbH1": 0,
+   "boutons": 0,
+   "onglets": 0,
+   "liens": [
+    "/universite/dashboard"
+   ],
+   "champs": 0,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 0,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": false,
+   "alerte": [],
+   "debord1280": 0,
+   "apiErreurs": [
+    "403 GET /api/emploi-du-temps"
+   ],
+   "apiAppels": 4,
+   "console": [
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+   ],
+   "debord390": 0,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [],
+     "boutonsVus": 0
+    }
+   ]
+  },
+  {
+   "route": "/parametres",
+   "arrivee": "/parametres",
+   "acces": "autorisé",
+   "ms": 1371,
+   "h1": "Paramètres",
+   "nbH1": 1,
+   "boutons": 6,
+   "onglets": 0,
+   "liens": [
+    "/universite/dashboard"
+   ],
+   "champs": 5,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 4,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": false,
+   "alerte": [],
+   "debord1280": 0,
+   "apiErreurs": [],
+   "apiAppels": 3,
+   "console": [],
+   "debord390": -4,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [
+      {
+       "bouton": "Profil",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Notifications",
+       "effet": "changement d’affichage"
+      },
+      {
+       "bouton": "Sécurité",
+       "effet": "changement d’affichage"
+      },
+      {
+       "bouton": "Apparence",
+       "effet": "changement d’affichage"
+      },
+      {
+       "bouton": "Préférences",
+       "effet": "changement d’affichage"
+      }
+     ],
+     "boutonsVus": 6
+    }
+   ]
+  },
+  {
+   "route": "/messagerie",
+   "arrivee": "/messagerie",
+   "acces": "autorisé",
+   "ms": 1507,
+   "h1": "",
+   "nbH1": 0,
+   "boutons": 4,
+   "onglets": 0,
+   "liens": [
+    "/universite/dashboard"
+   ],
+   "champs": 1,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 1,
+   "imagesSansAlt": 0,
+   "petitesCibles": 3,
+   "clesNonTraduites": [],
+   "texteVide": true,
+   "alerte": [],
+   "debord1280": -4,
+   "apiErreurs": [],
+   "apiAppels": 4,
+   "console": [],
+   "debord390": 0,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [
+      {
+       "bouton": "Boîte",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Favoris",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Archive",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Nouvelle conversation",
+       "effet": "api 200 GET /api/messages/contacts"
+      }
+     ],
+     "boutonsVus": 4
+    }
+   ]
+  },
+  {
+   "route": "/affectations",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/enseignant/classes",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/parent/enfants",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/eleve/cours",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/comptable/transactions",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/comptable/factures",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/surveillant/surveillance",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/surveillant/presences",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/censeur/discipline",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/censeur/absences",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/infirmier/soins",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/infirmier/dossiers",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/bibliothecaire/catalogue",
+   "arrivee": "/unauthorized",
+   "acces": "refusé",
+   "redirectionTardive": true
+  },
+  {
+   "route": "/bibliothecaire/emprunts",
+   "arrivee": "/bibliothecaire/emprunts",
+   "acces": "autorisé",
+   "ms": 7953,
+   "h1": "",
+   "nbH1": 0,
+   "boutons": 0,
+   "onglets": 0,
+   "liens": [],
+   "champs": 0,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 0,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": false,
+   "alerte": [],
+   "debord1280": 0,
+   "apiErreurs": [],
+   "apiAppels": 1,
+   "console": [],
+   "debord390": 0,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [],
+     "boutonsVus": 0
+    }
+   ]
+  },
+  {
+   "route": "/secretaire/inscriptions",
+   "arrivee": "/secretaire/inscriptions",
+   "acces": "autorisé",
+   "ms": 10632,
+   "h1": "",
+   "nbH1": 0,
+   "boutons": 0,
+   "onglets": 0,
+   "liens": [],
+   "champs": 0,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 0,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": false,
+   "alerte": [],
+   "debord1280": 0,
+   "apiErreurs": [],
+   "apiAppels": 0,
+   "console": [],
+   "debord390": 0,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [],
+     "boutonsVus": 0
+    }
+   ]
+  },
+  {
+   "route": "/secretaire/planning",
+   "arrivee": "/secretaire/planning",
+   "acces": "autorisé",
+   "ms": 18100,
+   "h1": "",
+   "nbH1": 0,
+   "boutons": 0,
+   "onglets": 0,
+   "liens": [],
+   "champs": 0,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 0,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": false,
+   "alerte": [],
+   "debord1280": 0,
+   "apiErreurs": [],
+   "apiAppels": 0,
+   "console": [],
+   "debord390": 0,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [],
+     "boutonsVus": 0
+    }
+   ]
+  },
+  {
+   "route": "/secretaire/documents",
+   "arrivee": "/unauthorized",
+   "acces": "refusé",
+   "redirectionTardive": true
+  },
+  {
+   "route": "/universite/facultes",
+   "arrivee": "/universite/facultes",
+   "acces": "autorisé",
+   "ms": 1639,
+   "h1": "Facultés",
+   "nbH1": 1,
+   "boutons": 1,
+   "onglets": 0,
+   "liens": [
+    "/universite/dashboard",
+    "/universite"
+   ],
+   "champs": 1,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 1,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": false,
+   "alerte": [],
+   "debord1280": 0,
+   "apiErreurs": [],
+   "apiAppels": 4,
+   "console": [],
+   "debord390": -4,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [
+      {
+       "bouton": "Ajouter une faculté",
+       "effet": "AUCUN EFFET VISIBLE"
+      }
+     ],
+     "boutonsVus": 1
+    }
+   ]
+  },
+  {
+   "route": "/universite/departements",
+   "arrivee": "/universite/departements",
+   "acces": "autorisé",
+   "ms": 1583,
+   "h1": "Départements",
+   "nbH1": 1,
+   "boutons": 9,
+   "onglets": 0,
+   "liens": [
+    "/universite/dashboard",
+    "/universite"
+   ],
+   "champs": 2,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 1,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": false,
+   "alerte": [],
+   "debord1280": -4,
+   "apiErreurs": [],
+   "apiAppels": 4,
+   "console": [],
+   "debord390": -4,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [
+      {
+       "bouton": "Nouveau département",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Gérer",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Gérer",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Gérer",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Gérer",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Gérer",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Gérer",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Gérer",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Gérer",
+       "effet": "AUCUN EFFET VISIBLE"
+      }
+     ],
+     "boutonsVus": 9
+    }
+   ]
+  },
+  {
+   "route": "/universite/etudiants",
+   "arrivee": "/universite/etudiants",
+   "acces": "autorisé",
+   "ms": 1524,
+   "h1": "Étudiants",
+   "nbH1": 1,
+   "boutons": 15,
+   "onglets": 0,
+   "liens": [
+    "/universite/dashboard",
+    "/universite"
+   ],
+   "champs": 1,
+   "tableaux": 1,
+   "lignes": 12,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 1,
+   "imagesSansAlt": 0,
+   "petitesCibles": 2,
+   "clesNonTraduites": [
+    "etu.uac.bj"
+   ],
+   "texteVide": false,
+   "alerte": [],
+   "debord1280": -4,
+   "apiErreurs": [],
+   "apiAppels": 4,
+   "console": [],
+   "debord390": -4,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [
+      {
+       "bouton": "Ajouter un étudiant",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Tous",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "—",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Voir",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Voir",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Voir",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Voir",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Voir",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Voir",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Voir",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Voir",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Voir",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Voir",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Voir",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Voir",
+       "effet": "AUCUN EFFET VISIBLE"
+      }
+     ],
+     "boutonsVus": 15
+    }
+   ]
+  },
+  {
+   "route": "/universite/enseignants",
+   "arrivee": "/universite/enseignants",
+   "acces": "autorisé",
+   "ms": 1641,
+   "h1": "Enseignants",
+   "nbH1": 1,
+   "boutons": 1,
+   "onglets": 0,
+   "liens": [
+    "/universite/dashboard",
+    "/universite"
+   ],
+   "champs": 1,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 1,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": false,
+   "alerte": [],
+   "debord1280": -4,
+   "apiErreurs": [],
+   "apiAppels": 4,
+   "console": [],
+   "debord390": -4,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [
+      {
+       "bouton": "Ajouter un enseignant",
+       "effet": "AUCUN EFFET VISIBLE"
+      }
+     ],
+     "boutonsVus": 1
+    }
+   ]
+  },
+  {
+   "route": "/universite/cours",
+   "arrivee": "/universite/cours",
+   "acces": "autorisé",
+   "ms": 2395,
+   "h1": "Erreur serveur",
+   "nbH1": 1,
+   "boutons": 1,
+   "onglets": 0,
+   "liens": [
+    "/universite/dashboard",
+    "/universite",
+    "/"
+   ],
+   "champs": 0,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 0,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": false,
+   "alerte": [],
+   "debord1280": -4,
+   "apiErreurs": [],
+   "apiAppels": 4,
+   "console": [
+    "PAGEERROR Objects are not valid as a React child (found: object with keys {id, nom, prenom, grade, specialite, telephone, email, departement_id, created_at, updated_at, e",
+    "PAGEERROR Objects are not valid as a React child (found: object with keys {id, libelle, annee_academique_id, created_at, updated_at, ecole_id}). If you meant to render a ",
+    "PAGEERROR Objects are not valid as a React child (found: object with keys {id, nom, niveau, departement_id, created_at, updated_at, ecole_id}). If you meant to render a c",
+    "The above error occurred in the <p> component:\n\n    at p\n    at div\n    at Card (http://localhost:3002/src/shared/components/ui/Card.jsx:25:17)\n    at div\n    a"
+   ],
+   "debord390": 27,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [
+      {
+       "bouton": "Réessayer",
+       "console": [
+        "PAGEERROR Objects are not valid as a React child (found: object with keys {id, nom, prenom, grade, specialite, telephone, email, departement_id, created_at, updated_at, e",
+        "PAGEERROR Objects are not valid as a React child (found: object with keys {id, libelle, annee_academique_id, created_at, updated_at, ecole_id}). If you meant to render a "
+       ],
+       "effet": "AUCUN EFFET VISIBLE"
+      }
+     ],
+     "boutonsVus": 1
+    }
+   ]
+  },
+  {
+   "route": "/universite/mes-cours",
+   "arrivee": "/unauthorized",
+   "acces": "refusé",
+   "redirectionTardive": true
+  },
+  {
+   "route": "/universite/notes",
+   "arrivee": "/unauthorized",
+   "acces": "refusé",
+   "redirectionTardive": true
+  },
+  {
+   "route": "/universite/taches",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/universite/planning",
+   "arrivee": "/unauthorized",
+   "acces": "refusé",
+   "redirectionTardive": true
+  },
+  {
+   "route": "/universite/dashboard",
+   "arrivee": "/universite/dashboard",
+   "acces": "autorisé",
+   "ms": 1697,
+   "h1": "Université",
+   "nbH1": 1,
+   "boutons": 9,
+   "onglets": 5,
+   "liens": [
+    "/universite/dashboard"
+   ],
+   "champs": 0,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 2,
+   "champsSansLabel": 0,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": true,
+   "alerte": [],
+   "debord1280": -4,
+   "apiErreurs": [
+    "500 GET /api/dashboard/universite"
+   ],
+   "apiAppels": 4,
+   "console": [
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+   ],
+   "debord390": -4,
+   "vues": [
+    {
+     "onglet": "Aperçu",
+     "clics": [
+      {
+       "bouton": "Actualiser",
+       "effet": "désactivé"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Calendrier",
+       "console": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+       ],
+       "effet": "api 500 GET /api/dashboard/universite"
+      }
+     ],
+     "apiErreurs": [],
+     "console": [],
+     "debord": -4,
+     "boutonsVus": 4
+    },
+    {
+     "onglet": "Facultés",
+     "clics": [
+      {
+       "bouton": "Ajouter une faculté",
+       "effet": "navigation /universite/facultes"
+      }
+     ],
+     "apiErreurs": [],
+     "console": [],
+     "debord": 0,
+     "boutonsVus": 1
+    },
+    {
+     "onglet": "",
+     "clics": [
+      {
+       "bouton": "Ajouter une faculté",
+       "effet": "navigation /universite/facultes"
+      }
+     ],
+     "erreur": "locator.click: Timeout 2000ms exceeded.\nCall log:\n  - waiting for locator('#main",
+     "apiErreurs": [],
+     "console": [],
+     "debord": 0,
+     "boutonsVus": 1
+    },
+    {
+     "onglet": "",
+     "clics": [
+      {
+       "bouton": "Ajouter un étudiant",
+       "effet": "navigation /universite/etudiants"
+      }
+     ],
+     "erreur": "locator.click: Timeout 2000ms exceeded.\nCall log:\n  - waiting for locator('#main",
+     "apiErreurs": [],
+     "console": [],
+     "debord": -4,
+     "boutonsVus": 15
+    },
+    {
+     "onglet": "Planning",
+     "clics": [
+      {
+       "bouton": "Actualiser",
+       "effet": "désactivé"
+      },
+      {
+       "bouton": "(sans nom)",
+       "console": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+       ],
+       "effet": "api 500 GET /api/dashboard/universite"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Calendrier",
+       "effet": "AUCUN EFFET VISIBLE"
+      }
+     ],
+     "erreur": "locator.click: Timeout 2000ms exceeded.\nCall log:\n  - waiting for locator('#main",
+     "apiErreurs": [],
+     "console": [],
+     "debord": -4,
+     "boutonsVus": 4
+    }
+   ]
+  },
+  {
+   "route": "/paiement/callback",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/directeur/ai-insights",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/enseignant/ai-assistant",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/parent/ai-report",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/eleve/tutor",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/admin/ecoles",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/admin/utilisateurs",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/admin/statistiques",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/admin/configuration",
+   "arrivee": "/unauthorized",
+   "acces": "refusé",
+   "redirectionTardive": true
+  },
+  {
+   "route": "/admin/journal-audit",
+   "arrivee": "/unauthorized",
+   "acces": "refusé",
+   "redirectionTardive": true
+  },
+  {
+   "route": "/admin/plans",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/admin/billing",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/admin/modules",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/admin/white-label",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  }
+ ],
+ "termine": true
+}

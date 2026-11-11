@@ -1,0 +1,4 @@
+[
+ {"id":"C4","titre":"Recherche globale (Ctrl+K)","statut":"ÉCHEC","detail":"La palette s'ouvre (Ctrl+K ou bouton « Rechercher »), mais disparaît dès la première lettre saisie quand un élève correspond. Console : « Objects are not valid as a React child (found: object with keys {id, nom_classe}) ». Cause : CommandPalette.jsx:218 et :459 affichent `el.classe`, qui est un objet. Capture : captures/parcours/C4-apres-frappe.jpg"},
+ {"id":"N2","titre":"Page « Notes » : cause de l'affichage vide","statut":"ÉCHEC","detail":"GET /api/notes/eleve répond 200 avec les notes dans `data.data` (réponse paginée, 641 notes en base), mais la page affiche « Total évaluations 0 » et « Aucune note trouvée ». Cause : NotesPage.jsx:38 n'accepte qu'un tableau dans `notesData.data`."}
+]

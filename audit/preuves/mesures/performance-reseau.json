@@ -1,0 +1,87 @@
+[
+ {
+  "profil": "Fibre / Wi-Fi (non bridé)",
+  "scenario": "Première visite : page de connexion",
+  "formulaireUtilisable_ms": 393,
+  "fcp_ms": 544,
+  "load_ms": 191,
+  "requetes": 6,
+  "ko": 302
+ },
+ {
+  "profil": "Fibre / Wi-Fi (non bridé)",
+  "scenario": "Connexion puis tableau de bord parent",
+  "titreVisible_ms": 900,
+  "donneesChargees_ms": 1089,
+  "requetes": 16,
+  "ko": 136
+ },
+ {
+  "profil": "4G correcte (9 Mb/s, 170 ms)",
+  "scenario": "Première visite : page de connexion",
+  "formulaireUtilisable_ms": 1567,
+  "fcp_ms": 1576,
+  "load_ms": 968,
+  "requetes": 6,
+  "ko": 302
+ },
+ {
+  "profil": "4G correcte (9 Mb/s, 170 ms)",
+  "scenario": "Connexion puis tableau de bord parent",
+  "titreVisible_ms": 2101,
+  "donneesChargees_ms": 2253,
+  "requetes": 16,
+  "ko": 136
+ },
+ {
+  "profil": "3G (1,6 Mb/s, 300 ms)",
+  "scenario": "Première visite : page de connexion",
+  "formulaireUtilisable_ms": 3212,
+  "fcp_ms": 3228,
+  "load_ms": 2468,
+  "requetes": 6,
+  "ko": 302
+ },
+ {
+  "profil": "3G (1,6 Mb/s, 300 ms)",
+  "scenario": "Connexion puis tableau de bord parent",
+  "titreVisible_ms": 3357,
+  "donneesChargees_ms": 3358,
+  "requetes": 16,
+  "ko": 136
+ },
+ {
+  "profil": "3G lente (400 kb/s, 400 ms)",
+  "scenario": "Première visite : page de connexion",
+  "formulaireUtilisable_ms": 8577,
+  "fcp_ms": 8488,
+  "load_ms": 7391,
+  "requetes": 6,
+  "ko": 302
+ },
+ {
+  "profil": "3G lente (400 kb/s, 400 ms)",
+  "scenario": "Connexion puis tableau de bord parent",
+  "titreVisible_ms": 5642,
+  "donneesChargees_ms": 5643,
+  "requetes": 15,
+  "ko": 133
+ },
+ {
+  "profil": "2G / EDGE (240 kb/s, 800 ms)",
+  "scenario": "Première visite : page de connexion",
+  "formulaireUtilisable_ms": 13913,
+  "fcp_ms": 13800,
+  "load_ms": 12222,
+  "requetes": 6,
+  "ko": 302
+ },
+ {
+  "profil": "2G / EDGE (240 kb/s, 800 ms)",
+  "scenario": "Connexion puis tableau de bord parent",
+  "titreVisible_ms": 9464,
+  "donneesChargees_ms": 9465,
+  "requetes": 15,
+  "ko": 133
+ }
+]

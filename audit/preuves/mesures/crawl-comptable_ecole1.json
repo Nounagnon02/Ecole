@@ -1,0 +1,1339 @@
+{
+ "compte": "comptable_ecole1",
+ "accueilAttendu": "/comptable/dashboard",
+ "login": {
+  "deuxFacteurs": "activée pendant le test",
+  "arrivee": "/comptable/dashboard",
+  "ok": true,
+  "ms": 5185,
+  "erreur": ""
+ },
+ "nav": [
+  {
+   "href": "/comptable/dashboard",
+   "texte": "Tableau de bord"
+  },
+  {
+   "href": "/comptable/transactions",
+   "texte": "Transactions"
+  },
+  {
+   "href": "/comptable/factures",
+   "texte": "Factures"
+  },
+  {
+   "href": "/paiements",
+   "texte": "Paiements"
+  },
+  {
+   "href": "/communications",
+   "texte": "Annonces"
+  },
+  {
+   "href": "/parametres",
+   "texte": "Paramètres"
+  },
+  {
+   "href": "/messagerie",
+   "texte": "Messagerie"
+  }
+ ],
+ "pages": [
+  {
+   "route": "/directeur/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/enseignant/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/eleve/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/parent/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/admin/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé",
+   "redirectionTardive": true
+  },
+  {
+   "route": "/comptable/dashboard",
+   "arrivee": "/comptable/dashboard",
+   "acces": "autorisé",
+   "ms": 1590,
+   "h1": "Comptabilité",
+   "nbH1": 1,
+   "boutons": 5,
+   "onglets": 3,
+   "liens": [
+    "/comptable/dashboard"
+   ],
+   "champs": 0,
+   "tableaux": 2,
+   "lignes": 18,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 0,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": false,
+   "alerte": [],
+   "debord1280": -4,
+   "apiErreurs": [],
+   "apiAppels": 4,
+   "console": [],
+   "debord390": -4,
+   "vues": [
+    {
+     "onglet": "Aperçu",
+     "clics": [
+      {
+       "bouton": "Actualiser",
+       "effet": "api 200 GET /api/dashboard/comptable"
+      },
+      {
+       "bouton": "Synthèse",
+       "effet": "AUCUN EFFET VISIBLE"
+      }
+     ],
+     "apiErreurs": [],
+     "console": [],
+     "debord": -4,
+     "boutonsVus": 2
+    },
+    {
+     "onglet": "Factures",
+     "clics": [
+      {
+       "bouton": "Exporter",
+       "effet": "navigation /comptable/factures"
+      },
+      {
+       "bouton": "Nouvelle facture",
+       "effet": "navigation /comptable/factures"
+      },
+      {
+       "bouton": "Voir",
+       "effet": "navigation /comptable/factures"
+      },
+      {
+       "bouton": "Envoyer",
+       "effet": "navigation /comptable/factures"
+      },
+      {
+       "bouton": "Imprimer",
+       "effet": "navigation /comptable/factures"
+      },
+      {
+       "bouton": "Voir",
+       "effet": "navigation /comptable/factures"
+      },
+      {
+       "bouton": "Envoyer",
+       "effet": "navigation /comptable/factures"
+      },
+      {
+       "bouton": "Imprimer",
+       "effet": "navigation /comptable/factures"
+      },
+      {
+       "bouton": "Voir",
+       "effet": "navigation /comptable/factures"
+      },
+      {
+       "bouton": "Envoyer",
+       "effet": "navigation /comptable/factures"
+      },
+      {
+       "bouton": "Imprimer",
+       "effet": "navigation /comptable/factures"
+      },
+      {
+       "bouton": "Voir",
+       "effet": "navigation /comptable/factures"
+      },
+      {
+       "bouton": "Envoyer",
+       "effet": "navigation /comptable/factures"
+      },
+      {
+       "bouton": "Imprimer",
+       "effet": "navigation /comptable/factures"
+      },
+      {
+       "bouton": "Voir",
+       "effet": "navigation /comptable/factures"
+      },
+      {
+       "bouton": "Envoyer",
+       "effet": "navigation /comptable/factures"
+      },
+      {
+       "bouton": "Imprimer",
+       "effet": "navigation /comptable/factures"
+      },
+      {
+       "bouton": "Voir",
+       "effet": "navigation /comptable/factures"
+      },
+      {
+       "bouton": "Envoyer",
+       "effet": "navigation /comptable/factures"
+      },
+      {
+       "bouton": "Imprimer",
+       "effet": "navigation /comptable/factures"
+      },
+      {
+       "bouton": "Voir",
+       "effet": "navigation /comptable/factures"
+      },
+      {
+       "bouton": "Envoyer",
+       "effet": "navigation /comptable/factures"
+      },
+      {
+       "bouton": "Imprimer",
+       "effet": "navigation /comptable/factures"
+      },
+      {
+       "bouton": "Voir",
+       "effet": "navigation /comptable/factures"
+      },
+      {
+       "bouton": "Envoyer",
+       "effet": "navigation /comptable/factures"
+      },
+      {
+       "bouton": "Imprimer",
+       "effet": "navigation /comptable/factures"
+      },
+      {
+       "bouton": "Voir",
+       "effet": "navigation /comptable/factures"
+      },
+      {
+       "bouton": "Envoyer",
+       "effet": "navigation /comptable/factures"
+      },
+      {
+       "bouton": "Imprimer",
+       "effet": "navigation /comptable/factures"
+      },
+      {
+       "bouton": "Voir",
+       "effet": "navigation /comptable/factures"
+      }
+     ],
+     "apiErreurs": [],
+     "console": [],
+     "debord": -4,
+     "boutonsVus": 128
+    },
+    {
+     "onglet": "",
+     "clics": [
+      {
+       "bouton": "Exporter",
+       "effet": "navigation /comptable/factures"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "navigation /comptable/transactions"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "navigation /comptable/transactions"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "navigation /comptable/transactions"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "navigation /comptable/transactions"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "navigation /comptable/transactions"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "navigation /comptable/transactions"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "navigation /comptable/transactions"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "navigation /comptable/transactions"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "navigation /comptable/transactions"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "navigation /comptable/transactions"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "navigation /comptable/transactions"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "navigation /comptable/transactions"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "navigation /comptable/transactions"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "navigation /comptable/transactions"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "navigation /comptable/transactions"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "navigation /comptable/transactions"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "navigation /comptable/transactions"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "navigation /comptable/transactions"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "navigation /comptable/transactions"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "navigation /comptable/transactions"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "navigation /comptable/transactions"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "navigation /comptable/transactions"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "navigation /comptable/transactions"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "navigation /comptable/transactions"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "navigation /comptable/transactions"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "navigation /comptable/transactions"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "navigation /comptable/transactions"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "navigation /comptable/transactions"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "navigation /comptable/transactions"
+      }
+     ],
+     "erreur": "locator.click: Timeout 2000ms exceeded.\nCall log:\n  - waiting for locator('#main",
+     "apiErreurs": [],
+     "console": [],
+     "debord": -4,
+     "boutonsVus": 128
+    }
+   ]
+  },
+  {
+   "route": "/surveillant/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/censeur/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/infirmier/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/bibliothecaire/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/secretaire/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/eleves",
+   "arrivee": "/eleves",
+   "acces": "autorisé",
+   "ms": 1526,
+   "h1": "Élèves",
+   "nbH1": 1,
+   "boutons": 3,
+   "onglets": 0,
+   "liens": [
+    "/comptable/dashboard"
+   ],
+   "champs": 2,
+   "tableaux": 1,
+   "lignes": 1,
+   "boutonsSansNom": 1,
+   "champsSansLabel": 1,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": true,
+   "alerte": [],
+   "debord1280": 0,
+   "apiErreurs": [
+    "403 GET /api/eleves"
+   ],
+   "apiAppels": 4,
+   "console": [
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+   ],
+   "debord390": -4,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [
+      {
+       "bouton": "(sans nom)",
+       "console": [
+        "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+       ],
+       "effet": "api 403 GET /api/eleves"
+      },
+      {
+       "bouton": "Exporter",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Nouvel élève",
+       "effet": "AUCUN EFFET VISIBLE"
+      }
+     ],
+     "boutonsVus": 3
+    }
+   ]
+  },
+  {
+   "route": "/notes",
+   "arrivee": "/notes",
+   "acces": "autorisé",
+   "ms": 1538,
+   "h1": "Notes",
+   "nbH1": 1,
+   "boutons": 7,
+   "onglets": 0,
+   "liens": [
+    "/comptable/dashboard"
+   ],
+   "champs": 3,
+   "tableaux": 1,
+   "lignes": 1,
+   "boutonsSansNom": 1,
+   "champsSansLabel": 1,
+   "imagesSansAlt": 0,
+   "petitesCibles": 3,
+   "clesNonTraduites": [],
+   "texteVide": true,
+   "alerte": [],
+   "debord1280": -4,
+   "apiErreurs": [
+    "403 GET /api/notes/eleve"
+   ],
+   "apiAppels": 4,
+   "console": [
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+   ],
+   "debord390": 23,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [
+      {
+       "bouton": "(sans nom)",
+       "console": [
+        "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+       ],
+       "effet": "api 403 GET /api/notes/eleve"
+      },
+      {
+       "bouton": "Exporter",
+       "effet": "popup: http://localhost:3002/api/notes/export"
+      },
+      {
+       "bouton": "Importer",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Nouvelle note",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Notes",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Classement",
+       "effet": "changement d’affichage"
+      },
+      {
+       "bouton": "Bulletins",
+       "effet": "changement d’affichage"
+      }
+     ],
+     "boutonsVus": 7
+    }
+   ]
+  },
+  {
+   "route": "/paiements",
+   "arrivee": "/paiements",
+   "acces": "autorisé",
+   "ms": 1595,
+   "h1": "Paiements",
+   "nbH1": 1,
+   "boutons": 48,
+   "onglets": 0,
+   "liens": [
+    "/comptable/dashboard"
+   ],
+   "champs": 2,
+   "tableaux": 1,
+   "lignes": 42,
+   "boutonsSansNom": 1,
+   "champsSansLabel": 1,
+   "imagesSansAlt": 0,
+   "petitesCibles": 44,
+   "clesNonTraduites": [],
+   "texteVide": false,
+   "alerte": [],
+   "debord1280": -4,
+   "apiErreurs": [],
+   "apiAppels": 4,
+   "console": [],
+   "debord390": 27,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [
+      {
+       "bouton": "(sans nom)",
+       "effet": "api 200 GET /api/comptable/paiements"
+      },
+      {
+       "bouton": "Factures",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Exporter",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Nouveau paiement",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Paiements",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Échéancier",
+       "effet": "changement d’affichage"
+      }
+     ],
+     "boutonsVus": 48
+    }
+   ]
+  },
+  {
+   "route": "/communications",
+   "arrivee": "/communications",
+   "acces": "autorisé",
+   "ms": 1591,
+   "h1": "Communications",
+   "nbH1": 1,
+   "boutons": 5,
+   "onglets": 0,
+   "liens": [
+    "/comptable/dashboard"
+   ],
+   "champs": 0,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 0,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": true,
+   "alerte": [],
+   "debord1280": 0,
+   "apiErreurs": [],
+   "apiAppels": 4,
+   "console": [],
+   "debord390": 0,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [
+      {
+       "bouton": "Nouvelle publication",
+       "effet": "changement d’affichage"
+      },
+      {
+       "bouton": "Publier",
+       "console": [
+        "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+       ],
+       "effet": "api 403 POST /api/communications"
+      },
+      {
+       "bouton": "Annuler",
+       "effet": "changement d’affichage"
+      },
+      {
+       "bouton": "Informations",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Événements",
+       "effet": "AUCUN EFFET VISIBLE"
+      }
+     ],
+     "boutonsVus": 5
+    }
+   ]
+  },
+  {
+   "route": "/emploi-du-temps",
+   "arrivee": "/emploi-du-temps",
+   "acces": "autorisé",
+   "ms": 1553,
+   "h1": "",
+   "nbH1": 0,
+   "boutons": 0,
+   "onglets": 0,
+   "liens": [
+    "/comptable/dashboard"
+   ],
+   "champs": 0,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 0,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": false,
+   "alerte": [],
+   "debord1280": 0,
+   "apiErreurs": [
+    "403 GET /api/emploi-du-temps"
+   ],
+   "apiAppels": 4,
+   "console": [
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+   ],
+   "debord390": 0,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [],
+     "boutonsVus": 0
+    }
+   ]
+  },
+  {
+   "route": "/parametres",
+   "arrivee": "/parametres",
+   "acces": "autorisé",
+   "ms": 1519,
+   "h1": "Paramètres",
+   "nbH1": 1,
+   "boutons": 6,
+   "onglets": 0,
+   "liens": [
+    "/comptable/dashboard"
+   ],
+   "champs": 5,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 4,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": false,
+   "alerte": [],
+   "debord1280": 0,
+   "apiErreurs": [],
+   "apiAppels": 3,
+   "console": [],
+   "debord390": -4,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [
+      {
+       "bouton": "Profil",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Notifications",
+       "effet": "changement d’affichage"
+      },
+      {
+       "bouton": "Sécurité",
+       "effet": "changement d’affichage"
+      },
+      {
+       "bouton": "Apparence",
+       "effet": "changement d’affichage"
+      },
+      {
+       "bouton": "Préférences",
+       "effet": "changement d’affichage"
+      }
+     ],
+     "boutonsVus": 6
+    }
+   ]
+  },
+  {
+   "route": "/messagerie",
+   "arrivee": "/messagerie",
+   "acces": "autorisé",
+   "ms": 1574,
+   "h1": "",
+   "nbH1": 0,
+   "boutons": 4,
+   "onglets": 0,
+   "liens": [
+    "/comptable/dashboard"
+   ],
+   "champs": 1,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 1,
+   "imagesSansAlt": 0,
+   "petitesCibles": 3,
+   "clesNonTraduites": [],
+   "texteVide": true,
+   "alerte": [],
+   "debord1280": -4,
+   "apiErreurs": [],
+   "apiAppels": 4,
+   "console": [],
+   "debord390": 0,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [
+      {
+       "bouton": "Boîte",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Favoris",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Archive",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Nouvelle conversation",
+       "effet": "api 200 GET /api/messages/contacts"
+      }
+     ],
+     "boutonsVus": 4
+    }
+   ]
+  },
+  {
+   "route": "/affectations",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/enseignant/classes",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/parent/enfants",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/eleve/cours",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/comptable/transactions",
+   "arrivee": "/comptable/transactions",
+   "acces": "autorisé",
+   "ms": 1525,
+   "h1": "Transactions",
+   "nbH1": 1,
+   "boutons": 43,
+   "onglets": 0,
+   "liens": [
+    "/comptable/dashboard",
+    "/comptable"
+   ],
+   "champs": 3,
+   "tableaux": 1,
+   "lignes": 42,
+   "boutonsSansNom": 42,
+   "champsSansLabel": 1,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": false,
+   "alerte": [],
+   "debord1280": -4,
+   "apiErreurs": [],
+   "apiAppels": 4,
+   "console": [],
+   "debord390": 33,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [
+      {
+       "bouton": "Exporter",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "AUCUN EFFET VISIBLE"
+      }
+     ],
+     "boutonsVus": 43
+    }
+   ]
+  },
+  {
+   "route": "/comptable/factures",
+   "arrivee": "/comptable/factures",
+   "acces": "autorisé",
+   "ms": 1651,
+   "h1": "Factures",
+   "nbH1": 1,
+   "boutons": 128,
+   "onglets": 0,
+   "liens": [
+    "/comptable/dashboard",
+    "/comptable"
+   ],
+   "champs": 2,
+   "tableaux": 1,
+   "lignes": 42,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 1,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": false,
+   "alerte": [],
+   "debord1280": -4,
+   "apiErreurs": [],
+   "apiAppels": 4,
+   "console": [],
+   "debord390": 9,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [
+      {
+       "bouton": "Exporter",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Nouvelle facture",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Voir",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Envoyer",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Imprimer",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Voir",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Envoyer",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Imprimer",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Voir",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Envoyer",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Imprimer",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Voir",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Envoyer",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Imprimer",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Voir",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Envoyer",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Imprimer",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Voir",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Envoyer",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Imprimer",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Voir",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Envoyer",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Imprimer",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Voir",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Envoyer",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Imprimer",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Voir",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Envoyer",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Imprimer",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Voir",
+       "effet": "AUCUN EFFET VISIBLE"
+      }
+     ],
+     "boutonsVus": 128
+    }
+   ]
+  },
+  {
+   "route": "/surveillant/surveillance",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/surveillant/presences",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/censeur/discipline",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/censeur/absences",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/infirmier/soins",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/infirmier/dossiers",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/bibliothecaire/catalogue",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/bibliothecaire/emprunts",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/secretaire/inscriptions",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/secretaire/planning",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/secretaire/documents",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/universite/facultes",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/universite/departements",
+   "arrivee": "/unauthorized",
+   "acces": "refusé",
+   "redirectionTardive": true
+  },
+  {
+   "route": "/universite/etudiants",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/universite/enseignants",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/universite/cours",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/universite/mes-cours",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/universite/notes",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/universite/taches",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/universite/planning",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/universite/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/paiement/callback",
+   "arrivee": "/paiement/callback",
+   "acces": "autorisé",
+   "ms": 1646,
+   "h1": "Confirmation indisponible",
+   "nbH1": 1,
+   "boutons": 1,
+   "onglets": 0,
+   "liens": [
+    "/comptable/dashboard",
+    "/paiement"
+   ],
+   "champs": 0,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 0,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": false,
+   "alerte": [],
+   "debord1280": 0,
+   "apiErreurs": [],
+   "apiAppels": 3,
+   "console": [],
+   "debord390": 0,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [
+      {
+       "bouton": "Retour à l'échéancier",
+       "effet": "navigation /paiements + api 200 GET /api/comptable/paiements"
+      }
+     ],
+     "boutonsVus": 1
+    }
+   ]
+  },
+  {
+   "route": "/directeur/ai-insights",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/enseignant/ai-assistant",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/parent/ai-report",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/eleve/tutor",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/admin/ecoles",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/admin/utilisateurs",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/admin/statistiques",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/admin/configuration",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/admin/journal-audit",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/admin/plans",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/admin/billing",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/admin/modules",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/admin/white-label",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  }
+ ],
+ "termine": true
+}

@@ -1,0 +1,1017 @@
+{
+ "compte": "enseignant_ecole1",
+ "accueilAttendu": "/enseignant/dashboard",
+ "login": {
+  "arrivee": "/enseignant/dashboard",
+  "ok": true,
+  "ms": 2300,
+  "erreur": ""
+ },
+ "nav": [
+  {
+   "href": "/enseignant/dashboard",
+   "texte": "Tableau de bord"
+  },
+  {
+   "href": "/enseignant/classes",
+   "texte": "Classes"
+  },
+  {
+   "href": "/eleves",
+   "texte": "Élèves"
+  },
+  {
+   "href": "/notes",
+   "texte": "Notes"
+  },
+  {
+   "href": "/emploi-du-temps",
+   "texte": "Emploi du temps"
+  },
+  {
+   "href": "/communications",
+   "texte": "Annonces"
+  },
+  {
+   "href": "/parametres",
+   "texte": "Paramètres"
+  },
+  {
+   "href": "/messagerie",
+   "texte": "Messagerie"
+  },
+  {
+   "href": "/enseignant/ai-assistant",
+   "texte": "Assistant"
+  }
+ ],
+ "pages": [
+  {
+   "route": "/directeur/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/enseignant/dashboard",
+   "arrivee": "/enseignant/dashboard",
+   "acces": "autorisé",
+   "ms": 1562,
+   "h1": "Mon espace enseignant",
+   "nbH1": 1,
+   "boutons": 11,
+   "onglets": 6,
+   "liens": [
+    "/enseignant/dashboard"
+   ],
+   "champs": 0,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 2,
+   "champsSansLabel": 0,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": true,
+   "alerte": [],
+   "debord1280": -4,
+   "apiErreurs": [],
+   "apiAppels": 4,
+   "console": [],
+   "debord390": -4,
+   "vues": [
+    {
+     "onglet": "Aperçu",
+     "clics": [
+      {
+       "bouton": "Actualiser",
+       "effet": "api 200 GET /api/dashboard/enseignant"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Voir la semaine",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Nouveau",
+       "effet": "AUCUN EFFET VISIBLE"
+      }
+     ],
+     "apiErreurs": [],
+     "console": [],
+     "debord": -4,
+     "boutonsVus": 5
+    },
+    {
+     "onglet": "Ma classe",
+     "clics": [],
+     "apiErreurs": [],
+     "console": [],
+     "debord": 0,
+     "boutonsVus": 0
+    },
+    {
+     "onglet": "",
+     "clics": [],
+     "erreur": "locator.click: Timeout 2000ms exceeded.\nCall log:\n  - waiting for locator('#main",
+     "apiErreurs": [],
+     "console": [],
+     "debord": 0,
+     "boutonsVus": 0
+    },
+    {
+     "onglet": "",
+     "clics": [],
+     "erreur": "locator.click: Timeout 2000ms exceeded.\nCall log:\n  - waiting for locator('#main",
+     "apiErreurs": [],
+     "console": [],
+     "debord": 0,
+     "boutonsVus": 0
+    },
+    {
+     "onglet": "",
+     "clics": [],
+     "erreur": "locator.click: Timeout 2000ms exceeded.\nCall log:\n  - waiting for locator('#main",
+     "apiErreurs": [],
+     "console": [],
+     "debord": 0,
+     "boutonsVus": 0
+    },
+    {
+     "onglet": "",
+     "clics": [],
+     "erreur": "locator.click: Timeout 2000ms exceeded.\nCall log:\n  - waiting for locator('#main",
+     "apiErreurs": [],
+     "console": [],
+     "debord": 0,
+     "boutonsVus": 0
+    }
+   ]
+  },
+  {
+   "route": "/eleve/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/parent/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/admin/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/comptable/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/surveillant/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/censeur/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/infirmier/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/bibliothecaire/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/secretaire/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/eleves",
+   "arrivee": "/eleves",
+   "acces": "autorisé",
+   "ms": 1547,
+   "h1": "Élèves",
+   "nbH1": 1,
+   "boutons": 67,
+   "onglets": 0,
+   "liens": [
+    "/enseignant/dashboard"
+   ],
+   "champs": 2,
+   "tableaux": 1,
+   "lignes": 32,
+   "boutonsSansNom": 1,
+   "champsSansLabel": 1,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": false,
+   "alerte": [],
+   "debord1280": -4,
+   "apiErreurs": [],
+   "apiAppels": 4,
+   "console": [],
+   "debord390": -4,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [
+      {
+       "bouton": "(sans nom)",
+       "effet": "api 200 GET /api/eleves"
+      },
+      {
+       "bouton": "Exporter",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Nouvel élève",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Plus d'actions",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Retirer des effectifs",
+       "effet": "confirm: Retirer AGBODJAN Yèhossou des effectifs ? Son dossier (notes, paiements…) reste "
+      },
+      {
+       "bouton": "Plus d'actions",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Retirer des effectifs",
+       "effet": "confirm: Retirer HOUNGBO Fifamè des effectifs ? Son dossier (notes, paiements…) reste con"
+      },
+      {
+       "bouton": "Plus d'actions",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Retirer des effectifs",
+       "effet": "confirm: Retirer ADJOVI Koffi des effectifs ? Son dossier (notes, paiements…) reste consu"
+      },
+      {
+       "bouton": "Plus d'actions",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Retirer des effectifs",
+       "effet": "confirm: Retirer AHOUANSOU Mirabelle des effectifs ? Son dossier (notes, paiements…) rest"
+      },
+      {
+       "bouton": "Plus d'actions",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Retirer des effectifs",
+       "effet": "confirm: Retirer AKPOVI Joël des effectifs ? Son dossier (notes, paiements…) reste consul"
+      },
+      {
+       "bouton": "Plus d'actions",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Retirer des effectifs",
+       "effet": "confirm: Retirer BOKO Urbain des effectifs ? Son dossier (notes, paiements…) reste consul"
+      },
+      {
+       "bouton": "Plus d'actions",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Retirer des effectifs",
+       "effet": "confirm: Retirer CHABI Ornella des effectifs ? Son dossier (notes, paiements…) reste cons"
+      },
+      {
+       "bouton": "Plus d'actions",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Retirer des effectifs",
+       "effet": "confirm: Retirer DEGBEGNI Ruth des effectifs ? Son dossier (notes, paiements…) reste cons"
+      },
+      {
+       "bouton": "Plus d'actions",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Retirer des effectifs",
+       "effet": "confirm: Retirer EGBETOKO Sylvère des effectifs ? Son dossier (notes, paiements…) reste c"
+      },
+      {
+       "bouton": "Plus d'actions",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Retirer des effectifs",
+       "effet": "confirm: Retirer FIGNON Bérenger des effectifs ? Son dossier (notes, paiements…) reste co"
+      },
+      {
+       "bouton": "Plus d'actions",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Retirer des effectifs",
+       "effet": "confirm: Retirer GBAGUIDI Carmelle des effectifs ? Son dossier (notes, paiements…) reste "
+      },
+      {
+       "bouton": "Plus d'actions",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Retirer des effectifs",
+       "effet": "confirm: Retirer HESSOU Fernand des effectifs ? Son dossier (notes, paiements…) reste con"
+      },
+      {
+       "bouton": "Plus d'actions",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Retirer des effectifs",
+       "effet": "confirm: Retirer HOUNKPATIN Déborah des effectifs ? Son dossier (notes, paiements…) reste"
+      },
+      {
+       "bouton": "Plus d'actions",
+       "effet": "AUCUN EFFET VISIBLE"
+      }
+     ],
+     "boutonsVus": 67
+    }
+   ]
+  },
+  {
+   "route": "/notes",
+   "arrivee": "/notes",
+   "acces": "autorisé",
+   "ms": 1646,
+   "h1": "Notes",
+   "nbH1": 1,
+   "boutons": 7,
+   "onglets": 0,
+   "liens": [
+    "/enseignant/dashboard"
+   ],
+   "champs": 3,
+   "tableaux": 1,
+   "lignes": 1,
+   "boutonsSansNom": 1,
+   "champsSansLabel": 1,
+   "imagesSansAlt": 0,
+   "petitesCibles": 3,
+   "clesNonTraduites": [],
+   "texteVide": true,
+   "alerte": [],
+   "debord1280": 0,
+   "apiErreurs": [],
+   "apiAppels": 4,
+   "console": [],
+   "debord390": 23,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [
+      {
+       "bouton": "(sans nom)",
+       "effet": "api 200 GET /api/notes/eleve"
+      },
+      {
+       "bouton": "Exporter",
+       "effet": "popup: http://localhost:3002/api/notes/export"
+      },
+      {
+       "bouton": "Importer",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Nouvelle note",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Notes",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Classement",
+       "effet": "changement d’affichage"
+      },
+      {
+       "bouton": "Bulletins",
+       "effet": "changement d’affichage"
+      }
+     ],
+     "boutonsVus": 7
+    }
+   ]
+  },
+  {
+   "route": "/paiements",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/communications",
+   "arrivee": "/communications",
+   "acces": "autorisé",
+   "ms": 1442,
+   "h1": "Communications",
+   "nbH1": 1,
+   "boutons": 5,
+   "onglets": 0,
+   "liens": [
+    "/enseignant/dashboard"
+   ],
+   "champs": 0,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 0,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": true,
+   "alerte": [],
+   "debord1280": 0,
+   "apiErreurs": [],
+   "apiAppels": 4,
+   "console": [],
+   "debord390": 0,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [
+      {
+       "bouton": "Nouvelle publication",
+       "effet": "changement d’affichage"
+      },
+      {
+       "bouton": "Publier",
+       "console": [
+        "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+       ],
+       "effet": "api 403 POST /api/communications"
+      },
+      {
+       "bouton": "Annuler",
+       "effet": "changement d’affichage"
+      },
+      {
+       "bouton": "Informations",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Événements",
+       "effet": "AUCUN EFFET VISIBLE"
+      }
+     ],
+     "boutonsVus": 5
+    }
+   ]
+  },
+  {
+   "route": "/emploi-du-temps",
+   "arrivee": "/emploi-du-temps",
+   "acces": "autorisé",
+   "ms": 1558,
+   "h1": "Emploi du temps",
+   "nbH1": 1,
+   "boutons": 4,
+   "onglets": 0,
+   "liens": [
+    "/enseignant/dashboard"
+   ],
+   "champs": 3,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 2,
+   "champsSansLabel": 0,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": false,
+   "alerte": [],
+   "debord1280": -4,
+   "apiErreurs": [],
+   "apiAppels": 4,
+   "console": [],
+   "debord390": 145,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [
+      {
+       "bouton": "Exporter",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Ajouter un cours",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "AUCUN EFFET VISIBLE"
+      }
+     ],
+     "boutonsVus": 4
+    }
+   ]
+  },
+  {
+   "route": "/parametres",
+   "arrivee": "/parametres",
+   "acces": "autorisé",
+   "ms": 1515,
+   "h1": "Paramètres",
+   "nbH1": 1,
+   "boutons": 21,
+   "onglets": 0,
+   "liens": [
+    "/enseignant/dashboard"
+   ],
+   "champs": 7,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 6,
+   "imagesSansAlt": 0,
+   "petitesCibles": 14,
+   "clesNonTraduites": [],
+   "texteVide": true,
+   "alerte": [],
+   "debord1280": -4,
+   "apiErreurs": [],
+   "apiAppels": 4,
+   "console": [],
+   "debord390": -4,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [
+      {
+       "bouton": "Profil",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Notifications",
+       "effet": "changement d’affichage"
+      },
+      {
+       "bouton": "Sécurité",
+       "effet": "changement d’affichage"
+      },
+      {
+       "bouton": "Apparence",
+       "effet": "changement d’affichage"
+      },
+      {
+       "bouton": "Préférences",
+       "effet": "changement d’affichage"
+      }
+     ],
+     "boutonsVus": 21
+    }
+   ]
+  },
+  {
+   "route": "/messagerie",
+   "arrivee": "/messagerie",
+   "acces": "autorisé",
+   "ms": 1486,
+   "h1": "",
+   "nbH1": 0,
+   "boutons": 4,
+   "onglets": 0,
+   "liens": [
+    "/enseignant/dashboard"
+   ],
+   "champs": 1,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 1,
+   "imagesSansAlt": 0,
+   "petitesCibles": 3,
+   "clesNonTraduites": [],
+   "texteVide": true,
+   "alerte": [],
+   "debord1280": -4,
+   "apiErreurs": [],
+   "apiAppels": 4,
+   "console": [],
+   "debord390": 0,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [
+      {
+       "bouton": "Boîte",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Favoris",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Archive",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Nouvelle conversation",
+       "effet": "api 200 GET /api/messages/contacts"
+      }
+     ],
+     "boutonsVus": 4
+    }
+   ]
+  },
+  {
+   "route": "/affectations",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/enseignant/classes",
+   "arrivee": "/enseignant/classes",
+   "acces": "autorisé",
+   "ms": 1404,
+   "h1": "Mes classes",
+   "nbH1": 1,
+   "boutons": 0,
+   "onglets": 0,
+   "liens": [
+    "/enseignant/dashboard",
+    "/enseignant"
+   ],
+   "champs": 0,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 0,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": true,
+   "alerte": [],
+   "debord1280": 0,
+   "apiErreurs": [],
+   "apiAppels": 4,
+   "console": [],
+   "debord390": 0,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [],
+     "boutonsVus": 0
+    }
+   ]
+  },
+  {
+   "route": "/parent/enfants",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/eleve/cours",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/comptable/transactions",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/comptable/factures",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/surveillant/surveillance",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/surveillant/presences",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/censeur/discipline",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/censeur/absences",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/infirmier/soins",
+   "arrivee": "/unauthorized",
+   "acces": "refusé",
+   "redirectionTardive": true
+  },
+  {
+   "route": "/infirmier/dossiers",
+   "arrivee": "/infirmier/dossiers",
+   "acces": "autorisé",
+   "ms": 5779,
+   "h1": "",
+   "nbH1": 0,
+   "boutons": 0,
+   "onglets": 0,
+   "liens": [],
+   "champs": 0,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 0,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": false,
+   "alerte": [],
+   "debord1280": 0,
+   "apiErreurs": [],
+   "apiAppels": 0,
+   "console": [],
+   "debord390": 0,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [],
+     "boutonsVus": 0
+    }
+   ]
+  },
+  {
+   "route": "/bibliothecaire/catalogue",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/bibliothecaire/emprunts",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/secretaire/inscriptions",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/secretaire/planning",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/secretaire/documents",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/universite/facultes",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/universite/departements",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/universite/etudiants",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/universite/enseignants",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/universite/cours",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/universite/mes-cours",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/universite/notes",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/universite/taches",
+   "arrivee": "/universite/taches",
+   "acces": "autorisé",
+   "ms": 2422,
+   "h1": "",
+   "nbH1": 0,
+   "boutons": 0,
+   "onglets": 0,
+   "liens": [],
+   "champs": 0,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 0,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": false,
+   "alerte": [],
+   "debord1280": 0,
+   "apiErreurs": [],
+   "apiAppels": 1,
+   "console": [],
+   "debord390": 0,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [],
+     "boutonsVus": 0
+    }
+   ]
+  },
+  {
+   "route": "/universite/planning",
+   "arrivee": "/unauthorized",
+   "acces": "refusé",
+   "redirectionTardive": true
+  },
+  {
+   "route": "/universite/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/paiement/callback",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/directeur/ai-insights",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/enseignant/ai-assistant",
+   "arrivee": "/enseignant/ai-assistant",
+   "acces": "autorisé",
+   "ms": 1474,
+   "h1": "Assistant pédagogique IA",
+   "nbH1": 1,
+   "boutons": 7,
+   "onglets": 0,
+   "liens": [
+    "/enseignant/dashboard",
+    "/enseignant"
+   ],
+   "champs": 1,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 1,
+   "champsSansLabel": 1,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": false,
+   "alerte": [],
+   "debord1280": -4,
+   "apiErreurs": [],
+   "apiAppels": 3,
+   "console": [],
+   "debord390": 0,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [
+      {
+       "bouton": "Chat IA",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Analyses",
+       "effet": "changement d’affichage"
+      },
+      {
+       "bouton": "Analyser",
+       "console": [
+        "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+       ],
+       "effet": "api 403 GET /api/v1/ia/predictive"
+      }
+     ],
+     "boutonsVus": 7
+    }
+   ]
+  },
+  {
+   "route": "/parent/ai-report",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/eleve/tutor",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/admin/ecoles",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/admin/utilisateurs",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/admin/statistiques",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/admin/configuration",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/admin/journal-audit",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/admin/plans",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/admin/billing",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/admin/modules",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/admin/white-label",
+   "arrivee": "/admin/white-label",
+   "acces": "autorisé",
+   "ms": 5843,
+   "h1": "",
+   "nbH1": 0,
+   "boutons": 0,
+   "onglets": 0,
+   "liens": [],
+   "champs": 0,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 0,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": false,
+   "alerte": [],
+   "debord1280": 0,
+   "apiErreurs": [],
+   "apiAppels": 1,
+   "console": [],
+   "debord390": 0,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [],
+     "boutonsVus": 0
+    }
+   ]
+  }
+ ],
+ "termine": true
+}

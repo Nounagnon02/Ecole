@@ -1,0 +1,6 @@
+super-admin@ecole.bj: accueil /admin/dashboard, 15 routes autorisées, 1 avec refus API, 0 bloquées
+recteur_universite: accueil /universite/dashboard, 10 routes autorisées, 3 avec refus API, 0 bloquées
+doyen_faculte1: accueil /universite/dashboard, 11 routes autorisées, 3 avec refus API, 0 bloquées
+prof_agbodjan-fifame: accueil /universite/dashboard, 11 routes autorisées, 4 avec refus API, 0 bloquées
+uac2024001: accueil /universite/dashboard, 9 routes autorisées, 5 avec refus API, 0 bloquées
+perso_bossou-marcellin: accueil /universite/dashboard, 8 routes autorisées, 3 avec refus API, 0 bloquées
