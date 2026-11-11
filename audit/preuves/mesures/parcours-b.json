@@ -1,0 +1,98 @@
+[
+ {
+  "id": "A6",
+  "titre": "Déconnexion puis bouton « Précédent »",
+  "statut": "VALIDÉ",
+  "detail": "après déconnexion: /connexion ; après « Précédent »: /connexion"
+ },
+ {
+  "id": "C4",
+  "titre": "Recherche globale (Ctrl+K) : chercher un élève puis une page",
+  "statut": "ERREUR",
+  "detail": "locator.innerText: Timeout 30000ms exceeded."
+ },
+ {
+  "id": "C5",
+  "titre": "Notifications et menu du compte",
+  "statut": "ERREUR",
+  "detail": "locator.click: Timeout 30000ms exceeded."
+ },
+ {
+  "id": "H1",
+  "titre": "Élèves : recherche par nom",
+  "statut": "VALIDÉ",
+  "detail": "32 lignes → 1 pour « AGBODJAN » (AY AGBODJAN Yèhossou 3ème BEN2024001 actif ) ; recherche sans résultat: « Aucun élève trouvé »"
+ },
+ {
+  "id": "H2",
+  "titre": "Élèves : retirer un élève des effectifs",
+  "statut": "ÉCHEC",
+  "detail": "élève: DY DJOKO Yvette 4ème SCO2025030 actif ; confirmation: confirm: Retirer DJOKO Yvette des effectifs ? Son dossier (n ; API: 200 POST /api/eleves/32/deactivate ; lignes 32 → 32 → 32 après rechargement ; message: « » ; restauration possible depuis l’interface: non proposée"
+ },
+ {
+  "id": "H3",
+  "titre": "Élèves : créer un élève",
+  "statut": "ÉCHEC",
+  "detail": "clic sur « Nouvel élève » : rien ne se passe ; aucun appel d’écriture ; le bouton n’a aucune action dans le code (ElevesPage.jsx:97)"
+ },
+ {
+  "id": "I1",
+  "titre": "Notes : filtres, classement, bulletins, export",
+  "statut": "OBSERVÉ",
+  "detail": "1 lignes ; filtre « — » → 1 ; CLASSEMENT: BOUTONS: ∅ | Exporter | Importer | Nouvelle note | Notes | Classement | Bulletins | ∅ || CHAMPS: select#[Sélectionner une classe] | select#[Filtrer par période] ; BULLETINS: BOUTONS: ∅ | Exporter | Importer | Nouvelle note | Notes | Classement | Bulletins | Recalculer l'instantané | Verrouiller le bulletin || CHAMPS: select#[Sélectionner une classe] | sele"
+ },
+ {
+  "id": "K1",
+  "titre": "Affectations : affecter un enseignant puis retirer",
+  "statut": "ERREUR",
+  "detail": "locator.click: Timeout 30000ms exceeded."
+ },
+ {
+  "id": "F1",
+  "titre": "Messagerie : un parent écrit à un enseignant",
+  "statut": "VALIDÉ",
+  "detail": "contacts proposés au parent: 87 dont 0 élèves et 0 autres parents ; API: 201 POST /api/messages, 200 PUT /api/messages/conversation/26/read ; message affiché: oui ; visible après rechargement (liste des conversations): oui"
+ },
+ {
+  "id": "J1",
+  "titre": "Paiements (parent) : échéancier et paiement en ligne",
+  "statut": "OBSERVÉ",
+  "detail": "LISTE: Accueil Paiements Paiements Gestion des transactions financières Factures Exporter Nouveau paiement Revenus encaissés 0 F CFA Transactions 0 Taux d'Encaisse 0% Impayés 100% Paiements Échéancier Tous les statuts Payé Partiel En attente Erreur : Unauthorized - R ; ÉCHÉANCIER: BOUTONS: ∅ | Factures | Exporter | Nouveau paiement | Paiements | Échéancier || CHAMPS: input#:r5:[Rechercher un élève"
+ },
+ {
+  "id": "J2",
+  "titre": "Parent : page « Mes enfants »",
+  "statut": "ÉCHEC",
+  "detail": "contenu: « Accueil Parent Mes Enfants Mes enfants Suivez la scolarité de vos enfants Aucun enfant lié à votre compte » ; API en erreur: 401 /api/auth/me, 401 /api/auth/me, 403 /api/comptable/paiements"
+ },
+ {
+  "id": "I2",
+  "titre": "Enseignant : saisir des notes",
+  "statut": "ERREUR",
+  "detail": "locator.click: Timeout 30000ms exceeded."
+ },
+ {
+  "id": "I3",
+  "titre": "Enseignant : page « Mes classes »",
+  "statut": "OBSERVÉ",
+  "detail": "Accueil Enseignant Mes Classes Mes classes Gérez vos classes et suivez vos élèves Aucune classe assignée ; BOUTONS: || CHAMPS: "
+ },
+ {
+  "id": "G1",
+  "titre": "Écoles : envoi du formulaire vide",
+  "statut": "VALIDÉ",
+  "detail": "API: 422 POST /api/ecoles ; messages: « * / The nom field is required. / * / The email field is required. » ; BOUTONS: Fermer | Annuler | Créer l'école || CHAMPS: input#:rf:[Ex: Complexe scolaire Lumière] | input#:rh:[contact@ecole.bj] | input#:rj:[+229 01 02 03 04] | input#:rl:[Cotonou, Bénin] | input#:rn:[Cotonou]"
+ },
+ {
+  "id": "G2",
+  "titre": "Écoles : créer une école (nom accentué, téléphone à 10 chiffres)",
+  "statut": "VALIDÉ",
+  "detail": "API: 201 POST /api/ecoles ; message: « » ; comptes créés affichés: non ; visible après rechargement: oui"
+ },
+ {
+  "id": "L1",
+  "titre": "Mobile 360 px : menu, navigation, zones tactiles (parent)",
+  "statut": "PARTIEL",
+  "detail": "menu: 8 liens ; arrivée /notes ; débordement horizontal 53px ; zones tactiles < 44 px: 7/18 ; plus petite police: 12px"
+ }
+]

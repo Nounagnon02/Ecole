@@ -1,0 +1,110 @@
+[
+ {
+  "id": "X1",
+  "titre": "Accessibilité (axe-core) : page de connexion",
+  "statut": "VALIDÉ",
+  "detail": "aucune violation détectée"
+ },
+ {
+  "id": "X2",
+  "titre": "Clavier : parcourir la connexion sans souris",
+  "statut": "PARTIEL",
+  "detail": "ordre: select[Français English ا] !SANS-FOCUS-VISIBLE → input#login-email[] → input#login-password[] → button[Afficher le mot de] → a[Mot de passe oubli] → button[Se connecter] !SANS-FOCUS-VISIBLE → body[École UNE ÉCOLE, ] !SANS-FOCUS-VISIBLE → select[Français English ا] !SANS-FOCUS-VISIBLE ; Entrée dans le mot de passe → /enseignant/dashboard"
+ },
+ {
+  "id": "X3",
+  "titre": "Clavier : lien d’évitement et menu",
+  "statut": "PARTIEL",
+  "detail": "premier élément au Tab: « Aller au contenu principal École Espace » ; après Entrée, focus sur #"
+ },
+ {
+  "id": "X4/parent/dashboard",
+  "titre": "Accessibilité (axe-core) : /parent/dashboard",
+  "statut": "ÉCHEC",
+  "detail": "button-name (critical, 1)"
+ },
+ {
+  "id": "X4/parent/enfants",
+  "titre": "Accessibilité (axe-core) : /parent/enfants",
+  "statut": "ÉCHEC",
+  "detail": "color-contrast (serious, 14)"
+ },
+ {
+  "id": "X4/messagerie",
+  "titre": "Accessibilité (axe-core) : /messagerie",
+  "statut": "VALIDÉ",
+  "detail": "aucune violation détectée"
+ },
+ {
+  "id": "X5/directeur/dashboard",
+  "titre": "Accessibilité (axe-core) : /directeur/dashboard",
+  "statut": "ÉCHEC",
+  "detail": "svg-img-alt (serious, 4)"
+ },
+ {
+  "id": "X5/eleves",
+  "titre": "Accessibilité (axe-core) : /eleves",
+  "statut": "ÉCHEC",
+  "detail": "button-name (critical, 1) ; color-contrast (serious, 32)"
+ },
+ {
+  "id": "X5/notes",
+  "titre": "Accessibilité (axe-core) : /notes",
+  "statut": "ÉCHEC",
+  "detail": "button-name (critical, 1)"
+ },
+ {
+  "id": "X5/emploi-du-temps",
+  "titre": "Accessibilité (axe-core) : /emploi-du-temps",
+  "statut": "ÉCHEC",
+  "detail": "button-name (critical, 2) ; color-contrast (serious, 8)"
+ },
+ {
+  "id": "X5/parametres",
+  "titre": "Accessibilité (axe-core) : /parametres",
+  "statut": "ÉCHEC",
+  "detail": "color-contrast (serious, 1) ; label (critical, 4)"
+ },
+ {
+  "id": "X7",
+  "titre": "Accessibilité (axe-core) en thème sombre : /directeur/dashboard",
+  "statut": "ÉCHEC",
+  "detail": "svg-img-alt (serious, 4)"
+ },
+ {
+  "id": "K1",
+  "titre": "Affectations : affecter un enseignant à une classe de lycée",
+  "statut": "BLOQUÉ",
+  "detail": "séries: 0 ; matières: 0 ; bouton désactivé ; API: aucun appel d’écriture ; message: « » ; après rechargement: 1ère D Tle A Tle C Tle D Série Choisissez d’abord une classe Matière Choisissez d’abord une série Affecter Cours de l’enseignant 0 affectation Sélectionnez un enseignant pour afficher ses affectations"
+ },
+ {
+  "id": "X6/comptable/dashboard",
+  "titre": "Accessibilité (axe-core) : /comptable/dashboard",
+  "statut": "ÉCHEC",
+  "detail": "svg-img-alt (serious, 1)"
+ },
+ {
+  "id": "X6/comptable/transactions",
+  "titre": "Accessibilité (axe-core) : /comptable/transactions",
+  "statut": "ÉCHEC",
+  "detail": "button-name (critical, 42) ; color-contrast (serious, 42)"
+ },
+ {
+  "id": "X6/paiements",
+  "titre": "Accessibilité (axe-core) : /paiements",
+  "statut": "ÉCHEC",
+  "detail": "button-name (critical, 1)"
+ },
+ {
+  "id": "J3",
+  "titre": "Comptable : liste des paiements, filtres et reçu",
+  "statut": "OBSERVÉ",
+  "detail": "42 lignes ; filtre statut → 6 ; Accueil Paiements Paiements Gestion des transactions financières Factures Exporter Nouveau paiement Revenus encaissés 602 076 F CFA Transactions 42 Taux d'Encaisse 14% Impayés 86% Paiements Échéancier Tous les statuts Payé Partiel En attente RÉFÉRENCE ÉLÈVE TY ; bouton « » → http://localhost:3002/api/comptable/paiements/24/recu :: Complexe Scolaire Excellence Cotono"
+ },
+ {
+  "id": "J4",
+  "titre": "Comptable : échéancier et paiement en ligne (sans déclencher FedaPay)",
+  "statut": "BLOQUÉ",
+  "detail": "BOUTONS: ∅ | Factures | Exporter | Nouveau paiement | Paiements | Échéancier || CHAMPS: input#:r2:[Rechercher un élève...] ; après sélection d’un élève: Accueil Paiements Paiements Gestion des transactions financières Factures Exporter Nouveau paiement Revenus encaissés 602 076 F CFA Transactions 42 Taux d'Encaisse 14% Impayés 86% Paiements Échéancier Aucun élève trouvé Sélectionnez un élève pour "
+ }
+]
