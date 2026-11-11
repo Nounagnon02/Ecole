@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Rules\BeninPhoneNumber;
+use App\Support\Inscription;
 use App\Models\{CahierDeTexte, EmploiDuTemps, Eleve, User, Classes};
 use App\Services\BulletinService;
 use Illuminate\Http\Request;
@@ -67,41 +69,70 @@ class EleveController extends Controller
     {
         $this->authorize('create', Eleve::class);
 
+        // L'agent d'inscription saisit qui est l'élève et où il va. Le
+        // matricule, l'identifiant et le mot de passe sont produits ici :
+        // les lui demander, c'était trois champs à inventer par dossier.
         $validated = $request->validate([
-            'name' => 'required|string',
-            'prenom' => 'required|string',
-            'identifiant' => 'required|string|unique:users,identifiant',
-            'password' => 'required|string|min:8',
-            'numero_matricule' => 'required|string|unique:eleves,numero_matricule',
+            'name' => 'required|string|max:255',
+            'prenom' => 'required|string|max:255',
+            'identifiant' => 'nullable|string|max:255|unique:users,identifiant',
+            'password' => 'nullable|string|min:8',
+            'numero_matricule' => 'nullable|string|max:50|unique:eleves,numero_matricule',
             'classe_id' => 'required|school_exists:classes,id',
             'serie_id' => 'nullable|school_exists:series,id',
             'email' => 'nullable|email|unique:users,email',
+            'date_naissance' => 'nullable|date|before:today',
+            'lieu_naissance' => 'nullable|string|max:255',
+            'sexe' => 'nullable|in:M,F',
+            'parent' => 'nullable|array',
+            'parent.name' => 'required_with:parent|string|max:255',
+            'parent.prenom' => 'nullable|string|max:255',
+            'parent.telephone' => ['required_with:parent', 'string', new BeninPhoneNumber],
         ]);
 
         try {
             return DB::transaction(function () use ($validated) {
                 $ecoleId = auth()->user()->ecole_id;
+                $matricule = $validated['numero_matricule'] ?? Inscription::nouveauMatricule();
+                $motDePasse = $validated['password'] ?? Inscription::motDePasseProvisoire();
 
                 $user = User::create([
                     'name' => $validated['name'],
                     'prenom' => $validated['prenom'],
-                    'identifiant' => $validated['identifiant'],
-                    'password' => Hash::make($validated['password']),
+                    'identifiant' => $validated['identifiant'] ?? $matricule,
+                    'password' => Hash::make($motDePasse),
                     'role' => 'eleve',
                     'ecole_id' => $ecoleId,
-                    'email' => $validated['email'],
+                    // Absents de la requête, ces champs n'existent pas dans
+                    // `$validated` : les lire sans garde répondait 500.
+                    'email' => $validated['email'] ?? null,
                 ]);
 
                 $eleve = Eleve::create([
                     'user_id' => $user->id,
-                    'numero_matricule' => $validated['numero_matricule'],
+                    'ecole_id' => $ecoleId,
+                    'numero_matricule' => $matricule,
                     'classe_id' => $validated['classe_id'],
-                    'serie_id' => $validated['serie_id'],
+                    'serie_id' => $validated['serie_id'] ?? null,
+                    'date_naissance' => $validated['date_naissance'] ?? null,
+                    'lieu_naissance' => $validated['lieu_naissance'] ?? null,
+                    'sexe' => $validated['sexe'] ?? null,
                 ]);
 
-                \Cache::forget('dashboard_directeur_' . (auth()->user()->ecole_id ?? 'global'));
+                $accesParent = isset($validated['parent'])
+                    ? Inscription::rattacherParent($eleve, $validated['parent'], (int) $ecoleId)
+                    : null;
 
-                return response()->json($eleve->load('user'), 201);
+                \Cache::forget('dashboard_directeur_' . ($ecoleId ?? 'global'));
+
+                // Les mots de passe provisoires ne sont lisibles qu'ici, une
+                // fois : ils ne sont stockés que hachés.
+                return response()->json($eleve->load('user', 'classe')->toArray() + [
+                    'acces' => [
+                        'eleve' => ['identifiant' => $user->identifiant, 'mot_de_passe_provisoire' => $motDePasse],
+                        'parent' => $accesParent,
+                    ],
+                ], 201);
             });
         } catch (\Exception $e) {
             $this->rethrowIfMeaningful($e);
