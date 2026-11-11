@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Parents;
 
+use App\Rules\BeninPhoneNumber;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
@@ -23,7 +24,7 @@ class AcceptParentInvitationRequest extends FormRequest
             'password' => 'required|string|min:8|confirmed',
             'name' => 'required|string',
             'prenom' => 'required|string',
-            'telephone' => 'nullable|string',
+            'telephone' => ['nullable', 'string', new BeninPhoneNumber],
         ];
     }
 }
