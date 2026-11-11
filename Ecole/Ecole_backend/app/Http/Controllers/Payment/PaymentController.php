@@ -337,31 +337,50 @@ class PaymentController extends Controller
     }
 
     /**
-     * Callback
+     * Retour du navigateur après la page de la passerelle.
+     *
+     * Le web n'avait aucune page aux adresses `/payment/success|failed|error`
+     * vers lesquelles ce retour redirigeait : le payeur finissait sur une page
+     * introuvable. Et un paiement mobile money encore en attente de validation
+     * sur le téléphone était annoncé comme échoué. Trois issues distinctes
+     * désormais, sur une page qui existe.
      */
     public function callback(Request $request)
     {
         $transactionId = $request->query('id');
+        $retour = fn (string $statut) => redirect(
+            rtrim((string) config('app.frontend_url'), '/').'/paiement/retour?statut='.$statut
+        );
 
         try {
-            $payment = Payment::where('transaction_id', $transactionId)->first();
-            if (!$payment) {
-                return redirect(config('app.frontend_url') . '/payment/error');
+            // Retour sans session garantie : la transaction, émise par la
+            // passerelle, fait autorité (même raisonnement que le webhook).
+            $payment = $transactionId
+                ? Payment::withoutGlobalScope('ecole')->where('transaction_id', $transactionId)->first()
+                : null;
+
+            if (! $payment || ! $payment->ecole_id) {
+                return $retour('erreur');
             }
 
-            $result = $this->provider->verifyPayment($transactionId);
+            $result = $this->provider->verifyPayment((string) $transactionId);
 
             if ($result['success']) {
-                $this->confirmPayment($payment, 'Paiement approuvé');
-                return redirect(config('app.frontend_url') . '/payment/success?id=' . $payment->id);
+                SchoolContext::for(
+                    (int) $payment->ecole_id,
+                    fn () => $this->confirmPayment($payment, 'Paiement approuvé'),
+                );
+
+                return $retour('confirme');
             }
 
-            return redirect(config('app.frontend_url') . '/payment/failed?id=' . $payment->id);
+            return $retour(($result['status'] ?? null) === 'pending' && empty($result['error']) ? 'attente' : 'echoue');
 
         } catch (\Exception $e) {
             $this->rethrowIfMeaningful($e);
             Log::error('Callback error', ['error' => $e->getMessage()]);
-            return redirect(config('app.frontend_url') . '/payment/error');
+
+            return $retour('erreur');
         }
     }
 

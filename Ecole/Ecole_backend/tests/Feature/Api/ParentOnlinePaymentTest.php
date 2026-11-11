@@ -156,3 +156,51 @@ it('n’ouvre pas de paiement pour l’enfant d’une autre famille', function (
     Http::assertNothingSent();
     $this->getJson("/api/parent/enfants/{$autre->id}/paiements")->assertStatus(404);
 });
+
+/*
+ * Retour du navigateur. La route est publique : le payeur revient de la
+ * passerelle, parfois sans session. Elle redirigeait vers des pages que le web
+ * n'a pas, et annonçait « échec » pour un paiement encore en attente.
+ */
+function retourDePasserelle(string $statutPasserelle): array
+{
+    [, $enfant, $echeance] = familleAvecEcheance(60000);
+    $paiement = Payment::create([
+        'eleve_id' => $enfant->id, 'paiement_eleve_id' => $echeance->id, 'ecole_id' => $enfant->ecole_id,
+        'amount' => 25000, 'currency' => 'XOF', 'type' => 'scolarite', 'description' => 'Scolarité',
+        'status' => 'pending', 'transaction_id' => 'TX_RETOUR',
+    ]);
+    Http::fake(['sandbox-api.fedapay.com/v1/transactions/TX_RETOUR' => Http::response([
+        'transaction' => ['id' => 'TX_RETOUR', 'status' => $statutPasserelle, 'amount' => 2500000],
+    ])]);
+    auth()->forgetGuards(); // le retour arrive sans session
+
+    return [$paiement, $echeance, test()->get('/api/payments/callback?id=TX_RETOUR')];
+}
+
+it('au retour d’un paiement approuvé, crédite l’échéance et renvoie vers la page de retour', function () {
+    [$paiement, $echeance, $reponse] = retourDePasserelle('approved');
+
+    $reponse->assertRedirect('http://localhost:3000/paiement/retour?statut=confirme');
+    expect(Payment::withoutGlobalScope('ecole')->find($paiement->id)->status)->toBe('completed')
+        ->and((float) PaiementEleve::withoutGlobalScopes()->find($echeance->id)->montant_paye)->toBe(25000.0);
+});
+
+it('au retour d’un paiement encore en attente, ne l’annonce pas comme échoué', function () {
+    [$paiement, , $reponse] = retourDePasserelle('pending');
+
+    $reponse->assertRedirect('http://localhost:3000/paiement/retour?statut=attente');
+    expect(Payment::withoutGlobalScope('ecole')->find($paiement->id)->status)->toBe('pending');
+});
+
+it('au retour d’un paiement refusé, renvoie vers l’issue « échoué » sans rien créditer', function () {
+    [, $echeance, $reponse] = retourDePasserelle('declined');
+
+    $reponse->assertRedirect('http://localhost:3000/paiement/retour?statut=echoue');
+    expect((float) PaiementEleve::withoutGlobalScopes()->find($echeance->id)->montant_paye)->toBe(0.0);
+});
+
+it('au retour d’une transaction inconnue, renvoie vers l’issue « erreur »', function () {
+    $this->get('/api/payments/callback?id=INCONNUE')
+        ->assertRedirect('http://localhost:3000/paiement/retour?statut=erreur');
+});
