@@ -136,6 +136,16 @@
     "register": "S'inscrire",
     "login_title": "Connectez-vous à votre compte",
     "login_subtitle": "Entrez vos identifiants pour accéder à votre espace",
+    "two_factor_setup": {
+      "title": "Activez la vérification en deux étapes",
+      "subtitle": "C'est à faire une seule fois. Ensuite, à chaque connexion, ce code vous sera demandé après le mot de passe.",
+      "intro_title": "Protégez l'accès à votre établissement.",
+      "intro_text": "Votre fonction ({role}) donne accès à des données sensibles : notes, paiements, dossiers. Un code affiché sur votre téléphone est donc demandé en plus du mot de passe.",
+      "step_install": "Installez une application d'authentification (Google Authenticator, Microsoft Authenticator…).",
+      "step_scan": "Scannez le QR code avec cette application.",
+      "step_code": "Saisissez le code à 6 chiffres qu'elle affiche.",
+      "logout": "Se déconnecter"
+    },
     "login_form": {
       "votre_ecole": "Votre école",
       "vous_etes_associe_a_plusieurs_etablissements": "Vous êtes associé à plusieurs établissements.",

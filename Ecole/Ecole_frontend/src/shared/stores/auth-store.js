@@ -24,6 +24,10 @@ const initialState = {
   pendingSchools: null, // [{ id, name }] quand le login necessite le choix de l'ecole
   pendingToken: null,   // token temporaire pour finaliser le choix d'ecole
   pendingTwoFactorToken: null, // jeton '2fa:pending' pour /auth/2fa/verify-login
+  // Rôle à 2FA obligatoire (directeur, comptable, admin…) qui ne l'a pas encore
+  // activée : connecté, mais l'API refuse tout sauf l'enrôlement. Tant que ce
+  // drapeau est levé, ProtectedRoute renvoie vers /activation-2fa.
+  twoFactorSetupRequired: false,
   step: 'initial',      // 'initial' | 'pick-school' | 'verify-2fa'
 };
 
@@ -94,6 +98,22 @@ const useAuthStore = create(
             isLoading: false,
           });
           return { requiresTwoFactor: true };
+        }
+
+        // 2FA obligatoire pour ce rôle mais jamais activée : le mot de passe
+        // est bon et la session est ouverte, mais l'API ne laisse passer que
+        // l'enrôlement. Sans cette branche, le cas générique ci-dessous
+        // envoyait la personne sur un tableau de bord vide, chaque appel
+        // répondant 403 « Authentification à deux facteurs obligatoire ».
+        if (data.requires_2fa_setup) {
+          set({
+            user: data.user,
+            isAuthenticated: true,
+            isLoading: false,
+            twoFactorSetupRequired: true,
+            step: 'initial',
+          });
+          return { requiresTwoFactorSetup: true, user: data.user };
         }
 
         // Si plusieurs ecoles → l'utilisateur doit choisir
@@ -223,6 +243,27 @@ const useAuthStore = create(
         } catch {
           set({ ...initialState, isLoading: false });
         }
+      },
+
+      /**
+       * L'API a refusé un appel faute de 2FA activée (403 requires_2fa_setup) :
+       * ProtectedRoute redirige alors vers /activation-2fa. Couvre une session
+       * déjà ouverte, par exemple après rechargement de la page.
+       */
+      requireTwoFactorSetup: () => {
+        if (!get().twoFactorSetupRequired) set({ twoFactorSetupRequired: true });
+      },
+
+      /**
+       * La 2FA vient d'être activée (/auth/2fa/verify) : l'accès est rétabli.
+       */
+      completeTwoFactorSetup: () => {
+        const { user } = get();
+        set({
+          twoFactorSetupRequired: false,
+          user: user ? { ...user, two_factor_enabled: true } : user,
+          sessionLastVerified: Date.now(),
+        });
       },
 
       /**

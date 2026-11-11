@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Lock, Mail, School, ShieldCheck, ArrowRight, BookOpen, Calendar, MessageSquare } from 'lucide-react';
 import useAuthStore from '@/shared/stores/auth-store';
 import { ROLE_REDIRECT_MAP, FALLBACK_REDIRECT } from '@/features/roles/route-config';
+import { TWO_FACTOR_SETUP_PATH } from './ProtectedRoute';
 import { Button, Input } from '@/shared/components/ui';
 import Brand from '@/shared/components/ui/Brand';
 import { useTranslation } from '@/shared/i18n';
@@ -72,6 +73,13 @@ export default function LoginForm() {
       // pour un login réussi sans école et tenterait de rediriger dans le vide.
       if (result?.requiresTwoFactor) {
         setShowTwoFactorChallenge(true);
+        return;
+      }
+
+      // 2FA obligatoire pour ce rôle mais pas encore activée → écran
+      // d'activation. Le tableau de bord ne recevrait que des 403.
+      if (result?.requiresTwoFactorSetup) {
+        navigate(TWO_FACTOR_SETUP_PATH, { replace: true });
         return;
       }
 
