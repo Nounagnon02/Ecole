@@ -10,7 +10,7 @@ class ElevePolicy
 {
     public function viewAny(User $user): bool
     {
-        return Roles::satisfies($user->role, ['directeur', 'enseignant', 'censeur', 'surveillant', 'infirmier', 'bibliothecaire', 'secretaire']);
+        return Roles::satisfies($user->role, ['directeur', 'enseignant', 'censeur', 'surveillant', 'infirmier', 'bibliothecaire', 'secretaire', 'comptable']);
     }
 
     public function view(User $user, Eleve $eleve): bool

@@ -9,12 +9,10 @@ use App\Http\Controllers\EleveController;
 use App\Http\Controllers\EmploiDuTempsController;
 use App\Http\Controllers\MatieresController;
 use App\Http\Controllers\MoyennesController;
-use App\Http\Controllers\Notes\{
-    NotesAutoSaveController,
-    NotesCrudController,
-    NotesImportController,
-    NotesStatsController,
-};
+use App\Http\Controllers\Notes\NotesAutoSaveController;
+use App\Http\Controllers\Notes\NotesCrudController;
+use App\Http\Controllers\Notes\NotesImportController;
+use App\Http\Controllers\Notes\NotesStatsController;
 use App\Http\Controllers\PeriodesController;
 use Illuminate\Support\Facades\Route;
 
@@ -57,7 +55,11 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ============ ÉLÈVES ============
     Route::prefix('eleves')->group(function () {
-        Route::get('/', [EleveController::class, 'index'])->middleware('role:directeur,enseignant');
+        // Le secrétariat (inscriptions), la comptabilité (échéanciers), la
+        // surveillance (appel) et le censorat (discipline) ont chacun une page
+        // qui part de la liste des élèves : la leur refuser rendait ces pages
+        // inutilisables (audit BUG-003, BUG-006).
+        Route::get('/', [EleveController::class, 'index'])->middleware('role:directeur,enseignant,secretaire,comptable,surveillant,censeur');
         Route::post('/store', [EleveController::class, 'store'])->middleware('role:directeur');
         Route::get('/{id}', [EleveController::class, 'show']); // ElevePolicy::view appliquée dans le contrôleur
         Route::put('/update/{id}', [EleveController::class, 'update'])->middleware('role:directeur');
