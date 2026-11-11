@@ -55,6 +55,7 @@
     "assistant": "Assistant"
   },
   "common": {
+    "coming_soon": "Bientôt disponible",
     "loading": "Chargement...",
     "save": "Enregistrer",
     "cancel": "Annuler",
