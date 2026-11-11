@@ -1,19 +1,16 @@
 <?php
 
-use App\Http\Controllers\{
-    EnseignantController,
-    EnseignantsMaternellePrimaireController,
-    ParentsController,
-    EspaceParentController,
-    ComptableController,
-    SurveillantController,
-    CenseurController,
-    InfirmierController,
-    BibliothecaireController,
-    SecretaireController,
-    AuthController,
-    ImportController
-};
+use App\Http\Controllers\BibliothecaireController;
+use App\Http\Controllers\CenseurController;
+use App\Http\Controllers\ComptableController;
+use App\Http\Controllers\EnseignantController;
+use App\Http\Controllers\EnseignantsMaternellePrimaireController;
+use App\Http\Controllers\EspaceParentController;
+use App\Http\Controllers\ImportController;
+use App\Http\Controllers\InfirmierController;
+use App\Http\Controllers\ParentsController;
+use App\Http\Controllers\SecretaireController;
+use App\Http\Controllers\SurveillantController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -88,7 +85,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/{id}', [ParentsController::class, 'update'])->middleware('role:directeur');
         // Suppression douce du compte parent (directeur).
         Route::delete('/{id}', [ParentsController::class, 'destroy'])->middleware('role:directeur');
-        
+
         // Gestion invitations parents
         Route::post('/invite', [ParentsController::class, 'invite']);
         Route::post('/{eleveId}/generate-code', [ParentsController::class, 'generateParentCode']);
@@ -130,7 +127,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // ============ SURVEILLANT ============
-    Route::prefix('surveillant')->middleware('role:directeur,surveillant')->group(function () {
+    Route::prefix('surveillant')->middleware('role:directeur,surveillant,censeur')->group(function () {
         Route::get('/absences', [SurveillantController::class, 'absences']);
         Route::post('/absences', [SurveillantController::class, 'storeAbsence']);
     });
@@ -196,7 +193,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // ============ SURVEILLANT (complément) ============
-    Route::prefix('surveillant')->middleware('role:directeur,surveillant')->group(function () {
+    Route::prefix('surveillant')->middleware('role:directeur,surveillant,censeur')->group(function () {
         Route::get('/incidents', [SurveillantController::class, 'incidents']);
         Route::post('/incidents', [SurveillantController::class, 'storeIncident']);
         Route::get('/sanctions', [SurveillantController::class, 'sanctions']);
