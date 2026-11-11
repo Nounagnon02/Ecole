@@ -6,7 +6,7 @@ import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   Users, Search, Download, Plus, Upload, GraduationCap,
-  MoreHorizontal, UserCheck, UserX, RefreshCw, Trash2,
+  Eye, UserCheck, UserX, RefreshCw, Trash2,
 } from 'lucide-react';
 import { cn } from '@/shared/lib/utils';
 import { useApiQuery } from '@/shared/lib/api-client';
@@ -26,6 +26,7 @@ import useAuthStore from '@/shared/stores/auth-store';
 import { ROLES, ROLE_GROUPS } from '@/shared/types/roles';
 import InscriptionDialog from './InscriptionDialog';
 import ImportDialog from './ImportDialog';
+import FicheDialog from './FicheDialog';
 
 const STATUT_COLORS = {
   actif: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400',
@@ -49,6 +50,7 @@ export default function ElevesPage() {
   const [filterClasse, setFilterClasse] = useState('');
   const [inscription, setInscription] = useState(false);
   const [importation, setImportation] = useState(false);
+  const [ficheId, setFicheId] = useState(null);
   // Mêmes rôles que `ElevePolicy::create` côté API.
   const peutInscrire = useAuthStore((etat) => etat.hasAnyRole([...ROLE_GROUPS.DIRECTION, ROLES.SECRETAIRE]));
 
@@ -132,6 +134,7 @@ export default function ElevesPage() {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+      <FicheDialog eleveId={ficheId} peutModifier={peutInscrire} onClose={() => setFicheId(null)} onChanged={() => refetch()} />
       <ImportDialog open={importation} onClose={() => setImportation(false)} onDone={() => refetch()} />
       <InscriptionDialog open={inscription} onClose={() => setInscription(false)} onDone={() => refetch()} />
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -240,7 +243,7 @@ export default function ElevesPage() {
                 </Table.Cell>
                 <Table.Cell className="text-right">
                   <div className="flex justify-end gap-1">
-                    <Button variant="ghost" size="sm" icon={<MoreHorizontal />} title={t('pages.eleves.eleves.plus_d_actions')} />
+                    <Button variant="ghost" size="sm" icon={<Eye />} onClick={() => setFicheId(eleve.id)}>{t('pages.eleves.fiche.ouvrir')}</Button>
                     {estActif(eleve) ? (
                       <Button
                         variant="ghost"

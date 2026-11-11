@@ -120,6 +120,61 @@ class EleveController extends Controller
         return response()->json($eleve);
     }
 
+    /**
+     * Fiche de l'élève : identité, parents, et un résumé de sa scolarité.
+     *
+     * La liste ne montrait qu'un nom et une classe ; pour joindre un parent ou
+     * savoir où en est un élève, il fallait ouvrir trois autres pages, dont
+     * certaines refusées au rôle. Les montants ne sont rendus qu'aux rôles qui
+     * tiennent ou règlent la scolarité.
+     */
+    public function fiche($id)
+    {
+        $eleve = Eleve::with(['user:id,name,prenom,email,identifiant', 'classe:id,nom_classe', 'parents.user:id,name,prenom,telephone'])->findOrFail($id);
+        $this->authorize('view', $eleve);
+
+        $role = auth()->user()->role;
+        $notes = \App\Models\Notes::where('eleve_id', $eleve->id)->where('note_sur', '>', 0)->get(['note', 'note_sur']);
+        $absences = \App\Models\Absence::where('eleve_id', $eleve->id)->get(['justifiee']);
+        $voitLesMontants = \App\Support\Roles::satisfies($role, ['directeur', 'comptable', 'secretaire']) || $role === 'parent';
+        $echeances = $voitLesMontants ? \App\Models\PaiementEleve::where('eleve_id', $eleve->id)->get(['montant_total', 'montant_paye', 'montant_restant']) : null;
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'eleve' => [
+                    'id' => $eleve->id,
+                    'name' => $eleve->user?->name,
+                    'prenom' => $eleve->user?->prenom,
+                    'identifiant' => $eleve->user?->identifiant,
+                    'numero_matricule' => $eleve->numero_matricule,
+                    'statut' => $eleve->statut,
+                    'sexe' => $eleve->sexe,
+                    'date_naissance' => $eleve->date_naissance ? \Illuminate\Support\Carbon::parse($eleve->date_naissance)->toDateString() : null,
+                    'classe' => $eleve->classe ? ['id' => $eleve->classe->id, 'nom' => $eleve->classe->nom_classe] : null,
+                ],
+                'parents' => $eleve->parents->map(fn ($parent) => [
+                    'nom' => trim(($parent->user?->name ?? '').' '.($parent->user?->prenom ?? '')),
+                    'telephone' => $parent->user?->telephone,
+                    'principal' => (bool) $parent->pivot->is_primary,
+                ])->sortByDesc('principal')->values(),
+                'scolarite' => [
+                    'notes' => $notes->count(),
+                    // Moyenne simple des notes ramenées sur 20 : un repère, pas
+                    // la moyenne pondérée du bulletin.
+                    'moyenne' => $notes->isEmpty() ? null : round($notes->avg(fn ($n) => (float) $n->note / (float) $n->note_sur * 20), 2),
+                    'absences' => $absences->count(),
+                    'absences_non_justifiees' => $absences->where('justifiee', false)->count(),
+                ],
+                'paiements' => $echeances === null ? null : [
+                    'total_du' => (float) $echeances->sum('montant_total'),
+                    'total_paye' => (float) $echeances->sum('montant_paye'),
+                    'reste' => (float) $echeances->sum('montant_restant'),
+                ],
+            ],
+        ]);
+    }
+
     public function update(Request $request, $id)
     {
         $eleve = Eleve::findOrFail($id);
