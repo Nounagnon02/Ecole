@@ -1247,6 +1247,25 @@
         },
         "back": "Back to the payment schedule",
         "redirect": "Automatic redirect in 3 seconds..."
+      },
+      "retour": {
+        "confirme": {
+          "titre": "Payment confirmed",
+          "texte": "Thank you. Your payment is recorded and the instalment is up to date."
+        },
+        "attente": {
+          "titre": "Payment awaiting confirmation",
+          "texte": "Approve the request on your phone if you have not yet. The instalment will be updated once the operator confirms."
+        },
+        "echoue": {
+          "titre": "The payment did not go through",
+          "texte": "No amount was recorded. You can try again."
+        },
+        "erreur": {
+          "titre": "We could not verify this payment",
+          "texte": "Check your payments: if it was debited, it will appear there. Otherwise, contact the school accounts office."
+        },
+        "lien": "Back to payments"
       }
     },
     "parametres": {
@@ -1368,6 +1387,34 @@
         "sans_motif": "No reason given",
         "partiel": "Partial",
         "frais": "Fees"
+      },
+      "paiements": {
+        "title": "My payments",
+        "subtitle": "What you owe for each child, and online payment.",
+        "choisir_enfant": "Choose a child",
+        "total_du": "Total due",
+        "total_paye": "Already paid",
+        "reste_a_payer": "Left to pay",
+        "echeance": "Instalment",
+        "statut": "Status",
+        "statuts": {
+          "solde": "Settled",
+          "partiel": "Partly paid",
+          "a_payer": "To pay"
+        },
+        "en_cours": "Payment in progress · {montant}",
+        "reprendre": "Resume",
+        "payer": "Pay",
+        "payer_titre": "Pay · {libelle}",
+        "reste_sur_echeance": "Left to pay on this instalment: {montant}.",
+        "montant_a_payer": "Amount to pay (FCFA)",
+        "paiement_partiel_possible": "You can pay in several instalments.",
+        "suite": "You will choose your operator (MTN, Moov, Celtiis) and confirm on your phone at the next step.",
+        "continuer": "Continue to payment",
+        "montant_minimal": "The minimum amount is {montant}.",
+        "montant_trop_eleve": "The amount cannot exceed what is left to pay ({montant}).",
+        "ouverture_impossible": "The payment could not be opened. Try again in a moment.",
+        "aucune_echeance": "No instalment recorded for this child."
       }
     },
     "secretaire": {

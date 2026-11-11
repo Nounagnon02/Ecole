@@ -65,7 +65,7 @@ const ROLE_MENUS = {
     { icon: LayoutDashboard, label: 'nav.dashboard', path: '/parent/dashboard' },
     { icon: UserCheck, label: 'nav.enfants', path: '/parent/enfants' },
     { icon: BookOpen, label: 'nav.notes', path: '/notes' },
-    { icon: CreditCard, label: 'nav.paiements', path: '/paiements' },
+    { icon: CreditCard, label: 'nav.paiements', path: '/parent/paiements' },
     { icon: MessageSquare, label: 'nav.annonces', path: '/communications' },
     { icon: Settings, label: 'nav.parametres', path: '/parametres' },
   ],
@@ -188,7 +188,7 @@ export function getRoleNavigation(role) {
   const preferred = ROLE_MENUS[ROLE_NORMALIZATION[role] || role] || [];
   const items = [...preferred, ...COMMON_ITEMS].filter(item => paths.has(item.path));
   for (const route of routes) {
-    if (route.path.endsWith('/dashboard') || route.path === '/paiement/callback') continue;
+    if (route.path.endsWith('/dashboard') || route.path.startsWith('/paiement/')) continue;
     if (!items.some(item => item.path === route.path) && LABELS[route.path]) {
       items.push({ icon: FileText, label: `nav.${LABELS[route.path]}`, path: route.path });
     }

@@ -174,6 +174,13 @@ export const ROUTE_CONFIG = {
     component: lazy(() => import('@/app/features/parent/EnfantsPage')),
     roles: [ROLES.PARENT],
   },
+  // Ce que le parent doit et le paiement en ligne, sur ses propres routes
+  // d'API — pas sur celles de la comptabilité, qui lui répondent 403.
+  parentPaiements: {
+    path: '/parent/paiements',
+    component: lazy(() => import('@/app/features/parent/MesPaiementsPage')),
+    roles: [ROLES.PARENT],
+  },
 
   // ─── FEATURES ÉLÈVE ─────────────────────────────────────────────────
   eleveCours: {
@@ -306,6 +313,13 @@ export const ROUTE_CONFIG = {
     path: '/paiement/callback',
     component: lazy(() => import('@/app/features/paiements/PaiementCallbackPage')),
     roles: [...ROLE_GROUPS.DIRECTION, ROLES.COMPTABLE],
+  },
+  // Retour du navigateur après la passerelle (PaymentController::callback) :
+  // ouvert à quiconque peut ouvrir un paiement.
+  paiementRetour: {
+    path: '/paiement/retour',
+    component: lazy(() => import('@/app/features/paiements/PaiementRetourPage')),
+    roles: [...ROLE_GROUPS.DIRECTION, ROLES.COMPTABLE, ROLES.SECRETAIRE, ROLES.PARENT, ROLES.ELEVE],
   },
   directeurAiInsights: {
     path: '/directeur/ai-insights',
