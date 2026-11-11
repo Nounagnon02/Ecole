@@ -1247,6 +1247,25 @@
         },
         "back": "Retour à l'échéancier",
         "redirect": "Redirection automatique dans 3 secondes..."
+      },
+      "retour": {
+        "confirme": {
+          "titre": "Paiement confirmé",
+          "texte": "Merci. Votre paiement est enregistré et l’échéance est mise à jour."
+        },
+        "attente": {
+          "titre": "Paiement en attente de confirmation",
+          "texte": "Validez la demande sur votre téléphone si ce n’est pas fait. L’échéance sera mise à jour dès la confirmation de l’opérateur."
+        },
+        "echoue": {
+          "titre": "Le paiement n’a pas abouti",
+          "texte": "Aucun montant n’a été enregistré. Vous pouvez réessayer."
+        },
+        "erreur": {
+          "titre": "Nous n’avons pas pu vérifier ce paiement",
+          "texte": "Consultez vos paiements : s’il a été débité, il y apparaîtra. Sinon, contactez la comptabilité de l’école."
+        },
+        "lien": "Retour aux paiements"
       }
     },
     "parametres": {
@@ -1368,6 +1387,34 @@
         "sans_motif": "Sans motif",
         "partiel": "Partiel",
         "frais": "Frais"
+      },
+      "paiements": {
+        "title": "Mes paiements",
+        "subtitle": "Ce que vous devez pour chaque enfant, et le paiement en ligne.",
+        "choisir_enfant": "Choisir un enfant",
+        "total_du": "Total dû",
+        "total_paye": "Déjà payé",
+        "reste_a_payer": "Reste à payer",
+        "echeance": "Échéance",
+        "statut": "Statut",
+        "statuts": {
+          "solde": "Soldé",
+          "partiel": "Payé en partie",
+          "a_payer": "À payer"
+        },
+        "en_cours": "Paiement en cours · {montant}",
+        "reprendre": "Reprendre",
+        "payer": "Payer",
+        "payer_titre": "Payer · {libelle}",
+        "reste_sur_echeance": "Reste à payer sur cette échéance : {montant}.",
+        "montant_a_payer": "Montant à payer (FCFA)",
+        "paiement_partiel_possible": "Vous pouvez payer en plusieurs fois.",
+        "suite": "Vous choisirez votre opérateur (MTN, Moov, Celtiis) et confirmerez sur votre téléphone à l’étape suivante.",
+        "continuer": "Continuer vers le paiement",
+        "montant_minimal": "Le montant minimal est de {montant}.",
+        "montant_trop_eleve": "Le montant ne peut pas dépasser le reste à payer ({montant}).",
+        "ouverture_impossible": "Le paiement n’a pas pu être ouvert. Réessayez dans un instant.",
+        "aucune_echeance": "Aucune échéance enregistrée pour cet enfant."
       }
     },
     "secretaire": {
