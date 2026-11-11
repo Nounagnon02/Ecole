@@ -22,8 +22,11 @@ afterEach(fn () => Model::preventLazyLoading(false));
 it('répond sans charger de relation à la demande', function () {
     $ecole = Ecole::factory()->create(['status' => 'active']);
     $recteur = User::factory()->create(['role' => 'recteur', 'ecole_id' => $ecole->id]);
-    $faculte = Faculte::factory()->forSchool($ecole)->create();
-    Departement::factory()->create(['faculte_id' => $faculte->id, 'ecole_id' => $ecole->id]);
+    // Deux facultés : la garde ne signale un chargement à la demande que sur
+    // un modèle issu d'une collection de plusieurs éléments.
+    foreach (Faculte::factory()->count(2)->forSchool($ecole)->create() as $faculte) {
+        Departement::factory()->create(['faculte_id' => $faculte->id, 'ecole_id' => $ecole->id]);
+    }
 
     Model::preventLazyLoading(true);
 
