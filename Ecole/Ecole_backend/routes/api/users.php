@@ -134,6 +134,11 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // ============ IMPORTS DE DONNÉES ============
+    // Inscription en masse par CSV. Le secrétariat importe élèves et parents ;
+    // les lignes du personnel sont refusées par le service hors direction.
+    Route::post('imports/comptes', [ImportController::class, 'importComptes'])
+        ->middleware(['role:directeur,secretaire', 'throttle:exports']);
+
     Route::prefix('imports')->middleware(['role:directeur', 'throttle:exports'])->group(function () {
         Route::post('/eleves', [ImportController::class, 'importEleves']);
     });

@@ -33,6 +33,63 @@ final class Inscription
     }
 
     /**
+     * Inscrire un élève : compte, dossier, et parent s'il est fourni.
+     *
+     * Une seule règle pour le formulaire et pour l'import en masse. À appeler
+     * dans une transaction.
+     *
+     * @param  array<string, mixed>  $donnees  name, prenom, classe_id, et en option
+     *                                         numero_matricule, identifiant, password, serie_id, email,
+     *                                         date_naissance, lieu_naissance, sexe, parent{name, prenom, telephone}
+     * @return array{eleve: Eleve, acces: array{eleve: array, parent: ?array}}
+     */
+    public static function inscrireEleve(array $donnees, int $ecoleId): array
+    {
+        $matricule = ($donnees['numero_matricule'] ?? null) ?: self::nouveauMatricule();
+        $motDePasse = ($donnees['password'] ?? null) ?: self::motDePasseProvisoire();
+
+        $user = User::create([
+            'name' => $donnees['name'],
+            'prenom' => $donnees['prenom'],
+            'identifiant' => ($donnees['identifiant'] ?? null) ?: $matricule,
+            'password' => Hash::make($motDePasse),
+            'role' => 'eleve',
+            'ecole_id' => $ecoleId,
+            'email' => ($donnees['email'] ?? null) ?: null,
+        ]);
+
+        // Mot de passe produit ici, donc connu de l'agent : provisoire.
+        if (empty($donnees['password'])) {
+            self::exigerChangement($user);
+        }
+
+        $eleve = Eleve::create([
+            'user_id' => $user->id,
+            'ecole_id' => $ecoleId,
+            'numero_matricule' => $matricule,
+            'classe_id' => $donnees['classe_id'],
+            'serie_id' => $donnees['serie_id'] ?? null,
+            'date_naissance' => $donnees['date_naissance'] ?? null,
+            'lieu_naissance' => $donnees['lieu_naissance'] ?? null,
+            'sexe' => $donnees['sexe'] ?? null,
+        ]);
+
+        return [
+            'eleve' => $eleve,
+            'acces' => [
+                'eleve' => ['identifiant' => $user->identifiant, 'mot_de_passe_provisoire' => $motDePasse],
+                'parent' => ! empty($donnees['parent']) ? self::rattacherParent($eleve, $donnees['parent'], $ecoleId) : null,
+            ],
+        ];
+    }
+
+    /** Identifiant de connexion tiré d'un numéro : sa forme locale à 10 chiffres. */
+    public static function identifiantDepuisTelephone(string $telephone): string
+    {
+        return self::identifiantLibre('0'.substr((string) BeninPhone::normalize($telephone), -9));
+    }
+
+    /**
      * Rattacher l'élève au parent joignable à ce numéro, en créant son compte
      * s'il n'existe pas dans l'école. Le numéro, au format local à 10
      * chiffres, lui sert d'identifiant de connexion.
@@ -41,6 +98,27 @@ final class Inscription
      * @return array{identifiant: ?string, mot_de_passe_provisoire: ?string, nouveau: bool}
      */
     public static function rattacherParent(Eleve $eleve, array $donnees, int $ecoleId): array
+    {
+        $acces = self::compteParent($donnees, $ecoleId);
+        $parent = UserParent::where('user_id', $acces['user_id'])->firstOrFail();
+
+        if (! $parent->eleves()->where('eleves.id', $eleve->id)->exists()) {
+            $parent->eleves()->attach($eleve->id, [
+                'ecole_id' => $ecoleId,
+                'is_primary' => ! $eleve->parents()->exists(),
+            ]);
+        }
+
+        return $acces;
+    }
+
+    /**
+     * Le compte du parent joignable à ce numéro dans l'école, créé au besoin.
+     *
+     * @param  array{name: string, prenom?: ?string, telephone: string}  $donnees
+     * @return array{identifiant: ?string, mot_de_passe_provisoire: ?string, nouveau: bool, user_id: int}
+     */
+    public static function compteParent(array $donnees, int $ecoleId): array
     {
         $telephone = BeninPhone::normalize($donnees['telephone']);
         $motDePasse = null;
@@ -58,7 +136,7 @@ final class Inscription
             $compte = User::create([
                 'name' => $donnees['name'],
                 'prenom' => $donnees['prenom'] ?? null,
-                'identifiant' => self::identifiantLibre('0'.substr($telephone, -9)),
+                'identifiant' => self::identifiantDepuisTelephone($telephone),
                 'telephone' => $telephone,
                 'password' => Hash::make($motDePasse),
                 'role' => 'parent',
@@ -67,19 +145,13 @@ final class Inscription
             self::exigerChangement($compte);
         }
 
-        $parent = UserParent::firstOrCreate(['user_id' => $compte->id], ['ecole_id' => $ecoleId]);
-
-        if (! $parent->eleves()->where('eleves.id', $eleve->id)->exists()) {
-            $parent->eleves()->attach($eleve->id, [
-                'ecole_id' => $ecoleId,
-                'is_primary' => ! $eleve->parents()->exists(),
-            ]);
-        }
+        UserParent::firstOrCreate(['user_id' => $compte->id], ['ecole_id' => $ecoleId]);
 
         return [
             'identifiant' => $compte->identifiant,
             'mot_de_passe_provisoire' => $motDePasse,
             'nouveau' => $motDePasse !== null,
+            'user_id' => $compte->id,
         ];
     }
 

@@ -93,51 +93,16 @@ class EleveController extends Controller
         try {
             return DB::transaction(function () use ($validated) {
                 $ecoleId = auth()->user()->ecole_id;
-                $matricule = $validated['numero_matricule'] ?? Inscription::nouveauMatricule();
-                $motDePasse = $validated['password'] ?? Inscription::motDePasseProvisoire();
-
-                $user = User::create([
-                    'name' => $validated['name'],
-                    'prenom' => $validated['prenom'],
-                    'identifiant' => $validated['identifiant'] ?? $matricule,
-                    'password' => Hash::make($motDePasse),
-                    'role' => 'eleve',
-                    'ecole_id' => $ecoleId,
-                    // Absents de la requête, ces champs n'existent pas dans
-                    // `$validated` : les lire sans garde répondait 500.
-                    'email' => $validated['email'] ?? null,
-                ]);
-
-                // Mot de passe produit ici, donc connu de l'agent : provisoire.
-                if (! isset($validated['password'])) {
-                    Inscription::exigerChangement($user);
-                }
-
-                $eleve = Eleve::create([
-                    'user_id' => $user->id,
-                    'ecole_id' => $ecoleId,
-                    'numero_matricule' => $matricule,
-                    'classe_id' => $validated['classe_id'],
-                    'serie_id' => $validated['serie_id'] ?? null,
-                    'date_naissance' => $validated['date_naissance'] ?? null,
-                    'lieu_naissance' => $validated['lieu_naissance'] ?? null,
-                    'sexe' => $validated['sexe'] ?? null,
-                ]);
-
-                $accesParent = isset($validated['parent'])
-                    ? Inscription::rattacherParent($eleve, $validated['parent'], (int) $ecoleId)
-                    : null;
+                $inscription = Inscription::inscrireEleve($validated, (int) $ecoleId);
 
                 \Cache::forget('dashboard_directeur_' . ($ecoleId ?? 'global'));
 
                 // Les mots de passe provisoires ne sont lisibles qu'ici, une
                 // fois : ils ne sont stockés que hachés.
-                return response()->json($eleve->load('user', 'classe')->toArray() + [
-                    'acces' => [
-                        'eleve' => ['identifiant' => $user->identifiant, 'mot_de_passe_provisoire' => $motDePasse],
-                        'parent' => $accesParent,
-                    ],
-                ], 201);
+                return response()->json(
+                    $inscription['eleve']->load('user', 'classe')->toArray() + ['acces' => $inscription['acces']],
+                    201
+                );
             });
         } catch (\Exception $e) {
             $this->rethrowIfMeaningful($e);
