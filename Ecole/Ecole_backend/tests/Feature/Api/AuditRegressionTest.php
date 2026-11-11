@@ -143,12 +143,14 @@ class AuditRegressionTest extends TestCase
         $ecole = Ecole::factory()->create();
         $eleve = User::factory()->create(['role' => 'eleve', 'ecole_id' => $ecole->id]);
         $directeur = User::factory()->create(['role' => 'directeur', 'ecole_id' => $ecole->id]);
-        $parent = User::factory()->create(['role' => 'parent', 'ecole_id' => $ecole->id]);
+        // Un élève n'écrit qu'au personnel de l'école (MessagingContacts) : le
+        // destinataire est donc un enseignant, pas une autre famille.
+        $destinataire = User::factory()->create(['role' => 'enseignant', 'ecole_id' => $ecole->id]);
 
         $this->actingAs($eleve)
             ->postJson('/api/messages', [
                 'expediteur' => (string) $directeur->id, // tentative d'usurpation
-                'destinataire' => (string) $parent->id,
+                'destinataire' => (string) $destinataire->id,
                 'sujet' => 'Message officiel',
                 'contenu' => 'Faux message du directeur',
             ])

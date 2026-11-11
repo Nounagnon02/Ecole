@@ -63,7 +63,14 @@ it('crée le compte du parent, le rattache, et le parent voit son enfant', funct
         ->and($reponse->json('acces.parent'))->toMatchArray(['identifiant' => '0197000001', 'nouveau' => true])
         ->and(Hash::check($reponse->json('acces.parent.mot_de_passe_provisoire'), $parent->password))->toBeTrue();
 
-    $enfants = $this->actingAs($parent)->getJson('/api/parent/enfants')->assertOk()->json('data');
+    // Le mot de passe remis est provisoire : le parent le remplace d'abord.
+    $this->actingAs($parent)->getJson('/api/parent/enfants')->assertStatus(403);
+    $this->postJson('/api/auth/change-password', [
+        'current_password' => $reponse->json('acces.parent.mot_de_passe_provisoire'),
+        'password' => 'MonSecret2026', 'password_confirmation' => 'MonSecret2026',
+    ])->assertOk();
+
+    $enfants = $this->getJson('/api/parent/enfants')->assertOk()->json('data');
     expect($enfants)->toHaveCount(1)->and($enfants[0]['id'])->toBe(Eleve::sole()->id);
     // Premier parent du dossier : c'est lui le contact de référence.
     expect((bool) Eleve::sole()->parents()->first()->pivot->is_primary)->toBeTrue();

@@ -112,6 +112,8 @@ class PasswordResetController extends Controller
         // Mettre à jour le mot de passe
         $user = User::where('email', $request->email)->first();
         $user->password = Hash::make($request->password);
+        // Choisi par son titulaire : ce n'est plus un mot de passe provisoire.
+        $user->password_change_required = false;
         $user->setRememberToken(Str::random(60));
         $user->save();
 

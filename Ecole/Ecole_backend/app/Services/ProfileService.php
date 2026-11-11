@@ -36,6 +36,10 @@ class ProfileService
             'two_factor_enabled',
         ]);
 
+        // Mot de passe provisoire à remplacer : le client ouvre l'écran de
+        // changement, y compris après un rechargement de page.
+        $payload['password_change_required'] = (bool) $user->password_change_required;
+
         if ($this->isTeacher($user)) {
             $enseignant = $user->enseignant;
             $payload['profil'] = $enseignant

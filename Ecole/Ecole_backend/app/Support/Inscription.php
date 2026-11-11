@@ -64,6 +64,7 @@ final class Inscription
                 'role' => 'parent',
                 'ecole_id' => $ecoleId,
             ]);
+            self::exigerChangement($compte);
         }
 
         $parent = UserParent::firstOrCreate(['user_id' => $compte->id], ['ecole_id' => $ecoleId]);
@@ -80,6 +81,15 @@ final class Inscription
             'mot_de_passe_provisoire' => $motDePasse,
             'nouveau' => $motDePasse !== null,
         ];
+    }
+
+    /**
+     * Marquer le mot de passe du compte comme provisoire : son titulaire devra
+     * le remplacer à la première connexion.
+     */
+    public static function exigerChangement(User $compte): void
+    {
+        $compte->forceFill(['password_change_required' => true])->save();
     }
 
     /** `users.identifiant` est unique sur toute la plateforme, pas par école. */

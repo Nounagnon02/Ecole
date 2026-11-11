@@ -108,6 +108,11 @@ class EleveController extends Controller
                     'email' => $validated['email'] ?? null,
                 ]);
 
+                // Mot de passe produit ici, donc connu de l'agent : provisoire.
+                if (! isset($validated['password'])) {
+                    Inscription::exigerChangement($user);
+                }
+
                 $eleve = Eleve::create([
                     'user_id' => $user->id,
                     'ecole_id' => $ecoleId,
