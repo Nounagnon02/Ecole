@@ -1266,6 +1266,26 @@
           "texte": "Check your payments: if it was debited, it will appear there. Otherwise, contact the school accounts office."
         },
         "lien": "Back to payments"
+      },
+      "encaissement": {
+        "encaisser": "Collect",
+        "titre": "Record a payment",
+        "reste": "{type} · left to pay: {montant}",
+        "montant": "Amount received (FCFA)",
+        "mode": "Payment method",
+        "modes": {
+          "ESPECES": "Cash",
+          "CHEQUE": "Cheque",
+          "VIREMENT": "Bank transfer",
+          "MOBILE_MONEY": "Mobile money"
+        },
+        "reference": "Reference (optional)",
+        "reference_aide": "Cheque, transfer or transaction number.",
+        "enregistrer": "Record the payment",
+        "montant_requis": "Enter the amount received.",
+        "montant_trop_eleve": "The payment cannot exceed what is left to pay ({montant}).",
+        "echec": "The payment could not be recorded.",
+        "succes": "Payment recorded · {reference}"
       }
     },
     "parametres": {
