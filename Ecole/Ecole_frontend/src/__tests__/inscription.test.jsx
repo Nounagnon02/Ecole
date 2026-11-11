@@ -93,6 +93,19 @@ describe('inscription', () => {
     expect(screen.queryByTestId('acces-parent')).not.toBeInTheDocument();
   });
 
+  it('envoie le matricule saisi à la main, et montre sous le champ le refus d’un doublon', async () => {
+    http.onPost('/eleves/store').reply(422, { message: 'Invalide', errors: { numero_matricule: ['Ce matricule est déjà utilisé.'] } });
+    const dialogue = await ouvrir();
+
+    saisir(dialogue, /^Nom(\s*\*)?$/, 'DOSSOU'); saisir(dialogue, /^Prénom(\s*\*)?$/, 'Afi'); saisir(dialogue, /^Classe/, '4');
+    saisir(dialogue, /Matricule/, ' BEN2026001 ');
+    fireEvent.click(within(dialogue).getByRole('button', { name: /Inscrire l’élève/ }));
+
+    await waitFor(() => expect(http.callsTo('post', '/eleves/store')).toHaveLength(1));
+    expect(http.callsTo('post', '/eleves/store')[0].body).toMatchObject({ numero_matricule: 'BEN2026001' });
+    await waitFor(() => expect(within(dialogue).getByLabelText(/Matricule/)).toHaveAccessibleDescription(/déjà utilisé/));
+  });
+
   it('dit que le parent était déjà connu au lieu d’afficher un mot de passe', async () => {
     http.onPost('/eleves/store').reply(201, { id: 9, acces: { eleve: { identifiant: 'E1', mot_de_passe_provisoire: 'P1' }, parent: { identifiant: '0197000001', mot_de_passe_provisoire: null, nouveau: false } } });
     const dialogue = await ouvrir();
