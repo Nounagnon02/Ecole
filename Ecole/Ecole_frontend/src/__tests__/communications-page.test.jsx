@@ -18,7 +18,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { makeQueryClient } from './helpers/render';
+import { makeQueryClient, signIn, resetAuth } from './helpers/render';
 import { MemoryRouter } from 'react-router-dom';
 import CommunicationsPage from '@/app/features/communications/CommunicationsPage';
 import { installHttpMock } from './helpers/http-mock';
@@ -220,8 +220,12 @@ describe('CommunicationsPage — lecture', () => {
  * ═══════════════════════════════════════════════════════════════════ */
 describe('CommunicationsPage — écriture', () => {
   beforeEach(() => {
+    // Seuls les rôles éditeurs voient le bouton de publication.
+    signIn('directeur');
     http.onGet(PATH).reply(200, envelope([ANNONCE]));
   });
+
+  afterEach(() => resetAuth());
 
   async function readyWithForm() {
     renderPage();
@@ -415,4 +419,30 @@ describe('CommunicationsPage — écriture', () => {
     expect(screen.queryByText('Obligatoire.')).not.toBeInTheDocument();
     expect(screen.queryByText('Invalide')).not.toBeInTheDocument();
   });
+});
+
+describe('CommunicationsPage — qui peut publier', () => {
+  beforeEach(() => {
+    http.onGet(PATH).reply(200, envelope([ANNONCE]));
+  });
+
+  it.each(['parent', 'eleve', 'enseignant', 'comptable', 'infirmier'])(
+    'ne propose pas de publier à un %s, que l’API refuserait',
+    async (role) => {
+      signIn(role);
+      renderPage();
+      await waitFor(() => expect(screen.getByText('Rentrée 2026')).toBeInTheDocument());
+      expect(screen.queryByRole('button', { name: /nouvelle publication/i })).not.toBeInTheDocument();
+    },
+  );
+
+  it.each(['directeur', 'directeurP', 'censeur', 'secretaire', 'super-admin'])(
+    'propose de publier à un %s',
+    async (role) => {
+      signIn(role);
+      renderPage();
+      await waitFor(() => expect(screen.getByText('Rentrée 2026')).toBeInTheDocument());
+      expect(screen.getByRole('button', { name: /nouvelle publication/i })).toBeInTheDocument();
+    },
+  );
 });

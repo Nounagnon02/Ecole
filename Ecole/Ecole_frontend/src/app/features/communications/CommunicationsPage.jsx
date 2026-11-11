@@ -23,6 +23,15 @@ import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import { api } from '@/shared/services/api';
 import { useTranslation } from '@/shared/i18n';
+import useAuthStore from '@/shared/stores/auth-store';
+import { ROLES, ROLE_GROUPS } from '@/shared/types/roles';
+
+/**
+ * Rôles que l'API autorise à publier (CommunicationPolicy::isEditor).
+ * Le bouton était proposé à tous : un parent ou un enseignant rédigeait son
+ * annonce, puis recevait un refus et la perdait.
+ */
+const ROLES_EDITEURS = [...ROLE_GROUPS.DIRECTION, ROLES.CENSEUR, ROLES.SECRETAIRE, ROLES.SUPER_ADMIN];
 
 const CATEGORY_CONFIG = {
   all: { label: 'Tout', icon: MessageSquare },
@@ -73,6 +82,7 @@ function normalizePost(p) {
 
 export default function CommunicationsPage() {
   const { t } = useTranslation();
+  const peutPublier = useAuthStore((st) => st.hasAnyRole(ROLES_EDITEURS));
   const [submitting, setSubmitting] = useState(false);
   const [activeCategory, setActiveCategory] = useState('all');
   const [formOpen, setFormOpen] = useState(false);
@@ -208,9 +218,11 @@ export default function CommunicationsPage() {
           <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.communications.communications.title')}</h1>
           <p className="text-sm text-[var(--text-secondary)]">{t('pages.communications.communications.subtitle')}</p>
         </div>
-        <Button size="sm" icon={<Plus />} onClick={toggleForm} aria-expanded={formOpen}>
-          {t('pages.communications.communications.nouvelle_publication')}
-        </Button>
+        {peutPublier && (
+          <Button size="sm" icon={<Plus />} onClick={toggleForm} aria-expanded={formOpen}>
+            {t('pages.communications.communications.nouvelle_publication')}
+          </Button>
+        )}
       </div>
 
       {/* Rédaction */}
