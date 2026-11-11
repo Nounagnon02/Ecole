@@ -150,4 +150,27 @@ describe('CommandPalette', () => {
       expect(within(dialogue).queryByRole('option')).not.toBeInTheDocument();
     });
   });
+  it('affiche un élève dont la classe arrive en objet, sans planter', async () => {
+    // L'API renvoie `classe: { id, nom_classe }` dans une enveloppe paginée.
+    // Rendre l'objet tel quel faisait disparaître la palette à la première lettre.
+    apiGet.mockImplementation((url) => Promise.resolve({
+      data: url === '/eleves'
+        ? { success: true, data: { data: [{ id: 7, user: { name: 'AGBODJAN', prenom: 'Yèhossou' }, classe: { id: 3, nom_classe: '3ème' } }] } }
+        : [],
+    }));
+    signIn('directeur');
+    monter();
+    ouvrir();
+
+    const dialogue = await screen.findByRole('dialog', { name: /palette de commandes/i });
+    fireEvent.change(within(dialogue).getByRole('combobox'), { target: { value: 'Agbo' } });
+    await act(async () => { vi.advanceTimersByTime(350); });
+
+    expect(await within(dialogue).findByText('AGBODJAN Yèhossou')).toBeInTheDocument();
+    expect(within(dialogue).getByText('3ème')).toBeInTheDocument();
+
+    // La destination existe : il n'y a pas de page /eleves/:id.
+    fireEvent.click(within(dialogue).getByText('AGBODJAN Yèhossou'));
+    expect(navigate).toHaveBeenCalledWith('/eleves');
+  });
 });

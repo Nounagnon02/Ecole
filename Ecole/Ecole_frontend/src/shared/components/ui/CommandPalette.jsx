@@ -37,6 +37,32 @@ import apiClient from '@/shared/lib/api-client';
 import { ROUTE_CONFIG } from '@/features/roles/route-config';
 import { ROLES, normalizeRole } from '@/shared/types/roles';
 import { useTranslation } from '@/shared/i18n';
+import { libelle } from '@/shared/lib/utils';
+
+/**
+ * Résultats de recherche → lignes de la palette.
+ *
+ * `classe` arrive de l'API sous forme d'objet (`{ id, nom_classe }`) : l'afficher
+ * tel quel faisait planter React et la palette disparaissait à la première
+ * lettre. Les destinations pointaient aussi vers `/eleves/:id` et `/classes/:id`,
+ * qui n'existent pas ; elles mènent maintenant à la liste des élèves.
+ */
+const versEleve = (el) => ({
+  label: el.nom_complet
+    || [el.user?.name ?? el.nom, el.user?.prenom ?? el.prenom].filter(Boolean).join(' ')
+    || `Élève ${el.id}`,
+  sublabel: libelle(el.classe) || libelle(el.classe_nom),
+  path: '/eleves',
+  icon: Users,
+  _type: 'eleve',
+});
+const versClasse = (cl) => ({
+  label: libelle(cl.nom_classe ?? cl.nom) || `Classe ${cl.id}`,
+  sublabel: libelle(cl.niveau) || libelle(cl.section),
+  path: '/eleves',
+  icon: BookOpen,
+  _type: 'classe',
+});
 
 /* ─── Debounce helper ────────────────────────────────────────────────── */
 function useDebouncedValue(value, delay = 300) {
@@ -190,6 +216,8 @@ export default function CommandPalette() {
         const data = res.value?.data;
         if (Array.isArray(data)) return data;
         if (Array.isArray(data?.data)) return data.data;
+        // Enveloppe contenant un paginateur Laravel.
+        if (Array.isArray(data?.data?.data)) return data.data.data;
         if (Array.isArray(data?.eleves)) return data.eleves;
         if (Array.isArray(data?.results)) return data.results;
         return [];
@@ -213,22 +241,10 @@ export default function CommandPalette() {
 
     filteredActions.forEach((action) => items.push({ ...action, _type: 'action' }));
     apiResults.eleves.forEach((el) =>
-      items.push({
-        label: el.nom_complet || el.nom || `${el.prenom || ''} ${el.nom || ''}`.trim(),
-        sublabel: el.classe || el.classe_nom || '',
-        path: `/eleves/${el.id}`,
-        icon: Users,
-        _type: 'eleve',
-      })
+      items.push(versEleve(el))
     );
     apiResults.classes.forEach((cl) =>
-      items.push({
-        label: cl.nom || cl.nom_classe || `Classe ${cl.id}`,
-        sublabel: cl.niveau || cl.section || '',
-        path: `/classes/${cl.id}`,
-        icon: BookOpen,
-        _type: 'classe',
-      })
+      items.push(versClasse(cl))
     );
     apiResults.paiements.forEach((p) =>
       items.push({
@@ -454,22 +470,10 @@ export default function CommandPalette() {
                 {renderGroup('Actions', filteredActions)}
 
                 {/* API Results: Élèves */}
-                {renderGroup('Élèves', apiResults.eleves.map((el) => ({
-                  label: el.nom_complet || el.nom || `${el.prenom || ''} ${el.nom || ''}`.trim(),
-                  sublabel: el.classe || el.classe_nom || '',
-                  path: `/eleves/${el.id}`,
-                  icon: Users,
-                  _type: 'eleve',
-                })))}
+                {renderGroup('Élèves', apiResults.eleves.map((el) => (versEleve(el))))}
 
                 {/* API Results: Classes */}
-                {renderGroup('Classes', apiResults.classes.map((cl) => ({
-                  label: cl.nom || cl.nom_classe || `Classe ${cl.id}`,
-                  sublabel: cl.niveau || cl.section || '',
-                  path: `/classes/${cl.id}`,
-                  icon: BookOpen,
-                  _type: 'classe',
-                })))}
+                {renderGroup('Classes', apiResults.classes.map((cl) => (versClasse(cl))))}
 
                 {/* API Results: Paiements */}
                 {renderGroup('Paiements', apiResults.paiements.map((p) => ({

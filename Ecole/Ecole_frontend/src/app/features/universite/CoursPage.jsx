@@ -13,7 +13,7 @@ import {
   BookOpen, Plus, Search, Clock, Users,
   GraduationCap, Building2, Eye, Loader2, AlertCircle,
 } from 'lucide-react';
-import { cn } from '@/shared/lib/utils';
+import { cn, libelle } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
@@ -53,12 +53,12 @@ export default function CoursPage() {
     creditsTotal: cours.reduce((s, c) => s + Number(c.credits || 0), 0)
   }), [cours]);
 
-  const niveaux = useMemo(() => ['Tous', ...new Set(cours.map((c) => c.niveau).filter(Boolean))], [cours]);
+  const niveaux = useMemo(() => ['Tous', ...new Set(cours.map((c) => libelle(c.niveau)).filter(Boolean))], [cours]);
 
   const filtered = useMemo(() =>
     cours.filter((c) => {
       if (search && !c.intitule?.toLowerCase().includes(search.toLowerCase()) && !c.code?.toLowerCase().includes(search.toLowerCase())) return false;
-      if (filterNiveau && c.niveau !== filterNiveau) return false;
+      if (filterNiveau && libelle(c.niveau) !== filterNiveau) return false;
       return true;
     }),
     [search, filterNiveau, cours]
@@ -150,11 +150,11 @@ export default function CoursPage() {
               </Badge>
             </div>
             <h3 className="font-semibold text-sm text-[var(--text-primary)] ">{c.intitule}</h3>
-            <p className="text-xs text-[var(--text-secondary)] mb-1">{c.code} · {c.professeur || c.enseignant || '—'}</p>
+            <p className="text-xs text-[var(--text-secondary)] mb-1">{c.code} · {libelle(c.professeur) || libelle(c.enseignant) || '—'}</p>
             <div className="flex items-center gap-2 mb-3">
-              <Badge variant="outline" size="sm">{c.niveau}</Badge>
-              <Badge variant="outline" size="sm">{c.semestre}</Badge>
-              <span className="text-xs text-[var(--text-tertiary)]">{c.filiere || ''}</span>
+              <Badge variant="outline" size="sm">{libelle(c.niveau)}</Badge>
+              <Badge variant="outline" size="sm">{libelle(c.semestre)}</Badge>
+              <span className="text-xs text-[var(--text-tertiary)]">{libelle(c.filiere)}</span>
             </div>
             <div className="flex justify-between text-xs text-[var(--text-secondary)]  pt-2 border-t border-[var(--border-light)] ">
               <span className="flex items-center gap-1"><GraduationCap className="h-3 w-3" /> {c.credits} crédits</span>
