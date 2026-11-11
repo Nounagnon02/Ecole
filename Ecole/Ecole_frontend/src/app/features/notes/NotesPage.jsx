@@ -13,6 +13,8 @@ import {
 import { cn } from '@/shared/lib/utils';
 import { useApiQuery, useApiMutation, api } from '@/shared/lib/api-client';
 import { unwrapList } from '@/shared/lib/unwrap';
+import useAuthStore from '@/shared/stores/auth-store';
+import { ROLE_GROUPS } from '@/shared/types/roles';
 import StatsCard from '@/shared/components/ui/StatsCard';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
@@ -31,6 +33,10 @@ export default function NotesPage() {
   const [classementClasse, setClassementClasse] = useState('');
   const [classementPeriode, setClassementPeriode] = useState('Trimestre 1');
 
+  // Verrouiller une note est réservé à la direction et aux enseignants (routes
+  // `notes/{id}/lock`). Le bouton était montré aux parents et aux élèves, qui
+  // recevaient un refus.
+  const peutVerrouiller = useAuthStore((st) => st.hasAnyRole([...ROLE_GROUPS.DIRECTION, ...ROLE_GROUPS.ENSEIGNANTS]));
   const [page, setPage] = useState(1);
 
   const { data: notesData, isLoading, error, refetch } = useApiQuery(
@@ -351,7 +357,9 @@ export default function NotesPage() {
                       )}
                     </Table.Cell>
                     <Table.Cell className="text-right">
-                      <button
+                      {peutVerrouiller && <button
+                        type="button"
+                        aria-label={n.locked ? t('pages.notes.notes.deverrouiller') : t('pages.notes.notes.verrouiller')}
                         onClick={() => handleLock(n.id, n.locked)}
                         className={cn(
                           'p-1.5 rounded-lg transition-colors',
@@ -362,7 +370,7 @@ export default function NotesPage() {
                         title={n.locked ? t('pages.notes.notes.deverrouiller') : t('pages.notes.notes.verrouiller')}
                       >
                         {n.locked ? <Unlock className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
-                      </button>
+                      </button>}
                     </Table.Cell>
                   </Table.Row>
                 ))}

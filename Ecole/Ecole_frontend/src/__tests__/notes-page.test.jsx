@@ -101,4 +101,19 @@ describe('NotesPage — réponse paginée de l’API', () => {
     expect(await screen.findByText(/Aucune note trouvée/i)).toBeInTheDocument();
     expect(screen.queryByText('100%')).not.toBeInTheDocument();
   });
+
+  it('ne propose de verrouiller une note qu’à la direction et aux enseignants', async () => {
+    http.onGet('/notes/eleve').reply(200, page([note(1, 'AGBODJAN', '14.50')], 1, 1, 1));
+
+    signIn(ROLES.PARENT);
+    const { unmount } = monter();
+    await screen.findByText(/AGBODJAN/);
+    expect(screen.queryByRole('button', { name: /^Verrouiller$/i })).not.toBeInTheDocument();
+    unmount();
+
+    signIn(ROLES.ENSEIGNANT);
+    monter();
+    await screen.findByText(/AGBODJAN/);
+    expect(screen.getByRole('button', { name: /^Verrouiller$/i })).toBeInTheDocument();
+  });
 });
