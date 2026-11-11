@@ -1120,6 +1120,42 @@
         "terminer": "Terminer",
         "matricule": "Matricule (facultatif)",
         "matricule_aide": "Laissez vide pour qu’il soit généré."
+      },
+      "import": {
+        "bouton": "Importer un fichier",
+        "titre": "Inscription en masse",
+        "aide": "Un seul fichier CSV pour les élèves, les parents, les enseignants et le personnel : une ligne par personne, avec son rôle dans la première colonne.",
+        "aide_eleve": "Élève : nom, prénom et classe. Le matricule est généré s’il est vide. Le parent indiqué sur la ligne est créé, ou retrouvé par son téléphone.",
+        "aide_personnel": "Parent, enseignant, personnel : nom et téléphone, qui servira d’identifiant. Les comptes du personnel sont réservés à la direction.",
+        "aide_tout_ou_rien": "Le fichier est d’abord contrôlé. Si une seule ligne pose problème, rien n’est créé. 200 lignes au plus par fichier.",
+        "modele": "Télécharger le modèle",
+        "choisir": "Choisir un fichier CSV",
+        "autre_fichier": "Choisir un autre fichier",
+        "fichier": "Fichier CSV à importer",
+        "fichier_choisi": "Fichier : {nom}",
+        "pret": "Fichier valide : {total} lignes. Seront créés : {comptes}.",
+        "refuse": "Le fichier est refusé : {nombre} ligne(s) à corriger. Rien n’a été créé.",
+        "ligne": "Ligne",
+        "probleme": "Problème",
+        "importer": "Importer les {total} lignes",
+        "echec": "Le fichier n’a pas pu être envoyé.",
+        "fait": "Import terminé : {comptes}.",
+        "acces_une_fois": "Téléchargez maintenant les accès à remettre : les mots de passe provisoires ne seront plus affichés. Chacun devra choisir le sien à sa première connexion.",
+        "telecharger_acces": "Télécharger les {nombre} accès",
+        "terminer": "Terminer",
+        "fermer_sans_acces": "Vous n’avez pas téléchargé les accès. Les mots de passe provisoires seront perdus. Fermer quand même ?",
+        "roles": {
+          "eleve": "élève(s)",
+          "parent": "parent(s)",
+          "enseignant": "enseignant(s)",
+          "secretaire": "secrétaire(s)",
+          "comptable": "comptable(s)",
+          "surveillant": "surveillant(s)",
+          "censeur": "censeur(s)",
+          "infirmier": "infirmier(s)",
+          "bibliothecaire": "bibliothécaire(s)",
+          "directeur": "directeur(s)"
+        }
       }
     },
     "emploi_du_temps": {

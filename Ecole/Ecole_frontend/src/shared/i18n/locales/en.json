@@ -1120,6 +1120,42 @@
         "terminer": "Done",
         "matricule": "Registration number (optional)",
         "matricule_aide": "Leave empty to have it generated."
+      },
+      "import": {
+        "bouton": "Import a file",
+        "titre": "Bulk enrolment",
+        "aide": "One CSV file for pupils, parents, teachers and staff: one row per person, with their role in the first column.",
+        "aide_eleve": "Pupil: last name, first name and class. The registration number is generated when empty. The parent on the row is created, or found by phone number.",
+        "aide_personnel": "Parent, teacher, staff: last name and phone number, which becomes the identifier. Staff accounts are reserved for the direction.",
+        "aide_tout_ou_rien": "The file is checked first. If a single row is wrong, nothing is created. 200 rows at most per file.",
+        "modele": "Download the template",
+        "choisir": "Choose a CSV file",
+        "autre_fichier": "Choose another file",
+        "fichier": "CSV file to import",
+        "fichier_choisi": "File: {nom}",
+        "pret": "Valid file: {total} rows. To be created: {comptes}.",
+        "refuse": "The file is refused: {nombre} row(s) to fix. Nothing was created.",
+        "ligne": "Row",
+        "probleme": "Problem",
+        "importer": "Import the {total} rows",
+        "echec": "The file could not be sent.",
+        "fait": "Import complete: {comptes}.",
+        "acces_une_fois": "Download the credentials to hand over now: provisional passwords will not be shown again. Each person will choose their own at first sign-in.",
+        "telecharger_acces": "Download the {nombre} credentials",
+        "terminer": "Done",
+        "fermer_sans_acces": "You have not downloaded the credentials. Provisional passwords will be lost. Close anyway?",
+        "roles": {
+          "eleve": "pupil(s)",
+          "parent": "parent(s)",
+          "enseignant": "teacher(s)",
+          "secretaire": "secretary(ies)",
+          "comptable": "accountant(s)",
+          "surveillant": "supervisor(s)",
+          "censeur": "dean(s) of studies",
+          "infirmier": "nurse(s)",
+          "bibliothecaire": "librarian(s)",
+          "directeur": "director(s)"
+        }
       }
     },
     "emploi_du_temps": {

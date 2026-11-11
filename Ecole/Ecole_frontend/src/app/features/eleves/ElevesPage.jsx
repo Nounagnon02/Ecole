@@ -5,7 +5,7 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Users, Search, Download, Plus, GraduationCap,
+  Users, Search, Download, Plus, Upload, GraduationCap,
   MoreHorizontal, UserCheck, UserX, RefreshCw, Trash2,
 } from 'lucide-react';
 import { cn } from '@/shared/lib/utils';
@@ -25,6 +25,7 @@ import { useTranslation } from '@/shared/i18n';
 import useAuthStore from '@/shared/stores/auth-store';
 import { ROLES, ROLE_GROUPS } from '@/shared/types/roles';
 import InscriptionDialog from './InscriptionDialog';
+import ImportDialog from './ImportDialog';
 
 const STATUT_COLORS = {
   actif: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400',
@@ -47,6 +48,7 @@ export default function ElevesPage() {
   const [search, setSearch] = useState('');
   const [filterClasse, setFilterClasse] = useState('');
   const [inscription, setInscription] = useState(false);
+  const [importation, setImportation] = useState(false);
   // Mêmes rôles que `ElevePolicy::create` côté API.
   const peutInscrire = useAuthStore((etat) => etat.hasAnyRole([...ROLE_GROUPS.DIRECTION, ROLES.SECRETAIRE]));
 
@@ -130,6 +132,7 @@ export default function ElevesPage() {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+      <ImportDialog open={importation} onClose={() => setImportation(false)} onDone={() => refetch()} />
       <InscriptionDialog open={inscription} onClose={() => setInscription(false)} onDone={() => refetch()} />
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -141,6 +144,9 @@ export default function ElevesPage() {
             <RefreshCw className={cn('h-4 w-4 mr-1', isLoading && 'animate-spin')} />
           </Button>
           <Button variant="outline" size="sm" icon={<Download />} onClick={exporter} disabled={filtered.length === 0}>{t('common.export')}</Button>
+          {peutInscrire && (
+            <Button variant="outline" size="sm" icon={<Upload />} onClick={() => setImportation(true)}>{t('pages.eleves.import.bouton')}</Button>
+          )}
           {peutInscrire && (
             <Button size="sm" icon={<Plus />} onClick={() => setInscription(true)}>{t('pages.eleves.eleves.nouvel_eleve')}</Button>
           )}

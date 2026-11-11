@@ -61,6 +61,9 @@ class ImportController extends Controller
             \Cache::forget('dashboard_directeur_'.($request->user()->ecole_id ?? 'global'));
         }
 
-        return response()->json($resultat, $resultat['success'] ? 200 : 422);
+        // Un fichier lu puis refusé est un résultat, pas une erreur HTTP : le
+        // client du web ne transmet pas le corps d'un 422 hors du champ
+        // `errors`, et la liste des lignes à corriger se perdait.
+        return response()->json($resultat);
     }
 }

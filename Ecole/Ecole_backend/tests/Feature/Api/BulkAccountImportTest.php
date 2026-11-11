@@ -80,7 +80,7 @@ it('ne crée rien si une seule ligne est refusée, et dit laquelle et pourquoi',
         'eleve;AGBO;Luc;;;7ème;;;;;;',
         'eleve;KPADE;Rita;;;CM2;;;;KPADE;Jean;12345',
         'sorcier;X;Y;0196000009;;;;;;;;',
-    ])->assertStatus(422);
+    ])->assertOk()->assertJsonPath('success', false);
 
     expect(collect($reponse->json('erreurs'))->pluck('ligne')->all())->toBe([3, 4, 5])
         ->and($reponse->json('erreurs.0.message'))->toContain('Classe « 7ème » introuvable')
@@ -114,7 +114,7 @@ it('refuse les doublons, dans le fichier comme avec la base', function () {
         'enseignant;HOUNKPE;Marie;+229 96 00 00 02;;;;;;;;',
         'comptable;A;B;0196000005;;;;;;;;',
         'comptable;C;D;96000005;;;;;;;;',
-    ])->assertStatus(422);
+    ])->assertOk()->assertJsonPath('success', false);
 
     expect(collect($reponse->json('erreurs'))->pluck('ligne')->all())->toBe([2, 4, 5, 7])
         ->and($reponse->json('erreurs.2.message'))->toContain('Un compte existe déjà')
@@ -126,7 +126,7 @@ it('ne laisse pas le secrétariat créer des comptes du personnel', function () 
 
     importer(['eleve;DOSSOU;Afi;;;6ème;;;;;;'])->assertOk();
     importer(['comptable;A;B;0196000005;;;;;;;;'])
-        ->assertStatus(422)->assertJsonPath('erreurs.0.message', 'Seule la direction peut créer un compte du personnel.');
+        ->assertOk()->assertJsonPath('success', false)->assertJsonPath('erreurs.0.message', 'Seule la direction peut créer un compte du personnel.');
 
     expect(User::where('role', 'comptable')->count())->toBe(0);
 });
@@ -142,9 +142,9 @@ it('accepte un fichier de tableur : virgules, BOM, colonnes en désordre et acce
 it('refuse un fichier sans les colonnes attendues, trop long, ou d’un rôle non autorisé', function () {
     ecoleAvecClasses();
 
-    importer(['DOSSOU;Afi'], [], 'nom;prenom')->assertStatus(422)->assertJsonPath('erreurs.0.ligne', 1);
+    importer(['DOSSOU;Afi'], [], 'nom;prenom')->assertOk()->assertJsonPath('success', false)->assertJsonPath('erreurs.0.ligne', 1);
     importer(array_fill(0, 201, 'eleve;DOSSOU;Afi;;;6ème;;;;;;'))
-        ->assertStatus(422)->assertJsonFragment(['ligne' => 1]);
+        ->assertOk()->assertJsonPath('success', false)->assertJsonFragment(['ligne' => 1]);
     expect(Eleve::count())->toBe(0);
 
     test()->actingAs(User::factory()->create(['role' => 'enseignant', 'ecole_id' => Ecole::first()->id]));
