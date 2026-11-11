@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Parents;
 
 use App\Models\ParentEleve;
+use App\Rules\BeninPhoneNumber;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
@@ -29,12 +30,12 @@ class StoreParentRequest extends FormRequest
             'email' => 'required|email|unique:users,email',
             'identifiant' => 'required|string|unique:users,identifiant',
             'password' => 'required|string|min:8',
-            'telephone' => 'nullable|string',
+            'telephone' => ['nullable', 'string', new BeninPhoneNumber],
             'eleve_ids' => 'sometimes|array',
             'eleve_ids.*' => 'school_exists:eleves,id',
             'liens' => 'sometimes|array',
             'liens.*.eleve_id' => 'required|school_exists:eleves,id',
-            'liens.*.role' => 'sometimes|nullable|in:' . implode(',', ParentEleve::ROLES),
+            'liens.*.role' => 'sometimes|nullable|in:'.implode(',', ParentEleve::ROLES),
             'liens.*.is_primary' => 'sometimes|boolean',
             'liens.*.is_guardian' => 'sometimes|boolean',
         ];

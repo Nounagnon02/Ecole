@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Payment;
 
+use App\Rules\BeninPhoneNumber;
 use Illuminate\Foundation\Http\FormRequest;
 
 /** Débit mobile money sur un encaissement déjà ouvert. */
@@ -16,9 +17,9 @@ class MobileMoneyRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'payment_id'   => 'required|school_exists:payments,id',
-            'phone_number' => 'required|string',
-            'operator'     => 'required|in:mtn,moov',
+            'payment_id' => 'required|school_exists:payments,id',
+            'phone_number' => ['required', 'string', new BeninPhoneNumber],
+            'operator' => 'required|in:mtn,moov',
         ];
     }
 }

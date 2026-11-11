@@ -2,21 +2,29 @@
 
 namespace App\Services;
 
+use App\Support\BeninPhone;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class SmsService
 {
     private string $apiKey;
+
     private string $username;
+
     private string $shortcode;
+
     private string $baseUrl;
 
     public function __construct()
     {
-        $this->apiKey = config('services.africastalking.api_key', '');
-        $this->username = config('services.africastalking.username', '');
-        $this->shortcode = config('services.africastalking.shortcode', '');
+        // `config($cle, '')` ne remplace pas une clé présente mais nulle (variable
+        // d'environnement absente) : sans code court, le constructeur plantait
+        // sur « Cannot assign null to property $shortcode of type string ».
+        $this->apiKey = (string) config('services.africastalking.api_key');
+        $this->username = (string) config('services.africastalking.username');
+        $this->shortcode = (string) config('services.africastalking.shortcode');
         $this->baseUrl = 'https://api.africastalking.com/version1';
     }
 
@@ -25,15 +33,20 @@ class SmsService
      */
     public function send(string $to, string $message): array
     {
-        $to = $this->normalizePhone($to);
+        $raw = $to;
+        $to = BeninPhone::normalize($raw);
 
         if ($to === null) {
-            Log::warning('SMS: numéro de téléphone invalide', ['raw' => $to]);
-            return ['success' => false, 'message_id' => null, 'error' => 'Numéro de téléphone invalide (format: +229XXXXXXXX).'];
+            // Le journal recevait `$to`, déjà écrasé par null : le numéro fautif
+            // n'était jamais consigné.
+            Log::warning('SMS: numéro de téléphone invalide', ['raw' => $raw]);
+
+            return ['success' => false, 'message_id' => null, 'error' => 'Numéro de téléphone invalide (format attendu : 01 suivi de 8 chiffres).'];
         }
 
         if (empty($this->apiKey) || empty($this->username)) {
             Log::error('SMS: credentials Africa\'s Talking manquants');
+
             return ['success' => false, 'message_id' => null, 'error' => 'Credentials SMS non configurés.'];
         }
 
@@ -58,22 +71,27 @@ class SmsService
 
                 if ($status === 'Success') {
                     Log::info('SMS envoyé', ['to' => $to, 'message_id' => $messageId]);
+
                     return ['success' => true, 'message_id' => $messageId, 'error' => null];
                 }
 
                 $error = data_get($firstRecipient, 'status', 'Échec de l\'envoi');
                 Log::warning('SMS échoué', ['to' => $to, 'status' => $error]);
+
                 return ['success' => false, 'message_id' => null, 'error' => $error];
             }
 
             $errorMessage = data_get($body, 'SMSMessageData.Message', 'Réponse inattendue de l\'API');
             Log::error('SMS: réponse API invalide', ['to' => $to, 'response' => $body]);
+
             return ['success' => false, 'message_id' => null, 'error' => $errorMessage];
-        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+        } catch (ConnectionException $e) {
             Log::error('SMS: timeout', ['to' => $to]);
+
             return ['success' => false, 'message_id' => null, 'error' => 'Délai d\'attente dépassé. Réessayez plus tard.'];
         } catch (\Exception $e) {
             Log::error('SMS: exception', ['to' => $to, 'exception' => $e->getMessage()]);
+
             return ['success' => false, 'message_id' => null, 'error' => 'Erreur interne lors de l\'envoi du SMS.'];
         }
     }
@@ -109,6 +127,7 @@ class SmsService
     public function paymentReminder(string $phone, string $parentName, string $studentName, string $amount): array
     {
         $message = "Cher/Chère {$parentName}, rappel de paiement de {$amount} FCFA pour {$studentName}. Merci.";
+
         return $this->send($phone, $message);
     }
 
@@ -118,6 +137,7 @@ class SmsService
     public function absenceAlert(string $phone, string $parentName, string $studentName, string $date): array
     {
         $message = "Absence de {$studentName} le {$date}. Contactez l'établissement.";
+
         return $this->send($phone, $message);
     }
 
@@ -127,31 +147,7 @@ class SmsService
     public function gradePosted(string $phone, string $parentName, string $studentName, string $period): array
     {
         $message = "Les notes de {$studentName} pour {$period} sont disponibles.";
+
         return $this->send($phone, $message);
-    }
-
-    /**
-     * Normalize phone to +229XXXXXXXX format (Bénin).
-     */
-    private function normalizePhone(string $phone): ?string
-    {
-        $phone = trim($phone);
-
-        // Already correct: +229XXXXXXXX
-        if (preg_match('/^\+229\d{8}$/', $phone)) {
-            return $phone;
-        }
-
-        // Without +: 229XXXXXXXX
-        if (preg_match('/^229\d{8}$/', $phone)) {
-            return '+' . $phone;
-        }
-
-        // Local 8-digit number
-        if (preg_match('/^\d{8}$/', $phone)) {
-            return '+229' . $phone;
-        }
-
-        return null;
     }
 }

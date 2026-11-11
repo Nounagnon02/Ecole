@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\Parents;
 
+use App\Models\UserParent;
+use App\Rules\BeninPhoneNumber;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
@@ -21,13 +23,13 @@ class UpdateParentRequest extends FormRequest
 
     public function rules(): array
     {
-        $parent = \App\Models\UserParent::findOrFail($this->route('id'));
+        $parent = UserParent::findOrFail($this->route('id'));
 
         return [
             'name' => 'sometimes|string',
             'prenom' => 'sometimes|string',
-            'email' => 'sometimes|nullable|email|unique:users,email,' . $parent->user_id,
-            'telephone' => 'sometimes|string',
+            'email' => 'sometimes|nullable|email|unique:users,email,'.$parent->user_id,
+            'telephone' => ['sometimes', 'string', new BeninPhoneNumber],
             'eleve_ids' => 'sometimes|array',
             'eleve_ids.*' => 'school_exists:eleves,id',
         ];
