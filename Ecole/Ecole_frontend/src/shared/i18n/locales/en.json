@@ -1217,7 +1217,7 @@
         "reference": "Reference",
         "recu": "Receipt",
         "aucun_paiement_trouve": "No payment found",
-        "voir_le_recu": "View receipt",
+        "voir_le_recu": "Download the receipt",
         "selectionnez_un_eleve_pour_voir_son_echeancier": "Select a student to see their payment schedule",
         "total_du": "Total due",
         "echeances": "Due dates",
@@ -1227,7 +1227,8 @@
         "url_de_paiement_invalide": "Invalid payment URL",
         "impossible_d_initialiser_le_paiement": "Unable to initialize the payment",
         "erreur_lors_de_l_initialisation_du_paiement": "Error while initializing the payment",
-        "impossible_de_recuperer_les_paiements": "Unable to retrieve the payments"
+        "impossible_de_recuperer_les_paiements": "Unable to retrieve the payments",
+        "recu_indisponible": "The receipt could not be downloaded."
       },
       "callback": {
         "status": {
@@ -1429,7 +1430,7 @@
         "reste_sur_echeance": "Left to pay on this instalment: {montant}.",
         "montant_a_payer": "Amount to pay (FCFA)",
         "paiement_partiel_possible": "You can pay in several instalments.",
-        "suite": "You will choose your operator (MTN, Moov, Celtiis) and confirm on your phone at the next step.",
+        "suite": "You will choose your operator (MTN, Moov, Celtiis) and confirm on your phone at the next step. The payment operator adds its fees there, shown before you confirm.",
         "continuer": "Continue to payment",
         "montant_minimal": "The minimum amount is {montant}.",
         "montant_trop_eleve": "The amount cannot exceed what is left to pay ({montant}).",

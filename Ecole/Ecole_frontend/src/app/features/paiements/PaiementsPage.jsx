@@ -81,8 +81,24 @@ export default function PaiementsPage() {
   const payes = paiements.filter(paye).length;
   const tauxEncaisse = totalTransactions > 0 ? Math.round((payes / totalTransactions) * 100) : 0;
 
-  const handleRecu = (id) => {
-    window.open(`/api/comptable/paiements/${id}/recu`, '_blank', 'noopener,noreferrer');
+  // Le reçu s'ouvrait dans un nouvel onglet sur `/api/…` : sans nom de
+  // fichier, et sur téléphone l'utilisateur quittait l'application (BUG-029).
+  // Il est maintenant téléchargé sous un nom lisible.
+  const handleRecu = async (id, reference) => {
+    try {
+      const res = await api.get(`/comptable/paiements/${id}/recu`, { responseType: 'blob' });
+      const url = URL.createObjectURL(new Blob([res.data], { type: 'text/html' }));
+      const lien = document.createElement('a');
+      lien.href = url;
+      lien.download = `recu-${String(reference ?? id).replace(/[^\w-]+/g, '_')}.html`;
+      document.body.appendChild(lien);
+      lien.click();
+      lien.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      logger.error('Erreur reçu:', err);
+      toast.error(t('pages.paiements.paiements.recu_indisponible'));
+    }
   };
 
   // Liste unique des élèves pour l'échéancier
@@ -293,9 +309,10 @@ export default function PaiementsPage() {
                     </Table.Cell>
                     <Table.Cell className="text-right">
                       <button
-                        onClick={() => handleRecu(p.id)}
+                        onClick={() => handleRecu(p.id, p.reference)}
                         className="p-1.5 rounded-lg text-[var(--text-tertiary)] hover:text-[var(--accent)] hover:bg-[var(--accent-subtle)] transition-colors"
                         title={t('pages.paiements.paiements.voir_le_recu')}
+                        aria-label={t('pages.paiements.paiements.voir_le_recu')}
                       >
                         <Eye className="h-4 w-4" />
                       </button>
@@ -454,9 +471,11 @@ export default function PaiementsPage() {
                                 </Button>
                               )}
                               <button
-                                onClick={() => handleRecu(e.id)}
+                                onClick={() => handleRecu(e.id, e.reference)}
                                 className="p-1.5 rounded-lg text-[var(--text-tertiary)] hover:text-[var(--accent)] hover:bg-[var(--accent-subtle)] transition-colors"
                                 title={t('pages.paiements.paiements.voir_le_recu')}
+                                aria-label={t('pages.paiements.paiements.voir_le_recu')}
+                        aria-label={t('pages.paiements.paiements.voir_le_recu')}
                               >
                                 <Eye className="h-4 w-4" />
                               </button>
