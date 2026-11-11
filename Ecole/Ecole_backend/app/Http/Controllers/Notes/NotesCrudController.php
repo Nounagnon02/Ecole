@@ -381,6 +381,10 @@ class NotesCrudController extends Controller
             ], 422);
         }
 
+        if (! $this->peutNoter((int) $request->classe_id, (int) $request->matiere_id)) {
+            return response()->json(['success' => false, 'message' => 'Cette matière ne vous est pas affectée dans cette classe.'], 403);
+        }
+
         DB::beginTransaction();
 
         try {
@@ -401,6 +405,30 @@ class NotesCrudController extends Controller
 
                 if (!$serieHasMatiere) {
                     $errors[] = "Élève #{$item['eleve_id']} : matière absente de sa série";
+                    continue;
+                }
+
+                // La grille se réenregistre : une note déjà saisie pour cette
+                // évaluation est corrigée, pas doublée. Sans cela, corriger
+                // une seule note d'un devoir renvoyait toute la classe en
+                // erreur « plus d'une note de Devoir1 ».
+                $existante = $this->noteDeLEvaluation($request, (int) $item['eleve_id'])->first();
+
+                if ($existante) {
+                    if ($existante->locked) {
+                        $errors[] = "Élève #{$item['eleve_id']} : note verrouillée, non modifiée";
+
+                        continue;
+                    }
+
+                    $existante->update([
+                        'note' => $item['note'],
+                        'note_sur' => $item['note_sur'] ?? 20,
+                        'date_evaluation' => $request->date_evaluation,
+                        'observation' => $item['observation'] ?? $existante->observation,
+                    ]);
+                    $imported++;
+
                     continue;
                 }
 
@@ -478,8 +506,15 @@ class NotesCrudController extends Controller
             return response()->json(['success' => false, 'message' => 'Classe non trouvée'], 404);
         }
 
+        $matieresAffectees = $this->matieresAffectees((int) $classeId);
+
+        if ($matieresAffectees !== null && $matieresAffectees === []) {
+            return response()->json(['success' => false, 'message' => 'Cette classe ne vous est pas affectée.'], 403);
+        }
+
         $eleves = Eleve::with('user:id,name,prenom')
             ->where('classe_id', $classeId)
+            ->where('statut', '!=', 'inactive')
             ->orderBy('numero_matricule')
             ->get(['id', 'user_id', 'numero_matricule'])
             ->map(fn($e) => [
@@ -508,6 +543,24 @@ class NotesCrudController extends Controller
                 ->map(fn($m) => ['id' => $m->id, 'nom' => $m->nom, 'coefficient' => null]);
         }
 
+        // Un enseignant ne voit que ses matières dans cette classe.
+        if ($matieresAffectees !== null) {
+            $matieres = collect($matieres)->whereIn('id', $matieresAffectees)->values();
+        }
+
+        // Notes déjà saisies pour l'évaluation demandée : la grille s'ouvre
+        // sur ce qui existe, pour corriger plutôt que ressaisir.
+        $notes = [];
+        $requete = request();
+        if ($requete->filled(['matiere_id', 'type_evaluation', 'periode'])) {
+            $notes = $this->noteDeLEvaluation($requete->merge(['classe_id' => $classeId]))
+                ->get(['id', 'eleve_id', 'note', 'note_sur', 'locked', 'date_evaluation'])
+                ->map(fn ($n) => [
+                    'id' => $n->id, 'eleve_id' => $n->eleve_id, 'note' => (float) $n->note,
+                    'note_sur' => (float) $n->note_sur, 'locked' => (bool) $n->locked,
+                ])->values();
+        }
+
         return response()->json([
             'success' => true,
             'data' => [
@@ -518,7 +571,62 @@ class NotesCrudController extends Controller
                 ],
                 'eleves' => $eleves,
                 'matieres' => $matieres,
+                'notes' => $notes,
             ],
         ]);
+    }
+
+    /**
+     * Les notes d'une évaluation : une par élève, matière, type et période —
+     * et par date pour les interrogations, qui peuvent être plusieurs.
+     */
+    private function noteDeLEvaluation(Request $request, ?int $eleveId = null)
+    {
+        return Notes::where('classe_id', $request->classe_id)
+            ->where('matiere_id', $request->matiere_id)
+            ->where('type_evaluation', $request->type_evaluation)
+            ->where('periode', $request->periode)
+            ->when($eleveId, fn ($q) => $q->where('eleve_id', $eleveId))
+            ->when(
+                $request->type_evaluation === 'Interrogation' && $request->filled('date_evaluation'),
+                fn ($q) => $q->whereDate('date_evaluation', $request->date_evaluation)
+            );
+    }
+
+    /**
+     * Matières que l'utilisateur enseigne dans cette classe, ou null s'il
+     * n'est pas tenu par les affectations (direction).
+     *
+     * @return array<int, int>|null
+     */
+    private function matieresAffectees(int $classeId): ?array
+    {
+        $user = auth()->user();
+
+        if (\App\Support\Roles::isDirector($user->role)) {
+            return null;
+        }
+
+        $enseignantId = $user->enseignant?->id;
+
+        if (! $enseignantId) {
+            return [];
+        }
+
+        return DB::table('enseignant_matiere')
+            ->where('enseignant_id', $enseignantId)->where('classe_id', $classeId)
+            ->pluck('matiere_id')->map(fn ($id) => (int) $id)->unique()->values()->all();
+    }
+
+    /**
+     * Un enseignant ne note que les matières qui lui sont affectées dans la
+     * classe : jusqu'ici, n'importe quel enseignant pouvait noter n'importe
+     * quelle classe de l'école.
+     */
+    private function peutNoter(int $classeId, int $matiereId): bool
+    {
+        $affectees = $this->matieresAffectees($classeId);
+
+        return $affectees === null || in_array($matiereId, $affectees, true);
     }
 }
