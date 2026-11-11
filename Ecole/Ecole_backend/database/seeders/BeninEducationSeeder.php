@@ -81,13 +81,15 @@ class BeninEducationSeeder extends Seeder
         }
 
         // Series
+        // Sans école, une série est invisible : le modèle est cloisonné par
+        // établissement (audit BUG-009).
         DB::table('series')->insert([
-            ['nom' => 'Maternelle', 'created_at' => now(), 'updated_at' => now()],
-            ['nom' => 'Primaire', 'created_at' => now(), 'updated_at' => now()],
-            ['nom' => 'Collège', 'created_at' => now(), 'updated_at' => now()],
-            ['nom' => 'Série A', 'created_at' => now(), 'updated_at' => now()],
-            ['nom' => 'Série C', 'created_at' => now(), 'updated_at' => now()],
-            ['nom' => 'Série D', 'created_at' => now(), 'updated_at' => now()],
+            ['ecole_id' => $ecole, 'nom' => 'Maternelle', 'created_at' => now(), 'updated_at' => now()],
+            ['ecole_id' => $ecole, 'nom' => 'Primaire', 'created_at' => now(), 'updated_at' => now()],
+            ['ecole_id' => $ecole, 'nom' => 'Collège', 'created_at' => now(), 'updated_at' => now()],
+            ['ecole_id' => $ecole, 'nom' => 'Série A', 'created_at' => now(), 'updated_at' => now()],
+            ['ecole_id' => $ecole, 'nom' => 'Série C', 'created_at' => now(), 'updated_at' => now()],
+            ['ecole_id' => $ecole, 'nom' => 'Série D', 'created_at' => now(), 'updated_at' => now()],
         ]);
 
         // Matieres

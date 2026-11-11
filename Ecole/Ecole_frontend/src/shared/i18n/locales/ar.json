@@ -1650,7 +1650,8 @@
         "enseignants_maternelle_et_primaire": "معلمو الحضانة والابتدائي",
         "chaque_enseignant_couvre_une_classe": "يغطي كل معلم صفًا كاملاً — غيّر صفه هنا",
         "affectation_count_singular": "{n} إسناد",
-        "affectation_count_plural": "{n} إسناد"
+        "affectation_count_plural": "{n} إسناد",
+        "classe_sans_serie": "لا توجد شعبة مرتبطة بهذا القسم، لذا لا يمكن إسناد أي مادة إليه. اربط مواده أولاً في إعدادات المدرسة."
       }
     },
     "ai": {
