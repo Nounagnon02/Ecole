@@ -8,6 +8,7 @@ use App\Models\EmploiDuTemps;
 use App\Models\Message;
 use App\Models\Notes;
 use App\Models\PaiementEleve;
+use App\Models\Payment;
 use App\Models\RendezVous;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -415,16 +416,38 @@ class EspaceParentController extends Controller
         $due  = (float) $paiements->sum('montant_total');
         $paid = (float) $paiements->sum('montant_paye');
 
+        // Ouvertures en attente de la passerelle, par échéance : le parent doit
+        // pouvoir reprendre un paiement commencé plutôt que d'en ouvrir un autre.
+        $enCours = Payment::where('eleve_id', $child->id)
+            ->whereNotNull('paiement_eleve_id')
+            ->awaitingGateway()
+            ->latest()
+            ->get()
+            ->groupBy('paiement_eleve_id');
+
         return response()->json([
             'success' => true,
-            'data'    => $paiements->map(fn($p) => [
-                'id'            => $p->id,
-                'montant'       => (float) $p->montant,
-                'montant_paye'  => (float) $p->montant_paye,
-                'mode_paiement' => $p->mode_paiement,
-                'date'          => $p->date_paiement,
-                'statut'        => $p->statut_global,
-            ]),
+            'data'    => $paiements->map(function ($p) use ($enCours) {
+                $ouvertures = $enCours->get($p->id);
+
+                return [
+                    'id'            => $p->id,
+                    'libelle'       => $p->type_paiement ?: 'Scolarité',
+                    'reference'     => $p->reference,
+                    'montant'       => (float) $p->montant,
+                    'montant_total' => (float) $p->montant_total,
+                    'montant_paye'  => (float) $p->montant_paye,
+                    'reste'         => (float) $p->montant_restant,
+                    'mode_paiement' => $p->mode_paiement,
+                    'date'          => $p->date_paiement,
+                    'statut'        => $p->statut_global,
+                    'paiement_en_cours' => $ouvertures ? [
+                        'id'           => $ouvertures->first()->id,
+                        'montant'      => (float) $ouvertures->sum('amount'),
+                        'checkout_url' => $ouvertures->first()->checkout_url,
+                    ] : null,
+                ];
+            }),
             'meta' => [
                 'total_du'    => $due,
                 'total_paye'  => $paid,
