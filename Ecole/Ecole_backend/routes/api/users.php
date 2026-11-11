@@ -121,6 +121,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/echeancier/{eleveId}', [ComptableController::class, 'echeancier']);
         // Paiement en ligne (FedaPay). Le nom de route `comptable.fedapay.callback`
         // est celui que FedaPayService renvoie au provider en `callback_url`.
+        Route::post('/echeancier/{paiementId}/encaisser', [ComptableController::class, 'encaisserEcheance']);
         Route::post('/echeancier/{paiementId}/initier-paiement', [ComptableController::class, 'initierPaiementEcheance']);
         Route::get('/paiement/callback', [ComptableController::class, 'paiementCallback'])->name('comptable.fedapay.callback');
         Route::get('/paiement/verifier/{transactionId}', [ComptableController::class, 'verifierPaiement']);

@@ -6,6 +6,7 @@ use App\Models\{PaiementEleve, Bourse, Depense, Eleve, TransactionPaiement};
 use App\Support\Reglement;
 use App\Services\FedaPayService;
 use App\Services\Comptabilite\RecuService;
+use App\Http\Requests\Comptable\EncaisserEcheanceRequest;
 use App\Http\Requests\Comptable\StoreDepenseRequest;
 use App\Http\Requests\Comptable\StorePaiementRequest;
 use App\Http\Requests\Comptable\StoreBourseRequest;
@@ -258,6 +259,9 @@ class ComptableController extends Controller
                         'reference' => $p->reference ?? 'PAY-' . $p->id,
                         'type' => $p->type_paiement ?: $p->mode_paiement,
                         'montant' => (float) $p->montant,
+                        'montant_total' => (float) $p->montant_total,
+                        'montant_paye' => (float) $p->montant_paye,
+                        'reste' => (float) $p->montant_restant,
                         'date' => $p->date_paiement?->format('d/m/Y'),
                         'statut' => Reglement::slug($p->statut_global),
                         'statut_label' => Reglement::libelle($p->statut_global),
@@ -266,6 +270,72 @@ class ComptableController extends Controller
                 }),
             ],
         ]);
+    }
+
+    /**
+     * Encaisser au guichet un versement sur une échéance (espèces, chèque,
+     * virement, mobile money constaté).
+     *
+     * Jusqu'ici, « Payer » sur une échéance n'ouvrait que la passerelle en
+     * ligne, et `storePaiement` crée une ligne soldée de plus sans toucher au
+     * reste dû : un élève qui réglait en espèces restait débiteur.
+     *
+     * L'échéance est relue sous verrou : deux agents qui encaissent en même
+     * temps ne peuvent pas, à eux deux, dépasser le reste dû.
+     */
+    public function encaisserEcheance(EncaisserEcheanceRequest $request, $paiementId)
+    {
+        $donnees = $request->validated();
+        $montant = (float) $donnees['montant'];
+
+        return DB::transaction(function () use ($donnees, $montant, $paiementId) {
+            $echeance = PaiementEleve::lockForUpdate()->findOrFail($paiementId);
+            $reste = (float) $echeance->montant_restant;
+
+            if ($reste <= 0) {
+                return response()->json(['success' => false, 'message' => 'Cette échéance est déjà soldée.'], 422);
+            }
+
+            if ($montant > $reste) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Le versement dépasse le reste dû de cette échéance ('.number_format($reste, 0, ',', ' ').' FCFA).',
+                ], 422);
+            }
+
+            $versement = TransactionPaiement::create([
+                'id_paiement_eleve' => $echeance->id,
+                'ecole_id' => $echeance->ecole_id,
+                'tranche' => $echeance->type_paiement,
+                'montant_paye' => $montant,
+                'date_paiement' => $donnees['date_paiement'] ?? now(),
+                'statut' => TransactionPaiement::APPROUVE,
+                'methode_paiement' => $donnees['mode_paiement'],
+                'reference_transaction' => $donnees['reference'] ?? Reglement::nouvelleReference(),
+                'recu_par' => auth()->id(),
+                'observation' => $donnees['observation'] ?? null,
+            ]);
+
+            $echeance->mode_paiement = $donnees['mode_paiement'];
+            $echeance->credit($montant);
+
+            \Cache::forget('dashboard_directeur_'.(auth()->user()->ecole_id ?? 'global'));
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Versement enregistré.',
+                'data' => [
+                    'reference' => $versement->reference_transaction,
+                    'echeance' => [
+                        'id' => $echeance->id,
+                        'montant_total' => (float) $echeance->montant_total,
+                        'montant_paye' => (float) $echeance->montant_paye,
+                        'reste' => (float) $echeance->montant_restant,
+                        'statut' => Reglement::slug($echeance->statut_global),
+                    ],
+                ],
+            ], 201);
+        });
     }
 
     /**
