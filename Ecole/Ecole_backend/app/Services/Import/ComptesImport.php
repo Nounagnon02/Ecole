@@ -11,7 +11,6 @@ use App\Support\Inscription;
 use App\Support\Roles;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 /**
@@ -29,8 +28,8 @@ use Illuminate\Support\Str;
  */
 final class ComptesImport
 {
-    /** Chaque compte coûte un hachage de mot de passe : au-delà, la requête expire. */
-    public const MAX_LIGNES = 200;
+    /** Garde-fou de durée et de mémoire, pas une limite d'usage : une grande école tient en un fichier. */
+    public const MAX_LIGNES = 2000;
 
     public const COLONNES = [
         'role', 'nom', 'prenom', 'telephone', 'email', 'classe', 'matricule',
@@ -40,11 +39,11 @@ final class ComptesImport
     /**
      * @return array{success: bool, simulation: bool, total: int, crees: array<string, int>, erreurs: array<int, array{ligne: int, message: string}>, acces: array<int, array<string, ?string>>}
      */
-    public function importer(string $contenu, User $agent, bool $simulation = false): array
+    public function importer(string $contenu, User $agent, bool $simulation = false, bool $creerClasses = false): array
     {
         $erreurs = [];
         $lignes = $this->lire($contenu, $erreurs);
-        $resultat = ['success' => false, 'simulation' => $simulation, 'total' => count($lignes), 'crees' => [], 'erreurs' => $erreurs, 'acces' => []];
+        $resultat = ['success' => false, 'simulation' => $simulation, 'total' => count($lignes), 'crees' => [], 'erreurs' => $erreurs, 'acces' => [], 'classes_inconnues' => [], 'classes_creees' => []];
 
         if ($erreurs !== [] || $lignes === []) {
             if ($lignes === [] && $erreurs === []) {
@@ -62,9 +61,29 @@ final class ComptesImport
         $crees = [];
         $acces = [];
 
+        // Classes citées par des élèves et absentes de l'école. Elles ne sont
+        // créées que sur demande explicite : une faute de frappe (« 6eme B »
+        // pour « 6ème A ») ne doit pas fabriquer une classe à l'insu de l'agent.
+        $inconnues = [];
+        foreach ($lignes as $ligne) {
+            if ($this->role($ligne['role']) === Roles::ELEVE && $ligne['classe'] !== '' && ! $classes->has($this->cle($ligne['classe']))) {
+                $inconnues[$this->cle($ligne['classe'])] ??= $ligne['classe'];
+            }
+        }
+        $classesCreees = [];
+
+        Inscription::$simulation = $simulation;
+        Inscription::indexerParents(true);
         DB::beginTransaction();
 
         try {
+            if ($creerClasses) {
+                foreach ($inconnues as $cle => $nom) {
+                    $classes[$cle] = Classes::create(['ecole_id' => $ecoleId, 'nom_classe' => $nom, 'categorie_classe' => $this->categorie($nom)]);
+                    $classesCreees[] = $nom;
+                }
+            }
+
             foreach ($lignes as $numero => $ligne) {
                 $message = $this->controler($ligne, $classes, $peutCreerPersonnel, $vus);
 
@@ -95,6 +114,9 @@ final class ComptesImport
             DB::rollBack();
 
             throw $e;
+        } finally {
+            Inscription::$simulation = false;
+            Inscription::indexerParents(false);
         }
 
         return [
@@ -105,6 +127,8 @@ final class ComptesImport
             'erreurs' => $erreurs,
             // Les mots de passe provisoires ne sortent que d'un import réel.
             'acces' => $erreurs === [] && ! $simulation ? array_values(array_filter($acces, fn ($compte) => $compte['nouveau'])) : [],
+            'classes_inconnues' => $creerClasses ? [] : array_values($inconnues),
+            'classes_creees' => $erreurs === [] ? $classesCreees : [],
         ];
     }
 
@@ -200,7 +224,7 @@ final class ComptesImport
             }
 
             if (! $classes->has($this->cle($ligne['classe']))) {
-                return "Classe « {$ligne['classe']} » introuvable dans l'école. Classes connues : ".$classes->pluck('nom_classe')->implode(', ').'.';
+                return "Classe « {$ligne['classe']} » introuvable dans l'école. Corrigez-la, ou demandez la création des classes manquantes. Classes connues : ".$classes->pluck('nom_classe')->implode(', ').'.';
             }
 
             if ($ligne['matricule'] !== '') {
@@ -284,8 +308,6 @@ final class ComptesImport
                 'parent' => $ligne['parent_telephone'] !== '' ? [
                     'name' => $ligne['parent_nom'], 'prenom' => $ligne['parent_prenom'] ?: null, 'telephone' => $ligne['parent_telephone'],
                 ] : null,
-                // En simulation, on ne paie pas le hachage d'un vrai mot de passe.
-                'password' => $simulation ? 'simulation-'.Str::random(8) : null,
             ], $ecoleId);
 
             $comptes = [['role' => Roles::ELEVE, 'nom' => $nom, 'nouveau' => true] + $inscription['acces']['eleve']];
@@ -313,7 +335,7 @@ final class ComptesImport
             'identifiant' => Inscription::identifiantDepuisTelephone($ligne['telephone']),
             'telephone' => BeninPhone::normalize($ligne['telephone']),
             'email' => $ligne['email'] ?: null,
-            'password' => Hash::make($simulation ? 'simulation' : $motDePasse),
+            'password' => Inscription::hacher($motDePasse),
             'role' => $role,
             'ecole_id' => $ecoleId,
         ]);
@@ -324,6 +346,44 @@ final class ComptesImport
         }
 
         return [['role' => $role, 'nom' => $nom, 'identifiant' => $compte->identifiant, 'mot_de_passe_provisoire' => $motDePasse, 'nouveau' => true]];
+    }
+
+    /**
+     * Créer un seul compte, hors fichier : mêmes contrôles, même règle.
+     *
+     * @param  array<string, ?string>  $donnees  role, nom, prenom, telephone, email
+     * @return array{erreur: ?string, acces: ?array}
+     */
+    public function creerCompte(array $donnees, User $agent): array
+    {
+        $ligne = array_map(fn ($valeur) => trim((string) $valeur), $donnees) + array_fill_keys(self::COLONNES, '');
+        $ecoleId = (int) $agent->ecole_id;
+        $classes = collect();
+        $vus = ['matricule' => [], 'email' => [], 'telephone' => []];
+
+        $erreur = $this->controler($ligne, $classes, Roles::satisfies($agent->role, [Roles::DIRECTOR]), $vus);
+
+        if ($erreur !== null) {
+            return ['erreur' => $erreur, 'acces' => null];
+        }
+
+        return ['erreur' => null, 'acces' => DB::transaction(fn () => $this->creer($ligne, $classes, $ecoleId, false)[0])];
+    }
+
+    /** Cycle d'une classe d'après son nom, pour une classe créée par l'import. */
+    private function categorie(string $nom): string
+    {
+        $cle = $this->cle($nom);
+
+        if (preg_match('/^(petite|moyenne|grande)section|^(ps|ms|gs)$|maternelle/', $cle)) {
+            return 'Maternelle';
+        }
+
+        if (preg_match('/^(ci|cp|ce1|ce2|cm1|cm2)/', $cle)) {
+            return 'Primaire';
+        }
+
+        return 'Secondaire';
     }
 
     /** Rôle reconnu, écrit comme l'application l'attend, ou null. */

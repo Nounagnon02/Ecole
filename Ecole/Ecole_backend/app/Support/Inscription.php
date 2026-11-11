@@ -17,6 +17,35 @@ final class Inscription
     /** Lettres et chiffres sans 0/O, 1/I/L : le code se dicte et se recopie. */
     private const ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 
+    /**
+     * Coût bcrypt d'un mot de passe provisoire.
+     *
+     * Un mot de passe provisoire est tiré au hasard (10 caractères sur 31, soit
+     * près de 50 bits) et doit être remplacé à la première connexion : il n'a
+     * pas besoin du coût prévu pour un mot de passe choisi par une personne.
+     * Au coût normal, importer 600 élèves et leurs parents prenait plusieurs
+     * minutes de calcul et la requête expirait. Le mot de passe définitif,
+     * lui, est haché au coût normal (PasswordChangeController).
+     */
+    private const COUT_PROVISOIRE = 6;
+
+    /** Vrai pendant une simulation d'import : on contrôle, on ne hache pas. */
+    public static bool $simulation = false;
+
+    /** Empreinte d'un mot de passe produit par l'application. */
+    public static function hacher(string $motDePasse): string
+    {
+        if (self::$simulation) {
+            // Empreinte bcrypt valide de forme, qui n'ouvre aucun compte : la
+            // transaction d'une simulation est toujours annulée.
+            return '$2y$04$'.str_repeat('.', 53);
+        }
+
+        // Jamais au-dessus du coût configuré : le modèle refuse une empreinte
+        // plus coûteuse que la sienne.
+        return Hash::make($motDePasse, ['rounds' => min(self::COUT_PROVISOIRE, (int) config('hashing.bcrypt.rounds', 12))]);
+    }
+
     public static function nouveauMatricule(): string
     {
         do {
@@ -52,7 +81,8 @@ final class Inscription
             'name' => $donnees['name'],
             'prenom' => $donnees['prenom'],
             'identifiant' => ($donnees['identifiant'] ?? null) ?: $matricule,
-            'password' => Hash::make($motDePasse),
+            // Choisi par l'agent : coût normal. Produit ici : provisoire.
+            'password' => empty($donnees['password']) ? self::hacher($motDePasse) : Hash::make($motDePasse),
             'role' => 'eleve',
             'ecole_id' => $ecoleId,
             'email' => ($donnees['email'] ?? null) ?: null,
@@ -123,13 +153,7 @@ final class Inscription
         $telephone = BeninPhone::normalize($donnees['telephone']);
         $motDePasse = null;
 
-        // Les numéros déjà en base peuvent être à l'ancien format : on compare
-        // les formes normalisées, pas les chaînes.
-        $compte = User::where('role', 'parent')
-            ->where('ecole_id', $ecoleId)
-            ->whereNotNull('telephone')
-            ->get()
-            ->first(fn (User $user) => BeninPhone::normalize($user->telephone) === $telephone);
+        $compte = self::parentConnu($telephone, $ecoleId);
 
         if (! $compte) {
             $motDePasse = self::motDePasseProvisoire();
@@ -138,11 +162,15 @@ final class Inscription
                 'prenom' => $donnees['prenom'] ?? null,
                 'identifiant' => self::identifiantDepuisTelephone($telephone),
                 'telephone' => $telephone,
-                'password' => Hash::make($motDePasse),
+                'password' => self::hacher($motDePasse),
                 'role' => 'parent',
                 'ecole_id' => $ecoleId,
             ]);
             self::exigerChangement($compte);
+
+            if (isset(self::$parentsParTelephone[$ecoleId])) {
+                self::$parentsParTelephone[$ecoleId][$telephone] = $compte->id;
+            }
         }
 
         UserParent::firstOrCreate(['user_id' => $compte->id], ['ecole_id' => $ecoleId]);
@@ -153,6 +181,44 @@ final class Inscription
             'nouveau' => $motDePasse !== null,
             'user_id' => $compte->id,
         ];
+    }
+
+    /**
+     * Index « téléphone normalisé → compte parent » par école, tenu le temps
+     * d'un import. Sans lui, chaque ligne relisait tous les parents de l'école
+     * pour comparer les numéros : sur 600 lignes, l'essentiel du temps.
+     * Null hors import : on relit alors la base à chaque appel.
+     *
+     * @var array<int, array<string, int>>|null
+     */
+    private static ?array $parentsParTelephone = null;
+
+    /** Ouvrir ou fermer l'index des parents (à fermer dans un `finally`). */
+    public static function indexerParents(bool $actif): void
+    {
+        self::$parentsParTelephone = $actif ? [] : null;
+    }
+
+    /**
+     * Le compte parent de l'école joignable à ce numéro normalisé, s'il existe.
+     * Les numéros en base peuvent être à l'ancien format : on compare les
+     * formes normalisées, pas les chaînes.
+     */
+    private static function parentConnu(string $telephone, int $ecoleId): ?User
+    {
+        $normalises = fn () => User::where('role', 'parent')->where('ecole_id', $ecoleId)->whereNotNull('telephone')
+            ->get(['id', 'telephone'])
+            ->mapWithKeys(fn (User $user) => [(string) BeninPhone::normalize($user->telephone) => $user->id])
+            ->all();
+
+        if (self::$parentsParTelephone === null) {
+            $id = $normalises()[$telephone] ?? null;
+        } else {
+            self::$parentsParTelephone[$ecoleId] ??= $normalises();
+            $id = self::$parentsParTelephone[$ecoleId][$telephone] ?? null;
+        }
+
+        return $id ? User::find($id) : null;
     }
 
     /**

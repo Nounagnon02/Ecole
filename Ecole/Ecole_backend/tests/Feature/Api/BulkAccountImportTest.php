@@ -143,10 +143,97 @@ it('refuse un fichier sans les colonnes attendues, trop long, ou d’un rôle no
     ecoleAvecClasses();
 
     importer(['DOSSOU;Afi'], [], 'nom;prenom')->assertOk()->assertJsonPath('success', false)->assertJsonPath('erreurs.0.ligne', 1);
-    importer(array_fill(0, 201, 'eleve;DOSSOU;Afi;;;6ème;;;;;;'))
+    importer(array_fill(0, 2001, 'eleve;DOSSOU;Afi;;;6ème;;;;;;'))
         ->assertOk()->assertJsonPath('success', false)->assertJsonFragment(['ligne' => 1]);
     expect(Eleve::count())->toBe(0);
 
     test()->actingAs(User::factory()->create(['role' => 'enseignant', 'ecole_id' => Ecole::first()->id]));
     importer(['eleve;DOSSOU;Afi;;;6ème;;;;;;'])->assertStatus(403);
+});
+
+it('importe une école entière en un seul fichier', function () {
+    ecoleAvecClasses();
+    $lignes = [];
+    for ($i = 1; $i <= 300; $i++) {
+        $lignes[] = sprintf('eleve;NOM%d;Prenom%d;;;6ème;;;;PARENT%d;;01%08d', $i, $i, intdiv($i + 1, 2), 97000000 + intdiv($i + 1, 2));
+    }
+
+    $reponse = importer($lignes)->assertOk()->assertJsonPath('success', true);
+
+    // 300 élèves, deux par famille : 150 parents.
+    expect($reponse->json('crees'))->toBe(['eleve' => 300, 'parent' => 150])
+        ->and(Eleve::count())->toBe(300);
+});
+
+it('signale les classes inconnues, et ne les crée que si on le demande', function () {
+    $ecole = ecoleAvecClasses();
+    $lignes = ['eleve;DOSSOU;Afi;;;5ème B;;;;;;', 'eleve;AGBO;Luc;;;5eme b;;;;;;', 'eleve;KPADE;Rita;;;CE1 A;;;;;;', 'eleve;ZINSOU;Paul;;;6ème;;;;;;'];
+
+    $refus = importer($lignes, ['simulation' => '1'])->assertOk()->assertJsonPath('success', false);
+    expect($refus->json('classes_inconnues'))->toBe(['5ème B', 'CE1 A'])
+        ->and(Classes::where('ecole_id', $ecole->id)->count())->toBe(2);
+
+    $accord = importer($lignes, ['creer_classes' => '1'])->assertOk()->assertJsonPath('success', true);
+    expect($accord->json('classes_creees'))->toBe(['5ème B', 'CE1 A'])
+        ->and(Classes::where('nom_classe', '5ème B')->sole()->categorie_classe)->toBe('Secondaire')
+        ->and(Classes::where('nom_classe', 'CE1 A')->sole()->categorie_classe)->toBe('Primaire')
+        // « 5ème B » et « 5eme b » sont la même classe : une seule est créée.
+        ->and(Eleve::where('classe_id', Classes::where('nom_classe', '5ème B')->sole()->id)->count())->toBe(2);
+});
+
+it('ne garde aucune classe créée si le fichier est refusé pour une autre raison', function () {
+    $ecole = ecoleAvecClasses();
+
+    importer(['eleve;DOSSOU;Afi;;;5ème B;;;;;;', 'sorcier;X;Y;0196000009;;;;;;;;'], ['creer_classes' => '1'])
+        ->assertOk()->assertJsonPath('success', false)->assertJsonPath('classes_creees', []);
+
+    expect(Classes::where('ecole_id', $ecole->id)->count())->toBe(2);
+});
+
+it('donne aux mots de passe provisoires une empreinte valide, jamais plus coûteuse que la configuration', function () {
+    ecoleAvecClasses();
+    importer(['eleve;DOSSOU;Afi;;;6ème;;;;DOSSOU;Koffi;0197000001', 'enseignant;HOUNKPE;Marie;0196000002;;;;;;;;'])->assertOk();
+
+    foreach (User::whereIn('role', ['eleve', 'parent', 'enseignant'])->get() as $compte) {
+        expect(password_get_info($compte->password)['algoName'])->toBe('bcrypt')
+            ->and(password_get_info($compte->password)['options']['cost'])->toBeLessThanOrEqual((int) config('hashing.bcrypt.rounds'));
+    }
+});
+
+/*
+ * Création directe d'un membre du personnel, sans fichier.
+ */
+
+it('laisse la direction créer un compte du personnel et le retrouver dans la liste', function () {
+    $ecole = ecoleAvecClasses();
+
+    $reponse = $this->postJson('/api/personnel/comptes', [
+        'role' => 'comptable', 'nom' => 'ZINSOU', 'prenom' => 'Paul', 'telephone' => '01 96 00 00 03', 'email' => 'paul@ecole.test',
+    ])->assertCreated();
+
+    $compte = User::where('identifiant', '0196000003')->sole();
+    expect($compte->role)->toBe('comptable')
+        ->and($compte->ecole_id)->toBe($ecole->id)
+        ->and((bool) $compte->password_change_required)->toBeTrue()
+        ->and(Hash::check($reponse->json('acces.mot_de_passe_provisoire'), $compte->password))->toBeTrue();
+
+    $liste = collect($this->getJson('/api/personnel/comptes')->assertOk()->json('data'));
+    expect($liste->firstWhere('identifiant', '0196000003'))->toMatchArray(['role' => 'comptable', 'mot_de_passe_provisoire' => true])
+        // Le directeur connecté y figure aussi ; élèves et parents jamais.
+        ->and($liste->pluck('role')->intersect(['eleve', 'parent'])->all())->toBe([]);
+});
+
+it('refuse à la création directe un doublon, un rôle inconnu, un élève, et tout autre que la direction', function () {
+    ecoleAvecClasses();
+    $donnees = ['role' => 'enseignant', 'nom' => 'HOUNKPE', 'telephone' => '0196000002'];
+
+    $this->postJson('/api/personnel/comptes', $donnees)->assertCreated();
+    $this->postJson('/api/personnel/comptes', $donnees)->assertStatus(422)->assertJsonPath('message', 'Un compte existe déjà pour le téléphone « 0196000002 ».');
+    $this->postJson('/api/personnel/comptes', ['role' => 'sorcier'] + $donnees)->assertStatus(422);
+    $this->postJson('/api/personnel/comptes', ['role' => 'eleve'] + $donnees)->assertStatus(422)->assertJsonValidationErrors('role');
+    $this->postJson('/api/personnel/comptes', ['telephone' => '123'] + $donnees)->assertStatus(422)->assertJsonValidationErrors('telephone');
+
+    test()->actingAs(User::factory()->create(['role' => 'secretaire', 'ecole_id' => Ecole::first()->id]));
+    $this->postJson('/api/personnel/comptes', ['telephone' => '0196000007'] + $donnees)->assertStatus(403);
+    $this->getJson('/api/personnel/comptes')->assertStatus(403);
 });

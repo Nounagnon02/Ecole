@@ -139,9 +139,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('imports/comptes', [ImportController::class, 'importComptes'])
         ->middleware(['role:directeur,secretaire', 'throttle:exports']);
 
-    Route::prefix('imports')->middleware(['role:directeur', 'throttle:exports'])->group(function () {
-        Route::post('/eleves', [ImportController::class, 'importEleves']);
-    });
+    // Comptes du personnel : la direction les crée un par un ici, ou en masse
+    // par le fichier ci-dessus.
+    Route::get('personnel/comptes', [ImportController::class, 'comptesPersonnel'])->middleware('role:directeur');
+    Route::post('personnel/comptes', [ImportController::class, 'creerComptePersonnel'])->middleware(['role:directeur', 'throttle:30,1,comptes-personnel']);
 
     // ============ CENSEUR ============
     Route::prefix('censeur')->middleware('role:directeur,censeur')->group(function () {
