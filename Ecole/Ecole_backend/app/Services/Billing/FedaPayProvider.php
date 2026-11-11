@@ -54,24 +54,27 @@ class FedaPayProvider extends PaymentProvider
 
         try {
             $response = $this->client()->post("{$this->baseUrl}/transactions", [
-                'amount' => (int) ($params['amount'] * 100), // FedaPay uses cents
+                // Le franc CFA n'a pas de centimes et FedaPay le compte à
+                // l'unité : multiplier par 100 débitait cent fois le montant.
+                'amount' => (int) round($params['amount']),
                 'currency' => ['iso' => $params['currency'] ?? 'XOF'],
                 'description' => $params['description'] ?? '',
-                'reference' => $params['reference'],
+                'merchant_reference' => $params['reference'] ?? null,
                 'callback_url' => $params['callback_url'] ?? route('billing.webhook.fedapay'),
                 'cancel_url' => $params['cancel_url'] ?? '',
-                'metadata' => $params['metadata'] ?? [],
+                'custom_metadata' => $params['metadata'] ?? [],
             ]);
 
             $data = $response->json();
+            $transaction = self::transaction($data);
 
-            if ($response->successful() && isset($data['transaction'])) {
+            if ($response->successful() && $transaction) {
                 CircuitBreaker::recordSuccess(self::CIRCUIT);
 
                 return [
                     'success' => true,
-                    'payment_url' => $data['transaction']['url'] ?? null,
-                    'transaction_id' => $data['transaction']['id'] ?? null,
+                    'payment_url' => $transaction['payment_url'] ?? $transaction['url'] ?? null,
+                    'transaction_id' => $transaction['id'] ?? null,
                     'error' => null,
                 ];
             }
@@ -113,21 +116,24 @@ class FedaPayProvider extends PaymentProvider
 
             $data = $response->json();
 
-            if ($response->successful() && isset($data['transaction'])) {
+            $transaction = self::transaction($data);
+
+            if ($response->successful() && $transaction) {
                 CircuitBreaker::recordSuccess(self::CIRCUIT);
 
-                $status = match ($data['transaction']['status'] ?? '') {
-                    'approved' => 'completed',
-                    'pending' => 'pending',
-                    'canceled', 'declined' => 'failed',
+                // `transferred` : approuvée puis reversée au marchand.
+                // `refunded` n'est plus un encaissement.
+                $status = match ($transaction['status'] ?? '') {
+                    'approved', 'transferred' => 'completed',
+                    'canceled', 'declined', 'expired', 'refunded' => 'failed',
                     default => 'pending',
                 };
 
                 return [
                     'success' => $status === 'completed',
                     'status' => $status,
-                    'amount' => ($data['transaction']['amount'] ?? 0) / 100,
-                    'payment_method' => $data['transaction']['payment_method_type'] ?? null,
+                    'amount' => (float) ($transaction['amount'] ?? 0),
+                    'payment_method' => $transaction['mode'] ?? $transaction['payment_method_type'] ?? null,
                     'error' => null,
                 ];
             }
@@ -166,7 +172,7 @@ class FedaPayProvider extends PaymentProvider
 
         try {
             $response = $this->client()->post("{$this->baseUrl}/transactions/{$transactionId}/refund", [
-                'amount' => $amount ? (int) ($amount * 100) : null,
+                'amount' => $amount ? (int) round($amount) : null,
             ]);
 
             $data = $response->json();
@@ -206,9 +212,21 @@ class FedaPayProvider extends PaymentProvider
      * la requête HTTP, `throw: false` laisse chaque appelant lire
      * `$response->successful()` lui-même plutôt que de lever une exception.
      */
+    /**
+     * La transaction d'une réponse. FedaPay la range sous `v1/transaction` ;
+     * `transaction` est la forme que simulaient nos tests historiques.
+     */
+    private static function transaction(mixed $data): ?array
+    {
+        $transaction = is_array($data) ? ($data['v1/transaction'] ?? $data['transaction'] ?? null) : null;
+
+        return is_array($transaction) ? $transaction : null;
+    }
+
     private function client()
     {
-        return Http::withBasicAuth($this->apiKey, '')
+        // FedaPay refuse l'authentification Basic (401) : jeton Bearer.
+        return Http::withToken($this->apiKey)
             ->timeout(10)
             ->retry(2, 200, throw: false);
     }

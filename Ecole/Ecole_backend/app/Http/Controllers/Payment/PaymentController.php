@@ -14,6 +14,7 @@ use App\Http\Requests\Payment\InitializePaymentRequest;
 use App\Http\Requests\Payment\MobileMoneyRequest;
 use App\Services\Billing\PaymentProvider;
 use App\Support\Alerting;
+use App\Support\FedaPayWebhook;
 use App\Support\SchoolContext;
 
 class PaymentController extends Controller
@@ -405,11 +406,14 @@ class PaymentController extends Controller
     {
         $signature = $request->header('X-FedaPay-Signature');
         $payload = $request->getContent();
-        $expectedSignature = hash_hmac('sha256', $payload, (string) config('services.fedapay.webhook_secret'));
+        $secret = (string) config('services.fedapay.webhook_secret');
 
-        // Un en-tête absent donne null, que `hash_equals` n'accepte pas : le
-        // comparer tel quel émet une dépréciation avant de retomber sur false.
-        if (!is_string($signature) || !hash_equals($expectedSignature, $signature)) {
+        // Format FedaPay (`t=…,s=…`, anti-rejeu) ; à défaut, l'ancien HMAC
+        // simple du corps, tant que des outils internes le produisent encore.
+        $signatureValide = FedaPayWebhook::signatureValide($payload, $signature, $secret)
+            || (is_string($signature) && hash_equals(hash_hmac('sha256', $payload, $secret), $signature));
+
+        if (! $signatureValide) {
             Alerting::anomaly('Webhook de paiement rejeté (signature invalide)', [
                 'ip' => $request->ip(),
                 'signature_present' => is_string($signature),
@@ -421,9 +425,9 @@ class PaymentController extends Controller
         $data = $request->all();
 
         try {
-            if (isset($data['entity']['transaction'])) {
-                $transactionId = $data['entity']['transaction']['id'];
-                $status = $data['entity']['transaction']['status'];
+            if ($transaction = FedaPayWebhook::transaction($data)) {
+                $transactionId = $transaction['id'];
+                $status = $transaction['status'];
 
                 $payment = Payment::withoutGlobalScope('ecole')
                     ->where('transaction_id', $transactionId)
@@ -555,7 +559,7 @@ class PaymentController extends Controller
      */
     private function applyGatewayOutcome(Payment $payment, string $status, $transactionId): void
     {
-        if ($status === 'approved') {
+        if (in_array($status, ['approved', 'transferred'], true)) {
             // Filet de sécurité : vérifier côté provider que la transaction est
             // bien approuvée (audit S3). Si l'appel échoue (timeout,
             // indisponibilité), on fait quand même confiance à la signature
@@ -580,7 +584,7 @@ class PaymentController extends Controller
             return;
         }
 
-        if ($status === 'declined') {
+        if (in_array($status, ['declined', 'canceled', 'expired'], true)) {
             $payment->update(['status' => 'failed']);
             $this->recordHistory($payment, 'failed', 'Paiement refusé');
         }
