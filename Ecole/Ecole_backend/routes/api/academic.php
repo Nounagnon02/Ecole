@@ -60,9 +60,10 @@ Route::middleware('auth:sanctum')->group(function () {
         // qui part de la liste des élèves : la leur refuser rendait ces pages
         // inutilisables (audit BUG-003, BUG-006).
         Route::get('/', [EleveController::class, 'index'])->middleware('role:directeur,enseignant,secretaire,comptable,surveillant,censeur');
-        Route::post('/store', [EleveController::class, 'store'])->middleware('role:directeur');
+        // L'inscription est le travail du secrétariat (ElevePolicy::create).
+        Route::post('/store', [EleveController::class, 'store'])->middleware('role:directeur,secretaire');
         Route::get('/{id}', [EleveController::class, 'show']); // ElevePolicy::view appliquée dans le contrôleur
-        Route::put('/update/{id}', [EleveController::class, 'update'])->middleware('role:directeur');
+        Route::put('/update/{id}', [EleveController::class, 'update'])->middleware('role:directeur,secretaire');
 
         // Sortie et retour dans les effectifs. Il n'y a volontairement pas de
         // DELETE ici : un dossier d'élève ne se supprime pas (cf.
