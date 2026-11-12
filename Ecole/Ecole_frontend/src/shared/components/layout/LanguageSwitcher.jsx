@@ -1,7 +1,7 @@
 /**
  * LanguageSwitcher — choix de la langue de l'interface.
  *
- * Les libellés sont écrits dans leur propre langue (« English », « العربية »)
+ * Les libellés sont écrits dans leur propre langue (« Français », « English »)
  * pour rester lisibles quelle que soit la locale active : quelqu'un qui s'est
  * trompé de langue doit pouvoir la retrouver sans la comprendre.
  */

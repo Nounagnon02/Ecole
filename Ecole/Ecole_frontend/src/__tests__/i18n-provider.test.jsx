@@ -37,10 +37,11 @@ afterEach(() => {
 });
 
 describe('LanguageSwitcher', () => {
-  it('propose les trois langues, nommées dans leur propre langue', () => {
+  it('propose les deux langues, nommées dans leur propre langue', () => {
     monter();
     const options = screen.getAllByRole('option').map((o) => o.textContent);
-    expect(options).toEqual(['Français', 'English', 'العربية']);
+    // L'arabe, incomplet, a été retiré (lot 10).
+    expect(options).toEqual(['Français', 'English']);
   });
 
   it('démarre en français', () => {
@@ -58,23 +59,27 @@ describe('LanguageSwitcher', () => {
     expect(document.documentElement.dir).toBe('ltr');
   });
 
-  it("inverse la mise en page en arabe et mémorise le choix", () => {
-    monter();
-    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'ar' } });
+  it('mémorise le choix et le restaure au montage', () => {
+    const { unmount } = monter();
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'en' } });
+    expect(localStorage.getItem('ecole-locale')).toBe('en');
+    unmount();
 
-    expect(document.documentElement.dir).toBe('rtl');
-    expect(document.documentElement.lang).toBe('ar');
-    expect(localStorage.getItem('ecole-locale')).toBe('ar');
+    monter();
+    expect(screen.getByRole('combobox')).toHaveValue('en');
+    expect(document.documentElement.lang).toBe('en');
   });
 
-  it("restaure la locale mémorisée ET son sens d'écriture au montage", () => {
+  it('ramène au français, de gauche à droite, un appareil resté sur l’arabe', () => {
+    // L'arabe a été retiré : une préférence ancienne ne doit ni afficher des
+    // clés brutes ni laisser la page en lecture de droite à gauche.
     localStorage.setItem('ecole-locale', 'ar');
     monter();
 
-    expect(screen.getByRole('combobox')).toHaveValue('ar');
-    // Le cas qui était faux : le texte revenait en arabe mais `dir` restait
-    // à `ltr` jusqu'à ce que l'utilisateur rechoisisse la langue.
-    expect(document.documentElement.dir).toBe('rtl');
+    expect(screen.getByRole('combobox')).toHaveValue('fr');
+    expect(screen.getByTestId('probe')).toHaveTextContent('Enregistrer');
+    expect(document.documentElement.dir).toBe('ltr');
+    expect(document.documentElement.lang).toBe('fr');
   });
 
   it('ignore une locale mémorisée inconnue', () => {

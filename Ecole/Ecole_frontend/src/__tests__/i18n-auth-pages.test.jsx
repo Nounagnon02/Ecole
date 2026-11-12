@@ -8,7 +8,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { I18nProvider } from '@/shared/i18n';
 import LoginForm from '@/shared/components/auth/LoginForm';
@@ -48,12 +48,13 @@ describe('LoginForm', () => {
     expect(screen.queryByText('Connectez-vous à votre espace')).not.toBeInTheDocument();
   });
 
-  it("propose le sélecteur de langue et bascule à l'arabe", () => {
+  it("propose le sélecteur de langue, sans l'arabe retiré", () => {
     monter(<LoginForm />);
-    fireEvent.change(screen.getByRole('combobox', { name: 'Langue' }), { target: { value: 'ar' } });
+    const options = within(screen.getByRole('combobox', { name: 'Langue' })).getAllByRole('option').map((o) => o.value);
 
-    expect(document.documentElement.dir).toBe('rtl');
-    expect(screen.getByText('سجّل الدخول إلى فضائك')).toBeInTheDocument();
+    expect(options).toEqual(['fr', 'en']);
+    fireEvent.change(screen.getByRole('combobox', { name: 'Langue' }), { target: { value: 'en' } });
+    expect(screen.getByText('Log in to your account')).toBeInTheDocument();
   });
 
   it('traduit les erreurs de validation du formulaire', () => {
