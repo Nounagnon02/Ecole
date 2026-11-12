@@ -107,6 +107,8 @@ return Application::configure(basePath: dirname(__DIR__))
         // second plutôt que de saturer le disque temporaire ou la bande
         // passante vers le disque distant.
         $schedule->command('backup:run')->dailyAt('02:00')->withoutOverlapping();
+        // Rappels SMS des échéances (J-7 et J-1), en matinée.
+        $schedule->command('ecole:rappels-echeances')->dailyAt('08:00')->withoutOverlapping();
     })
     ->withExceptions(function (Exceptions $exceptions) {
         // Sans DSN configuré (`SENTRY_LARAVEL_DSN`), le SDK ne fait rien :
