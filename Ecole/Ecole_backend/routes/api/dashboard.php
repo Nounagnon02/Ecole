@@ -60,4 +60,8 @@ Route::middleware('auth:sanctum')->prefix('directeur')->group(function () {
     Route::get('/stats', [DirecteurController::class, 'stats'])->middleware('role:directeur');
     Route::get('/classes', [DirecteurController::class, 'classes'])->middleware('role:directeur');
     Route::get('/enseignants', [DirecteurController::class, 'enseignants'])->middleware('role:directeur');
+    // « Ce qui demande une décision » (recommandation D8) et ses relances.
+    Route::get('/decisions', [\App\Http\Controllers\Dashboard\DecisionsController::class, 'index'])->middleware('role:directeur');
+    Route::post('/decisions/relancer', [\App\Http\Controllers\Dashboard\DecisionsController::class, 'relancer'])
+        ->middleware(['role:directeur', 'throttle:30,1']);
 });

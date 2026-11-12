@@ -26,6 +26,9 @@ final class AvisParents
             'recu' => '{ecole} : paiement de {montant} FCFA reçu pour {eleve} ({libelle}). Reste à payer : {reste} FCFA. Réf. {reference}.',
             'echeance' => '{ecole} : rappel, {reste} FCFA restent à payer pour {eleve} ({libelle}) avant le {date}.',
             'convocation' => '{ecole} : vous êtes attendu(e) le {date} à {heure} pour {eleve}. Motif : {motif}.',
+            // Relances de la direction (tableau « décisions »).
+            'retard' => '{ecole} : {reste} FCFA restent dus pour {eleve} ({libelle}), échéance du {date} dépassée. Merci de régulariser ou de contacter l’école.',
+            'absences_a_justifier' => '{ecole} : {nombre} absence(s) de {eleve} restent à justifier. Merci de contacter l’école.',
         ],
         'en' => [
             'absence' => '{ecole}: {eleve} was marked {statut} on {date}. Contact the school if this is wrong.',
@@ -33,10 +36,15 @@ final class AvisParents
             'recu' => '{ecole}: payment of {montant} FCFA received for {eleve} ({libelle}). Left to pay: {reste} FCFA. Ref. {reference}.',
             'echeance' => '{ecole}: reminder, {reste} FCFA left to pay for {eleve} ({libelle}) before {date}.',
             'convocation' => '{ecole}: you are expected on {date} at {heure} about {eleve}. Reason: {motif}.',
+            'retard' => '{ecole}: {reste} FCFA still due for {eleve} ({libelle}), past the {date} deadline. Please settle or contact the school.',
+            'absences_a_justifier' => '{ecole}: {nombre} absence(s) of {eleve} still need a reason. Please contact the school.',
         ],
     ];
 
-    private const TYPE_PAR_MODELE = ['absence' => 'absences', 'bulletin' => 'notes', 'recu' => 'recus', 'echeance' => 'echeances', 'convocation' => 'convocations'];
+    private const TYPE_PAR_MODELE = [
+        'absence' => 'absences', 'bulletin' => 'notes', 'recu' => 'recus', 'echeance' => 'echeances', 'convocation' => 'convocations',
+        'retard' => 'echeances', 'absences_a_justifier' => 'absences',
+    ];
 
     /** Avertir les parents de l'élève. Rend le nombre de messages confiés à l'envoi. */
     public static function envoyer(Eleve $eleve, string $modele, array $valeurs): int
@@ -61,13 +69,21 @@ final class AvisParents
 
             // File d'attente : avec un worker, l'appel d'une classe n'attend pas
             // les SMS ; sans (QUEUE_CONNECTION=sync), l'envoi est immédiat.
-            dispatch(function () use ($telephone, $texte) {
-                $resultat = app(SmsService::class)->send($telephone, $texte);
-                if (! $resultat['success']) {
-                    Log::warning('Avis SMS non envoyé', ['erreur' => $resultat['error']]);
-                }
-            });
-            $envois++;
+            // Un avis ne doit jamais faire échouer le geste qui l'envoie (appel,
+            // bulletin, encaissement) : une file indisponible est consignée —
+            // sans le numéro ni le texte, qui sont des données personnelles.
+            try {
+                $tache = dispatch(function () use ($telephone, $texte) {
+                    $resultat = app(SmsService::class)->send($telephone, $texte);
+                    if (! $resultat['success']) {
+                        Log::warning('Avis SMS non envoyé', ['erreur' => $resultat['error']]);
+                    }
+                });
+                unset($tache); // la mise en file a lieu ici, dans le try
+                $envois++;
+            } catch (\Throwable $e) {
+                Log::error('Avis SMS non confié à la file', ['modele' => $modele, 'erreur' => $e::class]);
+            }
         }
 
         return $envois;

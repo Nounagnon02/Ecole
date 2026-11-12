@@ -534,7 +534,25 @@
       "effectif": "Effectif",
       "categorie": "Catégorie",
       "aucune_classe": "Aucune classe",
-      "rapport": "Rapport"
+      "rapport": "Rapport",
+      "decisions": {
+        "titre": "À décider",
+        "impayes": "Impayés échus",
+        "notes": "Notes non saisies (30 jours)",
+        "absences": "Absences non justifiées",
+        "relancer": "Relancer",
+        "envoyee": "Relance envoyée.",
+        "deja": "Déjà relancé aujourd’hui.",
+        "en_attente": "Relance en attente du réseau.",
+        "echec": "La relance n’a pas abouti.",
+        "rien": "Rien à signaler.",
+        "eleve": "élève",
+        "eleves": "élèves",
+        "absence": "absence",
+        "absences_unite": "absences",
+        "derniere": "dernière note le {date}",
+        "aucune": "aucune note"
+      }
     },
     "eleve": {
       "title": "Mon espace élève",

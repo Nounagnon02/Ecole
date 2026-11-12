@@ -17,6 +17,7 @@ import {
 } from 'recharts';
 import { useDashboardStats } from '@/app/dashboards/hooks/useDashboardData';
 import DashboardShell from '@/app/dashboards/DashboardShell';
+import ADecider from './ADecider';
 import StatsCard from '@/shared/components/ui/StatsCard';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
@@ -160,8 +161,10 @@ function ClassesTable({ classes, loading }) {
   return (
     <Card className="col-span-2">
       <Card.Header>
-        <div className="flex items-center justify-between">
-          <div>
+        {/* Retour à la ligne sur téléphone : titre et recherche côte à côte
+            débordaient à 360 px. */}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="min-w-0">
             <Card.Title>{t('dashboards.directeur.classes_et_effectifs')}</Card.Title>
             <Card.Description>{t('dashboards.directeur.vue_d_ensemble_des_classes_actives')}</Card.Description>
           </div>
@@ -169,7 +172,7 @@ function ClassesTable({ classes, loading }) {
             placeholder={t('common.search_ellipsis')}
             size="sm"
             icon={Search}
-            className="w-48"
+            className="w-full sm:w-48"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -220,6 +223,8 @@ function ApercuSection({ data, loading }) {
   return (
     <div className="space-y-6">
       <StatCardsGrid stats={stats} loading={loading} />
+      {/* Ce qui demande une action, avant les graphiques (audit, D8). */}
+      <ADecider />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <PerformanceChart data={stats} loading={loading} />
         <RepartitionPie data={stats} loading={loading} />
