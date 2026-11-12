@@ -1674,6 +1674,33 @@
         "2fa_desactivee": "2FA désactivée.",
         "annuler": "Annuler",
         "desactiver": "Désactiver"
+      },
+      "avis_sms": {
+        "titre": "Avis par SMS",
+        "intro": "L’école vous prévient par SMS au numéro de votre compte. Choisissez ce que vous voulez recevoir.",
+        "enregistre": "Préférences enregistrées.",
+        "personnel": "Les avis par SMS sont envoyés aux parents. Votre compte n’a pas de réglage de notification.",
+        "langue": "Langue des messages",
+        "absences": {
+          "titre": "Absences et retards",
+          "desc": "Le jour même, après l’appel."
+        },
+        "notes": {
+          "titre": "Bulletins",
+          "desc": "Quand le bulletin d’un trimestre est arrêté."
+        },
+        "echeances": {
+          "titre": "Échéances",
+          "desc": "7 jours et 1 jour avant la date limite."
+        },
+        "recus": {
+          "titre": "Reçus de paiement",
+          "desc": "À chaque paiement enregistré."
+        },
+        "convocations": {
+          "titre": "Convocations",
+          "desc": "Quand l’école vous donne rendez-vous."
+        }
       }
     },
     "parent": {
