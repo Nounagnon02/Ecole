@@ -64,7 +64,9 @@ export default function Header() {
   return (
     <header className="ecole-header" ref={ref}>
       <div className="ecole-header-top">
-        <Link to={ROLE_REDIRECT_MAP[user?.role] || '/'} aria-label={t('nav.dashboard')}><Brand /></Link>
+        {/* Nom accessible = texte visible (« École ») suivi de la destination :
+            un aria-label « Tableau de bord » masquait le texte lu à l'écran. */}
+        <Link to={ROLE_REDIRECT_MAP[user?.role] || '/'}><Brand /><span className="sr-only"> — {t('nav.dashboard')}</span></Link>
         <div className="ecole-school"><p>{school || t('c.school_space')}</p><p>{ROLE_LABELS[user?.role] || user?.role}</p></div>
         <div className="ecole-header-actions">
           <button type="button" className="ecole-header-button" onClick={toggleCommandPalette} aria-label={t('header.search')}>

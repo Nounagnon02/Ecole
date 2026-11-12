@@ -104,7 +104,7 @@ function ApercuSection({ data, loading }) {
           <Card.Header>
             <div className="flex items-center justify-between">
               <div>
-                <Card.Title>{t('dashboards.parent.evolution_des_notes')}</Card.Title>
+                <Card.Title as="h2">{t('dashboards.parent.evolution_des_notes')}</Card.Title>
                 <Card.Description>{t('dashboards.parent.suivi_trimestriel')}</Card.Description>
               </div>
               {childKeys.length > 0 && (
@@ -163,7 +163,7 @@ function ApercuSection({ data, loading }) {
         {/* Enfants */}
         <Card>
           <Card.Header>
-            <Card.Title>{t('dashboards.parent.mes_enfants')}</Card.Title>
+            <Card.Title as="h2">{t('dashboards.parent.mes_enfants')}</Card.Title>
             <Card.Description>{t('dashboards.parent.vue_rapide')}</Card.Description>
           </Card.Header>
           <Card.Body className="space-y-4">
@@ -217,7 +217,7 @@ function ApercuSection({ data, loading }) {
         <Card.Header>
           <div className="flex items-center justify-between">
             <div>
-              <Card.Title>{t('dashboards.parent.derniers_echanges')}</Card.Title>
+              <Card.Title as="h2">{t('dashboards.parent.derniers_echanges')}</Card.Title>
               <Card.Description>{t('dashboards.parent.avec_l_etablissement')}</Card.Description>
             </div>
             <Badge variant="danger" size="sm">{safeCommunications.filter(c => c.urgent).length} urgent</Badge>
