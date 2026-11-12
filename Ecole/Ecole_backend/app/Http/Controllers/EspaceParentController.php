@@ -455,4 +455,25 @@ class EspaceParentController extends Controller
             ],
         ]);
     }
+
+    /** Préférences d'avis SMS du parent connecté (lot 7.2). */
+    public function preferences()
+    {
+        return response()->json(['success' => true, 'data' => \App\Support\AvisParents::preferences(Auth::user())]);
+    }
+
+    public function majPreferences(Request $request)
+    {
+        $donnees = $request->validate([
+            'absences' => 'boolean', 'notes' => 'boolean', 'echeances' => 'boolean', 'recus' => 'boolean', 'convocations' => 'boolean',
+            'langue' => 'in:fr,en',
+        ]);
+
+        \Illuminate\Support\Facades\DB::table('preferences_notifications')->updateOrInsert(
+            ['user_id' => Auth::id()],
+            $donnees + ['updated_at' => now(), 'created_at' => now()],
+        );
+
+        return $this->preferences();
+    }
 }

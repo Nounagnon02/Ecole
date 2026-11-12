@@ -605,6 +605,16 @@ class PaymentController extends Controller
             $this->recordHistory($payment, 'completed', $note);
             $this->reconcile($payment);
         });
+
+        // Reçu par SMS, une seule fois : on n'arrive ici qu'au premier passage
+        // à « completed ».
+        if ($payment->eleve) {
+            $echeance = $payment->paiement_eleve_id ? PaiementEleve::find($payment->paiement_eleve_id) : null;
+            \App\Support\AvisParents::envoyer($payment->eleve->loadMissing('user:id,name,prenom'), 'recu', [
+                'montant' => \App\Support\AvisParents::fcfa((float) $payment->amount), 'libelle' => $payment->description ?? 'scolarité',
+                'reste' => \App\Support\AvisParents::fcfa((float) ($echeance?->montant_restant ?? 0)), 'reference' => $payment->transaction_id ?? $payment->id,
+            ]);
+        }
     }
 
     /**

@@ -377,6 +377,13 @@ class ComptableController extends Controller
             $echeance->mode_paiement = $donnees['mode_paiement'];
             $echeance->credit($montant);
 
+            if ($eleve = Eleve::with('user:id,name,prenom')->find($echeance->eleve_id)) {
+                \App\Support\AvisParents::envoyer($eleve, 'recu', [
+                    'montant' => \App\Support\AvisParents::fcfa($montant), 'libelle' => $echeance->type_paiement ?? 'scolarité',
+                    'reste' => \App\Support\AvisParents::fcfa((float) $echeance->montant_restant), 'reference' => $versement->reference_transaction,
+                ]);
+            }
+
             \Cache::forget('dashboard_directeur_'.(auth()->user()->ecole_id ?? 'global'));
 
             return response()->json([

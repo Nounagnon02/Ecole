@@ -79,9 +79,19 @@ class BulletinsController extends Controller
             ->where('locked', false)
             ->update(['locked' => true]);
 
+        foreach ($bulletins->load('eleve.user:id,name,prenom') as $bulletin) {
+            if ($bulletin->eleve) {
+                \App\Support\AvisParents::envoyer($bulletin->eleve, 'bulletin', [
+                    'periode' => $bulletin->periode,
+                    'moyenne' => number_format((float) $bulletin->moyenne_generale, 2, ',', ''),
+                    'rang' => $bulletin->rang.'/'.$bulletin->total_eleves,
+                ]);
+            }
+        }
+
         return response()->json([
             'success' => true,
-            'data' => $bulletins->load('eleve.user:id,name,prenom'),
+            'data' => $bulletins,
             'notes_verrouillees' => $verrouillees,
         ]);
     }

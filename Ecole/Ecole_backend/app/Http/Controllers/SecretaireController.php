@@ -66,7 +66,18 @@ class SecretaireController extends Controller
             'heure' => 'required|string',
         ]);
 
-        return RendezVous::create($validated);
+        $rendezVous = RendezVous::create($validated);
+
+        // Convocation : prévenir le parent convoqué.
+        $parent = \App\Models\UserParent::with('eleves.user:id,name,prenom', 'user:id,telephone')->find($validated['parent_id']);
+        $eleve = $parent?->eleves->first();
+        if ($eleve) {
+            \App\Support\AvisParents::envoyer($eleve, 'convocation', [
+                'date' => \Illuminate\Support\Carbon::parse($validated['date'])->format('d/m/Y'), 'heure' => $validated['heure'], 'motif' => $validated['motif'],
+            ]);
+        }
+
+        return $rendezVous;
     }
 
     public function storeCertificat(Request $request)

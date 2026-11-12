@@ -86,8 +86,9 @@ class SurveillantController extends Controller
         }
 
         $compte = ['present' => 0, 'absent' => 0, 'retard' => 0];
+        $aAvertir = [];
 
-        DB::transaction(function () use ($donnees, &$compte) {
+        DB::transaction(function () use ($donnees, &$compte, &$aAvertir) {
             foreach ($donnees['eleves'] as $ligne) {
                 $compte[$ligne['statut']]++;
                 $existante = Absence::where('eleve_id', $ligne['eleve_id'])->whereDate('date', $donnees['date'])->first();
@@ -101,14 +102,28 @@ class SurveillantController extends Controller
                 $type = $ligne['statut'] === 'retard' ? 'retard' : 'absence';
 
                 if ($existante) {
+                    $changement = $existante->type !== $type;
                     $existante->update(['type' => $type, 'motif' => $ligne['motif'] ?? $existante->motif]);
                 } else {
                     Absence::create(['eleve_id' => $ligne['eleve_id'], 'date' => $donnees['date'], 'type' => $type, 'motif' => $ligne['motif'] ?? null]);
+                    $changement = true;
+                }
+
+                // Un appel rejoué n'envoie pas deux fois le même avis.
+                if ($changement) {
+                    $aAvertir[] = [$ligne['eleve_id'], $type];
                 }
             }
         });
 
         \Cache::forget('dashboard_directeur_'.(auth()->user()->ecole_id ?? 'global'));
+
+        foreach ($aAvertir as [$eleveId, $type]) {
+            \App\Support\AvisParents::envoyer(Eleve::with('user:id,name,prenom')->find($eleveId), 'absence', [
+                'statut' => $type === 'retard' ? 'en retard' : 'absent(e)',
+                'date' => \Illuminate\Support\Carbon::parse($donnees['date'])->format('d/m/Y'),
+            ]);
+        }
 
         return response()->json(['success' => true, 'data' => $compte]);
     }
