@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Notes;
 
-use App\Http\Controllers\Concerns\ScopesToCaller;
 use App\Http\Controllers\Controller;
 use App\Models\Notes;
 use App\Models\Eleve;
@@ -15,8 +14,6 @@ use Illuminate\Support\Facades\Validator;
 
 class NotesCrudController extends Controller
 {
-    use ScopesToCaller;
-
     use NotesHelpers;
 
     /**
