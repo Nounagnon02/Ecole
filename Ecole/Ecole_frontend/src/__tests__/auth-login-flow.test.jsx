@@ -40,7 +40,7 @@ function renderLogin() {
 // `^Mot de passe` : sans l'ancre, le bouton « Afficher le mot de passe »
 // du composant Input matche aussi et la requête devient ambiguë.
 const passwordField = () => screen.getByLabelText(/^Mot de passe/);
-const emailField = () => screen.getByLabelText(/^Email ou identifiant/);
+const emailField = () => screen.getByLabelText(/^Téléphone, e-mail ou identifiant/);
 
 function fillCredentials({ email = 'directeur@ecole.bj', password = 'secret123' } = {}) {
   fireEvent.change(emailField(), { target: { value: email } });

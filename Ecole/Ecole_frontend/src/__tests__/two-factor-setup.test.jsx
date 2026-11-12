@@ -79,7 +79,7 @@ describe('connexion d’un rôle à 2FA obligatoire, pas encore activée', () =>
     http.onPost('/auth/2fa/setup').reply(200, SETUP);
 
     renderApp('/connexion');
-    fireEvent.change(screen.getByLabelText(/^Email ou identifiant/), { target: { value: 'directeur_ecole1' } });
+    fireEvent.change(screen.getByLabelText(/^Téléphone, e-mail ou identifiant/), { target: { value: 'directeur_ecole1' } });
     fireEvent.change(screen.getByLabelText(/^Mot de passe/), { target: { value: 'password' } });
     fireEvent.click(screen.getByRole('button', { name: /Se connecter/i }));
 

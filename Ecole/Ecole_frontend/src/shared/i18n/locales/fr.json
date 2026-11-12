@@ -167,7 +167,7 @@
       "pense_pour_l_excellence": "pensé pour l'excellence.",
       "connectez_vous_a_votre_espace": "Connectez-vous à votre espace",
       "accedez_a_votre_tableau_de_bord": "Accédez à votre tableau de bord",
-      "email_ou_identifiant": "Email ou identifiant",
+      "email_ou_identifiant": "Téléphone, e-mail ou identifiant",
       "vous_exemple_com_ou_eleve_2024_001": "vous@exemple.com ou ELEVE-2024-001",
       "se_connecter": "Se connecter",
       "besoin_d_aide_contactez_votre_administrateur": "Besoin d'aide ? Contactez votre administrateur",
@@ -209,6 +209,22 @@
       "saisir": "Code de secours",
       "utiliser": "Je n’ai pas mon téléphone : utiliser un code de secours",
       "revenir_application": "Utiliser le code de l’application"
+    },
+    "reset_sms": {
+      "titre": "Mot de passe oublié",
+      "telephone": "Numéro de téléphone du compte",
+      "recevoir": "Recevoir un code par SMS",
+      "envoye": "Code envoyé.",
+      "code": "Code reçu par SMS",
+      "nouveau": "Nouveau mot de passe",
+      "confirmation": "Confirmez le mot de passe",
+      "valider": "Changer le mot de passe",
+      "renvoyer": "Je n’ai rien reçu : renvoyer un code",
+      "retour": "Retour à la connexion",
+      "trop_court": "Au moins 8 caractères.",
+      "differents": "Les deux mots de passe ne correspondent pas.",
+      "echec": "La demande a échoué.",
+      "lien": "Pas d’adresse e-mail ? Recevoir un code par SMS"
     }
   },
   "eleve": {

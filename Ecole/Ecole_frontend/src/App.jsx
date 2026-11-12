@@ -21,6 +21,7 @@ import TwoFactorSetupPage from '@/app/features/auth/TwoFactorSetupPage';
 import LoginForm from '@/shared/components/auth/LoginForm';
 import ForgotPassword from '@/app/features/auth/ForgotPassword';
 import ResetPassword from '@/app/features/auth/ResetPassword';
+import ResetSmsPage from '@/app/features/auth/ResetSmsPage';
 import ErrorBoundary from '@/shared/components/ui/ErrorBoundary';
 import { captureException } from '@/shared/lib/error-reporting';
 import { LoadingSpinner } from '@/shared/components/ui/Skeleton';
@@ -148,6 +149,7 @@ function App() {
 
         {/* ─── Routes publiques — mot de passe oublié ──────────────────── */}
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/mot-de-passe-oublie/sms" element={<ResetSmsPage />} />
         <Route path="/reset-password" element={<ResetPassword />} />
 
         {/* ─── Route publique — landing / redirect auth ────────────────── */}
