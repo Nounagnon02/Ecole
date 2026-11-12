@@ -23,7 +23,6 @@ import {
   DollarSign,
   Calendar,
   Search,
-  Sparkles,
   BarChart3,
   CreditCard,
   ClipboardList,
@@ -88,25 +87,21 @@ const ROLE_ACTIONS = {
     { icon: BookOpen, label: 'Saisir une note', action: 'navigate', path: '/notes' },
     { icon: DollarSign, label: 'Enregistrer un paiement', action: 'navigate', path: '/paiements' },
     { icon: Calendar, label: 'Planifier un cours', action: 'navigate', path: '/emploi-du-temps' },
-    { icon: BarChart3, label: 'Rapport IA', action: 'navigate', path: '/directeur/ai-insights' },
   ],
   [ROLES.ENSEIGNANT]: [
     { icon: ClipboardList, label: 'Saisir une note', action: 'navigate', path: '/notes' },
     { icon: Users, label: 'Voir mes élèves', action: 'navigate', path: '/eleves' },
     { icon: Calendar, label: 'Mon emploi du temps', action: 'navigate', path: '/emploi-du-temps' },
-    { icon: Sparkles, label: 'Assistant de cours IA', action: 'navigate', path: '/enseignant/ai-assistant' },
   ],
   [ROLES.ELEVE]: [
     { icon: BookOpen, label: 'Mes notes', action: 'navigate', path: '/notes' },
     { icon: Calendar, label: 'Emploi du temps', action: 'navigate', path: '/emploi-du-temps' },
     { icon: CreditCard, label: 'Mes paiements', action: 'navigate', path: '/paiements' },
-    { icon: Sparkles, label: 'Tuteur IA', action: 'navigate', path: '/eleve/tutor' },
   ],
   [ROLES.PARENT]: [
     { icon: Users, label: 'Voir mes enfants', action: 'navigate', path: '/parent/enfants' },
     { icon: DollarSign, label: 'Paiements', action: 'navigate', path: '/paiements' },
     { icon: BookOpen, label: 'Notes des enfants', action: 'navigate', path: '/notes' },
-    { icon: Sparkles, label: 'Rapport hebdomadaire', action: 'navigate', path: '/parent/ai-report' },
   ],
   [ROLES.COMPTABLE]: [
     { icon: DollarSign, label: 'Enregistrer un paiement', action: 'navigate', path: '/paiements' },
