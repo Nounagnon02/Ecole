@@ -118,3 +118,16 @@ it('refuse une note hors de 0 à 20', function () {
     saisir($c, [-1])->assertStatus(422);
     expect(Notes::count())->toBe(0);
 });
+
+it('donne à l’enseignant la liste de ses classes, une fois chacune', function () {
+    $c = classeNotee();
+    // Une seconde matière dans la même classe ne doit pas la faire apparaître deux fois.
+    DB::table('enseignant_matiere')->insert(['ecole_id' => $c['ecole']->id, 'enseignant_id' => $c['prof']->enseignant->id,
+        'matiere_id' => $c['svt']->id, 'classe_id' => $c['classe']->id, 'serie_id' => DB::table('series')->value('id')]);
+
+    $classes = $this->getJson('/api/enseignant/classes')->assertOk()->json('data');
+
+    expect($classes)->toHaveCount(1)
+        ->and($classes[0]['nom_classe'])->toBe('6ème')
+        ->and($classes[0]['eleves'])->toHaveCount(3);
+});
