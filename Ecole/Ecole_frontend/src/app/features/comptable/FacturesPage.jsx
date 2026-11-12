@@ -6,11 +6,14 @@
  */
 
 import { useState, useMemo } from 'react';
-import { useApiQuery } from '@/shared/lib/api-client';
+import apiClient, { useApiQuery } from '@/shared/lib/api-client';
+import FormDialog from '@/shared/components/ui/FormDialog';
+import useElevesOptions from '@/shared/lib/useElevesOptions';
+import { aujourdhuiIso, telechargerCsv, telechargerRecu } from '@/shared/lib/telecharger';
 import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
-  FileText, Plus, Download, Eye, Send, Printer,
+  FileText, Plus, Download, Printer,
   Search, AlertCircle, CheckCircle, Loader2
 } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/shared/lib/utils';
@@ -54,13 +57,30 @@ export default function FacturesPage() {
   // tout (cf. audit P4.1). `unwrapList` traverse les trois formes
   // d'enveloppe que renvoient les contrôleurs.
   const requete = useApiQuery(['comptable-paiements'], '/comptable/paiements');
+  const [nouvelle, setNouvelle] = useState(false);
+  const [retour, setRetour] = useState(null);
+  const eleves = useElevesOptions(nouvelle);
+  const requeteClasses = useApiQuery(['classes'], '/classes', { queryOptions: { enabled: nouvelle } });
+  const classes = useMemo(() => (unwrapList(requeteClasses.data) ?? []).map((c) => ({ value: c.id, label: c.nom_classe })), [requeteClasses.data]);
+  const e = (cle, v) => t(`pages.comptable.echeances.${cle}`, v);
+  const creerEcheances = async (v) => {
+    if (!v.classe_id && !v.eleve_id) throw { errors: { classe_id: [e('classe_ou_eleve')] } };
+    const { data } = await apiClient.post('/comptable/echeances', {
+      ...v, classe_id: v.classe_id ? Number(v.classe_id) : null, eleve_id: v.eleve_id ? Number(v.eleve_id) : null,
+    });
+    setRetour(e('crees', { crees: data?.crees ?? 0, deja: data?.deja_facturees ?? 0 }));
+    requete.refetch();
+  };
+  const recu = async (fac) => {
+    try { await telechargerRecu(fac.id, fac.reference); } catch (err) { setRetour(err?.message ?? t('common.load_error')); }
+  };
 
   const factures = useMemo(
     () => (unwrapList(requete.data) ?? []).map((p, i) => ({
           ...p,
           numero: p.reference || `FAC-${String(2025000 + (p.id || i)).slice(-6)}`,
-          client: p.eleve ? `${p.eleve.prenom || ''} ${p.eleve.nom || ''}`.trim() : 'N/A',
-          motif: p.type_paiement || t('pages.comptable.factures.frais'),
+          client: p.client || (p.eleve ? `${p.eleve.nom || ''} ${p.eleve.prenom || ''}`.trim() : '—'),
+          motif: p.type_paiement || p.motif || t('pages.comptable.factures.frais'),
           dateEmission: p.date_paiement || p.created_at,
           dateEcheance: p.date_paiement || p.created_at
         })),
@@ -70,9 +90,12 @@ export default function FacturesPage() {
   const error = requete.isError ? (requete.error?.message ?? t('common.load_error')) : null;
 
   const stats = useMemo(() => {
-    const total = factures.reduce((s, f) => s + Number(f.montant || 0), 0);
-    const payees = factures.filter((f) => f.statut === 'paye' || f.statut === 'payee').reduce((s, f) => s + Number(f.montant || 0), 0);
-    const impayees = factures.filter((f) => f.statut === 'impaye' || f.statut === 'echec').reduce((s, f) => s + Number(f.montant || 0), 0);
+    // Dû, encaissé et reste à percevoir. `montant` est la ligne versée, pas
+    // le dû ; et l'API envoie les statuts payee/partiel/en_attente — la page
+    // cherchait « impaye » et « echec », qui n'existent pas.
+    const total = factures.reduce((s, f) => s + Number(f.montant_total ?? f.montant ?? 0), 0);
+    const payees = factures.reduce((s, f) => s + Number(f.montant_paye ?? 0), 0);
+    const impayees = factures.reduce((s, f) => s + Number(f.montant_restant ?? 0), 0);
     return { total, payees, impayees, nombre: factures.length };
   }, [factures]);
 
@@ -116,6 +139,23 @@ export default function FacturesPage() {
         <p className="text-sm text-[var(--text-secondary)]">{t('pages.comptable.factures.subtitle')}</p>
       </div>
 
+      <FormDialog
+        open={nouvelle}
+        title={t('pages.comptable.factures.nouvelle_facture')}
+        submitLabel={e('creer')}
+        initial={{ date_paiement: aujourdhuiIso() }}
+        fields={[
+          { name: 'classe_id', label: e('classe'), type: 'select', options: classes, helperText: e('classe_aide') },
+          { name: 'eleve_id', label: e('eleve'), type: 'select', options: eleves, helperText: e('eleve_aide') },
+          { name: 'type_paiement', label: e('libelle'), required: true, placeholder: e('libelle_exemple') },
+          { name: 'montant_total', label: e('montant'), type: 'number', required: true, min: 1 },
+          { name: 'date_paiement', label: e('date'), type: 'date', required: true },
+        ]}
+        onSubmit={creerEcheances}
+        onClose={() => setNouvelle(false)}
+      />
+      {retour && <p role="status" className="text-sm text-[var(--text-primary)]">{retour}</p>}
+
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-4">
         <StatsCard title={t('pages.comptable.factures.total_facture')} value={formatCurrency(stats.total)} icon={FileText} color="primary" />
@@ -148,8 +188,11 @@ export default function FacturesPage() {
               <option value="en_attente">{t('common.status.pending')}</option>
               <option value="echec">{t('pages.comptable.factures.impayee')}</option>
             </select>
-            <Button variant="outline" size="sm" icon={<Download />}>{t('common.export')}</Button>
-            <Button size="sm" icon={<Plus />}>{t('pages.comptable.factures.nouvelle_facture')}</Button>
+            <Button variant="outline" size="sm" icon={<Download />} disabled={filtered.length === 0} onClick={() => telechargerCsv(`echeances-${aujourdhuiIso()}.csv`, [
+              ['Référence', 'Élève', 'Classe', 'Libellé', 'Dû', 'Payé', 'Reste', 'Échéance', 'Statut'],
+              ...filtered.map((f) => [f.reference, f.client, f.classe ?? '', f.motif, f.montant_total ?? '', f.montant_paye ?? '', f.montant_restant ?? '', f.date_paiement ?? '', f.statut_label ?? f.statut]),
+            ])}>{t('common.export')}</Button>
+            <Button size="sm" icon={<Plus />} onClick={() => setNouvelle(true)}>{t('pages.comptable.factures.nouvelle_facture')}</Button>
           </div>
         </div>
       </Card>
@@ -189,7 +232,7 @@ export default function FacturesPage() {
                     <span className="text-sm text-[var(--text-secondary)] ">{fac.motif}</span>
                   </td>
                   <td className="py-3 pr-4">
-                    <span className="text-sm font-semibold text-[var(--text-primary)] ">{formatCurrency(fac.montant)}</span>
+                    <span className="text-sm font-semibold text-[var(--text-primary)] ">{formatCurrency(fac.montant_total ?? fac.montant)}</span>
                   </td>
                   <td className="py-3 pr-4">
                     <span className="text-sm text-[var(--text-secondary)] ">
@@ -203,9 +246,7 @@ export default function FacturesPage() {
                   </td>
                   <td className="py-3 text-right">
                     <div className="flex justify-end gap-1">
-                      <Button variant="ghost" size="sm" icon={<Eye />} title={t('common.view')} />
-                      <Button variant="ghost" size="sm" icon={<Send />} title={t('pages.comptable.factures.envoyer')} />
-                      <Button variant="ghost" size="sm" icon={<Printer />} title={t('pages.comptable.factures.imprimer')} />
+                      <Button variant="ghost" size="sm" icon={<Printer />} title={e('recu')} aria-label={`${e('recu')} ${fac.reference}`} onClick={() => recu(fac)} />
                     </div>
                   </td>
                 </tr>

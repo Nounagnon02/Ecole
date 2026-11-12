@@ -1104,6 +1104,20 @@
         "paiement": "Payment",
         "partielle": "Partial",
         "rembourse": "Refunded"
+      },
+      "echeances": {
+        "creer": "Create the instalment",
+        "classe": "For a whole class",
+        "classe_aide": "Every enrolled pupil gets the instalment.",
+        "eleve": "Or for one pupil",
+        "eleve_aide": "Leave the class empty.",
+        "classe_ou_eleve": "Choose a class or a pupil.",
+        "libelle": "Label",
+        "libelle_exemple": "Tuition 1st instalment",
+        "montant": "Amount due (FCFA)",
+        "date": "Due date",
+        "crees": "{crees} instalment(s) created; {deja} pupil(s) already had it.",
+        "recu": "Receipt"
       }
     },
     "eleve": {

@@ -7,6 +7,7 @@
 
 import { useState, useMemo } from 'react';
 import { useApiQuery } from '@/shared/lib/api-client';
+import { aujourdhuiIso, telechargerCsv, telechargerRecu } from '@/shared/lib/telecharger';
 import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
@@ -60,7 +61,7 @@ export default function TransactionsPage() {
   const error = requete.isError ? (requete.error?.message ?? t('common.load_error')) : null;
 
   const stats = useMemo(() => {
-    const recettes = transactions.filter((t) => t.statut === 'paye' || t.statut === 'payee');
+    const recettes = transactions.filter((t) => t.statut === 'payee' || t.statut === 'partiel');
     const totalRecettes = recettes.reduce((s, t) => s + Number(t.montant || 0), 0);
     return {
       totalRecettes,
@@ -162,7 +163,10 @@ export default function TransactionsPage() {
               <option value="en_attente">{t('common.status.pending')}</option>
               <option value="echec">{t('pages.comptable.transactions.echec')}</option>
             </select>
-            <Button variant="outline" size="sm" icon={<Download />}>{t('common.export')}</Button>
+            <Button variant="outline" size="sm" icon={<Download />} disabled={filtered.length === 0} onClick={() => telechargerCsv(`transactions-${aujourdhuiIso()}.csv`, [
+              ['Référence', 'Élève', 'Libellé', 'Montant', 'Mode', 'Date', 'Statut'],
+              ...filtered.map((x) => [x.reference, x.client, x.motif, x.montant_paye ?? x.montant, x.mode_paiement, x.date_paiement, x.statut_label ?? x.statut]),
+            ])}>{t('common.export')}</Button>
           </div>
         </div>
       </Card>
@@ -230,7 +234,7 @@ export default function TransactionsPage() {
                     <Badge variant={getStatutColor(trx.statut)} size="sm">{statutLabel(trx.statut)}</Badge>
                   </td>
                   <td className="py-3 text-right">
-                    <Button variant="ghost" size="sm" icon={<Eye />} />
+                    <Button variant="ghost" size="sm" icon={<Eye />} aria-label={`${t('pages.comptable.echeances.recu')} ${trx.reference}`} title={t('pages.comptable.echeances.recu')} onClick={() => telechargerRecu(trx.id, trx.reference).catch(() => {})} />
                   </td>
                 </tr>
               ))}
