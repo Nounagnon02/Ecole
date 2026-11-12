@@ -13,6 +13,7 @@ import apiClient from '@/shared/lib/api-client';
 import { cacheClear } from '@/shared/lib/db';
 import { clearDashboardCache } from '@/shared/lib/query-client';
 import { normalizeRole } from '@/shared/types/roles';
+import { memoriserAide } from '@/shared/lib/aideEcole';
 
 export const SESSION_CHECK_INTERVAL = 5 * 60 * 1000; // 5 min entre vérifications
 
@@ -316,5 +317,11 @@ const useAuthStore = create(
     { name: 'auth-store' }
   )
 );
+
+// Chaque profil reçu (connexion, /auth/me) met à jour le numéro d'aide que
+// la page de connexion affichera la prochaine fois sur cet appareil.
+useAuthStore.subscribe((state, prev) => {
+  if (state.user?.ecole && state.user.ecole !== prev.user?.ecole) memoriserAide(state.user.ecole);
+});
 
 export default useAuthStore;

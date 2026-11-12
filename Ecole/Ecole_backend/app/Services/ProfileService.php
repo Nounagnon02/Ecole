@@ -40,6 +40,13 @@ class ProfileService
         // changement, y compris après un rechargement de page.
         $payload['password_change_required'] = (bool) $user->password_change_required;
 
+        // Nom et téléphone de l'école : en-têtes (site, bulletins, certificats)
+        // et numéro d'aide que la page de connexion garde sur l'appareil.
+        $ecole = $user->ecole_id ? $user->ecole()->first(['id', 'nom', 'phone']) : null;
+        $payload['ecole'] = $ecole
+            ? ['id' => $ecole->id, 'nom' => $ecole->nom, 'telephone' => $ecole->phone]
+            : null;
+
         if ($this->isTeacher($user)) {
             $enseignant = $user->enseignant;
             $payload['profil'] = $enseignant
