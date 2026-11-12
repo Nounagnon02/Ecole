@@ -16,7 +16,7 @@ class EmploiDuTempsController extends Controller
 
     public function index(Request $request)
     {
-        $query = EmploiDuTemps::with(['classe', 'matiere', 'enseignant']);
+        $query = EmploiDuTemps::with(['classe:id,nom_classe', 'matiere:id,nom', 'enseignant.user:id,name,prenom']);
 
         if ($request->has('classe_id')) {
             $query->where('classe_id', $request->classe_id);
@@ -26,9 +26,13 @@ class EmploiDuTempsController extends Controller
             $query->where('enseignant_id', $request->enseignant_id);
         }
 
-        $emplois = $query->orderBy('jour')->orderBy('heure_debut')->paginate(50);
+        // L'emploi du temps d'une classe ou d'un enseignant tient en une page :
+        // le paginer à 50 en coupait la fin sans le dire. Sans filtre, toute
+        // l'école, par pages de 200.
+        $query->orderBy('heure_debut');
+        $filtre = $request->filled('classe_id') || $request->filled('enseignant_id');
 
-        return response()->json($emplois);
+        return response()->json($filtre ? ['data' => $query->get()] : $query->paginate(200));
     }
 
     public function store(Request $request)
