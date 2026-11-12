@@ -167,7 +167,7 @@
       "pense_pour_l_excellence": "designed for excellence.",
       "connectez_vous_a_votre_espace": "Log in to your account",
       "accedez_a_votre_tableau_de_bord": "Access your dashboard",
-      "email_ou_identifiant": "Email or username",
+      "email_ou_identifiant": "Phone, email or identifier",
       "vous_exemple_com_ou_eleve_2024_001": "you@example.com or ELEVE-2024-001",
       "se_connecter": "Log in",
       "besoin_d_aide_contactez_votre_administrateur": "Need help? Contact your administrator",
@@ -209,6 +209,22 @@
       "saisir": "Recovery code",
       "utiliser": "I don’t have my phone: use a recovery code",
       "revenir_application": "Use the app code"
+    },
+    "reset_sms": {
+      "titre": "Forgot password",
+      "telephone": "Account phone number",
+      "recevoir": "Get a code by SMS",
+      "envoye": "Code sent.",
+      "code": "Code received by SMS",
+      "nouveau": "New password",
+      "confirmation": "Confirm the password",
+      "valider": "Change the password",
+      "renvoyer": "Nothing received: send a new code",
+      "retour": "Back to sign-in",
+      "trop_court": "At least 8 characters.",
+      "differents": "The two passwords do not match.",
+      "echec": "The request failed.",
+      "lien": "No email address? Get a code by SMS"
     }
   },
   "eleve": {

@@ -167,7 +167,7 @@
       "pense_pour_l_excellence": "مصمَّم من أجل التميّز.",
       "connectez_vous_a_votre_espace": "سجّل الدخول إلى فضائك",
       "accedez_a_votre_tableau_de_bord": "ادخل إلى لوحة القيادة الخاصة بك",
-      "email_ou_identifiant": "البريد الإلكتروني أو المعرّف",
+      "email_ou_identifiant": "الهاتف أو البريد أو المعرّف",
       "vous_exemple_com_ou_eleve_2024_001": "you@example.com أو ELEVE-2024-001",
       "se_connecter": "تسجيل الدخول",
       "besoin_d_aide_contactez_votre_administrateur": "هل تحتاج إلى مساعدة؟ تواصل مع المسؤول",
@@ -209,6 +209,22 @@
       "saisir": "رمز الاسترداد",
       "utiliser": "لا أملك هاتفي: استخدام رمز استرداد",
       "revenir_application": "استخدام رمز التطبيق"
+    },
+    "reset_sms": {
+      "titre": "نسيت كلمة المرور",
+      "telephone": "رقم هاتف الحساب",
+      "recevoir": "تلقي رمز عبر SMS",
+      "envoye": "تم إرسال الرمز.",
+      "code": "الرمز المستلم عبر SMS",
+      "nouveau": "كلمة المرور الجديدة",
+      "confirmation": "أكّد كلمة المرور",
+      "valider": "تغيير كلمة المرور",
+      "renvoyer": "لم يصلني شيء: إعادة إرسال رمز",
+      "retour": "العودة إلى تسجيل الدخول",
+      "trop_court": "8 أحرف على الأقل.",
+      "differents": "كلمتا المرور غير متطابقتين.",
+      "echec": "فشل الطلب.",
+      "lien": "لا بريد إلكتروني؟ تلقَّ رمزاً عبر SMS"
     }
   },
   "eleve": {

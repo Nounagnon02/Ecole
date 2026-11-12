@@ -247,6 +247,9 @@ export default function ForgotPassword() {
               </div>
 
               <div className="border-t border-[var(--border-light)] px-10 py-5">
+                <p className="text-center text-sm">
+                  <Link to="/mot-de-passe-oublie/sms" className="inline-flex min-h-11 items-center font-medium text-[var(--accent)]">{t('auth.reset_sms.lien')}</Link>
+                </p>
                 <p className="text-center text-xs text-[var(--text-tertiary)]">
                   {t('pages.auth.forgot_password.have_account')}{' '}
                   <Link
