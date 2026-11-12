@@ -993,6 +993,38 @@
         "aucun_incident_trouve": "لم يتم العثور على أي حادثة",
         "legere": "خفيفة",
         "moyenne": "متوسطة"
+      },
+      "vie_scolaire": {
+        "nouvel_incident": "التصريح بحادثة",
+        "description": "الوصف",
+        "description_requise": "صف الحادثة.",
+        "date": "التاريخ",
+        "gravite": "الخطورة",
+        "gravites": {
+          "faible": "خفيفة",
+          "moyenne": "متوسطة",
+          "grave": "خطيرة"
+        },
+        "enregistrer": "حفظ",
+        "marquer_resolu": "وضع علامة محلولة",
+        "rouvrir": "إعادة فتح",
+        "sanctions": "العقوبات",
+        "nouvelle_sanction": "إصدار عقوبة",
+        "aucune_sanction": "لا توجد عقوبات.",
+        "eleve": "التلميذ",
+        "choisir_eleve": "اختر تلميذاً",
+        "eleve_requis": "اختر التلميذ.",
+        "type": "العقوبة",
+        "duree": "المدة (أيام)",
+        "duree_aide": "للإقصاء أو الحجز.",
+        "motif": "السبب",
+        "motif_requis": "أدخل السبب.",
+        "lever": "رفع",
+        "statuts_sanction": {
+          "active": "سارية",
+          "levee": "مرفوعة",
+          "terminee": "منتهية"
+        }
       }
     },
     "communications": {

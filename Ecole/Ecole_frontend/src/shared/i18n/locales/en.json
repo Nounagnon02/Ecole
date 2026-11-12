@@ -993,6 +993,38 @@
         "aucun_incident_trouve": "No incident found",
         "legere": "Minor",
         "moyenne": "Medium"
+      },
+      "vie_scolaire": {
+        "nouvel_incident": "Report an incident",
+        "description": "Description",
+        "description_requise": "Describe the incident.",
+        "date": "Date",
+        "gravite": "Severity",
+        "gravites": {
+          "faible": "Low",
+          "moyenne": "Medium",
+          "grave": "Serious"
+        },
+        "enregistrer": "Save",
+        "marquer_resolu": "Mark resolved",
+        "rouvrir": "Reopen",
+        "sanctions": "Sanctions",
+        "nouvelle_sanction": "Issue a sanction",
+        "aucune_sanction": "No sanction.",
+        "eleve": "Pupil",
+        "choisir_eleve": "Choose a pupil",
+        "eleve_requis": "Choose the pupil.",
+        "type": "Sanction",
+        "duree": "Duration (days)",
+        "duree_aide": "For an exclusion or a detention.",
+        "motif": "Reason",
+        "motif_requis": "Enter the reason.",
+        "lever": "Lift",
+        "statuts_sanction": {
+          "active": "Ongoing",
+          "levee": "Lifted",
+          "terminee": "Ended"
+        }
       }
     },
     "communications": {

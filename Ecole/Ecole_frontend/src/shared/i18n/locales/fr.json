@@ -993,6 +993,38 @@
         "aucun_incident_trouve": "Aucun incident trouvé",
         "legere": "Légère",
         "moyenne": "Moyenne"
+      },
+      "vie_scolaire": {
+        "nouvel_incident": "Déclarer un incident",
+        "description": "Description",
+        "description_requise": "Décrivez l’incident.",
+        "date": "Date",
+        "gravite": "Gravité",
+        "gravites": {
+          "faible": "Faible",
+          "moyenne": "Moyenne",
+          "grave": "Grave"
+        },
+        "enregistrer": "Enregistrer",
+        "marquer_resolu": "Marquer résolu",
+        "rouvrir": "Rouvrir",
+        "sanctions": "Sanctions",
+        "nouvelle_sanction": "Prononcer une sanction",
+        "aucune_sanction": "Aucune sanction.",
+        "eleve": "Élève",
+        "choisir_eleve": "Choisir un élève",
+        "eleve_requis": "Choisissez l’élève.",
+        "type": "Sanction",
+        "duree": "Durée (jours)",
+        "duree_aide": "Pour une exclusion ou une retenue.",
+        "motif": "Motif",
+        "motif_requis": "Indiquez le motif.",
+        "lever": "Lever",
+        "statuts_sanction": {
+          "active": "En cours",
+          "levee": "Levée",
+          "terminee": "Terminée"
+        }
       }
     },
     "communications": {

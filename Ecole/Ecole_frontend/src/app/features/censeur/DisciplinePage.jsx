@@ -6,7 +6,8 @@
  */
 
 import { useState, useMemo } from 'react';
-import { useApiQuery } from '@/shared/lib/api-client';
+import apiClient, { useApiQuery } from '@/shared/lib/api-client';
+import { IncidentDialog, SanctionsSection } from './DisciplineDialogs';
 import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
@@ -63,6 +64,13 @@ export default function DisciplinePage() {
   // l'autre, et chacune a son entrée de cache (cf. audit P4.1).
   const requeteIncidents = useApiQuery(['surveillant-incidents'], '/surveillant/incidents');
   const requeteStats = useApiQuery(['surveillant-statistiques'], '/surveillant/statistiques');
+  const [nouvelIncident, setNouvelIncident] = useState(false);
+  const changerStatut = async (incident) => {
+    const resolu = ['traitee', 'termine', 'résolu', 'resolu'].includes(incident.statut);
+    await apiClient.patch(`/surveillant/incidents/${incident.id}`, { statut: resolu ? 'en_cours' : 'resolu' });
+    requeteIncidents.refetch();
+    requeteStats.refetch();
+  };
 
   // La projection d'origine est conservée : la page affiche `type`, que le
   // serveur ne renvoie pas toujours — il faut retomber sur la description.
@@ -88,7 +96,7 @@ export default function DisciplinePage() {
   const incidentStats = useMemo(() => ({
     total: incidents.length,
     enCours: incidents.filter((i) => i.statut === 'en_cours' || i.statut === 'signalé').length,
-    traitees: incidents.filter((i) => i.statut === 'termine' || i.statut === 'résolu' || i.statut === 'traitee').length,
+    traitees: incidents.filter((i) => ['termine', 'résolu', 'resolu', 'traitee'].includes(i.statut)).length,
     graves: incidents.filter((i) => i.gravite === 'grave').length
   }), [incidents]);
 
@@ -98,8 +106,8 @@ export default function DisciplinePage() {
       if (search && !(i.type || '').toLowerCase().includes(q)) return false;
       if (filterGravite && i.gravite !== filterGravite) return false;
       if (filterStatut) {
-        if (filterStatut === 'en_cours' && (i.statut === 'termine' || i.statut === 'traitee' || i.statut === 'résolu')) return false;
-        if (filterStatut === 'traitee' && i.statut !== 'termine' && i.statut !== 'traitee' && i.statut !== 'résolu') return false;
+        if (filterStatut === 'en_cours' && ['termine', 'traitee', 'résolu', 'resolu'].includes(i.statut)) return false;
+        if (filterStatut === 'traitee' && !['termine', 'traitee', 'résolu', 'resolu'].includes(i.statut)) return false;
       }
       return true;
     }),
@@ -276,10 +284,12 @@ export default function DisciplinePage() {
               <option value="en_cours">{t('common.status.in_progress')}</option>
               <option value="traitee">{t('pages.censeur.discipline.traitee')}</option>
             </select>
-            <Button size="sm" icon={<Plus />}>{t('pages.censeur.discipline.nouvel_incident')}</Button>
+            <Button size="sm" icon={<Plus />} onClick={() => setNouvelIncident(true)}>{t('pages.censeur.discipline.nouvel_incident')}</Button>
           </div>
         </div>
       </Card>
+
+      <IncidentDialog open={nouvelIncident} onClose={() => setNouvelIncident(false)} onDone={() => { requeteIncidents.refetch(); requeteStats.refetch(); }} />
 
       {/* Liste des incidents */}
       <div className="space-y-3">
@@ -311,8 +321,8 @@ export default function DisciplinePage() {
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-sm font-semibold text-[var(--text-primary)] ">{incident.type}</span>
                   <Badge variant={getGraviteVariant(incident.gravite)} size="sm">{getGraviteLabel(incident.gravite)}</Badge>
-                  <Badge variant={incident.statut === 'traitee' || incident.statut === 'termine' || incident.statut === 'résolu' ? 'primary' : 'warning'} size="sm">
-                    {incident.statut === 'traitee' || incident.statut === 'termine' || incident.statut === 'résolu' ? t('pages.censeur.discipline.traitee') : t('common.status.in_progress')}
+                  <Badge variant={['traitee', 'termine', 'résolu', 'resolu'].includes(incident.statut) ? 'primary' : 'warning'} size="sm">
+                    {['traitee', 'termine', 'résolu', 'resolu'].includes(incident.statut) ? t('pages.censeur.discipline.traitee') : t('common.status.in_progress')}
                   </Badge>
                 </div>
                 <div className="mt-2 flex flex-wrap items-center gap-4 text-xs text-[var(--text-secondary)]">
@@ -322,11 +332,15 @@ export default function DisciplinePage() {
                   </span>
                 </div>
               </div>
-              <Button variant="ghost" size="sm">{t('common.details')}</Button>
+              <Button variant="outline" size="sm" onClick={() => changerStatut(incident)}>
+                {['traitee', 'termine', 'résolu', 'resolu'].includes(incident.statut) ? t('pages.censeur.vie_scolaire.rouvrir') : t('pages.censeur.vie_scolaire.marquer_resolu')}
+              </Button>
             </div>
           </Card>
         ))}
       </div>
+
+      <SanctionsSection />
     </motion.div>
   );
 }
