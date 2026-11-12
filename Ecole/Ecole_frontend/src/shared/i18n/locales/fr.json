@@ -951,6 +951,21 @@
         "aucun_emprunt_trouve": "Aucun emprunt trouvé",
         "marquer_retour": "Marquer retour",
         "ouvrage": "Ouvrage"
+      },
+      "pret": {
+        "titre": "Prêter un livre",
+        "preter": "Prêter",
+        "livre": "Livre",
+        "eleve": "Élève",
+        "date_emprunt": "Date du prêt",
+        "date_retour": "Retour prévu le"
+      },
+      "ouvrage": {
+        "titre": "Titre",
+        "auteur": "Auteur",
+        "categorie": "Catégorie",
+        "annee": "Année de publication",
+        "exemplaires": "Nombre d’exemplaires"
       }
     },
     "censeur": {

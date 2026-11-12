@@ -951,6 +951,21 @@
         "aucun_emprunt_trouve": "لم يتم العثور على أي استعارة",
         "marquer_retour": "تسجيل الإرجاع",
         "ouvrage": "الكتاب"
+      },
+      "pret": {
+        "titre": "إعارة كتاب",
+        "preter": "إعارة",
+        "livre": "الكتاب",
+        "eleve": "التلميذ",
+        "date_emprunt": "تاريخ الإعارة",
+        "date_retour": "تاريخ الإرجاع المتوقع"
+      },
+      "ouvrage": {
+        "titre": "العنوان",
+        "auteur": "المؤلف",
+        "categorie": "الفئة",
+        "annee": "سنة النشر",
+        "exemplaires": "عدد النسخ"
       }
     },
     "censeur": {
