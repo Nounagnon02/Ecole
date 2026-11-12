@@ -8,6 +8,7 @@ import { Button, Input } from '@/shared/components/ui';
 import Brand from '@/shared/components/ui/Brand';
 import { useTranslation } from '@/shared/i18n';
 import LanguageSwitcher from '@/shared/components/layout/LanguageSwitcher';
+import { lireAide, lienTelephone } from '@/shared/lib/aideEcole';
 
 export default function LoginForm() {
   const { t } = useTranslation();
@@ -28,6 +29,8 @@ export default function LoginForm() {
   const [twoFactorCode, setTwoFactorCode] = useState('');
   // Code de l'application (6 chiffres) ou code de secours (XXXX-XXXX).
   const [secours, setSecours] = useState(false);
+  // Numéro de la dernière école connectée sur cet appareil (lu une fois).
+  const [aide] = useState(lireAide);
   const codeValide = secours ? twoFactorCode.replace(/[^A-Za-z0-9]/g, '').length === 8 : twoFactorCode.length === 6;
   const [twoFactorLoading, setTwoFactorLoading] = useState(false);
 
@@ -210,7 +213,14 @@ export default function LoginForm() {
             </form>
           </>}
         </section>
-        <p className="ecole-auth-note">{t('auth.login_form.besoin_d_aide_contactez_votre_administrateur')}</p>
+        {aide ? (
+          <p className="ecole-auth-note">
+            {t('auth.login_form.besoin_d_aide_appelez')} {aide.nom ? `${aide.nom} : ` : ''}
+            <a href={lienTelephone(aide.telephone)} className="font-semibold text-[var(--accent)] underline" dir="ltr">{aide.telephone}</a>
+          </p>
+        ) : (
+          <p className="ecole-auth-note">{t('auth.login_form.besoin_d_aide_contactez_votre_administrateur')}</p>
+        )}
       </main>
     </div>
   );

@@ -125,6 +125,7 @@ Pages de travail ajoutées ou rebranchées sur l'API au fil du plan de correctio
 - Double authentification : huit **codes de secours** remis à l'activation ; le super-administrateur peut la réinitialiser.
 - Déconnexion après inactivité : 15 min pour la direction, la comptabilité et l'administration, 60 min sinon (`shared/lib/useInactivite.js`).
 - Connexion par numéro de téléphone (toutes écritures béninoises) ; mot de passe oublié par SMS (`/mot-de-passe-oublie/sms`).
+- Aide sur la page de connexion : le téléphone de la dernière école connectée sur l'appareil (`shared/lib/aideEcole.js`), sinon `VITE_AIDE_TELEPHONE` et `VITE_AIDE_NOM` fixés au déploiement, sinon « Contactez votre administrateur ». Le numéro vient de la fiche de l'école (`ecoles.phone`).
 
 ### Écritures hors-ligne
 

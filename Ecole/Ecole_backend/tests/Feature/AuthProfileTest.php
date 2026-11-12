@@ -175,3 +175,21 @@ it('validates experience rows', function () {
     $response->assertStatus(422)
         ->assertJsonValidationErrors(['experiences.0.poste', 'experiences.0.date_debut']);
 });
+
+it('gives the school name and phone so the login page can show who to call', function () {
+    $ecole = Ecole::factory()->create(['nom' => 'CEG Les Palmiers', 'phone' => '+229 01 97 00 00 00']);
+    $user = User::factory()->create(['ecole_id' => $ecole->id]);
+
+    $this->actingAs($user)->getJson('/api/auth/me')
+        ->assertOk()
+        ->assertJsonPath('user.ecole.nom', 'CEG Les Palmiers')
+        ->assertJsonPath('user.ecole.telephone', '+229 01 97 00 00 00');
+});
+
+it('gives no school to an account without one', function () {
+    $user = User::factory()->create(['role' => 'super-admin', 'ecole_id' => null]);
+
+    $this->actingAs($user)->getJson('/api/auth/me')
+        ->assertOk()
+        ->assertJsonPath('user.ecole', null);
+});
