@@ -15,7 +15,7 @@ return new class extends Migration
     {
         Schema::create('relances_direction', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('ecole_id')->constrained('ecoles')->cascadeOnDelete();
+            $table->foreignId('ecole_id')->constrained('ecoles');
             $table->string('type', 20);
             $table->unsignedBigInteger('cible_id');
             $table->date('jour');
