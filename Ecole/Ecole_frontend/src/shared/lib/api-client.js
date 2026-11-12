@@ -8,7 +8,39 @@
 import axios from 'axios';
 import { useQuery as useReactQuery, useMutation as useReactMutation, useQueryClient } from '@tanstack/react-query';
 import useAuthStore from '@/shared/stores/auth-store';
-import { queueMutation, cacheGet, cacheSet } from './db';
+import { queueMutation, cacheGetDerniere, cacheSet } from './db';
+import useHorsLigneStore from '@/shared/stores/hors-ligne-store';
+
+/**
+ * Clé de cache d'une lecture : l'adresse ET ses paramètres. Sans eux, les
+ * notes de la 6e A, gardées sous `/notes`, étaient rendues hors connexion
+ * pour la 6e B.
+ */
+function cleCache(config) {
+  const params = Object.entries(config.params ?? {})
+    .filter(([, v]) => v !== undefined && v !== null && v !== '')
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(typeof v === 'object' ? JSON.stringify(v) : v)}`)
+    .join('&');
+  return params ? `${config.url}?${params}` : config.url;
+}
+
+/**
+ * Dernière réponse connue d'une lecture, même ancienne ; sa date est signalée
+ * au bandeau réseau. Null si rien n'est gardé ou si le stockage manque.
+ */
+async function lectureHorsLigne(config) {
+  const entree = await cacheGetDerniere(cleCache(config)).catch(() => null);
+  if (!entree) return null;
+  useHorsLigneStore.getState().signaler(entree.updatedAt);
+  return {
+    data: entree.value,
+    status: 200,
+    statusText: 'OK (cached)',
+    headers: { 'x-cached': 'true', 'x-cached-at': entree.updatedAt },
+    config,
+  };
+}
 
 /* ─── Axios instance ────────────────────────────────────────────────────── */
 const apiClient = axios.create({
@@ -35,25 +67,11 @@ apiClient.interceptors.request.use(async (config) => {
 
   // GET requests: serve from cache when offline
   if (config.method === 'get' && !navigator.onLine) {
-    const cached = await cacheGet(config.url);
-    if (cached !== null) {
-      // Return cached data as a pseudo-response
+    const reponse = await lectureHorsLigne(config);
+    if (reponse) {
+      // Pseudo-réponse : l'adaptateur rend la dernière réponse connue.
       config._fromCache = true;
-      return {
-        ...config,
-        data: cached,
-        status: 200,
-        statusText: 'OK (cached)',
-        headers: { 'x-cached': 'true' },
-        adapter: () =>
-          Promise.resolve({
-            data: cached,
-            status: 200,
-            statusText: 'OK (cached)',
-            headers: { 'x-cached': 'true' },
-            config
-          })
-      };
+      return { ...config, adapter: () => Promise.resolve({ ...reponse, config }) };
     }
   }
 
@@ -102,7 +120,7 @@ apiClient.interceptors.response.use(
         const ttl = response.headers['x-cache-ttl']
           ? parseInt(response.headers['x-cache-ttl']) * 1000
           : 5 * 60 * 1000;
-        await cacheSet(response.config.url, response.data, ttl).catch(() => {});
+        await cacheSet(cleCache(response.config), response.data, ttl).catch(() => {});
       }
     }
     return response;
@@ -149,18 +167,14 @@ apiClient.interceptors.response.use(
       }
     }
 
-    // Network error + GET → try cache fallback
-    if (!error.response && originalRequest.method === 'get' && navigator.onLine === false) {
-      const cached = await cacheGet(originalRequest.url).catch(() => null);
-      if (cached !== null) {
-        return Promise.resolve({
-          data: cached,
-          status: 200,
-          statusText: 'OK (cached fallback)',
-          headers: { 'x-cached': 'true' },
-          config: originalRequest
-        });
-      }
+    // Lecture sans réseau → dernière réponse connue. Deux cas : le navigateur
+    // se sait hors ligne, ou il se croit en ligne mais le service worker n'a
+    // rien pu joindre (réponse 503 marquée `offline`). Une vraie panne
+    // serveur (503 sans cette marque) reste une erreur affichée.
+    const sansReseau = (!error.response && navigator.onLine === false) || error.response?.data?.offline === true;
+    if (sansReseau && originalRequest.method === 'get') {
+      const reponse = await lectureHorsLigne(originalRequest);
+      if (reponse) return reponse;
     }
 
     // Mapping d'erreurs API vers un format standard.

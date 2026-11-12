@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import useInactivite from '@/shared/lib/useInactivite';
-import { WifiOff } from 'lucide-react';
 import Header from './Header';
+import BandeauReseau from './BandeauReseau';
 import Breadcrumb from '@/shared/components/ui/Breadcrumb';
 import { LoadingSpinner } from '@/shared/components/ui/Skeleton';
 import useUIStore from '@/shared/stores/ui-store';
@@ -34,7 +34,7 @@ export default function AppShell({ children }) {
     <div className="min-h-screen bg-[var(--surface)] text-[var(--text-primary)]">
       <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:start-2 focus:z-[9999] focus:rounded-md focus:bg-[var(--action)] focus:px-4 focus:py-3 focus:text-white">{t('app_shell.aller_au_contenu_principal')}</a>
       <Header />
-      {!online && <div role="status" className="ecole-network"><WifiOff size={18} aria-hidden="true" /><span>{t('c.offline')}</span></div>}
+      <BandeauReseau enLigne={online} />
       <main id="main-content" tabIndex={-1} className="ecole-main">
         <Breadcrumb />
         {globalLoading ? <LoadingSpinner /> : children || <Outlet />}

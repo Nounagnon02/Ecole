@@ -2311,6 +2311,7 @@
     "no_notifications": "No new notifications.",
     "account": "My account",
     "more": "More",
+    "donnees_du": "Last known data: {date}.",
     "offline": "Offline. Displayed information may be out of date. Check the save status before leaving a form.",
     "auth_eyebrow": "One school, a shared connection",
     "auth_title": "School life, all in one place.",

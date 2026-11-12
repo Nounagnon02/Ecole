@@ -10,7 +10,7 @@ import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import axios from 'axios';
 import apiClient from '@/shared/lib/api-client';
-import { cacheClear } from '@/shared/lib/db';
+import { cacheClear, viderCachesApi } from '@/shared/lib/db';
 import { clearDashboardCache } from '@/shared/lib/query-client';
 import { normalizeRole } from '@/shared/types/roles';
 import { memoriserAide } from '@/shared/lib/aideEcole';
@@ -209,6 +209,7 @@ const useAuthStore = create(
         // dossiers médicaux. Il survivait à la déconnexion et restait lisible
         // par l'utilisateur suivant sur un poste partagé (cf. audit S17).
         await cacheClear().catch(() => {});
+        await viderCachesApi().catch(() => {});
 
         // Même problème pour le cache serveur de react-query, qui porte les
         // réponses des tableaux de bord : sans purge, l'utilisateur suivant
@@ -224,6 +225,7 @@ const useAuthStore = create(
        */
       clearSession: () => {
         cacheClear().catch(() => {});
+        viderCachesApi().catch(() => {});
         clearDashboardCache();
         set({ ...initialState, isLoading: false });
       },

@@ -26,6 +26,9 @@ export const queryClient = new QueryClient({
       gcTime: 10 * 60 * 1000,
       retry: 2,
       refetchOnWindowFocus: false,
+      // Hors ligne, la lecture part quand même : le client HTTP rend alors la
+      // dernière réponse connue, datée, au lieu d'une page en attente sans fin.
+      networkMode: 'offlineFirst',
     },
     mutations: {
       retry: 1,

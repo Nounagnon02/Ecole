@@ -115,6 +115,50 @@ export async function cacheGet(key) {
 }
 
 /**
+ * Durée pendant laquelle une réponse reste montrable hors connexion.
+ *
+ * Le TTL (`expiresAt`) dit si une réponse est fraîche ; hors connexion, on
+ * ne peut pas faire mieux que la dernière connue, et l'écran dit de quand
+ * elle date. Au-delà de 30 jours, elle ne rend plus service.
+ */
+export const CONSERVATION_HORS_LIGNE_MS = 30 * 24 * 60 * 60 * 1000;
+
+/** Une entrée du cache peut-elle encore être montrée hors connexion ? */
+export function estConservable(entry, maintenant = Date.now()) {
+  const date = Date.parse(entry?.updatedAt ?? '');
+  return Number.isFinite(date) && maintenant - date <= CONSERVATION_HORS_LIGNE_MS;
+}
+
+/**
+ * Dernière réponse connue pour une clé, même expirée, avec sa date :
+ * `{ value, updatedAt }`, ou null. Rien n'est supprimé à la lecture.
+ * @param {string} key
+ */
+export async function cacheGetDerniere(key) {
+  const db = await openDB();
+  const request = db.transaction('cache', 'readonly').objectStore('cache').get(key);
+
+  return new Promise((resolve, reject) => {
+    request.onsuccess = () => {
+      const entry = request.result;
+      resolve(entry && estConservable(entry) ? { value: entry.value, updatedAt: entry.updatedAt } : null);
+    };
+    request.onerror = () => reject(request.error);
+  });
+}
+
+/**
+ * Supprime les caches d'API du service worker (`ecole-api-*`) laissés par
+ * une version qui y gardait des réponses : notes, dossiers médicaux…
+ * Appelée à la déconnexion, avec la purge d'IndexedDB.
+ */
+export async function viderCachesApi() {
+  if (typeof caches === 'undefined') return;
+  const noms = await caches.keys();
+  await Promise.all(noms.filter((nom) => nom.startsWith('ecole-api')).map((nom) => caches.delete(nom)));
+}
+
+/**
  * Remove expired entries from cache.
  */
 export async function cacheCleanup() {
