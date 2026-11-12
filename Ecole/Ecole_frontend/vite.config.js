@@ -75,7 +75,25 @@ export default defineConfig({
     // rediscuter — avec, cette fois, une vérification sur le bundle *construit*
     // (voir `src/__tests__/production-bundle.test.js`).
     rollupOptions: {
-      output: {},
+      output: {
+        // Fusionne les morceaux de moins de 10 Ko (une icône, un utilitaire)
+        // dans ceux qui les utilisent. Sans cela, une page demandait des
+        // dizaines de fichiers minuscules : en 3G lente, chaque requête coûte
+        // 400 ms. Contrairement à `manualChunks`, Rollup ne fusionne que si
+        // l'ordre d'initialisation reste le même.
+        experimentalMinChunkSize: 10_000,
+        // Les icônes (lucide-react) en un seul fichier plutôt qu'une par
+        // fichier : un tableau de bord en demandait une trentaine. React a
+        // son propre fichier pour que le graphe reste sans cycle (les icônes
+        // dépendent de React, jamais l'inverse). Chemins exacts, pas de
+        // sous-chaîne : c'est le classement approximatif de l'ancien
+        // `manualChunks` qui avait créé le cycle et la page blanche.
+        manualChunks(id) {
+          if (/[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/.test(id)) return 'react';
+          if (/[\\/]node_modules[\\/]lucide-react[\\/]/.test(id)) return 'icones';
+          return undefined;
+        },
+      },
     },
 
     chunkSizeWarningLimit: 250,

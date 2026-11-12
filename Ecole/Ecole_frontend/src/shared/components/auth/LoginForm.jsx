@@ -1,10 +1,13 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { Lock, Mail, School, ShieldCheck, ArrowRight, BookOpen, Calendar, MessageSquare } from 'lucide-react';
 import useAuthStore from '@/shared/stores/auth-store';
 import { ROLE_REDIRECT_MAP, FALLBACK_REDIRECT } from '@/features/roles/route-config';
 import { TWO_FACTOR_SETUP_PATH } from './ProtectedRoute';
-import { Button, Input } from '@/shared/components/ui';
+// Imports directs, pas l'index `ui` : il entraînait tableaux, onglets et
+// framer-motion dans le premier chargement de la page de connexion.
+import Button from '@/shared/components/ui/Button';
+import Input from '@/shared/components/ui/Input';
 import Brand from '@/shared/components/ui/Brand';
 import { useTranslation } from '@/shared/i18n';
 import LanguageSwitcher from '@/shared/components/layout/LanguageSwitcher';
@@ -31,6 +34,13 @@ export default function LoginForm() {
   const [secours, setSecours] = useState(false);
   // Numéro de la dernière école connectée sur cet appareil (lu une fois).
   const [aide] = useState(lireAide);
+
+  // Pendant que la personne tape, la coque des pages connectées se charge
+  // en arrière-plan : après la connexion, le tableau de bord n'attend plus.
+  useEffect(() => {
+    const id = setTimeout(() => { import('@/shared/components/layout/AuthenticatedLayout').catch(() => {}); }, 1000);
+    return () => clearTimeout(id);
+  }, []);
   const codeValide = secours ? twoFactorCode.replace(/[^A-Za-z0-9]/g, '').length === 8 : twoFactorCode.length === 6;
   const [twoFactorLoading, setTwoFactorLoading] = useState(false);
 

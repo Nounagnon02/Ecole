@@ -5,7 +5,8 @@
  * ou comme page d'erreur générique.
  */
 
-import { motion } from 'framer-motion';
+// Pas de framer-motion ici : ce module est chargé au démarrage par
+// `ErrorBoundary`, et l'animation y entraînait toute la bibliothèque.
 import { useTranslation } from '@/shared/i18n';
 
 export function ErrorBoundaryFallback({ error, onReset }) {
@@ -13,12 +14,7 @@ export function ErrorBoundaryFallback({ error, onReset }) {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-[var(--surface)] px-6 text-center ">
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="max-w-md"
-      >
+      <div className="max-w-md">
         <div className="mb-6 flex justify-center">
           <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-red-50 dark:bg-red-950/30">
             <svg className="h-10 w-10 text-red-500" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -55,7 +51,7 @@ export function ErrorBoundaryFallback({ error, onReset }) {
             {t('error.go_home')}
           </a>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }

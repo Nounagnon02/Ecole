@@ -7,7 +7,8 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { render, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import apiClient from '@/shared/lib/api-client';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import App from '@/App';
@@ -93,6 +94,20 @@ describe('visiteur non authentifié', () => {
   it('atterrit sur /404 pour une route inconnue', async () => {
     const router = renderApp(['/route-qui-nexiste-pas']);
     await waitFor(() => expect(at(router)).toBe('/404'));
+  });
+});
+
+describe('premier affichage en réseau lent', () => {
+  it('montre le formulaire de connexion sans attendre la réponse de /auth/me', async () => {
+    // /auth/me ne répond jamais : en 3G lente, c'est un aller-retour de plus
+    // avant que la personne puisse seulement taper son identifiant.
+    const adaptateur = apiClient.defaults.adapter;
+    apiClient.defaults.adapter = (config) =>
+      config.url?.includes('/auth/me') ? new Promise(() => {}) : adaptateur(config);
+
+    renderApp(['/connexion']);
+
+    expect(await screen.findByLabelText(/^Téléphone, e-mail ou identifiant/)).toBeInTheDocument();
   });
 });
 
