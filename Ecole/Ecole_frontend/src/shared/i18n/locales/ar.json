@@ -181,7 +181,8 @@
       "tresorerie": "المحاسبة",
       "communication": "التواصل",
       "planning": "الجدولة",
-      "droits": "École. جميع الحقوق محفوظة."
+      "droits": "École. جميع الحقوق محفوظة.",
+      "deconnecte_inactivite": "تم تسجيل خروجك بعد فترة من عدم النشاط. سجّل الدخول من جديد للمتابعة."
     },
     "password_change": {
       "intro_title": "اختر كلمة مرورك",

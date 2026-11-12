@@ -181,7 +181,8 @@
       "tresorerie": "Accounting",
       "communication": "Communication",
       "planning": "Planning",
-      "droits": "École. All rights reserved."
+      "droits": "École. All rights reserved.",
+      "deconnecte_inactivite": "You were signed out after a period of inactivity. Sign in again to continue."
     },
     "password_change": {
       "intro_title": "Choose your password",

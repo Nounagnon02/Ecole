@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { Lock, Mail, School, ShieldCheck, ArrowRight, BookOpen, Calendar, MessageSquare } from 'lucide-react';
 import useAuthStore from '@/shared/stores/auth-store';
 import { ROLE_REDIRECT_MAP, FALLBACK_REDIRECT } from '@/features/roles/route-config';
@@ -11,6 +11,8 @@ import LanguageSwitcher from '@/shared/components/layout/LanguageSwitcher';
 
 export default function LoginForm() {
   const { t } = useTranslation();
+  const [parametres] = useSearchParams();
+  const inactivite = parametres.get('raison') === 'inactivite';
   const navigate = useNavigate();
   const login = useAuthStore((s) => s.login);
   const selectSchool = useAuthStore((s) => s.selectSchool);
@@ -170,6 +172,7 @@ export default function LoginForm() {
       <main className="ecole-auth-form">
         <div className="ecole-auth-language"><LanguageSwitcher /></div>
         <section className="ecole-auth-card" aria-labelledby="auth-title">
+          {inactivite && <p role="status" className="mb-4 rounded-md border border-[var(--border)] bg-[var(--surface-subtle)] p-3 text-sm text-[var(--text-primary)]">{t('auth.login_form.deconnecte_inactivite')}</p>}
           {showTwoFactorChallenge ? <>
             <ShieldCheck className="mb-4 text-[var(--accent)]" size={32} aria-hidden="true" />
             <h2 id="auth-title">{t('auth.login_form.verification_en_deux_etapes')}</h2>

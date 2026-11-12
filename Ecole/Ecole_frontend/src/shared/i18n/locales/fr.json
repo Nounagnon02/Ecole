@@ -181,7 +181,8 @@
       "tresorerie": "Trésorerie",
       "communication": "Communication",
       "planning": "Planning",
-      "droits": "École. Tous droits réservés."
+      "droits": "École. Tous droits réservés.",
+      "deconnecte_inactivite": "Vous avez été déconnecté après une période d’inactivité. Reconnectez-vous pour continuer."
     },
     "password_change": {
       "intro_title": "Choisissez votre mot de passe",
