@@ -1,0 +1,60 @@
+{
+ "date": "2026-11-12T15:49:22.747Z",
+ "etapes": [
+  {
+   "etape": "connexion : ordre des tabulations",
+   "ok": true,
+   "detail": "Langue → vous@exemple.com ou ELEVE-2024-001 → login-password → Afficher le mot de passe → Mot de passe oublié ? → Se connecter → (body) → Langue"
+  },
+  {
+   "etape": "connexion : focus visible à chaque arrêt",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "etape": "connexion au clavier jusqu’au tableau de bord",
+   "ok": true,
+   "detail": "/parent/dashboard"
+  },
+  {
+   "etape": "lien d’évitement en premier arrêt",
+   "ok": true,
+   "detail": "Aller au contenu principal"
+  },
+  {
+   "etape": "le lien d’évitement place le focus dans le contenu",
+   "ok": true,
+   "detail": "main-content"
+  },
+  {
+   "etape": "menu : atteindre « Notes » au clavier et l’ouvrir",
+   "ok": true,
+   "detail": "/notes"
+  },
+  {
+   "etape": "page Notes : focus visible sur 25 arrêts",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "etape": "dialogue : le focus entre dans la fenêtre",
+   "ok": true,
+   "detail": "Nouvel événement → Fermer"
+  },
+  {
+   "etape": "dialogue : le focus reste piégé (Tab et Maj+Tab)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "etape": "dialogue : Échap ferme et rend le focus au bouton",
+   "ok": true,
+   "detail": "Nouvel événement"
+  },
+  {
+   "etape": "tableau à 360 px : atteint au clavier et défile aux flèches",
+   "ok": true,
+   "detail": "Tableau (défilement horizontal) scrollLeft 0 → 196"
+  }
+ ]
+}
