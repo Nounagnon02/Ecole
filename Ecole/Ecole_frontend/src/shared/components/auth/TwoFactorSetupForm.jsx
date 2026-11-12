@@ -21,6 +21,7 @@ export default function TwoFactorSetupForm({ onActivated, onCancel, cancelLabel 
   const [qrUrl, setQrUrl] = useState('');
   const [secret, setSecret] = useState('');
   const [code, setCode] = useState('');
+  const [codesSecours, setCodesSecours] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -58,9 +59,15 @@ export default function TwoFactorSetupForm({ onActivated, onCancel, cancelLabel 
     setSubmitting(true);
     setError('');
     try {
-      await api.post('/auth/2fa/verify', { code });
-      completeTwoFactorSetup();
-      onActivated?.();
+      const { data } = await api.post('/auth/2fa/verify', { code });
+      // Les codes de secours ne sont montrés qu'une fois : on les affiche
+      // avant de rendre l'accès, la personne confirme les avoir notés.
+      if (Array.isArray(data?.codes_secours) && data.codes_secours.length) {
+        setCodesSecours(data.codes_secours);
+      } else {
+        completeTwoFactorSetup();
+        onActivated?.();
+      }
     } catch (err) {
       setError(err.message || t('pages.parametres.parametres.code_invalide'));
       setCode('');
@@ -68,6 +75,20 @@ export default function TwoFactorSetupForm({ onActivated, onCancel, cancelLabel 
       setSubmitting(false);
     }
   };
+
+  if (codesSecours) {
+    return (
+      <div className="space-y-4">
+        <p role="status" className="text-sm text-[var(--text-primary)]">{t('auth.codes_secours.intro')}</p>
+        <ul className="grid grid-cols-2 gap-2 rounded-md border border-[var(--border)] p-3 font-mono text-sm" data-testid="codes-secours">
+          {codesSecours.map((c) => <li key={c}>{c}</li>)}
+        </ul>
+        <p className="text-xs text-[var(--text-secondary)]">{t('auth.codes_secours.conseil')}</p>
+        <button type="button" className="text-sm underline" onClick={() => window.print()}>{t('auth.codes_secours.imprimer')}</button>
+        <Button className="w-full" onClick={() => { completeTwoFactorSetup(); onActivated?.(); }}>{t('auth.codes_secours.notes')}</Button>
+      </div>
+    );
+  }
 
   if (status === 'loading') {
     return <p role="status" className="text-sm text-[var(--text-secondary)]">{t('common.loading')}</p>;

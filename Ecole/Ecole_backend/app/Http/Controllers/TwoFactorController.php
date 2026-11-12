@@ -2,9 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
+use App\Support\CodesSecours;
 use App\Support\Roles;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
 use PragmaRX\Google2FA\Google2FA;
 
 class TwoFactorController extends Controller
@@ -15,7 +19,7 @@ class TwoFactorController extends Controller
     public function showSetup(Request $request)
     {
         $user = $request->user();
-        $google2fa = new Google2FA();
+        $google2fa = new Google2FA;
 
         if ($user->two_factor_enabled) {
             return response()->json(['message' => 'La 2FA est déjà activée'], 422);
@@ -47,16 +51,16 @@ class TwoFactorController extends Controller
         ]);
 
         $user = $request->user();
-        $google2fa = new Google2FA();
+        $google2fa = new Google2FA;
 
-        if (!$user->two_factor_secret) {
+        if (! $user->two_factor_secret) {
             return response()->json(['message' => 'Veuillez d\'abord initialiser la 2FA'], 422);
         }
 
         $secret = decrypt($user->two_factor_secret);
         $valid = $google2fa->verifyKey($secret, $request->code, 1);
 
-        if (!$valid) {
+        if (! $valid) {
             return response()->json(['message' => 'Code invalide'], 422);
         }
 
@@ -71,7 +75,9 @@ class TwoFactorController extends Controller
             $request->session()->put('two_factor_verified', true);
         }
 
-        return response()->json(['message' => '2FA activée avec succès']);
+        // Remis une seule fois : sans eux, un téléphone perdu enfermait la
+        // personne hors de son compte.
+        return response()->json(['message' => '2FA activée avec succès', 'codes_secours' => CodesSecours::regenerer($user)]);
     }
 
     /**
@@ -84,9 +90,9 @@ class TwoFactorController extends Controller
         ]);
 
         $user = $request->user();
-        $google2fa = new Google2FA();
+        $google2fa = new Google2FA;
 
-        if (!$user->two_factor_enabled) {
+        if (! $user->two_factor_enabled) {
             return response()->json(['message' => 'La 2FA n\'est pas activée'], 422);
         }
 
@@ -104,7 +110,7 @@ class TwoFactorController extends Controller
         $secret = decrypt($user->two_factor_secret);
         $valid = $google2fa->verifyKey($secret, $request->code, 1);
 
-        if (!$valid) {
+        if (! $valid) {
             return response()->json(['message' => 'Code invalide'], 422);
         }
 
@@ -122,21 +128,23 @@ class TwoFactorController extends Controller
      */
     public function verifyLogin(Request $request)
     {
+        // Un code de l'application (6 chiffres) ou un code de secours (XXXX-XXXX).
         $request->validate([
-            'code' => 'required|string|size:6',
+            'code' => 'required|string|min:6|max:9',
         ]);
 
         $user = Auth::user();
 
-        if (!$user || !$user->two_factor_enabled) {
+        if (! $user || ! $user->two_factor_enabled) {
             return response()->json(['message' => 'Non autorisé'], 401);
         }
 
-        $google2fa = new Google2FA();
+        $google2fa = new Google2FA;
         $secret = decrypt($user->two_factor_secret);
-        $valid = $google2fa->verifyKey($secret, $request->code, 1);
+        $valid = (ctype_digit($request->code) && strlen($request->code) === 6 && $google2fa->verifyKey($secret, $request->code, 1))
+            || CodesSecours::consommer($user, $request->code);
 
-        if (!$valid) {
+        if (! $valid) {
             return response()->json(['message' => 'Code 2FA invalide'], 422);
         }
 
@@ -156,7 +164,7 @@ class TwoFactorController extends Controller
         // Se marquer seulement `session()->put('two_factor_verified', true)`
         // (l'ancien comportement) ne suffit pas sans `Auth::login()` : rien
         // n'associe la session à un utilisateur.
-        if (\Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::fromFrontend($request)) {
+        if (EnsureFrontendRequestsAreStateful::fromFrontend($request)) {
             // `Auth::guard('web')`, pas le bare `Auth::login()` : cette route
             // exige `auth:sanctum` pour authentifier le jeton en attente, ce
             // qui a déjà résolu/mis en cache le garde Sanctum (un
@@ -183,5 +191,38 @@ class TwoFactorController extends Controller
             'role' => $user->role,
             'ecole_id' => $user->ecole_id,
         ]);
+    }
+
+    /**
+     * Nouveaux codes de secours (les anciens cessent de valoir).
+     * POST /auth/2fa/codes-secours
+     */
+    public function codesSecours(Request $request)
+    {
+        $user = $request->user();
+
+        if (! $user->two_factor_enabled) {
+            return response()->json(['message' => 'La double authentification n’est pas activée.'], 422);
+        }
+
+        return response()->json(['codes_secours' => CodesSecours::regenerer($user)]);
+    }
+
+    /**
+     * Débloquer le compte d'une personne qui a perdu son téléphone et ses
+     * codes : la double authentification est retirée, à réactiver à la
+     * prochaine connexion. Réservé au super-administrateur.
+     * POST /admin/utilisateurs/{id}/reinitialiser-2fa
+     */
+    public function reinitialiser(Request $request, $id)
+    {
+        $cible = User::withoutGlobalScopes()->findOrFail($id);
+        $cible->forceFill(['two_factor_enabled' => false, 'two_factor_secret' => null, 'two_factor_verified_at' => null])->save();
+        CodesSecours::effacer($cible);
+        $cible->tokens()->delete();
+
+        Log::warning('2FA réinitialisée par le super-administrateur', ['par' => $request->user()->id, 'cible' => $cible->id]);
+
+        return response()->json(['message' => 'Double authentification réinitialisée.']);
     }
 }

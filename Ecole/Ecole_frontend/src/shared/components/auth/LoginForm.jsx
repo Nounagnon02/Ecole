@@ -26,6 +26,9 @@ export default function LoginForm() {
   const [showSchoolPicker, setShowSchoolPicker] = useState(false);
   const [showTwoFactorChallenge, setShowTwoFactorChallenge] = useState(false);
   const [twoFactorCode, setTwoFactorCode] = useState('');
+  // Code de l'application (6 chiffres) ou code de secours (XXXX-XXXX).
+  const [secours, setSecours] = useState(false);
+  const codeValide = secours ? twoFactorCode.replace(/[^A-Za-z0-9]/g, '').length === 8 : twoFactorCode.length === 6;
   const [twoFactorLoading, setTwoFactorLoading] = useState(false);
 
   const setField = useCallback(
@@ -134,7 +137,7 @@ export default function LoginForm() {
 
   const handleTwoFactorSubmit = async (e) => {
     e.preventDefault();
-    if (twoFactorLoading || twoFactorCode.length !== 6) return;
+    if (twoFactorLoading || !codeValide) return;
 
     setTwoFactorLoading(true);
     setErrors({});
@@ -179,8 +182,13 @@ export default function LoginForm() {
             <p className="text-sm text-[var(--text-secondary)]">{t('auth.login_form.entrez_le_code_a_6_chiffres_de_votre_application')}</p>
             {errors._general && <p role="alert" className="auth-error">{errors._general}</p>}
             <form onSubmit={handleTwoFactorSubmit} aria-label={t('auth.login_form.verification_en_deux_etapes')}>
-              <Input id="two-factor-code" placeholder="000000" label={t('auth.login_form.code_de_verification')} value={twoFactorCode} onChange={e => setTwoFactorCode(e.target.value.replace(/\D/g, '').slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" maxLength={6} autoFocus required />
-              <Button type="submit" size="lg" loading={twoFactorLoading} disabled={twoFactorCode.length !== 6}>{t('auth.login_form.verifier')}</Button>
+              {secours
+                ? <Input id="two-factor-code" placeholder="XXXX-XXXX" label={t('auth.codes_secours.saisir')} value={twoFactorCode} onChange={e => setTwoFactorCode(e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 9))} autoComplete="off" maxLength={9} autoFocus required />
+                : <Input id="two-factor-code" placeholder="000000" label={t('auth.login_form.code_de_verification')} value={twoFactorCode} onChange={e => setTwoFactorCode(e.target.value.replace(/\D/g, '').slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" maxLength={6} autoFocus required />}
+              <Button type="submit" size="lg" loading={twoFactorLoading} disabled={!codeValide}>{t('auth.login_form.verifier')}</Button>
+              <button type="button" className="mt-2 text-sm underline" onClick={() => { setSecours((v) => !v); setTwoFactorCode(''); }}>
+                {secours ? t('auth.codes_secours.revenir_application') : t('auth.codes_secours.utiliser')}
+              </button>
               <Button variant="ghost" onClick={changeAccount}>{t('auth.login_form.changer_d_identifiant')}</Button>
             </form>
           </> : showSchoolPicker && pendingSchools?.length > 0 ? <>
