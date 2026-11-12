@@ -2,15 +2,145 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{Absence, Incident, Sanction, Eleve};
+use App\Models\Absence;
+use App\Models\Classes;
+use App\Models\Eleve;
+use App\Models\Incident;
+use App\Models\Sanction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class SurveillantController extends Controller
 {
-    public function absences()
+    /**
+     * Absences et retards, filtrables par jour et par classe. Sans filtre, les
+     * 500 plus récents : la liste complète d'une année grossissait sans fin.
+     */
+    public function absences(Request $request)
     {
-        return Absence::with(['eleve.classe'])->latest()->get();
+        return Absence::with(['eleve.classe', 'eleve.user:id,name,prenom'])
+            ->when($request->filled('date'), fn ($q) => $q->whereDate('date', $request->date))
+            ->when($request->filled('classe_id'), fn ($q) => $q->whereHas('eleve', fn ($e) => $e->where('classe_id', $request->classe_id)))
+            ->latest('date')->latest('id')
+            ->limit(500)
+            ->get();
+    }
+
+    /**
+     * Feuille d'appel d'une classe pour un jour : chaque élève inscrit, avec
+     * son statut déjà relevé (présent par défaut).
+     */
+    public function feuilleAppel(Request $request, $classeId)
+    {
+        $request->validate(['date' => 'nullable|date']);
+        $date = $request->input('date', now()->toDateString());
+        $classe = Classes::findOrFail($classeId);
+
+        $releves = Absence::whereDate('date', $date)
+            ->whereIn('eleve_id', Eleve::where('classe_id', $classe->id)->pluck('id'))
+            ->get()->keyBy('eleve_id');
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'classe' => ['id' => $classe->id, 'nom_classe' => $classe->nom_classe],
+                'date' => $date,
+                'eleves' => Eleve::with('user:id,name,prenom')
+                    ->where('classe_id', $classe->id)->where('statut', '!=', 'inactive')
+                    ->orderBy('numero_matricule')->get()
+                    ->map(fn ($e) => [
+                        'id' => $e->id,
+                        'nom' => $e->user?->name,
+                        'prenom' => $e->user?->prenom,
+                        'matricule' => $e->numero_matricule,
+                        // `absences.type` vaut « absence » ou « retard » ; l'appel parle
+                        // de présent, absent, retard.
+                        'statut' => $releves->has($e->id) ? ($releves[$e->id]->type === 'retard' ? 'retard' : 'absent') : 'present',
+                        'motif' => $releves->get($e->id)?->motif,
+                        'justifiee' => (bool) $releves->get($e->id)?->justifiee,
+                    ])->values(),
+            ],
+        ]);
+    }
+
+    /**
+     * Enregistrer l'appel d'une classe. Rejouable : le même appel renvoyé
+     * deux fois (double clic, renvoi après coupure) ne crée rien de plus, et
+     * un élève repassé « présent » perd l'absence notée par erreur.
+     */
+    public function enregistrerAppel(Request $request)
+    {
+        $donnees = $request->validate([
+            'classe_id' => 'required|school_exists:classes,id',
+            'date' => 'required|date|before_or_equal:today',
+            'eleves' => 'required|array|min:1',
+            'eleves.*.eleve_id' => 'required|integer',
+            'eleves.*.statut' => 'required|in:present,absent,retard',
+            'eleves.*.motif' => 'nullable|string|max:255',
+        ]);
+
+        $ids = Eleve::where('classe_id', $donnees['classe_id'])->pluck('id')->all();
+        $etrangers = collect($donnees['eleves'])->pluck('eleve_id')->diff($ids);
+        if ($etrangers->isNotEmpty()) {
+            return response()->json(['success' => false, 'message' => 'Un ou plusieurs élèves ne sont pas dans cette classe.'], 422);
+        }
+
+        $compte = ['present' => 0, 'absent' => 0, 'retard' => 0];
+
+        DB::transaction(function () use ($donnees, &$compte) {
+            foreach ($donnees['eleves'] as $ligne) {
+                $compte[$ligne['statut']]++;
+                $existante = Absence::where('eleve_id', $ligne['eleve_id'])->whereDate('date', $donnees['date'])->first();
+
+                if ($ligne['statut'] === 'present') {
+                    $existante?->delete();
+
+                    continue;
+                }
+
+                $type = $ligne['statut'] === 'retard' ? 'retard' : 'absence';
+
+                if ($existante) {
+                    $existante->update(['type' => $type, 'motif' => $ligne['motif'] ?? $existante->motif]);
+                } else {
+                    Absence::create(['eleve_id' => $ligne['eleve_id'], 'date' => $donnees['date'], 'type' => $type, 'motif' => $ligne['motif'] ?? null]);
+                }
+            }
+        });
+
+        \Cache::forget('dashboard_directeur_'.(auth()->user()->ecole_id ?? 'global'));
+
+        return response()->json(['success' => true, 'data' => $compte]);
+    }
+
+    /** Justifier (ou non) une absence, avec son motif. */
+    public function justifierAbsence(Request $request, $id)
+    {
+        $donnees = $request->validate(['justifiee' => 'required|boolean', 'motif' => 'nullable|string|max:255']);
+        $absence = Absence::findOrFail($id);
+        $absence->update($donnees);
+
+        return response()->json(['success' => true, 'data' => $absence->fresh()]);
+    }
+
+    /** Faire avancer un incident : ouvert → en cours → résolu. */
+    public function majIncident(Request $request, $id)
+    {
+        $donnees = $request->validate(['statut' => 'required|in:ouvert,en_cours,resolu']);
+        $incident = Incident::findOrFail($id);
+        $incident->update($donnees);
+
+        return response()->json(['success' => true, 'data' => $incident->fresh()]);
+    }
+
+    /** Lever ou clore une sanction. */
+    public function majSanction(Request $request, $id)
+    {
+        $donnees = $request->validate(['statut' => 'required|in:active,levee,terminee']);
+        $sanction = Sanction::findOrFail($id);
+        $sanction->update($donnees);
+
+        return response()->json(['success' => true, 'data' => $sanction->fresh()->load('eleve.user:id,name,prenom')]);
     }
 
     public function incidents()
@@ -20,7 +150,7 @@ class SurveillantController extends Controller
 
     public function sanctions()
     {
-        return Sanction::with(['eleve.classe'])->latest()->get();
+        return Sanction::with(['eleve.classe', 'eleve.user:id,name,prenom'])->latest()->get();
     }
 
     public function storeAbsence(Request $request)
@@ -29,12 +159,12 @@ class SurveillantController extends Controller
             'eleve_id' => 'required|school_exists:eleves,id',
             'date' => 'required|date',
             'type' => 'required|in:absence,retard',
-            'motif' => 'nullable|string'
+            'motif' => 'nullable|string',
         ]);
 
         $absence = Absence::create($validated);
 
-        \Cache::forget('dashboard_directeur_' . (auth()->user()->ecole_id ?? 'global'));
+        \Cache::forget('dashboard_directeur_'.(auth()->user()->ecole_id ?? 'global'));
 
         return $absence;
     }
@@ -43,13 +173,13 @@ class SurveillantController extends Controller
     {
         $validated = $request->validate([
             'description' => 'required|string',
-            'date' => 'required|date',
-            'gravite' => 'required|in:faible,moyenne,grave'
+            'date' => 'required|date|before_or_equal:today',
+            'gravite' => 'required|in:faible,moyenne,grave',
         ]);
 
         $incident = Incident::create($validated);
 
-        \Cache::forget('dashboard_directeur_' . (auth()->user()->ecole_id ?? 'global'));
+        \Cache::forget('dashboard_directeur_'.(auth()->user()->ecole_id ?? 'global'));
 
         return $incident;
     }
@@ -61,10 +191,12 @@ class SurveillantController extends Controller
             'type_sanction' => 'required|string',
             'motif' => 'required|string',
             'date' => 'required|date',
-            'duree' => 'nullable|integer'
+            'duree' => 'nullable|integer',
         ]);
 
-        return Sanction::create($validated);
+        $sanction = Sanction::create($validated);
+
+        return response()->json($sanction->load('eleve.user:id,name,prenom'), 201);
     }
 
     /**
