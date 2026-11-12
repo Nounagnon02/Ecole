@@ -73,8 +73,8 @@ function renderPage() {
 
 /** Ouvre le formulaire de rédaction et rend le `<form>`. */
 async function openForm() {
-  fireEvent.click(screen.getByRole('button', { name: /Nouvelle publication/i }));
-  return screen.getByRole('form', { name: 'Nouvelle publication' });
+  fireEvent.click(screen.getByRole('button', { name: /Nouvelle annonce/i }));
+  return screen.getByRole('form', { name: 'Nouvelle annonce' });
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -99,7 +99,7 @@ describe('CommunicationsPage — lecture', () => {
     expect(screen.getByText('Les cours reprennent le 15 septembre.')).toBeInTheDocument();
     expect(screen.getByText('rentrée')).toBeInTheDocument();
     expect(screen.getByText('calendrier')).toBeInTheDocument();
-    expect(screen.queryByText('Aucune communication trouvée')).not.toBeInTheDocument();
+    expect(screen.queryByText('Aucune annonce')).not.toBeInTheDocument();
   });
 
   it('accepte aussi un tableau nu', async () => {
@@ -151,10 +151,11 @@ describe('CommunicationsPage — lecture', () => {
 
     renderPage();
 
-    await waitFor(() => expect(screen.getByText('Aucune communication trouvée')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Aucune annonce')).toBeInTheDocument());
     // Un fil vide reste un fil : l'en-tête et les filtres sont là, et
     // aucun bouton de reprise n'est proposé.
-    expect(screen.getByText('Communications')).toBeInTheDocument();
+    // Même mot que le menu : « Annonces ».
+    expect(screen.getByRole('heading', { name: 'Annonces' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Réessayer' })).not.toBeInTheDocument();
   });
 
@@ -171,7 +172,7 @@ describe('CommunicationsPage — lecture', () => {
     expect(screen.getByRole('button', { name: 'Réessayer' })).toBeInTheDocument();
     // Le cœur du test : « le serveur a refusé » ne doit pas se déguiser en
     // « il n'y a aucune communication ».
-    expect(screen.queryByText('Aucune communication trouvée')).not.toBeInTheDocument();
+    expect(screen.queryByText('Aucune annonce')).not.toBeInTheDocument();
     expect(screen.queryByText('Rentrée 2026')).not.toBeInTheDocument();
   });
 
@@ -181,7 +182,7 @@ describe('CommunicationsPage — lecture', () => {
     renderPage();
 
     await waitFor(() => expect(screen.getByText('Network Error')).toBeInTheDocument());
-    expect(screen.queryByText('Aucune communication trouvée')).not.toBeInTheDocument();
+    expect(screen.queryByText('Aucune annonce')).not.toBeInTheDocument();
   });
 
   it('affiche un indicateur de chargement avant la réponse', async () => {
@@ -190,7 +191,7 @@ describe('CommunicationsPage — lecture', () => {
     const { container } = renderPage();
 
     expect(container.querySelector('.animate-spin')).not.toBeNull();
-    expect(screen.queryByText('Aucune communication trouvée')).not.toBeInTheDocument();
+    expect(screen.queryByText('Aucune annonce')).not.toBeInTheDocument();
 
     await waitFor(() => expect(screen.getByText('Rentrée 2026')).toBeInTheDocument());
     expect(container.querySelector('.animate-spin')).toBeNull();
@@ -237,13 +238,13 @@ describe('CommunicationsPage — écriture', () => {
     renderPage();
     await waitFor(() => expect(screen.getByText('Rentrée 2026')).toBeInTheDocument());
 
-    expect(screen.queryByRole('form', { name: 'Nouvelle publication' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('form', { name: 'Nouvelle annonce' })).not.toBeInTheDocument();
 
     await openForm();
-    expect(screen.getByRole('form', { name: 'Nouvelle publication' })).toBeInTheDocument();
+    expect(screen.getByRole('form', { name: 'Nouvelle annonce' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Annuler' }));
-    expect(screen.queryByRole('form', { name: 'Nouvelle publication' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('form', { name: 'Nouvelle annonce' })).not.toBeInTheDocument();
   });
 
   it('envoie exactement titre, contenu et catégorie en POST', async () => {
@@ -305,7 +306,7 @@ describe('CommunicationsPage — écriture', () => {
     expect(screen.getAllByText('Rose Adjovi').length).toBe(2);
     // Le fil déjà chargé reste en place.
     expect(screen.getByText('Rentrée 2026')).toBeInTheDocument();
-    expect(screen.queryByRole('form', { name: 'Nouvelle publication' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('form', { name: 'Nouvelle annonce' })).not.toBeInTheDocument();
   });
 
   it('rend les erreurs de validation 422 champ par champ, sans perdre le fil', async () => {
@@ -331,7 +332,7 @@ describe('CommunicationsPage — écriture', () => {
 
     // Et surtout : un refus de validation ne remplace pas la page par
     // l'écran d'erreur. Le formulaire reste ouvert, le fil reste lisible.
-    expect(screen.getByRole('form', { name: 'Nouvelle publication' })).toBeInTheDocument();
+    expect(screen.getByRole('form', { name: 'Nouvelle annonce' })).toBeInTheDocument();
     expect(screen.getByText('Rentrée 2026')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Réessayer' })).not.toBeInTheDocument();
   });
@@ -378,7 +379,7 @@ describe('CommunicationsPage — écriture', () => {
     fireEvent.click(screen.getByRole('button', { name: /Publier/i }));
 
     await waitFor(() => expect(screen.getByText(message)).toBeInTheDocument());
-    expect(screen.getByRole('form', { name: 'Nouvelle publication' })).toBeInTheDocument();
+    expect(screen.getByRole('form', { name: 'Nouvelle annonce' })).toBeInTheDocument();
     expect(screen.getByText('Rentrée 2026')).toBeInTheDocument();
   });
 
@@ -432,7 +433,7 @@ describe('CommunicationsPage — qui peut publier', () => {
       signIn(role);
       renderPage();
       await waitFor(() => expect(screen.getByText('Rentrée 2026')).toBeInTheDocument());
-      expect(screen.queryByRole('button', { name: /nouvelle publication/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /nouvelle annonce/i })).not.toBeInTheDocument();
     },
   );
 
@@ -442,7 +443,7 @@ describe('CommunicationsPage — qui peut publier', () => {
       signIn(role);
       renderPage();
       await waitFor(() => expect(screen.getByText('Rentrée 2026')).toBeInTheDocument());
-      expect(screen.getByRole('button', { name: /nouvelle publication/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /nouvelle annonce/i })).toBeInTheDocument();
     },
   );
 });

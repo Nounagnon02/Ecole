@@ -1074,20 +1074,20 @@
     },
     "communications": {
       "communications": {
-        "title": "Communications",
+        "title": "Announcements",
         "subtitle": "Stay informed about school news",
-        "nouvelle_publication": "New Publication",
-        "nouvelle_publication_2": "New publication",
+        "nouvelle_publication": "New announcement",
+        "nouvelle_publication_2": "New announcement",
         "titre": "Title",
-        "titre_de_la_publication": "Publication title",
+        "titre_de_la_publication": "Announcement title",
         "contenu": "Content",
         "que_souhaitez_vous_annoncer": "What would you like to announce?",
         "categorie": "Category",
         "publier": "Publish",
-        "aucune_communication_trouvee": "No communication found",
+        "aucune_communication_trouvee": "No announcements",
         "epingle": "Pinned",
         "partager": "Share",
-        "la_publication_a_echoue": "Publishing failed."
+        "la_publication_a_echoue": "The announcement was not published."
       }
     },
     "comptable": {
@@ -1639,7 +1639,7 @@
         "notifications_push": "Push notifications",
         "recevoir_les_notifications_sur_votre_appareil": "Receive notifications on your device",
         "recevoir_un_resume_par_email": "Receive a summary by email",
-        "communications_importantes": "Important communications",
+        "communications_importantes": "Important announcements",
         "alertes_de_la_direction": "Alerts from the administration",
         "notes_et_evaluations": "Grades and assessments",
         "quand_une_note_est_publiee": "When a grade is published",

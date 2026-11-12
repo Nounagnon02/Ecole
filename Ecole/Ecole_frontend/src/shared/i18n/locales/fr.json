@@ -15,7 +15,7 @@
     "notes": "Notes",
     "bulletins": "Bulletins",
     "paiements": "Paiements",
-    "messagerie": "Messagerie",
+    "messagerie": "Messages",
     "bibliotheque": "Bibliothèque",
     "infirmerie": "Infirmerie",
     "transport": "Transport",
@@ -320,7 +320,7 @@
     "semaine_prochaine": "Semaine prochaine"
   },
   "messagerie": {
-    "title": "Messagerie",
+    "title": "Messages",
     "nouveau_message": "Nouveau message",
     "sujet": "Sujet",
     "contenu": "Contenu",
@@ -1074,20 +1074,20 @@
     },
     "communications": {
       "communications": {
-        "title": "Communications",
+        "title": "Annonces",
         "subtitle": "Restez informé des actualités de l'établissement",
-        "nouvelle_publication": "Nouvelle publication",
-        "nouvelle_publication_2": "Nouvelle publication",
+        "nouvelle_publication": "Nouvelle annonce",
+        "nouvelle_publication_2": "Nouvelle annonce",
         "titre": "Titre",
-        "titre_de_la_publication": "Titre de la publication",
+        "titre_de_la_publication": "Titre de l'annonce",
         "contenu": "Contenu",
         "que_souhaitez_vous_annoncer": "Que souhaitez-vous annoncer ?",
         "categorie": "Catégorie",
         "publier": "Publier",
-        "aucune_communication_trouvee": "Aucune communication trouvée",
+        "aucune_communication_trouvee": "Aucune annonce",
         "epingle": "Épinglé",
         "partager": "Partager",
-        "la_publication_a_echoue": "La publication a échoué."
+        "la_publication_a_echoue": "L'annonce n'a pas été publiée."
       }
     },
     "comptable": {
@@ -1639,7 +1639,7 @@
         "notifications_push": "Notifications push",
         "recevoir_les_notifications_sur_votre_appareil": "Recevoir les notifications sur votre appareil",
         "recevoir_un_resume_par_email": "Recevoir un résumé par email",
-        "communications_importantes": "Communications importantes",
+        "communications_importantes": "Annonces importantes",
         "alertes_de_la_direction": "Alertes de la direction",
         "notes_et_evaluations": "Notes et évaluations",
         "quand_une_note_est_publiee": "Quand une note est publiée",
