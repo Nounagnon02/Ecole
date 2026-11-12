@@ -130,13 +130,16 @@ class BulletinArchiveTest extends TestCase
     }
 
     /** @test */
-    public function verrouiller_without_a_snapshot_archives_nothing()
+    public function verrouiller_a_class_without_grades_archives_nothing_and_says_why()
     {
+        // Le verrouillage calcule désormais lui-même les moyennes : seul
+        // l'absence de toute note laisse la classe sans bulletin, et la
+        // réponse le dit au lieu de renvoyer une liste vide.
         $school = $this->actingInSchool();
         $classe = Classes::factory()->create(['ecole_id' => $school->id]);
         Eleve::factory()->forSchool($school)->create(['classe_id' => $classe->id]);
 
-        $this->lock($classe)->assertOk()->assertJson(['data' => []]);
+        $this->lock($classe)->assertStatus(422)->assertJsonPath('success', false);
         $this->assertDatabaseCount('bulletins', 0);
     }
 

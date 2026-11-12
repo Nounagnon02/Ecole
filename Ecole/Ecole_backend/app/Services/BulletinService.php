@@ -315,9 +315,15 @@ class BulletinService
     {
         $anneeScolaire ??= AnneeScolaire::courante();
 
+        // Un élève retiré des effectifs, ou sans aucune note sur la période,
+        // n'a pas de bulletin : le classer avec une moyenne de 0 le mettait
+        // dernier et faussait le rang de toute la classe.
         $eleves = Eleve::with(['notes.matiere'])
             ->where('classe_id', $classeId)
-            ->get();
+            ->where('statut', '!=', 'inactive')
+            ->get()
+            ->filter(fn ($pupil) => $pupil->notes->where('periode', $periode)->isNotEmpty())
+            ->values();
 
         if ($eleves->isEmpty()) {
             return [];

@@ -118,8 +118,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('bulletins')->group(function () {
         Route::get('/', [BulletinsController::class, 'index'])
             ->middleware('role:directeur,enseignant,censeur,parent,eleve');
+        // Arrêter les bulletins d'une classe est un acte de la direction (ou du
+        // censeur), pas de chaque enseignant.
         Route::post('/verrouiller', [BulletinsController::class, 'verrouiller'])
-            ->middleware('role:directeur,enseignant,censeur');
+            ->middleware('role:directeur,censeur');
     });
 
     // ============ PÉRIODES ============
