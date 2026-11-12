@@ -119,7 +119,7 @@ export default function EnfantsPage() {
               className={cn(
                 'flex items-center gap-3 rounded-xl border-2 p-3 transition-all flex-1',
                 selectedEnfant?.id === enfant.id
-                  ? 'border-[var(--accent)] bg-[var(--accent-subtle)] dark:bg-[var(--accent-subtle)]0/5'
+                  ? 'border-[var(--accent)] bg-[var(--accent-subtle)] dark:bg-[var(--action)]/5'
                   : 'border-[var(--border)] hover:border-[var(--accent)]/30  hover:border-[var(--accent)]'
               )}
             >
@@ -276,7 +276,7 @@ export default function EnfantsPage() {
                   </div>
                   <div className="h-2 rounded-full bg-[var(--surface-subtle)]  overflow-hidden">
                     <div
-                      className="h-full rounded-full bg-[var(--accent-subtle)]0"
+                      className="h-full rounded-full bg-[var(--action)]"
                       style={{ width: `${selectedEnfant.frais.total > 0 ? (selectedEnfant.frais.paye / selectedEnfant.frais.total) * 100 : 0}%` }}
                     />
                   </div>

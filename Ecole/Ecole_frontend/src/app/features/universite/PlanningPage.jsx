@@ -142,7 +142,7 @@ export default function PlanningPage() {
                 className={cn(
                   'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
                   filterType === key
-                    ? 'bg-[var(--primary-subtle)] text-[var(--accent)] dark:bg-[var(--accent-subtle)]0/10 dark:text-[var(--accent)]'
+                    ? 'bg-[var(--primary-subtle)] text-[var(--accent)] dark:bg-[var(--action)]/10 dark:text-[var(--accent)]'
                     : 'bg-[var(--surface-subtle)] text-[var(--text-secondary)] hover:bg-[var(--surface-subtle)]   '
                 )}
               >
