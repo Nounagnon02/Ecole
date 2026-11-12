@@ -16,6 +16,7 @@ import {
   School,
   BarChart3,
   UserCheck,
+  PenLine,
   CreditCard,
   Library,
   Heart,
@@ -30,6 +31,7 @@ import { PROTECTED_ROUTES } from './route-config';
 const ENSEIGNANT_COMMON = [
   { icon: Users, label: 'nav.eleves', path: '/eleves' },
   { icon: ClipboardList, label: 'nav.notes', path: '/notes' },
+  { icon: PenLine, label: 'nav.saisie_notes', path: '/notes/saisie' },
   { icon: Calendar, label: 'nav.emploi_du_temps', path: '/emploi-du-temps' },
   { icon: MessageSquare, label: 'nav.annonces', path: '/communications' },
 ];

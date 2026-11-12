@@ -119,6 +119,12 @@ export const ROUTE_CONFIG = {
     component: lazy(() => import('@/app/features/notes/NotesPage')),
     roles: [...ROLE_GROUPS.DIRECTION, ...ROLE_GROUPS.ENSEIGNANTS, ROLES.CENSEUR, ROLES.ELEVE, ROLES.PARENT],
   },
+  // Grille de saisie : mêmes rôles que `POST /notes/bulk`.
+  notesSaisie: {
+    path: '/notes/saisie',
+    component: lazy(() => import('@/app/features/notes/SaisieNotesPage')),
+    roles: [...ROLE_GROUPS.DIRECTION, ...ROLE_GROUPS.ENSEIGNANTS],
+  },
   paiements: {
     path: '/paiements',
     component: lazy(() => import('@/app/features/paiements/PaiementsPage')),

@@ -53,7 +53,8 @@
     "identite": "Identité visuelle",
     "affectations": "Affectations",
     "assistant": "Assistant",
-    "personnel": "Personnel"
+    "personnel": "Personnel",
+    "saisie_notes": "Saisir des notes"
   },
   "common": {
     "coming_soon": "Bientôt disponible",
@@ -1321,6 +1322,33 @@
         "verrouiller": "Verrouiller",
         "publie": "Publié",
         "verrouille": "Verrouillé"
+      },
+      "saisie": {
+        "title": "Saisie des notes",
+        "subtitle": "Choisissez la classe et l’évaluation, puis saisissez au clavier.",
+        "classe": "Classe",
+        "choisir_classe": "Choisir une classe",
+        "matiere": "Matière",
+        "choisir_matiere": "Choisir une matière",
+        "classe_d_abord": "Choisissez d’abord une classe",
+        "evaluation": "Évaluation",
+        "periode": "Période",
+        "date": "Date de l’évaluation",
+        "aucune_classe": "Aucune classe ne vous est affectée. Demandez à la direction de vous affecter vos classes.",
+        "aucune_matiere": "Aucune matière ne vous est affectée dans cette classe.",
+        "aucun_eleve": "Aucun élève dans cette classe.",
+        "eleve": "Élève",
+        "matricule": "Matricule",
+        "note_sur_20": "Note sur 20",
+        "note_de": "Note de {nom}",
+        "verrouillee": "Verrouillée",
+        "aide_clavier": "Entrée ou flèche bas : élève suivant. Laissez vide pour un élève absent.",
+        "invalides": "{nombre} note(s) à corriger : une note va de 0 à 20.",
+        "en_attente": "{nombre} note(s) non enregistrée(s), gardée(s) sur cet appareil.",
+        "enregistre": "Notes enregistrées.",
+        "enregistrer": "Enregistrer les notes",
+        "hors_ligne": "Pas de connexion. Vos notes sont gardées sur cet appareil et partiront dès le retour du réseau.",
+        "echec": "Les notes n’ont pas pu être enregistrées."
       }
     },
     "paiements": {

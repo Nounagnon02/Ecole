@@ -53,7 +53,8 @@
     "identite": "Branding",
     "affectations": "Assignments",
     "assistant": "Assistant",
-    "personnel": "Staff"
+    "personnel": "Staff",
+    "saisie_notes": "Enter grades"
   },
   "common": {
     "coming_soon": "Coming soon",
@@ -1321,6 +1322,33 @@
         "verrouiller": "Lock",
         "publie": "Published",
         "verrouille": "Locked"
+      },
+      "saisie": {
+        "title": "Grade entry",
+        "subtitle": "Choose the class and the assessment, then type.",
+        "classe": "Class",
+        "choisir_classe": "Choose a class",
+        "matiere": "Subject",
+        "choisir_matiere": "Choose a subject",
+        "classe_d_abord": "Choose a class first",
+        "evaluation": "Assessment",
+        "periode": "Term",
+        "date": "Assessment date",
+        "aucune_classe": "No class is assigned to you. Ask the direction to assign your classes.",
+        "aucune_matiere": "No subject is assigned to you in this class.",
+        "aucun_eleve": "No pupil in this class.",
+        "eleve": "Pupil",
+        "matricule": "Registration number",
+        "note_sur_20": "Grade out of 20",
+        "note_de": "Grade of {nom}",
+        "verrouillee": "Locked",
+        "aide_clavier": "Enter or down arrow: next pupil. Leave empty for an absent pupil.",
+        "invalides": "{nombre} grade(s) to fix: a grade goes from 0 to 20.",
+        "en_attente": "{nombre} unsaved grade(s), kept on this device.",
+        "enregistre": "Grades saved.",
+        "enregistrer": "Save grades",
+        "hors_ligne": "No connection. Your grades are kept on this device and will be sent when the network is back.",
+        "echec": "The grades could not be saved."
       }
     },
     "paiements": {
