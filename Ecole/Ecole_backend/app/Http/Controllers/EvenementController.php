@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Evenement;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Validator;
 
 class EvenementController extends Controller
@@ -17,10 +18,31 @@ class EvenementController extends Controller
             ->where('date_debut', '>=', now())
             ->take(10)
             ->get();
-            
+
         return response()->json([
             'success' => true,
-            'data' => $events
+            'data' => $events,
+        ]);
+    }
+
+    /** Types d'événement que le planning sait afficher. */
+    public const TYPES = ['reunion', 'conseil', 'sortie', 'evenement', 'academique', 'culturel', 'administratif'];
+
+    /**
+     * Planning : les événements d'une période (par défaut du mois écoulé aux
+     * six prochains mois). `index` ne rend que les dix prochains, ce qui
+     * suffit au tableau de bord mais pas à un planning.
+     */
+    public function planning(Request $request)
+    {
+        $bornes = $request->validate(['du' => 'nullable|date', 'au' => 'nullable|date|after_or_equal:du']);
+
+        return response()->json([
+            'success' => true,
+            'data' => Evenement::whereBetween('date_debut', [
+                $bornes['du'] ?? now()->subMonth()->startOfDay(),
+                isset($bornes['au']) ? Carbon::parse($bornes['au'])->endOfDay() : now()->addMonths(6)->endOfDay(),
+            ])->orderBy('date_debut')->limit(500)->get(),
         ]);
     }
 
@@ -32,8 +54,13 @@ class EvenementController extends Controller
         $validator = Validator::make($request->all(), [
             'titre' => 'required|string|max:255',
             'date_debut' => 'required|date',
-            'lieu' => 'nullable|string',
-            'description' => 'nullable|string'
+            // Fin et type étaient ignorés : la colonne `type` gardait sa
+            // valeur par défaut, et un événement sur plusieurs jours n'avait
+            // pas de fin.
+            'date_fin' => 'nullable|date|after_or_equal:date_debut',
+            'type' => 'nullable|in:'.implode(',', self::TYPES),
+            'lieu' => 'nullable|string|max:255',
+            'description' => 'nullable|string|max:2000',
         ]);
 
         if ($validator->fails()) {
@@ -42,13 +69,13 @@ class EvenementController extends Controller
 
         $event = Evenement::create([
             ...$validator->validated(),
-            'created_by' => $request->user() ? $request->user()->id : null
+            'created_by' => $request->user() ? $request->user()->id : null,
         ]);
 
         return response()->json([
             'success' => true,
             'message' => 'Événement créé avec succès',
-            'data' => $event
+            'data' => $event,
         ], 201);
     }
 
@@ -58,9 +85,10 @@ class EvenementController extends Controller
     public function show($id)
     {
         $event = Evenement::find($id);
-        if (!$event) {
+        if (! $event) {
             return response()->json(['message' => 'Événement non trouvé'], 404);
         }
+
         return response()->json(['success' => true, 'data' => $event]);
     }
 
@@ -70,15 +98,17 @@ class EvenementController extends Controller
     public function update(Request $request, $id)
     {
         $event = Evenement::find($id);
-        if (!$event) {
+        if (! $event) {
             return response()->json(['message' => 'Événement non trouvé'], 404);
         }
 
         $validated = $request->validate([
             'titre' => 'sometimes|string|max:255',
             'date_debut' => 'sometimes|date',
-            'lieu' => 'nullable|string',
-            'description' => 'nullable|string'
+            'date_fin' => 'nullable|date|after_or_equal:'.($request->input('date_debut') ?? $event->date_debut),
+            'type' => 'sometimes|in:'.implode(',', self::TYPES),
+            'lieu' => 'nullable|string|max:255',
+            'description' => 'nullable|string|max:2000',
         ]);
 
         $event->update($validated);
@@ -86,7 +116,7 @@ class EvenementController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Événement mis à jour',
-            'data' => $event
+            'data' => $event,
         ]);
     }
 
@@ -96,7 +126,7 @@ class EvenementController extends Controller
     public function destroy($id)
     {
         $event = Evenement::find($id);
-        if (!$event) {
+        if (! $event) {
             return response()->json(['message' => 'Événement non trouvé'], 404);
         }
 
@@ -104,7 +134,7 @@ class EvenementController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Événement supprimé'
+            'message' => 'Événement supprimé',
         ]);
     }
 }
