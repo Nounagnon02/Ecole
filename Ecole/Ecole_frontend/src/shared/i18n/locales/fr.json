@@ -126,7 +126,10 @@
     "load_error": "Erreur de chargement",
     "user": "Utilisateur",
     "payments": "Paiements",
-    "manage": "Gérer"
+    "manage": "Gérer",
+    "champ_obligatoire": "Champ obligatoire.",
+    "choisir": "Choisir",
+    "erreur_enregistrement": "L’enregistrement a échoué."
   },
   "auth": {
     "login": "Connexion",
@@ -1691,6 +1694,16 @@
         "aucun_evenement_trouve": "Aucun événement trouvé",
         "planifie": "Planifié",
         "termine": "Terminé"
+      },
+      "planning_edition": {
+        "titre": "Titre",
+        "type": "Type",
+        "debut": "Début",
+        "fin": "Fin (facultatif)",
+        "lieu": "Lieu",
+        "description": "Description",
+        "modifier": "Modifier l’événement",
+        "confirmer_suppression": "Supprimer « {titre} » du planning ?"
       }
     },
     "surveillant": {

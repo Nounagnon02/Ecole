@@ -268,7 +268,8 @@ export const ROUTE_CONFIG = {
   secretairePlanning: {
     path: '/secretaire/planning',
     component: lazy(() => import('@/app/features/secretaire/PlanningPage')),
-    roles: [ROLES.SECRETAIRE],
+    // Mêmes rôles que `/secretaire/evenements`.
+    roles: [ROLES.SECRETAIRE, ...ROLE_GROUPS.DIRECTION],
   },
   secretaireDocuments: {
     path: '/secretaire/documents',

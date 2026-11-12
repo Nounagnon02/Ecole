@@ -126,7 +126,10 @@
     "load_error": "Loading error",
     "user": "User",
     "payments": "Payments",
-    "manage": "Manage"
+    "manage": "Manage",
+    "champ_obligatoire": "Required field.",
+    "choisir": "Choose",
+    "erreur_enregistrement": "Saving failed."
   },
   "auth": {
     "login": "Log in",
@@ -1691,6 +1694,16 @@
         "aucun_evenement_trouve": "No event found",
         "planifie": "Scheduled",
         "termine": "Completed"
+      },
+      "planning_edition": {
+        "titre": "Title",
+        "type": "Type",
+        "debut": "Start",
+        "fin": "End (optional)",
+        "lieu": "Place",
+        "description": "Description",
+        "modifier": "Edit the event",
+        "confirmer_suppression": "Remove “{titre}” from the planning?"
       }
     },
     "surveillant": {
