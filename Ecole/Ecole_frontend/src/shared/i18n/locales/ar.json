@@ -2294,7 +2294,8 @@
       "chargement": "جارٍ التحميل",
       "chargement_en_cours": "جارٍ التحميل…",
       "contenu_en_chargement": "المحتوى قيد التحميل",
-      "tableau_en_chargement": "الجدول قيد التحميل"
+      "tableau_en_chargement": "الجدول قيد التحميل",
+      "connexion_lente": "الاتصال بطيء، التحميل مستمر…"
     },
     "avatar": {
       "avatar": "صورة رمزية"
