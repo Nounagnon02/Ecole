@@ -44,6 +44,15 @@ class SmsService
             return ['success' => false, 'message_id' => null, 'error' => 'Numéro de téléphone invalide (format attendu : 01 suivi de 8 chiffres).'];
         }
 
+        // Pilote « journal » : le message est consigné, pas envoyé. C'est le
+        // défaut tant qu'aucun fournisseur n'est configuré, pour qu'aucun SMS
+        // réel ne parte d'un poste de développement ou de test.
+        if ((config('services.sms.driver') ?? (empty($this->apiKey) ? 'log' : 'africastalking')) === 'log') {
+            Log::info('SMS (journal, non envoyé)', ['to' => $to, 'message' => $message]);
+
+            return ['success' => true, 'message_id' => 'journal-'.bin2hex(random_bytes(4)), 'error' => null];
+        }
+
         if (empty($this->apiKey) || empty($this->username)) {
             Log::error('SMS: credentials Africa\'s Talking manquants');
 

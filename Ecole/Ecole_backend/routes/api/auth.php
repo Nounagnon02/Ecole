@@ -53,6 +53,12 @@ Route::get('/auth/verify-email/{token}', [AuthController::class, 'verifyEmail'])
 Route::post('/auth/select-school', [AuthController::class, 'selectSchool'])->middleware('throttle:10,1,select-school');
 
 // Mot de passe oublié — rate limité contre le spam
+// Mot de passe oublié par SMS (numéro du compte).
+Route::post('/auth/mot-de-passe-oublie/sms', [\App\Http\Controllers\Api\PasswordResetSmsController::class, 'envoyer'])
+    ->middleware('throttle:3,1,reset-sms');
+Route::post('/auth/mot-de-passe-oublie/sms/confirmer', [\App\Http\Controllers\Api\PasswordResetSmsController::class, 'confirmer'])
+    ->middleware('throttle:10,1,reset-sms-confirm');
+
 Route::post('/auth/forgot-password', [\App\Http\Controllers\Api\PasswordResetController::class, 'sendResetLink'])
     ->middleware('throttle:3,1,forgot-password');
 Route::post('/auth/reset-password', [\App\Http\Controllers\Api\PasswordResetController::class, 'reset'])
