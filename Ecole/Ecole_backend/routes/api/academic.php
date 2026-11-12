@@ -59,7 +59,9 @@ Route::middleware('auth:sanctum')->group(function () {
         // surveillance (appel) et le censorat (discipline) ont chacun une page
         // qui part de la liste des élèves : la leur refuser rendait ces pages
         // inutilisables (audit BUG-003, BUG-006).
-        Route::get('/', [EleveController::class, 'index'])->middleware('role:directeur,enseignant,secretaire,comptable,surveillant,censeur');
+        // L'infirmerie et la bibliothèque choisissent un élève dans leurs
+        // formulaires (consultation, prêt) : la liste leur est ouverte en lecture.
+        Route::get('/', [EleveController::class, 'index'])->middleware('role:directeur,enseignant,secretaire,comptable,surveillant,censeur,infirmier,bibliothecaire');
         // L'inscription est le travail du secrétariat (ElevePolicy::create).
         Route::post('/store', [EleveController::class, 'store'])->middleware('role:directeur,secretaire');
         Route::get('/{id}/fiche', [EleveController::class, 'fiche']); // ElevePolicy::view

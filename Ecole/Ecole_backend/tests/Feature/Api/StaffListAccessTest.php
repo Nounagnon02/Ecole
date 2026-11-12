@@ -22,11 +22,11 @@ function membre(string $role): User
 
 it('ouvre la liste des élèves au personnel dont une page en dépend', function (string $role) {
     $this->actingAs(membre($role))->getJson('/api/eleves')->assertOk();
-})->with(['secretaire', 'comptable', 'surveillant', 'censeur', 'enseignant']);
+})->with(['secretaire', 'comptable', 'surveillant', 'censeur', 'enseignant', 'infirmier', 'bibliothecaire']);
 
 it('garde la liste des élèves fermée aux autres rôles', function (string $role) {
     $this->actingAs(membre($role))->getJson('/api/eleves')->assertForbidden();
-})->with(['parent', 'eleve', 'infirmier', 'bibliothecaire']);
+})->with(['parent', 'eleve']);
 
 it('ouvre au censeur les incidents, les absences et les statistiques de vie scolaire', function (string $chemin) {
     $this->actingAs(membre('censeur'))->getJson($chemin)->assertOk();
