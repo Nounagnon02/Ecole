@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Support\BeninPhone;
+
 use App\Models\Ecole;
 use App\Models\Eleve;
 use App\Models\Enseignant;
@@ -26,8 +28,16 @@ class AuthService
     {
         // Parenthèses explicites : sans le groupement, un `orWhere` se
         // combinerait mal avec toute condition ajoutée par la suite.
-        $user = User::where(function ($q) use ($login) {
+        // Un numéro béninois, saisi sous n'importe quelle forme (01 97…,
+        // +229…, ancien numéro à 8 chiffres), retrouve le compte : c'est
+        // l'identifiant des parents et du personnel inscrits par l'école.
+        $variantes = BeninPhone::variantes($login);
+
+        $user = User::where(function ($q) use ($login, $variantes) {
             $q->where('email', $login)->orWhere('identifiant', $login);
+            if ($variantes) {
+                $q->orWhereIn('identifiant', $variantes)->orWhereIn('telephone', $variantes);
+            }
         })->first();
 
         if (!$user || !Hash::check($password, $user->password)) {

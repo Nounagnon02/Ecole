@@ -55,6 +55,27 @@ final class BeninPhone
         return '+'.self::COUNTRY_CODE.$digits;
     }
 
+    /**
+     * Les écritures sous lesquelles ce numéro peut être enregistré : forme
+     * internationale, locale à 10 chiffres, et ancien numéro à 8 chiffres
+     * (avec ou sans indicatif), encore présent dans des comptes anciens.
+     *
+     * @return array<int, string>
+     */
+    public static function variantes(?string $raw): array
+    {
+        $international = self::normalize($raw);
+
+        if ($international === null) {
+            return [];
+        }
+
+        $local = '0'.substr($international, -9);
+        $ancien = substr($international, -8);
+
+        return [$international, $local, $ancien, '+'.self::COUNTRY_CODE.$ancien, self::COUNTRY_CODE.$ancien];
+    }
+
     public static function isValid(?string $raw): bool
     {
         return self::normalize($raw) !== null;

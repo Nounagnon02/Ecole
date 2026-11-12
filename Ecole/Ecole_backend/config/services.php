@@ -48,6 +48,11 @@ return [
         // `temperature` retiré : rejeté avec une 400 sur les modèles courants.
     ],
 
+    // `log` : consigner sans envoyer (défaut sans clé fournisseur).
+    'sms' => [
+        'driver' => env('SMS_DRIVER'),
+    ],
+
     'africastalking' => [
         'api_key' => env('AFRICASTALKING_API_KEY'),
         'username' => env('AFRICASTALKING_USERNAME'),
