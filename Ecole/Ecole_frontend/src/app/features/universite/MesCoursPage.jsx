@@ -152,7 +152,7 @@ export default function MesCoursPage() {
                     <div
                       className={cn(
                         'h-full rounded-full transition-all',
-                        c.progression === 100 ? 'bg-emerald-500' : 'bg-[var(--accent-subtle)]0'
+                        c.progression === 100 ? 'bg-emerald-500' : 'bg-[var(--action)]'
                       )}
                       style={{ width: `${c.progression}%` }}
                     />

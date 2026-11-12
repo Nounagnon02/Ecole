@@ -317,7 +317,7 @@ export default function CommunicationsPage() {
               onClick={() => setActiveCategory(id)}
               className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all ${
                 activeCategory === id
-                  ? 'bg-[var(--accent-subtle)]0 text-white shadow-sm'
+                  ? 'bg-[var(--action)] text-white shadow-sm'
                   : 'bg-[var(--surface-subtle)] text-[var(--text-secondary)] hover:bg-[var(--surface-subtle)]   '
               }`}
             >
