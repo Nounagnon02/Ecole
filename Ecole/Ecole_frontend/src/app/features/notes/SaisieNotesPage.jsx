@@ -12,7 +12,8 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { CheckCircle, CloudOff, Loader2, Save } from 'lucide-react';
+import { CheckCircle, CloudOff, Download, FileUp, Loader2, Save } from 'lucide-react';
+import { lireFichier, lireTableurNotes, modeleGrille } from './importNotes';
 import apiClient, { useApiQuery } from '@/shared/lib/api-client';
 import { unwrapList } from '@/shared/lib/unwrap';
 import useAuthStore from '@/shared/stores/auth-store';
@@ -49,6 +50,8 @@ export default function SaisieNotesPage() {
   const [etat, setEtat] = useState('repos'); // repos | envoi | enregistre | attente | erreur
   const [message, setMessage] = useState(null);
   const champs = useRef({});
+  const fichier = useRef(null);
+  const [rapport, setRapport] = useState(null);
 
   const requeteClasses = useApiQuery(['classes-a-noter', estDirection], estDirection ? '/classes' : '/enseignant/classes');
   const classes = useMemo(() => (unwrapList(requeteClasses.data) ?? []).map((c) => ({ value: c.id, label: c.nom_classe })), [requeteClasses.data]);
@@ -103,6 +106,37 @@ export default function SaisieNotesPage() {
     });
     setEtat('attente');
     setMessage(null);
+  };
+
+  const telechargerModele = () => {
+    const url = URL.createObjectURL(new Blob(['\uFEFF' + modeleGrille(eleves, saisies)], { type: 'text/csv;charset=utf-8' }));
+    const lien = document.createElement('a');
+    lien.href = url;
+    lien.download = `notes-${grille?.classe?.nom_classe ?? 'classe'}-${evaluation.type}.csv`.replace(/[^\w.-]+/g, '_');
+    document.body.appendChild(lien);
+    lien.click();
+    lien.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  // Les notes du tableur remplissent la grille ; rien n'est enregistré sans
+  // le clic sur « Enregistrer ».
+  const importer = async (evenement) => {
+    const choisi = evenement.target.files?.[0];
+    evenement.target.value = '';
+    if (!choisi) return;
+    const resultat = lireTableurNotes(await lireFichier(choisi), eleves, lireNote);
+    setRapport({ nom: choisi.name, ...resultat });
+    if (resultat.lues > 0) {
+      setSaisies((precedent) => {
+        const suivant = { ...precedent };
+        Object.entries(resultat.saisies).forEach(([id, note]) => { if (!enregistrees[id]?.locked) suivant[id] = note; });
+        ecrire(cle, suivant);
+        return suivant;
+      });
+      setEtat('attente');
+      setMessage(null);
+    }
   };
 
   const allerA = (index) => { const cible = champs.current[eleves[index]?.id]; if (cible) { cible.focus(); cible.select?.(); } };
@@ -187,6 +221,23 @@ export default function SaisieNotesPage() {
             <p className="py-8 text-center text-sm text-[var(--text-secondary)]">{p('aucun_eleve')}</p>
           ) : (
             <>
+              <div className="mb-4 flex flex-col gap-2 sm:flex-row">
+                <Button variant="outline" size="sm" icon={<Download size={16} />} onClick={telechargerModele}>{p('modele')}</Button>
+                <Button variant="outline" size="sm" icon={<FileUp size={16} />} onClick={() => fichier.current?.click()}>{p('importer')}</Button>
+                <input ref={fichier} type="file" accept=".csv,text/csv" className="sr-only" aria-label={p('fichier')} onChange={importer} />
+              </div>
+              {rapport && (
+                <div role={rapport.erreurs.length ? 'alert' : 'status'} className="mb-4 rounded-md border border-[var(--border)] bg-[var(--surface-subtle)] p-3 text-sm">
+                  <p className="text-[var(--text-primary)]">{p('import_lu', { nom: rapport.nom, nombre: rapport.lues })}</p>
+                  {rapport.erreurs.length > 0 && (
+                    <ul className="mt-2 list-disc space-y-1 pl-5 text-[var(--error)]">
+                      {rapport.erreurs.map((e) => (
+                        <li key={`${e.ligne}-${e.message}`}>{p(`import_erreur_${e.message}`, { ligne: e.ligne, valeur: e.valeur ?? '' })}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <caption className="sr-only">{p('title')}</caption>

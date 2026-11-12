@@ -1348,7 +1348,15 @@
         "enregistre": "تم حفظ العلامات.",
         "enregistrer": "حفظ العلامات",
         "hors_ligne": "لا يوجد اتصال. علاماتك محفوظة على هذا الجهاز وستُرسل عند عودة الشبكة.",
-        "echec": "تعذّر حفظ العلامات."
+        "echec": "تعذّر حفظ العلامات.",
+        "modele": "تنزيل الشبكة (جدول)",
+        "importer": "استيراد جدول",
+        "fichier": "جدول العلامات للاستيراد",
+        "import_lu": "{nom}: نُقلت {nombre} علامة إلى الشبكة. راجعها ثم احفظ.",
+        "import_erreur_colonnes": "السطر {ligne}: يلزم عمود « matricule » وعمود « note ».",
+        "import_erreur_inconnu": "السطر {ligne}: رقم التسجيل « {valeur} » غير موجود في هذا القسم.",
+        "import_erreur_doublon": "السطر {ligne}: رقم التسجيل « {valeur} » مكرر.",
+        "import_erreur_note": "السطر {ligne}: « {valeur} » ليست علامة بين 0 و20."
       }
     },
     "paiements": {

@@ -168,3 +168,62 @@ describe('grille de saisie', () => {
     expect(getRoleNavigation('parent').map((e) => e.path)).not.toContain('/notes/saisie');
   });
 });
+
+describe('import d’un tableur de notes', () => {
+  const importer = (contenu) => fireEvent.change(screen.getByLabelText(/Tableur de notes à importer/), {
+    target: { files: [new File([contenu], 'notes.csv', { type: 'text/csv' })] },
+  });
+
+  it('reporte les notes dans la grille sans rien enregistrer, et liste les lignes refusées', async () => {
+    await ouvrir();
+
+    importer('﻿matricule;nom;note\r\nB1;AGBO;12,5\r\nb3;KPADE;8\r\nB9;INCONNU;10\r\nB2;DOSSOU;24\r\nB1;AGBO;13\r\n');
+
+    expect(await screen.findByText(/notes\.csv : 2 note\(s\) reportée\(s\)/)).toBeInTheDocument();
+    expect(champ('AGBO Luc')).toHaveValue('12,5');
+    expect(champ('KPADE Rita')).toHaveValue('8');
+    expect(champ('DOSSOU Afi')).toHaveValue('');
+    const rapport = screen.getByRole('alert');
+    expect(rapport).toHaveTextContent('Ligne 4 : matricule « B9 » absent de cette classe.');
+    expect(rapport).toHaveTextContent('Ligne 5 : « 24 » n’est pas une note entre 0 et 20.');
+    expect(rapport).toHaveTextContent('Ligne 6 : le matricule « B1 » apparaît deux fois.');
+    expect(envois()).toHaveLength(0);
+  });
+
+  it('accepte un séparateur virgule et refuse un fichier sans colonne note', async () => {
+    await ouvrir();
+
+    importer('Matricule,Note\nB2,15.5\n');
+    expect(await screen.findByText(/1 note\(s\) reportée\(s\)/)).toBeInTheDocument();
+    expect(champ('DOSSOU Afi')).toHaveValue('15,5');
+
+    importer('matricule;nom\nB1;AGBO\n');
+    expect(await screen.findByText(/il faut une colonne « matricule » et une colonne « note »/)).toBeInTheDocument();
+  });
+
+  it('ne touche pas une note verrouillée', async () => {
+    http.onGet('/notes/grille/4').reply(200, grille([{ id: 10, eleve_id: 2, note: 7, note_sur: 20, locked: true }]));
+    await ouvrir();
+    await waitFor(() => expect(champ('DOSSOU Afi')).toHaveValue('7'));
+
+    importer('matricule;note\nB2;18\n');
+
+    await screen.findByText(/reportée\(s\)/);
+    expect(champ('DOSSOU Afi')).toHaveValue('7');
+  });
+
+  it('fournit la grille de la classe comme tableur à remplir', async () => {
+    const contenus = [];
+    const noms = [];
+    const BlobOrigine = globalThis.Blob;
+    vi.spyOn(globalThis, 'Blob').mockImplementation(function B(parts, opts) { contenus.push(parts.join('')); return new BlobOrigine(parts, opts); });
+    URL.createObjectURL = vi.fn(() => 'blob:x'); URL.revokeObjectURL = vi.fn();
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function clic() { noms.push(this.download); });
+    await ouvrir();
+
+    fireEvent.click(screen.getByRole('button', { name: /Télécharger la grille/ }));
+
+    expect(noms[0]).toMatch(/^notes-6/);
+    expect(contenus[0].replace('﻿', '').split('\r\n')).toEqual(['matricule;nom;prenom;note', 'B1;AGBO;Luc;', 'B2;DOSSOU;Afi;', 'B3;KPADE;Rita;']);
+  });
+});
