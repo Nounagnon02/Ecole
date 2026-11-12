@@ -14,6 +14,7 @@ import { cn } from '@/shared/lib/utils';
 import { useApiQuery, useApiMutation, api } from '@/shared/lib/api-client';
 import { unwrapList } from '@/shared/lib/unwrap';
 import useAuthStore from '@/shared/stores/auth-store';
+import { useNavigate } from 'react-router-dom';
 import { ROLE_GROUPS } from '@/shared/types/roles';
 import StatsCard from '@/shared/components/ui/StatsCard';
 import Card from '@/shared/components/ui/Card';
@@ -26,6 +27,7 @@ import { useTranslation } from '@/shared/i18n';
 
 export default function NotesPage() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [filterMatiere, setFilterMatiere] = useState('');
   const [filterClasse, setFilterClasse] = useState('');
@@ -201,7 +203,9 @@ export default function NotesPage() {
             {t('common.export')}
           </Button>
           <Button variant="outline" size="sm" icon={<Download />}>{t('pages.notes.notes.importer')}</Button>
-          <Button size="sm" icon={<Plus />}>{t('pages.notes.notes.nouvelle_note')}</Button>
+          {peutVerrouiller && (
+            <Button size="sm" icon={<Plus />} onClick={() => navigate('/notes/saisie')}>{t('pages.notes.notes.nouvelle_note')}</Button>
+          )}
         </div>
       </div>
 
