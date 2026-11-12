@@ -131,6 +131,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('surveillant')->middleware('role:directeur,surveillant,censeur')->group(function () {
         Route::get('/absences', [SurveillantController::class, 'absences']);
         Route::post('/absences', [SurveillantController::class, 'storeAbsence']);
+        Route::patch('/absences/{id}', [SurveillantController::class, 'justifierAbsence']);
+        // Appel d'une classe : feuille du jour, puis enregistrement rejouable.
+        Route::get('/appel/{classeId}', [SurveillantController::class, 'feuilleAppel']);
+        Route::post('/appel', [SurveillantController::class, 'enregistrerAppel']);
     });
 
     // ============ IMPORTS DE DONNÉES ============
@@ -205,6 +209,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/incidents', [SurveillantController::class, 'storeIncident']);
         Route::get('/sanctions', [SurveillantController::class, 'sanctions']);
         Route::post('/sanctions', [SurveillantController::class, 'storeSanction']);
+        Route::patch('/incidents/{id}', [SurveillantController::class, 'majIncident']);
+        Route::patch('/sanctions/{id}', [SurveillantController::class, 'majSanction']);
         Route::get('/statistiques', [SurveillantController::class, 'statistiques']);
     });
 });
