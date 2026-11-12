@@ -1235,6 +1235,27 @@
         "disponible": "متاح",
         "donnees_chargees_depuis_l_api": "بيانات محمّلة من الواجهة البرمجية",
         "mode_demo_api_indisponible": "الوضع التجريبي (الواجهة البرمجية غير متاحة)"
+      },
+      "edition": {
+        "classe": "القسم",
+        "toutes_les_classes": "كل الأقسام",
+        "aucun_cours": "لا توجد حصص.",
+        "ajouter": "إضافة حصة",
+        "modifier": "تعديل الحصة",
+        "modifier_cours": "تعديل حصة {matiere}",
+        "supprimer_cours": "حذف حصة {matiere}",
+        "confirmer_suppression": "حذف حصة {matiere} يوم {jour} على الساعة {heure}؟",
+        "matiere": "المادة",
+        "enseignant": "المدرس",
+        "jour": "اليوم",
+        "debut": "البداية",
+        "fin": "النهاية",
+        "salle": "القاعة (اختياري)",
+        "choisir": "اختر",
+        "requis": "حقل إلزامي.",
+        "fin_apres_debut": "يجب أن تأتي النهاية بعد البداية.",
+        "enregistrer": "حفظ",
+        "echec": "تعذّر حفظ الحصة."
       }
     },
     "enseignant": {

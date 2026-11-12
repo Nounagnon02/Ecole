@@ -1235,6 +1235,27 @@
         "disponible": "Available",
         "donnees_chargees_depuis_l_api": "Data loaded from the API",
         "mode_demo_api_indisponible": "Demo mode (API unavailable)"
+      },
+      "edition": {
+        "classe": "Class",
+        "toutes_les_classes": "All classes",
+        "aucun_cours": "No course.",
+        "ajouter": "Add a course",
+        "modifier": "Edit the course",
+        "modifier_cours": "Edit the {matiere} course",
+        "supprimer_cours": "Delete the {matiere} course",
+        "confirmer_suppression": "Delete the {matiere} course on {jour} at {heure}?",
+        "matiere": "Subject",
+        "enseignant": "Teacher",
+        "jour": "Day",
+        "debut": "Start",
+        "fin": "End",
+        "salle": "Room (optional)",
+        "choisir": "Choose",
+        "requis": "Required field.",
+        "fin_apres_debut": "The end must come after the start.",
+        "enregistrer": "Save",
+        "echec": "The course could not be saved."
       }
     },
     "enseignant": {

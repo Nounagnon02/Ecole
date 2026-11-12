@@ -1235,6 +1235,27 @@
         "disponible": "Disponible",
         "donnees_chargees_depuis_l_api": "Données chargées depuis l'API",
         "mode_demo_api_indisponible": "Mode démo (API indisponible)"
+      },
+      "edition": {
+        "classe": "Classe",
+        "toutes_les_classes": "Toutes les classes",
+        "aucun_cours": "Aucun cours.",
+        "ajouter": "Ajouter un cours",
+        "modifier": "Modifier le cours",
+        "modifier_cours": "Modifier le cours de {matiere}",
+        "supprimer_cours": "Supprimer le cours de {matiere}",
+        "confirmer_suppression": "Supprimer le cours de {matiere} du {jour} à {heure} ?",
+        "matiere": "Matière",
+        "enseignant": "Enseignant",
+        "jour": "Jour",
+        "debut": "Début",
+        "fin": "Fin",
+        "salle": "Salle (facultatif)",
+        "choisir": "Choisir",
+        "requis": "Champ obligatoire.",
+        "fin_apres_debut": "La fin doit suivre le début.",
+        "enregistrer": "Enregistrer",
+        "echec": "Le cours n’a pas pu être enregistré."
       }
     },
     "enseignant": {
