@@ -198,6 +198,63 @@ class ComptableController extends Controller
      * `paiements.reference` est unique par école depuis que les identifiants
      * émis par l'établissement ont été sortis de l'unicité plateforme.
      */
+    /**
+     * Créer une échéance due (frais d'inscription, tranche de scolarité…)
+     * pour un élève, ou pour chaque élève inscrit d'une classe.
+     *
+     * Le comptable ne pouvait enregistrer qu'une ligne déjà soldée
+     * (`storePaiement`) : rien ne permettait de dire ce qu'une famille doit,
+     * donc ni le parent ni le guichet n'avaient d'échéance à régler. Un élève
+     * qui a déjà une échéance du même libellé n'en reçoit pas une seconde.
+     */
+    public function storeEcheances(Request $request)
+    {
+        $donnees = $request->validate([
+            'eleve_id' => 'required_without:classe_id|nullable|school_exists:eleves,id',
+            'classe_id' => 'required_without:eleve_id|nullable|school_exists:classes,id',
+            'type_paiement' => 'required|string|max:255',
+            'montant_total' => 'required|numeric|min:1',
+            'date_paiement' => 'required|date',
+        ]);
+
+        $eleves = isset($donnees['eleve_id'])
+            ? Eleve::whereKey($donnees['eleve_id'])->get()
+            : Eleve::where('classe_id', $donnees['classe_id'])->where('statut', '!=', 'inactive')->get();
+
+        $crees = 0;
+        $dejaFacturees = 0;
+
+        DB::transaction(function () use ($eleves, $donnees, &$crees, &$dejaFacturees) {
+            foreach ($eleves as $eleve) {
+                if (PaiementEleve::where('eleve_id', $eleve->id)->where('type_paiement', $donnees['type_paiement'])->exists()) {
+                    $dejaFacturees++;
+
+                    continue;
+                }
+
+                PaiementEleve::create([
+                    'eleve_id' => $eleve->id,
+                    'parents_id' => $eleve->responsibleParent()?->id,
+                    'type_paiement' => $donnees['type_paiement'],
+                    'montant' => 0,
+                    'montant_total' => $donnees['montant_total'],
+                    'montant_paye' => 0,
+                    'montant_restant' => $donnees['montant_total'],
+                    'statut_global' => PaiementEleve::PENDING,
+                    // Colonne obligatoire ; le mode réel est noté à l'encaissement.
+                    'mode_paiement' => 'ESPECES',
+                    'date_paiement' => $donnees['date_paiement'],
+                    'reference' => Reglement::nouvelleReference(),
+                ]);
+                $crees++;
+            }
+        });
+
+        \Cache::forget('dashboard_directeur_'.(auth()->user()->ecole_id ?? 'global'));
+
+        return response()->json(['success' => true, 'crees' => $crees, 'deja_facturees' => $dejaFacturees], $crees > 0 ? 201 : 200);
+    }
+
     public function storeBourse(StoreBourseRequest $request)
     {
         return Bourse::create($request->validated());

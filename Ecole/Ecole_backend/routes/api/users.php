@@ -113,6 +113,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/finances', [ComptableController::class, 'finances']);
         Route::get('/bourses', [ComptableController::class, 'bourses']);
         Route::post('/paiements', [ComptableController::class, 'storePaiement']);
+        // Échéances dues : un élève, ou toute une classe.
+        Route::post('/echeances', [ComptableController::class, 'storeEcheances']);
         Route::post('/bourses', [ComptableController::class, 'storeBourse']);
         Route::get('/depenses', [ComptableController::class, 'depenses']);
         Route::post('/depenses', [ComptableController::class, 'storeDepense']);
