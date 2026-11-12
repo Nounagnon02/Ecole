@@ -6,11 +6,14 @@
  */
 
 import { useState, useMemo } from 'react';
-import { useApiQuery } from '@/shared/lib/api-client';
+import apiClient, { useApiQuery } from '@/shared/lib/api-client';
+import { useNavigate } from 'react-router-dom';
+import FormDialog from '@/shared/components/ui/FormDialog';
+import CertificatsSection from './CertificatsSection';
 import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
-  FileText, FolderOpen, Search, Plus, Download, Eye,
+  FileText, FolderOpen, Search, Plus,
   CheckCircle, FileSpreadsheet, File, Loader2, AlertCircle
 } from 'lucide-react';
 import { cn, formatDate } from '@/shared/lib/utils';
@@ -41,6 +44,13 @@ export default function DocumentsPage() {
   // tout (cf. audit P4.1). `unwrapList` traverse les trois formes
   // d'enveloppe que renvoient les contrôleurs.
   const requete = useApiQuery(['secretaire-courriers'], '/secretaire/courriers');
+  const navigate = useNavigate();
+  const [nouveau, setNouveau] = useState(false);
+  const c = (cle) => t(`pages.secretaire.courrier.${cle}`);
+  const enregistrerCourrier = async (v) => {
+    await apiClient.post('/secretaire/courriers', v);
+    requete.refetch();
+  };
 
   const documents = useMemo(() => unwrapList(requete.data) ?? [], [requete.data]);
   const loading = requete.isPending;
@@ -100,10 +110,25 @@ export default function DocumentsPage() {
           <p className="text-sm text-[var(--text-secondary)]">{t('pages.secretaire.documents.subtitle')}</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" icon={<FolderOpen />}>{t('pages.secretaire.documents.dossiers')}</Button>
-          <Button size="sm" icon={<Plus />}>{t('pages.secretaire.documents.nouveau_courrier')}</Button>
+          <Button variant="outline" size="sm" icon={<FolderOpen />} onClick={() => navigate('/secretaire/inscriptions')}>{t('pages.secretaire.documents.dossiers')}</Button>
+          <Button size="sm" icon={<Plus />} onClick={() => setNouveau(true)}>{t('pages.secretaire.documents.nouveau_courrier')}</Button>
         </div>
       </div>
+      <FormDialog
+        open={nouveau}
+        title={t('pages.secretaire.documents.nouveau_courrier')}
+        initial={{ type: 'entrant', date_reception: new Date().toISOString().slice(0, 10) }}
+        fields={[
+          { name: 'type', label: c('sens'), type: 'select', options: [{ value: 'entrant', label: t('pages.secretaire.documents.entrant') }, { value: 'sortant', label: t('pages.secretaire.documents.sortant') }], required: true },
+          { name: 'date_reception', label: c('date'), type: 'date', required: true },
+          { name: 'expediteur', label: t('pages.secretaire.documents.expediteur'), required: true },
+          { name: 'destinataire', label: t('pages.secretaire.documents.destinataire'), required: true },
+          { name: 'objet', label: c('objet'), required: true },
+          { name: 'observation', label: c('observation'), type: 'textarea' },
+        ]}
+        onSubmit={enregistrerCourrier}
+        onClose={() => setNouveau(false)}
+      />
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-3">
@@ -188,10 +213,7 @@ export default function DocumentsPage() {
                     </span>
                   </td>
                   <td className="py-3 text-right">
-                    <div className="flex justify-end gap-1">
-                      <Button variant="ghost" size="sm" icon={<Eye />} title={t('common.view')} />
-                      <Button variant="ghost" size="sm" icon={<Download />} title={t('pages.secretaire.documents.telecharger')} />
-                    </div>
+                    <span className="font-mono text-xs text-[var(--text-secondary)]">{doc.reference}</span>
                   </td>
                 </tr>
               ))}
@@ -199,6 +221,7 @@ export default function DocumentsPage() {
           </table>
         </div>
       </Card>
+      <CertificatsSection />
     </motion.div>
   );
 }
