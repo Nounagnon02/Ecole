@@ -134,3 +134,9 @@
    absolue (légende `sr-only`, « Actions ») se plaçaient hors du conteneur et
    élargissaient la page à 360 px. Le conteneur devient leur repère. */
 .overflow-x-auto:has(> table) { position: relative; }
+
+/* Pages publiques (connexion, mot de passe oublié, 404) : hors de la coque,
+   aucune règle de focus ne s'y appliquait, et l'anneau des boutons y était
+   annulé — le bouton « Se connecter » ne montrait aucun focus au clavier.
+   Hors couche pour passer devant `focus-visible:outline-none`. */
+body:not(:has(.ecole-main)) :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
