@@ -951,6 +951,21 @@
         "aucun_emprunt_trouve": "No loan found",
         "marquer_retour": "Mark as returned",
         "ouvrage": "Book"
+      },
+      "pret": {
+        "titre": "Lend a book",
+        "preter": "Lend",
+        "livre": "Book",
+        "eleve": "Pupil",
+        "date_emprunt": "Loan date",
+        "date_retour": "Due back on"
+      },
+      "ouvrage": {
+        "titre": "Title",
+        "auteur": "Author",
+        "categorie": "Category",
+        "annee": "Publication year",
+        "exemplaires": "Number of copies"
       }
     },
     "censeur": {

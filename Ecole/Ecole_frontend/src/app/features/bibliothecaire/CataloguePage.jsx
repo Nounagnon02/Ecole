@@ -6,12 +6,14 @@
  */
 
 import { useState, useMemo } from 'react';
-import { useApiQuery } from '@/shared/lib/api-client';
+import apiClient, { useApiQuery } from '@/shared/lib/api-client';
+import FormDialog from '@/shared/components/ui/FormDialog';
+import PretDialog from './PretDialog';
 import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
   BookOpen, Plus, Search, BookMarked, Book, BookX,
-  Eye, Loader2, AlertCircle,
+  Loader2, AlertCircle,
 } from 'lucide-react';
 import { cn } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
@@ -32,6 +34,16 @@ export default function CataloguePage() {
   // tout (cf. audit P4.1). `unwrapList` traverse les trois formes
   // d'enveloppe que renvoient les contrôleurs.
   const requete = useApiQuery(['bibliothecaire-livres'], '/bibliothecaire/livres');
+  const [ajout, setAjout] = useState(false);
+  const [pretLivre, setPretLivre] = useState(null);
+  const f = (cle) => t(`pages.bibliothecaire.ouvrage.${cle}`);
+  const ajouter = async (v) => {
+    await apiClient.post('/bibliothecaire/livres', v);
+    requete.refetch();
+  };
+  // Exemplaires encore en rayon : `disponible` seul disait « épuisé » dès le
+  // premier prêt d'un titre possédé en plusieurs exemplaires.
+  const enRayon = (o) => o.exemplaires_disponibles ?? (o.disponible ? 1 : 0);
 
   const ouvrages = useMemo(() => unwrapList(requete.data) ?? [], [requete.data]);
   const loading = requete.isPending;
@@ -39,8 +51,8 @@ export default function CataloguePage() {
 
   const stats = useMemo(() => ({
     total: ouvrages.length,
-    disponibles: ouvrages.filter((o) => o.disponible).length,
-    empruntes: ouvrages.filter((o) => !o.disponible).length,
+    disponibles: ouvrages.filter((o) => (o.exemplaires_disponibles ?? (o.disponible ? 1 : 0)) > 0).length,
+    empruntes: ouvrages.filter((o) => (o.exemplaires_disponibles ?? (o.disponible ? 1 : 0)) === 0).length,
     categories: new Set(ouvrages.map((o) => o.categorie)).size,
   }), [ouvrages]);
 
@@ -83,7 +95,23 @@ export default function CataloguePage() {
           <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.bibliothecaire.catalogue.title')}</h1>
           <p className="text-sm text-[var(--text-secondary)]">{t('pages.bibliothecaire.catalogue.subtitle')}</p>
         </div>
-        <Button size="sm" icon={<Plus />}>{t('pages.bibliothecaire.catalogue.ajouter_un_ouvrage')}</Button>
+        <Button size="sm" icon={<Plus />} onClick={() => setAjout(true)}>{t('pages.bibliothecaire.catalogue.ajouter_un_ouvrage')}</Button>
+        <PretDialog open={pretLivre !== null} livreId={pretLivre} onClose={() => setPretLivre(null)} onDone={() => requete.refetch()} />
+        <FormDialog
+          open={ajout}
+          title={t('pages.bibliothecaire.catalogue.ajouter_un_ouvrage')}
+          initial={{ nombre_exemplaires: '1' }}
+          fields={[
+            { name: 'titre', label: f('titre'), required: true },
+            { name: 'auteur', label: f('auteur'), required: true },
+            { name: 'isbn', label: 'ISBN', required: true },
+            { name: 'categorie', label: f('categorie'), required: true },
+            { name: 'annee_publication', label: f('annee'), type: 'number', required: true, min: 1450, max: new Date().getFullYear() },
+            { name: 'nombre_exemplaires', label: f('exemplaires'), type: 'number', min: 1 },
+          ]}
+          onSubmit={ajouter}
+          onClose={() => setAjout(false)}
+        />
       </div>
 
       {/* Stats */}
@@ -153,16 +181,15 @@ export default function CataloguePage() {
             <div className="flex items-center justify-between text-xs">
               <span className={cn(
                 'font-medium',
-                o.disponible ? 'text-emerald-600' : 'text-red-600'
+                enRayon(o) > 0 ? 'text-emerald-600' : 'text-red-600'
               )}>
-                {o.disponible ? t('pages.bibliothecaire.catalogue.disponible') : t('pages.bibliothecaire.catalogue.epuise')}
-                {o.nombre_exemplaires ? ` (${o.nombre_exemplaires} ex.)` : ''}
+                {enRayon(o) > 0 ? t('pages.bibliothecaire.catalogue.disponible') : t('pages.bibliothecaire.catalogue.epuise')}
+                {o.nombre_exemplaires ? ` (${enRayon(o)}/${o.nombre_exemplaires} ex.)` : ''}
               </span>
               {o.isbn && <span className="text-[var(--text-tertiary)]">ISBN: {o.isbn.slice(-8)}</span>}
             </div>
             <div className="mt-3 pt-3 border-t border-[var(--border-light)]  flex gap-2">
-              <Button variant="outline" size="sm" icon={<Eye />}>{t('common.details')}</Button>
-              <Button variant="ghost" size="sm" disabled={!o.disponible}>
+              <Button variant="outline" size="sm" disabled={enRayon(o) === 0} onClick={() => setPretLivre(o.id)}>
                 {t('pages.bibliothecaire.catalogue.emprunter')}
               </Button>
             </div>

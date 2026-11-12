@@ -73,7 +73,7 @@ const PAGES = [
     nom: 'EmpruntsPage',
     Composant: EmpruntsPage,
     url: '/bibliothecaire/emprunts',
-    element: { id: 1, livre: { titre: 'Les Misérables' }, eleve: { nom: 'Chabi', prenom: 'Awa' }, date_emprunt: '2026-09-01', statut: 'en_cours' },
+    element: { id: 1, livre: { titre: 'Les Misérables' }, eleve: { user: { name: 'Chabi', prenom: 'Awa' } }, date_emprunt: '2026-09-01', statut: 'en_cours' },
     attendu: 'Les Misérables',
     vide: /aucun emprunt trouvé/i,
   },

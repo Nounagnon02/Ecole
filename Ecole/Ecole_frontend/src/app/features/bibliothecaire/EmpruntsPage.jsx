@@ -6,7 +6,8 @@
  */
 
 import { useState, useMemo } from 'react';
-import { useApiQuery } from '@/shared/lib/api-client';
+import apiClient, { useApiQuery } from '@/shared/lib/api-client';
+import PretDialog from './PretDialog';
 import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
@@ -48,6 +49,17 @@ export default function EmpruntsPage() {
   // tout (cf. audit P4.1). `unwrapList` traverse les trois formes
   // d'enveloppe que renvoient les contrôleurs.
   const requete = useApiQuery(['bibliothecaire-emprunts'], '/bibliothecaire/emprunts');
+  const [pret, setPret] = useState(false);
+  const [erreurRetour, setErreurRetour] = useState(null);
+  const retour = async (emprunt) => {
+    setErreurRetour(null);
+    try {
+      await apiClient.put(`/bibliothecaire/emprunts/${emprunt.id}/retour`);
+      requete.refetch();
+    } catch (err) {
+      setErreurRetour(err?.message ?? t('common.erreur_enregistrement'));
+    }
+  };
 
   const emprunts = useMemo(() => unwrapList(requete.data) ?? [], [requete.data]);
   const loading = requete.isPending;
@@ -73,7 +85,7 @@ export default function EmpruntsPage() {
     return emprunts.filter((e) => {
       const q = search.toLowerCase();
       if (search) {
-        const eleve = `${e.eleve?.prenom || ''} ${e.eleve?.nom || ''}`;
+        const eleve = `${e.eleve?.user?.prenom || ''} ${e.eleve?.user?.name || ''}`;
         const livre = e.livre?.titre || '';
         if (!eleve.toLowerCase().includes(q) && !livre.toLowerCase().includes(q)) return false;
       }
@@ -123,8 +135,11 @@ export default function EmpruntsPage() {
           <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.bibliothecaire.emprunts.title')}</h1>
           <p className="text-sm text-[var(--text-secondary)]">{t('pages.bibliothecaire.emprunts.subtitle')}</p>
         </div>
-        <Button size="sm" icon={<Plus />}>{t('pages.bibliothecaire.emprunts.nouvel_emprunt')}</Button>
+        <Button size="sm" icon={<Plus />} onClick={() => setPret(true)}>{t('pages.bibliothecaire.emprunts.nouvel_emprunt')}</Button>
+        <PretDialog open={pret} onClose={() => setPret(false)} onDone={() => requete.refetch()} />
       </div>
+
+      {erreurRetour && <p role="alert" className="text-sm text-[var(--error)]">{erreurRetour}</p>}
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-4">
@@ -205,7 +220,7 @@ export default function EmpruntsPage() {
                   <div className="mt-1 flex flex-wrap items-center gap-4 text-xs text-[var(--text-secondary)]">
                     <span className="flex items-center gap-1">
                       <User className="h-3 w-3" />
-                      {e.eleve?.prenom} {e.eleve?.nom} · {e.eleve?.classe?.nom_classe || '—'}
+                      {e.eleve?.user?.prenom} {e.eleve?.user?.name} · {e.eleve?.classe?.nom_classe || '—'}
                     </span>
                     <span className="flex items-center gap-1">
                       <ArrowRight className="h-3 w-3" />
@@ -233,9 +248,8 @@ export default function EmpruntsPage() {
                 </div>
                 <div className="flex gap-1">
                   {statut !== 'termine' && (
-                    <Button variant="outline" size="sm">{t('pages.bibliothecaire.emprunts.marquer_retour')}</Button>
+                    <Button variant="outline" size="sm" onClick={() => retour(e)}>{t('pages.bibliothecaire.emprunts.marquer_retour')}</Button>
                   )}
-                  <Button variant="ghost" size="sm">{t('common.details')}</Button>
                 </div>
               </div>
             </Card>
