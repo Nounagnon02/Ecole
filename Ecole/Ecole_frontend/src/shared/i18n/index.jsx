@@ -15,12 +15,13 @@ import fr from './locales/fr.json';
 
 /* ─── Ressources ─────────────────────────────────────────────────── */
 // Seul le français (langue par défaut et de repli) est dans le premier
-// chargement. L'anglais et l'arabe — 45 Ko compressés — arrivent quand on
-// les choisit : en 3G lente, ils retardaient le formulaire de connexion.
+// chargement. L'anglais arrive quand on le choisit : en 3G lente, il
+// retardait le formulaire de connexion. L'arabe, resté incomplet, a été
+// retiré (lot 10) ; une préférence « ar » encore mémorisée retombe sur le
+// français, comme toute langue inconnue.
 const RESOURCES = { fr };
 const CHARGEURS = {
   en: () => import('./locales/en.json'),
-  ar: () => import('./locales/ar.json'),
 };
 const CONNUES = ['fr', ...Object.keys(CHARGEURS)];
 
@@ -38,7 +39,6 @@ const STORAGE_KEY = 'ecole-locale';
 export const LOCALES = [
   { code: 'fr', label: 'Français' },
   { code: 'en', label: 'English' },
-  { code: 'ar', label: 'العربية' },
 ];
 
 function lookup(locale, key) {
@@ -117,13 +117,14 @@ export function I18nProvider({ children, initialLocale = DEFAULT_LOCALE }) {
   }, []);
 
   // `chargees` dans les dépendances : un nouveau `t` après chargement d'une langue.
-  const t =useCallback((key, params = {}) => resolve(key, locale, params), [locale, chargees]);
+  const t = useCallback((key, params = {}) => resolve(key, locale, params), [locale, chargees]);
 
-  const dir = locale === 'ar' ? 'rtl' : 'ltr';
+  // Les deux langues proposées s'écrivent de gauche à droite. `dir` est
+  // tout de même posé : une page restée en `rtl` (ancienne préférence pour
+  // l'arabe, dans le même onglet) revient ainsi à gauche à droite.
+  const dir = 'ltr';
 
-  // `lang` et `dir` suivent la locale à chaque changement ET au montage : une
-  // locale restaurée depuis le stockage (arabe après un rechargement) doit
-  // inverser la mise en page sans attendre que l'utilisateur rechoisisse.
+  // `lang` et `dir` suivent la locale à chaque changement ET au montage.
   useEffect(() => {
     document.documentElement.lang = locale;
     document.documentElement.dir = dir;

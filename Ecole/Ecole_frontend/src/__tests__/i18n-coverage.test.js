@@ -9,7 +9,6 @@
 import { describe, it, expect } from 'vitest';
 import fr from '@/shared/i18n/locales/fr.json';
 import en from '@/shared/i18n/locales/en.json';
-import ar from '@/shared/i18n/locales/ar.json';
 
 function aplatir(obj, prefixe = '') {
   const out = {};
@@ -25,7 +24,7 @@ const FR = aplatir(fr);
 const params = (s) => [...String(s).matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort();
 
 describe('parité des locales', () => {
-  for (const [nom, locale] of [['en', en], ['ar', ar]]) {
+  for (const [nom, locale] of [['en', en]]) {
     const L = aplatir(locale);
 
     it(`${nom} a exactement les clés du français`, () => {
