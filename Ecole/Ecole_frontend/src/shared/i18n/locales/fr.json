@@ -2311,6 +2311,7 @@
     "no_notifications": "Aucune nouvelle notification.",
     "account": "Mon compte",
     "more": "Plus",
+    "donnees_du": "Dernières données connues : {date}.",
     "offline": "Hors connexion. Les informations affichées peuvent ne plus être à jour. Vérifiez le statut d’enregistrement avant de quitter une saisie.",
     "auth_eyebrow": "Une école, un lien commun",
     "auth_title": "La vie de l’école, au même endroit.",

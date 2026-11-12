@@ -3,15 +3,16 @@
  *
  * Stratégies :
  * - Cache-first : assets statiques (JS, CSS, images, polices)
- * - Network-first : requêtes API
+ * - Réseau seul : requêtes API (le hors-ligne passe par IndexedDB, côté client)
  * - Stale-while-revalidate : pages HTML (navigation)
  * - Cache-only : assets pré-cachés à l'install
  *
  * Diffusion des mises à jour via BroadcastChannel.
  */
 
-const CACHE_NAME = 'ecole-cache-v2';
-const API_CACHE_NAME = 'ecole-api-v2';
+// v3 : l'activation supprime les caches v2, dont `ecole-api-v2` qui gardait
+// des réponses de l'API (notes, dossiers médicaux) après la déconnexion.
+const CACHE_NAME = 'ecole-cache-v3';
 
 const STATIC_ASSETS = [
   '/',
@@ -45,7 +46,7 @@ self.addEventListener('activate', (event) => {
       const cacheNames = await caches.keys();
       await Promise.all(
         cacheNames
-          .filter((name) => name !== CACHE_NAME && name !== API_CACHE_NAME)
+          .filter((name) => name !== CACHE_NAME)
           .map((name) => caches.delete(name))
       );
 
@@ -71,9 +72,16 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Requêtes API → network-first
+  // Requêtes API → réseau seul. Le hors-ligne est le rôle du cache
+  // d'IndexedDB du client HTTP : il est vidé à la déconnexion, alors que
+  // Cache Storage gardait les réponses pour l'utilisateur suivant.
   if (url.pathname.startsWith('/api/')) {
-    event.respondWith(networkFirst(request, API_CACHE_NAME));
+    event.respondWith(
+      fetch(request).catch(() => new Response(
+        JSON.stringify({ error: 'Vous êtes hors ligne', offline: true }),
+        { status: 503, headers: { 'Content-Type': 'application/json' } },
+      )),
+    );
     return;
   }
 
@@ -125,41 +133,12 @@ async function cacheFirst(request) {
 }
 
 /**
- * Network-first : essaie le réseau, sinon cache de secours.
- * Utile pour les données fraîches avec fallback offline.
- */
-async function networkFirst(request, cacheName = CACHE_NAME) {
-  try {
-    const response = await fetch(request);
-    if (response.ok) {
-      const cache = await caches.open(cacheName);
-      // Nettoie les anciennes entrées du cache si nécessaire
-      const cloned = response.clone();
-      cache.put(request, cloned);
-    }
-    return response;
-  } catch {
-    const cached = await caches.match(request);
-    if (cached) return cached;
-
-    // Fallback JSON structuré pour les API
-    if (request.headers.get('Accept')?.includes('application/json')) {
-      return new Response(
-        JSON.stringify({ error: 'Vous êtes hors ligne', offline: true }),
-        {
-          status: 503,
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
-    }
-
-    return new Response('Vous êtes hors ligne', { status: 503 });
-  }
-}
-
-/**
  * Stale-while-revalidate : retourne le cache immédiatement,
  * puis met à jour en arrière-plan.
+ *
+ * Hors ligne, une adresse jamais visitée (`/notes`) n'a pas de copie : on
+ * rend alors la coquille de l'application (`index.html`), qui sait afficher
+ * n'importe quelle page, au lieu de l'erreur réseau du navigateur.
  */
 async function staleWhileRevalidate(request) {
   const cache = await caches.open(CACHE_NAME);
@@ -172,7 +151,10 @@ async function staleWhileRevalidate(request) {
       }
       return response;
     })
-    .catch(() => cached);
+    .catch(async () => cached
+      || (await cache.match('/index.html'))
+      || (await cache.match('/'))
+      || new Response('Vous êtes hors ligne', { status: 503 }));
 
   return cached || fetchPromise;
 }
@@ -184,7 +166,6 @@ self.addEventListener('message', (event) => {
   }
   if (event.data?.type === 'CACHE_CLEAR') {
     caches.delete(CACHE_NAME);
-    caches.delete(API_CACHE_NAME);
   }
 });
 
