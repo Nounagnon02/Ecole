@@ -9,7 +9,10 @@ import { useTranslation } from '@/shared/i18n';
 export default function BandeauReseau({ enLigne }) {
   const { t, locale } = useTranslation();
   const donneesDu = useHorsLigneStore((s) => s.donneesDu);
-  if (enLigne) return null;
+  // Le navigateur peut se croire en ligne alors que rien ne répond (réseau
+  // faible, service worker qui sert la page) : des données venues du cache
+  // suffisent à afficher le bandeau.
+  if (enLigne && !donneesDu) return null;
 
   const date = donneesDu
     ? new Date(donneesDu).toLocaleString(locale || 'fr', { dateStyle: 'short', timeStyle: 'short' })

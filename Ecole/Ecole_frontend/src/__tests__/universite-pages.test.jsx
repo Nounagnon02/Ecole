@@ -205,7 +205,7 @@ describe('PlanningPage', () => {
 
     renderPage(<PlanningPage />);
 
-    await waitFor(() => expect(screen.getByText('Network Error')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/Pas de connexion au serveur/)).toBeInTheDocument());
     expect(screen.queryByText('Aucun événement trouvé')).not.toBeInTheDocument();
   });
 
@@ -378,7 +378,7 @@ describe('TachesPage', () => {
 
     renderPage(<TachesPage />);
 
-    await waitFor(() => expect(screen.getByText('Network Error')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/Pas de connexion au serveur/)).toBeInTheDocument());
     expect(screen.queryByText('Aucune tâche trouvée')).not.toBeInTheDocument();
   });
 
@@ -565,7 +565,7 @@ describe('MesCoursPage', () => {
 
     renderPage(<MesCoursPage />);
 
-    await waitFor(() => expect(screen.getByText('Network Error')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/Pas de connexion au serveur/)).toBeInTheDocument());
     expect(screen.queryByText('Aucun cours trouvé')).not.toBeInTheDocument();
   });
 

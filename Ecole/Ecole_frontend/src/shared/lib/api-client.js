@@ -121,6 +121,8 @@ apiClient.interceptors.response.use(
           ? parseInt(response.headers['x-cache-ttl']) * 1000
           : 5 * 60 * 1000;
         await cacheSet(cleCache(response.config), response.data, ttl).catch(() => {});
+        // Le serveur répond de nouveau : les données affichées sont fraîches.
+        if (useHorsLigneStore.getState().donneesDu) useHorsLigneStore.getState().effacer();
       }
     }
     return response;
@@ -167,11 +169,15 @@ apiClient.interceptors.response.use(
       }
     }
 
-    // Lecture sans réseau → dernière réponse connue. Deux cas : le navigateur
-    // se sait hors ligne, ou il se croit en ligne mais le service worker n'a
-    // rien pu joindre (réponse 503 marquée `offline`). Une vraie panne
-    // serveur (503 sans cette marque) reste une erreur affichée.
-    const sansReseau = (!error.response && navigator.onLine === false) || error.response?.data?.offline === true;
+    // Lecture sans réseau → dernière réponse connue, datée par le bandeau.
+    // « Sans réseau » : aucune réponse (le navigateur peut se croire en ligne
+    // sur un réseau faible), une passerelle qui n'atteint pas l'API (502,
+    // 504), ou le 503 marqué `offline` du service worker. Un 503 ordinaire
+    // (maintenance) reste une erreur affichée.
+    const statut = error.response?.status;
+    const sansReseau = !error.response
+      || statut === 502 || statut === 504
+      || error.response?.data?.offline === true;
     if (sansReseau && originalRequest.method === 'get') {
       const reponse = await lectureHorsLigne(originalRequest);
       if (reponse) return reponse;
@@ -187,13 +193,23 @@ apiClient.interceptors.response.use(
     // Le champ `error` peut être un objet `{ code, message, details }` ou
     // une chaîne nue `{ error: 'message' }` — on gère les deux cas.
     const rawError = error.response?.data?.error;
+    // Sans réponse du tout, axios ne donne qu'un texte technique anglais
+    // (« Network Error », « timeout of 15000ms exceeded ») : on dit plutôt
+    // ce qui se passe et quoi faire.
+    const sansReponse = !error.response;
+    const messageSansReponse = ['ECONNABORTED', 'ETIMEDOUT'].includes(error.code)
+      ? 'Le serveur met trop de temps à répondre. Réessayez dans un instant.'
+      : originalRequest.method === 'get'
+        ? 'Pas de connexion au serveur. Cette page n’a pas encore été ouverte sur cet appareil : elle s’affichera au retour du réseau.'
+        : 'Pas de connexion au serveur. Vérifiez le réseau, puis réessayez.';
     const apiError = {
       status: error.response?.status || 0,
-      code: (typeof rawError === 'object' ? rawError?.code : null) || 'UNKNOWN_ERROR',
+      code: (typeof rawError === 'object' ? rawError?.code : null) || (sansReponse ? 'NETWORK_ERROR' : 'UNKNOWN_ERROR'),
       message:
         (typeof rawError === 'object' ? rawError?.message : null) ||
         (typeof rawError === 'string' ? rawError : null) ||
         error.response?.data?.message ||
+        (sansReponse ? messageSansReponse : null) ||
         error.message ||
         'Une erreur est survenue',
       details: (typeof rawError === 'object' ? rawError?.details : null) || [],
