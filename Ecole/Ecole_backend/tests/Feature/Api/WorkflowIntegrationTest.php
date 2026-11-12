@@ -217,7 +217,7 @@ it('secretaire routes are registered and accessible', function () {
     $response->assertStatus(501);
 });
 
-it('secretaire courrier route is registered', function () {
+it('secretaire courrier route records the mail', function () {
     $ecole = Ecole::factory()->create();
     $user = User::factory()->create(['role' => 'secretaire', 'ecole_id' => $ecole->id]);
     $this->actingAs($user);
@@ -230,7 +230,8 @@ it('secretaire courrier route is registered', function () {
         'date_reception' => now()->toDateString(),
     ]);
 
-    $response->assertStatus(501);
+    // Le registre du courrier existe désormais (table `courriers`).
+    $response->assertCreated();
 });
 
 it('secretaire visiteur route is registered', function () {
@@ -248,7 +249,7 @@ it('secretaire visiteur route is registered', function () {
     $response->assertStatus(501);
 });
 
-it('stub secretariat methods are wired and return not-implemented', function () {
+it('remaining stub secretariat methods are wired and return not-implemented', function () {
     $ecole = Ecole::factory()->create();
     $classe = Classes::factory()->create(['ecole_id' => $ecole->id]);
     $user = User::factory()->create(['role' => 'secretaire', 'ecole_id' => $ecole->id]);
@@ -262,11 +263,7 @@ it('stub secretariat methods are wired and return not-implemented', function () 
     $r1 = $this->postJson('/api/secretaire/dossiers', $payload);
     $r1->assertStatus(501);
 
-    $r2 = $this->postJson('/api/secretaire/courriers', array_merge($payload, [
-        'expediteur' => 'Mairie', 'destinataire' => 'Direction',
-        'objet' => 'Test', 'type' => 'entrant', 'date_reception' => now()->toDateString(),
-    ]));
-    $r2->assertStatus(501);
+    // Le courrier n'est plus un bouchon : voir « secretaire courrier route records the mail ».
 
     $r3 = $this->postJson('/api/secretaire/visiteurs', array_merge($payload, [
         'nom_visiteur' => 'M. X', 'motif' => 'RDV', 'heure_arrivee' => '10:00', 'date_visite' => now()->toDateString(),
