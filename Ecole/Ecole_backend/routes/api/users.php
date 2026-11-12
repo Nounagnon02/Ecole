@@ -190,6 +190,13 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ============ SECRETAIRE ============
     Route::prefix('secretaire')->middleware('role:directeur,secretaire')->group(function () {
+        // Planning de l'établissement. Les routes `/evenements` (services.php)
+        // sont réservées à la direction pour l'écriture et fermées au
+        // secrétariat en lecture : la page Planning répondait 403.
+        Route::get('/evenements', [\App\Http\Controllers\EvenementController::class, 'planning']);
+        Route::post('/evenements', [\App\Http\Controllers\EvenementController::class, 'store']);
+        Route::put('/evenements/{id}', [\App\Http\Controllers\EvenementController::class, 'update']);
+        Route::delete('/evenements/{id}', [\App\Http\Controllers\EvenementController::class, 'destroy']);
         Route::get('/dossiers-eleves', [SecretaireController::class, 'dossiersEleves']);
         Route::get('/rendez-vous', [SecretaireController::class, 'rendezVous']);
         Route::get('/certificats', [SecretaireController::class, 'certificats']);
