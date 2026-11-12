@@ -128,6 +128,18 @@ describe('grille de saisie', () => {
     expect(localStorage.length).toBe(0);
   });
 
+  it('n’annonce pas « enregistré » quand l’envoi n’est que mis en file hors-ligne', async () => {
+    http.onPost('/notes/bulk').reply(202, { queued: true, message: 'Modification mise en file d\'attente hors-ligne' });
+    await ouvrir();
+
+    taper('AGBO Luc', '12');
+    enregistrer();
+
+    expect(await screen.findByText(/Pas de connexion/)).toBeInTheDocument();
+    expect(screen.queryByText('Notes enregistrées.')).not.toBeInTheDocument();
+    expect(localStorage.length).toBe(1);
+  });
+
   it('montre le refus de l’API et garde la saisie', async () => {
     http.onPost('/notes/bulk').reply(403, { success: false, message: 'Cette matière ne vous est pas affectée dans cette classe.' });
     await ouvrir();

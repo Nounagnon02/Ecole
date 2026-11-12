@@ -128,6 +128,14 @@ export default function SaisieNotesPage() {
         type_evaluation: evaluation.type, periode: evaluation.periode, date_evaluation: evaluation.date,
         notes: aEnvoyer,
       });
+      // Hors-ligne, le client HTTP met l'envoi en file et répond « queued » :
+      // rien n'est encore enregistré. Le dire, et garder le brouillon — le
+      // renvoi au retour du réseau est sans risque, la grille se réenregistre.
+      if (data?.queued) {
+        setEtat('attente');
+        setMessage(p('hors_ligne'));
+        return;
+      }
       ecrire(cle, null);
       setEtat('enregistre');
       setMessage(data?.warnings?.length ? data.warnings.join(' ') : null);
