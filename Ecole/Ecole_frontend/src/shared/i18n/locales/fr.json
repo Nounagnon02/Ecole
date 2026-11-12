@@ -1663,6 +1663,28 @@
         "present": "Présent",
         "absent": "Absent",
         "aucune_presence_trouvee": "Aucune présence trouvée"
+      },
+      "appel": {
+        "title": "Appel",
+        "subtitle": "Choisissez la classe : chaque élève est présent par défaut, une touche le marque absent ou en retard.",
+        "classe": "Classe",
+        "choisir_classe": "Choisir une classe",
+        "date": "Jour",
+        "aucun_eleve": "Aucun élève dans cette classe.",
+        "present": "Présent",
+        "absent": "Absent",
+        "retard": "Retard",
+        "statut_de": "Présence de {nom}",
+        "compte": "{present} présent(s), {absent} absent(s), {retard} retard(s).",
+        "enregistrer": "Enregistrer l’appel",
+        "enregistre": "Appel enregistré.",
+        "en_attente": "Appel non enregistré, gardé sur cet appareil.",
+        "hors_ligne": "Pas de connexion. L’appel est gardé sur cet appareil et partira dès le retour du réseau.",
+        "echec": "L’appel n’a pas pu être enregistré.",
+        "absences_du_jour": "Absences et retards du jour",
+        "justifier": "Justifier",
+        "justifiee": "Justifiée",
+        "motif_question": "Motif de la justification (facultatif) :"
       }
     },
     "universite": {

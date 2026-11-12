@@ -1663,6 +1663,28 @@
         "present": "Present",
         "absent": "Absent",
         "aucune_presence_trouvee": "No attendance record found"
+      },
+      "appel": {
+        "title": "Roll call",
+        "subtitle": "Choose the class: each pupil is present by default, one tap marks them absent or late.",
+        "classe": "Class",
+        "choisir_classe": "Choose a class",
+        "date": "Day",
+        "aucun_eleve": "No pupil in this class.",
+        "present": "Present",
+        "absent": "Absent",
+        "retard": "Late",
+        "statut_de": "Attendance of {nom}",
+        "compte": "{present} present, {absent} absent, {retard} late.",
+        "enregistrer": "Save the roll call",
+        "enregistre": "Roll call saved.",
+        "en_attente": "Roll call not saved, kept on this device.",
+        "hors_ligne": "No connection. The roll call is kept on this device and will be sent when the network is back.",
+        "echec": "The roll call could not be saved.",
+        "absences_du_jour": "Absences and late arrivals of the day",
+        "justifier": "Justify",
+        "justifiee": "Justified",
+        "motif_question": "Reason for the justification (optional):"
       }
     },
     "universite": {
