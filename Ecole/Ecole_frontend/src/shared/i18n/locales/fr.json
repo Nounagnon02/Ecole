@@ -1104,6 +1104,20 @@
         "paiement": "Paiement",
         "partielle": "Partielle",
         "rembourse": "Remboursé"
+      },
+      "echeances": {
+        "creer": "Créer l’échéance",
+        "classe": "Pour toute une classe",
+        "classe_aide": "Chaque élève inscrit reçoit l’échéance.",
+        "eleve": "Ou pour un seul élève",
+        "eleve_aide": "Laissez la classe vide.",
+        "classe_ou_eleve": "Choisissez une classe ou un élève.",
+        "libelle": "Libellé",
+        "libelle_exemple": "Scolarité 1re tranche",
+        "montant": "Montant dû (FCFA)",
+        "date": "Date limite",
+        "crees": "{crees} échéance(s) créée(s) ; {deja} élève(s) l’avaient déjà.",
+        "recu": "Reçu"
       }
     },
     "eleve": {

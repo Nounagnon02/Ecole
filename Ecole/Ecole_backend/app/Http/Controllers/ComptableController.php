@@ -55,6 +55,7 @@ class ComptableController extends Controller
                     'motif' => $p->type_paiement ?: 'Frais de scolarité',
                     'type_paiement' => $p->type_paiement,
                     'montant' => (float) $p->montant,
+                    'montant_total' => (float) ($p->montant_total ?? 0),
                     'montant_paye' => (float) ($p->montant_paye ?? 0),
                     'montant_restant' => (float) ($p->montant_restant ?? 0),
                     'date_paiement' => $p->date_paiement?->format('Y-m-d'),
