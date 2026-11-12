@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\ScopesToCaller;
 use App\Models\Bulletin;
+use App\Models\Notes;
 use App\Services\BulletinService;
+use App\Support\AnneeScolaire;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -32,7 +34,7 @@ class BulletinsController extends Controller
         $this->restrictToCallerScope($query);
 
         $rows = $query
-            ->with(['eleve', 'classe'])
+            ->with(['eleve.user:id,name,prenom', 'classe:id,nom_classe'])
             ->orderByDesc('annee_scolaire')
             ->orderBy('periode')
             ->orderBy('rang')
@@ -55,12 +57,32 @@ class BulletinsController extends Controller
             'annee_scolaire' => 'nullable|string|regex:/^\d{4}-\d{4}$/',
         ])->validate();
 
-        $bulletins = $service->archiverClasse(
-            $validated['classe_id'],
-            $validated['periode'],
-            $validated['annee_scolaire'] ?? null
-        );
+        // Verrouiller sans calcul préalable figeait un instantané vide ou
+        // périmé, et la réponse était une liste vide sans explication. Le
+        // calcul fait donc partie du verrouillage.
+        $annee = $validated['annee_scolaire'] ?? null;
+        $service->recalculerClasseMoyennes($validated['classe_id'], $validated['periode'], $annee);
+        $bulletins = $service->archiverClasse($validated['classe_id'], $validated['periode'], $annee);
 
-        return response()->json(['success' => true, 'data' => $bulletins]);
+        if ($bulletins->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Aucune note n’est saisie pour cette classe sur cette période : il n’y a pas de bulletin à établir.',
+            ], 422);
+        }
+
+        // Les notes qui ont servi au bulletin sont figées avec lui : une
+        // correction passe désormais par un déverrouillage explicite.
+        $verrouillees = Notes::where('classe_id', $validated['classe_id'])
+            ->where('periode', $validated['periode'])
+            ->where('annee_scolaire', $annee ?? AnneeScolaire::courante())
+            ->where('locked', false)
+            ->update(['locked' => true]);
+
+        return response()->json([
+            'success' => true,
+            'data' => $bulletins->load('eleve.user:id,name,prenom'),
+            'notes_verrouillees' => $verrouillees,
+        ]);
     }
 }
