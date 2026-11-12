@@ -200,6 +200,15 @@
       "identique": "Choisissez un mot de passe différent du mot de passe provisoire.",
       "confirmation_differente": "Les deux mots de passe ne correspondent pas.",
       "echec": "Le mot de passe n’a pas pu être enregistré."
+    },
+    "codes_secours": {
+      "intro": "Double authentification activée. Voici vos codes de secours : chacun permet une connexion si vous perdez votre téléphone.",
+      "conseil": "Notez-les ou imprimez-les, et gardez-les en lieu sûr : ils ne seront plus affichés.",
+      "imprimer": "Imprimer les codes",
+      "notes": "J’ai noté mes codes",
+      "saisir": "Code de secours",
+      "utiliser": "Je n’ai pas mon téléphone : utiliser un code de secours",
+      "revenir_application": "Utiliser le code de l’application"
     }
   },
   "eleve": {

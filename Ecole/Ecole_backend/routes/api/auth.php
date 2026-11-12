@@ -35,6 +35,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/auth/2fa/setup', [TwoFactorController::class, 'showSetup'])->middleware('throttle:60,1,2fa-setup');
     Route::post('/auth/2fa/verify', [TwoFactorController::class, 'verify'])->middleware('throttle:60,1,2fa-verify');
     Route::post('/auth/2fa/disable', [TwoFactorController::class, 'disable'])->middleware('throttle:60,1,2fa-disable');
+    Route::post('/auth/2fa/codes-secours', [TwoFactorController::class, 'codesSecours'])->middleware('throttle:10,1,2fa-codes');
+    Route::post('/admin/utilisateurs/{id}/reinitialiser-2fa', [TwoFactorController::class, 'reinitialiser'])->middleware(['role:super-admin', 'throttle:10,1,2fa-reset']);
 
     // Email verification
     Route::post('/auth/send-verification-email', [AuthController::class, 'sendVerificationEmail'])->middleware('throttle:60,1,verification-email');

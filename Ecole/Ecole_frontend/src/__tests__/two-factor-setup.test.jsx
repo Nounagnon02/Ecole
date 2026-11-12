@@ -230,3 +230,22 @@ describe('écran d’activation', () => {
     expect(useAuthStore.getState().twoFactorSetupRequired).toBe(false);
   });
 });
+
+describe('codes de secours', () => {
+  it('montre les codes après activation et ne rend l’accès qu’une fois notés', async () => {
+    signIn(ROLES.DIRECTEUR);
+    useAuthStore.setState({ twoFactorSetupRequired: true });
+    http.onPost('/auth/2fa/setup').reply(200, { qr_code_url: 'otpauth://totp/x', secret: 'JBSWY3DPEHPK3PXP' });
+    http.onPost('/auth/2fa/verify').reply(200, { message: 'ok', codes_secours: ['AAAA-BBBB', 'CCCC-DDDD'] });
+    renderApp(TWO_FACTOR_SETUP_PATH);
+
+    const champ = await screen.findByLabelText(/code/i, { selector: 'input' });
+    fireEvent.change(champ, { target: { value: '123456' } });
+    fireEvent.click(screen.getByRole('button', { name: /Activer|Vérifier|Confirmer/i }));
+
+    expect(await screen.findByTestId('codes-secours')).toHaveTextContent('AAAA-BBBB');
+    expect(useAuthStore.getState().twoFactorSetupRequired).toBe(true);
+    fireEvent.click(screen.getByRole('button', { name: /J’ai noté mes codes/ }));
+    await waitFor(() => expect(useAuthStore.getState().twoFactorSetupRequired).toBe(false));
+  });
+});

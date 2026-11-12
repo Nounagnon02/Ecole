@@ -200,6 +200,15 @@
       "identique": "Choose a password different from the provisional one.",
       "confirmation_differente": "The two passwords do not match.",
       "echec": "The password could not be saved."
+    },
+    "codes_secours": {
+      "intro": "Two-factor authentication is on. Here are your recovery codes: each lets you sign in once if you lose your phone.",
+      "conseil": "Write them down or print them and keep them safe: they will not be shown again.",
+      "imprimer": "Print the codes",
+      "notes": "I have saved my codes",
+      "saisir": "Recovery code",
+      "utiliser": "I don’t have my phone: use a recovery code",
+      "revenir_application": "Use the app code"
     }
   },
   "eleve": {
