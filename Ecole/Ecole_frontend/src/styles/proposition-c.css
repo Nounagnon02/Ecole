@@ -82,8 +82,21 @@
     .ecole-auth-language { margin-block-end:16px; }
     .ecole-auth-card { padding:24px; }
   }
+  .zone-impression { display:none; }
   @media print {
     .ecole-header, .ecole-network, [data-no-print] { display:none !important; }
+    /* Bulletins : seule la zone d'impression sort, un bulletin par page. */
+    body:has(.zone-impression:not(:empty)) .ecole-main > * > *:not(.zone-impression),
+    body:has(.zone-impression:not(:empty)) [role="dialog"] { display:none !important; }
+    .zone-impression { display:block; }
+    .zone-impression { width:100%; max-width:186mm; margin:0 auto; background:white; color:#17302e; }
+    .zone-impression .bulletin-imprimable { break-after:page; break-inside:avoid; padding:10mm 0; }
+    .zone-impression table { table-layout:fixed; width:100%; }
+    .zone-impression th, .zone-impression td { background:transparent !important; }
+    html, body, .ecole-shell, .ecole-main { background:white !important; }
+  }
+  @page { size:A4; margin:12mm; }
+  @media print {
     .ecole-main { max-width:none; padding:0; }
     body { background:white; color:#17302e; }
   }
