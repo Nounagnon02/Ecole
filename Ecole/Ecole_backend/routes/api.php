@@ -17,7 +17,7 @@
 | - universite.php: Module universitaire
 | - admin.php     : Super admin — utilisateurs, configuration, logs
 | - audit.php     : Journal d'audit — consultation (directeur/admin)
-| - ia.php        : Assistant IA EduPilot (/api/v1/ia/*)
+| - ia.php        : Assistant IA EduPilot (/api/v1/ia/*), seulement si MODULE_IA=true
 |
 */
 
@@ -31,4 +31,7 @@ require __DIR__.'/api/services.php';
 require __DIR__.'/api/universite.php';
 require __DIR__.'/api/admin.php';
 require __DIR__.'/api/audit.php';
-require __DIR__.'/api/ia.php';
+// Assistant IA : hors plan, coupé sauf MODULE_IA=true (config/modules.php).
+if (config('modules.ia')) {
+    require __DIR__.'/api/ia.php';
+}
