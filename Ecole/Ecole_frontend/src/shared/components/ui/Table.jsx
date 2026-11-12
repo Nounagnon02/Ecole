@@ -7,10 +7,15 @@
 
 import { forwardRef } from 'react';
 import { cn } from '@/shared/lib/utils';
+import { useTranslation } from '@/shared/i18n';
 
-function Table({ children, className, wrapperClassName, stickyHeader = false }) {
+function Table({ children, className, wrapperClassName, stickyHeader = false, label }) {
+  const { t } = useTranslation();
+  // Zone qui défile : atteignable au clavier (flèches) et nommée, sinon un
+  // tableau trop large ne se lit qu'à la souris.
   return (
-    <div className={cn('w-full overflow-auto rounded-xl border border-[var(--border)] ', wrapperClassName)}>
+    <div role="region" aria-label={label || t('common.tableau_defilant')} tabIndex={0}
+      className={cn('w-full overflow-auto rounded-xl border border-[var(--border)]', wrapperClassName)}>
       <table className={cn('w-full caption-bottom text-sm', className)}>
         {children}
       </table>

@@ -156,7 +156,7 @@ export default function BulletinsPage() {
         ) : bulletins.length === 0 ? (
           <p className="py-8 text-center text-sm text-[var(--text-secondary)]">{estFamille ? p('aucun_famille') : p('aucun')}</p>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" role="region" aria-label={t('common.tableau_defilant')} tabIndex={0}>
             <table className="w-full text-sm">
               <caption className="sr-only">{p('title')}</caption>
               <thead>

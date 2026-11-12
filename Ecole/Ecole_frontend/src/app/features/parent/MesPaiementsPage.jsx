@@ -160,7 +160,7 @@ export default function MesPaiementsPage({ onRedirect = versPasserelle }) {
                 <p className="text-sm">{t('pages.parent.paiements.aucune_echeance')}</p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto" role="region" aria-label={t('common.tableau_defilant')} tabIndex={0}>
                 <table className="w-full text-sm">
                   <caption className="sr-only">{t('pages.parent.paiements.title')}</caption>
                   <thead>

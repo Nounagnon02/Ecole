@@ -272,7 +272,7 @@ export default function MessageriePage() {
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto" role="region" aria-label={t('pages.messagerie.messagerie.zone_conversations')} tabIndex={0}>
             {loadingConv && (
               <div className="flex items-center justify-center p-8">
                 <Loader2 className="h-6 w-6 animate-spin text-[var(--text-tertiary)]" />
@@ -336,7 +336,7 @@ export default function MessageriePage() {
                   <X className="h-4 w-4 text-[var(--text-tertiary)]" />
                 </button>
               </div>
-              <div className="flex-1 overflow-y-auto">
+              <div className="flex-1 overflow-y-auto" role="region" aria-label={t('pages.messagerie.messagerie.zone_contacts')} tabIndex={0}>
                 {loadingContacts && (
                   <div className="flex items-center justify-center p-8">
                     <Loader2 className="h-6 w-6 animate-spin text-[var(--text-tertiary)]" />
@@ -385,7 +385,8 @@ export default function MessageriePage() {
               </div>
 
               {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              {/* `log` : les lecteurs d'écran annoncent les nouveaux messages. */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-3" role="log" aria-label={t('pages.messagerie.messagerie.zone_messages')} tabIndex={0}>
                 {loadingMsg && (
                   <div className="flex items-center justify-center h-32">
                     <Loader2 className="h-6 w-6 animate-spin text-[var(--text-tertiary)]" />

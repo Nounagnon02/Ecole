@@ -238,7 +238,7 @@ export default function SaisieNotesPage() {
                   )}
                 </div>
               )}
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto" role="region" aria-label={t('common.tableau_defilant')} tabIndex={0}>
                 <table className="w-full text-sm">
                   <caption className="sr-only">{p('title')}</caption>
                   <thead>

@@ -123,7 +123,7 @@ function RepartitionPie({ data, loading }) {
         <Card.Description>{t('dashboards.directeur.distribution_par_tranche')}</Card.Description>
       </Card.Header>
       <Card.Body>
-        <div className="h-[300px]" aria-hidden="true">
+        <div className="h-[300px]" aria-hidden="true" inert="">
           {loading ? <Skeleton className="h-full w-full rounded-xl" /> : (
             <ResponsiveContainer width="100%" height="100%">
               <RePieChart>

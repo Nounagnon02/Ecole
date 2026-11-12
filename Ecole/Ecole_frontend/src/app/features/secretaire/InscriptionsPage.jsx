@@ -173,10 +173,12 @@ export default function InscriptionsPage() {
                 {/* Dossier status */}
                 <div className="mt-3 flex flex-wrap gap-2">
                   <span className={cn(
-                    'inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full',
+                    // Jetons du thème (contraste ≥ 5:1 clair et sombre) ; 12 px au
+                    // lieu de 10, illisibles sur un petit écran.
+                    'inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full',
                     ins.dossier_complet
-                      ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400'
-                      : 'bg-[var(--surface-subtle)] text-[var(--text-tertiary)]  '
+                      ? 'bg-[var(--green-subtle)] text-[var(--green)]'
+                      : 'bg-[var(--surface-subtle)] text-[var(--text-secondary)]'
                   )}>
                     {ins.dossier_complet ? <CheckCircle className="h-2.5 w-2.5" /> : <XCircle className="h-2.5 w-2.5" />}
                     {ins.dossier_complet ? t('pages.secretaire.inscriptions.dossier_complet') : t('pages.secretaire.inscriptions.dossier_incomplet')}

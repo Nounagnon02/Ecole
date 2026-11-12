@@ -157,7 +157,7 @@ export default function AuditLogPage() {
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto" role="region" aria-label={t('common.tableau_defilant')} tabIndex={0}>
               <table className="w-full text-left text-sm">
                 <thead className="border-b border-[var(--border-light)] text-xs uppercase tracking-wide text-[var(--text-tertiary)] ">
                   <tr>
