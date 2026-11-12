@@ -87,7 +87,10 @@ class EnseignantController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $user->enseignant->classes()->with('eleve.user')->get()
+            // `eleves`, pas `eleve` : la relation appelée n'existait pas et la
+            // route répondait 500 dès qu'un enseignant avait une classe. Une
+            // classe revient une fois par matière affectée : on dédoublonne.
+            'data' => $user->enseignant->classes()->with('eleves.user')->get()->unique('id')->values(),
         ]);
     }
 
