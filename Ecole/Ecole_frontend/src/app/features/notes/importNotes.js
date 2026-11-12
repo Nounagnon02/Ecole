@@ -35,7 +35,7 @@ function cellules(ligne, separateur) {
  * @returns {{ saisies: Record<number,string>, erreurs: Array<{ligne:number, message:string}>, lues: number }}
  */
 export function lireTableurNotes(texte, eleves, lireNote) {
-  const lignes = String(texte ?? '').replace(/^﻿/, '').split(/\r\n|\r|\n/);
+  const lignes = String(texte ?? '').replace(/^\uFEFF/, '').split(/\r\n|\r|\n/);
   const entete = lignes[0] ?? '';
   const separateur = (entete.match(/;/g) ?? []).length >= (entete.match(/,/g) ?? []).length ? ';' : ',';
   const colonnes = cellules(entete, separateur).map(sansAccents);

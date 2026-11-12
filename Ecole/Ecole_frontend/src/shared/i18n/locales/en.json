@@ -130,7 +130,8 @@
     "champ_obligatoire": "Required field.",
     "choisir": "Choose",
     "erreur_enregistrement": "Saving failed.",
-    "refresh": "Refresh"
+    "refresh": "Refresh",
+    "tableau_defilant": "Table (scrolls horizontally)"
   },
   "auth": {
     "login": "Log in",
@@ -2143,7 +2144,10 @@
         "boite": "Inbox",
         "favoris": "Starred",
         "archive": "Archive",
-        "aucun_message": "No message"
+        "aucun_message": "No message",
+        "zone_conversations": "Conversations",
+        "zone_contacts": "Contacts",
+        "zone_messages": "Conversation messages"
       }
     },
     "auth": {

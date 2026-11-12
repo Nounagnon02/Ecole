@@ -129,3 +129,8 @@
 :root:not(.dark) .text-teal-500, :root:not(.dark) .text-teal-600 { color:#0F766E; }
 
 
+
+/* Tableau dans un conteneur à défilement : les éléments masqués en position
+   absolue (légende `sr-only`, « Actions ») se plaçaient hors du conteneur et
+   élargissaient la page à 360 px. Le conteneur devient leur repère. */
+.overflow-x-auto:has(> table) { position: relative; }

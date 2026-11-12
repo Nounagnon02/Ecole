@@ -102,8 +102,8 @@ export default function EnfantsPage() {
         <p className="text-sm text-[var(--text-secondary)]">{t('pages.parent.enfants.subtitle')}</p>
       </div>
 
-      {/* Sélection enfant */}
-      <div className="flex gap-3">
+      {/* Sélection enfant — empilée sur téléphone : côte à côte, elle débordait à 360 px. */}
+      <div className="flex flex-col gap-3 sm:flex-row">
         {enfants.length === 0 ? (
           <Card className="flex-1">
             <div className="text-center py-8 text-[var(--text-secondary)]">
@@ -117,20 +117,20 @@ export default function EnfantsPage() {
               key={enfant.id}
               onClick={() => setSelectedEnfant(enfant)}
               className={cn(
-                'flex items-center gap-3 rounded-xl border-2 p-3 transition-all flex-1',
+                'flex min-w-0 items-center gap-3 rounded-xl border-2 p-3 transition-all flex-1',
                 selectedEnfant?.id === enfant.id
                   ? 'border-[var(--accent)] bg-[var(--accent-subtle)] dark:bg-[var(--action)]/5'
                   : 'border-[var(--border)] hover:border-[var(--accent)]/30  hover:border-[var(--accent)]'
               )}
             >
               <Avatar name={enfant.nom} size="md" />
-              <div className="text-left">
-                <p className="text-sm font-semibold text-[var(--text-primary)] ">{enfant.nom}</p>
+              <div className="min-w-0 text-left">
+                <p className="truncate text-sm font-semibold text-[var(--text-primary)]">{enfant.nom}</p>
                 <p className="text-xs text-[var(--text-secondary)]">{enfant.classe?.nom || enfant.classe_nom || '—'}</p>
               </div>
               <div className="ml-auto text-right">
                 <p className="text-sm font-bold text-[var(--accent)]">{enfant.moyenne?.toFixed(1) || '—'}</p>
-                <p className="text-xs text-[var(--text-secondary)]">Rang: {enfant.rang || '—'}e</p>
+                <p className="text-xs text-[var(--text-secondary)]">{t('common.rank')} : {enfant.rang ? `${enfant.rang}e` : '—'}</p>
               </div>
             </button>
           ))
@@ -141,7 +141,7 @@ export default function EnfantsPage() {
       {selectedEnfant && (
         <div className="grid gap-4 sm:grid-cols-4">
           <StatsCard title={t('pages.parent.enfants.moyenne_generale')} value={selectedEnfant.moyenne?.toFixed(1) || '—'} icon={TrendingUp} color="primary" />
-          <StatsCard title={t('common.rank')} value={`${selectedEnfant.rang || '—'}e`} icon={GraduationCap} color="emerald" />
+          <StatsCard title={t('common.rank')} value={selectedEnfant.rang ? `${selectedEnfant.rang}e` : '—'} icon={GraduationCap} color="emerald" />
           <StatsCard title={t('pages.parent.enfants.absences')} value={String(selectedEnfant.absences || 0)} icon={AlertTriangle} color={selectedEnfant.absences > 0 ? 'red' : 'emerald'} />
           <StatsCard
             title={t('pages.parent.enfants.frais_scolarite')}
@@ -155,7 +155,8 @@ export default function EnfantsPage() {
       {/* Tabs : Notes | Emploi du temps | Paiements | Absences */}
       {selectedEnfant && (
         <Card>
-          <div className="flex gap-1 border-b border-[var(--border)]  pb-0 mb-4">
+          {/* Défile horizontalement sur téléphone au lieu d'élargir la page. */}
+          <div role="tablist" aria-label={t('pages.parent.enfants.title')} className="flex gap-1 overflow-x-auto border-b border-[var(--border)] pb-0 mb-4">
             {[
               { id: 'notes', label: t('pages.parent.enfants.notes'), icon: BookOpen },
               { id: 'edt', label: t('pages.parent.enfants.emploi_du_temps'), icon: Calendar },
@@ -164,15 +165,18 @@ export default function EnfantsPage() {
             ].map((tab) => (
               <button
                 key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={activeTab === tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
-                  'px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px flex items-center gap-1.5',
+                  'shrink-0 whitespace-nowrap px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px flex items-center gap-1.5',
                   activeTab === tab.id
                     ? 'border-[var(--accent)] text-[var(--accent)] dark:text-[var(--accent)]'
                     : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] '
                 )}
               >
-                <tab.icon className="h-4 w-4" />
+                <tab.icon className="h-4 w-4" aria-hidden="true" />
                 {tab.label}
               </button>
             ))}
@@ -200,7 +204,7 @@ export default function EnfantsPage() {
                     <div className="text-right">
                       <p className={cn(
                         'text-lg font-bold',
-                        parseFloat(n.note || 0) >= 14 ? 'text-emerald-600' : parseFloat(n.note || 0) >= 10 ? 'text-amber-600' : 'text-red-600'
+                        parseFloat(n.note || 0) >= 14 ? 'text-[var(--green)]' : parseFloat(n.note || 0) >= 10 ? 'text-[var(--amber)]' : 'text-[var(--red)]'
                       )}>
                         {n.note}/{n.note_sur || 20}
                       </p>
@@ -298,7 +302,7 @@ export default function EnfantsPage() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-bold text-emerald-600">{formatNumber(p.montant)} FCFA</p>
+                      <p className="text-sm font-bold text-[var(--green)]">{formatNumber(p.montant)} FCFA</p>
                       <Badge variant={p.statut === 'paye' ? 'primary' : 'warning'} size="sm">
                         {p.statut === 'paye' ? t('common.status.paid') : t('common.status.pending')}
                       </Badge>

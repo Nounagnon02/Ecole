@@ -92,7 +92,7 @@ function ApercuSection({ stats, caData, repartition, factures, impayes, tresorer
           <Card.Body>
             {repartition.length > 0 ? (
             <>
-            <div className="h-[220px]" aria-hidden="true">
+            <div className="h-[220px]" aria-hidden="true" inert="">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie data={repartition} cx="50%" cy="50%" innerRadius={55} outerRadius={85} dataKey="value" paddingAngle={3}>

@@ -130,7 +130,8 @@
     "champ_obligatoire": "Champ obligatoire.",
     "choisir": "Choisir",
     "erreur_enregistrement": "L’enregistrement a échoué.",
-    "refresh": "Actualiser"
+    "refresh": "Actualiser",
+    "tableau_defilant": "Tableau (défilement horizontal)"
   },
   "auth": {
     "login": "Connexion",
@@ -2143,7 +2144,10 @@
         "boite": "Boîte",
         "favoris": "Favoris",
         "archive": "Archive",
-        "aucun_message": "Aucun message"
+        "aucun_message": "Aucun message",
+        "zone_conversations": "Conversations",
+        "zone_contacts": "Contacts",
+        "zone_messages": "Messages de la conversation"
       }
     },
     "auth": {

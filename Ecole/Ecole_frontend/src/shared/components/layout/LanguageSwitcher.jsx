@@ -15,7 +15,9 @@ export default function LanguageSwitcher({ className = '' }) {
   return (
     <label
       className={
-        'flex h-9 items-center gap-1.5 rounded-lg px-2 text-[var(--text-tertiary)] transition-all ' +
+        // Texte secondaire (contraste suffisant) et anneau de focus : le `select`
+        // n'a pas de contour propre.
+        'flex h-9 items-center gap-1.5 rounded-lg px-2 text-[var(--text-secondary)] transition-all focus-within:ring-2 focus-within:ring-[var(--action)] ' +
         'hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] ' + className
       }
     >

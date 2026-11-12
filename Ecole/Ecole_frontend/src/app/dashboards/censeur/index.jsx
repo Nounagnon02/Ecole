@@ -78,7 +78,7 @@ function ApercuSection({ stats, evolution, types_sanctions, sanctions, absencesP
             <Card.Description>{t('dashboards.censeur.types_de_sanctions')}</Card.Description>
           </Card.Header>
           <Card.Body>
-            <div className="h-[200px]" aria-hidden="true">
+            <div className="h-[200px]" aria-hidden="true" inert="">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie data={types_sanctions} cx="50%" cy="50%" innerRadius={50} outerRadius={80} dataKey="value" paddingAngle={3}>

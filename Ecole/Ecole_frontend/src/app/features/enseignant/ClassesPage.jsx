@@ -187,7 +187,7 @@ export default function ClassesPage() {
           </div>
 
           {viewMode === 'liste' ? (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto" role="region" aria-label={t('common.tableau_defilant')} tabIndex={0}>
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-[var(--border)]  text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
