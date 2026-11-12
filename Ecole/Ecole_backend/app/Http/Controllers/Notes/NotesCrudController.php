@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Notes;
 
+use App\Http\Controllers\Concerns\ScopesToCaller;
 use App\Http\Controllers\Controller;
 use App\Models\Notes;
 use App\Models\Eleve;
@@ -14,6 +15,8 @@ use Illuminate\Support\Facades\Validator;
 
 class NotesCrudController extends Controller
 {
+    use ScopesToCaller;
+
     use NotesHelpers;
 
     /**
@@ -34,6 +37,11 @@ class NotesCrudController extends Controller
         }
 
         $query = Notes::with(['eleve.user', 'matiere', 'classe']);
+
+        // Sans identifiant, la liste n'était bornée qu'à l'école : un parent
+        // ou un élève recevait les notes de tous les élèves. Même règle que
+        // pour les bulletins : famille → ses enfants, élève → lui-même.
+        $this->restrictToCallerScope($query);
 
         if ($eleveId) {
             $query->where('eleve_id', $eleveId);
