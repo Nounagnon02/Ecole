@@ -130,11 +130,36 @@ class StaffDashboardContractTest extends TestCase
             ],
         ]);
 
+        $this->assertSame('75%', $response->json('data.stats.2.value'));
+
         $factures = $response->json('data.factures');
         $this->assertCount(4, $factures);
         $statuts = collect($factures)->pluck('statut');
         $this->assertContains('Payée', $statuts);
         $this->assertContains('En attente', $statuts);
+    }
+
+    /** @test */
+    public function comptable_recovery_rate_is_a_dash_when_nothing_was_billed_this_month()
+    {
+        $school = $this->school();
+        $user   = $this->staff($school, 'comptable');
+        $eleve  = $this->eleve($school, $this->classe($school));
+
+        // Même mois l'an dernier : ne compte pas pour « ce mois ».
+        PaiementEleve::factory()->create([
+            'eleve_id'      => $eleve->id,
+            'ecole_id'      => $school->id,
+            'date_paiement' => now()->subYear(),
+            'type_paiement' => 'Scolarité',
+            'statut_global' => PaiementEleve::PAID,
+        ]);
+
+        $response = $this->actingAs($user, 'sanctum')
+            ->getJson('/api/dashboard/comptable')
+            ->assertStatus(200);
+
+        $this->assertSame('—', $response->json('data.stats.2.value'));
     }
 
     /* ─── Surveillant ───────────────────────────────────────────────── */

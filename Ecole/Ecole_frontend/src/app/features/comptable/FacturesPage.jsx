@@ -161,7 +161,7 @@ export default function FacturesPage() {
         <StatsCard title={t('pages.comptable.factures.total_facture')} value={formatCurrency(stats.total)} icon={FileText} color="primary" />
         <StatsCard title={t('pages.comptable.factures.paye')} value={formatCurrency(stats.payees)} icon={CheckCircle} color="emerald" />
         <StatsCard title={t('pages.comptable.factures.impaye')} value={formatCurrency(stats.impayees)} icon={AlertCircle} color="red" />
-        <StatsCard title={t('pages.comptable.factures.taux_recouvrement')} value={`${stats.total > 0 ? Math.round((stats.payees / stats.total) * 100) : 0}%`} icon={FileText} color="sky" />
+        <StatsCard title={t('pages.comptable.factures.taux_recouvrement')} value={stats.total > 0 ? `${Math.round((stats.payees / stats.total) * 100)}%` : '—'} icon={FileText} color="sky" />
       </div>
 
       {/* Actions */}

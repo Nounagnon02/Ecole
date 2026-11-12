@@ -79,7 +79,8 @@ export default function PaiementsPage() {
 
   const totalTransactions = paiements.length;
   const payes = paiements.filter(paye).length;
-  const tauxEncaisse = totalTransactions > 0 ? Math.round((payes / totalTransactions) * 100) : 0;
+  // Sans paiement, il n'y a rien à mesurer : « — », pas « 0 % » / « 100 % ».
+  const tauxEncaisse = totalTransactions > 0 ? Math.round((payes / totalTransactions) * 100) : null;
 
   // Le reçu s'ouvrait dans un nouvel onglet sur `/api/…` : sans nom de
   // fichier, et sur téléphone l'utilisateur quittait l'application (BUG-029).
@@ -186,8 +187,8 @@ export default function PaiementsPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatsCard title={t('pages.paiements.paiements.revenus_encaisses')} value={formatCurrency(totalPaye)} icon={DollarSign} color="primary" />
         <StatsCard title={t('pages.paiements.paiements.transactions')} value={String(totalTransactions)} icon={CreditCard} color="emerald" />
-        <StatsCard title={t('pages.paiements.paiements.taux_d_encaisse')} value={`${tauxEncaisse}%`} icon={TrendingUp} color="sky" />
-        <StatsCard title={t('pages.paiements.paiements.impayes')} value={`${100 - tauxEncaisse}%`} icon={TrendingDown} color="red" />
+        <StatsCard title={t('pages.paiements.paiements.taux_d_encaisse')} value={tauxEncaisse === null ? '—' : `${tauxEncaisse}%`} icon={TrendingUp} color="sky" />
+        <StatsCard title={t('pages.paiements.paiements.impayes')} value={tauxEncaisse === null ? '—' : `${100 - tauxEncaisse}%`} icon={TrendingDown} color="red" />
       </div>
 
       {/* Tabs */}

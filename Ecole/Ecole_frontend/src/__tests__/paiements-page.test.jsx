@@ -97,6 +97,16 @@ describe('PaiementsPage', () => {
     expect(screen.getByText('Impayés')).toBeInTheDocument();
   });
 
+  it('affiche « — » et non « 100 % » d’impayés quand il n’y a aucun paiement', async () => {
+    http.onGet(PATH).reply(200, { success: true, data: [] });
+
+    renderPage();
+
+    await waitFor(() => expect(screen.getAllByText('—').length).toBe(2));
+    expect(screen.queryByText('100%')).not.toBeInTheDocument();
+    expect(screen.queryByText('0%')).not.toBeInTheDocument();
+  });
+
   it('filtre par statut avec les valeurs du contrat', async () => {
     http.onGet(PATH).reply(200, { success: true, data: PAIEMENTS });
 
