@@ -534,7 +534,25 @@
       "effectif": "Headcount",
       "categorie": "Category",
       "aucune_classe": "No class",
-      "rapport": "Report"
+      "rapport": "Report",
+      "decisions": {
+        "titre": "To decide",
+        "impayes": "Overdue payments",
+        "notes": "Grades not entered (30 days)",
+        "absences": "Unexcused absences",
+        "relancer": "Send reminder",
+        "envoyee": "Reminder sent.",
+        "deja": "Already reminded today.",
+        "en_attente": "Reminder waiting for the network.",
+        "echec": "The reminder failed.",
+        "rien": "Nothing to report.",
+        "eleve": "student",
+        "eleves": "students",
+        "absence": "absence",
+        "absences_unite": "absences",
+        "derniere": "last grade on {date}",
+        "aucune": "no grade"
+      }
     },
     "eleve": {
       "title": "My Student Space",
