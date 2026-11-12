@@ -1328,6 +1328,25 @@
       "vaccinations": {
         "title": "Vaccination Record",
         "subtitle": "Tracking and history of vaccinations"
+      },
+      "formulaires": {
+        "eleve": "Pupil",
+        "date": "Date",
+        "motif": "Reason",
+        "urgence": "Emergency",
+        "oui": "Yes",
+        "non": "No",
+        "diagnostic": "Diagnosis",
+        "traitement": "Treatment or referral",
+        "contact_urgence": "Emergency contact",
+        "groupe_sanguin": "Blood group",
+        "vaccins_a_jour": "Vaccinations up to date",
+        "aptitude_sport": "Fit for sport",
+        "allergies": "Allergies",
+        "maladies_chroniques": "Chronic illnesses",
+        "vaccin": "Vaccine",
+        "lot": "Batch number",
+        "rappel": "Booster date"
       }
     },
     "notes": {

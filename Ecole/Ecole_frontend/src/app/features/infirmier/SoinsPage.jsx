@@ -6,7 +6,9 @@
  */
 
 import { useState, useMemo } from 'react';
-import { useApiQuery } from '@/shared/lib/api-client';
+import apiClient, { useApiQuery } from '@/shared/lib/api-client';
+import FormDialog from '@/shared/components/ui/FormDialog';
+import useElevesOptions from '@/shared/lib/useElevesOptions';
 import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
@@ -45,6 +47,13 @@ export default function SoinsPage() {
   // tout (cf. audit P4.1). `unwrapList` traverse les trois formes
   // d'enveloppe que renvoient les contrôleurs.
   const requete = useApiQuery(['infirmier-consultations'], '/infirmier/consultations');
+  const [nouveau, setNouveau] = useState(false);
+  const eleves = useElevesOptions(nouveau);
+  const f = (cle) => t(`pages.infirmier.formulaires.${cle}`);
+  const enregistrer = async (v) => {
+    await apiClient.post('/infirmier/consultations', { ...v, eleve_id: Number(v.eleve_id), urgence: v.urgence === 'oui' });
+    requete.refetch();
+  };
 
   const soins = useMemo(() => unwrapList(requete.data) ?? [], [requete.data]);
   const loading = requete.isPending;
@@ -64,7 +73,7 @@ export default function SoinsPage() {
     soins.filter((s) => {
       const q = search.toLowerCase();
       if (search) {
-        const nom = `${s.eleve?.prenom || ''} ${s.eleve?.nom || ''}`;
+        const nom = `${s.eleve?.user?.prenom || ''} ${s.eleve?.user?.name || ''}`;
         if (!nom.toLowerCase().includes(q) && !(s.motif || '').toLowerCase().includes(q)) return false;
       }
       if (filterUrgence === 'urgence' && !s.urgence) return false;
@@ -100,8 +109,23 @@ export default function SoinsPage() {
           <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.infirmier.soins.title')}</h1>
           <p className="text-sm text-[var(--text-secondary)]">{t('pages.infirmier.soins.subtitle')}</p>
         </div>
-        <Button size="sm" icon={<Plus />}>{t('pages.infirmier.soins.nouveau_soin')}</Button>
+        <Button size="sm" icon={<Plus />} onClick={() => setNouveau(true)}>{t('pages.infirmier.soins.nouveau_soin')}</Button>
       </div>
+      <FormDialog
+        open={nouveau}
+        title={t('pages.infirmier.soins.nouveau_soin')}
+        initial={{ date: new Date().toISOString().slice(0, 10), urgence: 'non' }}
+        fields={[
+          { name: 'eleve_id', label: f('eleve'), type: 'select', options: eleves, required: true },
+          { name: 'date', label: f('date'), type: 'date', required: true },
+          { name: 'motif', label: f('motif'), required: true },
+          { name: 'urgence', label: f('urgence'), type: 'select', options: [{ value: 'non', label: f('non') }, { value: 'oui', label: f('oui') }] },
+          { name: 'diagnostic', label: f('diagnostic'), type: 'textarea', required: true },
+          { name: 'traitement', label: f('traitement'), type: 'textarea' },
+        ]}
+        onSubmit={enregistrer}
+        onClose={() => setNouveau(false)}
+      />
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-4">
@@ -179,8 +203,8 @@ export default function SoinsPage() {
                 )}
                 <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-[var(--text-secondary)]">
                   <span className="flex items-center gap-1">
-                    <Avatar name={`${soin.eleve?.prenom || ''} ${soin.eleve?.nom || ''}`} size="xs" />
-                    {soin.eleve?.prenom} {soin.eleve?.nom} · {soin.eleve?.classe?.nom_classe || '—'}
+                    <Avatar name={`${soin.eleve?.user?.prenom || ''} ${soin.eleve?.user?.name || ''}`} size="xs" />
+                    {soin.eleve?.user?.prenom} {soin.eleve?.user?.name} · {soin.eleve?.classe?.nom_classe || '—'}
                   </span>
                   <span className="flex items-center gap-1">
                     <Clock className="h-3 w-3" />
@@ -188,7 +212,7 @@ export default function SoinsPage() {
                   </span>
                 </div>
               </div>
-              <Button variant="ghost" size="sm">{t('common.details')}</Button>
+              {soin.traitement && <p className="max-w-xs text-xs text-[var(--text-secondary)]">{soin.traitement}</p>}
             </div>
           </Card>
         ))}

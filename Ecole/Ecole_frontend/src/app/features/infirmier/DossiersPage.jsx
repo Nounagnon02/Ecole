@@ -6,7 +6,9 @@
  */
 
 import { useState, useMemo } from 'react';
-import { useApiQuery } from '@/shared/lib/api-client';
+import apiClient, { useApiQuery } from '@/shared/lib/api-client';
+import FormDialog from '@/shared/components/ui/FormDialog';
+import useElevesOptions from '@/shared/lib/useElevesOptions';
 import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
@@ -34,6 +36,40 @@ export default function DossiersPage() {
   // l'autre, et chacune a son entrée de cache (cf. audit P4.1).
   const requeteDossiers = useApiQuery(['infirmier-dossiers'], '/infirmier/dossiers-medicaux');
   const requeteVaccinations = useApiQuery(['infirmier-vaccinations'], '/infirmier/vaccinations');
+  const [formulaire, setFormulaire] = useState(null); // { type: 'dossier'|'vaccin', initial }
+  const eleves = useElevesOptions(formulaire !== null);
+  const f = (cle) => t(`pages.infirmier.formulaires.${cle}`);
+  const ouiNon = [{ value: 'oui', label: f('oui') }, { value: 'non', label: f('non') }];
+  const champsDossier = [
+    { name: 'eleve_id', label: f('eleve'), type: 'select', options: eleves, required: true },
+    { name: 'contact_urgence', label: f('contact_urgence'), required: true },
+    { name: 'groupe_sanguin', label: f('groupe_sanguin'), type: 'select', options: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map((g) => ({ value: g, label: g })) },
+    { name: 'vaccins_a_jour', label: f('vaccins_a_jour'), type: 'select', options: ouiNon },
+    { name: 'aptitude_sport', label: f('aptitude_sport'), type: 'select', options: ouiNon },
+    { name: 'allergies', label: f('allergies'), type: 'textarea' },
+    { name: 'maladies_chroniques', label: f('maladies_chroniques'), type: 'textarea' },
+  ];
+  const champsVaccin = [
+    { name: 'eleve_id', label: f('eleve'), type: 'select', options: eleves, required: true },
+    { name: 'nom_vaccin', label: f('vaccin'), required: true },
+    { name: 'date_vaccination', label: f('date'), type: 'date', required: true },
+    { name: 'numero_lot', label: f('lot'), required: true },
+    { name: 'date_rappel', label: f('rappel'), type: 'date' },
+  ];
+  const enregistrer = async (v) => {
+    const corps = { ...v, eleve_id: Number(v.eleve_id) };
+    ['vaccins_a_jour', 'aptitude_sport'].forEach((k) => { if (k in corps) corps[k] = corps[k] !== 'non'; });
+    if (formulaire.type === 'dossier') {
+      await apiClient.post('/infirmier/dossiers-medicaux', corps);
+      requeteDossiers.refetch();
+    } else {
+      await apiClient.post('/infirmier/vaccinations', corps);
+      requeteVaccinations.refetch();
+    }
+  };
+  const ouvrirDossier = (d) => setFormulaire({ type: 'dossier', initial: d ? {
+    ...d, eleve_id: String(d.eleve_id), vaccins_a_jour: d.vaccins_a_jour ? 'oui' : 'non', aptitude_sport: d.aptitude_sport ? 'oui' : 'non',
+  } : { vaccins_a_jour: 'oui', aptitude_sport: 'oui' } });
 
   const dossiers = useMemo(() => unwrapList(requeteDossiers.data) ?? [], [requeteDossiers.data]);
   const vaccinations = useMemo(() => unwrapList(requeteVaccinations.data) ?? [], [requeteVaccinations.data]);
@@ -72,7 +108,7 @@ export default function DossiersPage() {
       e.vaccins.sort((a, b) => new Date(b.date_vaccination) - new Date(a.date_vaccination));
     });
     return Object.values(map).sort((a, b) =>
-      (a.eleve?.nom || '').localeCompare(b.eleve?.nom || '')
+      (a.eleve?.user?.name || '').localeCompare(b.eleve?.user?.name || '')
     );
   }, [vaccinations]);
 
@@ -90,7 +126,7 @@ export default function DossiersPage() {
     dossiers.filter((d) => {
       const q = search.toLowerCase();
       if (search) {
-        const nom = `${d.eleve?.prenom || ''} ${d.eleve?.nom || ''}`;
+        const nom = `${d.eleve?.user?.prenom || ''} ${d.eleve?.user?.name || ''}`;
         if (!nom.toLowerCase().includes(q)) return false;
       }
       if (filterAllergie === 'oui' && (!d.allergies || d.allergies === 'Aucune' || d.allergies === '')) return false;
@@ -135,10 +171,19 @@ export default function DossiersPage() {
             {t(tab === 'dossiers' ? 'pages.infirmier.dossiers.subtitle' : 'pages.infirmier.vaccinations.subtitle')}
           </p>
         </div>
-        <Button size="sm" icon={<Plus />}>
+        <Button size="sm" icon={<Plus />} onClick={() => (tab === 'dossiers' ? ouvrirDossier(null) : setFormulaire({ type: 'vaccin', initial: { date_vaccination: new Date().toISOString().slice(0, 10) } }))}>
           {tab === 'dossiers' ? t('pages.infirmier.dossiers.nouveau_dossier') : t('pages.infirmier.dossiers.nouveau_vaccin')}
         </Button>
       </div>
+
+      <FormDialog
+        open={formulaire !== null}
+        title={formulaire?.type === 'vaccin' ? t('pages.infirmier.dossiers.nouveau_vaccin') : t('pages.infirmier.dossiers.nouveau_dossier')}
+        fields={formulaire?.type === 'vaccin' ? champsVaccin : champsDossier}
+        initial={formulaire?.initial}
+        onSubmit={enregistrer}
+        onClose={() => setFormulaire(null)}
+      />
 
       {/* Tabs */}
       <div className="flex gap-4 border-b border-[var(--border)] ">
@@ -216,10 +261,10 @@ export default function DossiersPage() {
             {filtered.map((d) => (
               <Card key={d.id} hover>
                 <div className="flex items-start gap-3 mb-4">
-                  <Avatar name={`${d.eleve?.prenom || ''} ${d.eleve?.nom || ''}`} size="md" />
+                  <Avatar name={`${d.eleve?.user?.prenom || ''} ${d.eleve?.user?.name || ''}`} size="md" />
                   <div>
                     <h3 className="font-semibold text-[var(--text-primary)] ">
-                      {d.eleve?.prenom} {d.eleve?.nom}
+                      {d.eleve?.user?.prenom} {d.eleve?.user?.name}
                     </h3>
                     <p className="text-xs text-[var(--text-secondary)]">{d.eleve?.classe?.nom_classe || '—'}</p>
                   </div>
@@ -273,8 +318,7 @@ export default function DossiersPage() {
                 )}
 
                 <div className="mt-3 flex gap-2">
-                  <Button variant="outline" size="sm" icon={<FileText />}>{t('pages.infirmier.dossiers.consulter')}</Button>
-                  <Button variant="ghost" size="sm">{t('common.edit')}</Button>
+                  <Button variant="outline" size="sm" icon={<FileText />} onClick={() => ouvrirDossier(d)}>{t('common.edit')}</Button>
                 </div>
               </Card>
             ))}
@@ -313,10 +357,10 @@ export default function DossiersPage() {
                       onClick={() => setExpandedEleve(isExpanded ? null : (groupe.eleve?.id))}
                       className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[var(--surface)]  transition-colors"
                     >
-                      <Avatar name={`${groupe.eleve?.prenom || ''} ${groupe.eleve?.nom || ''}`} size="sm" />
+                      <Avatar name={`${groupe.eleve?.user?.prenom || ''} ${groupe.eleve?.user?.name || ''}`} size="sm" />
                       <div className="flex-1 text-left">
                         <span className="font-medium text-[var(--text-primary)] ">
-                          {groupe.eleve?.prenom} {groupe.eleve?.nom}
+                          {groupe.eleve?.user?.prenom} {groupe.eleve?.user?.name}
                         </span>
                         <span className="ml-2 text-xs text-[var(--text-secondary)]">
                           {groupe.eleve?.classe?.nom_classe || '—'} · {groupe.vaccins.length} vaccin(s)

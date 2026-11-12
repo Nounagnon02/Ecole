@@ -1328,6 +1328,25 @@
       "vaccinations": {
         "title": "Carnet de vaccination",
         "subtitle": "Suivi et historique des vaccinations"
+      },
+      "formulaires": {
+        "eleve": "Élève",
+        "date": "Date",
+        "motif": "Motif",
+        "urgence": "Urgence",
+        "oui": "Oui",
+        "non": "Non",
+        "diagnostic": "Diagnostic",
+        "traitement": "Traitement ou orientation",
+        "contact_urgence": "Contact d’urgence",
+        "groupe_sanguin": "Groupe sanguin",
+        "vaccins_a_jour": "Vaccins à jour",
+        "aptitude_sport": "Apte au sport",
+        "allergies": "Allergies",
+        "maladies_chroniques": "Maladies chroniques",
+        "vaccin": "Vaccin",
+        "lot": "Numéro de lot",
+        "rappel": "Date de rappel"
       }
     },
     "notes": {

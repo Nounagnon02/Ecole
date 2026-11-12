@@ -92,7 +92,7 @@ const PAGES = [
     nom: 'SoinsPage',
     Composant: SoinsPage,
     url: '/infirmier/consultations',
-    element: { id: 1, motif: 'Céphalées', traitement: 'Repos', date_consultation: '2026-09-12', eleve: { nom: 'Bio', prenom: 'Kader' } },
+    element: { id: 1, motif: 'Céphalées', traitement: 'Repos', date_consultation: '2026-09-12', eleve: { user: { name: 'Bio', prenom: 'Kader' } } },
     attendu: 'Céphalées',
     vide: /aucun soin trouvé/i,
   },
@@ -206,7 +206,7 @@ describe('DossiersPage', () => {
     http.onGet('/infirmier/vaccinations').reply(200, { success: true, data: [] });
     http.onGet('/infirmier/dossiers-medicaux').reply(200, {
       success: true,
-      data: [{ id: 1, eleve: { nom: 'Chabi', prenom: 'Awa' }, groupe_sanguin: 'O+', allergies: 'Arachide' }],
+      data: [{ id: 1, eleve: { user: { name: 'Chabi', prenom: 'Awa' } }, groupe_sanguin: 'O+', allergies: 'Arachide' }],
     });
 
     monter(<DossiersPage />);
