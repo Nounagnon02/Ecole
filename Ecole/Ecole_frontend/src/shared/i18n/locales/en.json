@@ -1348,7 +1348,15 @@
         "enregistre": "Grades saved.",
         "enregistrer": "Save grades",
         "hors_ligne": "No connection. Your grades are kept on this device and will be sent when the network is back.",
-        "echec": "The grades could not be saved."
+        "echec": "The grades could not be saved.",
+        "modele": "Download the grid (spreadsheet)",
+        "importer": "Import a spreadsheet",
+        "fichier": "Grade spreadsheet to import",
+        "import_lu": "{nom}: {nombre} grade(s) copied to the grid. Check them, then save.",
+        "import_erreur_colonnes": "Row {ligne}: a “matricule” column and a “note” column are required.",
+        "import_erreur_inconnu": "Row {ligne}: registration number “{valeur}” is not in this class.",
+        "import_erreur_doublon": "Row {ligne}: registration number “{valeur}” appears twice.",
+        "import_erreur_note": "Row {ligne}: “{valeur}” is not a grade between 0 and 20."
       }
     },
     "paiements": {

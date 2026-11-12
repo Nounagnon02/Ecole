@@ -1348,7 +1348,15 @@
         "enregistre": "Notes enregistrées.",
         "enregistrer": "Enregistrer les notes",
         "hors_ligne": "Pas de connexion. Vos notes sont gardées sur cet appareil et partiront dès le retour du réseau.",
-        "echec": "Les notes n’ont pas pu être enregistrées."
+        "echec": "Les notes n’ont pas pu être enregistrées.",
+        "modele": "Télécharger la grille (tableur)",
+        "importer": "Importer un tableur",
+        "fichier": "Tableur de notes à importer",
+        "import_lu": "{nom} : {nombre} note(s) reportée(s) dans la grille. Vérifiez-les, puis enregistrez.",
+        "import_erreur_colonnes": "Ligne {ligne} : il faut une colonne « matricule » et une colonne « note ».",
+        "import_erreur_inconnu": "Ligne {ligne} : matricule « {valeur} » absent de cette classe.",
+        "import_erreur_doublon": "Ligne {ligne} : le matricule « {valeur} » apparaît deux fois.",
+        "import_erreur_note": "Ligne {ligne} : « {valeur} » n’est pas une note entre 0 et 20."
       }
     },
     "paiements": {
