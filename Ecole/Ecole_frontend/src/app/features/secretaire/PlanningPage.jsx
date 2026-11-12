@@ -6,7 +6,8 @@
  */
 
 import { useState, useMemo } from 'react';
-import { useApiQuery } from '@/shared/lib/api-client';
+import apiClient, { useApiQuery } from '@/shared/lib/api-client';
+import FormDialog from '@/shared/components/ui/FormDialog';
 import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
@@ -50,7 +51,29 @@ export default function PlanningPage() {
   // ensemble lançaient deux requêtes, et un retour sur la page rechargeait
   // tout (cf. audit P4.1). `unwrapList` traverse les trois formes
   // d'enveloppe que renvoient les contrôleurs.
-  const requete = useApiQuery(['evenements'], '/evenements');
+  // `/evenements` est fermé au secrétariat ; ses propres routes servent le
+  // planning sur une période (du mois écoulé aux six prochains).
+  const requete = useApiQuery(['planning'], '/secretaire/evenements');
+  const [edition, setEdition] = useState(null);
+  const champsEvenement = [
+    { name: 'titre', label: t('pages.secretaire.planning_edition.titre'), required: true },
+    { name: 'type', label: t('pages.secretaire.planning_edition.type'), type: 'select', options: Object.entries(TYPE_CONFIG).map(([value, cfg]) => ({ value, label: cfg.label })) },
+    { name: 'date_debut', label: t('pages.secretaire.planning_edition.debut'), type: 'datetime-local', required: true },
+    { name: 'date_fin', label: t('pages.secretaire.planning_edition.fin'), type: 'datetime-local' },
+    { name: 'lieu', label: t('pages.secretaire.planning_edition.lieu') },
+    { name: 'description', label: t('pages.secretaire.planning_edition.description'), type: 'textarea' },
+  ];
+  const versChamp = (d) => (d ? String(d).replace(' ', 'T').slice(0, 16) : '');
+  const enregistrer = async (valeurs) => {
+    if (edition?.id) await apiClient.put(`/secretaire/evenements/${edition.id}`, valeurs);
+    else await apiClient.post('/secretaire/evenements', valeurs);
+    requete.refetch();
+  };
+  const supprimer = async (evt) => {
+    if (!window.confirm(t('pages.secretaire.planning_edition.confirmer_suppression', { titre: evt.titre }))) return;
+    await apiClient.delete(`/secretaire/evenements/${evt.id}`);
+    requete.refetch();
+  };
 
   const evenements = useMemo(() => unwrapList(requete.data) ?? [], [requete.data]);
   const loading = requete.isPending;
@@ -106,8 +129,16 @@ export default function PlanningPage() {
           <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.secretaire.planning.title')}</h1>
           <p className="text-sm text-[var(--text-secondary)]">{t('pages.secretaire.planning.subtitle')}</p>
         </div>
-        <Button size="sm" icon={<Plus />}>{t('pages.secretaire.planning.nouvel_evenement')}</Button>
+        <Button size="sm" icon={<Plus />} onClick={() => setEdition({})}>{t('pages.secretaire.planning.nouvel_evenement')}</Button>
       </div>
+      <FormDialog
+        open={edition !== null}
+        title={edition?.id ? t('pages.secretaire.planning_edition.modifier') : t('pages.secretaire.planning.nouvel_evenement')}
+        fields={champsEvenement}
+        initial={edition?.id ? { ...edition, date_debut: versChamp(edition.date_debut), date_fin: versChamp(edition.date_fin) } : { type: 'evenement' }}
+        onSubmit={enregistrer}
+        onClose={() => setEdition(null)}
+      />
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-4">
@@ -207,7 +238,10 @@ export default function PlanningPage() {
                     )}
                   </div>
 
-                  <Button variant="ghost" size="sm">{t('common.details')}</Button>
+                  <div className="flex gap-1">
+                    <Button variant="outline" size="sm" onClick={() => setEdition(evt)}>{t('common.edit')}</Button>
+                    <Button variant="ghost" size="sm" onClick={() => supprimer(evt)}>{t('common.delete')}</Button>
+                  </div>
                 </div>
               </Card>
             );

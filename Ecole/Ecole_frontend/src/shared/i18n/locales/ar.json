@@ -126,7 +126,10 @@
     "load_error": "خطأ في التحميل",
     "user": "المستخدم",
     "payments": "المدفوعات",
-    "manage": "إدارة"
+    "manage": "إدارة",
+    "champ_obligatoire": "حقل إلزامي.",
+    "choisir": "اختر",
+    "erreur_enregistrement": "فشل الحفظ."
   },
   "auth": {
     "login": "تسجيل الدخول",
@@ -1691,6 +1694,16 @@
         "aucun_evenement_trouve": "لم يتم العثور على أي فعالية",
         "planifie": "مجدول",
         "termine": "منتهٍ"
+      },
+      "planning_edition": {
+        "titre": "العنوان",
+        "type": "النوع",
+        "debut": "البداية",
+        "fin": "النهاية (اختياري)",
+        "lieu": "المكان",
+        "description": "الوصف",
+        "modifier": "تعديل الحدث",
+        "confirmer_suppression": "حذف « {titre} » من التخطيط؟"
       }
     },
     "surveillant": {
