@@ -181,7 +181,7 @@ describe('CommunicationsPage — lecture', () => {
 
     renderPage();
 
-    await waitFor(() => expect(screen.getByText('Network Error')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/Pas de connexion au serveur/)).toBeInTheDocument());
     expect(screen.queryByText('Aucune annonce')).not.toBeInTheDocument();
   });
 
@@ -389,7 +389,7 @@ describe('CommunicationsPage — écriture', () => {
     await readyWithForm();
     fireEvent.click(screen.getByRole('button', { name: /Publier/i }));
 
-    await waitFor(() => expect(screen.getByText('Network Error')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/Pas de connexion au serveur/)).toBeInTheDocument());
     expect(screen.getByText('Rentrée 2026')).toBeInTheDocument();
   });
 

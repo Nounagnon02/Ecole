@@ -115,6 +115,40 @@ describe('réseau défaillant alors que le navigateur se croit en ligne', () => 
     expect(res.data).toEqual({ data: ['6e A'] });
   });
 
+  it('retient la date, puis l’oublie à la première vraie réponse du réseau', async () => {
+    memoire.set('__horloge', '2026-11-10T08:30:00.000Z');
+    http.onGet('/classes').reply(200, { data: ['6e A'] });
+    await api.get('/classes');
+
+    http.onGet('/classes').reply(503, { error: 'Vous êtes hors ligne', offline: true });
+    await api.get('/classes');
+    expect(useHorsLigneStore.getState().donneesDu).toBe('2026-11-10T08:30:00.000Z');
+
+    http.onGet('/classes').reply(200, { data: ['6e A', '6e B'] });
+    await api.get('/classes');
+    expect(useHorsLigneStore.getState().donneesDu).toBeNull();
+  });
+
+  it.each([502, 504])('sert la dernière réponse connue quand la passerelle répond %i (API injoignable)', async (status) => {
+    http.onGet('/classes').reply(200, { data: ['6e A'] });
+    await api.get('/classes');
+
+    http.onGet('/classes').reply(status, {});
+    const res = await api.get('/classes');
+
+    expect(res.data).toEqual({ data: ['6e A'] });
+  });
+
+  it('sert la dernière réponse connue sur une panne réseau, même si le navigateur se croit en ligne', async () => {
+    http.onGet('/auth/me').reply(200, { user: { id: 7 } });
+    await api.get('/auth/me');
+
+    http.onGet('/auth/me').networkError();
+    const res = await api.get('/auth/me');
+
+    expect(res.data).toEqual({ user: { id: 7 } });
+  });
+
   it('ne masque pas une vraie panne serveur (503 sans marque hors ligne)', async () => {
     http.onGet('/classes').reply(200, { data: ['6e A'] });
     await api.get('/classes');
@@ -183,6 +217,14 @@ describe('bandeau réseau', () => {
     const bandeau = screen.getByRole('status');
     expect(bandeau).toHaveTextContent(/Hors connexion/);
     expect(bandeau).toHaveTextContent(/10\/11\/2026/);
+  });
+
+  it('s’affiche aussi quand le navigateur se croit en ligne mais que les données viennent du cache', () => {
+    useHorsLigneStore.setState({ donneesDu: '2026-11-10T08:30:00.000Z' });
+
+    render(<BandeauReseau enLigne />);
+
+    expect(screen.getByRole('status')).toHaveTextContent(/10\/11\/2026/);
   });
 
   it('ne s’affiche pas en ligne', () => {
