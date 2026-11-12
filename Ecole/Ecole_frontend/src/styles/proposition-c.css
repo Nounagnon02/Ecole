@@ -113,6 +113,15 @@
     .ecole-main { max-width:none; padding:0; }
     body { background:white; color:#17302e; }
   }
+
+  /* Les liens de navigation sont faits pour la barre verte (texte presque
+     blanc). Dans le menu « Plus » et le menu mobile, sur fond clair, ils
+     étaient illisibles (contraste 1,14:1). Ils y prennent les couleurs du
+     thème, en clair comme en sombre. */
+  .ecole-popover .ecole-nav-link, .ecole-mobile-navigation .ecole-nav-link { color:var(--text-primary); border-bottom:0; white-space:normal; }
+  .ecole-popover .ecole-nav-link { min-height:44px; padding:10px 12px; border-radius:6px; font-size:14px; }
+  .ecole-popover .ecole-nav-link:hover, .ecole-mobile-navigation .ecole-nav-link:hover { background:var(--surface-hover); color:var(--text-primary); }
+  .ecole-popover .ecole-nav-link[aria-current="page"], .ecole-mobile-navigation .ecole-nav-link[aria-current="page"] { color:var(--accent); background:var(--primary-subtle); font-weight:700; }
 }
 
 /* Hors couche, pour primer sur les utilitaires de couleur de Tailwind. */
