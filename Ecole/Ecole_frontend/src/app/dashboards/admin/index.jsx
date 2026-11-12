@@ -39,10 +39,10 @@ import Button from '@/shared/components/ui/Button';
 // Les `id`/`key` ci-dessous sont aussi le dernier segment de la clé i18n
 // (`dashboards.admin.tabs.<id>`, `dashboards.admin.stats.<key>`) : le texte
 // affiché vient de `t()`, ces tableaux ne portent plus que la structure.
+// Seuls les onglets qui s'affichent ici : ceux qui menaient vers une
+// autre page doublaient le menu (audit, recommandation B4).
 const TABS = [
   { id: 'apercu', label: 'Aperçu', icon: Activity },
-  { id: 'utilisateurs', label: 'Utilisateurs', icon: Users },
-  { id: 'configuration', label: 'Configuration', icon: Settings },
   { id: 'logs', label: 'Logs Système', icon: Terminal },
   { id: 'sauvegardes', label: 'Sauvegardes', icon: Database },
 ];

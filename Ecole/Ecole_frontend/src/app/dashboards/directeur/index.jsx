@@ -28,13 +28,10 @@ import { useTranslation } from '@/shared/i18n';
 
 const COLORS = ['var(--accent)', 'var(--green)', 'var(--amber)', 'var(--red)', 'var(--blue)', 'var(--primary)', 'var(--text-secondary)'];
 
+// Seuls les onglets qui s'affichent ici : ceux qui menaient vers une
+// autre page doublaient le menu (audit, recommandation B4).
 const TABS = [
   { id: 'apercu', label: 'Aperçu', icon: Activity },
-  { id: 'eleves', label: 'Élèves', icon: Users },
-  { id: 'performances', label: 'Performances', icon: BarChart3 },
-  { id: 'finances', label: 'Finances', icon: DollarSign },
-  { id: 'messages', label: 'Messages', icon: MessageSquare },
-  { id: 'calendrier', label: 'Calendrier', icon: Calendar },
 ];
 
 function StatCardsGrid({ stats, loading }) {

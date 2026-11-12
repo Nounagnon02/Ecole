@@ -19,6 +19,7 @@ import EnseignantDashboard from '@/app/dashboards/enseignant';
 import AdminDashboard from '@/app/dashboards/admin';
 import useAuthStore from '@/shared/stores/auth-store';
 import { clearDashboardCache } from '@/shared/lib/query-client';
+import { getRoleNavigation } from '@/features/roles/navigation-config';
 import { installHttpMock } from './helpers/http-mock';
 
 const DIRECTEUR_ENDPOINT = '/dashboard/directeur/data';
@@ -168,15 +169,17 @@ describe('DirecteurDashboard', () => {
     expect(http.callsTo('get', DIRECTEUR_ENDPOINT)).toHaveLength(2);
   });
 
-  it('renvoie vers /eleves quand on clique l’onglet Élèves', async () => {
+  it('n’a plus d’onglets qui doublent le menu (Élèves, Finances…)', async () => {
+    // Recommandation B4 de l'audit : ces onglets quittaient le tableau de
+    // bord vers des pages déjà dans le menu. Seul « Aperçu » restait : pas
+    // de barre d'onglets du tout.
     http.onGet(DIRECTEUR_ENDPOINT).reply(200, { data: DIRECTEUR_PAYLOAD });
 
     renderDashboard(<DirecteurDashboard />);
     await waitFor(() => expect(screen.getByText('412')).toBeInTheDocument());
 
-    fireEvent.click(screen.getByRole('tab', { name: /Élèves/i }));
-
-    await waitFor(() => expect(screen.getByTestId('url').textContent).toBe('/eleves'));
+    expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: /Élèves/i })).not.toBeInTheDocument();
   });
 
   it('filtre les classes sur la recherche', async () => {
@@ -272,15 +275,25 @@ describe('EleveDashboard', () => {
     expect(screen.queryByText('13.5/20')).not.toBeInTheDocument();
   });
 
-  it('renvoie vers /emploi-du-temps depuis l’onglet dédié', async () => {
+  it('garde les onglets qui s’affichent dans la page, retire ceux qui en sortent', async () => {
     http.onGet(ELEVE_ENDPOINT).reply(200, { data: ELEVE_PAYLOAD });
 
     renderDashboard(<EleveDashboard />);
     await waitFor(() => expect(screen.getByText('13.5/20')).toBeInTheDocument());
 
-    fireEvent.click(screen.getByRole('tab', { name: /Emploi du temps/i }));
+    // « Emploi du temps » et « Paiements » sont dans le menu de l'élève.
+    expect(screen.queryByRole('tab', { name: /Emploi du temps/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: /Paiements/i })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('tab', { name: /Notes/i }));
+    // L'onglet Notes reste dans le tableau de bord.
+    expect(screen.getByTestId('url').textContent).toBe('/tableau');
+  });
+});
 
-    await waitFor(() => expect(screen.getByTestId('url').textContent).toBe('/emploi-du-temps'));
+describe('onglets retirés, accès conservés', () => {
+  it('donne au parent l’emploi du temps par le menu, faute d’onglet', () => {
+    const chemins = getRoleNavigation('parent').map((entree) => entree.path);
+    expect(chemins).toContain('/emploi-du-temps');
   });
 });
 

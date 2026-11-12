@@ -70,7 +70,8 @@ export default function DashboardShell({
 
       {error && <ErrorDisplay message={error} onRetry={onRefresh} />}
 
-      {tabs.length > 0 && (
+      {/* Un seul onglet (« Aperçu ») n'est pas un choix : pas de barre. */}
+      {tabs.length > 1 && (
         <div className="border-b border-[var(--border)] ">
           {/* `role="tablist"` et les `aria-*` manquaient partout : la barre
               n'était qu'une rangée de boutons pour un lecteur d'écran. */}
@@ -106,8 +107,8 @@ export default function DashboardShell({
         <motion.div
           key={activeTab}
           id={`panneau-${activeTab}`}
-          role={tabs.length > 0 ? 'tabpanel' : undefined}
-          aria-labelledby={tabs.length > 0 ? `onglet-${activeTab}` : undefined}
+          role={tabs.length > 1 ? 'tabpanel' : undefined}
+          aria-labelledby={tabs.length > 1 ? `onglet-${activeTab}` : undefined}
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -8 }}
