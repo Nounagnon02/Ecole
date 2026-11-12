@@ -109,6 +109,8 @@ describe('NotesPage — réponse paginée de l’API', () => {
     const { unmount } = monter();
     await screen.findByText(/AGBODJAN/);
     expect(screen.queryByRole('button', { name: /^Verrouiller$/i })).not.toBeInTheDocument();
+    // Export et saisie sont fermés aux familles par l'API : pas de bouton.
+    expect(screen.queryByRole('button', { name: /Exporter|Nouvelle note|Importer/i })).not.toBeInTheDocument();
     unmount();
 
     signIn(ROLES.ENSEIGNANT);

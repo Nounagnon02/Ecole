@@ -199,12 +199,15 @@ export default function NotesPage() {
           <Button variant="ghost" size="sm" onClick={refetch} disabled={isLoading}>
             <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} />
           </Button>
-          <Button variant="outline" size="sm" icon={<FileSpreadsheet />} onClick={handleExport}>
-            {t('common.export')}
-          </Button>
-          <Button variant="outline" size="sm" icon={<Download />}>{t('pages.notes.notes.importer')}</Button>
+          {/* Export, import et saisie : réservés à ceux que l'API y autorise. */}
           {peutVerrouiller && (
-            <Button size="sm" icon={<Plus />} onClick={() => navigate('/notes/saisie')}>{t('pages.notes.notes.nouvelle_note')}</Button>
+            <>
+              <Button variant="outline" size="sm" icon={<FileSpreadsheet />} onClick={handleExport}>
+                {t('common.export')}
+              </Button>
+              <Button variant="outline" size="sm" icon={<Download />} onClick={() => navigate('/notes/saisie')}>{t('pages.notes.notes.importer')}</Button>
+              <Button size="sm" icon={<Plus />} onClick={() => navigate('/notes/saisie')}>{t('pages.notes.notes.nouvelle_note')}</Button>
+            </>
           )}
         </div>
       </div>
