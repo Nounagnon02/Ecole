@@ -2294,7 +2294,8 @@
       "chargement": "Loading",
       "chargement_en_cours": "Loading…",
       "contenu_en_chargement": "Content loading",
-      "tableau_en_chargement": "Table loading"
+      "tableau_en_chargement": "Table loading",
+      "connexion_lente": "The connection is slow, still loading…"
     },
     "avatar": {
       "avatar": "Avatar"
