@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useNavigate } from 'react-router-dom';
+import useInactivite from '@/shared/lib/useInactivite';
 import { WifiOff } from 'lucide-react';
 import Header from './Header';
 import Breadcrumb from '@/shared/components/ui/Breadcrumb';
@@ -22,6 +23,8 @@ export default function AppShell({ children }) {
     connect(); listenForNotifications(user.id); listenForMessages(user.id);
   }, [user?.id, connect, listenForNotifications, listenForMessages]);
   useEffect(() => startOfflineSync(), []);
+  const navigate = useNavigate();
+  useInactivite(() => navigate('/connexion?raison=inactivite', { replace: true }));
   useEffect(() => {
     const update = () => setOnline(navigator.onLine);
     window.addEventListener('online', update); window.addEventListener('offline', update);
