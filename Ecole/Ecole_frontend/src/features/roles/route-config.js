@@ -125,6 +125,12 @@ export const ROUTE_CONFIG = {
     component: lazy(() => import('@/app/features/notes/SaisieNotesPage')),
     roles: [...ROLE_GROUPS.DIRECTION, ...ROLE_GROUPS.ENSEIGNANTS],
   },
+  // Mêmes rôles que `GET /bulletins` ; l'arrêt est filtré dans la page.
+  bulletins: {
+    path: '/bulletins',
+    component: lazy(() => import('@/app/features/bulletins/BulletinsPage')),
+    roles: [...ROLE_GROUPS.DIRECTION, ...ROLE_GROUPS.ENSEIGNANTS, ROLES.CENSEUR, ROLES.PARENT, ROLES.ELEVE],
+  },
   paiements: {
     path: '/paiements',
     component: lazy(() => import('@/app/features/paiements/PaiementsPage')),
