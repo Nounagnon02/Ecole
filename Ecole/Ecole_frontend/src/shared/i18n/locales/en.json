@@ -129,7 +129,8 @@
     "manage": "Manage",
     "champ_obligatoire": "Required field.",
     "choisir": "Choose",
-    "erreur_enregistrement": "Saving failed."
+    "erreur_enregistrement": "Saving failed.",
+    "refresh": "Refresh"
   },
   "auth": {
     "login": "Log in",

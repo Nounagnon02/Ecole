@@ -129,7 +129,8 @@
     "manage": "إدارة",
     "champ_obligatoire": "حقل إلزامي.",
     "choisir": "اختر",
-    "erreur_enregistrement": "فشل الحفظ."
+    "erreur_enregistrement": "فشل الحفظ.",
+    "refresh": "تحديث"
   },
   "auth": {
     "login": "تسجيل الدخول",

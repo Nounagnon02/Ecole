@@ -101,7 +101,7 @@ function ApercuSection({ stats, inscriptions, facultes, activites, loading }) {
           <Card.Body>
             <div className="h-[260px]">
               {facultes.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full text-[var(--text-tertiary)]">
+                <div className="flex flex-col items-center justify-center h-full text-[var(--text-tertiary)]" aria-hidden="true">
                   <Building2 className="h-10 w-10 mb-3 opacity-40" />
                   <p className="text-sm">{t('dashboards.universite.aucune_donnee_facultaire')}</p>
                 </div>

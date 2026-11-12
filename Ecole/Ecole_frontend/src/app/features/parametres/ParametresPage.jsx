@@ -100,7 +100,7 @@ export default function ParametresPage() {
                 onClick={() => setActiveSection(section.id)}
                 className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
                   activeSection === section.id
-                    ? 'bg-[var(--accent-subtle)] text-[var(--accent)] dark:bg-[var(--accent-subtle)]0/10 dark:text-[var(--accent)]'
+                    ? 'bg-[var(--accent-subtle)] text-[var(--accent)] dark:bg-[var(--action)]/10 dark:text-[var(--accent)]'
                     : 'text-[var(--text-secondary)] hover:bg-[var(--surface-subtle)]  '
                 }`}
               >
@@ -215,20 +215,16 @@ function ProfilSection({ user, onSave, saving, saved }) {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-[var(--text-primary)] ">{t('pages.parametres.parametres.prenom')}</label>
-              <Input name="prenom" defaultValue={user?.prenom || ''} />
+              <Input label={t('pages.parametres.parametres.prenom')} name="prenom" defaultValue={user?.prenom || ''} />
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-[var(--text-primary)] ">{t('pages.parametres.parametres.nom')}</label>
-              <Input name="name" defaultValue={user?.name || ''} />
+              <Input label={t('pages.parametres.parametres.nom')} name="name" defaultValue={user?.name || ''} />
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-[var(--text-primary)] ">{t('pages.parametres.parametres.email')}</label>
-              <Input type="email" name="email" defaultValue={user?.email || ''} />
+              <Input type="email" label={t('pages.parametres.parametres.email')} name="email" defaultValue={user?.email || ''} />
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-[var(--text-primary)] ">{t('pages.parametres.parametres.telephone')}</label>
-              <Input name="telephone" defaultValue={user?.telephone || ''} />
+              <Input label={t('pages.parametres.parametres.telephone')} name="telephone" defaultValue={user?.telephone || ''} />
             </div>
           </div>
 
@@ -236,12 +232,10 @@ function ProfilSection({ user, onSave, saving, saved }) {
             <>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-[var(--text-primary)] ">{t('pages.parametres.parametres.specialite')}</label>
-                  <Input name="specialite" defaultValue={user?.profil?.specialite || ''} />
+                  <Input label={t('pages.parametres.parametres.specialite')} name="specialite" defaultValue={user?.profil?.specialite || ''} />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-[var(--text-primary)] ">{t('pages.parametres.parametres.grade')}</label>
-                  <Input name="grade" defaultValue={user?.profil?.grade || ''} />
+                  <Input label={t('pages.parametres.parametres.grade')} name="grade" defaultValue={user?.profil?.grade || ''} />
                 </div>
               </div>
 

@@ -77,7 +77,7 @@ function ApercuSection({ stats, activite, categories, emprunts, retardsListe, no
             <Card.Description>{t('dashboards.bibliothecaire.repartition_des_ouvrages')}</Card.Description>
           </Card.Header>
           <Card.Body>
-            <div className="h-[200px]">
+            <div className="h-[200px]" aria-hidden="true">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie data={categories} cx="50%" cy="50%" innerRadius={50} outerRadius={80} dataKey="value" paddingAngle={3}>

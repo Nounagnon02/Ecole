@@ -129,7 +129,8 @@
     "manage": "Gérer",
     "champ_obligatoire": "Champ obligatoire.",
     "choisir": "Choisir",
-    "erreur_enregistrement": "L’enregistrement a échoué."
+    "erreur_enregistrement": "L’enregistrement a échoué.",
+    "refresh": "Actualiser"
   },
   "auth": {
     "login": "Connexion",

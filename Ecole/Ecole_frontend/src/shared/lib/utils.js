@@ -77,9 +77,11 @@ export function stringToColor(str) {
   for (let i = 0; i < str.length; i++) {
     hash = str.charCodeAt(i) + ((hash << 5) - hash);
   }
+  // Teintes foncées : les initiales sont écrites en blanc, et les teintes
+  // claires d'origine (#10B981, #F59E0B…) ne passaient pas le contraste.
   const colors = [
-    '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6',
-    '#EC4899', '#14B8A6', '#F97316', '#6366F1', '#84CC16',
+    '#1D4ED8', '#047857', '#B45309', '#B91C1C', '#6D28D9',
+    '#BE185D', '#0F766E', '#C2410C', '#4338CA', '#4D7C0F',
   ];
   return colors[Math.abs(hash) % colors.length];
 }

@@ -143,7 +143,7 @@ export default function ElevesPage() {
           <p className="text-sm text-[var(--text-secondary)]">{t('pages.eleves.eleves.subtitle')}</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={refetch} disabled={isLoading}>
+          <Button variant="ghost" size="sm" aria-label={t('common.refresh')} title={t('common.refresh')} onClick={refetch} disabled={isLoading}>
             <RefreshCw className={cn('h-4 w-4 mr-1', isLoading && 'animate-spin')} />
           </Button>
           <Button variant="outline" size="sm" icon={<Download />} onClick={exporter} disabled={filtered.length === 0}>{t('common.export')}</Button>
