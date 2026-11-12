@@ -227,7 +227,7 @@ export default function CommunicationsPage() {
 
       {/* Rédaction */}
       {formOpen && (
-        <Card>
+        <Card padding>
           <form onSubmit={handleCreatePost} aria-label={t('pages.communications.communications.nouvelle_publication_2')} className="space-y-4">
             <Input
               label={t('pages.communications.communications.titre')}
@@ -309,7 +309,7 @@ export default function CommunicationsPage() {
       )}
 
       {/* Categories */}
-      <Card>
+      <Card padding>
         <div className="flex flex-wrap gap-2">
           {Object.entries(CATEGORY_CONFIG).map(([id, cfg]) => (
             <button
@@ -333,7 +333,7 @@ export default function CommunicationsPage() {
         {loadingPosts && (
           <div className="space-y-4">
             {Array.from({ length: 3 }).map((_, i) => (
-              <Card key={i}>
+              <Card padding key={i}>
                 <div className="flex items-start gap-4">
                   <div className="h-10 w-10 rounded-full bg-[var(--surface-subtle)] animate-pulse " />
                   <div className="flex-1 space-y-2">
@@ -347,7 +347,7 @@ export default function CommunicationsPage() {
           </div>
         )}
         {!loadingPosts && sorted.length === 0 && (
-          <Card>
+          <Card padding>
             <div className="text-center py-8 text-[var(--text-secondary)]">
               <MessageSquare className="mx-auto h-8 w-8 mb-2" />
               <p className="text-sm">{t('pages.communications.communications.aucune_communication_trouvee')}</p>
@@ -360,7 +360,7 @@ export default function CommunicationsPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <Card hover>
+            <Card padding hover>
               {post.pinned && (
                 <div className="mb-3 flex items-center gap-2 text-xs font-medium text-[var(--accent)]">
                   <Pin className="h-3 w-3" />

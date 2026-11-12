@@ -101,7 +101,7 @@ export default function ClassesPage() {
       {/* Cartes Classes */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {classes.length === 0 ? (
-          <Card className="sm:col-span-2 lg:col-span-4">
+          <Card padding className="sm:col-span-2 lg:col-span-4">
             <div className="text-center py-8 text-[var(--text-secondary)]">
               <Users className="mx-auto h-8 w-8 mb-2" />
               <p className="text-sm">{t('pages.enseignant.classes.aucune_classe_assignee')}</p>
@@ -145,7 +145,7 @@ export default function ClassesPage() {
 
       {/* Détail de la classe sélectionnée */}
       {selectedClasse && (
-        <Card>
+        <Card padding>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-4">
             <div>
               <h2 className="text-lg font-semibold text-[var(--text-primary)] ">

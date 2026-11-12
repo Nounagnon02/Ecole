@@ -65,7 +65,7 @@ export default function CertificatsSection() {
   };
 
   return (
-    <Card data-no-print>
+    <Card padding data-no-print>
       <FormDialog
         open={ouvert}
         title={p('etablir')}

@@ -92,7 +92,7 @@ export default function ParametresPage() {
 
       <div className="flex flex-col gap-6 lg:flex-row">
         {/* Sidebar de navigation */}
-        <Card className="lg:w-56 shrink-0 h-fit">
+        <Card padding className="lg:w-56 shrink-0 h-fit">
           <nav className="flex flex-col gap-1">
             {SECTIONS.map((section) => (
               <button

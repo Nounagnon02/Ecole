@@ -130,7 +130,7 @@ export default function TachesPage() {
         <StatsCard title={t('pages.universite.taches.urgentes')} value={String(stats.urgentes)} icon={AlertCircle} color="red" />
       </div>
 
-      <Card>
+      <Card padding>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
@@ -160,7 +160,7 @@ export default function TachesPage() {
 
       <div className="space-y-3">
         {filtered.length === 0 && (
-          <Card>
+          <Card padding>
             <div className="text-center py-8 text-[var(--text-secondary)]">
               <CheckSquare className="mx-auto h-8 w-8 mb-2" />
               <p className="text-sm">{t('pages.universite.taches.aucune_tache_trouvee')}</p>
@@ -170,7 +170,7 @@ export default function TachesPage() {
         {filtered.map((tache) => {
           const isOverdue = tache.dateLimite && new Date(tache.dateLimite) < new Date() && tache.statut !== 'termine';
           return (
-            <Card key={tache.id} hover>
+            <Card padding key={tache.id} hover>
               <div className="flex items-start gap-4">
                 <div className={cn(
                   'h-10 w-10 rounded-xl flex items-center justify-center shrink-0',

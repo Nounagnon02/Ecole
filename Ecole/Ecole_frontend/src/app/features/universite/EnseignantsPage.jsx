@@ -110,7 +110,7 @@ export default function EnseignantsPage() {
         <StatsCard title={t('pages.universite.enseignants.assistants')} value={String(stats.assistants)} icon={Users} color="amber" />
       </div>
 
-      <Card>
+      <Card padding>
         <div className="relative max-w-sm">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
           <Input
@@ -125,7 +125,7 @@ export default function EnseignantsPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {filtered.length === 0 && (
           <div className="sm:col-span-2 lg:col-span-3">
-            <Card>
+            <Card padding>
               <div className="text-center py-8 text-[var(--text-secondary)]">
                 <Users className="mx-auto h-8 w-8 mb-2" />
                 <p className="text-sm">{t('pages.universite.enseignants.aucun_enseignant_trouve')}</p>
@@ -136,7 +136,7 @@ export default function EnseignantsPage() {
         {filtered.map((e) => {
           const gradeConf = GRADE_BADGE[e.grade?.toLowerCase()] || { variant: 'neutral', label: e.grade };
           return (
-            <Card key={e.id} hover>
+            <Card padding key={e.id} hover>
               <div className="flex items-start justify-between mb-3">
                 <div className="h-10 w-10 rounded-xl bg-[var(--primary-subtle)] flex items-center justify-center">
                   <Users className="h-5 w-5 text-[var(--accent)]" />

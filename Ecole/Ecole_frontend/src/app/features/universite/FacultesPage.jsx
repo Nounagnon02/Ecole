@@ -93,7 +93,7 @@ export default function FacultesPage() {
         <StatsCard title={t('common.students')} value={String(stats.etudiants)} icon={Users} color="amber" />
       </div>
 
-      <Card>
+      <Card padding>
         <div className="relative max-w-sm">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
           <Input
@@ -108,7 +108,7 @@ export default function FacultesPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {filtered.length === 0 && (
           <div className="sm:col-span-2 lg:col-span-3">
-            <Card>
+            <Card padding>
               <div className="text-center py-8 text-[var(--text-secondary)]">
                 <Building2 className="mx-auto h-8 w-8 mb-2" />
                 <p className="text-sm">{t('pages.universite.facultes.aucune_faculte_trouvee')}</p>
@@ -117,7 +117,7 @@ export default function FacultesPage() {
           </div>
         )}
         {filtered.map((f) => (
-          <Card key={f.id} hover>
+          <Card padding key={f.id} hover>
             <div className="flex items-start justify-between mb-3">
               <div className="h-10 w-10 rounded-xl bg-[var(--primary-subtle)] flex items-center justify-center">
                 <Building2 className="h-5 w-5 text-[var(--accent)]" />

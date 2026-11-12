@@ -131,7 +131,7 @@ export function SanctionsSection() {
   };
 
   return (
-    <Card>
+    <Card padding>
       <SanctionDialog open={ouvert} onClose={() => setOuvert(false)} onDone={() => requete.refetch()} />
       <div className="mb-3 flex items-center justify-between gap-2">
         <h2 className="text-base font-semibold text-[var(--text-primary)]">{p('sanctions')}</h2>

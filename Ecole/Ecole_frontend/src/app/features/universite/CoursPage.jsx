@@ -98,7 +98,7 @@ export default function CoursPage() {
         <StatsCard title={t('pages.universite.cours.credits')} value={String(stats.creditsTotal)} icon={Building2} color="amber" />
       </div>
 
-      <Card>
+      <Card padding>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
@@ -131,7 +131,7 @@ export default function CoursPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {filtered.length === 0 && (
           <div className="sm:col-span-2 lg:col-span-3">
-            <Card>
+            <Card padding>
               <div className="text-center py-8 text-[var(--text-secondary)]">
                 <BookOpen className="mx-auto h-8 w-8 mb-2" />
                 <p className="text-sm">{t('common.no_course_found')}</p>
@@ -140,7 +140,7 @@ export default function CoursPage() {
           </div>
         )}
         {filtered.map((c) => (
-          <Card key={c.id} hover>
+          <Card padding key={c.id} hover>
             <div className="flex items-start justify-between mb-2">
               <div className="h-10 w-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/20 flex items-center justify-center">
                 <BookOpen className="h-5 w-5 text-emerald-500" />

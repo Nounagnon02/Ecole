@@ -130,7 +130,7 @@ export default function BulletinsPage() {
       </div>
 
       {!estFamille && (
-        <Card data-no-print>
+        <Card padding data-no-print>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:items-end">
             <Select label={p('classe')} placeholder={p('choisir_classe')} options={classes} value={classe} onChange={(e) => { setClasse(e.target.value); setRetour(null); }} />
             <Select label={p('periode')} options={PERIODES.map((v) => ({ value: v, label: v }))} value={periode} onChange={(e) => { setPeriode(e.target.value); setRetour(null); }} />
@@ -143,7 +143,7 @@ export default function BulletinsPage() {
         </Card>
       )}
 
-      <Card data-no-print>
+      <Card padding data-no-print>
         {!estFamille && !classe ? (
           <p className="py-8 text-center text-sm text-[var(--text-secondary)]">{p('choisir_d_abord')}</p>
         ) : requete.isPending ? (

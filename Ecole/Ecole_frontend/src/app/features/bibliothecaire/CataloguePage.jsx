@@ -123,7 +123,7 @@ export default function CataloguePage() {
       </div>
 
       {/* Filtres */}
-      <Card>
+      <Card padding>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
@@ -157,7 +157,7 @@ export default function CataloguePage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {filtered.length === 0 && (
           <div className="sm:col-span-2 lg:col-span-3">
-            <Card>
+            <Card padding>
               <div className="text-center py-8 text-[var(--text-secondary)]">
                 <BookOpen className="mx-auto h-8 w-8 mb-2" />
                 <p className="text-sm">{t('pages.bibliothecaire.catalogue.aucun_ouvrage_trouve')}</p>
@@ -166,7 +166,7 @@ export default function CataloguePage() {
           </div>
         )}
         {filtered.map((o) => (
-          <Card key={o.id} hover>
+          <Card padding key={o.id} hover>
             <div className="h-10 w-10 rounded-xl bg-[var(--primary-subtle)] flex items-center justify-center mb-3">
               <BookOpen className="h-5 w-5 text-[var(--accent)]" />
             </div>

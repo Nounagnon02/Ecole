@@ -105,7 +105,7 @@ export default function EnfantsPage() {
       {/* Sélection enfant — empilée sur téléphone : côte à côte, elle débordait à 360 px. */}
       <div className="flex flex-col gap-3 sm:flex-row">
         {enfants.length === 0 ? (
-          <Card className="flex-1">
+          <Card padding className="flex-1">
             <div className="text-center py-8 text-[var(--text-secondary)]">
               <User className="mx-auto h-8 w-8 mb-2" />
               <p className="text-sm">{t('pages.parent.enfants.aucun_enfant_lie_a_votre_compte')}</p>

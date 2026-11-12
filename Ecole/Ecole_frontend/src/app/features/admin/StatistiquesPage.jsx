@@ -137,7 +137,7 @@ export default function StatistiquesPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
+        <Card padding>
           <h3 className="text-sm font-semibold text-[var(--text-primary)]  mb-4">{t('pages.admin.statistiques.repartition_des_utilisateurs')}</h3>
           <div className="space-y-4">
             {rolesWithPct.map((item) => (
@@ -154,7 +154,7 @@ export default function StatistiquesPage() {
           </div>
         </Card>
 
-        <Card>
+        <Card padding>
           <h3 className="text-sm font-semibold text-[var(--text-primary)]  mb-4">{t('pages.admin.statistiques.activite_recente')}</h3>
           <div className="space-y-3">
             {data.recent_activities?.length > 0 ? (
@@ -182,7 +182,7 @@ export default function StatistiquesPage() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <Card>
+        <Card padding>
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/20 flex items-center justify-center">
               <CheckCircle className="h-5 w-5 text-emerald-500" />
@@ -193,7 +193,7 @@ export default function StatistiquesPage() {
             </div>
           </div>
         </Card>
-        <Card>
+        <Card padding>
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-xl bg-amber-100 dark:bg-amber-900/20 flex items-center justify-center">
               <BookOpen className="h-5 w-5 text-amber-500" />
@@ -204,7 +204,7 @@ export default function StatistiquesPage() {
             </div>
           </div>
         </Card>
-        <Card>
+        <Card padding>
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-xl bg-sky-100 dark:bg-sky-900/20 flex items-center justify-center">
               <GraduationCap className="h-5 w-5 text-sky-500" />

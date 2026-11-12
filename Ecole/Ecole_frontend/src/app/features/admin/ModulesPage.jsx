@@ -88,7 +88,7 @@ export default function ModulesPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {modules.length === 0 && (
           <div className="sm:col-span-2 lg:col-span-3">
-            <Card>
+            <Card padding>
               <div className="text-center py-8 text-[var(--text-secondary)]">
                 <Puzzle className="mx-auto h-8 w-8 mb-2" />
                 <p className="text-sm">{t('pages.admin.modules.aucun_module_disponible')}</p>
