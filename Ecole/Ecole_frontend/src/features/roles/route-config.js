@@ -227,7 +227,8 @@ export const ROUTE_CONFIG = {
   surveillantPresences: {
     path: '/surveillant/presences',
     component: lazy(() => import('@/app/features/surveillant/PresencesPage')),
-    roles: [ROLES.SURVEILLANT],
+    // Mêmes rôles que `POST /surveillant/appel`.
+    roles: [ROLES.SURVEILLANT, ROLES.CENSEUR, ...ROLE_GROUPS.DIRECTION],
   },
   censeurDiscipline: {
     path: '/censeur/discipline',
