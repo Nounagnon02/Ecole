@@ -126,11 +126,13 @@ class BulletinService
      */
     private function moyenneMatiere($subjectMarks): float
     {
-        $devoir1 = $this->moyenneType($subjectMarks, 'Devoir1');
-        $devoir2 = $this->moyenneType($subjectMarks, 'Devoir2');
-        $interrogations = $this->moyenneType($subjectMarks, 'Interrogation');
-
-        return collect([$devoir1, $devoir2, $interrogations])
+        // Chaque type d'évaluation présent pèse autant : pour le secondaire,
+        // (Devoir 1 + Devoir 2 + moyenne des interrogations) / 3. Seuls ces
+        // trois types étaient lus : une note saisie en « 1ère evaluation »,
+        // « 2ème evaluation »… était ignorée, et la matière tombait à 0 sur le
+        // bulletin alors que l'élève avait une note.
+        return $subjectMarks->pluck('type_evaluation')->unique()
+            ->map(fn ($type) => $this->moyenneType($subjectMarks, $type))
             ->filter(fn ($v) => $v !== null)
             ->avg() ?? 0;
     }
