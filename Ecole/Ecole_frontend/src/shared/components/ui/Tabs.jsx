@@ -101,7 +101,6 @@ function TabsTrigger({ children, value, variant, className, disabled }) {
   const { activeValue, setValue } = useContext(TabsContext);
   const isActive = activeValue === value;
   const triggerId = useId();
-  const panelId = useId();
 
   const variantStyles = {
     underline: cn(
@@ -132,7 +131,6 @@ function TabsTrigger({ children, value, variant, className, disabled }) {
       id={triggerId}
       role="tab"
       aria-selected={isActive}
-      aria-controls={panelId}
       tabIndex={isActive ? 0 : -1}
       disabled={disabled}
       aria-disabled={disabled || undefined}

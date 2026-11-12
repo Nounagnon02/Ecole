@@ -262,7 +262,7 @@ export default function MessageriePage() {
                   className={cn(
                     'flex-1 rounded-lg px-2 py-1 text-xs font-medium transition-colors',
                     filter === f
-                      ? 'bg-[var(--primary-subtle)] text-[var(--accent)] dark:bg-[var(--accent-subtle)]0/10 dark:text-[var(--accent)]'
+                      ? 'bg-[var(--primary-subtle)] text-[var(--accent)] dark:bg-[var(--action)]/10 dark:text-[var(--accent)]'
                       : 'text-[var(--text-secondary)] hover:bg-[var(--surface-subtle)] '
                   )}
                 >
@@ -291,7 +291,7 @@ export default function MessageriePage() {
                 className={cn(
                   'w-full border-b border-[var(--border-light)] p-3 text-left transition-colors ',
                   selectedConv?.id === conv.id
-                    ? 'bg-[var(--accent-subtle)] dark:bg-[var(--accent-subtle)]0/5'
+                    ? 'bg-[var(--accent-subtle)] dark:bg-[var(--action)]/5'
                     : 'hover:bg-[var(--surface)] '
                 )}
               >
@@ -405,7 +405,7 @@ export default function MessageriePage() {
                     <div className={cn(
                       'max-w-[70%] rounded-2xl px-4 py-2.5',
                       msg.from === 'me'
-                        ? 'bg-[var(--accent-subtle)]0 text-white rounded-br-md'
+                        ? 'bg-[var(--action)] text-white rounded-br-md'
                         : 'bg-[var(--surface-subtle)] text-[var(--text-primary)]   rounded-bl-md'
                     )}>
                       <p className="text-sm leading-relaxed">{msg.text}</p>

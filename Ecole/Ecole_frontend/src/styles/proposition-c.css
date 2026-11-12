@@ -82,6 +82,17 @@
     .ecole-auth-language { margin-block-end:16px; }
     .ecole-auth-card { padding:24px; }
   }
+  /* Petits écrans (lot 8.4). Sans `min-width:0`, un enfant de grille ou de
+     flex s'élargit à la taille de son tableau et toute la page défile de
+     côté ; `:where` laisse la priorité à tout utilitaire `min-w-*`. Les
+     rangées de boutons passent à la ligne, les rangées d'onglets défilent
+     dans leur cadre, et l'en-tête cède le sélecteur de langue (disponible
+     dans Paramètres et à la connexion) sous 400 px. */
+  .ecole-main :where(div, section, article, form, dl) { min-width:0; }
+  .ecole-main :where(.flex.items-center.gap-2, .flex.gap-2, .flex.gap-1) { flex-wrap:wrap; }
+  .ecole-main :where(.flex):has(> button.border-b-2) { overflow-x:auto; flex-wrap:nowrap; }
+  @media (max-width:400px) { .ecole-header-language, .ecole-header-actions > button:nth-of-type(2) { display:none; } }
+
   .zone-impression { display:none; }
   @media print {
     .ecole-header, .ecole-network, [data-no-print] { display:none !important; }
@@ -101,3 +112,18 @@
     body { background:white; color:#17302e; }
   }
 }
+
+/* Hors couche, pour primer sur les utilitaires de couleur de Tailwind. */
+/* Contraste (lot 8.2) : les teintes 400–600 des utilitaires de couleur,
+   écrites sur fond clair, n'atteignaient pas 4,5:1. En thème clair, elles
+   prennent la teinte 700 ; le thème sombre garde les siennes. */
+:root:not(.dark) .text-emerald-400, :root:not(.dark) .text-emerald-500, :root:not(.dark) .text-emerald-600,
+:root:not(.dark) .text-green-500, :root:not(.dark) .text-green-600 { color:#047857; }
+:root:not(.dark) .text-red-400, :root:not(.dark) .text-red-500, :root:not(.dark) .text-red-600 { color:#B91C1C; }
+:root:not(.dark) .text-amber-500, :root:not(.dark) .text-amber-600, :root:not(.dark) .text-orange-500, :root:not(.dark) .text-orange-600 { color:#B45309; }
+:root:not(.dark) .text-blue-500, :root:not(.dark) .text-blue-600, :root:not(.dark) .text-sky-500, :root:not(.dark) .text-sky-600 { color:#1D4ED8; }
+:root:not(.dark) .text-purple-500, :root:not(.dark) .text-purple-600, :root:not(.dark) .text-violet-500 { color:#6D28D9; }
+:root:not(.dark) .text-pink-500, :root:not(.dark) .text-pink-600 { color:#BE185D; }
+:root:not(.dark) .text-teal-500, :root:not(.dark) .text-teal-600 { color:#0F766E; }
+
+

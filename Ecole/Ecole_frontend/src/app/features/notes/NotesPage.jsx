@@ -196,7 +196,7 @@ export default function NotesPage() {
           <p className="text-sm text-[var(--text-secondary)]">{t('pages.notes.notes.subtitle')}</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={refetch} disabled={isLoading}>
+          <Button variant="ghost" size="sm" aria-label={t('common.refresh')} title={t('common.refresh')} onClick={refetch} disabled={isLoading}>
             <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} />
           </Button>
           {/* Export, import et saisie : réservés à ceux que l'API y autorise. */}
