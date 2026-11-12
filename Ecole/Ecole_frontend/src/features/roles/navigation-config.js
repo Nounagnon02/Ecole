@@ -72,6 +72,9 @@ const ROLE_MENUS = {
     { icon: UserCheck, label: 'nav.enfants', path: '/parent/enfants' },
     { icon: BookOpen, label: 'nav.notes', path: '/notes' },
     { icon: FileText, label: 'nav.bulletins', path: '/bulletins' },
+    // Seul accès des parents à l'emploi du temps depuis que l'onglet du
+    // tableau de bord, qui doublait le menu, a été retiré.
+    { icon: Calendar, label: 'nav.emploi_du_temps', path: '/emploi-du-temps' },
     { icon: CreditCard, label: 'nav.paiements', path: '/parent/paiements' },
     { icon: MessageSquare, label: 'nav.annonces', path: '/communications' },
     { icon: Settings, label: 'nav.parametres', path: '/parametres' },

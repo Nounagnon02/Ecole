@@ -36,12 +36,10 @@ import { useTranslation } from '@/shared/i18n';
 
 // ─── Constantes ───────────────────────────────────────────────
 
+// Seuls les onglets qui s'affichent ici : ceux qui menaient vers une
+// autre page doublaient le menu (audit, recommandation B4).
 const TABS = [
   { id: 'apercu', label: 'Aperçu', icon: BarChart3 },
-  { id: 'notes', label: 'Notes', icon: ClipboardList },
-  { id: 'emploi', label: 'Emploi du Temps', icon: Clock },
-  { id: 'paiements', label: 'Paiements', icon: DollarSign },
-  { id: 'communications', label: 'Échanges', icon: MessageSquare },
 ];
 
 const STATS_META = [

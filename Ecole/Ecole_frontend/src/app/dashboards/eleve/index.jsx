@@ -23,11 +23,11 @@ import Table from '@/shared/components/ui/Table';
 import { Skeleton } from '@/shared/components/ui/Skeleton';
 import { useTranslation } from '@/shared/i18n';
 
+// Seuls les onglets qui s'affichent ici : ceux qui menaient vers une
+// autre page doublaient le menu (audit, recommandation B4).
 const TABS = [
   { id: 'apercu', label: 'Aperçu', icon: BarChart3 },
   { id: 'notes', label: 'Mes Notes', icon: ClipboardList },
-  { id: 'emploi', label: 'Emploi du Temps', icon: Clock },
-  { id: 'paiements', label: 'Paiements', icon: DollarSign },
 ];
 
 function ApercuSection({ data, loading }) {

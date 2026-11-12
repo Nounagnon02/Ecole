@@ -29,12 +29,10 @@ import { Skeleton } from '@/shared/components/ui/Skeleton';
 /* ─── Constantes ─────────────────────────────────────────────── */
 const COLORS = ['var(--accent)', 'var(--green)', 'var(--amber)', 'var(--blue)', 'var(--primary)', 'var(--red)'];
 
+// Seuls les onglets qui s'affichent ici : ceux qui menaient vers une
+// autre page doublaient le menu (audit, recommandation B4).
 const TABS = [
   { id: 'apercu', label: 'Aperçu', icon: Activity },
-  { id: 'facultes', label: 'Facultés', icon: Building2 },
-  { id: 'etudiants', label: 'Étudiants', icon: Users },
-  { id: 'cours', label: 'Cours', icon: BookOpen },
-  { id: 'planning', label: 'Planning', icon: Calendar },
 ];
 
 const STATS_META = [

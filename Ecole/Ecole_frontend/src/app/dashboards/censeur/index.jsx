@@ -23,10 +23,10 @@ import Button from '@/shared/components/ui/Button';
 import Table from '@/shared/components/ui/Table';
 import { useTranslation } from '@/shared/i18n';
 
+// Seuls les onglets qui s'affichent ici : ceux qui menaient vers une
+// autre page doublaient le menu (audit, recommandation B4).
 const TABS = [
   { id: 'apercu', label: 'Aperçu', icon: BarChart3 },
-  { id: 'discipline', label: 'Discipline', icon: Gavel },
-  { id: 'absences', label: 'Absences', icon: CalendarX },
 ];
 
 const STATS_META = [

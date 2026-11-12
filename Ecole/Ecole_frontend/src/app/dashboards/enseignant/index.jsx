@@ -38,13 +38,13 @@ import { Skeleton } from '@/shared/components/ui/Skeleton';
 
 // ─── Constantes ───────────────────────────────────────────────
 
+// Seuls les onglets qui s'affichent ici : ceux qui menaient vers une
+// autre page doublaient le menu (audit, recommandation B4).
 const TABS = [
   { id: 'apercu', label: 'Aperçu', icon: BarChart3 },
-  { id: 'classe', label: 'Ma Classe', icon: Users },
   { id: 'notes', label: 'Notes', icon: ClipboardList },
   { id: 'cahier', label: 'Cahier de Textes', icon: FileText },
   { id: 'emploi', label: 'Emploi du Temps', icon: Clock },
-  { id: 'messages', label: 'Messages', icon: MessageSquare },
 ];
 
 const STATS_META = [
