@@ -108,8 +108,8 @@ const PAGES = [
     nom: 'InscriptionsPage',
     Composant: InscriptionsPage,
     url: '/secretaire/dossiers-eleves',
-    // La page lit `ins.eleve?.nom`, pas un champ plat.
-    element: { id: 1, eleve: { nom: 'Adjovi', prenom: 'Rose' }, classe: '6e A', dossier_complet: true },
+    // Forme réelle de l'API : le nom de l'élève vit sur son compte.
+    element: { id: 1, eleve: { id: 1, user: { name: 'Adjovi', prenom: 'Rose' } }, classe: '6e A', dossier_complet: true },
     attendu: 'Adjovi',
     vide: /aucune inscription trouvée/i,
   },

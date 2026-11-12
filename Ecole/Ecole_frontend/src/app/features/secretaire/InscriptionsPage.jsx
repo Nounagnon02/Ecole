@@ -7,6 +7,8 @@
 
 import { useState, useMemo } from 'react';
 import { useApiQuery } from '@/shared/lib/api-client';
+import InscriptionDialog from '@/app/features/eleves/InscriptionDialog';
+import FicheDialog from '@/app/features/eleves/FicheDialog';
 import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
@@ -33,6 +35,10 @@ export default function InscriptionsPage() {
   // tout (cf. audit P4.1). `unwrapList` traverse les trois formes
   // d'enveloppe que renvoient les contrôleurs.
   const requete = useApiQuery(['secretaire-dossiers-eleves'], '/secretaire/dossiers-eleves');
+  const [inscription, setInscription] = useState(false);
+  const [ficheId, setFicheId] = useState(null);
+  // Nom et prénom de l'élève vivent sur son compte (`eleve.user`).
+  const nomEleve = (i) => `${i.eleve?.user?.name ?? ''} ${i.eleve?.user?.prenom ?? ''}`.trim();
 
   const inscriptions = useMemo(() => unwrapList(requete.data) ?? [], [requete.data]);
   const loading = requete.isPending;
@@ -48,8 +54,8 @@ export default function InscriptionsPage() {
     inscriptions.filter((i) => {
       const q = search.toLowerCase();
       if (search) {
-        const nom = `${i.eleve?.prenom || ''} ${i.eleve?.nom || ''}`;
-        const nomPere = (i.nom_pere || '').toLowerCase();
+        const nom = nomEleve(i);
+        const nomPere = (i.nom_parent || '').toLowerCase();
         if (!nom.toLowerCase().includes(q) && !nomPere.includes(q)) return false;
       }
       if (filterStatut === 'complete' && !i.dossier_complet) return false;
@@ -83,8 +89,10 @@ export default function InscriptionsPage() {
           <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.secretaire.inscriptions.title')}</h1>
           <p className="text-sm text-[var(--text-secondary)]">{t('pages.secretaire.inscriptions.subtitle')}</p>
         </div>
-        <Button size="sm" icon={<Plus />}>{t('pages.secretaire.inscriptions.nouvelle_inscription')}</Button>
+        <Button size="sm" icon={<Plus />} onClick={() => setInscription(true)}>{t('pages.secretaire.inscriptions.nouvelle_inscription')}</Button>
       </div>
+      <InscriptionDialog open={inscription} onClose={() => setInscription(false)} onDone={() => requete.refetch()} />
+      <FicheDialog eleveId={ficheId} peutModifier onClose={() => setFicheId(null)} onChanged={() => requete.refetch()} />
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-3">
@@ -131,11 +139,11 @@ export default function InscriptionsPage() {
         {filtered.map((ins) => (
           <Card key={ins.id || ins.eleve?.id} hover>
             <div className="flex items-start gap-4">
-              <Avatar name={`${ins.eleve?.prenom || ''} ${ins.eleve?.nom || ''}`} size="md" />
+              <Avatar name={nomEleve(ins)} size="md" />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-sm font-semibold text-[var(--text-primary)] ">
-                    {ins.eleve?.prenom} {ins.eleve?.nom}
+                    {nomEleve(ins)}
                   </span>
                   <Badge variant={ins.dossier_complet ? 'primary' : 'warning'} size="sm">
                     {ins.dossier_complet ? t('pages.secretaire.inscriptions.complet') : t('pages.secretaire.inscriptions.incomplet')}
@@ -145,10 +153,10 @@ export default function InscriptionsPage() {
                   )}
                 </div>
                 <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-[var(--text-secondary)]">
-                  {ins.nom_pere && (
+                  {ins.nom_parent && (
                     <span className="flex items-center gap-1">
                       <UserCheck className="h-3 w-3" />
-                      {ins.nom_pere}
+                      {ins.nom_parent}
                     </span>
                   )}
                   {ins.eleve?.created_at && (
@@ -176,9 +184,9 @@ export default function InscriptionsPage() {
                 </div>
               </div>
               <div className="flex gap-1">
-                <Button variant="ghost" size="sm" icon={<Eye />} title={t('common.view')} />
+                <Button variant="ghost" size="sm" icon={<Eye />} title={t('common.view')} aria-label={`${t('common.view')} ${nomEleve(ins)}`} onClick={() => setFicheId(ins.eleve?.id ?? ins.id)} />
                 {!ins.dossier_complet && (
-                  <Button variant="outline" size="sm">{t('pages.secretaire.inscriptions.completer')}</Button>
+                  <Button variant="outline" size="sm" onClick={() => setFicheId(ins.eleve?.id ?? ins.id)}>{t('pages.secretaire.inscriptions.completer')}</Button>
                 )}
               </div>
             </div>

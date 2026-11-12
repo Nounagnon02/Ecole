@@ -1704,6 +1704,36 @@
         "description": "Description",
         "modifier": "Edit the event",
         "confirmer_suppression": "Remove “{titre}” from the planning?"
+      },
+      "courrier": {
+        "sens": "Direction",
+        "date": "Date",
+        "objet": "Subject",
+        "observation": "Note"
+      },
+      "certificats": {
+        "title": "Certificates",
+        "etablir": "Issue a certificate",
+        "aucun": "No certificate issued.",
+        "eleve": "Pupil",
+        "type": "Certificate",
+        "date": "Issue date",
+        "delivre": "Handed over",
+        "delivrer": "Mark handed over",
+        "imprimer": "Print",
+        "numero": "No.",
+        "fait_le": "Done on {date}.",
+        "signature": "The head of school",
+        "titres": {
+          "scolarite": "Certificate of enrolment",
+          "frequentation": "Certificate of attendance",
+          "radiation": "Certificate of withdrawal"
+        },
+        "textes": {
+          "scolarite": "The undersigned head of school certifies that the pupil {nom}, registration number {matricule}, is duly enrolled in {classe} for the current school year.",
+          "frequentation": "The undersigned head of school certifies that the pupil {nom}, registration number {matricule}, enrolled in {classe}, regularly attends the school.",
+          "radiation": "The undersigned head of school certifies that the pupil {nom}, registration number {matricule}, formerly enrolled in {classe}, has been withdrawn from the school roll."
+        }
       }
     },
     "surveillant": {

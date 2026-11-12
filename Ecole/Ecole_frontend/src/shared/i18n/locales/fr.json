@@ -1704,6 +1704,36 @@
         "description": "Description",
         "modifier": "Modifier l’événement",
         "confirmer_suppression": "Supprimer « {titre} » du planning ?"
+      },
+      "courrier": {
+        "sens": "Sens",
+        "date": "Date",
+        "objet": "Objet",
+        "observation": "Observation"
+      },
+      "certificats": {
+        "title": "Certificats",
+        "etablir": "Établir un certificat",
+        "aucun": "Aucun certificat établi.",
+        "eleve": "Élève",
+        "type": "Certificat",
+        "date": "Date d’émission",
+        "delivre": "Délivré",
+        "delivrer": "Marquer délivré",
+        "imprimer": "Imprimer",
+        "numero": "N°",
+        "fait_le": "Fait le {date}.",
+        "signature": "Le chef d’établissement",
+        "titres": {
+          "scolarite": "Certificat de scolarité",
+          "frequentation": "Certificat de fréquentation",
+          "radiation": "Certificat de radiation"
+        },
+        "textes": {
+          "scolarite": "Le chef d’établissement soussigné certifie que l’élève {nom}, matricule {matricule}, est régulièrement inscrit(e) en classe de {classe} pour l’année scolaire en cours.",
+          "frequentation": "Le chef d’établissement soussigné certifie que l’élève {nom}, matricule {matricule}, inscrit(e) en classe de {classe}, fréquente régulièrement l’établissement.",
+          "radiation": "Le chef d’établissement soussigné certifie que l’élève {nom}, matricule {matricule}, précédemment inscrit(e) en classe de {classe}, est radié(e) des effectifs de l’établissement."
+        }
       }
     },
     "surveillant": {
