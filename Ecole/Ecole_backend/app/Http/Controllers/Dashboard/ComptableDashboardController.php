@@ -29,10 +29,12 @@ class ComptableDashboardController extends Controller
                 \App\Models\PaiementEleve::PARTIAL,
             ])->count();
 
-            $totalPaiements = \App\Models\PaiementEleve::whereMonth('date_paiement', $moisActuel)->count();
-            $payes = \App\Models\PaiementEleve::whereMonth('date_paiement', $moisActuel)
-                ->where('statut_global', \App\Models\PaiementEleve::PAID)->count();
-            $tauxRecouvrement = $totalPaiements > 0 ? round(($payes / $totalPaiements) * 100) : 0;
+            // Le mois de l'année en cours seulement ; sans paiement, rien à mesurer.
+            $paiementsDuMois = \App\Models\PaiementEleve::whereMonth('date_paiement', $moisActuel)
+                ->whereYear('date_paiement', $anneeActuelle);
+            $totalPaiements = (clone $paiementsDuMois)->count();
+            $payes = (clone $paiementsDuMois)->where('statut_global', \App\Models\PaiementEleve::PAID)->count();
+            $tauxRecouvrement = $totalPaiements > 0 ? round(($payes / $totalPaiements) * 100) . '%' : '—';
 
             $depensesMois = (float) \App\Models\Depense::whereMonth('date_depense', $moisActuel)
                 ->whereYear('date_depense', $anneeActuelle)->sum('montant');
@@ -129,7 +131,7 @@ class ComptableDashboardController extends Controller
                 'stats' => [
                     ['title' => 'Revenus du Mois', 'value' => number_format($revenusMois, 0, ',', ' ') . ' F', 'trend' => 0, 'trendLabel' => 'ce mois'],
                     ['title' => 'Factures en Attente', 'value' => (string) $enAttente, 'trend' => 0, 'trendLabel' => 'non soldées'],
-                    ['title' => 'Taux Recouvrement', 'value' => "{$tauxRecouvrement}%", 'trend' => 0, 'trendLabel' => 'ce mois'],
+                    ['title' => 'Taux Recouvrement', 'value' => $tauxRecouvrement, 'trend' => 0, 'trendLabel' => 'ce mois'],
                     ['title' => 'Dépenses du Mois', 'value' => number_format($depensesMois, 0, ',', ' ') . ' F', 'trend' => 0, 'trendLabel' => 'ce mois'],
                 ],
                 'donnes_ca' => $donneesMensuelles,
@@ -149,7 +151,7 @@ class ComptableDashboardController extends Controller
                     'stats' => [
                         ['title' => 'Revenus du Mois', 'value' => '0 F', 'trend' => 0, 'trendLabel' => 'ce mois'],
                         ['title' => 'Factures en Attente', 'value' => '0', 'trend' => 0, 'trendLabel' => 'non soldées'],
-                        ['title' => 'Taux Recouvrement', 'value' => '0%', 'trend' => 0, 'trendLabel' => 'ce mois'],
+                        ['title' => 'Taux Recouvrement', 'value' => '—', 'trend' => 0, 'trendLabel' => 'ce mois'],
                         ['title' => 'Dépenses du Mois', 'value' => '0 F', 'trend' => 0, 'trendLabel' => 'ce mois'],
                     ],
                     'donnes_ca' => [],

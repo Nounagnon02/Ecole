@@ -104,6 +104,15 @@ describe('FacturesPage', () => {
     expect(screen.getByText('Taux recouvrement')).toBeInTheDocument();
   });
 
+  it('affiche « — » comme taux de recouvrement quand rien n’est facturé', async () => {
+    http.onGet(PATH).reply(200, { success: true, data: [] });
+
+    renderPage(<FacturesPage />);
+
+    await waitFor(() => expect(screen.getByText('—')).toBeInTheDocument());
+    expect(screen.queryByText('0%')).not.toBeInTheDocument();
+  });
+
   it('filtre par recherche sur le nom du client', async () => {
     mockPaiements();
 
