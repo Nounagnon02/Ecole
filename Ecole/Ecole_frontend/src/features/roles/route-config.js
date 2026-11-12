@@ -342,26 +342,12 @@ export const ROUTE_CONFIG = {
     component: lazy(() => import('@/app/features/paiements/PaiementRetourPage')),
     roles: [...ROLE_GROUPS.DIRECTION, ROLES.COMPTABLE, ROLES.SECRETAIRE, ROLES.PARENT, ROLES.ELEVE],
   },
-  directeurAiInsights: {
-    path: '/directeur/ai-insights',
-    component: lazy(() => import('@/app/features/ai/AiInsightsPage')),
-    roles: [ROLES.DIRECTEUR],
-  },
-  enseignantAiAssistant: {
-    path: '/enseignant/ai-assistant',
-    component: lazy(() => import('@/app/features/ai/AiInsightsPage')),
-    roles: [ROLES.ENSEIGNANT],
-  },
-  parentAiReport: {
-    path: '/parent/ai-report',
-    component: lazy(() => import('@/app/features/ai/AiInsightsPage')),
-    roles: [ROLES.PARENT],
-  },
-  eleveAiTutor: {
-    path: '/eleve/tutor',
-    component: lazy(() => import('@/app/features/ai/AiInsightsPage')),
-    roles: [ROLES.ELEVE],
-  },
+  // Assistant IA : hors plan, masqué (plan de correction, « Hors plan »).
+  // Ses routes /directeur/ai-insights, /enseignant/ai-assistant,
+  // /parent/ai-report et /eleve/tutor menaient toutes à
+  // app/features/ai/AiInsightsPage, conservée pour une reprise : il suffira de
+  // les rétablir ici, avec leurs libellés dans navigation-config (LABELS) et
+  // leurs entrées dans CommandPalette.
 
   // ─── ADMIN ───────────────────────────────────────────────────────────
   adminEcoles: {
