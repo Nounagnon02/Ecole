@@ -1,0 +1,39 @@
+{
+ "date": "2026-11-12T13:54:36.249Z",
+ "bridage": "Lighthouse mobile (1,6 Mb/s, 150 ms, CPU ×4)",
+ "mesures": [
+  {
+   "parcours": "Connexion (première visite)",
+   "lcp_ms": 1772,
+   "cls": 0,
+   "fcp_ms": 1772,
+   "ttfb_ms": 6,
+   "tbt_ms": 295,
+   "lcp_bon": true,
+   "cls_bon": true,
+   "tbt_bon": false
+  },
+  {
+   "parcours": "Tableau de bord parent",
+   "lcp_ms": 3364,
+   "cls": 0,
+   "fcp_ms": 1600,
+   "ttfb_ms": 5,
+   "tbt_ms": 396,
+   "lcp_bon": false,
+   "cls_bon": true,
+   "tbt_bon": false
+  },
+  {
+   "parcours": "Notes (enseignant)",
+   "lcp_ms": 3228,
+   "cls": 0,
+   "fcp_ms": 1588,
+   "ttfb_ms": 5,
+   "tbt_ms": 359,
+   "lcp_bon": false,
+   "cls_bon": true,
+   "tbt_bon": false
+  }
+ ]
+}
