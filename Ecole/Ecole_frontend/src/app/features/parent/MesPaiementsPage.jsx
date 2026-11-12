@@ -139,14 +139,14 @@ export default function MesPaiementsPage({ onRedirect = versPasserelle }) {
               ['total-paye', 'total_paye', totaux.total_paye],
               ['total-reste', 'reste_a_payer', totaux.solde],
             ].map(([id, cle, valeur]) => (
-              <Card key={id}>
+              <Card padding key={id}>
                 <dt className="text-sm text-[var(--text-secondary)]">{t(`pages.parent.paiements.${cle}`)}</dt>
                 <dd data-testid={id} className="mt-1 text-xl font-semibold text-[var(--text-primary)]">{formatCurrency(valeur)}</dd>
               </Card>
             ))}
           </dl>
 
-          <Card>
+          <Card padding>
             {requetePaiements.isPending ? (
               <div className="flex h-32 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-[var(--text-tertiary)]" /></div>
             ) : requetePaiements.isError ? (

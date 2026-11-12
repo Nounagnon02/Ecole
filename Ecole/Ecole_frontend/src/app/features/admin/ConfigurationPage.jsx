@@ -116,7 +116,7 @@ export default function ConfigurationPage() {
 
       <div className="grid gap-6 lg:grid-cols-4">
         {/* Navigation latérale */}
-        <Card className="lg:col-span-1">
+        <Card padding className="lg:col-span-1">
           <nav className="space-y-1">
             {CONFIG_SECTIONS.map((section) => {
               const IconComponent = section.icon;
@@ -150,7 +150,7 @@ export default function ConfigurationPage() {
           {CONFIG_SECTIONS.filter((s) => s.id === activeSection).map((section) => {
             const IconComponent = section.icon;
             return (
-              <Card key={section.id}>
+              <Card padding key={section.id}>
                 <div className="flex items-center gap-3 mb-6">
                   <div className={cn('h-10 w-10 rounded-xl flex items-center justify-center', SECTION_COLORS[section.id])}>
                     <IconComponent className="h-5 w-5" />

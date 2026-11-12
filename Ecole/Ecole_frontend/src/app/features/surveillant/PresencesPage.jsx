@@ -119,7 +119,7 @@ export default function PresencesPage() {
         <p className="text-sm text-[var(--text-secondary)]">{p('subtitle')}</p>
       </div>
 
-      <Card>
+      <Card padding>
         <div className="grid gap-3 sm:grid-cols-2">
           <Select label={p('classe')} placeholder={p('choisir_classe')} options={classes} value={classe} onChange={(e) => setClasse(e.target.value)} />
           <Input type="date" label={p('date')} max={aujourdhui()} value={date} onChange={(e) => setDate(e.target.value)} />
@@ -127,7 +127,7 @@ export default function PresencesPage() {
       </Card>
 
       {classe && (
-        <Card>
+        <Card padding>
           {requeteFeuille.isPending ? (
             <div className="flex h-32 items-center justify-center" role="status" aria-label={t('common.loading')}><Loader2 className="h-6 w-6 animate-spin text-[var(--text-tertiary)]" /></div>
           ) : requeteFeuille.isError ? (
@@ -180,7 +180,7 @@ export default function PresencesPage() {
       )}
 
       {classe && absences.length > 0 && (
-        <Card>
+        <Card padding>
           <h2 className="mb-3 text-base font-semibold text-[var(--text-primary)]">{p('absences_du_jour')}</h2>
           <ul className="divide-y divide-[var(--border-light)]" data-testid="absences">
             {absences.map((a) => (

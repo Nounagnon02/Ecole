@@ -200,7 +200,7 @@ export default function SaisieNotesPage() {
         <p className="text-sm text-[var(--text-secondary)]">{p('subtitle')}</p>
       </div>
 
-      <Card>
+      <Card padding>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           <Select label={p('classe')} placeholder={p('choisir_classe')} options={classes} value={evaluation.classe} onChange={changer('classe')} />
           <Select label={p('matiere')} placeholder={evaluation.classe ? p('choisir_matiere') : p('classe_d_abord')} options={matieres} value={evaluation.matiere} onChange={changer('matiere')} disabled={!evaluation.classe} />
@@ -214,7 +214,7 @@ export default function SaisieNotesPage() {
       </Card>
 
       {pret && (
-        <Card>
+        <Card padding>
           {requeteGrille.isPending ? (
             <div className="flex h-32 items-center justify-center" role="status" aria-label={t('common.loading')}><Loader2 className="h-6 w-6 animate-spin text-[var(--text-tertiary)]" /></div>
           ) : eleves.length === 0 ? (

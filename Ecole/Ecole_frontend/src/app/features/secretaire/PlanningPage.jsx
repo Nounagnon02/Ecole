@@ -149,7 +149,7 @@ export default function PlanningPage() {
       </div>
 
       {/* Filtres */}
-      <Card>
+      <Card padding>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
@@ -182,7 +182,7 @@ export default function PlanningPage() {
       {/* Timeline */}
       <div className="space-y-3">
         {filtered.length === 0 && (
-          <Card>
+          <Card padding>
             <div className="text-center py-8 text-[var(--text-secondary)]">
               <CalendarDays className="mx-auto h-8 w-8 mb-2" />
               <p className="text-sm">{t('pages.secretaire.planning.aucun_evenement_trouve')}</p>
@@ -196,7 +196,7 @@ export default function PlanningPage() {
             const estFutur = dateObj >= now;
             const typeCfg = TYPE_CONFIG[evt.type] || TYPE_CONFIG.evenement;
             return (
-              <Card key={evt.id} hover>
+              <Card padding key={evt.id} hover>
                 <div className="flex items-start gap-4">
                   {/* Date badge */}
                   <div className="flex flex-col items-center justify-center w-14 h-14 rounded-xl bg-[var(--surface-subtle)]  shrink-0">

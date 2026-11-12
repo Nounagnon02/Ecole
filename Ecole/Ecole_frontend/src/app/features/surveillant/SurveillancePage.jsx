@@ -119,7 +119,7 @@ export default function SurveillancePage() {
       </div>
 
       {/* Filtres */}
-      <Card>
+      <Card padding>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex gap-2">
             <select
@@ -141,7 +141,7 @@ export default function SurveillancePage() {
       {/* Liste des incidents */}
       <div className="grid gap-3">
         {filtered.length === 0 && (
-          <Card>
+          <Card padding>
             <div className="text-center py-8 text-[var(--text-secondary)]">
               <Shield className="mx-auto h-8 w-8 mb-2" />
               <p className="text-sm">{t('pages.surveillant.surveillance.aucun_incident_trouve')}</p>
@@ -149,7 +149,7 @@ export default function SurveillancePage() {
           </Card>
         )}
         {filtered.map((s) => (
-          <Card key={s.id} hover>
+          <Card padding key={s.id} hover>
             <div className="flex items-start gap-4">
               <div className={cn(
                 'h-12 w-12 rounded-xl flex items-center justify-center shrink-0',

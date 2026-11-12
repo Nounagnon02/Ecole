@@ -223,7 +223,7 @@ export default function DossiersPage() {
             <StatsCard title={t('pages.infirmier.dossiers.visites_recentes')} value={String(stats.visitesRecentes)} icon={Calendar} color="emerald" />
           </div>
 
-          <Card>
+          <Card padding>
             <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
               <div className="relative max-w-sm flex-1">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
@@ -250,7 +250,7 @@ export default function DossiersPage() {
           <div className="grid gap-4 md:grid-cols-2">
             {filtered.length === 0 && (
               <div className="md:col-span-2">
-                <Card>
+                <Card padding>
                   <div className="text-center py-8 text-[var(--text-secondary)]">
                     <FileText className="mx-auto h-8 w-8 mb-2" />
                     <p className="text-sm">{t('pages.infirmier.dossiers.aucun_dossier_trouve')}</p>
@@ -259,7 +259,7 @@ export default function DossiersPage() {
               </div>
             )}
             {filtered.map((d) => (
-              <Card key={d.id} hover>
+              <Card padding key={d.id} hover>
                 <div className="flex items-start gap-3 mb-4">
                   <Avatar name={`${d.eleve?.user?.prenom || ''} ${d.eleve?.user?.name || ''}`} size="md" />
                   <div>
@@ -337,7 +337,7 @@ export default function DossiersPage() {
           </div>
 
           {vaccinsParEleve.length === 0 && (
-            <Card>
+            <Card padding>
               <div className="text-center py-12 text-[var(--text-secondary)]">
                 <Syringe className="mx-auto h-10 w-10 mb-3 text-[var(--text-secondary)]" />
                 <p className="text-sm">{t('pages.infirmier.dossiers.aucune_vaccination_enregistree')}</p>

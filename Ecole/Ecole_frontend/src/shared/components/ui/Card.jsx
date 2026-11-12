@@ -26,6 +26,10 @@ function Card({ children, className, variant = 'default', hover = false, padding
         variantStyles[variant] || variantStyles.default,
         hover &&
           'cursor-pointer hover:shadow-[var(--shadow-4)]',
+        // Marge pour une carte sans Card.Header/Card.Body (filtre, résumé,
+        // élément de liste). La prop était ignorée : le contenu touchait le
+        // bord. Pas de marge par défaut, Header et Body ont la leur.
+        padding === true && 'p-4 sm:p-5',
         className
       )}
       {...props}

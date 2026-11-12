@@ -123,7 +123,7 @@ export default function PlanningPage() {
         <StatsCard title={t('common.today')} value={String(stats.aujourdhui)} icon={AlertCircle} color="amber" />
       </div>
 
-      <Card>
+      <Card padding>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
@@ -155,7 +155,7 @@ export default function PlanningPage() {
 
       <div className="space-y-3">
         {filtered.length === 0 && (
-          <Card>
+          <Card padding>
             <div className="text-center py-8 text-[var(--text-secondary)]">
               <CalendarDays className="mx-auto h-8 w-8 mb-2" />
               <p className="text-sm">{t('pages.universite.planning.aucun_evenement_trouve')}</p>
@@ -166,7 +166,7 @@ export default function PlanningPage() {
           const cfg = TYPE_CONFIG[evt.type] || TYPE_CONFIG.evenement;
           const IconComponent = cfg.icon;
           return (
-            <Card key={evt.id} hover>
+            <Card padding key={evt.id} hover>
               <div className="flex items-start gap-4">
                 <div className="flex flex-col items-center justify-center w-14 h-14 rounded-xl bg-[var(--surface-subtle)]  shrink-0">
                   <span className="text-lg font-bold text-[var(--text-primary)]  leading-none">

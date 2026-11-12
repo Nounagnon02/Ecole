@@ -102,7 +102,7 @@ export default function InscriptionsPage() {
       </div>
 
       {/* Filtres */}
-      <Card>
+      <Card padding>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
@@ -129,7 +129,7 @@ export default function InscriptionsPage() {
       {/* Liste */}
       <div className="space-y-3">
         {filtered.length === 0 && (
-          <Card>
+          <Card padding>
             <div className="text-center py-8 text-[var(--text-secondary)]">
               <UserPlus className="mx-auto h-8 w-8 mb-2" />
               <p className="text-sm">{t('pages.secretaire.inscriptions.aucune_inscription_trouvee')}</p>
@@ -137,7 +137,7 @@ export default function InscriptionsPage() {
           </Card>
         )}
         {filtered.map((ins) => (
-          <Card key={ins.id || ins.eleve?.id} hover>
+          <Card padding key={ins.id || ins.eleve?.id} hover>
             <div className="flex items-start gap-4">
               <Avatar name={nomEleve(ins)} size="md" />
               <div className="min-w-0 flex-1">

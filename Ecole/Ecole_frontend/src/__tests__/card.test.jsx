@@ -22,3 +22,23 @@ describe('Card.Header', () => {
     expect(screen.queryByRole('heading')).not.toBeInTheDocument();
   });
 });
+
+describe('Card — marge intérieure', () => {
+  // La prop `padding` était acceptée mais ignorée : un filtre posé directement
+  // dans une carte touchait son bord (« Classe » collé au trait, emploi du temps).
+  it('donne une marge quand on la demande', () => {
+    const { container } = render(<Card padding><span>Classe</span></Card>);
+    expect(container.firstChild.className).toMatch(/\bp-4\b/);
+  });
+
+  it('n’en donne pas par défaut : Card.Header et Card.Body ont la leur', () => {
+    const { container } = render(<Card><Card.Body>contenu</Card.Body></Card>);
+    expect(container.firstChild.className).not.toMatch(/\bp-4\b/);
+  });
+
+  it('laisse une classe de la page l’emporter', () => {
+    const { container } = render(<Card padding className="p-0"><span>x</span></Card>);
+    expect(container.firstChild.className).toMatch(/\bp-0\b/);
+    expect(container.firstChild.className).not.toMatch(/\bp-4\b/);
+  });
+});

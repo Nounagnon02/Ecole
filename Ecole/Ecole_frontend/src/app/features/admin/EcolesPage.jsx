@@ -32,7 +32,7 @@ const STATUT_CONFIG = {
 
 function EcoleSkeleton() {
   return (
-    <Card>
+    <Card padding>
       <div className="flex items-start gap-4">
         <Skeleton className="h-12 w-12 rounded-xl shrink-0" />
         <div className="flex-1 space-y-3">
@@ -256,7 +256,7 @@ export default function EcolesPage() {
       </div>
 
       {/* ─── Barre de recherche + filtre ────────────────────────── */}
-      <Card>
+      <Card padding>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
@@ -294,7 +294,7 @@ export default function EcolesPage() {
       )}
 
       {error && (
-        <Card>
+        <Card padding>
           <div className="flex flex-col items-center justify-center py-10 gap-3 text-[var(--red)]">
             <AlertCircle className="h-8 w-8" />
             <p className="text-sm">{error}</p>
@@ -309,7 +309,7 @@ export default function EcolesPage() {
         <div className="grid gap-4 sm:grid-cols-2">
           {filtered.length === 0 && (
             <div className="sm:col-span-2">
-              <Card>
+              <Card padding>
                 <div className="text-center py-8 text-[var(--text-tertiary)]">
                   <Building2 className="mx-auto h-8 w-8 mb-2 opacity-40" />
                   <p className="text-sm">{t('pages.admin.ecoles.aucune_ecole_trouvee')}</p>
@@ -318,7 +318,7 @@ export default function EcolesPage() {
             </div>
           )}
           {filtered.map((e) => (
-            <Card key={e.id} hover>
+            <Card padding key={e.id} hover>
               <div className="flex items-start gap-4">
                 <div className="h-12 w-12 rounded-xl bg-[var(--primary-subtle)] flex items-center justify-center shrink-0">
                   <Building2 className="h-6 w-6 text-[var(--primary)]" />

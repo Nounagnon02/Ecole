@@ -99,7 +99,7 @@ export default function DepartementsPage() {
         <StatsCard title={t('common.students')} value={String(stats.etudiants)} icon={GraduationCap} color="amber" />
       </div>
 
-      <Card>
+      <Card padding>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
@@ -124,7 +124,7 @@ export default function DepartementsPage() {
 
       <div className="space-y-3">
         {filtered.length === 0 && (
-          <Card>
+          <Card padding>
             <div className="text-center py-8 text-[var(--text-secondary)]">
               <BookOpen className="mx-auto h-8 w-8 mb-2" />
               <p className="text-sm">{t('pages.universite.departements.aucun_departement_trouve')}</p>
@@ -132,7 +132,7 @@ export default function DepartementsPage() {
           </Card>
         )}
         {filtered.map((d) => (
-          <Card key={d.id} hover>
+          <Card padding key={d.id} hover>
             <div className="flex items-start gap-4">
               <div className="h-10 w-10 rounded-xl bg-sky-100 dark:bg-sky-900/20 flex items-center justify-center shrink-0">
                 <BookOpen className="h-5 w-5 text-sky-500" />

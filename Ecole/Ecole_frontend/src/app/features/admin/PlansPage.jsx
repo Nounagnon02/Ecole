@@ -69,7 +69,7 @@ export default function PlansPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.1 }}
           >
-            <Card className={plan.is_popular ? 'ring-2 ring-[var(--accent)] relative' : 'relative'}>
+            <Card padding className={plan.is_popular ? 'ring-2 ring-[var(--accent)] relative' : 'relative'}>
               {plan.is_popular && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
                   <Badge variant="primary" size="sm">

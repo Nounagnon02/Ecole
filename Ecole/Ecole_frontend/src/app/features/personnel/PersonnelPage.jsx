@@ -148,7 +148,7 @@ export default function PersonnelPage() {
         <Input className="pl-9" aria-label={p('rechercher')} placeholder={p('rechercher')} value={recherche} onChange={(e) => setRecherche(e.target.value)} />
       </div>
 
-      <Card>
+      <Card padding>
         {requete.isPending ? (
           <div className="flex h-32 items-center justify-center" role="status" aria-label={t('common.loading')}><Loader2 className="h-6 w-6 animate-spin text-[var(--text-tertiary)]" /></div>
         ) : requete.isError ? (

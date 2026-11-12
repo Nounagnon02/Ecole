@@ -111,7 +111,7 @@ export default function CoursPage() {
       </div>
 
       {/* Filtres */}
-      <Card>
+      <Card padding>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
@@ -148,7 +148,7 @@ export default function CoursPage() {
       {/* Liste des cours */}
       <div className="space-y-3">
         {filtered.length === 0 && (
-          <Card>
+          <Card padding>
             <div className="text-center py-8 text-[var(--text-secondary)]">
               <BookOpen className="mx-auto h-8 w-8 mb-2" />
               <p className="text-sm">{t('common.no_course_found')}</p>
@@ -161,7 +161,7 @@ export default function CoursPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <Card hover>
+            <Card padding hover>
               <div className="flex items-start gap-4">
                 {/* Icône matière */}
                 <div className={cn(

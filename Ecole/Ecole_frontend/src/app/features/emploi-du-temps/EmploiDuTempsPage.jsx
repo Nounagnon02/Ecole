@@ -153,7 +153,7 @@ export default function EmploiDuTempsPage() {
         {peutModifier && <Button icon={<Plus size={18} />} onClick={() => setEdition({})}>{t('pages.emploi_du_temps.emploi_du_temps.ajouter_un_cours')}</Button>}
       </div>
 
-      <Card>
+      <Card padding>
         <div className="max-w-sm">
           <Select label={p('classe')} placeholder={p('toutes_les_classes')} options={classes} value={classe} onChange={(e) => setClasse(e.target.value)} />
         </div>

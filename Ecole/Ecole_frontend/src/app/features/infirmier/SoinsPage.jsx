@@ -136,7 +136,7 @@ export default function SoinsPage() {
       </div>
 
       {/* Filtres */}
-      <Card>
+      <Card padding>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
@@ -175,7 +175,7 @@ export default function SoinsPage() {
       {/* Liste */}
       <div className="space-y-3">
         {filtered.length === 0 && (
-          <Card>
+          <Card padding>
             <div className="text-center py-8 text-[var(--text-secondary)]">
               <Heart className="mx-auto h-8 w-8 mb-2" />
               <p className="text-sm">{t('pages.infirmier.soins.aucun_soin_trouve')}</p>
@@ -183,7 +183,7 @@ export default function SoinsPage() {
           </Card>
         )}
         {filtered.map((soin) => (
-          <Card key={soin.id} hover>
+          <Card padding key={soin.id} hover>
             <div className="flex items-start gap-4">
               <div className={cn('h-10 w-10 rounded-xl flex items-center justify-center shrink-0', getTypeColor(soin.urgence))}>
                 {getTypeIcon(soin.urgence)}
