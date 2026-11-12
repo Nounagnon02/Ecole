@@ -12,11 +12,24 @@
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo } from 'react';
 import fr from './locales/fr.json';
-import en from './locales/en.json';
-import ar from './locales/ar.json';
 
 /* ─── Ressources ─────────────────────────────────────────────────── */
-const RESOURCES = { fr, en, ar };
+// Seul le français (langue par défaut et de repli) est dans le premier
+// chargement. L'anglais et l'arabe — 45 Ko compressés — arrivent quand on
+// les choisit : en 3G lente, ils retardaient le formulaire de connexion.
+const RESOURCES = { fr };
+const CHARGEURS = {
+  en: () => import('./locales/en.json'),
+  ar: () => import('./locales/ar.json'),
+};
+const CONNUES = ['fr', ...Object.keys(CHARGEURS)];
+
+/** Charge une langue si besoin ; sans effet pour une langue inconnue. */
+export async function chargerLocale(locale) {
+  if (RESOURCES[locale] || !CHARGEURS[locale]) return;
+  const module = await CHARGEURS[locale]();
+  RESOURCES[locale] = module.default ?? module;
+}
 
 export const DEFAULT_LOCALE = 'fr';
 const STORAGE_KEY = 'ecole-locale';
@@ -57,7 +70,7 @@ function resolve(key, locale, params = {}) {
 function readStoredLocale(fallback) {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
-    return stored && RESOURCES[stored] ? stored : fallback;
+    return stored && CONNUES.includes(stored) ? stored : fallback;
   } catch {
     return fallback;
   }
@@ -80,9 +93,21 @@ const I18nContext = createContext({
 /* ─── Provider ───────────────────────────────────────────────────── */
 export function I18nProvider({ children, initialLocale = DEFAULT_LOCALE }) {
   const [locale, setLocale] = React.useState(() => readStoredLocale(initialLocale));
+  // Incrémenté quand une langue finit de se charger : les textes se
+  // réaffichent dans cette langue (en attendant, le français s'affiche).
+  const [chargees, setChargees] = React.useState(0);
+
+  useEffect(() => {
+    if (RESOURCES[locale]) return undefined;
+    let actif = true;
+    chargerLocale(locale)
+      .then(() => { if (actif) setChargees((n) => n + 1); })
+      .catch(() => { /* réseau absent : le français reste affiché */ });
+    return () => { actif = false; };
+  }, [locale]);
 
   const changeLocale = useCallback((newLocale) => {
-    if (!RESOURCES[newLocale]) return;
+    if (!CONNUES.includes(newLocale)) return;
     setLocale(newLocale);
     try {
       localStorage.setItem(STORAGE_KEY, newLocale);
@@ -91,7 +116,8 @@ export function I18nProvider({ children, initialLocale = DEFAULT_LOCALE }) {
     }
   }, []);
 
-  const t = useCallback((key, params = {}) => resolve(key, locale, params), [locale]);
+  // `chargees` dans les dépendances : un nouveau `t` après chargement d'une langue.
+  const t =useCallback((key, params = {}) => resolve(key, locale, params), [locale, chargees]);
 
   const dir = locale === 'ar' ? 'rtl' : 'ltr';
 
