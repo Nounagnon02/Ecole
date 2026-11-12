@@ -102,3 +102,22 @@ it('montre au parent le bulletin de son enfant et à lui seul', function () {
         ->and($bulletins[0]['eleve_id'])->toBe($c['eleves'][0]->id)
         ->and((float) $bulletins[0]['moyenne_generale'])->toBe(14.0);
 });
+
+it('compte toutes les évaluations saisies dans la moyenne de la matière', function () {
+    $c = classeAvecNotes();
+    $francais = Matieres::factory()->create(['ecole_id' => $c['ecole']->id, 'nom' => 'Français']);
+    $note = fn ($eleve, $matiere, $valeur, $type, $date = '2026-11-11') => Notes::create(['eleve_id' => $eleve->id, 'classe_id' => $c['classe']->id,
+        'matiere_id' => $matiere->id, 'note' => $valeur, 'note_sur' => 20, 'type_evaluation' => $type, 'date_evaluation' => $date,
+        'periode' => 'Trimestre 1', 'annee_scolaire' => AnneeScolaire::courante()]);
+    // Seulement une « 1ère evaluation » en français : 13,80, pas 0.
+    $note($c['eleves'][0], $francais, 13.8, '1ère evaluation');
+    // Devoir 1 à 14 (déjà là), interrogations 10 et 12 → (14 + 11) / 2 = 12,5.
+    $note($c['eleves'][0], $c['maths'], 10, 'Interrogation');
+    $note($c['eleves'][0], $c['maths'], 12, 'Interrogation', '2026-11-12');
+
+    arreter($c['classe'])->assertOk();
+
+    $detail = collect(Bulletin::where('eleve_id', $c['eleves'][0]->id)->sole()->data)->keyBy('matiere');
+    expect((float) $detail['Français']['moyenne'])->toBe(13.8)
+        ->and((float) $detail['Mathématiques']['moyenne'])->toBe(12.5);
+});
