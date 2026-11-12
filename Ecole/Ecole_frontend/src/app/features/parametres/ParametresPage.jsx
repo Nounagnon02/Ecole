@@ -186,6 +186,7 @@ function ProfilSection({ user, onSave, saving, saved }) {
     <div className="space-y-4">
       <Card>
         <Card.Header title={t('pages.parametres.parametres.photo_de_profil')} />
+        <Card.Body>
         <div className="flex items-center gap-4">
           <Avatar src={avatarDraft || user?.avatar || null} name={user?.name || 'User'} size="xl" />
           <div className="space-y-1">
@@ -208,10 +209,12 @@ function ProfilSection({ user, onSave, saving, saved }) {
             <p className="text-xs text-[var(--text-secondary)]">{t('pages.parametres.parametres.png_jpg_max_2_mo')}</p>
           </div>
         </div>
+        </Card.Body>
       </Card>
 
       <Card>
         <Card.Header title={t('pages.parametres.parametres.informations_personnelles')} />
+        <Card.Body>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
@@ -347,6 +350,7 @@ function ProfilSection({ user, onSave, saving, saved }) {
             )}
           </div>
         </form>
+        </Card.Body>
       </Card>
     </div>
   );
@@ -386,7 +390,9 @@ function NotificationsSection() {
     return (
       <Card>
         <Card.Header title={t('pages.parametres.parametres.preferences_de_notifications')} />
+        <Card.Body>
         <p className="text-sm text-[var(--text-secondary)]">{p('personnel')}</p>
+        </Card.Body>
       </Card>
     );
   }
@@ -394,6 +400,7 @@ function NotificationsSection() {
   return (
     <Card>
       <Card.Header title={p('titre')} />
+      <Card.Body>
       <p className="mb-4 text-sm text-[var(--text-secondary)]">{p('intro')}</p>
       {!prefs ? (
         <p role="status" className="text-sm text-[var(--text-secondary)]">{t('common.loading')}</p>
@@ -417,6 +424,7 @@ function NotificationsSection() {
           </label>
         </div>
       )}
+      </Card.Body>
     </Card>
   );
 }
@@ -479,6 +487,7 @@ function TwoFactorCard() {
           ) : null
         }
       />
+      <Card.Body>
 
       {step === 'idle' && (
         <div className="space-y-4">
@@ -521,6 +530,7 @@ function TwoFactorCard() {
           </div>
         </div>
       )}
+      </Card.Body>
     </Card>
   );
 }
@@ -569,6 +579,7 @@ function SecuriteSection() {
     <div className="space-y-4">
       <Card>
         <Card.Header title={t('pages.parametres.parametres.mot_de_passe')} />
+        <Card.Body>
         <div className="space-y-4">
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-[var(--text-primary)] ">{t('pages.parametres.parametres.mot_de_passe_actuel')}</label>
@@ -591,12 +602,14 @@ function SecuriteSection() {
             </Button>
           </div>
         </div>
+        </Card.Body>
       </Card>
 
       <TwoFactorCard />
 
       <Card>
         <Card.Header title={t('pages.parametres.parametres.sessions_actives')} />
+        <Card.Body>
         <div className="space-y-3">
           <div className="flex items-center justify-between rounded-lg border border-[var(--border)] p-3 ">
             <div className="flex items-center gap-3">
@@ -619,6 +632,7 @@ function SecuriteSection() {
             <Button variant="ghost" size="sm">{t('pages.parametres.parametres.revoquer')}</Button>
           </div>
         </div>
+        </Card.Body>
       </Card>
     </div>
   );
@@ -631,6 +645,7 @@ function ApparenceSection() {
     <div className="space-y-4">
       <Card>
         <Card.Header title={t('pages.parametres.parametres.theme')} />
+        <Card.Body>
         <div className="grid grid-cols-3 gap-3">
           {[
             { id: 'light', label: t('pages.parametres.parametres.clair'), icon: Sun, desc: t('pages.parametres.parametres.theme_clair') },
@@ -647,10 +662,12 @@ function ApparenceSection() {
             </button>
           ))}
         </div>
+        </Card.Body>
       </Card>
 
       <Card>
         <Card.Header title={t('pages.parametres.parametres.police')} />
+        <Card.Body>
         <div className="flex items-center gap-4">
           <select className="h-10 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40   ">
             <option>{t('pages.parametres.parametres.inter_par_defaut')}</option>
@@ -663,6 +680,7 @@ function ApparenceSection() {
             <option>{t('pages.parametres.parametres.tres_grande')}</option>
           </select>
         </div>
+        </Card.Body>
       </Card>
     </div>
   );
@@ -674,6 +692,7 @@ function PreferencesSection() {
   return (
     <Card>
       <Card.Header title={t('pages.parametres.parametres.preferences_generales')} />
+      <Card.Body>
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
@@ -726,6 +745,7 @@ function PreferencesSection() {
           </select>
         </div>
       </div>
+      </Card.Body>
     </Card>
   );
 }

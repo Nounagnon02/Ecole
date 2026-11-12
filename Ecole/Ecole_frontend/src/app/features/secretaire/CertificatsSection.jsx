@@ -89,7 +89,8 @@ export default function CertificatsSection() {
         <ul className="divide-y divide-[var(--border-light)]" data-testid="certificats">
           {certificats.map((c) => (
             <li key={c.id} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
-              <span>
+              {/* Peut rétrécir : sans `min-w-0`, la ligne dépassait de la carte à 360 px. */}
+              <span className="min-w-0 flex-1 break-words">
                 <span className="font-mono text-xs text-[var(--text-secondary)]">{c.numero_certificat}</span>
                 <span className="ml-2 font-medium">{nom(c)}</span>
                 <span className="ml-2 text-[var(--text-secondary)]">{p(`titres.${c.type_certificat}`)} · {formatDate(c.date_emission)}</span>
