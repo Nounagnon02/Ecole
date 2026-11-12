@@ -43,7 +43,7 @@ describe('LoginForm', () => {
     monter(<LoginForm />);
 
     expect(screen.getByText('Log in to your account')).toBeInTheDocument();
-    expect(screen.getByLabelText(/^Email or username/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^Phone, email or identifier/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /^Log in/ })).toBeInTheDocument();
     expect(screen.queryByText('Connectez-vous à votre espace')).not.toBeInTheDocument();
   });
