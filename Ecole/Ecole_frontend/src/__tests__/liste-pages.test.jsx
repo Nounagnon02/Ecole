@@ -29,7 +29,6 @@ import DossiersPage from '@/app/features/infirmier/DossiersPage';
 import SoinsPage from '@/app/features/infirmier/SoinsPage';
 import DocumentsPage from '@/app/features/secretaire/DocumentsPage';
 import InscriptionsPage from '@/app/features/secretaire/InscriptionsPage';
-import PresencesPage from '@/app/features/surveillant/PresencesPage';
 import SurveillancePage from '@/app/features/surveillant/SurveillancePage';
 import DepartementsPage from '@/app/features/universite/DepartementsPage';
 import EnseignantsPage from '@/app/features/universite/EnseignantsPage';
@@ -114,15 +113,8 @@ const PAGES = [
     attendu: 'Adjovi',
     vide: /aucune inscription trouvée/i,
   },
-  {
-    nom: 'PresencesPage',
-    Composant: PresencesPage,
-    url: '/surveillant/absences',
-    urlsAnnexes: ['/eleves'],
-    element: { id: 1, eleve: { nom: 'Chabi', prenom: 'Awa' }, date: '2026-09-15', justifiee: false, motif: 'Non justifiée' },
-    attendu: 'Chabi',
-    vide: /aucune présence trouvée/i,
-  },
+  // PresencesPage est devenue la feuille d'appel d'une classe : elle ne liste
+  // plus l'école entière. Ses cas vivent dans appel.test.jsx.
   {
     nom: 'SurveillancePage',
     Composant: SurveillancePage,
