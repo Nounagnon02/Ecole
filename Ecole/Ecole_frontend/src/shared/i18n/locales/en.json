@@ -1674,6 +1674,33 @@
         "2fa_desactivee": "2FA disabled.",
         "annuler": "Cancel",
         "desactiver": "Disable"
+      },
+      "avis_sms": {
+        "titre": "SMS notices",
+        "intro": "The school texts you at your account’s number. Choose what you want to receive.",
+        "enregistre": "Preferences saved.",
+        "personnel": "SMS notices go to parents. Your account has no notification setting.",
+        "langue": "Message language",
+        "absences": {
+          "titre": "Absences and late arrivals",
+          "desc": "The same day, after the roll call."
+        },
+        "notes": {
+          "titre": "Report cards",
+          "desc": "When a term’s report card is closed."
+        },
+        "echeances": {
+          "titre": "Due dates",
+          "desc": "7 days and 1 day before the due date."
+        },
+        "recus": {
+          "titre": "Payment receipts",
+          "desc": "For every payment recorded."
+        },
+        "convocations": {
+          "titre": "Summons",
+          "desc": "When the school sets an appointment with you."
+        }
       }
     },
     "parent": {

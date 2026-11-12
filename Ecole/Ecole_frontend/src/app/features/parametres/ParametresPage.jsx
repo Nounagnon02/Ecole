@@ -359,34 +359,70 @@ function ProfilSection({ user, onSave, saving, saved }) {
 }
 
 /* ─── Notifications ───────────────────────────────────────────────── */
+/**
+ * Les interrupteurs affichés ici n'enregistraient rien. Les seuls avis réels
+ * sont les SMS envoyés aux parents (absence, bulletin, reçu, échéance,
+ * convocation) : le parent les règle ici, le reste du personnel n'a rien à
+ * régler.
+ */
+const AVIS = ['absences', 'notes', 'echeances', 'recus', 'convocations'];
+
 function NotificationsSection() {
   const { t } = useTranslation();
-  const toggles = [
-    { label: t('pages.parametres.parametres.notifications_push'), desc: t('pages.parametres.parametres.recevoir_les_notifications_sur_votre_appareil'), enabled: true },
-    { label: t('pages.parametres.parametres.email'), desc: t('pages.parametres.parametres.recevoir_un_resume_par_email'), enabled: true },
-    { label: t('pages.parametres.parametres.communications_importantes'), desc: t('pages.parametres.parametres.alertes_de_la_direction'), enabled: true },
-    { label: t('pages.parametres.parametres.notes_et_evaluations'), desc: t('pages.parametres.parametres.quand_une_note_est_publiee'), enabled: false },
-    { label: t('common.payments'), desc: t('pages.parametres.parametres.confirmation_de_paiement_et_rappels'), enabled: true },
-    { label: t('pages.parametres.parametres.emploi_du_temps'), desc: t('pages.parametres.parametres.changements_dans_l_emploi_du_temps'), enabled: false },
-  ];
+  const p = (cle) => t(`pages.parametres.avis_sms.${cle}`);
+  const estParent = useAuthStore((s) => s.user?.role === 'parent');
+  const requete = useApiQuery(['parent-preferences'], '/parent/preferences', { queryOptions: { enabled: estParent } });
+  const prefs = requete.data?.data;
+  const [envoi, setEnvoi] = useState(false);
+
+  const changer = async (modif) => {
+    setEnvoi(true);
+    try {
+      await api.put('/parent/preferences', { ...prefs, ...modif });
+      await requete.refetch();
+      toast.success(p('enregistre'));
+    } catch (e) {
+      toast.error(e?.message ?? t('common.erreur_enregistrement'));
+    } finally {
+      setEnvoi(false);
+    }
+  };
+
+  if (!estParent) {
+    return (
+      <Card>
+        <Card.Header title={t('pages.parametres.parametres.preferences_de_notifications')} />
+        <p className="text-sm text-[var(--text-secondary)]">{p('personnel')}</p>
+      </Card>
+    );
+  }
 
   return (
     <Card>
-      <Card.Header title={t('pages.parametres.parametres.preferences_de_notifications')} />
-      <div className="space-y-4">
-        {toggles.map((item) => (
-          <div key={item.label} className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-[var(--text-primary)] ">{item.label}</p>
-              <p className="text-xs text-[var(--text-secondary)]">{item.desc}</p>
-            </div>
-            <label className="relative inline-flex cursor-pointer items-center">
-              <input type="checkbox" defaultChecked={item.enabled} className="peer sr-only" />
-              <div className="h-6 w-11 rounded-full bg-[var(--surface-subtle)] after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-[var(--surface-raised)] after:transition-all peer-checked:bg-[var(--accent-subtle)]0 peer-checked:after:translate-x-full " />
+      <Card.Header title={p('titre')} />
+      <p className="mb-4 text-sm text-[var(--text-secondary)]">{p('intro')}</p>
+      {!prefs ? (
+        <p role="status" className="text-sm text-[var(--text-secondary)]">{t('common.loading')}</p>
+      ) : (
+        <div className="space-y-4">
+          {AVIS.map((cle) => (
+            <label key={cle} className="flex min-h-11 items-center justify-between gap-4">
+              <span>
+                <span className="block text-sm font-medium text-[var(--text-primary)]">{p(`${cle}.titre`)}</span>
+                <span className="block text-xs text-[var(--text-secondary)]">{p(`${cle}.desc`)}</span>
+              </span>
+              <input type="checkbox" className="h-5 w-5" checked={!!prefs[cle]} disabled={envoi} onChange={(e) => changer({ [cle]: e.target.checked })} />
             </label>
-          </div>
-        ))}
-      </div>
+          ))}
+          <label className="flex min-h-11 items-center justify-between gap-4">
+            <span className="text-sm font-medium text-[var(--text-primary)]">{p('langue')}</span>
+            <select className="min-h-11 rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 text-sm" value={prefs.langue} disabled={envoi} onChange={(e) => changer({ langue: e.target.value })}>
+              <option value="fr">Français</option>
+              <option value="en">English</option>
+            </select>
+          </label>
+        </div>
+      )}
     </Card>
   );
 }
