@@ -1328,6 +1328,25 @@
       "vaccinations": {
         "title": "سجل التطعيم",
         "subtitle": "متابعة التطعيمات وسجلّها"
+      },
+      "formulaires": {
+        "eleve": "التلميذ",
+        "date": "التاريخ",
+        "motif": "السبب",
+        "urgence": "حالة طارئة",
+        "oui": "نعم",
+        "non": "لا",
+        "diagnostic": "التشخيص",
+        "traitement": "العلاج أو التوجيه",
+        "contact_urgence": "جهة الاتصال للطوارئ",
+        "groupe_sanguin": "فصيلة الدم",
+        "vaccins_a_jour": "التلقيحات محيّنة",
+        "aptitude_sport": "لائق للرياضة",
+        "allergies": "الحساسية",
+        "maladies_chroniques": "الأمراض المزمنة",
+        "vaccin": "اللقاح",
+        "lot": "رقم الدفعة",
+        "rappel": "تاريخ الجرعة المعززة"
       }
     },
     "notes": {
