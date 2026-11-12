@@ -39,6 +39,8 @@ $eleveIds = fn ($reponse) => collect($reponse->json('data.data'))->pluck('eleve_
 
 it('ne donne au parent que les notes de ses enfants', function () use ($eleveIds) {
     [$ecole, $eleves] = ecoleNotee();
+    // Le rattachement se fait toujours sous un agent connecté (scope école).
+    $this->actingAs(User::factory()->create(['role' => 'secretaire', 'ecole_id' => $ecole->id]));
     Inscription::rattacherParent($eleves[0], ['name' => 'P', 'telephone' => '0197000001'], $ecole->id);
     Inscription::rattacherParent($eleves[1], ['name' => 'P', 'telephone' => '0197000001'], $ecole->id);
     $parent = User::where('identifiant', '0197000001')->sole();
