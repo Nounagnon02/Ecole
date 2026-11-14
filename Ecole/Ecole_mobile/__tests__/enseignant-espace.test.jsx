@@ -12,6 +12,8 @@ import { api } from '../src/services/api';
 import { clearAll, listeBrouillons } from '../src/services/secureStorage';
 
 jest.mock('../src/services/api', () => ({ api: { get: jest.fn(), post: jest.fn(), put: jest.fn() } }));
+jest.mock('expo-document-picker', () => ({ getDocumentAsync: jest.fn() }));
+jest.mock('expo-file-system', () => ({ readAsStringAsync: jest.fn() }));
 const mockLogout = jest.fn();
 jest.mock('../src/context/AuthContext', () => ({ useAuth: () => ({ user: { id: 9, name: 'Prof', role: 'enseignant' }, logout: mockLogout }) }));
 
@@ -86,5 +88,48 @@ describe('espace enseignant — notes', () => {
     expect(mockLogout).toHaveBeenCalledTimes(1);
     await clearAll();
     expect(await listeBrouillons()).toEqual([]);
+  });
+});
+
+describe('import de notes par tableur (parité avec le web)', () => {
+  const DocumentPicker = require('expo-document-picker');
+  const FileSystem = require('expo-file-system');
+  const { lireTableurNotes } = require('../src/espaces/importNotes');
+  const eleves = [{ id: 21, matricule: 'M-21', nom: 'AHO', prenom: 'Kossi' }, { id: 22, matricule: 'M-22', nom: 'DOSSOU', prenom: 'Afi' }];
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    await AsyncStorage.clear();
+    api.get.mockImplementation((url) => Promise.resolve({ data: url.startsWith('/notes/grille/1') ? GRILLE
+      : { success: true, data: [{ id: 1, nom_classe: '3ème', eleves: [] }] } }));
+  });
+
+  it('lit le CSV comme le web : séparateur, matricule, note, erreurs', () => {
+    const r = lireTableurNotes('﻿matricule;nom;note\nM-21;AHO;12.5\nM-99;X;10\nM-22;DOSSOU;25\n', eleves, lireNote);
+    expect(r.saisies).toEqual({ 21: '12,5' });
+    expect(r.lues).toBe(1);
+    expect(r.erreurs.map((e) => e.message)).toEqual(['inconnu', 'note']);
+  });
+
+  it('remplit la grille depuis un fichier choisi, sans rien envoyer', async () => {
+    DocumentPicker.getDocumentAsync.mockResolvedValue({ canceled: false, assets: [{ uri: 'file:///notes.csv', name: 'notes.csv' }] });
+    // M-22 a une note verrouillée (14) : l'import ne doit pas la remplacer.
+    FileSystem.readAsStringAsync.mockResolvedValue('matricule;note\nM-21;15\nM-99;9\nM-22;3\n');
+    api.get.mockImplementation((url) => Promise.resolve({ data: url.startsWith('/notes/grille/1')
+      ? { success: true, data: { ...GRILLE.data, eleves: GRILLE.data.eleves.map((e) => ({ ...e, matricule: `M-${e.id}` })) } }
+      : { success: true, data: [{ id: 1, nom_classe: '3ème', eleves: [] }] } }));
+    const champ = await ouvrirGrille();
+    fireEvent.press(screen.getByRole('button', { name: 'Importer un tableur (CSV)' }));
+    await waitFor(() => expect(champ.props.value).toBe('15'));
+    expect(screen.getByLabelText('Note de DOSSOU Afi').props.value).toBe('14');
+    expect(await screen.findByText(/1 note\(s\) lue\(s\) · 1 ligne\(s\) ignorée\(s\)/)).toBeTruthy();
+    expect(api.post).not.toHaveBeenCalled();
+  });
+
+  it('ne fait rien si le choix est annulé', async () => {
+    DocumentPicker.getDocumentAsync.mockResolvedValue({ canceled: true, assets: null });
+    await ouvrirGrille();
+    fireEvent.press(screen.getByRole('button', { name: 'Importer un tableur (CSV)' }));
+    await new Promise((r) => setTimeout(r, 50));
+    expect(FileSystem.readAsStringAsync).not.toHaveBeenCalled();
   });
 });

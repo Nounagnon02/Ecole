@@ -11,6 +11,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, TextInput, View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import * as DocumentPicker from 'expo-document-picker';
+import * as FileSystem from 'expo-file-system';
+import { lireTableurNotes } from './importNotes';
 import { api } from '../services/api';
 import { getBrouillon, listeBrouillons, setBrouillon } from '../services/secureStorage';
 import { useAuth } from '../context/AuthContext';
@@ -124,6 +127,30 @@ export function Notes() {
     }
   }, [invalides.length, aEnvoyer, ev, cle, grilleReq]);
 
+  /** Import d'un tableur CSV (mêmes règles que le web) : remplit la grille, n'envoie rien. */
+  const importer = async () => {
+    try {
+      const choix = await DocumentPicker.getDocumentAsync({ type: ['text/csv', 'text/comma-separated-values', 'text/plain', 'application/vnd.ms-excel'], copyToCacheDirectory: true });
+      if (choix.canceled || !choix.assets?.[0]) return;
+      const texte = await FileSystem.readAsStringAsync(choix.assets[0].uri);
+      const r = lireTableurNotes(texte, eleves, lireNote);
+      if (r.erreurs.some((e) => e.message === 'colonnes')) {
+        setEtat('erreur');
+        setMessage('Le fichier doit avoir une colonne « matricule » et une colonne « note ».');
+        return;
+      }
+      // Une note verrouillée (bulletin arrêté) n'est pas remplacée par l'import.
+      const lues = Object.fromEntries(Object.entries(r.saisies).filter(([id]) => !enregistrees[id]?.locked));
+      const suivant = { ...saisies, ...lues };
+      setSaisies(suivant);
+      if (cle) await setBrouillon(cle, suivant);
+      setEtat('attente');
+      setMessage(`${Object.keys(lues).length} note(s) lue(s) · ${r.erreurs.length} ligne(s) ignorée(s). Vérifiez, puis enregistrez.`);
+    } catch {
+      Alert.alert('Import', 'Le fichier n’a pas pu être lu.');
+    }
+  };
+
   const listeClasses = liste(classes.donnees);
   return (
     <Ecran titre="Saisie des notes">
@@ -159,6 +186,7 @@ export function Notes() {
           );
         })}
         {message ? <Carte><Texte accessibilityRole="alert">{etat === 'attente' ? '⏳ ' : etat === 'enregistre' ? '✓ ' : ''}{message}</Texte></Carte> : null}
+        <Bouton titre="Importer un tableur (CSV)" variante="secondaire" onPress={importer} />
         <Bouton titre={`Enregistrer ${aEnvoyer.length} note(s)`} chargement={etat === 'envoi'} desactive={invalides.length > 0 || aEnvoyer.length === 0} onPress={enregistrer} />
       </>}
     </Ecran>
