@@ -15,6 +15,15 @@ class BulletinController extends Controller
 
     public function getBulletin($eleveId, Request $request)
     {
+        // Audit du 14/11, N-05 : aucun contrôle d'appartenance — tout parent
+        // de l'école lisait le bulletin de n'importe quel élève — et un élève
+        // inconnu ou sans série donnait 500. Élève cherché dans l'école de
+        // l'utilisateur (404 sinon), puis même règle que la fiche élève.
+        $eleve = Eleve::find(is_numeric($eleveId) ? (int) $eleveId : 0);
+        abort_if($eleve === null, 404, 'Élève introuvable.');
+        $this->authorize('view', $eleve);
+        abort_if($eleve->serie_id === null || $eleve->serie === null, 404, 'Bulletin indisponible : cet élève n’a pas de série.');
+
         try {
             // Validation de la période
             $periode = $request->get('periode', 'Trimestre 1');
