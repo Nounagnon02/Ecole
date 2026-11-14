@@ -74,7 +74,7 @@ export const AuthProvider = ({ children }) => {
       const message =
         err.response?.data?.message ||
         err.response?.data?.error ||
-        'Identifiants incorrects. Veuillez réessayer.';
+        (err.code === 'API_NON_CONFIGUREE' ? err.message : 'Identifiants incorrects. Veuillez réessayer.');
       setError(message);
       throw new Error(message);
     }

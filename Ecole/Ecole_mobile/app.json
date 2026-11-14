@@ -24,7 +24,8 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png",
         "backgroundColor": "#F4F0E8"
-      }
+      },
+      "package": "com.ecole.mobile"
     },
     "web": {
       "bundler": "metro",
