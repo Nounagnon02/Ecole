@@ -112,6 +112,9 @@ class ClassesController extends Controller
             $query->with('series.matieres.enseignants');
         }
 
+        // `q` : recherche globale (BUG-007), ignorée jusqu'ici.
+        \App\Support\Recherche::appliquer($query, $request->input('q'), fn ($ou, $motif) => $ou->where('nom_classe', 'like', $motif));
+
         $classes = $query->get();
 
         return response()->json($classes);

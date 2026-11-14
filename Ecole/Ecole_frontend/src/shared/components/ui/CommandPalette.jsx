@@ -36,7 +36,7 @@ import apiClient from '@/shared/lib/api-client';
 import { ROUTE_CONFIG } from '@/features/roles/route-config';
 import { ROLES, normalizeRole } from '@/shared/types/roles';
 import { useTranslation } from '@/shared/i18n';
-import { libelle } from '@/shared/lib/utils';
+import { formatCurrency, libelle } from '@/shared/lib/utils';
 
 /**
  * Résultats de recherche → lignes de la palette.
@@ -46,16 +46,32 @@ import { libelle } from '@/shared/lib/utils';
  * lettre. Les destinations pointaient aussi vers `/eleves/:id` et `/classes/:id`,
  * qui n'existent pas ; elles mènent maintenant à la liste des élèves.
  */
+const nomEleve = (el) => (typeof el === 'string' ? el : libelle(el?.nom_complet)
+  || [el?.user?.name ?? el?.nom, el?.user?.prenom ?? el?.prenom].filter((v) => typeof v === 'string' && v).join(' '));
+
 const versEleve = (el) => ({
-  label: el.nom_complet
-    || [el.user?.name ?? el.nom, el.user?.prenom ?? el.prenom].filter(Boolean).join(' ')
-    || `Élève ${el.id}`,
+  key: el.id,
+  label: nomEleve(el) || `Élève ${el.id}`,
   sublabel: libelle(el.classe) || libelle(el.classe_nom),
   path: '/eleves',
   icon: Users,
   _type: 'eleve',
 });
+// Le paiement porte l'élève complet en objet : le rendre tel quel faisait
+// planter la palette dès qu'un paiement existait (BUG-007, audit du 14/11).
+const versPaiement = (p) => {
+  const montant = Number(p.amount ?? p.montant);
+  return {
+    key: p.id,
+    label: nomEleve(p.eleve) || libelle(p.eleve_nom) || `Paiement ${p.id}`,
+    sublabel: Number.isFinite(montant) && montant > 0 ? formatCurrency(montant) : libelle(p.date),
+    path: '/paiements',
+    icon: CreditCard,
+    _type: 'paiement',
+  };
+};
 const versClasse = (cl) => ({
+  key: cl.id,
   label: libelle(cl.nom_classe ?? cl.nom) || `Classe ${cl.id}`,
   sublabel: libelle(cl.niveau) || libelle(cl.section),
   path: '/eleves',
@@ -241,15 +257,7 @@ export default function CommandPalette() {
     apiResults.classes.forEach((cl) =>
       items.push(versClasse(cl))
     );
-    apiResults.paiements.forEach((p) =>
-      items.push({
-        label: p.eleve || p.eleve_nom || `Paiement #${p.id}`,
-        sublabel: p.montant ? `${p.montant} FCFA` : p.date || '',
-        path: `/paiements`,
-        icon: CreditCard,
-        _type: 'paiement',
-      })
-    );
+    apiResults.paiements.forEach((p) => items.push(versPaiement(p)));
     filteredPages.forEach((page) => items.push({ ...page, _type: 'page' }));
 
     return items;
@@ -340,7 +348,8 @@ export default function CommandPalette() {
 
     return (
       <button
-        key={`${item._type}-${item.key || item.label || idx}`}
+        // Deux homonymes ont le même libellé : la clé suit l'identifiant.
+        key={`${item._type}-${item.key ?? item.path ?? item.label}-${idx}`}
         data-active={isActive}
         onClick={() => handleSelect(item)}
         onMouseEnter={() => setActiveIndex(currentIndex)}
@@ -471,13 +480,7 @@ export default function CommandPalette() {
                 {renderGroup('Classes', apiResults.classes.map((cl) => (versClasse(cl))))}
 
                 {/* API Results: Paiements */}
-                {renderGroup('Paiements', apiResults.paiements.map((p) => ({
-                  label: p.eleve || p.eleve_nom || `Paiement #${p.id}`,
-                  sublabel: p.montant ? `${p.montant} FCFA` : p.date || '',
-                  path: '/paiements',
-                  icon: CreditCard,
-                  _type: 'paiement',
-                })))}
+                {renderGroup('Paiements', apiResults.paiements.map(versPaiement))}
 
                 {/* Navigation pages */}
                 {renderGroup('Pages', filteredPages)}

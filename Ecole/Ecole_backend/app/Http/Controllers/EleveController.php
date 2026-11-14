@@ -56,6 +56,10 @@ class EleveController extends Controller
         // Paginé : la liste complète des élèves d'un établissement peut peser
         // plusieurs milliers de lignes avec leurs relations (cf. audit P3).
         $eleves = Eleve::with('user:id,name,prenom,email', 'classe:id,nom_classe', 'serie:id,nom')
+            // `q` : recherche globale (BUG-007), ignorée jusqu'ici.
+            ->tap(fn ($requete) => \App\Support\Recherche::appliquer($requete, request()->input('q'), fn ($ou, $motif) => $ou
+                ->where('numero_matricule', 'like', $motif)
+                ->orWhereHas('user', fn ($u) => $u->where('name', 'like', $motif)->orWhere('prenom', 'like', $motif))))
             ->orderBy('id')
             ->paginate((int) request()->input('per_page', 50));
 

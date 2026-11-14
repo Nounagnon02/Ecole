@@ -173,4 +173,31 @@ describe('CommandPalette', () => {
     fireEvent.click(within(dialogue).getByText('AGBODJAN Yèhossou'));
     expect(navigate).toHaveBeenCalledWith('/eleves');
   });
+  it('affiche un paiement dont l’élève arrive en objet, sans planter (BUG-007)', async () => {
+    // `/payments/history` renvoie `eleve` complet (id, ecole_id, statut,
+    // user_id, numero_matricule…) : le rendre tel quel faisait planter la
+    // palette dès qu'un paiement existait.
+    const erreurs = vi.spyOn(console, 'error').mockImplementation(() => {});
+    apiGet.mockImplementation((url) => Promise.resolve({
+      data: url === '/payments/history'
+        ? { success: true, data: { data: [{ id: 4, amount: '1500.00', eleve: { id: 9, ecole_id: 1, statut: 'actif', user_id: 3, numero_matricule: 'M-9', user: { name: 'AUDITFICTIF', prenom: 'Kossi' } } }] } }
+        : url === '/eleves'
+          ? { data: [{ id: 9, user: { name: 'AUDITFICTIF', prenom: 'Kossi' } }, { id: 10, user: { name: 'AUDITFICTIF', prenom: 'Kossi' } }] }
+          : [],
+    }));
+    signIn('directeur');
+    monter();
+    ouvrir();
+
+    const dialogue = await screen.findByRole('dialog', { name: /palette de commandes/i });
+    fireEvent.change(within(dialogue).getByRole('combobox'), { target: { value: 'AUDIT' } });
+    await act(async () => { vi.advanceTimersByTime(350); });
+
+    expect(await within(dialogue).findByText(/^1\s500\sF\s?CFA$/)).toBeInTheDocument();
+    // Deux homonymes et le paiement : trois lignes au même nom, sans clé en double.
+    expect(within(dialogue).getAllByText('AUDITFICTIF Kossi')).toHaveLength(3);
+    const clesDupliquees = erreurs.mock.calls.filter((appel) => String(appel[0]).includes('same key'));
+    erreurs.mockRestore();
+    expect(clesDupliquees).toEqual([]);
+  });
 });

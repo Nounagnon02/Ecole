@@ -42,6 +42,12 @@ class PaymentQueryController extends Controller
             ->when($request->type, fn($q) => $q->where('type', $request->type))
             ->when($request->date_from, fn($q) => $q->whereDate('created_at', '>=', $request->date_from))
             ->when($request->date_to, fn($q) => $q->whereDate('created_at', '<=', $request->date_to))
+            // `q` : recherche globale (BUG-007) — nom, prénom ou matricule de
+            // l'élève, ou référence de la transaction. Ignorée jusqu'ici.
+            ->tap(fn ($requete) => \App\Support\Recherche::appliquer($requete, $request->input('q'), fn ($ou, $motif) => $ou
+                ->where('transaction_id', 'like', $motif)
+                ->orWhereHas('eleve', fn ($e) => $e->where('numero_matricule', 'like', $motif)
+                    ->orWhereHas('user', fn ($u) => $u->where('name', 'like', $motif)->orWhere('prenom', 'like', $motif)))))
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
