@@ -47,6 +47,7 @@ function RootLayoutInner() {
         name="reset-password"
         options={{ title: 'Réinitialisation', animation: 'slide_from_bottom' }}
       />
+      <Stack.Screen name="paiement-retour" options={{ title: 'Paiement' }} />
       <Stack.Screen name="(app)" options={{ headerShown: false }} />
     </Stack>
   );
