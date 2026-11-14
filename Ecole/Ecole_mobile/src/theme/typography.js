@@ -18,17 +18,13 @@
 import { Platform } from 'react-native';
 
 /* ─── Familles de polices ────────────────────────────────────────────────── */
+/* Proposition C : Figtree (assets/fonts, licence OFL), chargée au démarrage
+   par app/_layout.tsx. Le titre utilise la graisse 700, le texte 400. */
 export const fonts = {
-  heading: Platform.select({
-    ios: 'Georgia',
-    android: 'serif',
-    default: 'serif',
-  }),
-  body: Platform.select({
-    ios: 'System',
-    android: 'sans-serif',
-    default: 'System',
-  }),
+  heading: 'Figtree-Bold',
+  body: 'Figtree-Regular',
+  medium: 'Figtree-Medium',
+  semibold: 'Figtree-SemiBold',
   mono: Platform.select({
     ios: 'Menlo',
     android: 'monospace',

@@ -115,7 +115,7 @@ export default function LoginScreen({ navigation }) {
               fontFamily: typography.heading.fontFamily, fontSize: 28,
               color: colors.textPrimary, fontWeight: '700', letterSpacing: -0.5,
             }}>
-              Érudit
+              École
             </EruditText>
             <EruditText style={{
               fontSize: 13, color: colors.textTertiary, marginTop: 4,
@@ -190,7 +190,7 @@ export default function LoginScreen({ navigation }) {
           <EruditText style={{
             textAlign: 'center', fontSize: 11, color: colors.textTertiary,
           }}>
-            Version 4.0 — Érudit Mobile
+            École — parents et enseignants
           </EruditText>
         </Animated.View>
       </ScrollView>

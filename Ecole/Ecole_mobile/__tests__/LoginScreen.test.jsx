@@ -58,7 +58,8 @@ describe('LoginScreen', () => {
   it('se rend avec le titre, les champs et le bouton de connexion', async () => {
     await afficherConnexion();
 
-    expect(screen.getByText('Érudit')).toBeTruthy();
+    expect(screen.getByText('École')).toBeTruthy();
+    expect(screen.queryByText('Érudit')).toBeNull();
     expect(screen.getByText('Connexion')).toBeTruthy();
     expect(screen.getByText('Email')).toBeTruthy();
     expect(screen.getByText('Mot de passe')).toBeTruthy();
