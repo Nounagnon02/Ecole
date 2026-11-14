@@ -220,7 +220,7 @@ function Paiements() {
 }
 
 /* ─── Messages : conversations, fil, envoi, nouveau message ────────────── */
-function Messages() {
+export function Messages() {
   const { user } = useAuth();
   const conversations = useRequete('/messages/conversations');
   const contacts = useRequete('/messages/contacts');

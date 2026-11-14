@@ -60,10 +60,37 @@ export async function getUser() {
   }
 }
 
+/* ─── Brouillons de saisie (notes) ─────────────────────────────────────── */
+// Gardés sur le téléphone tant qu'ils ne sont pas enregistrés par l'API, et
+// effacés à la déconnexion : sur un téléphone partagé, l'utilisateur suivant
+// ne doit pas les retrouver (même règle que le web, audit N-07).
+const PREFIXE_BROUILLON = '@ecole_brouillon:';
+
+export async function setBrouillon(cle, valeur) {
+  if (!valeur || Object.keys(valeur).length === 0) return AsyncStorage.removeItem(PREFIXE_BROUILLON + cle);
+  return AsyncStorage.setItem(PREFIXE_BROUILLON + cle, JSON.stringify(valeur));
+}
+
+export async function getBrouillon(cle) {
+  try {
+    return JSON.parse((await AsyncStorage.getItem(PREFIXE_BROUILLON + cle)) ?? 'null');
+  } catch {
+    return null;
+  }
+}
+
+/** Clés des brouillons non enregistrés (pour prévenir avant une déconnexion). */
+export async function listeBrouillons() {
+  const cles = await AsyncStorage.getAllKeys();
+  return cles.filter((c) => c.startsWith(PREFIXE_BROUILLON)).map((c) => c.slice(PREFIXE_BROUILLON.length));
+}
+
 export async function clearAll() {
+  const brouillons = (await AsyncStorage.getAllKeys().catch(() => [])).filter((c) => c.startsWith(PREFIXE_BROUILLON));
   await Promise.all([
     removeToken().catch(() => {}),
     AsyncStorage.removeItem(USER_KEY),
+    ...brouillons.map((c) => AsyncStorage.removeItem(c)),
     // Purge de l'ancien emplacement non chiffré, pour les mises à jour
     // depuis une version antérieure.
     AsyncStorage.removeItem('@ecole_token'),

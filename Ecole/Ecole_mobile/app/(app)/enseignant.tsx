@@ -1,7 +1,4 @@
 /**
- * enseignant — Dashboard Érudit v4
- *
- * Route protégée : écran d'accueil pour le rôle enseignant.
- * Délègue le rendu à src/screens/EnseignantDashboard.js
+ * Espace enseignant — parité avec le web (src/espaces/EnseignantEspace.js).
  */
-export { default } from '../../src/screens/EnseignantDashboard';
+export { default } from '../../src/espaces/EnseignantEspace';

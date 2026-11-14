@@ -148,7 +148,7 @@ export function Segments({ options, valeur, onChange }) {
       {options.map((o) => {
         const actif = o.valeur === valeur;
         return (
-          <Pressable key={o.valeur} onPress={() => onChange(o.valeur)} accessibilityRole="tab" accessibilityState={{ selected: actif }}
+          <Pressable key={o.valeur} onPress={() => onChange(o.valeur)} accessibilityRole="tab" accessibilityLabel={o.libelle} accessibilityState={{ selected: actif }}
             style={{ minHeight: 44, paddingHorizontal: 14, borderRadius: 22, justifyContent: 'center',
               backgroundColor: actif ? colors.accent : colors.surfaceRaised, borderWidth: 1, borderColor: actif ? colors.accent : colors.border }}>
             <Text style={{ fontFamily: fonts.medium, fontSize: 14, color: actif ? colors.surfaceRaised : colors.textPrimary }}>{o.libelle}</Text>
