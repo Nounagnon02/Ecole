@@ -13,6 +13,7 @@ import apiClient from '@/shared/lib/api-client';
 import Button from '@/shared/components/ui/Button';
 import Modal from '@/shared/components/ui/Modal';
 import { useTranslation } from '@/shared/i18n';
+import { aujourdhui } from '@/shared/lib/jour';
 
 export const COLONNES = ['role', 'nom', 'prenom', 'telephone', 'email', 'classe', 'matricule', 'sexe', 'date_naissance', 'parent_nom', 'parent_prenom', 'parent_telephone'];
 
@@ -99,7 +100,7 @@ export default function ImportDialog({ open, onClose, onDone }) {
 
   const telechargerAcces = () => {
     telecharger(
-      `acces-${new Date().toISOString().slice(0, 10)}.csv`,
+      `acces-${aujourdhui()}.csv`,
       [['role', 'nom', 'identifiant', 'mot_de_passe_provisoire'], ...resultat.acces.map((a) => [a.role, a.nom, a.identifiant, a.mot_de_passe_provisoire])]
         .map((ligne) => ligne.map(cellule).join(';')).join('\r\n'),
     );

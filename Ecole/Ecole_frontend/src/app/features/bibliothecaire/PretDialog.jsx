@@ -8,8 +8,9 @@ import { unwrapList } from '@/shared/lib/unwrap';
 import FormDialog from '@/shared/components/ui/FormDialog';
 import useElevesOptions from '@/shared/lib/useElevesOptions';
 import { useTranslation } from '@/shared/i18n';
+import { dansJours } from '@/shared/lib/jour';
 
-const dans = (jours) => { const d = new Date(); d.setDate(d.getDate() + jours); return d.toISOString().slice(0, 10); };
+const dans = (jours) => dansJours(jours);
 
 export default function PretDialog({ open, livreId, onClose, onDone }) {
   const { t } = useTranslation();

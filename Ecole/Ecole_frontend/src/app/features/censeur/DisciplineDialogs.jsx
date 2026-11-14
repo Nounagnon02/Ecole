@@ -15,8 +15,8 @@ import Input from '@/shared/components/ui/Input';
 import Modal from '@/shared/components/ui/Modal';
 import Select from '@/shared/components/ui/Select';
 import { useTranslation } from '@/shared/i18n';
+import { aujourdhui } from '@/shared/lib/jour';
 
-const aujourdhui = () => new Date().toISOString().slice(0, 10);
 
 /** Petit formulaire commun : champs, contrôle, envoi, erreurs de l'API. */
 function useFormulaire(initial, open) {

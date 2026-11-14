@@ -36,4 +36,5 @@ export async function telechargerRecuVersement(id, reference) {
   telechargerBlob(`recu-${String(reference ?? id).replace(/[^\w-]+/g, '_')}.html`, new Blob([data], { type: 'text/html' }));
 }
 
-export const aujourdhuiIso = () => new Date().toISOString().slice(0, 10);
+/** Date du jour à l'heure de l'école, pour nommer les fichiers. */
+export { aujourdhui as aujourdhuiIso } from './jour';

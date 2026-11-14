@@ -27,6 +27,7 @@ import { ROLES, ROLE_GROUPS } from '@/shared/types/roles';
 import InscriptionDialog from './InscriptionDialog';
 import ImportDialog from './ImportDialog';
 import FicheDialog from './FicheDialog';
+import { aujourdhui } from '@/shared/lib/jour';
 
 const STATUT_COLORS = {
   actif: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400',
@@ -125,7 +126,7 @@ export default function ElevesPage() {
     const url = URL.createObjectURL(new Blob(['\uFEFF' + lignes.map((l) => l.map(cellule).join(';')).join('\r\n')], { type: 'text/csv;charset=utf-8' }));
     const lien = document.createElement('a');
     lien.href = url;
-    lien.download = `eleves-${new Date().toISOString().slice(0, 10)}.csv`;
+    lien.download = `eleves-${aujourdhui()}.csv`;
     document.body.appendChild(lien);
     lien.click();
     lien.remove();

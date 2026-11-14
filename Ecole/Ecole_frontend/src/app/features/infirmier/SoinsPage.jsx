@@ -23,6 +23,7 @@ import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
 import { useTranslation } from '@/shared/i18n';
+import { aujourdhui } from '@/shared/lib/jour';
 
 const getTypeIcon = (urgence) => {
   if (urgence) return <Activity className="h-4 w-4" />;
@@ -114,7 +115,7 @@ export default function SoinsPage() {
       <FormDialog
         open={nouveau}
         title={t('pages.infirmier.soins.nouveau_soin')}
-        initial={{ date: new Date().toISOString().slice(0, 10), urgence: 'non' }}
+        initial={{ date: aujourdhui(), urgence: 'non' }}
         fields={[
           { name: 'eleve_id', label: f('eleve'), type: 'select', options: eleves, required: true },
           { name: 'date', label: f('date'), type: 'date', required: true },

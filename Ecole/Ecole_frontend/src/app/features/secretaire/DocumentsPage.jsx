@@ -23,6 +23,7 @@ import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
 import { useTranslation } from '@/shared/i18n';
+import { aujourdhui } from '@/shared/lib/jour';
 
 function getTypeIcon(type) {
   const cfg = {
@@ -117,7 +118,7 @@ export default function DocumentsPage() {
       <FormDialog
         open={nouveau}
         title={t('pages.secretaire.documents.nouveau_courrier')}
-        initial={{ type: 'entrant', date_reception: new Date().toISOString().slice(0, 10) }}
+        initial={{ type: 'entrant', date_reception: aujourdhui() }}
         fields={[
           { name: 'type', label: c('sens'), type: 'select', options: [{ value: 'entrant', label: t('pages.secretaire.documents.entrant') }, { value: 'sortant', label: t('pages.secretaire.documents.sortant') }], required: true },
           { name: 'date_reception', label: c('date'), type: 'date', required: true },

@@ -15,6 +15,7 @@ import Button from '@/shared/components/ui/Button';
 import Card from '@/shared/components/ui/Card';
 import FormDialog from '@/shared/components/ui/FormDialog';
 import { useTranslation } from '@/shared/i18n';
+import { aujourdhui } from '@/shared/lib/jour';
 
 export const TYPES_CERTIFICAT = ['scolarite', 'frequentation', 'radiation'];
 const nom = (c) => `${c.eleve?.user?.name ?? ''} ${c.eleve?.user?.prenom ?? ''}`.trim();
@@ -70,7 +71,7 @@ export default function CertificatsSection() {
         open={ouvert}
         title={p('etablir')}
         submitLabel={p('etablir')}
-        initial={{ type_certificat: 'scolarite', date_emission: new Date().toISOString().slice(0, 10) }}
+        initial={{ type_certificat: 'scolarite', date_emission: aujourdhui() }}
         fields={[
           { name: 'eleve_id', label: p('eleve'), type: 'select', options: eleves, required: true },
           { name: 'type_certificat', label: p('type'), type: 'select', options: TYPES_CERTIFICAT.map((v) => ({ value: v, label: p(`titres.${v}`) })), required: true },

@@ -18,11 +18,11 @@ import Card from '@/shared/components/ui/Card';
 import Input from '@/shared/components/ui/Input';
 import Select from '@/shared/components/ui/Select';
 import { useTranslation } from '@/shared/i18n';
+import { aujourdhui } from '@/shared/lib/jour';
 
 export const STATUTS = ['present', 'absent', 'retard'];
 const ICONES = { present: CheckCircle, absent: XCircle, retard: Clock };
 const COULEURS = { present: 'var(--success)', absent: 'var(--error)', retard: 'var(--warning)' };
-const aujourdhui = () => new Date().toISOString().slice(0, 10);
 const cleBrouillon = (classe, date) => `ecole:brouillon-appel:${classe}:${date}`;
 const lire = (cle) => { try { return JSON.parse(localStorage.getItem(cle) ?? 'null'); } catch { return null; } };
 const ecrire = (cle, valeur) => { try { if (valeur) localStorage.setItem(cle, JSON.stringify(valeur)); else localStorage.removeItem(cle); } catch { /* stockage indisponible */ } };

@@ -23,12 +23,12 @@ import Card from '@/shared/components/ui/Card';
 import Input from '@/shared/components/ui/Input';
 import Select from '@/shared/components/ui/Select';
 import { useTranslation } from '@/shared/i18n';
+import { aujourdhui } from '@/shared/lib/jour';
 
 /** Mêmes valeurs que `StoreNoteRequest` côté API. */
 export const TYPES = ['Devoir1', 'Devoir2', 'Interrogation', '1ère evaluation', '2ème evaluation', '3ème evaluation', '4ème evaluation', '5ème evaluation', '6ème evaluation'];
 export const PERIODES = ['Trimestre 1', 'Trimestre 2', 'Trimestre 3'];
 
-const aujourdhui = () => new Date().toISOString().slice(0, 10);
 const cleBrouillon = (e) => `ecole:brouillon-notes:${e.classe}:${e.matiere}:${e.type}:${e.periode}:${e.type === 'Interrogation' ? e.date : ''}`;
 const lire = (cle) => { try { return JSON.parse(localStorage.getItem(cle) ?? 'null'); } catch { return null; } };
 const ecrire = (cle, valeur) => { try { if (valeur) localStorage.setItem(cle, JSON.stringify(valeur)); else localStorage.removeItem(cle); } catch { /* stockage indisponible : la saisie continue */ } };

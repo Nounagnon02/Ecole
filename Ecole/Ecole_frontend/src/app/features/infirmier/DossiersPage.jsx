@@ -23,6 +23,7 @@ import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
 import { useTranslation } from '@/shared/i18n';
+import { aujourdhui } from '@/shared/lib/jour';
 
 export default function DossiersPage() {
   const { t } = useTranslation();
@@ -171,7 +172,7 @@ export default function DossiersPage() {
             {t(tab === 'dossiers' ? 'pages.infirmier.dossiers.subtitle' : 'pages.infirmier.vaccinations.subtitle')}
           </p>
         </div>
-        <Button size="sm" icon={<Plus />} onClick={() => (tab === 'dossiers' ? ouvrirDossier(null) : setFormulaire({ type: 'vaccin', initial: { date_vaccination: new Date().toISOString().slice(0, 10) } }))}>
+        <Button size="sm" icon={<Plus />} onClick={() => (tab === 'dossiers' ? ouvrirDossier(null) : setFormulaire({ type: 'vaccin', initial: { date_vaccination: aujourdhui() } }))}>
           {tab === 'dossiers' ? t('pages.infirmier.dossiers.nouveau_dossier') : t('pages.infirmier.dossiers.nouveau_vaccin')}
         </Button>
       </div>
