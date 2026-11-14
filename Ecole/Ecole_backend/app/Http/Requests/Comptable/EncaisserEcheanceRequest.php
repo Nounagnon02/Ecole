@@ -29,6 +29,8 @@ class EncaisserEcheanceRequest extends FormRequest
             'date_paiement' => 'nullable|date|before_or_equal:today',
             'reference' => 'nullable|string|max:255',
             'observation' => 'nullable|string|max:500',
+            // Générée par le guichet à l'ouverture du dialogue (N-01).
+            'cle_idempotence' => 'nullable|string|max:64',
         ];
     }
 }

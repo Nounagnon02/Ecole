@@ -1596,7 +1596,9 @@
         "montant_requis": "Enter the amount received.",
         "montant_trop_eleve": "The payment cannot exceed what is left to pay ({montant}).",
         "echec": "The payment could not be recorded.",
-        "succes": "Payment recorded · {reference}"
+        "succes": "Payment recorded · {reference}",
+        "deja": "This payment was already recorded · {reference}",
+        "recu": "Receipt"
       }
     },
     "parametres": {

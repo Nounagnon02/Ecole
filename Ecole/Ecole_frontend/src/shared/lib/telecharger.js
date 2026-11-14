@@ -27,4 +27,13 @@ export async function telechargerRecu(id, reference) {
   telechargerBlob(`recu-${String(reference ?? id).replace(/[^\w-]+/g, '_')}.html`, new Blob([data], { type: 'text/html' }));
 }
 
+/**
+ * Le reçu d'un versement encaissé : montant remis, date, mode et situation
+ * de l'échéance après lui (audit du 14/11, N-02).
+ */
+export async function telechargerRecuVersement(id, reference) {
+  const { data } = await apiClient.get(`/comptable/versements/${id}/recu`, { responseType: 'blob' });
+  telechargerBlob(`recu-${String(reference ?? id).replace(/[^\w-]+/g, '_')}.html`, new Blob([data], { type: 'text/html' }));
+}
+
 export const aujourdhuiIso = () => new Date().toISOString().slice(0, 10);

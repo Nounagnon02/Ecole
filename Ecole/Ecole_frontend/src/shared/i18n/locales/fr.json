@@ -1596,7 +1596,9 @@
         "montant_requis": "Indiquez le montant reçu.",
         "montant_trop_eleve": "Le versement ne peut pas dépasser le reste dû ({montant}).",
         "echec": "Le versement n’a pas pu être enregistré.",
-        "succes": "Versement enregistré · {reference}"
+        "succes": "Versement enregistré · {reference}",
+        "deja": "Ce versement était déjà enregistré · {reference}",
+        "recu": "Reçu"
       }
     },
     "parametres": {

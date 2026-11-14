@@ -66,7 +66,7 @@ describe('encaissement au guichet', () => {
 
     await waitFor(() => expect(http.callsTo('post', '/comptable/echeancier/2/encaisser')).toHaveLength(1));
     expect(http.callsTo('post', '/comptable/echeancier/2/encaisser')[0].body)
-      .toEqual({ montant: 10000, mode_paiement: 'CHEQUE', reference: 'CHQ-0042' });
+      .toEqual({ montant: 10000, mode_paiement: 'CHEQUE', reference: 'CHQ-0042', cle_idempotence: expect.any(String) });
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     await waitFor(() => expect(http.callsTo('get', '/comptable/echeancier/12').length).toBeGreaterThan(1));
   });

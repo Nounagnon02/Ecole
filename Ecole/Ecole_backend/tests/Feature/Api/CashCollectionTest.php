@@ -111,3 +111,92 @@ it('donne, dans l’échéancier, le dû, le payé et le reste de chaque échéa
 
     expect($ligne)->toMatchArray(['id' => $echeance->id, 'montant_total' => 60000.0, 'montant_paye' => 10000.0, 'reste' => 50000.0]);
 });
+
+/*
+ * Doublons (audit du 14/11, N-01) : deux requêtes simultanées « Encaisser
+ * 5 000 F » créditaient 10 000 F (deux onglets, deux agents, envoi rejoué).
+ */
+it('ne crédite qu’une fois un encaissement envoyé deux fois avec la même clé', function () {
+    [, , $echeance] = guichet(60000);
+    $donnees = ['montant' => 5000, 'mode_paiement' => 'ESPECES', 'cle_idempotence' => 'cle-test-0001'];
+
+    $r1 = encaisser($echeance, $donnees)->assertCreated();
+    $r2 = encaisser($echeance, $donnees)->assertOk();
+
+    expect((float) $echeance->fresh()->montant_paye)->toBe(5000.0)
+        ->and(TransactionPaiement::where('id_paiement_eleve', $echeance->id)->count())->toBe(1)
+        ->and($r2->json('data.reference'))->toBe($r1->json('data.reference'))
+        ->and($r2->json('deja_enregistre'))->toBeTrue();
+});
+
+it('traite comme un doublon un encaissement identique du même agent dans les 10 secondes', function () {
+    [, , $echeance] = guichet(60000);
+    $donnees = ['montant' => 5000, 'mode_paiement' => 'ESPECES'];
+
+    encaisser($echeance, $donnees)->assertCreated();
+    encaisser($echeance, $donnees)->assertOk()->assertJsonPath('deja_enregistre', true);
+
+    expect((float) $echeance->fresh()->montant_paye)->toBe(5000.0);
+});
+
+it('crédite un second versement identique au-delà de 10 secondes, ou d’un autre montant', function () {
+    [, , $echeance] = guichet(60000);
+
+    encaisser($echeance, ['montant' => 5000, 'mode_paiement' => 'ESPECES'])->assertCreated();
+    encaisser($echeance, ['montant' => 3000, 'mode_paiement' => 'ESPECES'])->assertCreated();
+    \Illuminate\Support\Carbon::setTestNow(now()->addSeconds(11));
+    encaisser($echeance, ['montant' => 5000, 'mode_paiement' => 'ESPECES'])->assertCreated();
+    \Illuminate\Support\Carbon::setTestNow();
+
+    expect((float) $echeance->fresh()->montant_paye)->toBe(13000.0);
+});
+
+/*
+ * Reçu d'un versement (audit du 14/11, N-02) : le reçu imprimable donnait le
+ * total de l'échéance (74 946 F) comme montant payé et sa date d'échéance,
+ * pour un versement partiel.
+ */
+function versementId(\Illuminate\Testing\TestResponse $reponse): int
+{
+    return (int) $reponse->json('data.versement_id');
+}
+
+it('imprime pour chaque versement le montant reçu, la date, le mode et la situation à ce moment', function () {
+    [$agent, , $echeance] = guichet(60000);
+    $agent->ecole->update(['phone' => '0121000000']);
+
+    encaisser($echeance, ['montant' => 5000, 'mode_paiement' => 'ESPECES'])->assertCreated();
+    $second = versementId(encaisser($echeance, ['montant' => 3000, 'mode_paiement' => 'MOBILE_MONEY'])->assertCreated());
+    encaisser($echeance, ['montant' => 2000, 'mode_paiement' => 'ESPECES'])->assertCreated();
+
+    $html = $this->get("/api/comptable/versements/{$second}/recu")->assertOk()->getContent();
+
+    expect($html)->toContain('Montant reçu')
+        ->and($html)->toContain('3 000 FCFA')
+        ->and($html)->toContain(now()->format('d/m/Y'))
+        ->and($html)->toContain('Mobile money')
+        ->and($html)->toMatch('/Total dû.*60 000 FCFA/s')
+        ->and($html)->toMatch('/Déjà payé.*8 000 FCFA/s')
+        ->and($html)->toMatch('/Reste à payer.*52 000 FCFA/s')
+        ->and($html)->toContain('0121000000');
+});
+
+it('n’imprime pas le reçu d’un versement d’une autre école', function () {
+    [, , $echeance] = guichet(60000);
+    $id = versementId(encaisser($echeance, ['montant' => 5000, 'mode_paiement' => 'ESPECES'])->assertCreated());
+
+    guichet(60000); // autre école, autre agent connecté
+    $this->get("/api/comptable/versements/{$id}/recu")->assertNotFound();
+});
+
+it('présente le reçu d’une échéance partielle comme une situation, pas comme un paiement du total', function () {
+    [, , $echeance] = guichet(74946);
+    encaisser($echeance, ['montant' => 5000, 'mode_paiement' => 'ESPECES'])->assertCreated();
+
+    $html = $this->get("/api/comptable/paiements/{$echeance->id}/recu")->assertOk()->getContent();
+
+    expect($html)->toMatch('/Total dû.*74 946 FCFA/s')
+        ->and($html)->toMatch('/Déjà payé.*5 000 FCFA/s')
+        ->and($html)->toMatch('/Reste à payer.*69 946 FCFA/s')
+        ->and($html)->not->toContain('<div class="amount">74 946 FCFA</div>');
+});

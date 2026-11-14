@@ -25,6 +25,7 @@ import { Skeleton } from '@/shared/components/ui/Skeleton';
 import { toast } from 'sonner';
 import { useTranslation } from '@/shared/i18n';
 import EncaissementDialog from './EncaissementDialog';
+import { telechargerRecuVersement } from '@/shared/lib/telecharger';
 
 const STATUT_COLORS = {
   payee: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400',
@@ -135,7 +136,16 @@ export default function PaiementsPage() {
 
   const versementEnregistre = (resultat) => {
     setAEncaisser(null);
-    toast.success(t('pages.paiements.encaissement.succes', { reference: resultat?.reference ?? '' }));
+    const message = resultat?.deja_enregistre ? 'pages.paiements.encaissement.deja' : 'pages.paiements.encaissement.succes';
+    // Le reçu remis au parent est celui du versement (N-02), pas la
+    // situation de l'échéance.
+    toast.success(t(message, { reference: resultat?.reference ?? '' }), resultat?.versement_id ? {
+      action: {
+        label: t('pages.paiements.encaissement.recu'),
+        onClick: () => telechargerRecuVersement(resultat.versement_id, resultat.reference)
+          .catch(() => toast.error(t('pages.paiements.paiements.recu_indisponible'))),
+      },
+    } : undefined);
     if (echeanceEleve) loadEcheancier(echeanceEleve);
     refetch();
   };
