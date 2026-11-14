@@ -421,6 +421,26 @@ describe('ParentDashboard', () => {
 
     await waitFor(() => expect(screen.getByText('Aucun enfant trouvé')).toBeInTheDocument());
   });
+
+  // Audit du 14/11 (BUG-020, lot E) : l'œil de chaque enfant et « Voir tous
+  // les échanges » n'avaient aucune action ; ils restaient « bientôt
+  // disponibles » sur la page d'accueil du parent.
+  it('n’a aucun bouton inerte, et ses liens mènent aux pages du parent', async () => {
+    http.onGet(PARENT_ENDPOINT).reply(200, { data: PARENT_PAYLOAD });
+    renderDashboard(<ParentDashboard />);
+    await waitFor(() => expect(screen.getByText('Aho Kossi')).toBeInTheDocument());
+
+    expect(document.querySelectorAll('[data-indisponible]')).toHaveLength(0);
+    fireEvent.click(screen.getByRole('button', { name: /Aho Kossi/ }));
+    await waitFor(() => expect(screen.getByTestId('url')).toHaveTextContent('/parent/enfants'));
+  });
+
+  it('ouvre les annonces depuis « Voir tous les échanges »', async () => {
+    http.onGet(PARENT_ENDPOINT).reply(200, { data: PARENT_PAYLOAD });
+    renderDashboard(<ParentDashboard />);
+    fireEvent.click(await screen.findByRole('button', { name: /Voir tous les échanges/ }));
+    await waitFor(() => expect(screen.getByTestId('url')).toHaveTextContent('/communications'));
+  });
 });
 
 describe('EnseignantDashboard', () => {

@@ -196,7 +196,8 @@ export default function Breadcrumb({ items: propItems, className }) {
               ) : (
                 <Link
                   to={item.href}
-                  className="truncate text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]  "
+                  // 44 px de haut au doigt (BUG-020) ; compact à la souris.
+                  className="inline-flex min-h-11 min-w-11 items-center truncate text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] sm:min-h-0"
                 >
                   {item.label}
                 </Link>

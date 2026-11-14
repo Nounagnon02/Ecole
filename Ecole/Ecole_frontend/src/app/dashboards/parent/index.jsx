@@ -52,6 +52,7 @@ const STATS_META = [
 // ─── Sections ─────────────────────────────────────────────────
 
 function ApercuSection({ data, loading }) {
+  const navigate = useNavigate();
   const { t } = useTranslation();
   const safeStats = data?.stats?.map((s, i) => ({
     ...s,
@@ -199,8 +200,14 @@ function ApercuSection({ data, loading }) {
                   </div>
                   <div className="mt-3 flex items-center justify-between text-sm">
                     <span className="text-[var(--text-secondary)]">Rang: <strong className="text-[var(--text-primary)] ">{enfant.rang ?? '—'}</strong></span>
-                    <Button variant="ghost" size="sm">
-                      <Eye className="h-4 w-4" />
+                    {/* Sans action, ce bouton restait « bientôt disponible » (audit du 14/11). */}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      aria-label={`${t('dashboards.parent.mes_enfants')} : ${enfant.nom ?? ''} ${enfant.prenom ?? ''}`.trim()}
+                      onClick={() => navigate('/parent/enfants')}
+                    >
+                      <Eye className="h-4 w-4" aria-hidden="true" />
                     </Button>
                   </div>
                 </div>
@@ -252,7 +259,7 @@ function ApercuSection({ data, loading }) {
           )}
         </Card.Body>
         <Card.Footer>
-          <Button variant="ghost" size="sm" className="w-full">
+          <Button variant="ghost" size="sm" className="w-full" onClick={() => navigate('/communications')}>
             {t('dashboards.parent.voir_tous_les_echanges')} <ArrowRight className="h-4 w-4 ml-1" />
           </Button>
         </Card.Footer>

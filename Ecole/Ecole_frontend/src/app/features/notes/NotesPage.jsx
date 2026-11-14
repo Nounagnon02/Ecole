@@ -225,7 +225,7 @@ export default function NotesPage() {
         <button
           onClick={() => setTab('notes')}
           className={cn(
-            'pb-2 text-sm font-medium border-b-2 transition-colors',
+            'min-h-11 pb-2 text-sm font-medium border-b-2 transition-colors',
             tab === 'notes'
               ? 'border-[var(--accent)] text-[var(--accent)]'
               : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] '
@@ -237,7 +237,7 @@ export default function NotesPage() {
         <button
           onClick={() => setTab('classement')}
           className={cn(
-            'pb-2 text-sm font-medium border-b-2 transition-colors',
+            'min-h-11 pb-2 text-sm font-medium border-b-2 transition-colors',
             tab === 'classement'
               ? 'border-[var(--accent)] text-[var(--accent)]'
               : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] '
@@ -249,7 +249,7 @@ export default function NotesPage() {
         <button
           onClick={() => setTab('bulletins')}
           className={cn(
-            'pb-2 text-sm font-medium border-b-2 transition-colors',
+            'min-h-11 pb-2 text-sm font-medium border-b-2 transition-colors',
             tab === 'bulletins'
               ? 'border-[var(--accent)] text-[var(--accent)]'
               : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] '

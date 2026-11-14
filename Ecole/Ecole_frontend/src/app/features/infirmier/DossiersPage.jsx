@@ -191,7 +191,7 @@ export default function DossiersPage() {
         <button
           onClick={() => setTab('dossiers')}
           className={cn(
-            'pb-2 text-sm font-medium border-b-2 transition-colors',
+            'min-h-11 pb-2 text-sm font-medium border-b-2 transition-colors',
             tab === 'dossiers'
               ? 'border-[var(--accent)] text-[var(--accent)]'
               : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] '
@@ -203,7 +203,7 @@ export default function DossiersPage() {
         <button
           onClick={() => setTab('vaccinations')}
           className={cn(
-            'pb-2 text-sm font-medium border-b-2 transition-colors',
+            'min-h-11 pb-2 text-sm font-medium border-b-2 transition-colors',
             tab === 'vaccinations'
               ? 'border-[var(--accent)] text-[var(--accent)]'
               : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] '

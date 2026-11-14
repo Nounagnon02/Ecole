@@ -263,7 +263,7 @@ export default function MessageriePage() {
                   key={f}
                   onClick={() => setFilter(f)}
                   className={cn(
-                    'flex-1 rounded-lg px-2 py-1 text-xs font-medium transition-colors',
+                    'min-h-11 flex-1 rounded-lg px-2 py-1 text-xs font-medium transition-colors',
                     filter === f
                       ? 'bg-[var(--primary-subtle)] text-[var(--accent)] dark:bg-[var(--action)]/10 dark:text-[var(--accent)]'
                       : 'text-[var(--text-secondary)] hover:bg-[var(--surface-subtle)] '

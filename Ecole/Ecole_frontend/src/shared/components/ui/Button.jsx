@@ -23,8 +23,9 @@ const variants = {
 };
 
 const sizes = {
-  sm: 'min-h-11 px-3 py-2 text-sm gap-1.5 rounded-md',
-  md: 'min-h-11 px-4 py-2.5 text-sm gap-2 rounded-md',
+  // 44 px dans les deux sens : un bouton à icône seule faisait 40 px de large (BUG-020).
+  sm: 'min-h-11 min-w-11 px-3 py-2 text-sm gap-1.5 rounded-md',
+  md: 'min-h-11 min-w-11 px-4 py-2.5 text-sm gap-2 rounded-md',
   lg: 'min-h-[52px] px-6 py-3 text-base gap-2.5 rounded-md',
 };
 

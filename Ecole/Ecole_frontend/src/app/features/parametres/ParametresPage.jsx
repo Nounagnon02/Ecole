@@ -98,7 +98,7 @@ export default function ParametresPage() {
               <button
                 key={section.id}
                 onClick={() => setActiveSection(section.id)}
-                className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
+                className={`flex min-h-11 items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
                   activeSection === section.id
                     ? 'bg-[var(--accent-subtle)] text-[var(--accent)] dark:bg-[var(--action)]/10 dark:text-[var(--accent)]'
                     : 'text-[var(--text-secondary)] hover:bg-[var(--surface-subtle)]  '
