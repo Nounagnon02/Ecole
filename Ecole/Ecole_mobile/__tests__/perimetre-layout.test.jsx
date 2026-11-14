@@ -53,4 +53,12 @@ describe('garde du périmètre mobile', () => {
     expect(mockReplace).not.toHaveBeenCalled();
     expect(mockLogout).not.toHaveBeenCalled();
   });
+
+  it('impose le changement du mot de passe provisoire avant tout écran', async () => {
+    mockAuth = { user: { id: 3, role: 'parent', password_change_required: true }, loading: false, logout: mockLogout };
+    mockSegments = ['(app)', 'parent'];
+    const { findByText, queryByText } = render(<AppLayout />);
+    expect(await findByText('Choisissez votre mot de passe')).toBeTruthy();
+    expect(queryByText('ECRAN-PARENT')).toBeNull();
+  });
 });

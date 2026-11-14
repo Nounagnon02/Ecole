@@ -15,7 +15,7 @@ import LoginScreen from '../src/screens/LoginScreen';
 import { AuthProvider } from '../src/context/AuthContext';
 import { ThemeProvider } from '../src/theme';
 import { api } from '../src/services/api';
-import { getToken, clearAll } from '../src/services/secureStorage';
+import { getToken, getUser, clearAll } from '../src/services/secureStorage';
 
 // Le client Axios est la seule frontière réseau : on la remplace.
 jest.mock('../src/services/api', () => ({
@@ -129,6 +129,17 @@ describe('LoginScreen', () => {
     await waitFor(() => expect(alerte).toHaveBeenCalledWith('Erreur', 'Identifiants invalides'));
     expect(navigation.replace).not.toHaveBeenCalled();
     expect(await getToken()).toBeNull();
+  });
+
+  it('retient qu’un mot de passe provisoire doit être changé', async () => {
+    api.post.mockResolvedValue({ data: { token: 't', requires_password_change: true, user: { id: 4, role: 'parent' } } });
+    const navigation = { replace: jest.fn() };
+    await afficherConnexion(navigation);
+    fireEvent.changeText(screen.getByPlaceholderText('exemple@ecole.bj'), '0190000101');
+    fireEvent.changeText(screen.getByPlaceholderText('••••••••'), 'Provisoire1');
+    fireEvent.press(screen.getByText('Se connecter'));
+    await waitFor(() => expect(navigation.replace).toHaveBeenCalledWith('/(app)/parent'));
+    expect((await getUser()).password_change_required).toBe(true);
   });
 
   it.each(['comptable', 'directeur', 'eleve', 'personnel'])(

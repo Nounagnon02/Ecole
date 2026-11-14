@@ -13,6 +13,7 @@ import { Stack, useRouter, useSegments } from 'expo-router';
 import { useAuth } from '../../src/context/AuthContext';
 import { useTheme } from '../../src/theme';
 import { DASHBOARDS, hrefDashboard } from '../../src/navigation/routerBridge';
+import MotDePasseImpose from '../../src/espaces/MotDePasseImpose';
 
 export default function AppLayout() {
   const { user, loading, logout } = useAuth();
@@ -58,6 +59,9 @@ export default function AppLayout() {
   }
 
   if (!user || !espace) return null;
+
+  // Mot de passe provisoire : à remplacer avant tout écran (l'API refuse le reste).
+  if (user.password_change_required) return <MotDePasseImpose />;
 
   return (
     <Stack screenOptions={{ headerShown: false }}>

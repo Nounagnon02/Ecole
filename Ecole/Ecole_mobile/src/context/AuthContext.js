@@ -58,7 +58,12 @@ export const AuthProvider = ({ children }) => {
         ...credentials,
         device_name: Platform.OS === 'ios' ? 'ios' : 'android',
       });
-      const userData = response.data.user || response.data;
+      // Mot de passe provisoire (compte créé par l'école) : l'API refuse tout
+      // le reste tant qu'il n'est pas remplacé ; l'espace l'impose d'abord.
+      const userData = {
+        ...(response.data.user || response.data),
+        password_change_required: !!(response.data.requires_password_change || response.data.user?.password_change_required),
+      };
       const token = response.data.token || userData.token;
 
       // Profil en clair (affichage), token en stockage chiffré.
