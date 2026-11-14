@@ -52,3 +52,12 @@ it('donne à chaque classe sa série et ses matières, sans doublon si on rejoue
         ->and(collect($classes['6ème']['series'][0]['matieres'])->pluck('nom')->sort()->values()->all())->toBe(['Mathématiques', 'SVT'])
         ->and(collect($classes['2nde C']['series'])->pluck('nom')->unique()->values()->all())->toBe(['Série C']);
 });
+
+/*
+ * Démonstration complète (audit du 14/11, N-08) : la « 3ème » était sautée
+ * (« already exists »), donc sans matière ni série, et sa contribution
+ * était créée pour la classe 0.
+ */
+it('donne aussi ses matières à la 3ème', function () {
+    expect(collect(DemoDataSeeder::CLASSES)->pluck(0)->all())->toContain('3ème');
+});

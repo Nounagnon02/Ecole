@@ -187,6 +187,13 @@ export const ROUTE_CONFIG = {
     roles: [...ROLE_GROUPS.DIRECTION],
   },
 
+  // Programme des classes : séries, matières, coefficients (N-08).
+  programme: {
+    path: '/programme',
+    component: lazy(() => import('@/app/features/programme/ProgrammePage')),
+    roles: [...ROLE_GROUPS.DIRECTION, ROLES.ADMIN],
+  },
+
   // ─── FEATURES PARENT ─────────────────────────────────────────────────
   parentEnfants: {
     path: '/parent/enfants',

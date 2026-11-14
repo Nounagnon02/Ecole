@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\DB;
 
 class SeriesMatieresController extends Controller
 {
-    public function detachMatiere($id, $matiere_id)
+    public function detachMatiere(Request $request, $id, $matiere_id)
     {
         $serie = Series::find($id);
 
@@ -25,14 +25,55 @@ class SeriesMatieresController extends Controller
             return response()->json(['message' => 'Serie non trouvée'], 404);
         }
 
+        // Avec `classe_id`, la matière ne quitte que cette classe : sans lui,
+        // retirer les maths de la 6ème les retirait de toutes les classes de
+        // la série (audit du 14/11, N-08). Sans `classe_id`, comportement
+        // inchangé pour les appels existants.
+        $relation = $serie->matieres();
+        if ($classeId = $request->query('classe_id')) {
+            $relation->wherePivot('classe_id', $classeId);
+        }
+
         // Vérifier si la matière est attachée à la série
-        if (! $serie->matieres()->where('matiere_id', $matiere_id)->exists()) {
+        if (! (clone $relation)->where('matiere_id', $matiere_id)->exists()) {
             return response()->json(['message' => 'Cette matière n\'est pas associée à cette série'], 404);
         }
 
-        $serie->matieres()->detach($matiere_id);
+        $relation->detach($matiere_id);
 
         return response()->json(['message' => 'Matière retirée de la série avec succès'], 200);
+    }
+
+    /**
+     * Programme d'une classe : pour chaque série, ses matières et leur
+     * coefficient (audit du 14/11, N-08). La direction le configurait sans
+     * pouvoir le relire ailleurs qu'en base. La classe est cherchée dans
+     * l'école de l'utilisateur (404 sinon).
+     */
+    public function programmeClasse($classeId)
+    {
+        $classe = Classes::findOrFail($classeId);
+
+        $lignes = DB::table('serie_matieres')
+            ->join('series', 'series.id', '=', 'serie_matieres.serie_id')
+            ->join('matieres', 'matieres.id', '=', 'serie_matieres.matiere_id')
+            ->where('serie_matieres.classe_id', $classe->id)
+            ->where('series.ecole_id', $classe->ecole_id)
+            ->orderBy('series.nom')
+            ->orderBy('matieres.nom')
+            ->get(['series.id as serie_id', 'series.nom as serie_nom', 'matieres.id as matiere_id', 'matieres.nom as matiere_nom', 'serie_matieres.coefficient']);
+
+        return response()->json([
+            'success' => true,
+            'classe' => ['id' => $classe->id, 'nom' => $classe->nom_classe],
+            'data' => $lignes->map(fn ($l) => [
+                'serie_id' => (int) $l->serie_id,
+                'serie_nom' => $l->serie_nom,
+                'matiere_id' => (int) $l->matiere_id,
+                'matiere_nom' => $l->matiere_nom,
+                'coefficient' => (float) $l->coefficient,
+            ])->values(),
+        ]);
     }
 
     public function syncMatieres(SyncMatieresRequest $request, $id)

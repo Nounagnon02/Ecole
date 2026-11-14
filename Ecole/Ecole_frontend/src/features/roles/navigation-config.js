@@ -42,6 +42,7 @@ const ROLE_MENUS = {
     { icon: LayoutDashboard, label: 'nav.dashboard', path: '/directeur/dashboard' },
     { icon: Users, label: 'nav.eleves', path: '/eleves' },
     { icon: UserCheck, label: 'nav.personnel', path: '/personnel' },
+    { icon: BookMarked, label: 'nav.programme', path: '/programme' },
     { icon: GraduationCap, label: 'nav.affectations', path: '/affectations' },
     { icon: BookOpen, label: 'nav.notes', path: '/notes' },
     { icon: FileText, label: 'nav.bulletins', path: '/bulletins' },
@@ -189,7 +190,7 @@ const COMMON_ITEMS = [
 ];
 
 
-const LABELS = {"/parent/enfants": "enfants", "/communications": "annonces", "/comptable/transactions": "transactions", "/comptable/factures": "factures", "/surveillant/surveillance": "surveillance", "/surveillant/presences": "presences", "/censeur/discipline": "discipline", "/censeur/absences": "absences", "/infirmier/dossiers": "dossiers_medicaux", "/infirmier/soins": "soins", "/bibliothecaire/catalogue": "catalogue", "/bibliothecaire/emprunts": "emprunts", "/secretaire/inscriptions": "inscriptions", "/secretaire/documents": "documents", "/secretaire/planning": "planning", "/universite/facultes": "facultes", "/universite/departements": "departements", "/universite/enseignants": "enseignants", "/universite/etudiants": "etudiants", "/universite/cours": "cours", "/universite/mes-cours": "mes_cours", "/universite/taches": "taches", "/universite/planning": "planning", "/admin/ecoles": "ecoles", "/admin/utilisateurs": "utilisateurs", "/admin/modules": "modules", "/admin/plans": "plans", "/admin/billing": "facturation", "/admin/statistiques": "statistiques", "/admin/configuration": "configuration", "/admin/white-label": "identite", "/affectations": "affectations", "/personnel": "personnel"};
+const LABELS = {"/parent/enfants": "enfants", "/communications": "annonces", "/comptable/transactions": "transactions", "/comptable/factures": "factures", "/surveillant/surveillance": "surveillance", "/surveillant/presences": "presences", "/censeur/discipline": "discipline", "/censeur/absences": "absences", "/infirmier/dossiers": "dossiers_medicaux", "/infirmier/soins": "soins", "/bibliothecaire/catalogue": "catalogue", "/bibliothecaire/emprunts": "emprunts", "/secretaire/inscriptions": "inscriptions", "/secretaire/documents": "documents", "/secretaire/planning": "planning", "/universite/facultes": "facultes", "/universite/departements": "departements", "/universite/enseignants": "enseignants", "/universite/etudiants": "etudiants", "/universite/cours": "cours", "/universite/mes-cours": "mes_cours", "/universite/taches": "taches", "/universite/planning": "planning", "/admin/ecoles": "ecoles", "/admin/utilisateurs": "utilisateurs", "/admin/modules": "modules", "/admin/plans": "plans", "/admin/billing": "facturation", "/admin/statistiques": "statistiques", "/admin/configuration": "configuration", "/admin/white-label": "identite", "/affectations": "affectations", "/personnel": "personnel", "/programme": "programme"};
 
 /** Les liens et les accès utilisent le même registre ; aucun module autorisé n'est orphelin. */
 export function getRoleNavigation(role) {

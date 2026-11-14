@@ -51,6 +51,9 @@ Route::middleware('auth:sanctum')->group(function () {
             ->middleware('role:directeur,enseignant,censeur,surveillant,secretaire,infirmier,bibliothecaire');
         Route::get('/{id}/enseignants', [ClassesController::class, 'getEnseignants'])
             ->middleware('role:directeur,enseignant,censeur,secretaire');
+        // Programme de la classe : séries, matières, coefficients (N-08).
+        Route::get('/{id}/programme', [\App\Http\Controllers\Series\SeriesMatieresController::class, 'programmeClasse'])
+            ->middleware('role:directeur,admin');
     });
 
     // ============ ÉLÈVES ============

@@ -54,7 +54,8 @@
     "affectations": "Assignments",
     "assistant": "Assistant",
     "personnel": "Staff",
-    "saisie_notes": "Enter grades"
+    "saisie_notes": "Enter grades",
+    "programme": "Class curriculum"
   },
   "common": {
     "coming_soon": "Coming soon",
@@ -2285,6 +2286,38 @@
       "confirmer_texte": "Averages of {classe} for {periode} will be computed and frozen, and the term’s grades locked. A correction will then require unlocking the grade and closing again.",
       "arretes": "{nombre} report card(s) closed, {notes} grade(s) locked.",
       "echec": "The report cards could not be closed."
+    },
+    "programme": {
+      "title": "Class curriculum",
+      "subtitle": "Streams, subjects and weightings for each class. A class without subjects cannot be given any teacher.",
+      "classe": "Class",
+      "choisir_classe": "Choose a class",
+      "matieres_de": "Subjects of class {classe}",
+      "vide": "This class has no subject yet. Add some below, or copy another class’s curriculum.",
+      "reprendre_de": "Copy curriculum from",
+      "reprendre": "Copy",
+      "repris": "{n} subject(s) copied",
+      "serie": "Stream",
+      "matiere": "Subject",
+      "coefficient": "Weighting",
+      "coefficient_de": "Weighting of {matiere}",
+      "retirer": "Remove",
+      "retirer_titre": "Remove this subject?",
+      "retirer_texte": "{matiere} will no longer be taught in {classe}. Other classes are unchanged. Teachers assigned to this subject in this class will lose their grade entry.",
+      "retiree": "{matiere} removed from the class",
+      "ajouter_titre": "Add a subject",
+      "choisir_serie": "Choose a stream",
+      "nouvelle_serie": "New stream…",
+      "nom_nouvelle_serie": "Name of the new stream",
+      "exemple_serie": "For example: Lower secondary, Series D",
+      "choisir_matiere": "Choose a subject",
+      "ajouter": "Add the subject",
+      "ajoutee": "Subject added to the class",
+      "coefficient_enregistre": "Weighting of {matiere} saved",
+      "coefficient_invalide": "The weighting must be between 0.1 and 10.",
+      "champs_requis": "Choose a stream and a subject.",
+      "echec": "The operation failed. Please try again.",
+      "aide_affectation": "Once the subjects are in place, assign teachers from the “Assignments” page."
     }
   },
   "app_shell": {

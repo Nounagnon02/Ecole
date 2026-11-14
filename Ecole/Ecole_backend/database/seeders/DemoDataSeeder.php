@@ -10,6 +10,37 @@ use Illuminate\Support\Facades\Hash;
 
 class DemoDataSeeder extends Seeder
 {
+    /**
+     * Classes de la démonstration : [nom, catégorie, série_id].
+     *
+     * La « 3ème » y figure (audit du 14/11, N-08) : elle était sautée parce
+     * qu'elle existe déjà (BeninEducationSeeder), et restait donc sans
+     * matière ni série — aucun enseignant ne pouvait y être affecté. Une
+     * classe existante est reprise telle quelle, pas recréée.
+     */
+    public const CLASSES = [
+        ['Petite Section', 'Maternelle', 1],
+        ['Moyenne Section', 'Maternelle', 1],
+        ['Grande Section', 'Maternelle', 1],
+        ['CP', 'Primaire', 2],
+        ['CE1', 'Primaire', 2],
+        ['CE2', 'Primaire', 2],
+        ['CM1', 'Primaire', 2],
+        ['CM2', 'Primaire', 2],
+        ['6ème', 'Secondaire', 3],
+        ['5ème', 'Secondaire', 3],
+        ['4ème', 'Secondaire', 3],
+        ['3ème', 'Secondaire', 3],
+        ['2nde A', 'Secondaire', 4],
+        ['2nde C', 'Secondaire', 5],
+        ['1ère A', 'Secondaire', 4],
+        ['1ère C', 'Secondaire', 5],
+        ['1ère D', 'Secondaire', 6],
+        ['Tle A', 'Secondaire', 4],
+        ['Tle C', 'Secondaire', 5],
+        ['Tle D', 'Secondaire', 6],
+    ];
+
     use RefusesInProduction;
 
     public function run()
@@ -46,29 +77,7 @@ class DemoDataSeeder extends Seeder
         echo "✓ Matières: " . count($matiereIds) . " au total\n";
 
         // ─── 3. More classes ────────────────────────────────────────────
-        $classDefs = [
-            // [nom, catégorie, série_id]
-            ['Petite Section', 'Maternelle', 1],
-            ['Moyenne Section', 'Maternelle', 1],
-            ['Grande Section', 'Maternelle', 1],
-            ['CP', 'Primaire', 2],
-            ['CE1', 'Primaire', 2],
-            ['CE2', 'Primaire', 2],
-            ['CM1', 'Primaire', 2],
-            ['CM2', 'Primaire', 2],
-            ['6ème', 'Secondaire', 3],
-            ['5ème', 'Secondaire', 3],
-            ['4ème', 'Secondaire', 3],
-            // 3ème already exists (id=1)
-            ['2nde A', 'Secondaire', 4],
-            ['2nde C', 'Secondaire', 5],
-            ['1ère A', 'Secondaire', 4],
-            ['1ère C', 'Secondaire', 5],
-            ['1ère D', 'Secondaire', 6],
-            ['Tle A', 'Secondaire', 4],
-            ['Tle C', 'Secondaire', 5],
-            ['Tle D', 'Secondaire', 6],
-        ];
+        $classDefs = self::CLASSES;
 
         $existingClasses = DB::table('classes')->where('ecole_id', $ecoleId)->pluck('id', 'nom_classe')->toArray();
         $classIds = [];

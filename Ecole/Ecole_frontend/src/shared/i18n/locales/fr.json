@@ -54,7 +54,8 @@
     "affectations": "Affectations",
     "assistant": "Assistant",
     "personnel": "Personnel",
-    "saisie_notes": "Saisir des notes"
+    "saisie_notes": "Saisir des notes",
+    "programme": "Programme des classes"
   },
   "common": {
     "coming_soon": "Bientôt disponible",
@@ -2285,6 +2286,38 @@
       "confirmer_texte": "Les moyennes de {classe} pour le {periode} seront calculées et figées, et les notes de la période verrouillées. Une correction demandera ensuite de déverrouiller la note puis d’arrêter à nouveau.",
       "arretes": "{nombre} bulletin(s) arrêté(s), {notes} note(s) verrouillée(s).",
       "echec": "Les bulletins n’ont pas pu être arrêtés."
+    },
+    "programme": {
+      "title": "Programme des classes",
+      "subtitle": "Séries, matières et coefficients de chaque classe. Une classe sans matière ne peut recevoir aucun enseignant.",
+      "classe": "Classe",
+      "choisir_classe": "Choisir une classe",
+      "matieres_de": "Matières de la classe {classe}",
+      "vide": "Cette classe n’a encore aucune matière. Ajoutez-en ci-dessous, ou reprenez le programme d’une autre classe.",
+      "reprendre_de": "Reprendre le programme de",
+      "reprendre": "Reprendre",
+      "repris": "{n} matière(s) reprise(s)",
+      "serie": "Série",
+      "matiere": "Matière",
+      "coefficient": "Coefficient",
+      "coefficient_de": "Coefficient de {matiere}",
+      "retirer": "Retirer",
+      "retirer_titre": "Retirer cette matière ?",
+      "retirer_texte": "{matiere} ne sera plus enseignée en {classe}. Les autres classes ne changent pas. Les enseignants affectés à cette matière dans cette classe perdront leur saisie de notes.",
+      "retiree": "{matiere} retirée de la classe",
+      "ajouter_titre": "Ajouter une matière",
+      "choisir_serie": "Choisir une série",
+      "nouvelle_serie": "Nouvelle série…",
+      "nom_nouvelle_serie": "Nom de la nouvelle série",
+      "exemple_serie": "Par exemple : Collège, Série D",
+      "choisir_matiere": "Choisir une matière",
+      "ajouter": "Ajouter la matière",
+      "ajoutee": "Matière ajoutée à la classe",
+      "coefficient_enregistre": "Coefficient de {matiere} enregistré",
+      "coefficient_invalide": "Le coefficient doit être compris entre 0,1 et 10.",
+      "champs_requis": "Choisissez une série et une matière.",
+      "echec": "L’opération a échoué. Réessayez.",
+      "aide_affectation": "Une fois les matières en place, affectez les enseignants depuis la page « Affectations »."
     }
   },
   "app_shell": {
