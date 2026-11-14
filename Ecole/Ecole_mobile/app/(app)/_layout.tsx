@@ -1,43 +1,42 @@
 /**
- * (app) Layout — Protected routes Érudit v4
+ * (app) Layout — routes authentifiées du mobile.
  *
- * Groupe de routes authentifiées.
- * Redirige vers la connexion si non authentifié.
- * Chaque dashboard de rôle est une route Stack.
+ * Périmètre (14/11/2026) : parents et enseignants seulement. Un compte d'un
+ * autre rôle est déconnecté (jeton révoqué, stockage purgé) ; un parent qui
+ * ouvrirait l'espace enseignant par lien profond, ou l'inverse, est renvoyé
+ * vers le sien. Les droits réels restent vérifiés par l'API à chaque appel.
  */
 
 import { useEffect } from 'react';
 import { View, ActivityIndicator } from 'react-native';
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import { useAuth } from '../../src/context/AuthContext';
 import { useTheme } from '../../src/theme';
-
-const DASHBOARD_ROUTES = [
-  { name: 'directeur', title: 'Directeur' },
-  { name: 'enseignant', title: 'Enseignant' },
-  { name: 'eleve', title: 'Élève' },
-  { name: 'parent', title: 'Parent' },
-  { name: 'comptable', title: 'Comptable' },
-  { name: 'surveillant', title: 'Surveillant' },
-  { name: 'censeur', title: 'Censeur' },
-  { name: 'infirmier', title: 'Infirmier' },
-  { name: 'bibliothecaire', title: 'Bibliothécaire' },
-  { name: 'secretaire', title: 'Secrétaire' },
-  { name: 'universite', title: 'Université' },
-  { name: 'admin', title: 'Admin' },
-];
+import { DASHBOARDS, hrefDashboard } from '../../src/navigation/routerBridge';
 
 export default function AppLayout() {
-  const { user, loading } = useAuth();
+  const { user, loading, logout } = useAuth();
   const router = useRouter();
+  const segments = useSegments();
   const { colors } = useTheme();
+  const espace = hrefDashboard(user?.role);
 
-  // Garde : pas d'accès sans auth
   useEffect(() => {
-    if (!loading && !user) {
+    if (loading) return;
+    if (!user) {
       router.replace('/');
+      return;
     }
-  }, [user, loading]);
+    if (!espace) {
+      // Session restaurée d'un compte hors périmètre : on la ferme.
+      logout().finally(() => router.replace('/'));
+      return;
+    }
+    const ecran = segments[segments.length - 1];
+    if (ecran && `/(app)/${ecran}` !== espace) {
+      router.replace(espace);
+    }
+  }, [user, loading, espace, segments]);
 
   if (loading) {
     return (
@@ -58,15 +57,15 @@ export default function AppLayout() {
     );
   }
 
-  if (!user) return null;
+  if (!user || !espace) return null;
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      {DASHBOARD_ROUTES.map((screen) => (
+      {DASHBOARDS.map((nom) => (
         <Stack.Screen
-          key={screen.name}
-          name={screen.name}
-          options={{ title: screen.title }}
+          key={nom}
+          name={nom}
+          options={{ title: nom === 'parent' ? 'Parent' : 'Enseignant' }}
         />
       ))}
     </Stack>

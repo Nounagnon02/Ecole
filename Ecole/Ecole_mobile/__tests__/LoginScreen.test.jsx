@@ -66,14 +66,12 @@ describe('LoginScreen', () => {
     expect(screen.getByText('Mot de passe oublié ?')).toBeTruthy();
   });
 
-  it('propose un badge par rôle disposant d’un dashboard mobile', async () => {
+  it('ne fait pas choisir de rôle : il vient du serveur', async () => {
     await afficherConnexion();
 
-    // 12 rôles = 12 dashboards présents dans app/(app)/.
-    expect(screen.getAllByRole('button', { name: /.+/ }).length).toBeGreaterThanOrEqual(12);
-    expect(screen.getByLabelText('Directeur')).toBeTruthy();
-    expect(screen.getByLabelText('Élève')).toBeTruthy();
-    expect(screen.getByLabelText('Bibliothécaire')).toBeTruthy();
+    expect(screen.queryByLabelText('Directeur')).toBeNull();
+    expect(screen.queryByLabelText('Comptable')).toBeNull();
+    expect(screen.queryByLabelText('Élève')).toBeNull();
   });
 
   it('refuse de soumettre un formulaire vide et n’appelle pas l’API', async () => {
@@ -90,7 +88,7 @@ describe('LoginScreen', () => {
     api.post.mockResolvedValue({
       data: {
         token: 'jeton-sanctum-123',
-        user: { id: 7, nom: 'Kangbode', role: 'comptable' },
+        user: { id: 7, nom: 'Kangbode', role: 'enseignant' },
       },
     });
     const navigation = { replace: jest.fn() };
@@ -100,7 +98,7 @@ describe('LoginScreen', () => {
     fireEvent.changeText(screen.getByPlaceholderText('••••••••'), 'secret123');
     fireEvent.press(screen.getByText('Se connecter'));
 
-    await waitFor(() => expect(navigation.replace).toHaveBeenCalledWith('/(app)/comptable'));
+    await waitFor(() => expect(navigation.replace).toHaveBeenCalledWith('/(app)/enseignant'));
 
     // L'email est trimé et device_name accompagne la demande de token Sanctum.
     expect(api.post).toHaveBeenCalledWith(
@@ -132,21 +130,25 @@ describe('LoginScreen', () => {
     expect(await getToken()).toBeNull();
   });
 
-  it('avertit sans rediriger quand le rôle renvoyé n’a pas de dashboard mobile', async () => {
-    const alerte = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
-    api.post.mockResolvedValue({
-      data: { token: 'jeton', user: { id: 9, role: 'personnel' } },
-    });
-    const navigation = { replace: jest.fn() };
-    await afficherConnexion(navigation);
+  it.each(['comptable', 'directeur', 'eleve', 'personnel'])(
+    'refuse un compte « %s » : avertit, ne redirige pas et purge la session',
+    async (role) => {
+      const alerte = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+      api.post.mockResolvedValue({ data: { token: 'jeton', user: { id: 9, role } } });
+      const navigation = { replace: jest.fn() };
+      await afficherConnexion(navigation);
 
-    fireEvent.changeText(screen.getByPlaceholderText('exemple@ecole.bj'), 'p@ecole.bj');
-    fireEvent.changeText(screen.getByPlaceholderText('••••••••'), 'secret123');
-    fireEvent.press(screen.getByText('Se connecter'));
+      fireEvent.changeText(screen.getByPlaceholderText('exemple@ecole.bj'), 'p@ecole.bj');
+      fireEvent.changeText(screen.getByPlaceholderText('••••••••'), 'secret123');
+      fireEvent.press(screen.getByText('Se connecter'));
 
-    await waitFor(() =>
-      expect(alerte).toHaveBeenCalledWith('Espace indisponible', expect.stringContaining('personnel'))
-    );
-    expect(navigation.replace).not.toHaveBeenCalled();
-  });
+      await waitFor(() =>
+        expect(alerte).toHaveBeenCalledWith('Application réservée', expect.stringContaining('parents et aux enseignants'))
+      );
+      expect(navigation.replace).not.toHaveBeenCalled();
+      // Le jeton émis ne doit pas rester sur le téléphone.
+      await waitFor(async () => expect(await getToken()).toBeNull());
+      expect(api.post).toHaveBeenCalledWith('/auth/logout');
+    }
+  );
 });

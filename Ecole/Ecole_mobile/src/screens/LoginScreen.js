@@ -31,35 +31,12 @@ import EruditButton from '../components/EruditButton';
 import EruditCard from '../components/EruditCard';
 import { hrefDashboard } from '../navigation/routerBridge';
 
-const ROLES = [
-  { key: 'directeur', label: 'Directeur', icon: '🏫' },
-  { key: 'enseignant', label: 'Enseignant', icon: '👨‍🏫' },
-  { key: 'eleve', label: 'Élève', icon: '🎓' },
-  { key: 'parent', label: 'Parent', icon: '👨‍👩‍👧' },
-  { key: 'comptable', label: 'Comptable', icon: '💰' },
-  { key: 'surveillant', label: 'Surveillant', icon: '👁️' },
-  { key: 'censeur', label: 'Censeur', icon: '⚖️' },
-  { key: 'infirmier', label: 'Infirmier', icon: '🏥' },
-  { key: 'bibliothecaire', label: 'Bibliothécaire', icon: '📚' },
-  { key: 'secretaire', label: 'Secrétaire', icon: '📋' },
-  { key: 'universite', label: 'Université', icon: '🏛️' },
-  { key: 'admin', label: 'Admin', icon: '⚙️' },
-];
-
-const ROLE_COLORS = {
-  directeur: '#1A3A3C', enseignant: '#5A7A63', eleve: '#5A7AAD',
-  parent: '#B8562E', comptable: '#C4943A', surveillant: '#BA4A4A',
-  censeur: '#8A5A7A', infirmier: '#5A8A8A', bibliothecaire: '#7A8A5A',
-  secretaire: '#8A7A5A', universite: '#1A3A3C', admin: '#1A3A3C',
-};
-
 export default function LoginScreen({ navigation }) {
   const { colors, spacing, radius, typography } = useTheme();
-  const { login } = useAuth();
+  const { login, logout } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('directeur');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -85,16 +62,16 @@ export default function LoginScreen({ navigation }) {
     }
     setLoading(true);
     try {
-      const userData = await login({ email: email.trim(), password, role });
-      // Le rôle qui fait foi est celui renvoyé par l'API, pas celui choisi
-      // dans le formulaire : l'utilisateur peut se tromper de badge. Le rôle
-      // du formulaire ne sert que si la réponse n'en porte aucun.
-      const roleEffectif = userData?.role || role;
-      const href = hrefDashboard(roleEffectif);
+      // Le rôle vient du serveur ; il n'est plus demandé à l'utilisateur.
+      const userData = await login({ email: email.trim(), password });
+      const href = hrefDashboard(userData?.role);
       if (!href) {
+        // Compte hors du périmètre mobile : le jeton émis ne doit pas rester
+        // sur le téléphone (session fermée côté serveur et stockage purgé).
+        await logout();
         Alert.alert(
-          'Espace indisponible',
-          `Aucun espace mobile n'existe pour le rôle « ${roleEffectif} ». Utilisez l'application web.`
+          'Application réservée',
+          "Cette application est réservée aux parents et aux enseignants. L'administration utilise l'application de bureau de l'école ; les élèves et étudiants, le site web."
         );
         return;
       }
@@ -180,49 +157,6 @@ export default function LoginScreen({ navigation }) {
                   onPress: () => setShowPassword(!showPassword),
                 }}
               />
-
-              {/* Sélecteur de rôle — badges déroulants */}
-              <View style={{ gap: spacing.xs }}>
-                <EruditText style={{
-                  fontSize: 12, color: colors.textTertiary,
-                  fontWeight: '500', letterSpacing: 0.3,
-                }}>
-                  Rôle
-                </EruditText>
-                <View style={{
-                  flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs,
-                }}>
-                  {ROLES.map(r => (
-                    <TouchableOpacity
-                      key={r.key}
-                      onPress={() => setRole(r.key)}
-                      activeOpacity={0.7}
-                      accessibilityRole="button"
-                      accessibilityLabel={r.label}
-                      style={{
-                        flexDirection: 'row', alignItems: 'center', gap: 4,
-                        paddingHorizontal: 10, paddingVertical: 6,
-                        borderRadius: radius.md,
-                        backgroundColor: role === r.key
-                          ? (ROLE_COLORS[r.key] || colors.primary)
-                          : colors.surfaceSubtle,
-                        borderWidth: 1,
-                        borderColor: role === r.key
-                          ? (ROLE_COLORS[r.key] || colors.primary)
-                          : colors.border,
-                      }}
-                    >
-                      <EruditText style={{ fontSize: 12 }}>{r.icon}</EruditText>
-                      <EruditText style={{
-                        fontSize: 11, fontWeight: '600',
-                        color: role === r.key ? '#FFFFFF' : colors.textSecondary,
-                      }}>
-                        {r.label}
-                      </EruditText>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
 
               {/* Bouton connexion */}
               <EruditButton

@@ -23,19 +23,15 @@ const RACINE_APP = path.join(__dirname, '..', 'app');
 
 /** Modules de route chargés paresseusement : `require` prouve la résolution. */
 const routesDashboard = {
-  admin: () => require('../app/(app)/admin'),
-  bibliothecaire: () => require('../app/(app)/bibliothecaire'),
-  censeur: () => require('../app/(app)/censeur'),
-  comptable: () => require('../app/(app)/comptable'),
-  directeur: () => require('../app/(app)/directeur'),
-  eleve: () => require('../app/(app)/eleve'),
   enseignant: () => require('../app/(app)/enseignant'),
-  infirmier: () => require('../app/(app)/infirmier'),
   parent: () => require('../app/(app)/parent'),
-  secretaire: () => require('../app/(app)/secretaire'),
-  surveillant: () => require('../app/(app)/surveillant'),
-  universite: () => require('../app/(app)/universite'),
 };
+
+/** Rôles hors du mobile (périmètre du 14/11/2026 : parents et enseignants seulement). */
+const HORS_MOBILE = [
+  'admin', 'super-admin', 'bibliothecaire', 'censeur', 'comptable', 'directeur', 'directeurM', 'directeurP',
+  'directeurS', 'secretaire', 'surveillant', 'infirmier', 'eleve', 'etudiant', 'recteur', 'doyen', 'personnel',
+];
 
 describe('point d’entrée', () => {
   it('n’expose qu’un seul point d’entrée : expo-router/entry', () => {
@@ -88,33 +84,20 @@ describe('dashboards par rôle', () => {
     expect(typeof composant).toBe('function');
   });
 
-  it('mappe les rôles de l’API Laravel vers un dashboard existant', () => {
-    const rolesApi = [
-      'admin',
-      'super-admin',
-      'bibliothecaire',
-      'censeur',
-      'comptable',
-      'directeur',
-      'doyen',
-      'eleve',
-      'enseignant',
-      'etudiant',
-      'infirmier',
-      'parent',
-      'professeur',
-      'recteur',
-      'secretaire',
-      'surveillant',
-    ];
-
-    for (const role of rolesApi) {
-      const href = hrefDashboard(role);
-      expect(href).toMatch(/^\/\(app\)\/[a-z]+$/);
-      const nom = href.replace('/(app)/', '');
-      expect(DASHBOARDS).toContain(nom);
-      expect(fs.existsSync(path.join(RACINE_APP, '(app)', `${nom}.tsx`))).toBe(true);
+  it('envoie les parents et toutes les variantes d’enseignant vers leur espace', () => {
+    expect(hrefDashboard('parent')).toBe('/(app)/parent');
+    for (const role of ['enseignant', 'enseignement', 'enseignementM', 'enseignementP']) {
+      expect(hrefDashboard(role)).toBe('/(app)/enseignant');
     }
+  });
+
+  it.each(HORS_MOBILE)('refuse le rôle « %s » : pas d’espace mobile', (role) => {
+    expect(hrefDashboard(role)).toBeNull();
+  });
+
+  it('ne garde aucune route administrative ou élève dans app/(app)/ (lien profond impossible)', () => {
+    const fichiers = fs.readdirSync(path.join(RACINE_APP, '(app)')).sort();
+    expect(fichiers).toEqual(['_layout.tsx', 'enseignant.tsx', 'parent.tsx']);
   });
 
   it('renvoie null plutôt qu’une route inexistante pour un rôle sans espace mobile', () => {
@@ -133,7 +116,7 @@ describe('pont react-navigation → expo-router', () => {
   });
 
   it('laisse passer les chemins absolus et retombe sur la connexion sinon', () => {
-    expect(resoudreHref('/(app)/directeur')).toBe('/(app)/directeur');
+    expect(resoudreHref('/(app)/enseignant')).toBe('/(app)/enseignant');
     expect(resoudreHref('EcranQuiNExistePas')).toBe('/');
   });
 
@@ -148,11 +131,11 @@ describe('pont react-navigation → expo-router', () => {
     const navigation = creerNavigationProxy(router);
 
     navigation.navigate('ForgotPassword');
-    navigation.replace('/(app)/eleve');
+    navigation.replace('/(app)/parent');
     navigation.goBack();
 
     expect(router.push).toHaveBeenCalledWith('/MotDePasseOublie');
-    expect(router.replace).toHaveBeenCalledWith('/(app)/eleve');
+    expect(router.replace).toHaveBeenCalledWith('/(app)/parent');
     expect(router.back).toHaveBeenCalled();
   });
 });
