@@ -113,24 +113,24 @@ describe('ModulesPage', () => {
 });
 
 describe('UtilisateursPage', () => {
-  const CHEMIN = '/v1/admin/tenants';
+  // La page listait des écoles (`/v1/admin/tenants`) comme des comptes ;
+  // elle lit maintenant les comptes eux-mêmes (BUG-023).
+  const CHEMIN = '/admin/utilisateurs';
 
-  it('projette les tenants en lignes utilisateur', async () => {
+  it('liste les comptes avec leur rôle et leur état', async () => {
     http.onGet(CHEMIN).reply(200, {
+      success: true,
       data: [
-        { id: 1, name: 'Complexe Excellence', email: 'excellence@test.bj', plan: { name: 'Intégral' } },
-        { id: 2, name: 'Groupe Horizon', email: 'horizon@test.bj' },
+        { id: 1, nom: 'HOUNSOU', prenom: 'Léa', role: 'secretaire', active: true, ecole: { id: 1, nom: 'CEG Test' } },
+        { id: 2, nom: 'AZON', prenom: 'Paul', role: 'comptable', active: false, ecole: { id: 1, nom: 'CEG Test' } },
       ],
     });
 
     monter(<UtilisateursPage />);
 
-    await waitFor(() => expect(screen.getAllByText('Complexe Excellence').length).toBeGreaterThan(0));
-    // Le plan sert de rôle ; sans plan, la projection retombe sur
-    // « Directeur ». Le libellé existe aussi dans le filtre de rôles, d'où
-    // `getAllByText`.
-    expect(screen.getByText('Intégral')).toBeInTheDocument();
-    expect(screen.getAllByText('Directeur').length).toBeGreaterThan(0);
+    expect(await screen.findByText('HOUNSOU Léa')).toBeInTheDocument();
+    expect(screen.getByText('AZON Paul')).toBeInTheDocument();
+    expect(screen.getAllByText('Inactif').length).toBeGreaterThan(0);
   });
 });
 

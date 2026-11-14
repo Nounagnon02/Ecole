@@ -32,7 +32,8 @@ export const ROLES_PERSONNEL = [
 
 const VIDE = { role: '', nom: '', prenom: '', telephone: '', email: '' };
 
-function AjoutDialog({ open, onClose, onDone }) {
+/** Partagé avec la page Utilisateurs de l'administrateur d'école (BUG-023). */
+export function AjoutDialog({ open, onClose, onDone, endpoint = '/personnel/comptes' }) {
   const { t } = useTranslation();
   const p = (cle, valeurs) => t(`pages.personnel.${cle}`, valeurs);
   const [champs, setChamps] = useState(VIDE);
@@ -64,7 +65,7 @@ function AjoutDialog({ open, onClose, onDone }) {
     setEnvoi(true);
     setErreur(null);
     try {
-      const { data } = await apiClient.post('/personnel/comptes', {
+      const { data } = await apiClient.post(endpoint, {
         role: champs.role,
         nom: champs.nom.trim(),
         telephone: champs.telephone.trim(),

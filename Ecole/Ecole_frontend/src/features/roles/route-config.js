@@ -358,7 +358,8 @@ export const ROUTE_CONFIG = {
   adminUtilisateurs: {
     path: '/admin/utilisateurs',
     component: lazy(() => import('@/app/features/admin/UtilisateursPage')),
-    roles: [ROLES.SUPER_ADMIN],
+    // L'administrateur d'école gère les comptes de son école (BUG-023).
+    roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
   },
   adminStatistiques: {
     path: '/admin/statistiques',

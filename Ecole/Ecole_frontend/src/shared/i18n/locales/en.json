@@ -845,7 +845,13 @@
         "utilisateur": "User",
         "role": "Role",
         "derniere_connexion": "Last login",
-        "aucun_utilisateur_trouve": "No user found"
+        "aucun_utilisateur_trouve": "No user found",
+        "reactiver": "Reactivate",
+        "confirmer_titre": "Deactivate this account?",
+        "confirmer_texte": "{nom} will no longer be able to sign in, and their open sessions will be closed. You can reactivate the account later.",
+        "desactive_ok": "{nom}'s account deactivated",
+        "reactive_ok": "{nom}'s account reactivated",
+        "echec_action": "The operation failed. Please try again."
       },
       "billing": {
         "title": "Billing",

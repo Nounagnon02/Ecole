@@ -845,7 +845,13 @@
         "utilisateur": "Utilisateur",
         "role": "Rôle",
         "derniere_connexion": "Dernière connexion",
-        "aucun_utilisateur_trouve": "Aucun utilisateur trouvé"
+        "aucun_utilisateur_trouve": "Aucun utilisateur trouvé",
+        "reactiver": "Réactiver",
+        "confirmer_titre": "Désactiver ce compte ?",
+        "confirmer_texte": "{nom} ne pourra plus se connecter, et ses sessions ouvertes seront fermées. Vous pourrez réactiver le compte plus tard.",
+        "desactive_ok": "Compte de {nom} désactivé",
+        "reactive_ok": "Compte de {nom} réactivé",
+        "echec_action": "L’opération a échoué. Réessayez."
       },
       "billing": {
         "title": "Facturation",

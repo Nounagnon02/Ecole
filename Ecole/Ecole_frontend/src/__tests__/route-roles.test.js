@@ -18,7 +18,6 @@ describe('droits des pages', () => {
     ['notes', ['comptable', 'infirmier', 'bibliothecaire', 'secretaire', 'surveillant', 'admin', 'recteur', 'etudiant']],
     ['paiements', ['parent', 'eleve', 'secretaire']],
     ['emploiDuTemps', ['comptable', 'infirmier', 'bibliothecaire', 'admin', 'recteur', 'etudiant']],
-    ['adminUtilisateurs', ['admin']],
     ['universiteEnseignants', ['professeur']],
     ['universiteNotes', ['etudiant']],
     ['eleveCours', ['etudiant']],

@@ -17,6 +17,7 @@ Route::middleware(['auth:sanctum', 'role:admin,super-admin'])->prefix('admin')->
 
     // ============ UTILISATEURS ============
     Route::get('/utilisateurs', [AdminController::class, 'utilisateurs']);
+    Route::post('/utilisateurs', [AdminController::class, 'store'])->middleware('throttle:30,1,admin-comptes');
     Route::get('/utilisateurs/{id}', [AdminController::class, 'show']);
     Route::post('/utilisateurs/{id}/toggle-status', [AdminController::class, 'toggleStatus']);
     Route::delete('/utilisateurs/{id}', [AdminController::class, 'destroy']);

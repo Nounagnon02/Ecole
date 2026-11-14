@@ -361,7 +361,8 @@ final class ComptesImport
         $classes = collect();
         $vus = ['matricule' => [], 'email' => [], 'telephone' => []];
 
-        $erreur = $this->controler($ligne, $classes, Roles::satisfies($agent->role, [Roles::DIRECTOR]), $vus);
+        // L'administrateur d'école crée aussi le personnel (BUG-023).
+        $erreur = $this->controler($ligne, $classes, Roles::satisfies($agent->role, [Roles::DIRECTOR, Roles::ADMIN]), $vus);
 
         if ($erreur !== null) {
             return ['erreur' => $erreur, 'acces' => null];
