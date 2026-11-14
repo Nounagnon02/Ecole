@@ -11,6 +11,25 @@ import { devtools } from 'zustand/middleware';
 import axios from 'axios';
 import apiClient from '@/shared/lib/api-client';
 import { cacheClear, viderCachesApi } from '@/shared/lib/db';
+
+/**
+ * Brouillons de saisie (notes, appel) gardés dans `localStorage` pour ne
+ * rien perdre hors ligne. Sur un téléphone partagé, l'enseignant suivant
+ * les retrouvait préremplis et pouvait les envoyer sous son nom (audit du
+ * 14/11, N-07). La file hors ligne, elle, est déjà vidée avec IndexedDB.
+ */
+function viderBrouillons() {
+  try {
+    const cles = [];
+    for (let i = 0; i < localStorage.length; i += 1) {
+      const cle = localStorage.key(i);
+      if (cle?.startsWith('ecole:brouillon-')) cles.push(cle);
+    }
+    cles.forEach((cle) => localStorage.removeItem(cle));
+  } catch {
+    // Stockage indisponible (navigation privée) : rien à effacer.
+  }
+}
 import { clearDashboardCache } from '@/shared/lib/query-client';
 import { normalizeRole } from '@/shared/types/roles';
 import { memoriserAide } from '@/shared/lib/aideEcole';
@@ -210,6 +229,7 @@ const useAuthStore = create(
         // par l'utilisateur suivant sur un poste partagé (cf. audit S17).
         await cacheClear().catch(() => {});
         await viderCachesApi().catch(() => {});
+        viderBrouillons();
 
         // Même problème pour le cache serveur de react-query, qui porte les
         // réponses des tableaux de bord : sans purge, l'utilisateur suivant
@@ -226,6 +246,7 @@ const useAuthStore = create(
       clearSession: () => {
         cacheClear().catch(() => {});
         viderCachesApi().catch(() => {});
+        viderBrouillons();
         clearDashboardCache();
         set({ ...initialState, isLoading: false });
       },

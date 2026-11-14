@@ -451,4 +451,29 @@ describe('store — initialize / logout', () => {
     expect(useAuthStore.getState().isAuthenticated).toBe(false);
     expect(useAuthStore.getState().user).toBeNull();
   });
+
+  // Audit du 14/11, N-07 : sur un téléphone partagé, l'enseignant suivant
+  // retrouvait préremplies les notes non envoyées du précédent (et pouvait
+  // les envoyer sous son nom) ; l'appel en cours restait aussi.
+  it('logout() et clearSession() effacent les brouillons de notes et d’appel, pas les préférences', async () => {
+    const remplir = () => {
+      localStorage.setItem('ecole:brouillon-notes:10:1:Devoir1:T1:', '{"5":"12"}');
+      localStorage.setItem('ecole:brouillon-appel:10:2026-11-14', '{"5":"absent"}');
+      localStorage.setItem('ecole.aide', '{"nom":"CEG"}');
+      localStorage.setItem('ecole-ui-storage', '{"state":{"theme":"dark"}}');
+    };
+    remplir();
+    http.onPost('/auth/logout').reply(200, {});
+    await useAuthStore.getState().logout();
+
+    expect(localStorage.getItem('ecole:brouillon-notes:10:1:Devoir1:T1:')).toBeNull();
+    expect(localStorage.getItem('ecole:brouillon-appel:10:2026-11-14')).toBeNull();
+    expect(localStorage.getItem('ecole.aide')).not.toBeNull();
+    expect(localStorage.getItem('ecole-ui-storage')).not.toBeNull();
+
+    remplir();
+    useAuthStore.getState().clearSession();
+    expect(localStorage.getItem('ecole:brouillon-notes:10:1:Devoir1:T1:')).toBeNull();
+    expect(localStorage.getItem('ecole:brouillon-appel:10:2026-11-14')).toBeNull();
+  });
 });
