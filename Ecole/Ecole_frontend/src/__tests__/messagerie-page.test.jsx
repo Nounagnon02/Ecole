@@ -86,6 +86,16 @@ async function waitForListReady() {
 }
 
 describe('MessageriePage', () => {
+  // BUG-026 : sans titre principal, l'onglet et les lecteurs d'écran
+  // ne disaient pas qu'on était dans la messagerie.
+  it('porte un titre principal « Messages »', async () => {
+    mockConversations();
+    mockThread();
+    mockReadConversation();
+    renderPage();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Messages' })).toBeInTheDocument();
+  });
+
   it('affiche l’aperçu, le rôle et sélectionne la première conversation (mappée)', async () => {
     mockConversations();
     mockThread();

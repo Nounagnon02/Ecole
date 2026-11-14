@@ -34,7 +34,8 @@ import useAuthStore from '@/shared/stores/auth-store';
 import useUIStore from '@/shared/stores/ui-store';
 import apiClient from '@/shared/lib/api-client';
 import { ROUTE_CONFIG } from '@/features/roles/route-config';
-import { ROLES, normalizeRole } from '@/shared/types/roles';
+import { getRoleNavigation } from '@/features/roles/navigation-config';
+import { ROLES, hasRole, normalizeRole } from '@/shared/types/roles';
 import { useTranslation } from '@/shared/i18n';
 import { formatCurrency, libelle } from '@/shared/lib/utils';
 
@@ -116,7 +117,7 @@ const ROLE_ACTIONS = {
   ],
   [ROLES.PARENT]: [
     { icon: Users, label: 'Voir mes enfants', action: 'navigate', path: '/parent/enfants' },
-    { icon: DollarSign, label: 'Paiements', action: 'navigate', path: '/paiements' },
+    { icon: DollarSign, label: 'Paiements', action: 'navigate', path: '/parent/paiements' },
     { icon: BookOpen, label: 'Notes des enfants', action: 'navigate', path: '/notes' },
   ],
   [ROLES.COMPTABLE]: [
@@ -143,20 +144,6 @@ const ROLE_ACTIONS = {
   ],
 };
 
-/* ─── Helper : extraire les pages du route config ───────────────── */
-function getAllRoutes(userRole) {
-  const effective = normalizeRole(userRole);
-  return Object.entries(ROUTE_CONFIG)
-    .filter(([, cfg]) => cfg.roles === null || (effective && cfg.roles.includes(effective)))
-    .map(([key, cfg]) => ({
-      key,
-      label: cfg.label || key.charAt(0).toUpperCase() + key.slice(1),
-      path: cfg.path,
-      icon: cfg.icon || ArrowRight,
-      group: cfg.group || 'navigation',
-    }));
-}
-
 export default function CommandPalette() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -175,13 +162,27 @@ export default function CommandPalette() {
   const listRef = useRef(null);
 
   /* ─── Pages accessibles à l'utilisateur ─────────────────────────── */
-  const pages = useMemo(() => getAllRoutes(user?.role), [user?.role]);
+  // Les pages du rôle, nommées comme dans son menu. La palette les tirait
+  // de la configuration des routes, sous leur clé technique (« AuditLog »).
+  const pages = useMemo(
+    () => getRoleNavigation(user?.role).map((item) => ({
+      key: item.path, label: t(item.label), path: item.path, icon: item.icon ?? ArrowRight, group: 'navigation',
+    })),
+    [user?.role, t],
+  );
 
   /* ─── Actions rapides pour le rôle ──────────────────────────────── */
   const actions = useMemo(() => {
     if (!user?.role) return [];
     const effective = normalizeRole(user.role);
-    return ROLE_ACTIONS[user.role] || ROLE_ACTIONS[effective] || DEFAULT_ACTIONS;
+    // Une action ne mène qu'à une page que ce rôle peut ouvrir : « Mes
+    // paiements » conduisait l'élève sur « Accès non autorisé ».
+    const actions = ROLE_ACTIONS[user.role] || ROLE_ACTIONS[effective] || DEFAULT_ACTIONS;
+    return actions.filter((action) => {
+      if (action.action !== 'navigate') return true;
+      const route = Object.values(ROUTE_CONFIG).find((r) => r.path === action.path);
+      return !route?.roles || hasRole(user.role, route.roles);
+    });
   }, [user?.role]);
 
   /* ─── Filtrage local (pages + actions) ──────────────────────────── */

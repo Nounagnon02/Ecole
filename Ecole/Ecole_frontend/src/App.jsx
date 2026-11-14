@@ -34,6 +34,7 @@ const ForbiddenPage = reactLazy(() => import('@/app/error/ForbiddenPage'));
 // Le conteneur des notifications : la page de connexion n'en affiche pas, et
 // les pages qui en affichent sont chargées après lui.
 const Toaster = reactLazy(() => import('sonner').then((m) => ({ default: m.Toaster })));
+import TitreDocument from '@/shared/components/layout/TitreDocument';
 import {
   PROTECTED_ROUTES,
   ROLE_REDIRECT_MAP
@@ -154,6 +155,8 @@ function App() {
       />
       </Suspense>
       <ScrollRestoration getKey={(location) => location.pathname + location.search} />
+      {/* Le titre de l'onglet suit le titre de la page (BUG-026). */}
+      <TitreDocument />
       <Routes>
         {/* ─── Route publique — connexion ──────────────────────────────── */}
         <Route path="/connexion" element={<LoginForm />} />

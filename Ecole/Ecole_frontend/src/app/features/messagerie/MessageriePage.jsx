@@ -241,6 +241,9 @@ export default function MessageriePage() {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+      {/* Titre principal (BUG-026) : la mise en page à deux volets n'en avait
+          pas ; l'onglet et les lecteurs d'écran ne nommaient pas la page. */}
+      <h1 className="sr-only">{t('nav.messagerie')}</h1>
       <div className="flex flex-col lg:flex-row h-[calc(100vh-12rem)] gap-4">
         {/* Liste des conversations */}
         <Card className="relative w-full lg:w-80 shrink-0 flex flex-col max-h-48 lg:max-h-none">

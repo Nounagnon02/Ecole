@@ -103,6 +103,28 @@ describe('CommandPalette', () => {
     expect(within(dialogue).queryByText(/utilisateurs/i)).not.toBeInTheDocument();
   });
 
+  it.each([['parent'], ['eleve']])('ne propose à un %s aucune action rapide vers une page refusée', async (role) => {
+    // « Paiements » menait le parent et l'élève sur « Accès non autorisé ».
+    signIn(role);
+    monter();
+    ouvrir();
+    const dialogue = await screen.findByRole('dialog', { name: /palette de commandes/i });
+    // Chaque action affiche sa destination : `/paiements` leur est refusée.
+    expect(within(dialogue).queryByText('/paiements')).not.toBeInTheDocument();
+  });
+
+  it('nomme les pages comme le menu, pas par leur clé technique', async () => {
+    // « ParentPaiements », « AuditLog » : les pages portaient le nom de leur
+    // entrée dans la configuration des routes.
+    signIn('directeur');
+    monter();
+    ouvrir();
+    const dialogue = await screen.findByRole('dialog', { name: /palette de commandes/i });
+    expect(within(dialogue).getByText('Programme des classes')).toBeInTheDocument();
+    expect(within(dialogue).queryByText('AuditLog')).not.toBeInTheDocument();
+    expect(within(dialogue).queryByText('AdminUtilisateurs')).not.toBeInTheDocument();
+  });
+
   it('interroge l’API après le debounce, pas à chaque frappe', async () => {
     signIn('directeur');
     monter();
