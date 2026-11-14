@@ -53,3 +53,43 @@ jobs:
           test "${{ steps.typecheck.outcome }}" = success \
             && test "${{ steps.lint.outcome }}" = success \
             && test "${{ steps.test.outcome }}" = success
+
+  # APK de recette (Android). Prouve que l'application native se construit à
+  # partir d'une révision identifiée ; ne remplace pas la recette sur appareil
+  # ou émulateur (audit/recette-multiplateforme/). L'adresse de l'API vient de
+  # la variable de dépôt MOBILE_API_URL : sans elle, l'APK refuse toute requête.
+  android-apk:
+    needs: check
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: Ecole/Ecole_mobile/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate the native Android project
+        run: npx expo prebuild --platform android --no-install
+        env:
+          CI: 1
+      - name: Build the release APK
+        working-directory: Ecole/Ecole_mobile/android
+        run: ./gradlew assembleRelease --no-daemon
+        env:
+          EXPO_PUBLIC_API_URL: ${{ vars.MOBILE_API_URL }}
+      - name: SHA-256
+        working-directory: Ecole/Ecole_mobile/android/app/build/outputs/apk/release
+        run: sha256sum app-release.apk | tee app-release.apk.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ecole-android-apk-${{ github.sha }}
+          path: |
+            Ecole/Ecole_mobile/android/app/build/outputs/apk/release/app-release.apk
+            Ecole/Ecole_mobile/android/app/build/outputs/apk/release/app-release.apk.sha256
+          retention-days: 30

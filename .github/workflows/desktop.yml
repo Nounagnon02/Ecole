@@ -80,3 +80,49 @@ jobs:
       - name: The packaged app embeds the frontend build
         working-directory: Ecole/Ecole_desktop
         run: test -f release/linux-unpacked/resources/Ecole_frontend/build/index.html
+
+  # Installateur Windows construit SUR Windows, puis installé en silence et
+  # vérifié (fichiers, empreinte). Ce n'est pas la recette Windows : les
+  # parcours administratifs sur le binaire installé se font sur une machine
+  # ou une VM Windows (audit/recette-multiplateforme/).
+  windows-installer:
+    needs: verify
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: |
+            Ecole/Ecole_frontend/package-lock.json
+            Ecole/Ecole_desktop/package-lock.json
+      - name: Build the web frontend
+        working-directory: Ecole/Ecole_frontend
+        run: |
+          npm ci
+          npm run build
+      - name: Build the Windows installer
+        working-directory: Ecole/Ecole_desktop
+        run: |
+          npm ci
+          npm run build:win
+      - name: Install silently and check the installed files
+        working-directory: Ecole/Ecole_desktop/release
+        shell: pwsh
+        run: |
+          $setup = Get-ChildItem -Filter '*Setup*.exe' | Select-Object -First 1
+          if (-not $setup) { throw 'Installateur introuvable' }
+          (Get-FileHash $setup.FullName -Algorithm SHA256).Hash | Tee-Object -FilePath "$($setup.Name).sha256"
+          Start-Process $setup.FullName -ArgumentList '/S' -Wait
+          $exe = Get-ChildItem "$env:LOCALAPPDATA\Programs" -Recurse -Filter '*.exe' | Where-Object { $_.Name -notmatch 'Uninstall' } | Select-Object -First 1
+          if (-not $exe) { throw 'Application non installée' }
+          if (-not (Test-Path (Join-Path $exe.DirectoryName 'resources\Ecole_frontend\build\index.html'))) { throw 'Build web absent du paquet' }
+          Write-Host "Installé : $($exe.FullName)"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ecole-windows-installer-${{ github.sha }}
+          path: |
+            Ecole/Ecole_desktop/release/*Setup*.exe
+            Ecole/Ecole_desktop/release/*.sha256
+          retention-days: 30
