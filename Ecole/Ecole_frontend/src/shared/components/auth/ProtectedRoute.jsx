@@ -8,6 +8,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
+import { admisSurCettePlateforme } from '@/shared/lib/plateforme';
+import DesktopReserve from './DesktopReserve';
 import useAuthStore, { SESSION_CHECK_INTERVAL } from '@/shared/stores/auth-store';
 import { LoadingSpinner } from '@/shared/components/ui/Skeleton';
 
@@ -49,6 +51,12 @@ export default function ProtectedRoute({ children, allowedRoles, role }) {
   /* ─── Non authentifié ─────────────────────────────────────────────── */
   if (!isAuthenticated) {
     return <Navigate to="/connexion" replace />;
+  }
+
+  /* ─── Application de bureau réservée à l'administration ───────────── */
+  // Périmètre produit, pas une protection : l'API vérifie les droits.
+  if (user && !admisSurCettePlateforme(user.role)) {
+    return <DesktopReserve />;
   }
 
   /* ─── Mot de passe provisoire à remplacer ─────────────────────────── */
