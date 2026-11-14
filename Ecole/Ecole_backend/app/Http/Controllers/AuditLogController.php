@@ -22,8 +22,11 @@ class AuditLogController extends Controller
 {
     public function index(Request $request)
     {
+        // `id` départage les entrées d'une même seconde : sans lui, leur
+        // ordre dépendait du plan d'exécution de la base.
         $query = AuditLog::with('user:id,name,prenom,role')
-            ->orderBy('created_at', 'desc');
+            ->orderBy('created_at', 'desc')
+            ->orderBy('id', 'desc');
 
         if ($request->filled('event')) {
             $query->where('event', $request->string('event'));

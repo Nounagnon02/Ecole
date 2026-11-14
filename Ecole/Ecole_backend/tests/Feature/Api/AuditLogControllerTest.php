@@ -93,4 +93,22 @@ class AuditLogControllerTest extends TestCase
         $this->assertSame(10, $response->json('data.0.old_values.valeur'));
         $this->assertSame(15, $response->json('data.0.new_values.valeur'));
     }
+
+    /** @test */
+    public function entries_of_the_same_second_list_the_newest_first()
+    {
+        // Le journal triait sur `created_at` seul : deux entrées de la même
+        // seconde sortaient dans un ordre arbitraire (test ci-dessus instable).
+        $school = Ecole::factory()->create(['status' => 'active']);
+        $director = User::factory()->create(['role' => 'directeur', 'ecole_id' => $school->id]);
+        $instant = now()->startOfSecond();
+        $ancienne = $this->makeLog($school->id, ['auditable_id' => 1]);
+        $recente = $this->makeLog($school->id, ['auditable_id' => 2]);
+        AuditLog::withoutGlobalScopes()->whereIn('id', [$ancienne->id, $recente->id])->update(['created_at' => $instant]);
+        AuditLog::withoutGlobalScopes()->where('id', '!=', 0)->whereNotIn('id', [$ancienne->id, $recente->id])->update(['created_at' => $instant->copy()->subMinute()]);
+
+        $ids = collect($this->actingAs($director)->getJson('/api/audit-logs')->assertOk()->json('data'))->pluck('id')->take(2)->all();
+
+        $this->assertSame([$recente->id, $ancienne->id], $ids);
+    }
 }
