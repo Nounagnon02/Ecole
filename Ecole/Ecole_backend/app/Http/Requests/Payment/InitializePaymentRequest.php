@@ -30,6 +30,8 @@ class InitializePaymentRequest extends FormRequest
             'description'       => 'required|string',
             'type'              => 'required|in:scolarite,cantine,transport,autre',
             'periode'           => 'nullable|string',
+            // Application d'origine : le retour de la passerelle y ramène le payeur.
+            'client'            => 'nullable|in:web,mobile',
         ];
     }
 }

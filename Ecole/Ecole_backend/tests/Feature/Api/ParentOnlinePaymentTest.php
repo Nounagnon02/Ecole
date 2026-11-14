@@ -204,3 +204,45 @@ it('au retour d’une transaction inconnue, renvoie vers l’issue « erreur »'
     $this->get('/api/payments/callback?id=INCONNUE')
         ->assertRedirect('http://localhost:3000/paiement/retour?statut=erreur');
 });
+
+/*
+ * Retour vers l'application mobile (mission multiplateforme du 14/11/2026).
+ * Un paiement ouvert depuis le mobile revenait sur le site web, jamais dans
+ * l'application. La destination de retour est fixe (configuration) : le
+ * client ne choisit qu'entre « web » et « mobile ».
+ */
+it('passe à la passerelle une adresse de retour marquée « mobile » quand le paiement vient du mobile', function () {
+    [$parent, $enfant, $echeance] = familleAvecEcheance(60000);
+    $this->actingAs($parent->user);
+    passerelleOuvre('TX_MOBILE');
+
+    $this->postJson('/api/payments/initialize', [
+        'eleve_id' => $enfant->id, 'paiement_eleve_id' => $echeance->id, 'amount' => 10000,
+        'description' => 'Scolarité', 'type' => 'scolarite', 'client' => 'mobile',
+    ])->assertOk();
+
+    Http::assertSent(fn ($r) => str_contains($r->url(), '/v1/transactions')
+        && str_contains((string) ($r['callback_url'] ?? ''), 'client=mobile'));
+});
+
+it('refuse un client inconnu, sans appeler la passerelle', function () {
+    [$parent, $enfant, $echeance] = familleAvecEcheance(60000);
+    $this->actingAs($parent->user);
+    Http::fake();
+
+    $this->postJson('/api/payments/initialize', [
+        'eleve_id' => $enfant->id, 'paiement_eleve_id' => $echeance->id, 'amount' => 10000,
+        'description' => 'Scolarité', 'type' => 'scolarite', 'client' => 'https://pirate.example',
+    ])->assertStatus(422);
+
+    Http::assertNothingSent();
+});
+
+it('au retour d’un paiement mobile, renvoie vers l’application avec le statut', function () {
+    [$paiement] = retourDePasserelle('approved');
+    // Même transaction, retour marqué « mobile ».
+    $paiement->update(['status' => 'pending']);
+    $reponse = $this->get('/api/payments/callback?id=TX_RETOUR&client=mobile');
+
+    $reponse->assertRedirect('ecole://paiement-retour?statut=confirme');
+});

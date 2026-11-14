@@ -3,7 +3,7 @@
     "name": "École",
     "slug": "erudit-mobile",
     "version": "4.0.0",
-    "scheme": "erudit",
+    "scheme": "ecole",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "automatic",

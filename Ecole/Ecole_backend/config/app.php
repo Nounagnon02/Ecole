@@ -71,6 +71,9 @@ return [
 
     'asset_url' => env('ASSET_URL'),
 
+    // Retour de la passerelle de paiement vers l'application mobile (schéma déclaré dans app.json).
+    'mobile_return_url' => env('MOBILE_RETURN_URL', 'ecole://paiement-retour'),
+
     'frontend_url' => env('FRONTEND_URL', 'http://localhost:3000'),
 
     /*

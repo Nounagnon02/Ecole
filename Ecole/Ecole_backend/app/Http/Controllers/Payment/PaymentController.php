@@ -168,7 +168,8 @@ class PaymentController extends Controller
                 'currency' => 'XOF',
                 'description' => $request->description,
                 'reference' => 'PAY_' . $payment->id . '_' . uniqid(),
-                'callback_url' => route('payment.callback'),
+                // Paiement ouvert depuis le mobile : le retour ramène dans l'application.
+                'callback_url' => route('payment.callback', $request->input('client') === 'mobile' ? ['client' => 'mobile'] : []),
                 'metadata' => [
                     'payment_id' => $payment->id,
                     'eleve_id' => $eleve->id,
@@ -349,9 +350,13 @@ class PaymentController extends Controller
     public function callback(Request $request)
     {
         $transactionId = $request->query('id');
-        $retour = fn (string $statut) => redirect(
-            rtrim((string) config('app.frontend_url'), '/').'/paiement/retour?statut='.$statut
-        );
+        // Retour vers l'application d'origine. La destination mobile est fixe
+        // (configuration) : le paramètre ne choisit qu'entre deux adresses
+        // connues, il ne peut pas rediriger ailleurs.
+        $versMobile = $request->query('client') === 'mobile';
+        $retour = fn (string $statut) => $versMobile
+            ? redirect()->away(rtrim((string) config('app.mobile_return_url'), '?').'?statut='.$statut)
+            : redirect(rtrim((string) config('app.frontend_url'), '/').'/paiement/retour?statut='.$statut);
 
         try {
             // Retour sans session garantie : la transaction, émise par la

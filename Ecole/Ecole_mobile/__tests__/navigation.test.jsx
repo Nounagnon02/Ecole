@@ -49,7 +49,8 @@ describe('point d’entrée', () => {
   it('déclare le plugin expo-router et un scheme pour les liens profonds', () => {
     const { expo } = require('../app.json');
     expect(expo.plugins).toContain('expo-router');
-    expect(expo.scheme).toBeTruthy();
+    // L'API ramène le payeur sur ecole://paiement-retour (config app.mobile_return_url).
+    expect(expo.scheme).toBe('ecole');
   });
 });
 
