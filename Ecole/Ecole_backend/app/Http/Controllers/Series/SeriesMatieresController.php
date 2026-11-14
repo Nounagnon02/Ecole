@@ -3,15 +3,17 @@
 namespace App\Http\Controllers\Series;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Series\AttachMatiereRequest;
+use App\Http\Requests\Series\SyncMatieresRequest;
+use App\Http\Requests\Series\UpdateEnseignantsMPRequest;
+use App\Http\Requests\Series\UpdateEnseignantsRequest;
+use App\Http\Requests\Series\UpdateMatiereCoefficientRequest;
 use App\Models\Classes;
+use App\Models\EnseignantMatiere;
 use App\Models\EnseignantsMaternellePrimaire;
 use App\Models\Series;
-use App\Http\Requests\Series\SyncMatieresRequest;
-use App\Http\Requests\Series\UpdateEnseignantsRequest;
-use App\Http\Requests\Series\UpdateEnseignantsMPRequest;
-use App\Http\Requests\Series\AttachMatiereRequest;
-use App\Http\Requests\Series\UpdateMatiereCoefficientRequest;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class SeriesMatieresController extends Controller
 {
@@ -19,12 +21,12 @@ class SeriesMatieresController extends Controller
     {
         $serie = Series::find($id);
 
-        if (!$serie) {
+        if (! $serie) {
             return response()->json(['message' => 'Serie non trouvée'], 404);
         }
 
         // Vérifier si la matière est attachée à la série
-        if (!$serie->matieres()->where('matiere_id', $matiere_id)->exists()) {
+        if (! $serie->matieres()->where('matiere_id', $matiere_id)->exists()) {
             return response()->json(['message' => 'Cette matière n\'est pas associée à cette série'], 404);
         }
 
@@ -37,7 +39,7 @@ class SeriesMatieresController extends Controller
     {
         $serie = Series::find($id);
 
-        if (!$serie) {
+        if (! $serie) {
             return response()->json(['message' => 'Serie non trouvée'], 404);
         }
 
@@ -46,13 +48,13 @@ class SeriesMatieresController extends Controller
         $syncData = [];
         foreach ($validated['matieres'] as $matiere) {
             // Vérification supplémentaire pour s'assurer que classe_id existe
-            if (!isset($matiere['classe_id'])) {
+            if (! isset($matiere['classe_id'])) {
                 continue; // Ou retourner une erreur
             }
 
             $syncData[$matiere['matiere_id']] = [
                 'classe_id' => $matiere['classe_id'],
-                'coefficient' => $matiere['coefficient']
+                'coefficient' => $matiere['coefficient'],
             ];
         }
 
@@ -61,15 +63,16 @@ class SeriesMatieresController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Matières synchronisées avec succès'
+                'message' => 'Matières synchronisées avec succès',
             ], 200);
 
         } catch (\Exception $e) {
             $this->rethrowIfMeaningful($e);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Erreur lors de la synchronisation',
-                'error' => $this->clientErrorMessage($e)
+                'error' => $this->clientErrorMessage($e),
             ], 500);
         }
     }
@@ -79,7 +82,7 @@ class SeriesMatieresController extends Controller
     {
         $serie = Series::find($id);
 
-        if (!$serie) {
+        if (! $serie) {
             return response()->json(['message' => 'Serie non trouvée'], 404);
         }
 
@@ -113,14 +116,14 @@ class SeriesMatieresController extends Controller
     // Récupère les matières d'une série dans une classe avec leurs enseignants
     public function getMatieresSC($classeId, $serieId)
     {
-        $classe = Classes::with(['series' => function($query) use ($serieId) {
+        $classe = Classes::with(['series' => function ($query) use ($serieId) {
             $query->where('series.id', $serieId)
                 ->with('matieres.enseignants');
         }])->findOrFail($classeId);
 
         $serie = $classe->series->first();
 
-        if (!$serie) {
+        if (! $serie) {
             return response()->json(['message' => 'Série non trouvée'], 404);
         }
 
@@ -133,26 +136,35 @@ class SeriesMatieresController extends Controller
         $classe = Classes::findOrFail($classeId);
         $serie = $classe->series()->findOrFail($serieId);
 
-        
+        // Remplacer les enseignants de CETTE classe et de CETTE série seulement.
+        // Un `sync()` sur la matière, toutes classes confondues, effaçait les
+        // affectations des autres classes (affecter en 5ème retirait
+        // l'enseignant de 6ème) et interdisait à un enseignant de tenir la
+        // même matière dans deux classes. La classe est celle de l'adresse,
+        // pas celle du corps de la requête.
+        DB::transaction(function () use ($request, $serie, $classe) {
+            foreach ($request->matieres as $matiereData) {
+                $matiere = $serie->matieres()->findOrFail($matiereData['matiere_id']);
 
-        foreach ($request->matieres as $matiereData) {
-            $matiere = $serie->matieres()->findOrFail($matiereData['matiere_id']);
+                EnseignantMatiere::where('matiere_id', $matiere->id)
+                    ->where('classe_id', $classe->id)
+                    ->where('serie_id', $serie->id)
+                    ->delete();
 
-            // Préparer le tableau pour sync avec données pivot
-            $syncData = [];
-            foreach ($matiereData['enseignants'] ?? [] as $enseignantId) {
-                $syncData[$enseignantId] = [
-                    'classe_id' => $matiereData['classe_id'],
-                    'serie_id' => $matiereData['serie_id'],
-                ];
+                foreach (array_unique($matiereData['enseignants'] ?? []) as $enseignantId) {
+                    EnseignantMatiere::create([
+                        'enseignant_id' => $enseignantId,
+                        'matiere_id' => $matiere->id,
+                        'classe_id' => $classe->id,
+                        'serie_id' => $serie->id,
+                    ]);
+                }
             }
-
-            $matiere->enseignants()->sync($syncData);
-        }
+        });
 
         return response()->json([
             'success' => true,
-            'message' => 'Enseignants mis à jour avec succès'
+            'message' => 'Enseignants mis à jour avec succès',
         ]);
     }
 
@@ -173,7 +185,7 @@ class SeriesMatieresController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Enseignants mis à jour avec succès'
+            'message' => 'Enseignants mis à jour avec succès',
         ]);
     }
 
@@ -181,7 +193,7 @@ class SeriesMatieresController extends Controller
     {
         $serie = Series::find($id);
 
-        if (!$serie) {
+        if (! $serie) {
             return response()->json(['message' => 'Serie non trouvée'], 404);
         }
 
@@ -197,7 +209,7 @@ class SeriesMatieresController extends Controller
 
         $serie->matieres()->attach($validated['matiere_id'], [
             'classe_id' => $validated['classe_id'],
-            'coefficient' => $validated['coefficient']
+            'coefficient' => $validated['coefficient'],
         ]);
 
         return response()->json(['message' => 'Matière ajoutée à la série avec succès'], 201);
@@ -207,7 +219,7 @@ class SeriesMatieresController extends Controller
     {
         $serie = Series::find($id);
 
-        if (!$serie) {
+        if (! $serie) {
             return response()->json(['message' => 'Serie non trouvée'], 404);
         }
 
@@ -218,7 +230,7 @@ class SeriesMatieresController extends Controller
             ->where('matiere_id', $matiere_id)
             ->wherePivot('classe_id', $validated['classe_id'])
             ->updateExistingPivot($matiere_id, [
-                'coefficient' => $validated['coefficient']
+                'coefficient' => $validated['coefficient'],
             ]);
 
         return response()->json(['message' => 'Coefficient mis à jour avec succès'], 200);
@@ -226,28 +238,28 @@ class SeriesMatieresController extends Controller
 
     public function getAllClassesWithSeriesAndMatieres()
     {
-        return Classes::with(['series' => function($query) {
-            $query->with(['matieres' => function($q) {
+        return Classes::with(['series' => function ($query) {
+            $query->with(['matieres' => function ($q) {
                 $q->select('matieres.id', 'matieres.nom')
-                ->withPivot('coefficient');
+                    ->withPivot('coefficient');
             }]);
-        }])->get()->map(function($classe) {
+        }])->get()->map(function ($classe) {
             return [
                 'id' => $classe->id,
                 'nom' => $classe->nom_classe,
-                'series' => $classe->series->map(function($serie) use ($classe) {
+                'series' => $classe->series->map(function ($serie) {
                     return [
                         'id' => $serie->id,
                         'nom' => $serie->nom,
-                        'matieres' => $serie->matieres->map(function($matiere) {
+                        'matieres' => $serie->matieres->map(function ($matiere) {
                             return [
                                 'id' => $matiere->id,
                                 'nom' => $matiere->nom,
-                                'coefficient' => $matiere->pivot->coefficient
+                                'coefficient' => $matiere->pivot->coefficient,
                             ];
-                        })
+                        }),
                     ];
-                })
+                }),
             ];
         });
     }

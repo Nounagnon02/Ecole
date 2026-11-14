@@ -5,6 +5,7 @@ namespace Tests\Feature\Api;
 use App\Models\Classes;
 use App\Models\Ecole;
 use App\Models\Enseignant;
+use App\Models\EnseignantMatiere;
 use App\Models\Matieres;
 use App\Models\Series;
 use App\Models\User;
@@ -21,9 +22,13 @@ class SeriesMatieresControllerTest extends TestCase
     use RefreshDatabase;
 
     private Ecole $school;
+
     private User $directeur;
+
     private Classes $classe;
+
     private Series $serie;
+
     private Matieres $matiere;
 
     protected function setUp(): void
@@ -185,12 +190,84 @@ class SeriesMatieresControllerTest extends TestCase
         $this->assertCount(0, $empty->json());
     }
 
+    /**
+     * Audit du 14/11 (N-03) : `sync()` sur la matière effaçait les affectations
+     * des autres classes. Affecter en 5ème retirait l'enseignant de 6ème.
+     */
+    private function affecter(Classes $classe, array $enseignants)
+    {
+        return $this->postJson("/api/series/classe/{$classe->id}/serie/{$this->serie->id}/enseignants", [
+            'matieres' => [[
+                'classe_id' => $classe->id,
+                'serie_id' => $this->serie->id,
+                'matiere_id' => $this->matiere->id,
+                'enseignants' => $enseignants,
+            ]],
+        ]);
+    }
+
+    private function affectations(): array
+    {
+        return EnseignantMatiere::where('matiere_id', $this->matiere->id)
+            ->orderBy('classe_id')->orderBy('enseignant_id')
+            ->get(['classe_id', 'enseignant_id'])
+            ->map(fn ($a) => [$a->classe_id, $a->enseignant_id])->all();
+    }
+
+    private function deuxClasses(): Classes
+    {
+        $autre = Classes::factory()->create(['ecole_id' => $this->school->id]);
+        foreach ([$this->classe, $autre] as $c) {
+            $this->serie->matieres()->attach($this->matiere->id, ['classe_id' => $c->id, 'coefficient' => 1]);
+        }
+
+        return $autre;
+    }
+
+    /** @test */
+    public function assigning_a_teacher_in_another_class_keeps_the_first_assignment()
+    {
+        $autre = $this->deuxClasses();
+        [$a, $b] = Enseignant::factory()->count(2)->create(['ecole_id' => $this->school->id])->all();
+
+        $this->affecter($this->classe, [$a->id])->assertOk();
+        $this->affecter($autre, [$b->id])->assertOk();
+
+        $this->assertSame([[$this->classe->id, $a->id], [$autre->id, $b->id]], $this->affectations());
+    }
+
+    /** @test */
+    public function the_same_teacher_can_teach_a_subject_in_two_classes()
+    {
+        $autre = $this->deuxClasses();
+        $a = Enseignant::factory()->create(['ecole_id' => $this->school->id]);
+
+        $this->affecter($this->classe, [$a->id])->assertOk();
+        $this->affecter($autre, [$a->id])->assertOk();
+
+        $this->assertSame([[$this->classe->id, $a->id], [$autre->id, $a->id]], $this->affectations());
+    }
+
+    /** @test */
+    public function reassigning_a_class_replaces_only_that_class()
+    {
+        $autre = $this->deuxClasses();
+        [$a, $b, $c] = Enseignant::factory()->count(3)->create(['ecole_id' => $this->school->id])->all();
+
+        $this->affecter($this->classe, [$a->id])->assertOk();
+        $this->affecter($autre, [$b->id])->assertOk();
+        $this->affecter($this->classe, [$c->id])->assertOk();
+
+        $this->assertSame([[$this->classe->id, $c->id], [$autre->id, $b->id]], $this->affectations());
+    }
+
     private function asDirectorOf(Ecole $school, callable $callback)
     {
         $previous = auth()->user();
         $this->actingAs(User::factory()->create(['role' => 'directeur', 'ecole_id' => $school->id]));
         $result = $callback();
         $this->actingAs($previous);
+
         return $result;
     }
 }
