@@ -62,18 +62,23 @@ function echapper(v) {
   return String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
-export function bulletinHtml(b) {
-  const lignes = (b.moyennes_par_matiere ?? []).map((m) => `<tr><td>${echapper(m.matiere)}</td><td>${echapper(sur20(m.moyenne))}</td><td>${echapper(m.coefficient ?? '—')}</td><td>${echapper(m.rang?.position ? `${m.rang.position}/${m.rang.total_eleves}` : '—')}</td></tr>`).join('');
+/**
+ * Bulletin arrêté, tel que le web l'affiche (`GET /bulletins`) : lignes par
+ * matière avec coefficient et rang, moyenne générale pondérée calculée par
+ * l'API. Le mobile ne recalcule rien (même résultat sur les deux plateformes).
+ */
+export function bulletinHtml(b, nomEleve, classe) {
+  const lignes = (b.data ?? []).map((m) => `<tr><td>${echapper(m.matiere)}</td><td>${echapper(sur20(m.moyenne))}</td><td>${echapper(m.coefficient ?? '—')}</td><td>${echapper(m.rang ?? '—')}</td></tr>`).join('');
   return `<html><head><meta charset="utf-8"><style>
     body{font-family:Figtree,Arial,sans-serif;margin:32px;color:#17302E}
     h1{color:#0F5C4A;font-size:20px;border-bottom:2px solid #795300;padding-bottom:12px}
     table{width:100%;border-collapse:collapse}td,th{border:1px solid #DDD5C5;padding:8px;text-align:left}
     th{background:#F4F0E8}.bilan{margin-top:16px;background:#F4F0E8;padding:12px;border-radius:8px}
   </style></head><body>
-    <h1>Bulletin — ${echapper(b.periode)}</h1>
-    <p><strong>${echapper(b.eleve?.nom)} ${echapper(b.eleve?.prenom)}</strong> · ${echapper(b.eleve?.classe?.nom ?? '')} · matricule ${echapper(b.eleve?.matricule ?? '—')}</p>
-    <table><thead><tr><th>Matière</th><th>Moyenne</th><th>Coefficient</th><th>Rang</th></tr></thead><tbody>${lignes || '<tr><td colspan="4">Aucune note publiée.</td></tr>'}</tbody></table>
-    <div class="bilan">Moyenne générale : ${echapper(lignes ? sur20(b.moyenne_generale) : '—')} · Rang : ${echapper(b.rang?.position ? `${b.rang.position}/${b.rang.total_eleves}` : '—')}${b.appreciation ? ` · ${echapper(b.appreciation)}` : ''}</div>
+    <h1>Bulletin — ${echapper(b.periode)} ${echapper(b.annee_scolaire ?? '')}</h1>
+    <p><strong>${echapper(nomEleve)}</strong> · ${echapper(classe ?? '')}</p>
+    <table><thead><tr><th>Matière</th><th>Moyenne</th><th>Coefficient</th><th>Rang</th></tr></thead><tbody>${lignes || '<tr><td colspan="4">Aucune matière notée.</td></tr>'}</tbody></table>
+    <div class="bilan">Moyenne générale : ${echapper(sur20(b.moyenne_generale))} · Rang : ${echapper(b.rang ? `${b.rang}/${b.total_eleves ?? '—'}` : '—')}${b.mention ? ` · ${echapper(b.mention)}` : ''}${b.appreciation ? ` · ${echapper(b.appreciation)}` : ''}</div>
   </body></html>`;
 }
 
@@ -84,15 +89,14 @@ function Scolarite() {
   const notes = useRequete(id && vue === 'notes' ? `/parent/enfants/${id}/notes` : null);
   const absences = useRequete(id && vue === 'absences' ? `/parent/enfants/${id}/absences` : null);
   const edt = useRequete(id && vue === 'edt' ? `/parent/enfants/${id}/emploi-du-temps` : null);
-  const bulletins = useRequete(id && vue === 'bulletins' ? '/parent/bulletins' : null);
+  const bulletins = useRequete(id && vue === 'bulletins' ? '/bulletins' : null);
   const [envoi, setEnvoi] = useState(null);
 
-  const partagerBulletin = async (periode) => {
-    setEnvoi(periode);
+  const partagerBulletin = async (b) => {
+    setEnvoi(b.id);
     try {
-      const { data } = await api.get(`/parent/bulletin/${id}/${encodeURIComponent(periode)}`);
-      const { uri } = await Print.printToFileAsync({ html: bulletinHtml(data?.data ?? data) });
-      if (await Sharing.isAvailableAsync()) await Sharing.shareAsync(uri, { mimeType: 'application/pdf', dialogTitle: `Bulletin ${periode}` });
+      const { uri } = await Print.printToFileAsync({ html: bulletinHtml(b, nomEnfant(enfant), enfant.classe?.nom) });
+      if (await Sharing.isAvailableAsync()) await Sharing.shareAsync(uri, { mimeType: 'application/pdf', dialogTitle: `Bulletin ${b.periode}` });
       else Alert.alert('Bulletin', 'Le bulletin a été enregistré, mais le partage n’est pas disponible sur cet appareil.');
     } catch (err) {
       Alert.alert('Bulletin', messageErreur(err, 'Le bulletin n’a pas pu être généré.'));
@@ -142,13 +146,13 @@ function Scolarite() {
         ))}
       </>}
       {vue === 'bulletins' && <>
-        {(() => { const propres = liste(bulletins.donnees).filter((b) => String(b.enfant_id) === String(id)); return <>
+        {(() => { const propres = liste(bulletins.donnees).filter((b) => String(b.eleve_id) === String(id)); return <>
           <Etat requete={bulletins} estVide={propres.length === 0} vide="Aucun bulletin arrêté pour cet enfant." />
           {propres.map((b) => (
-            <Carte key={b.periode}>
-              <Texte variante="sousTitre">{b.periode}</Texte>
-              <Texte>Rang : {b.rang?.position ? `${b.rang.position}/${b.rang.total_eleves}` : '—'}</Texte>
-              <Bouton titre="Ouvrir et partager (PDF)" variante="secondaire" chargement={envoi === b.periode} onPress={() => partagerBulletin(b.periode)} />
+            <Carte key={b.id}>
+              <Texte variante="sousTitre">{b.periode} {b.annee_scolaire ?? ''}</Texte>
+              <Texte>Moyenne : {sur20(b.moyenne_generale)} · Rang : {b.rang ? `${b.rang}/${b.total_eleves ?? '—'}` : '—'}{b.mention ? ` · ${b.mention}` : ''}</Texte>
+              <Bouton titre="Ouvrir et partager (PDF)" variante="secondaire" chargement={envoi === b.id} onPress={() => partagerBulletin(b)} />
             </Carte>
           ))}
         </>; })()}

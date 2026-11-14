@@ -101,9 +101,17 @@ describe('espace parent', () => {
   });
 
   it('échappe les noms dans le bulletin imprimé', () => {
-    const html = bulletinHtml({ periode: 'T1', eleve: { nom: '<script>x</script>', prenom: 'A', classe: { nom: '6ème' } }, moyennes_par_matiere: [], rang: {} });
+    const html = bulletinHtml({ periode: 'T1', data: [], rang: null }, '<script>x</script>', '6ème');
     expect(html).not.toContain('<script>x</script>');
     expect(html).toContain('&lt;script&gt;');
-    expect(html).toContain('Aucune note publiée');
+    expect(html).toContain('Aucune matière notée');
+  });
+
+  it('reprend tel quel le bulletin arrêté du web : même moyenne, coefficients et rang', () => {
+    const html = bulletinHtml({ periode: 'Trimestre 2', moyenne_generale: '15.50', rang: 3, total_eleves: 6, mention: 'Bien',
+      data: [{ matiere: 'Mathématiques', moyenne: 15.5, coefficient: 5, rang: 3 }] }, 'AHO Kossi', '6ème');
+    expect(html).toContain('15,5/20');
+    expect(html).toContain('<td>5</td>');
+    expect(html).toContain('3/6');
   });
 });
