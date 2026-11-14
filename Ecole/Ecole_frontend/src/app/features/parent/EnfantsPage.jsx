@@ -35,10 +35,13 @@ export default function EnfantsPage() {
     () => (unwrapList(requeteEnfants.data) ?? []).map((e) => ({
       ...e,
       nom: e.nom || `${e.prenom} ${e.nom_famille || ''}`.trim() || e.user?.name || t('pages.parent.enfants.enfant'),
-      frais: e.frais || { total: 0, paye: 0 },
-      moyenne: e.moyenne ?? 0,
-      rang: e.rang ?? 0,
-      absences: e.absences ?? 0,
+      // Champs de l'API : moyenne_generale, rang {position}, absences_count.
+      // Une valeur inconnue reste inconnue (« — ») : un repli à 0 affichait
+      // une moyenne de 0,0 et des frais « payés » (recette du 14/11, R-17).
+      frais: e.frais ?? null,
+      moyenne: e.moyenne ?? e.moyenne_generale ?? null,
+      rang: e.rang?.position ?? (typeof e.rang === 'number' ? e.rang : null),
+      absences: e.absences ?? e.absences_count ?? null,
     })),
     [requeteEnfants.data, t],
   );
@@ -129,7 +132,7 @@ export default function EnfantsPage() {
                 <p className="text-xs text-[var(--text-secondary)]">{enfant.classe?.nom || enfant.classe_nom || '—'}</p>
               </div>
               <div className="ml-auto text-right">
-                <p className="text-sm font-bold text-[var(--accent)]">{enfant.moyenne?.toFixed(1) || '—'}</p>
+                <p className="text-sm font-bold text-[var(--accent)]">{enfant.moyenne != null ? Number(enfant.moyenne).toFixed(1) : '—'}</p>
                 <p className="text-xs text-[var(--text-secondary)]">{t('common.rank')} : {enfant.rang ? `${enfant.rang}e` : '—'}</p>
               </div>
             </button>
@@ -140,9 +143,9 @@ export default function EnfantsPage() {
       {/* Stats rapides */}
       {selectedEnfant && (
         <div className="grid gap-4 sm:grid-cols-4">
-          <StatsCard title={t('pages.parent.enfants.moyenne_generale')} value={selectedEnfant.moyenne?.toFixed(1) || '—'} icon={TrendingUp} color="primary" />
+          <StatsCard title={t('pages.parent.enfants.moyenne_generale')} value={selectedEnfant.moyenne != null ? Number(selectedEnfant.moyenne).toFixed(1) : '—'} icon={TrendingUp} color="primary" />
           <StatsCard title={t('common.rank')} value={selectedEnfant.rang ? `${selectedEnfant.rang}e` : '—'} icon={GraduationCap} color="emerald" />
-          <StatsCard title={t('pages.parent.enfants.absences')} value={String(selectedEnfant.absences || 0)} icon={AlertTriangle} color={selectedEnfant.absences > 0 ? 'red' : 'emerald'} />
+          <StatsCard title={t('pages.parent.enfants.absences')} value={selectedEnfant.absences != null ? String(selectedEnfant.absences) : '—'} icon={AlertTriangle} color={selectedEnfant.absences > 0 ? 'red' : 'emerald'} />
           <StatsCard
             title={t('pages.parent.enfants.frais_scolarite')}
             value={selectedEnfant.frais?.total > 0 ? `${((selectedEnfant.frais.paye / selectedEnfant.frais.total) * 100).toFixed(0)}%` : '—'}
@@ -270,7 +273,10 @@ export default function EnfantsPage() {
 
           {activeTab === 'paiements' && (
             <div className="space-y-3">
-              {paiements.length === 0 ? (
+              {paiements.length === 0 && !(selectedEnfant.frais?.total > 0) ? (
+                // Aucune échéance ni frais connus : on le dit, sans afficher « Payé ».
+                <p className="rounded-xl bg-[var(--surface)] p-4 text-sm text-[var(--text-secondary)]">—</p>
+              ) : paiements.length === 0 ? (
                 <div className="rounded-xl bg-[var(--surface)]  p-4">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium text-[var(--text-primary)] ">{t('pages.parent.enfants.frais_de_scolarite')}</span>
