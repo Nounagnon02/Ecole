@@ -661,4 +661,18 @@ describe('AdminDashboard', () => {
 
     await waitFor(() => expect(screen.getByText(/Aucune entrée de journal/)).toBeInTheDocument());
   });
+
+  // Revue de pertinence (15/11/2026) : aucune sauvegarde n'existe côté API ;
+  // l'onglet et son bouton « Sauvegarder » sans effet laissaient croire le
+  // contraire. « Voir tous les logs » mène au journal d'audit.
+  it('ne promet pas de sauvegarde inexistante et ouvre le journal d’audit', async () => {
+    http.onGet(ADMIN_ENDPOINT).reply(200, { data: ADMIN_PAYLOAD });
+    renderDashboard(<AdminDashboard />);
+    await waitFor(() => expect(screen.getByText('Utilisateurs actifs')).toBeInTheDocument());
+    expect(screen.queryByRole('tab', { name: /Sauvegardes/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Sauvegarder/i })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Voir tous les logs/i }));
+    await waitFor(() => expect(screen.getByText('AUTRE-ECRAN')).toBeInTheDocument());
+    expect(screen.getByTestId('url')).toHaveTextContent('/admin/journal-audit');
+  });
 });

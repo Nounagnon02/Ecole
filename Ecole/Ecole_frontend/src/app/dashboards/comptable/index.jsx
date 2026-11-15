@@ -10,9 +10,7 @@ import { useDashboardStats } from '../hooks/useDashboardData';
 import DashboardShell from '../DashboardShell';
 import { motion } from 'framer-motion';
 import {
-  Wallet, Receipt, ArrowDownRight, TrendingUp,
-  CheckCircle2, Clock, BarChart3, FileSpreadsheet
-  
+  Wallet, Receipt, ArrowDownRight, TrendingUp, CheckCircle2, Clock, BarChart3,
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip,
@@ -21,7 +19,6 @@ import {
 import StatsCard from '@/shared/components/ui/StatsCard';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
-import Button from '@/shared/components/ui/Button';
 import Table from '@/shared/components/ui/Table';
 import { useTranslation } from '@/shared/i18n';
 
@@ -282,11 +279,6 @@ export default function ComptableDashboard() {
       loading={loading}
       error={error}
       onRefresh={refetch}
-      actions={
-        <Button variant="ghost" size="sm">
-          <Wallet className="h-4 w-4 mr-1" /> {t('dashboards.comptable.synthese')}
-        </Button>
-      }
     >
       {renderSection()}
     </DashboardShell>

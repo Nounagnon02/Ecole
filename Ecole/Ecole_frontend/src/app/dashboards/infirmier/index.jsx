@@ -10,8 +10,7 @@ import { useDashboardStats } from '../hooks/useDashboardData';
 import DashboardShell from '../DashboardShell';
 import { motion } from 'framer-motion';
 import {
-  Heart, Activity, AlertTriangle, Clock,
-  BarChart3, Stethoscope, FileText 
+  Heart, Activity, AlertTriangle, Clock, BarChart3, Stethoscope,
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip,
@@ -20,7 +19,6 @@ import {
 import StatsCard from '@/shared/components/ui/StatsCard';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
-import Button from '@/shared/components/ui/Button';
 import Table from '@/shared/components/ui/Table';
 import { useTranslation } from '@/shared/i18n';
 
@@ -299,11 +297,6 @@ export default function InfirmierDashboard() {
       loading={loading}
       error={error}
       onRefresh={refetch}
-      actions={
-        <>
-    <Button variant="ghost" size="sm"><Heart className="h-4 w-4 mr-1" /> {t('dashboards.infirmier.etat_des_lieux')}</Button>
-        </>
-      }
     >
       {renderSection()}
     </DashboardShell>

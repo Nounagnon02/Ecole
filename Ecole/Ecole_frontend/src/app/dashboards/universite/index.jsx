@@ -9,9 +9,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  Building2, Users, BookOpen, GraduationCap, Calendar,
-  Activity, School, UserCheck, FileText, Search, Bell,
-  BarChart3, ChevronRight
+  Building2, Users, BookOpen, GraduationCap, Calendar, Activity, School, UserCheck, FileText, Bell, BarChart3, ChevronRight,
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip,
@@ -22,7 +20,6 @@ import { useDashboardStats } from '@/app/dashboards/hooks/useDashboardData';
 import DashboardShell from '@/app/dashboards/DashboardShell';
 import StatsCard from '@/shared/components/ui/StatsCard';
 import Card from '@/shared/components/ui/Card';
-import Button from '@/shared/components/ui/Button';
 import { useTranslation } from '@/shared/i18n';
 import { Skeleton } from '@/shared/components/ui/Skeleton';
 
@@ -211,15 +208,6 @@ export default function UniversiteDashboard() {
       loading={loading}
       error={error}
       onRefresh={refetch}
-      actions={
-        <>
-    <Button variant="ghost" size="sm" icon={<Search className="h-4 w-4" />} />
-    <Button variant="ghost" size="sm"><Bell className="h-4 w-4" /></Button>
-    <Button variant="ghost" size="sm" icon={<Calendar className="h-4 w-4" />}>
-    {t('dashboards.universite.calendrier')}
-    </Button>
-        </>
-      }
     >
       {renderSection()}
     </DashboardShell>

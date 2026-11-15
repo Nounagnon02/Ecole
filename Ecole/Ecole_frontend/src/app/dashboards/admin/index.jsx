@@ -1,24 +1,14 @@
 /**
  * AdminDashboard — Tableau de bord premium pour Super Admin
  *
- * Sections : Aperçu Système | Utilisateurs | Configuration | Logs | Sauvegardes
+ * Sections : Aperçu Système | Utilisateurs | Configuration | Logs
  */
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  Users,
-  Settings,
-  Activity,
-  Database,
-  HardDrive,
-  AlertTriangle,
-  CheckCircle2,
-  Download,
-  RefreshCw,
-  Bell,
-  Terminal
+  Users, Activity, HardDrive, AlertTriangle, CheckCircle2, Download, RefreshCw, Terminal,
 } from 'lucide-react';
 import {
   XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer,
@@ -44,7 +34,6 @@ import Button from '@/shared/components/ui/Button';
 const TABS = [
   { id: 'apercu', label: 'Aperçu', icon: Activity },
   { id: 'logs', label: 'Logs Système', icon: Terminal },
-  { id: 'sauvegardes', label: 'Sauvegardes', icon: Database },
 ];
 
 const STATS_META = [
@@ -57,6 +46,7 @@ const STATS_META = [
 // ─── Sections ─────────────────────────────────────────────────
 
 function ApercuSection({ data, loading, onRefresh }) {
+  const navigate = useNavigate();
   const { t } = useTranslation();
   // Le titre affiché est traduit côté front, pas celui renvoyé par l'API :
   // le backend n'a pas de notion de locale, et les deux tableaux restent
@@ -175,7 +165,7 @@ function ApercuSection({ data, loading, onRefresh }) {
           </div>
         </Card.Body>
         <Card.Footer>
-          <Button variant="ghost" size="sm" className="w-full">
+          <Button variant="ghost" size="sm" className="w-full" onClick={() => navigate('/admin/journal-audit')}>
             {t('dashboards.admin.voir_tous_les_logs')} <Terminal className="h-4 w-4 ml-1" />
           </Button>
         </Card.Footer>
@@ -302,30 +292,6 @@ function LogsSection({ data, loading }) {
   );
 }
 
-function SauvegardesSection() {
-  const { t } = useTranslation();
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-heading text-xl font-semibold text-[var(--text-primary)] ">{t('dashboards.admin.sauvegardes')}</h2>
-          <p className="text-sm text-[var(--text-secondary)] mt-1">{t('dashboards.admin.gestion_des_backups')}</p>
-        </div>
-        <Button>
-          <Database className="h-4 w-4 mr-2" /> {t('dashboards.admin.sauvegarder')}
-        </Button>
-      </div>
-      <Card>
-        <Card.Body>
-          <p className="text-[var(--text-secondary)] text-center py-12">
-            {t('dashboards.admin.backups_automatiques_restauration_et')}
-          </p>
-        </Card.Body>
-      </Card>
-    </div>
-  );
-}
-
 // ─── Composant Principal ──────────────────────────────────────
 
 export default function AdminDashboard() {
@@ -354,7 +320,6 @@ export default function AdminDashboard() {
     switch (activeTab) {
       case 'apercu': return <ApercuSection data={data} loading={loading} onRefresh={refetch} />;
       case 'logs': return <LogsSection data={data} loading={loading} />;
-      case 'sauvegardes': return <SauvegardesSection />;
       default: return <ApercuSection data={data} loading={loading} onRefresh={refetch} />;
     }
   };
@@ -369,16 +334,6 @@ export default function AdminDashboard() {
       loading={loading}
       error={error}
       onRefresh={refetch}
-      actions={
-        <>
-    <Button variant="ghost" size="sm">
-    <Bell className="h-4 w-4 mr-1" /> {t('dashboards.admin.alertes')}
-    </Button>
-    <Button variant="ghost" size="sm">
-    <Settings className="h-4 w-4 mr-1" /> {t('dashboards.admin.parametres')}
-    </Button>
-        </>
-      }
     >
       {renderSection()}
     </DashboardShell>

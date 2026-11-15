@@ -10,7 +10,7 @@ import { useDashboardStats } from '../hooks/useDashboardData';
 import DashboardShell from '../DashboardShell';
 import { motion } from 'framer-motion';
 import {
-  Shield, Users, AlertTriangle, BarChart3, UserCheck, UserX, Camera, MapPin, Clock
+  Users, AlertTriangle, BarChart3, UserCheck, UserX, MapPin, Clock,
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip,
@@ -20,7 +20,6 @@ import StatsCard from '@/shared/components/ui/StatsCard';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Table from '@/shared/components/ui/Table';
-import Button from '@/shared/components/ui/Button';
 import { useTranslation } from '@/shared/i18n';
 
 // Seuls les onglets qui s'affichent ici : ceux qui menaient vers une
@@ -287,11 +286,6 @@ export default function SurveillantDashboard() {
       loading={loading}
       error={error}
       onRefresh={refetch}
-      actions={
-        <>
-    <Button variant="ghost" size="sm"><Shield className="h-4 w-4 mr-1" /> {t('dashboards.surveillant.mon_service')}</Button>
-        </>
-      }
     >
       {renderSection()}
     </DashboardShell>

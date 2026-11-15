@@ -11,7 +11,7 @@ import { useDashboardStats } from '../hooks/useDashboardData';
 import DashboardShell from '../DashboardShell';
 import { motion } from 'framer-motion';
 import {
-  FileText, Users, Calendar, BarChart3, UserPlus, ClipboardList 
+  FileText, Users, Calendar, BarChart3, UserPlus, ClipboardList,
 } from 'lucide-react';
 import {
   XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip,
@@ -22,7 +22,6 @@ import { fr } from 'date-fns/locale';
 import StatsCard from '@/shared/components/ui/StatsCard';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
-import Button from '@/shared/components/ui/Button';
 import Table from '@/shared/components/ui/Table';
 import { useTranslation } from '@/shared/i18n';
 
@@ -260,11 +259,6 @@ export default function SecretaireDashboard() {
       loading={loading}
       error={error}
       onRefresh={refetch}
-      actions={
-        <>
-    <Button variant="ghost" size="sm"><ClipboardList className="h-4 w-4 mr-1" /> {t('dashboards.secretaire.tableau_de_bord')}</Button>
-        </>
-      }
     >
       {renderSection()}
     </DashboardShell>
