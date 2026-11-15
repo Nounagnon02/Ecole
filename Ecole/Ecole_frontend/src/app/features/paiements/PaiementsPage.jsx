@@ -74,14 +74,20 @@ export default function PaiementsPage() {
   // à zéro tant que la page testait les mauvaises clés.
   const paye = (p) => p.statut === 'payee';
 
-  const totalPaye = paiements
-    .filter(paye)
-    .reduce((a, p) => a + parseFloat(p.montant ?? 0), 0);
+  // Revue de pertinence (15/11/2026) : l'encaissé ne comptait que les lignes
+  // soldées (les versements partiels en étaient exclus), et « taux » et
+  // « impayés » étaient des parts de LIGNES soldées, affichées comme des
+  // pourcentages d'argent. Tout est maintenant calculé sur les montants.
+  const nombre = (v) => (v === null || v === undefined || v === '' ? null : parseFloat(v));
+  const payeDe = (p) => nombre(p.montant_paye) ?? (paye(p) ? nombre(p.montant) ?? 0 : 0);
+  const totalDe = (p) => nombre(p.montant_total) ?? nombre(p.montant) ?? 0;
+  const totalPaye = paiements.reduce((a, p) => a + payeDe(p), 0);
+  const totalDu = paiements.reduce((a, p) => a + totalDe(p), 0);
+  const resteAEncaisser = paiements.reduce((a, p) => a + (nombre(p.montant_restant) ?? Math.max(0, totalDe(p) - payeDe(p))), 0);
 
   const totalTransactions = paiements.length;
-  const payes = paiements.filter(paye).length;
   // Sans paiement, il n'y a rien à mesurer : « — », pas « 0 % » / « 100 % ».
-  const tauxEncaisse = totalTransactions > 0 ? Math.round((payes / totalTransactions) * 100) : null;
+  const tauxEncaisse = totalDu > 0 ? Math.round((totalPaye / totalDu) * 100) : null;
 
   // Le reçu s'ouvrait dans un nouvel onglet sur `/api/…` : sans nom de
   // fichier, et sur téléphone l'utilisateur quittait l'application (BUG-029).
@@ -198,7 +204,7 @@ export default function PaiementsPage() {
         <StatsCard title={t('pages.paiements.paiements.revenus_encaisses')} value={formatCurrency(totalPaye)} icon={DollarSign} color="primary" />
         <StatsCard title={t('pages.paiements.paiements.transactions')} value={String(totalTransactions)} icon={CreditCard} color="emerald" />
         <StatsCard title={t('pages.paiements.paiements.taux_d_encaisse')} value={tauxEncaisse === null ? '—' : `${tauxEncaisse}%`} icon={TrendingUp} color="sky" />
-        <StatsCard title={t('pages.paiements.paiements.impayes')} value={tauxEncaisse === null ? '—' : `${100 - tauxEncaisse}%`} icon={TrendingDown} color="red" />
+        <StatsCard title={t('pages.paiements.paiements.impayes')} value={totalTransactions === 0 ? '—' : formatCurrency(resteAEncaisser)} icon={TrendingDown} color="red" />
       </div>
 
       {/* Tabs */}
@@ -306,8 +312,11 @@ export default function PaiementsPage() {
                     <Table.Cell>{p.type_paiement}</Table.Cell>
                     <Table.Cell>
                       <span className="font-semibold text-[var(--text-primary)] ">
-                        {formatCurrency(p.montant)}
+                        {formatCurrency(payeDe(p))}
                       </span>
+                      {totalDe(p) > payeDe(p) && (
+                        <span className="block text-xs text-[var(--text-secondary)]">{t('pages.paiements.paiements.sur_montant', { total: formatCurrency(totalDe(p)) })}</span>
+                      )}
                     </Table.Cell>
                     <Table.Cell className="text-xs text-[var(--text-secondary)]">{p.date_paiement}</Table.Cell>
                     <Table.Cell>

@@ -1526,10 +1526,10 @@
         "subtitle": "Financial transaction management",
         "factures": "Invoices",
         "nouveau_paiement": "New Payment",
-        "revenus_encaisses": "Revenue Collected",
+        "revenus_encaisses": "Collected",
         "transactions": "Transactions",
-        "taux_d_encaisse": "Collection Rate",
-        "impayes": "Unpaid",
+        "taux_d_encaisse": "Collection rate",
+        "impayes": "Left to collect",
         "paiements": "Payments",
         "echeancier": "Payment schedule",
         "paye": "Paid",
@@ -1548,7 +1548,8 @@
         "impossible_d_initialiser_le_paiement": "Unable to initialize the payment",
         "erreur_lors_de_l_initialisation_du_paiement": "Error while initializing the payment",
         "impossible_de_recuperer_les_paiements": "Unable to retrieve the payments",
-        "recu_indisponible": "The receipt could not be downloaded."
+        "recu_indisponible": "The receipt could not be downloaded.",
+        "sur_montant": "of {total} due"
       },
       "callback": {
         "status": {

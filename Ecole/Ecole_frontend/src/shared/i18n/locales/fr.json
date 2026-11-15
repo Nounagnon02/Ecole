@@ -1526,10 +1526,10 @@
         "subtitle": "Gestion des transactions financières",
         "factures": "Factures",
         "nouveau_paiement": "Nouveau paiement",
-        "revenus_encaisses": "Revenus encaissés",
+        "revenus_encaisses": "Encaissé",
         "transactions": "Transactions",
-        "taux_d_encaisse": "Taux d'Encaisse",
-        "impayes": "Impayés",
+        "taux_d_encaisse": "Taux d'encaissement",
+        "impayes": "Reste à encaisser",
         "paiements": "Paiements",
         "echeancier": "Échéancier",
         "paye": "Payé",
@@ -1548,7 +1548,8 @@
         "impossible_d_initialiser_le_paiement": "Impossible d'initialiser le paiement",
         "erreur_lors_de_l_initialisation_du_paiement": "Erreur lors de l'initialisation du paiement",
         "impossible_de_recuperer_les_paiements": "Impossible de récupérer les paiements",
-        "recu_indisponible": "Le reçu n’a pas pu être téléchargé."
+        "recu_indisponible": "Le reçu n’a pas pu être téléchargé.",
+        "sur_montant": "sur {total} dus"
       },
       "callback": {
         "status": {

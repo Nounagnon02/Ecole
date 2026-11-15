@@ -5,8 +5,7 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Users, Search, Download, Plus, Upload, GraduationCap,
-  Eye, UserCheck, UserX, RefreshCw, Trash2,
+  Users, Search, Download, Plus, Upload, Eye, UserCheck, UserX, RefreshCw, Trash2,
 } from 'lucide-react';
 import { cn } from '@/shared/lib/utils';
 import { useApiQuery } from '@/shared/lib/api-client';
@@ -104,15 +103,15 @@ export default function ElevesPage() {
 
   const actifs = eleves.filter(estActif).length;
   const inactifs = eleves.length - actifs;
-  const moyenneGenerale = eleves.length > 0
-    ? (eleves.reduce((acc, e) => acc + (e.moyenne ?? 0), 0) / eleves.length).toFixed(1)
-    : '—';
+  // Pas de « moyenne générale » ici (revue de pertinence, 15/11/2026) : elle
+  // faisait la moyenne des seuls élèves chargés, comptait 0 pour une moyenne
+  // inconnue et n'avait pas de période. Les moyennes officielles sont celles
+  // des bulletins arrêtés.
 
   const STATS = [
     { title: t('pages.eleves.eleves.total_eleves'), value: String(eleves.length), icon: Users, color: 'primary' },
     { title: t('pages.eleves.eleves.actifs'), value: String(actifs), icon: UserCheck, color: 'emerald' },
     { title: t('pages.eleves.eleves.inactifs'), value: String(inactifs), icon: UserX, color: 'amber' },
-    { title: t('pages.eleves.eleves.moyenne_generale'), value: `${moyenneGenerale}/20`, icon: GraduationCap, color: 'sky' },
   ];
 
   // Export de la liste affichée (filtres compris). Séparateur « ; » et BOM :
@@ -157,7 +156,7 @@ export default function ElevesPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-3">
         {STATS.map((stat) => (
           <StatsCard key={stat.title} {...stat} />
         ))}

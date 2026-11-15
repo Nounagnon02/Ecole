@@ -90,11 +90,17 @@ describe('PaiementsPage', () => {
     expect(screen.getByText('Payée')).toBeInTheDocument();
     expect(screen.getByText('Partielle')).toBeInTheDocument();
 
-    // Une ligne payée sur deux : encaissé = 25000, taux = 50 %, impayés = 50 %.
-    // Le calcul doit reposer sur `statut === 'payee'`, pas `'paye'`/`'payé'`.
-    expect(screen.getAllByText(/25\s*000/).length).toBeGreaterThan(0);
-    expect(screen.getAllByText('50%').length).toBe(2);
-    expect(screen.getByText('Impayés')).toBeInTheDocument();
+    // Calcul sur les MONTANTS (revue de pertinence, 15/11/2026) : la ligne
+    // partielle a reçu 25 000 sur 50 000. Encaissé 50 000 sur 75 000 dus,
+    // soit 67 % ; reste 25 000. Avant, l'encaissé ignorait ce versement
+    // partiel et « taux / impayés » comptaient des lignes (50 % / 50 %).
+    expect(screen.getByText('Encaissé')).toBeInTheDocument();
+    expect(screen.getAllByText(/50\s000/).length).toBeGreaterThan(0);
+    expect(screen.getByText('67%')).toBeInTheDocument();
+    expect(screen.getByText('Reste à encaisser')).toBeInTheDocument();
+    expect(screen.queryByText('50%')).not.toBeInTheDocument();
+    // Ligne partielle : payé 25 000, et ce qui est dû au total.
+    expect(screen.getByText(/sur 50\s000.*dus/)).toBeInTheDocument();
   });
 
   it('affiche « — » et non « 100 % » d’impayés quand il n’y a aucun paiement', async () => {
