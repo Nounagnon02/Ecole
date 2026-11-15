@@ -106,6 +106,30 @@ describe('DirecteurDashboard', () => {
     expect(screen.getByText('14')).toBeInTheDocument();
   });
 
+  // Revue de pertinence (15/11/2026) : impayés, absents du jour et incidents
+  // sont calculés par l'API mais n'étaient pas montrés ; les graphiques sans
+  // période et les boutons sans effet sont retirés.
+  it('montre impayés, absents du jour et incidents, sans graphique ni bouton inopérant', async () => {
+    http.onGet(DIRECTEUR_ENDPOINT).reply(200, { data: {
+      ...DIRECTEUR_PAYLOAD,
+      finances: { impayes: 2117414 }, assiduite: { absents_aujourdhui: 3 }, alertes: { incidents_ouverts: 9 },
+    } });
+    renderDashboard(<DirecteurDashboard />);
+    await waitFor(() => expect(screen.getByText('Impayés à recouvrer')).toBeInTheDocument());
+    expect(screen.getByText(/2\s117\s414/)).toBeInTheDocument();
+    expect(screen.getByText('9')).toBeInTheDocument();
+    expect(screen.queryByText('Répartition des notes')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Rapport|Exporter/i })).not.toBeInTheDocument();
+  });
+
+  it('affiche « — » pour un indicateur de suivi absent, jamais 0 FCFA', async () => {
+    http.onGet(DIRECTEUR_ENDPOINT).reply(200, { data: DIRECTEUR_PAYLOAD });
+    renderDashboard(<DirecteurDashboard />);
+    await waitFor(() => expect(screen.getByText('Impayés à recouvrer')).toBeInTheDocument());
+    expect(screen.getAllByText('—').length).toBe(3);
+    expect(screen.queryByText(/0\s*F/)).not.toBeInTheDocument();
+  });
+
   it('liste les classes retournées par l’API', async () => {
     http.onGet(DIRECTEUR_ENDPOINT).reply(200, { data: DIRECTEUR_PAYLOAD });
 

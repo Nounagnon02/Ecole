@@ -525,7 +525,10 @@
       "stats": {
         "total_eleves": "Total Students",
         "enseignants": "Teachers",
-        "classes": "Classes"
+        "classes": "Classes",
+        "impayes": "Unpaid fees to collect",
+        "absents_aujourdhui": "Absent today",
+        "incidents_ouverts": "Open incidents"
       },
       "evolution_des_effectifs": "Enrollment Trend",
       "inscriptions_par_mois": "Enrollments per month",

@@ -525,7 +525,10 @@
       "stats": {
         "total_eleves": "Total élèves",
         "enseignants": "Enseignants",
-        "classes": "Classes"
+        "classes": "Classes",
+        "impayes": "Impayés à recouvrer",
+        "absents_aujourdhui": "Absents aujourd'hui",
+        "incidents_ouverts": "Incidents ouverts"
       },
       "evolution_des_effectifs": "Évolution des effectifs",
       "inscriptions_par_mois": "Inscriptions par mois",

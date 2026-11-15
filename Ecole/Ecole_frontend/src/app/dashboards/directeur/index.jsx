@@ -5,29 +5,18 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import {
-  Users, GraduationCap, DollarSign,   Activity, School, MessageSquare,
-  Calendar, BarChart3, Download,
-  Search
-} from 'lucide-react';
-import {
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart as RePieChart, Pie, Cell, Legend,
-  Area, AreaChart
-} from 'recharts';
+import { Users, GraduationCap, Activity, School, Search, Wallet, UserX, ShieldAlert } from 'lucide-react';
 import { useDashboardStats } from '@/app/dashboards/hooks/useDashboardData';
 import DashboardShell from '@/app/dashboards/DashboardShell';
 import ADecider from './ADecider';
 import StatsCard from '@/shared/components/ui/StatsCard';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
-import Button from '@/shared/components/ui/Button';
 import Table from '@/shared/components/ui/Table';
 import Input from '@/shared/components/ui/Input';
 import { Skeleton } from '@/shared/components/ui/Skeleton';
 import { useTranslation } from '@/shared/i18n';
-
-const COLORS = ['var(--accent)', 'var(--green)', 'var(--amber)', 'var(--red)', 'var(--blue)', 'var(--primary)', 'var(--text-secondary)'];
+import { formatCurrency } from '@/shared/lib/utils';
 
 // Seuls les onglets qui s'affichent ici : ceux qui menaient vers une
 // autre page doublaient le menu (audit, recommandation B4).
@@ -70,84 +59,27 @@ function StatCardsGrid({ stats, loading }) {
   );
 }
 
-function PerformanceChart({ data, loading }) {
+/**
+ * Argent à recouvrer et vie scolaire du jour : ce que l'API calcule déjà et
+ * que l'écran ne montrait pas (revue de pertinence, 15/11/2026). Une valeur
+ * absente s'affiche « — », jamais 0. Les « revenus du mois » de l'API ne
+ * comptent que les frais soldés (versements partiels exclus) : ils ne sont
+ * pas présentés comme un encaissement.
+ */
+function SuiviGrid({ data, loading }) {
   const { t } = useTranslation();
-  const chartData = data?.evolution_effectifs ?? [];
-
+  if (loading) return null;
+  const nombre = (v) => (v === null || v === undefined ? '—' : String(v));
+  const impayes = data?.finances?.impayes;
+  const cards = [
+    { title: t('dashboards.directeur.stats.impayes'), value: impayes === null || impayes === undefined ? '—' : formatCurrency(impayes), icon: Wallet, color: 'amber' },
+    { title: t('dashboards.directeur.stats.absents_aujourdhui'), value: nombre(data?.assiduite?.absents_aujourdhui), icon: UserX, color: 'primary' },
+    { title: t('dashboards.directeur.stats.incidents_ouverts'), value: nombre(data?.alertes?.incidents_ouverts), icon: ShieldAlert, color: 'red' },
+  ];
   return (
-    <Card className="col-span-2">
-      <Card.Header>
-        <div className="flex items-center justify-between">
-          <div>
-            <Card.Title>{t('dashboards.directeur.evolution_des_effectifs')}</Card.Title>
-            <Card.Description>{t('dashboards.directeur.inscriptions_par_mois')}</Card.Description>
-          </div>
-          <Button variant="ghost" size="sm">
-            <Download className="h-4 w-4 mr-1" />{t('common.export')}
-          </Button>
-        </div>
-      </Card.Header>
-      <Card.Body>
-        <div className="h-[300px]">
-          {loading ? <Skeleton className="h-full w-full rounded-xl" /> : (
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData}>
-                <defs>
-                  <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--accent)" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="var(--accent)" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                <XAxis dataKey="name" tick={{ fontSize: 12 }} stroke="var(--text-tertiary)" />
-                <YAxis tick={{ fontSize: 12 }} stroke="var(--text-tertiary)" />
-                <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid var(--border)' }} />
-                <Area type="monotone" dataKey="students" stroke="var(--accent)" fill="url(#grad)" strokeWidth={2} name="Élèves" />
-              </AreaChart>
-            </ResponsiveContainer>
-          )}
-        </div>
-      </Card.Body>
-    </Card>
-  );
-}
-
-function RepartitionPie({ data, loading }) {
-  const { t } = useTranslation();
-  const chartData = data?.repartition_notes ?? [];
-
-  return (
-    <Card>
-      <Card.Header>
-        <Card.Title>{t('dashboards.directeur.repartition_des_notes')}</Card.Title>
-        <Card.Description>{t('dashboards.directeur.distribution_par_tranche')}</Card.Description>
-      </Card.Header>
-      <Card.Body>
-        <div className="h-[300px]" aria-hidden="true" inert="">
-          {loading ? <Skeleton className="h-full w-full rounded-xl" /> : (
-            <ResponsiveContainer width="100%" height="100%">
-              <RePieChart>
-                <Pie
-                  data={chartData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={90}
-                  paddingAngle={3}
-                  dataKey="value"
-                >
-                  {chartData.map((_, i) => (
-                    <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid var(--border)' }} />
-                <Legend verticalAlign="bottom" height={36} />
-              </RePieChart>
-            </ResponsiveContainer>
-          )}
-        </div>
-      </Card.Body>
-    </Card>
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {cards.map((stat) => <StatsCard key={stat.title} {...stat} className="h-full" />)}
+    </div>
   );
 }
 
@@ -225,10 +157,7 @@ function ApercuSection({ data, loading }) {
       <StatCardsGrid stats={stats} loading={loading} />
       {/* Ce qui demande une action, avant les graphiques (audit, D8). */}
       <ADecider />
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <PerformanceChart data={stats} loading={loading} />
-        <RepartitionPie data={stats} loading={loading} />
-      </div>
+      <SuiviGrid data={data} loading={loading} />
       <ClassesTable classes={classes} loading={loading} />
     </div>
   );
@@ -272,11 +201,6 @@ export default function DirecteurDashboard() {
       loading={loading}
       error={error}
       onRefresh={refetch}
-      actions={
-        <Button variant="ghost" size="sm">
-          <Download className="h-4 w-4 mr-1" />{t('dashboards.directeur.rapport')}
-        </Button>
-      }
     >
       {renderSection()}
     </DashboardShell>
