@@ -68,6 +68,33 @@ export function sur20(valeur) {
   return Number.isFinite(n) ? `${n.toLocaleString('fr-FR', { maximumFractionDigits: 2 })}/20` : '—';
 }
 
+/**
+ * Rôle tel que l'utilisateur le comprend : la fonction ou le service, jamais
+ * le code interne (« directeurM » → « Direction (maternelle) »).
+ */
+const ROLES = {
+  parent: 'Parent', eleve: 'Élève', etudiant: 'Étudiant',
+  enseignant: 'Enseignant', enseignement: 'Enseignant', enseignementM: 'Enseignant (maternelle)', enseignementP: 'Enseignant (primaire)', professeur: 'Enseignant',
+  directeur: 'Direction', directeurM: 'Direction (maternelle)', directeurP: 'Direction (primaire)', directeurS: 'Direction (secondaire)',
+  censeur: 'Censorat', surveillant: 'Surveillance', secretaire: 'Secrétariat', comptable: 'Comptabilité', infirmier: 'Infirmerie',
+  bibliothecaire: 'Bibliothèque', admin: 'Administration', 'super-admin': 'Administration', personnel: 'Personnel',
+};
+export function libelleRole(role) {
+  return ROLES[role] ?? (role ? String(role).charAt(0).toUpperCase() + String(role).slice(1) : '');
+}
+/** Le rôle relève-t-il de l'équipe enseignante (sinon : administration et services) ? */
+export const estEnseignant = (role) => /^(enseignant|enseignement|professeur)/.test(String(role ?? ''));
+
+/** Nom lisible d'une évaluation ; la valeur envoyée à l'API reste inchangée. */
+export function libelleEvaluation(type) {
+  const t = String(type ?? '');
+  const devoir = t.match(/^Devoir\s*(\d+)$/i);
+  if (devoir) return `Devoir ${devoir[1]}`;
+  const rang = t.match(/^(\d+)(?:ère|ème|e)\s+[ée]valuation$/i);
+  if (rang) return `${rang[1]}${rang[1] === '1' ? 're' : 'e'} évaluation`;
+  return t;
+}
+
 /** Initiales d'un nom (« AHO Kossi » → « AK »), pour les pastilles. */
 export function initiales(nom) {
   const mots = String(nom ?? '').replace(/^(M\.|Mme|Mlle)\s+/i, '').split(/\s+/).filter(Boolean);
@@ -325,13 +352,17 @@ export function Segments({ options, valeur, onChange }) {
   );
 }
 
-/** Champ de saisie ; le libellé sert d'étiquette accessible et, au besoin, visible. */
+/**
+ * Champ de saisie ; `libelle` est son nom accessible. `etiquette` affiche ce
+ * libellé (true) ou un texte plus court (chaîne) au-dessus du champ.
+ */
 export function Champ({ libelle, etiquette = false, style = undefined, ...props }) {
   const { colors } = useTheme();
+  const visible = typeof etiquette === 'string' ? etiquette : etiquette ? libelle : null;
   return (
     <View style={{ gap: 6 }}>
-      {etiquette ? <Text style={{ fontFamily: fonts.semibold, fontSize: 13, color: colors.textPrimary }}>{libelle}</Text> : null}
-      <TextInput accessibilityLabel={libelle} placeholder={libelle} placeholderTextColor={colors.textTertiary} {...props}
+      {visible ? <Text style={{ fontFamily: fonts.semibold, fontSize: 13, color: colors.textPrimary }}>{visible}</Text> : null}
+      <TextInput accessibilityLabel={libelle} placeholder={visible ? undefined : libelle} placeholderTextColor={colors.textTertiary} {...props}
         style={[{ minHeight: 48, borderWidth: 1, borderColor: colors.border, borderRadius: 12, paddingHorizontal: 14, backgroundColor: colors.surfaceRaised,
           color: colors.textPrimary, fontFamily: fonts.body, fontSize: 15 }, style]} />
     </View>

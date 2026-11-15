@@ -22,7 +22,7 @@ import { useAuth } from '../context/AuthContext';
 import { fonts } from '../theme/typography';
 import {
   Badge, BarreOnglets, Bouton, Carte, Champ, Ecran, EspaceContexte, Etat, Liste, Pastille, Pile, Rang, SANS_ONGLET, Segments, Texte, Tuile, Tuiles,
-  dateFr, fcfa, initiales, liste, messageErreur, onglet, sur20, useRequete, useTeintes,
+  dateFr, estEnseignant, fcfa, initiales, libelleEvaluation, libelleRole, liste, messageErreur, onglet, sur20, useRequete, useTeintes,
 } from './commun';
 import { Icone } from './Icone';
 
@@ -53,22 +53,37 @@ function usePucesEnfants() {
   return { options: enfants.map((e) => ({ valeur: e.id, libelle: e.prenom || nomEnfant(e) })), valeur: enfant?.id, onChange: choisir };
 }
 
-/* ─── Accueil : enfants, prochaine échéance, annonces ──────────────────── */
+/**
+ * Dernier bulletin arrêté d'un enfant (même source que le web) : moyenne
+ * pondérée, rang et période officiels. Les chiffres de `/parent/enfants`
+ * (moyenne brute de toutes les notes, toutes périodes) ne sont pas montrés :
+ * ils contredisaient le bulletin et n'indiquaient pas de période.
+ */
+const ORDRE_PERIODES = ['Trimestre 1', 'Trimestre 2', 'Trimestre 3', 'Semestre 1', 'Semestre 2'];
+export function dernierBulletin(bulletins, eleveId) {
+  const propres = liste(bulletins).filter((b) => String(b.eleve_id) === String(eleveId));
+  const cle = (b) => `${b.annee_scolaire ?? ''}#${String(ORDRE_PERIODES.indexOf(b.periode)).padStart(2, '0')}#${b.created_at ?? ''}`;
+  return propres.sort((a, b) => cle(b).localeCompare(cle(a)))[0] ?? null;
+}
+
+/* ─── Accueil : enfants, reste à payer, annonces ───────────────────────── */
 function Accueil({ navigation }) {
   const { user } = useAuth();
-  const { enfants, enfant, choisir, requete } = useEnfant();
+  const { enfants, enfant, choisir, requete, bulletins } = useEnfant();
   const t = useTeintes();
   const annonces = useRequete('/communications');
   const paiements = useRequete(enfant ? `/parent/enfants/${enfant.id}/paiements` : null);
-  const echeance = liste(paiements.donnees).find((e) => Number(e.reste) > 0 && !e.paiement_en_cours);
+  const meta = paiements.donnees?.meta;
+  const dernierVersement = liste(paiements.donnees).find((p) => Number(p.montant_paye) > 0);
   const suivre = (e) => { choisir(e.id); navigation.navigate('Scolarité'); };
 
   return (
-    <Ecran titre="Mes enfants" sur={nomCompte(user) ? `Bonjour, ${nomCompte(user)}` : undefined}
-      onActualiser={() => { requete.recharger(); annonces.recharger(); paiements.recharger(); }}>
+    <Ecran titre={enfants.length > 1 ? 'Mes enfants' : 'Accueil'} sur={nomCompte(user) ? `Bonjour, ${nomCompte(user)}` : undefined}
+      onActualiser={() => { requete.recharger(); annonces.recharger(); paiements.recharger(); bulletins.recharger(); }}>
       <Etat requete={requete} estVide={enfants.length === 0} vide="Aucun enfant n’est rattaché à votre compte. Contactez le secrétariat de l’école." />
       {enfants.map((e) => {
         const actif = enfants.length > 1 && e.id === enfant?.id;
+        const b = dernierBulletin(bulletins.donnees, e.id);
         return (
           <Carte key={e.id} onPress={() => suivre(e)} accessibilityLabel={`Voir la scolarité de ${nomEnfant(e)}`}
             style={actif ? { borderColor: t.colors.accent, borderWidth: 2, gap: 12 } : { gap: 12 }}>
@@ -76,27 +91,33 @@ function Accueil({ navigation }) {
               <Pastille nom={nomEnfant(e)} taille={44} />
               <View style={{ flex: 1, gap: 2 }}>
                 <Texte variante="sousTitre" style={{ fontSize: 17 }}>{nomEnfant(e)}</Texte>
-                <Texte variante="discret">{classeEnfant(e)} · matricule {e.matricule ?? '—'}</Texte>
+                <Texte variante="discret">{classeEnfant(e)}</Texte>
               </View>
               <Icone nom="suivant" couleur={t.colors.accent} />
             </View>
-            <Tuiles>
-              <Tuile libelle="Moyenne" valeur={sur20(e.moyenne_generale)} />
-              <Tuile libelle="Rang" valeur={String(e.rang?.position ?? e.rang ?? '—')} />
-              <Tuile libelle="Absences" valeur={String(e.absences_count ?? '—')} />
-            </Tuiles>
+            {b ? (
+              <Tuiles>
+                <Tuile libelle={`Moyenne · ${b.periode}`} valeur={sur20(b.moyenne_generale)} />
+                <Tuile libelle="Rang" valeur={b.rang ? `${b.rang}/${b.total_eleves ?? '—'}` : '—'} />
+              </Tuiles>
+            ) : (
+              <Texte variante="discret">{bulletins.chargement ? 'Chargement du bulletin…' : 'Aucun bulletin arrêté pour l’instant.'}</Texte>
+            )}
+            <Texte variante="discret" accessibilityLabel={`Absences et retards enregistrés : ${e.absences_count ?? 'inconnu'}`}>
+              Absences et retards enregistrés : {e.absences_count ?? '—'}
+            </Texte>
           </Carte>
         );
       })}
-      {echeance ? (
+      {meta && Number(meta.solde) > 0 ? (
         <Carte ton="ocre">
-          <Texte variante="fort" style={{ fontSize: 13, color: t.colors.amber }}>Échéance du {dateFr(echeance.date)}</Texte>
-          <Texte>{echeance.libelle} · {nomEnfant(enfant)}</Texte>
-          <View accessible accessibilityLabel={`${echeance.libelle} : ${fcfa(echeance.reste)} restant`} style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, flexWrap: 'wrap' }}>
-            <Texte variante="titre" style={{ fontSize: 26 }}>{fcfa(echeance.reste)}</Texte>
+          <Texte variante="fort" style={{ fontSize: 13, color: t.colors.amber }}>Frais de scolarité · {enfant?.prenom || nomEnfant(enfant)}</Texte>
+          <View accessible accessibilityLabel={`Reste à payer pour ${nomEnfant(enfant)} : ${fcfa(meta.solde)}`} style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, flexWrap: 'wrap' }}>
+            <Texte variante="titre" style={{ fontSize: 26 }}>{fcfa(meta.solde)}</Texte>
             <Texte variante="discret" style={{ color: t.colors.amber }}>reste à payer</Texte>
           </View>
-          <Bouton titre="Payer en ligne" accessibilityLabel={`Aller payer ${echeance.libelle} en ligne`} variante="ocre" onPress={() => navigation.navigate('Paiements')} />
+          {dernierVersement ? <Texte variante="discret">Dernier versement le {dateFr(dernierVersement.date)}</Texte> : null}
+          <Bouton titre="Voir et payer" accessibilityLabel={`Voir et payer les frais de ${nomEnfant(enfant)}`} variante="ocre" onPress={() => navigation.navigate('Paiements')} />
         </Carte>
       ) : null}
       <Texte variante="sousTitre" accessibilityRole="header">Annonces</Texte>
@@ -197,7 +218,7 @@ function Scolarite() {
           {liste(notes.donnees).map((n) => (
             <Rang key={n.id} hauteur={64}>
               <Pile titre={n.matiere?.nom ?? n.matiere ?? 'Matière'}
-                detail={[n.type_evaluation ?? n.type, n.periode, dateFr(n.date_evaluation ?? n.created_at)].filter(Boolean).join(' · ')} />
+                detail={[libelleEvaluation(n.type_evaluation ?? n.type), n.periode, dateFr(n.date_evaluation ?? n.date ?? n.created_at)].filter(Boolean).join(' · ')} />
               <Texte variante="titre" style={{ fontSize: 20 }}>{sur20(n.note ?? n.valeur)}</Texte>
             </Rang>
           ))}
@@ -206,9 +227,9 @@ function Scolarite() {
       {vue === 'absences' && <>
         {absMeta ? (
           <Tuiles>
-            <Tuile surCarte={false} libelle="Total" valeur={String(absMeta.total ?? '—')} />
-            <Tuile surCarte={false} libelle="Justifiées" valeur={String(absMeta.justifiees ?? '—')} />
-            <Tuile surCarte={false} libelle="Non justifiées" valeur={String(absMeta.injustifiees ?? '—')} />
+            <Tuile surCarte={false} libelle="Absences et retards" valeur={String(absMeta.total ?? '—')} />
+            <Tuile surCarte={false} libelle="Justifiés" valeur={String(absMeta.justifiees ?? '—')} />
+            <Tuile surCarte={false} libelle="Non justifiés" valeur={String(absMeta.injustifiees ?? '—')} />
           </Tuiles>
         ) : null}
         <Etat requete={absences} estVide={liste(absences.donnees).length === 0} vide="Aucune absence enregistrée." />
@@ -246,7 +267,9 @@ function Scolarite() {
 }
 
 /* ─── Paiements : solde, échéances, paiement en ligne, historique ──────── */
-const STATUTS = { PAYE: ['Payé', 'succes'], PARTIEL: ['Partiel', 'ocre'], EN_ATTENTE: ['À payer', 'ocre'], EN_RETARD: ['En retard', 'alerte'], ANNULE: ['Annulé', 'neutre'] };
+const STATUTS = { PAYE: ['Soldé', 'succes'], PARTIEL: ['Partiellement payé', 'ocre'], EN_ATTENTE: ['À payer', 'ocre'], EN_RETARD: ['En retard', 'alerte'], ANNULE: ['Annulé', 'neutre'] };
+const MODES = { ESPECES: 'en espèces', MOBILE_MONEY: 'par mobile money', CHEQUE: 'par chèque', VIREMENT: 'par virement', FEDAPAY: 'en ligne' };
+const modePaiement = (m) => MODES[String(m ?? '').toUpperCase()] ?? (m ? `(${String(m).toLowerCase()})` : '');
 
 function Paiements() {
   const { enfant } = useEnfant();
@@ -290,7 +313,7 @@ function Paiements() {
       {meta ? (
         <Carte style={{ gap: 6 }}>
           <View accessible accessibilityLabel={`Reste à payer : ${fcfa(meta.solde)}`} style={{ gap: 2 }}>
-            <Texte variante="discret">Reste à payer</Texte>
+            <Texte variante="discret">Reste à payer · {enfant.prenom || nomEnfant(enfant)}</Texte>
             <Texte variante="titre" style={{ fontSize: 28 }}>{fcfa(meta.solde)}</Texte>
           </View>
           {part !== null ? (
@@ -302,23 +325,27 @@ function Paiements() {
         </Carte>
       ) : null}
       <Etat requete={requete} estVide={echeances.length === 0} vide="Aucune échéance pour cet enfant." />
-      {echeances.length ? <Texte variante="sousTitre" accessibilityRole="header">Échéances</Texte> : null}
+      {echeances.length ? <Texte variante="sousTitre" accessibilityRole="header">Frais</Texte> : null}
       {echeances.map((e) => {
         const [statut, ton] = STATUTS[e.statut] ?? [e.statut, 'neutre'];
         const soldee = Number(e.reste) <= 0;
         return (
           <Carte key={e.id} style={{ gap: 12 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <Pile titre={e.libelle} lignes={2}
-                detail={soldee ? `${fcfa(e.montant_total)} · réf. ${e.reference ?? '—'}` : `Échéance : ${dateFr(e.date)} · reste ${fcfa(e.reste)}`} />
+            <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
+              <View style={{ flex: 1, gap: 2 }}>
+                <Texte variante="fort">{e.libelle}</Texte>
+                <Texte variante="discret">Payé {fcfa(e.montant_paye)} sur {fcfa(e.montant_total)}{soldee ? '' : ` · reste ${fcfa(e.reste)}`}</Texte>
+                {e.date ? <Texte variante="discret">Dernier versement le {dateFr(e.date)} {modePaiement(e.mode_paiement)}</Texte> : null}
+                {e.reference ? <Texte variante="discret">Référence {e.reference}</Texte> : null}
+              </View>
               <Badge texte={statut} ton={ton} />
             </View>
             {e.paiement_en_cours
-              ? <Texte variante="discret">Un paiement en ligne est en cours de confirmation.</Texte>
+              ? <Texte variante="discret">Un paiement en ligne est en cours de confirmation par l’opérateur ; il n’est pas encore compté.</Texte>
               : !soldee && (
                 <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-end' }}>
                   <View style={{ flex: 1 }}>
-                    <Champ libelle={`Montant à payer pour ${e.libelle}`} keyboardType="number-pad" defaultValue={String(e.reste)}
+                    <Champ libelle={`Montant à payer pour ${e.libelle}`} etiquette="Montant à payer (FCFA)" keyboardType="number-pad" defaultValue={String(e.reste)}
                       onChangeText={(v) => setMontants((m) => ({ ...m, [e.id]: v }))} style={{ backgroundColor: t.colors.surface, fontFamily: fonts.semibold, fontSize: 16 }} />
                   </View>
                   <Bouton titre="Payer en ligne" chargement={envoi === e.id} onPress={() => payer(e)} />
@@ -343,12 +370,19 @@ export function Messages() {
   const fil = useRequete(ouverte ? `/messages/conversation/${ouverte.id}` : null);
   const [texte, setTexte] = useState('');
   const [envoi, setEnvoi] = useState(false);
+  const [recherche, setRecherche] = useState('');
+  const filOuvert = !!ouverte;
 
   useEffect(() => {
     if (ouverte) api.put(`/messages/conversation/${ouverte.id}/read`).catch(() => {});
-    // Le fil occupe tout l'écran : la barre d'onglets laisse place à la saisie.
-    navigation?.setOptions?.({ tabBarStyle: ouverte ? { display: 'none' } : undefined });
-  }, [ouverte, navigation]);
+  }, [ouverte]);
+  // Le fil occupe tout l'écran : la barre d'onglets laisse place à la saisie.
+  // Dépend d'un booléen seulement : `setOptions` renouvelle l'objet
+  // `navigation`, et en dépendre relançait l'effet sans fin.
+  useEffect(() => {
+    navigation?.setOptions?.({ tabBarStyle: filOuvert ? { display: 'none' } : undefined });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filOuvert]);
 
   const envoyer = async () => {
     if (!texte.trim()) return;
@@ -400,7 +434,14 @@ export function Messages() {
     );
   }
 
-  const convs = liste(conversations.donnees).map((c) => ({ id: c.id ?? c.contact_id, nom: c.contact_nom || 'Conversation', role: c.role, dernier: c.dernier_message, date: c.derniere_date, nonLus: Number(c.non_lus ?? 0) }));
+  const convs = liste(conversations.donnees).map((c) => ({ id: c.id ?? c.contact_id, nom: c.contact_nom || 'Conversation', role: libelleRole(c.role), dernier: c.dernier_message, date: c.derniere_date, nonLus: Number(c.non_lus ?? 0) }));
+  const tous = liste(contacts.donnees);
+  const cherche = recherche.trim().toLowerCase();
+  const filtres = cherche ? tous.filter((p) => `${p.name} ${libelleRole(p.role)}`.toLowerCase().includes(cherche)) : tous;
+  const groupes = [
+    ['Administration et services', filtres.filter((p) => !estEnseignant(p.role))],
+    ['Enseignants', filtres.filter((p) => estEnseignant(p.role))],
+  ].filter(([, membres]) => membres.length);
   return (
     <Ecran titre="Messages" onActualiser={conversations.recharger}>
       <Etat requete={conversations} estVide={convs.length === 0} vide="Aucune conversation. Écrivez à un contact ci-dessous." />
@@ -421,17 +462,24 @@ export function Messages() {
           </Rang>
         ))}
       </Liste>
-      <Texte variante="sousTitre" accessibilityRole="header">Nouveau message</Texte>
-      <Etat requete={contacts} estVide={liste(contacts.donnees).length === 0} vide="Aucun contact disponible." />
-      <Liste>
-        {liste(contacts.donnees).map((p) => (
-          <Rang key={p.id} onPress={() => setOuverte({ id: p.id, nom: p.name, role: p.role })} accessibilityLabel={`Écrire à ${p.name}`}>
-            <Pastille nom={p.name} taille={36} />
-            <Pile titre={p.name} detail={p.role} />
-            <Icone nom="suivant" taille={20} couleur={t.colors.textSecondary} />
-          </Rang>
-        ))}
-      </Liste>
+      <Texte variante="sousTitre" accessibilityRole="header">Écrire à</Texte>
+      <Etat requete={contacts} estVide={tous.length === 0} vide="Aucun contact disponible." />
+      {tous.length > 8 ? <Champ libelle="Rechercher un nom ou une fonction" value={recherche} onChangeText={setRecherche} autoCapitalize="none" /> : null}
+      {cherche && filtres.length === 0 ? <Texte variante="discret">Aucun contact ne correspond à « {recherche.trim()} ».</Texte> : null}
+      {groupes.map(([titre, membres]) => (
+        <View key={titre} style={{ gap: 8 }}>
+          <Texte variante="discret" style={{ fontFamily: fonts.semibold }}>{titre}</Texte>
+          <Liste>
+            {membres.map((p) => (
+              <Rang key={p.id} onPress={() => setOuverte({ id: p.id, nom: p.name, role: libelleRole(p.role) })} accessibilityLabel={`Écrire à ${p.name}`}>
+                <Pastille nom={p.name} taille={36} />
+                <Pile titre={p.name} detail={libelleRole(p.role)} />
+                <Icone nom="suivant" taille={20} couleur={t.colors.textSecondary} />
+              </Rang>
+            ))}
+          </Liste>
+        </View>
+      ))}
     </Ecran>
   );
 }
@@ -511,7 +559,8 @@ export default function ParentEspace() {
   const enfants = useMemo(() => liste(requete.donnees), [requete.donnees]);
   const [idChoisi, setIdChoisi] = useState(null);
   const enfant = enfants.find((e) => e.id === idChoisi) ?? enfants[0] ?? null;
-  const valeur = useMemo(() => ({ enfants, enfant, choisir: setIdChoisi, requete }), [enfants, enfant, requete]);
+  const bulletins = useRequete('/bulletins');
+  const valeur = useMemo(() => ({ enfants, enfant, choisir: setIdChoisi, requete, bulletins }), [enfants, enfant, requete, bulletins]);
   const espace = useMemo(() => ({ initiales: initiales(nomCompte(user)), compte: 'Compte' }), [user]);
 
   return (

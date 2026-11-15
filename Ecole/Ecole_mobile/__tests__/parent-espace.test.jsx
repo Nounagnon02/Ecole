@@ -42,8 +42,27 @@ describe('espace parent', () => {
     monter();
     expect(await screen.findByLabelText('Voir la scolarité de AHO Kossi')).toBeTruthy();
     expect(screen.getAllByText('AHO Kossi').length).toBeGreaterThan(0);
-    expect(screen.getByLabelText('Moyenne : —')).toBeTruthy();
+    expect(await screen.findByText('Aucun bulletin arrêté pour l’instant.')).toBeTruthy();
     expect(screen.queryByText(/0\/20/)).toBeNull();
+    // Le compteur de l'API mêle absences et retards : le libellé le dit.
+    expect(screen.getByLabelText('Absences et retards enregistrés : 2')).toBeTruthy();
+  });
+
+  it('montre la moyenne du dernier bulletin avec sa période, jamais la moyenne brute de l’API', async () => {
+    api.get.mockImplementation((url) => Promise.resolve({ data: url === '/parent/enfants'
+      ? { success: true, data: [{ ...REPONSES['/parent/enfants'].data[0], moyenne_generale: 9.5, rang: 12 }] }
+      : url === '/bulletins'
+        ? { success: true, data: [
+          { id: 1, eleve_id: 7, periode: 'Trimestre 1', annee_scolaire: '2026-2027', moyenne_generale: '11.00', rang: 9, total_eleves: 30 },
+          { id: 2, eleve_id: 7, periode: 'Trimestre 2', annee_scolaire: '2026-2027', moyenne_generale: '13.40', rang: 4, total_eleves: 30 },
+          { id: 3, eleve_id: 99, periode: 'Trimestre 3', annee_scolaire: '2026-2027', moyenne_generale: '18.00', rang: 1, total_eleves: 30 },
+        ] }
+        : REPONSES[url] ?? { success: true, data: [] } }));
+    monter();
+    expect(await screen.findByLabelText('Moyenne · Trimestre 2 : 13,4/20')).toBeTruthy();
+    expect(screen.getByLabelText('Rang : 4/30')).toBeTruthy();
+    expect(screen.queryByText('9,5/20')).toBeNull();
+    expect(screen.queryByText('18/20')).toBeNull();
   });
 
   it('présente quatre onglets ; le compte s’ouvre par la pastille d’initiales', async () => {
@@ -59,11 +78,28 @@ describe('espace parent', () => {
     expect(await screen.findByRole('tab', { name: 'Accueil' })).toBeTruthy();
   });
 
-  it('annonce la prochaine échéance sur l’accueil et mène au paiement', async () => {
+  it('annonce sur l’accueil le reste total à payer, sans inventer d’échéance, et mène au paiement', async () => {
     monter();
-    expect(await screen.findByLabelText('Scolarité T1 : 50 000 FCFA restant')).toBeTruthy();
-    fireEvent.press(screen.getByRole('button', { name: 'Aller payer Scolarité T1 en ligne' }));
+    expect(await screen.findByLabelText('Reste à payer pour AHO Kossi : 50 000 FCFA')).toBeTruthy();
+    // `date` est la date du dernier versement : la présenter comme une échéance serait faux.
+    expect(screen.queryByText(/Échéance/)).toBeNull();
+    expect(screen.getByText(/Dernier versement le/)).toBeTruthy();
+    fireEvent.press(screen.getByRole('button', { name: 'Voir et payer les frais de AHO Kossi' }));
     expect(await screen.findByLabelText('Montant à payer pour Scolarité T1')).toBeTruthy();
+    expect(screen.getByText('Payé 10 000 FCFA sur 60 000 FCFA · reste 50 000 FCFA')).toBeTruthy();
+  });
+
+  it('désigne les contacts par leur fonction et les regroupe', async () => {
+    api.get.mockImplementation((url) => Promise.resolve({ data: url === '/messages/contacts'
+      ? { success: true, data: [{ id: 12, name: 'Mme DOSSOU', role: 'enseignant' }, { id: 13, name: 'M. KIKI', role: 'directeurM' }] }
+      : REPONSES[url] ?? { success: true, data: [] } }));
+    monter();
+    await screen.findByLabelText('Voir la scolarité de AHO Kossi');
+    fireEvent.press(screen.getByRole('tab', { name: 'Messages' }));
+    expect(await screen.findByText('Direction (maternelle)')).toBeTruthy();
+    expect(screen.queryByText('directeurM')).toBeNull();
+    expect(screen.getByText('Administration et services')).toBeTruthy();
+    expect(screen.getByText('Enseignants')).toBeTruthy();
   });
 
   it('ouvre le paiement en ligne depuis le mobile, retour dans l’application', async () => {

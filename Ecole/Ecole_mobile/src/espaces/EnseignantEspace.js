@@ -24,7 +24,7 @@ import { useAuth } from '../context/AuthContext';
 import { fonts } from '../theme/typography';
 import {
   BarreOnglets, Bouton, Carte, Champ, Choix, Ecran, EspaceContexte, Etat, Liste, Pastille, Pile, Rang, SANS_ONGLET, Segments, Texte,
-  dateFr, initiales, liste, messageErreur, onglet, sur20, useRequete, useTeintes,
+  dateFr, initiales, libelleEvaluation, liste, messageErreur, onglet, sur20, useRequete, useTeintes,
 } from './commun';
 import { ChangerMotDePasse, Jour, Messages, nomCompte } from './ParentEspace';
 import { Icone } from './Icone';
@@ -184,7 +184,7 @@ export function Notes() {
             options={matieres.map((m) => ({ valeur: m.id, libelle: `${m.nom} (coef. ${m.coefficient ?? '—'})` }))} />
         </View>
         <View style={{ flexDirection: 'row', gap: 8 }}>
-          <Choix libelle="Évaluation" valeur={ev.type} onChange={(v) => setEv((e) => ({ ...e, type: v }))} options={TYPES.map((x) => ({ valeur: x, libelle: x }))} />
+          <Choix libelle="Évaluation" valeur={ev.type} onChange={(v) => setEv((e) => ({ ...e, type: v }))} options={TYPES.map((x) => ({ valeur: x, libelle: libelleEvaluation(x) }))} />
           <Choix libelle="Période" valeur={ev.periode} onChange={(v) => setEv((e) => ({ ...e, periode: v }))} options={PERIODES.map((p) => ({ valeur: p, libelle: p }))} />
         </View>
         {ev.type === 'Interrogation' && (
@@ -210,6 +210,7 @@ export function Notes() {
             );
           })}
         </Liste>
+        <Texte variante="discret">{eleves.filter((e) => lireNote(saisies[e.id]) !== null).length} note(s) saisie(s) sur {effectif(eleves.length)}</Texte>
         {message ? <Texte accessibilityRole="alert" variante="discret" style={{ color: couleurMessage }}>{message}</Texte> : null}
         {invalides.length ? <Texte variante="discret" style={{ color: t.colors.error }}>Corrigez les notes hors de 0 à 20 pour pouvoir enregistrer.</Texte> : null}
         <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -253,15 +254,29 @@ function Bulletins() {
 }
 
 /* ─── Emploi du temps et annonces ──────────────────────────────────────── */
+/**
+ * Identifiant enseignant (≠ identifiant du compte), lu dans les affectations.
+ * Sans filtre, `/emploi-du-temps` renvoie les cours de toute l'école : un
+ * enseignant y voyait ceux de ses collègues (constaté le 15/11/2026).
+ */
+export function idEnseignant(classes) {
+  return liste(classes).map((c) => c.pivot?.enseignant_id).find((id) => id !== undefined && id !== null) ?? null;
+}
+
 function Semaine() {
   const { user } = useAuth();
-  const edt = useRequete('/emploi-du-temps');
+  const classes = useRequete('/enseignant/classes');
+  const id = idEnseignant(classes.donnees);
+  const edt = useRequete(id !== null ? `/emploi-du-temps?enseignant_id=${id}` : null);
   const annonces = useRequete('/communications');
   const cours = liste(edt.donnees);
   const parJour = JOURS.map((j) => ({ jour: j, cours: cours.filter((c) => String(c.jour).toLowerCase() === j) })).filter((j) => j.cours.length);
+  const pret = !classes.chargement && !edt.chargement;
   return (
-    <Ecran titre="Ma semaine" sur={nomCompte(user) ? `Bonjour, ${nomCompte(user)}` : undefined} onActualiser={() => { edt.recharger(); annonces.recharger(); }}>
-      <Etat requete={edt} estVide={parJour.length === 0} vide="Aucun cours planifié." />
+    <Ecran titre="Ma semaine" sur={nomCompte(user) ? `Bonjour, ${nomCompte(user)}` : undefined}
+      onActualiser={() => { classes.recharger(); edt.recharger(); annonces.recharger(); }}>
+      <Etat requete={classes.erreur ? classes : edt} estVide={pret && parJour.length === 0}
+        vide={id === null ? 'Aucune classe ne vous est affectée : pas d’emploi du temps à afficher.' : 'Aucun cours ne vous est attribué dans l’emploi du temps.'} />
       {parJour.map(({ jour, cours: c }) => (
         <Jour key={jour} jour={jour} cours={c} intitule={(x) => [x.classe?.nom_classe, x.matiere?.nom].filter(Boolean).join(' · ') || 'Cours'} />
       ))}

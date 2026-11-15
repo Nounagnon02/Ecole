@@ -6,7 +6,8 @@ import React from 'react';
 import { Alert } from 'react-native';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Notes, confirmerDeconnexion, lireNote } from '../src/espaces/EnseignantEspace';
+import { NavigationContainer } from '@react-navigation/native';
+import EnseignantEspace, { Notes, confirmerDeconnexion, idEnseignant, lireNote } from '../src/espaces/EnseignantEspace';
 import { ThemeProvider } from '../src/theme';
 import { api } from '../src/services/api';
 import { clearAll, listeBrouillons } from '../src/services/secureStorage';
@@ -133,5 +134,31 @@ describe('import de notes par tableur (parité avec le web)', () => {
     fireEvent.press(screen.getByRole('button', { name: 'Importer un tableur (CSV)' }));
     await new Promise((r) => setTimeout(r, 50));
     expect(FileSystem.readAsStringAsync).not.toHaveBeenCalled();
+  });
+});
+
+// Constaté le 15/11/2026 : sans filtre, l'API renvoie l'emploi du temps de
+// toute l'école, et l'enseignant voyait les cours de ses collègues.
+describe('ma semaine — seulement les cours de l’enseignant', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    api.get.mockImplementation((url) => Promise.resolve({ data: url === '/enseignant/classes'
+      ? { success: true, data: [{ id: 1, nom_classe: '3ème', eleves: [], pivot: { enseignant_id: 4, classe_id: 1 } }] }
+      : url === '/emploi-du-temps?enseignant_id=4'
+        ? { data: [{ id: 9, jour: 'lundi', heure_debut: '08:00', heure_fin: '10:00', salle: 'Salle 8', classe: { nom_classe: '3ème' }, matiere: { nom: 'Mathématiques' } }] }
+        : { success: true, data: [] } }));
+  });
+
+  it('lit l’identifiant enseignant dans les affectations', () => {
+    expect(idEnseignant({ data: [{ pivot: { enseignant_id: 4 } }] })).toBe(4);
+    expect(idEnseignant({ data: [] })).toBeNull();
+  });
+
+  it('demande l’emploi du temps filtré sur l’enseignant, jamais celui de toute l’école', async () => {
+    render(<ThemeProvider><NavigationContainer><EnseignantEspace /></NavigationContainer></ThemeProvider>);
+    expect(await screen.findByText('3ème · Mathématiques')).toBeTruthy();
+    expect(screen.getByText('Salle 8')).toBeTruthy();
+    expect(api.get).toHaveBeenCalledWith('/emploi-du-temps?enseignant_id=4');
+    expect(api.get).not.toHaveBeenCalledWith('/emploi-du-temps');
   });
 });
