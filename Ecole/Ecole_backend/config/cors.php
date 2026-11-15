@@ -10,6 +10,9 @@ return [
         'http://localhost:3002',
         'http://localhost:3003',
         'http://localhost:5173',
+        // Application desktop (Electron) : interface servie par le protocole
+        // `ecole://app` (Ecole_desktop/main.js). Sans elle, aucun appel API.
+        env('DESKTOP_ORIGIN', 'ecole://app'),
     ],
     'allowed_origins_patterns' => [],
     'allowed_headers' => ['Content-Type', 'X-Requested-With', 'X-XSRF-TOKEN', 'Accept', 'Authorization', 'X-Ecole-Id'],
