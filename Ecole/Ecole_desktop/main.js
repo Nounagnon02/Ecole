@@ -162,6 +162,11 @@ function createWindow() {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
+      // Adresse de l'API transmise à l'interface (preload → electronAPI.apiUrl) :
+      // un même installateur sert toutes les écoles, sans recompiler le web.
+      additionalArguments: origineDe(process.env.ECOLE_API_URL, 'ECOLE_API_URL')
+        ? [`--ecole-api-url=${origineDe(process.env.ECOLE_API_URL, 'ECOLE_API_URL')}`]
+        : [],
     },
   });
 

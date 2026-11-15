@@ -10,6 +10,7 @@ import { useQuery as useReactQuery, useMutation as useReactMutation, useQueryCli
 import useAuthStore from '@/shared/stores/auth-store';
 import { queueMutation, cacheGetDerniere, cacheSet } from './db';
 import useHorsLigneStore from '@/shared/stores/hors-ligne-store';
+import { apiDesktop, estDesktop, jetonDesktop } from './jeton-desktop';
 
 /**
  * Clé de cache d'une lecture : l'adresse ET ses paramètres. Sans eux, les
@@ -44,7 +45,8 @@ async function lectureHorsLigne(config) {
 
 /* ─── Axios instance ────────────────────────────────────────────────────── */
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
+  // Desktop : adresse donnée par l'application au lancement (jeton-desktop.js).
+  baseURL: apiDesktop() || import.meta.env.VITE_API_URL || '/api',
   timeout: 15000,
   withCredentials: true,
   xsrfCookieName: 'XSRF-TOKEN',
@@ -57,6 +59,13 @@ const apiClient = axios.create({
 
 /* ─── Request interceptor — offline queue + cache + auth timeout ──────── */
 apiClient.interceptors.request.use(async (config) => {
+  // Desktop : jeton Bearer gardé en mémoire, pas de cookie (autre site).
+  if (estDesktop()) {
+    config.withCredentials = false;
+    const jeton = jetonDesktop();
+    if (jeton && !config.headers?.Authorization) config.headers.Authorization = `Bearer ${jeton}`;
+  }
+
   // Skip offline handling for queue replay itself
   if (config.headers?.['X-Offline-Queue']) return config;
 

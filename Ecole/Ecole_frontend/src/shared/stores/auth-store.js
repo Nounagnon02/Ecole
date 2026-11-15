@@ -33,6 +33,7 @@ function viderBrouillons() {
 import { clearDashboardCache } from '@/shared/lib/query-client';
 import { normalizeRole } from '@/shared/types/roles';
 import { memoriserAide } from '@/shared/lib/aideEcole';
+import { definirJetonDesktop, estDesktop } from '@/shared/lib/jeton-desktop';
 
 export const SESSION_CHECK_INTERVAL = 5 * 60 * 1000; // 5 min entre vérifications
 
@@ -101,11 +102,14 @@ const useAuthStore = create(
        * pour selection apres le login.
        */
       login: async (credentials) => {
-        // Etape 1 : Recuperer le cookie CSRF
-        const origin = getBackendOrigin();
-        await axios.get(`${origin}/sanctum/csrf-cookie`, {
-          withCredentials: true,
-        });
+        // Etape 1 : Recuperer le cookie CSRF (web seulement : le desktop
+        // s'authentifie par jeton, cf. jeton-desktop.js)
+        if (!estDesktop()) {
+          const origin = getBackendOrigin();
+          await axios.get(`${origin}/sanctum/csrf-cookie`, {
+            withCredentials: true,
+          });
+        }
 
         // Etape 2 : Authentification sans ecole_id
         const { data } = await apiClient.post('/auth/login', credentials);
@@ -126,6 +130,7 @@ const useAuthStore = create(
         // envoyait la personne sur un tableau de bord vide, chaque appel
         // répondant 403 « Authentification à deux facteurs obligatoire ».
         if (data.requires_2fa_setup) {
+          definirJetonDesktop(data.token);
           set({
             user: data.user,
             isAuthenticated: true,
@@ -148,6 +153,7 @@ const useAuthStore = create(
         }
 
         // Connexion directe
+        definirJetonDesktop(data.token);
         set({
           user: data.user,
           isAuthenticated: true,
@@ -171,6 +177,7 @@ const useAuthStore = create(
           token: pendingToken,
         });
 
+        definirJetonDesktop(data.token);
         set({
           user: data.user,
           isAuthenticated: true,
@@ -203,6 +210,7 @@ const useAuthStore = create(
           { headers: { Authorization: `Bearer ${pendingTwoFactorToken}` } }
         );
 
+        definirJetonDesktop(data.token);
         set({
           user: data.user,
           isAuthenticated: true,
@@ -236,6 +244,7 @@ const useAuthStore = create(
         // voyait les effectifs et finances du précédent, éventuellement d'un
         // autre établissement.
         clearDashboardCache();
+        definirJetonDesktop(null);
 
         set({ ...initialState, isLoading: false });
       },
@@ -248,6 +257,7 @@ const useAuthStore = create(
         viderCachesApi().catch(() => {});
         viderBrouillons();
         clearDashboardCache();
+        definirJetonDesktop(null);
         set({ ...initialState, isLoading: false });
       },
 
