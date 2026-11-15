@@ -84,6 +84,16 @@ export function libelleRole(role) {
 /** Le rôle relève-t-il de l'équipe enseignante (sinon : administration et services) ? */
 export const estEnseignant = (role) => /^(enseignant|enseignement|professeur)/.test(String(role ?? ''));
 
+/** Groupe d'un contact de messagerie, dans l'ordre d'affichage. */
+export const GROUPES_CONTACTS = ['Administration et services', 'Enseignants', 'Parents', 'Élèves et étudiants'];
+export function groupeContact(role) {
+  const r = String(role ?? '');
+  if (estEnseignant(r)) return 'Enseignants';
+  if (r === 'parent') return 'Parents';
+  if (r === 'eleve' || r === 'etudiant') return 'Élèves et étudiants';
+  return 'Administration et services';
+}
+
 /** Nom lisible d'une évaluation ; la valeur envoyée à l'API reste inchangée. */
 export function libelleEvaluation(type) {
   const t = String(type ?? '');

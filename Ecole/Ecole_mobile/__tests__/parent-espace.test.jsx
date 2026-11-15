@@ -113,6 +113,16 @@ describe('espace parent', () => {
     expect(screen.getByText('Enseignants')).toBeTruthy();
   });
 
+  // Vu sur l'émulateur (15/11/2026) : élèves et parents rangés dans « Administration ».
+  it('ne range ni élève ni parent dans l’administration', () => {
+    const { groupeContact } = require('../src/espaces/commun');
+    expect(groupeContact('directeurM')).toBe('Administration et services');
+    expect(groupeContact('enseignementP')).toBe('Enseignants');
+    expect(groupeContact('parent')).toBe('Parents');
+    expect(groupeContact('eleve')).toBe('Élèves et étudiants');
+    expect(groupeContact('etudiant')).toBe('Élèves et étudiants');
+  });
+
   it('ouvre le paiement en ligne depuis le mobile, retour dans l’application', async () => {
     const ouvrir = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
     monter();

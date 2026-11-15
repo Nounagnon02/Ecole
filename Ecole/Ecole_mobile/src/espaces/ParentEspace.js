@@ -20,7 +20,7 @@ import { useAuth } from '../context/AuthContext';
 import { fonts } from '../theme/typography';
 import {
   Badge, BarreEtat, Bouton, Carte, Champ, Ecran, EspaceContexte, Etat, Liste, Onglets, Pastille, Pile, Rang, Segments, Texte, Tuile, Tuiles,
-  dateFr, estEnseignant, fcfa, initiales, libelleEvaluation, libelleRole, liste, messageErreur, sur20, useNavigationEspace, useRequete, useTeintes,
+  dateFr, fcfa, GROUPES_CONTACTS, groupeContact, initiales, libelleEvaluation, libelleRole, liste, messageErreur, sur20, useNavigationEspace, useRequete, useTeintes,
 } from './commun';
 import { Icone } from './Icone';
 
@@ -435,10 +435,7 @@ export function Messages() {
   const tous = liste(contacts.donnees);
   const cherche = recherche.trim().toLowerCase();
   const filtres = cherche ? tous.filter((p) => `${p.name} ${libelleRole(p.role)}`.toLowerCase().includes(cherche)) : tous;
-  const groupes = [
-    ['Administration et services', filtres.filter((p) => !estEnseignant(p.role))],
-    ['Enseignants', filtres.filter((p) => estEnseignant(p.role))],
-  ].filter(([, membres]) => membres.length);
+  const groupes = GROUPES_CONTACTS.map((g) => [g, filtres.filter((p) => groupeContact(p.role) === g)]).filter(([, membres]) => membres.length);
   return (
     <Ecran titre="Messages" onActualiser={conversations.recharger}>
       <Etat requete={conversations} estVide={convs.length === 0} vide="Aucune conversation. Écrivez à un contact ci-dessous." />
