@@ -13,20 +13,17 @@
  */
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { Alert, Linking, Pressable, Switch, TextInput, View } from 'react-native';
-import { NavigationContext } from '@react-navigation/native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { fonts } from '../theme/typography';
 import {
-  Badge, BarreOnglets, Bouton, Carte, Champ, Ecran, EspaceContexte, Etat, Liste, Pastille, Pile, Rang, SANS_ONGLET, Segments, Texte, Tuile, Tuiles,
-  dateFr, estEnseignant, fcfa, initiales, libelleEvaluation, libelleRole, liste, messageErreur, onglet, sur20, useRequete, useTeintes,
+  Badge, BarreEtat, Bouton, Carte, Champ, Ecran, EspaceContexte, Etat, Liste, Onglets, Pastille, Pile, Rang, Segments, Texte, Tuile, Tuiles,
+  dateFr, estEnseignant, fcfa, initiales, libelleEvaluation, libelleRole, liste, messageErreur, sur20, useNavigationEspace, useRequete, useTeintes,
 } from './commun';
 import { Icone } from './Icone';
 
-const Tab = createBottomTabNavigator();
 const EnfantContexte = createContext(null);
 const useEnfant = () => useContext(EnfantContexte);
 
@@ -362,7 +359,7 @@ function Paiements() {
 /* ─── Messages : conversations, fil, envoi, nouveau message ────────────── */
 export function Messages() {
   const { user } = useAuth();
-  const navigation = useContext(NavigationContext);
+  const navigation = useNavigationEspace();
   const t = useTeintes();
   const conversations = useRequete('/messages/conversations');
   const contacts = useRequete('/messages/contacts');
@@ -553,6 +550,14 @@ function Compte({ navigation }) {
 }
 
 /* ─── Espace ───────────────────────────────────────────────────────────── */
+const ECRANS_PARENT = [
+  { nom: 'Accueil', icone: 'accueil', composant: Accueil },
+  { nom: 'Scolarité', icone: 'livre', composant: Scolarite },
+  { nom: 'Paiements', icone: 'carte', composant: Paiements },
+  { nom: 'Messages', icone: 'message', composant: Messages },
+  { nom: 'Compte', composant: Compte, sansOnglet: true },
+];
+
 export default function ParentEspace() {
   const { user } = useAuth();
   const requete = useRequete('/parent/enfants');
@@ -565,14 +570,9 @@ export default function ParentEspace() {
 
   return (
     <EspaceContexte.Provider value={espace}>
+      <BarreEtat />
       <EnfantContexte.Provider value={valeur}>
-        <Tab.Navigator tabBar={(p) => <BarreOnglets {...p} />} screenOptions={{ headerShown: false }}>
-          <Tab.Screen name="Accueil" component={Accueil} options={onglet('accueil')} />
-          <Tab.Screen name="Scolarité" component={Scolarite} options={onglet('livre')} />
-          <Tab.Screen name="Paiements" component={Paiements} options={onglet('carte')} />
-          <Tab.Screen name="Messages" component={Messages} options={onglet('message')} />
-          <Tab.Screen name="Compte" component={Compte} options={SANS_ONGLET} />
-        </Tab.Navigator>
+        <Onglets ecrans={ECRANS_PARENT} />
       </EnfantContexte.Provider>
     </EspaceContexte.Provider>
   );

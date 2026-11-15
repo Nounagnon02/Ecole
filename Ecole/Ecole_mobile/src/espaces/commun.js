@@ -9,9 +9,8 @@
  *   d'onglets à icônes, compte ouvert par la pastille d'initiales.
  */
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, RefreshControl, ScrollView, StatusBar, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, BackHandler, Modal, Pressable, RefreshControl, ScrollView, StatusBar, Text, TextInput, View } from 'react-native';
 import { SafeAreaInsetsContext } from 'react-native-safe-area-context';
-import { NavigationContext } from '@react-navigation/native';
 import { api } from '../services/api';
 import { useTheme } from '../theme';
 import { fonts } from '../theme/typography';
@@ -147,11 +146,10 @@ export function Ecran({
   const t = useTeintes();
   const marges = useContext(SafeAreaInsetsContext) ?? { top: 0 };
   const espace = useContext(EspaceContexte);
-  const navigation = useContext(NavigationContext);
+  const navigation = useContext(NavigationEspace);
   const compte = !sansCompte && espace?.compte && navigation ? { initiales: espace.initiales, ouvrir: () => navigation.navigate(espace.compte) } : null;
   return (
     <View style={{ flex: 1, backgroundColor: t.colors.surface }}>
-      <StatusBar barStyle="light-content" backgroundColor={t.entete} />
       <View style={{ backgroundColor: t.entete, paddingTop: (marges.top ?? 0) + 16, paddingBottom: 16, gap: 12 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 20 }}>
           {onRetour ? (
@@ -410,32 +408,28 @@ export function Choix({ libelle, valeur, options, onChange, vide = 'à choisir' 
 }
 
 /**
- * Barre d'onglets à icônes (onglet actif surligné). Un écran dont
- * `tabBarItemStyle.display` vaut 'none' n'a pas d'onglet (le compte) ; la
- * barre disparaît quand l'écran courant met `tabBarStyle.display` à 'none'.
+ * Contexte de navigation d'un espace : `navigate(nom)` et `setOptions(opts)`
+ * (`opts.tabBarStyle.display === 'none'` masque la barre d'onglets, par
+ * exemple pendant la lecture d'une conversation).
  */
-export function BarreOnglets({ state, descriptors, navigation }) {
+const NavigationEspace = createContext(null);
+export const useNavigationEspace = () => useContext(NavigationEspace);
+
+function BarreOnglets({ onglets, actif, onChoisir }) {
   const t = useTeintes();
   const marges = useContext(SafeAreaInsetsContext) ?? { bottom: 0 };
-  if (descriptors[state.routes[state.index].key].options.tabBarStyle?.display === 'none') return null;
   return (
     <View accessibilityRole="tablist" style={{ flexDirection: 'row', backgroundColor: t.colors.surfaceRaised, borderTopWidth: 1, borderTopColor: t.colors.border,
       paddingTop: 8, paddingBottom: 8 + (marges.bottom ?? 0), paddingHorizontal: 4 }}>
-      {state.routes.map((route, i) => {
-        const { options } = descriptors[route.key];
-        if (options.tabBarItemStyle?.display === 'none') return null;
-        const actif = state.index === i;
-        const appui = () => {
-          const e = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
-          if (!actif && !e.defaultPrevented) navigation.navigate(route.name);
-        };
+      {onglets.map((o) => {
+        const choisi = o.nom === actif;
         return (
-          <Pressable key={route.key} onPress={appui} accessibilityRole="tab" accessibilityLabel={route.name} accessibilityState={{ selected: actif }}
+          <Pressable key={o.nom} onPress={() => onChoisir(o.nom)} accessibilityRole="tab" accessibilityLabel={o.nom} accessibilityState={{ selected: choisi }}
             style={{ flex: 1, minHeight: 56, alignItems: 'center', justifyContent: 'center', gap: 4 }}>
-            <View style={{ width: 56, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: actif ? t.teinte : 'transparent' }}>
-              {options.tabBarIcon?.({ focused: actif, color: actif ? t.colors.accent : t.colors.textSecondary, size: 22 })}
+            <View style={{ width: 56, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: choisi ? t.teinte : 'transparent' }}>
+              <Icone nom={o.icone} taille={22} couleur={choisi ? t.colors.accent : t.colors.textSecondary} />
             </View>
-            <Text style={{ fontFamily: actif ? fonts.heading : fonts.medium, fontSize: 12, color: actif ? t.colors.textPrimary : t.colors.textSecondary }}>{route.name}</Text>
+            <Text style={{ fontFamily: choisi ? fonts.heading : fonts.medium, fontSize: 12, color: choisi ? t.colors.textPrimary : t.colors.textSecondary }}>{o.nom}</Text>
           </Pressable>
         );
       })}
@@ -443,8 +437,68 @@ export function BarreOnglets({ state, descriptors, navigation }) {
   );
 }
 
-/** Options d'un écran à onglet, ou d'un écran sans onglet ni barre (le compte). */
-export function onglet(icone) {
-  return { tabBarIcon: ({ color, size }) => <Icone nom={icone} couleur={color} taille={size} /> };
+/**
+ * Onglets d'un espace, sans conteneur natif. Le navigateur d'onglets de
+ * react-navigation, avec react-native-screens 4.4 (Expo SDK 52), faisait
+ * tourner le rendu sans fin dès qu'un deuxième onglet s'affichait : fil
+ * JavaScript saturé, plus aucun appui pris en compte, mémoire en hausse
+ * jusqu'à l'arrêt de l'application (émulateur, 15/11/2026 ; défaut présent
+ * avant la refonte, APK 493b14b). Ici, chaque écran visité reste monté
+ * (son état est conservé) et seul l'écran actif est affiché.
+ *
+ * `ecrans` : [{ nom, icone, composant, sansOnglet }] ; un écran `sansOnglet`
+ * (le compte) n'a pas d'onglet et masque la barre. Le bouton Retour
+ * d'Android ramène au premier écran.
+ */
+export function Onglets({ ecrans }) {
+  const premier = ecrans[0].nom;
+  const [actif, setActif] = useState(premier);
+  const [visites, setVisites] = useState([premier]);
+  const [masquees, setMasquees] = useState({});
+  const aller = useCallback((nom) => {
+    setActif(nom);
+    setVisites((v) => (v.includes(nom) ? v : [...v, nom]));
+  }, []);
+  const navigations = React.useMemo(() => Object.fromEntries(ecrans.map((e) => [e.nom, {
+    navigate: aller,
+    setOptions: (opts) => {
+      const masquee = opts?.tabBarStyle?.display === 'none';
+      setMasquees((m) => (!!m[e.nom] === masquee ? m : { ...m, [e.nom]: masquee }));
+    },
+  }])), [ecrans, aller]);
+
+  useEffect(() => {
+    const abonnement = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (actif === premier) return false;
+      aller(premier);
+      return true;
+    });
+    return () => abonnement.remove();
+  }, [actif, premier, aller]);
+
+  const courant = ecrans.find((e) => e.nom === actif);
+  const barreVisible = !courant?.sansOnglet && !masquees[actif];
+  return (
+    <View style={{ flex: 1 }}>
+      <View style={{ flex: 1 }}>
+        {ecrans.filter((e) => visites.includes(e.nom)).map((e) => {
+          const Composant = e.composant;
+          return (
+            <View key={e.nom} style={e.nom === actif ? { flex: 1 } : { display: 'none' }}>
+              <NavigationEspace.Provider value={navigations[e.nom]}>
+                <Composant navigation={navigations[e.nom]} />
+              </NavigationEspace.Provider>
+            </View>
+          );
+        })}
+      </View>
+      {barreVisible ? <BarreOnglets onglets={ecrans.filter((e) => !e.sansOnglet)} actif={actif} onChoisir={aller} /> : null}
+    </View>
+  );
 }
-export const SANS_ONGLET = { tabBarItemStyle: { display: 'none' }, tabBarStyle: { display: 'none' } };
+
+/** Barre d'état aux couleurs de l'en-tête : une seule par espace. */
+export function BarreEtat() {
+  const t = useTeintes();
+  return <StatusBar barStyle="light-content" backgroundColor={t.entete} />;
+}

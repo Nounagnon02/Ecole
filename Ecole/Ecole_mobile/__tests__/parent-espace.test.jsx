@@ -78,6 +78,17 @@ describe('espace parent', () => {
     expect(await screen.findByRole('tab', { name: 'Accueil' })).toBeTruthy();
   });
 
+  // Onglets maison (15/11/2026) : l'écran visité reste monté, son état est gardé.
+  it('garde la vue choisie dans Scolarité quand on change d’onglet', async () => {
+    monter();
+    await screen.findByLabelText('Voir la scolarité de AHO Kossi');
+    fireEvent.press(screen.getByRole('tab', { name: 'Scolarité' }));
+    fireEvent.press(await screen.findByRole('tab', { name: 'Absences' }));
+    fireEvent.press(screen.getByRole('tab', { name: 'Accueil' }));
+    fireEvent.press(screen.getByRole('tab', { name: 'Scolarité' }));
+    expect(screen.getByRole('tab', { name: 'Absences' }).props.accessibilityState.selected).toBe(true);
+  });
+
   it('annonce sur l’accueil le reste total à payer, sans inventer d’échéance, et mène au paiement', async () => {
     monter();
     expect(await screen.findByLabelText('Reste à payer pour AHO Kossi : 50 000 FCFA')).toBeTruthy();

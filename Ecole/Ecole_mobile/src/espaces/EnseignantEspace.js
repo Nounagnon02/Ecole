@@ -14,7 +14,6 @@
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, TextInput, View } from 'react-native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
 import { lireTableurNotes } from './importNotes';
@@ -23,13 +22,12 @@ import { getBrouillon, listeBrouillons, setBrouillon } from '../services/secureS
 import { useAuth } from '../context/AuthContext';
 import { fonts } from '../theme/typography';
 import {
-  BarreOnglets, Bouton, Carte, Champ, Choix, Ecran, EspaceContexte, Etat, Liste, Pastille, Pile, Rang, SANS_ONGLET, Segments, Texte,
-  dateFr, initiales, libelleEvaluation, liste, messageErreur, onglet, sur20, useRequete, useTeintes,
+  BarreEtat, Bouton, Carte, Champ, Choix, Ecran, EspaceContexte, Etat, Liste, Onglets, Pastille, Pile, Rang, Segments, Texte,
+  dateFr, initiales, libelleEvaluation, liste, messageErreur, sur20, useRequete, useTeintes,
 } from './commun';
 import { ChangerMotDePasse, Jour, Messages, nomCompte } from './ParentEspace';
 import { Icone } from './Icone';
 
-const Tab = createBottomTabNavigator();
 export const TYPES = ['Devoir1', 'Devoir2', 'Interrogation', '1ère evaluation', '2ème evaluation', '3ème evaluation', '4ème evaluation', '5ème evaluation', '6ème evaluation'];
 export const PERIODES = ['Trimestre 1', 'Trimestre 2', 'Trimestre 3'];
 const JOURS = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
@@ -325,19 +323,22 @@ export function Compte({ navigation = undefined }) {
   );
 }
 
+const ECRANS_ENSEIGNANT = [
+  { nom: 'Semaine', icone: 'calendrier', composant: Semaine },
+  { nom: 'Classes', icone: 'groupe', composant: Classes },
+  { nom: 'Notes', icone: 'crayon', composant: Notes },
+  { nom: 'Bulletins', icone: 'document', composant: Bulletins },
+  { nom: 'Messages', icone: 'message', composant: Messages },
+  { nom: 'Compte', composant: Compte, sansOnglet: true },
+];
+
 export default function EnseignantEspace() {
   const { user } = useAuth();
   const espace = useMemo(() => ({ initiales: initiales(nomCompte(user)), compte: 'Compte' }), [user]);
   return (
     <EspaceContexte.Provider value={espace}>
-      <Tab.Navigator tabBar={(p) => <BarreOnglets {...p} />} screenOptions={{ headerShown: false }}>
-        <Tab.Screen name="Semaine" component={Semaine} options={onglet('calendrier')} />
-        <Tab.Screen name="Classes" component={Classes} options={onglet('groupe')} />
-        <Tab.Screen name="Notes" component={Notes} options={onglet('crayon')} />
-        <Tab.Screen name="Bulletins" component={Bulletins} options={onglet('document')} />
-        <Tab.Screen name="Messages" component={Messages} options={onglet('message')} />
-        <Tab.Screen name="Compte" component={Compte} options={SANS_ONGLET} />
-      </Tab.Navigator>
+      <BarreEtat />
+      <Onglets ecrans={ECRANS_ENSEIGNANT} />
     </EspaceContexte.Provider>
   );
 }
