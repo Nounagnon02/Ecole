@@ -37,6 +37,19 @@ beforeEach(() => {
 });
 afterEach(() => { http.restore(); vi.restoreAllMocks(); });
 
+describe('ElevesPage — chiffres affichés', () => {
+  // Revue de pertinence (15/11/2026) : la « moyenne générale » de cette page
+  // valait 0.0/20 dès qu'une moyenne manquait (comptée 0) et n'avait pas de
+  // période. Les moyennes officielles sont celles des bulletins.
+  it('n’affiche plus de moyenne générale fabriquée', async () => {
+    http.onGet('/eleves').reply(200, liste(eleve(1, 'ADJOVI', 'active')));
+    monter();
+    await screen.findByText(/ADJOVI/);
+    expect(screen.queryByText(/Moyenne générale/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/\/20/)).not.toBeInTheDocument();
+  });
+});
+
 describe('ElevesPage — statut de l’élève', () => {
   it('affiche « inactif » pour un élève dont le statut est inactive', async () => {
     http.onGet('/eleves').reply(200, liste(eleve(1, 'ADJOVI', 'active'), eleve(2, 'DJOKO', 'inactive')));
