@@ -37,4 +37,14 @@ describe('proposition C', () => {
     expect(app.name).toBe('École');
     expect(app.splash.backgroundColor).toBe('#F4F0E8');
   });
+
+  // Recette du 14/11/2026 (R-20) : l'APK demandait la surimpression, le
+  // stockage externe et la biométrie, inutiles aux parents et enseignants
+  // (le sélecteur de fichier passe par le système, sans permission).
+  it('ne demande pas de permission Android superflue', () => {
+    expect(app.android.blockedPermissions).toEqual(expect.arrayContaining([
+      'android.permission.SYSTEM_ALERT_WINDOW', 'android.permission.READ_EXTERNAL_STORAGE',
+      'android.permission.WRITE_EXTERNAL_STORAGE', 'android.permission.USE_BIOMETRIC', 'android.permission.USE_FINGERPRINT',
+    ]));
+  });
 });
