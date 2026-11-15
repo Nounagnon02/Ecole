@@ -4,13 +4,18 @@
  * - `liste()` : extrait une liste des enveloppes de l'API (`data`, paginée…) ;
  * - `useRequete()` : chargement, erreur, actualisation — un état inconnu
  *   reste inconnu, jamais remplacé par une valeur rassurante ;
- * - composants de base aux couleurs et à la police de la proposition C.
+ * - composants de base aux couleurs et à la police de la proposition C,
+ *   conformes aux maquettes validées le 15/11/2026 : en-tête vert, barre
+ *   d'onglets à icônes, compte ouvert par la pastille d'initiales.
  */
-import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { ActivityIndicator, Modal, Pressable, RefreshControl, ScrollView, StatusBar, Text, TextInput, View } from 'react-native';
+import { SafeAreaInsetsContext } from 'react-native-safe-area-context';
+import { NavigationContext } from '@react-navigation/native';
 import { api } from '../services/api';
 import { useTheme } from '../theme';
 import { fonts } from '../theme/typography';
+import { Icone } from './Icone';
 
 export function liste(reponse) {
   const d = reponse?.data ?? reponse;
@@ -46,7 +51,7 @@ const formatFcfa = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 });
 /** Montant en FCFA, ou « — » s'il est inconnu. */
 export function fcfa(montant) {
   const n = Number(montant);
-  return montant === null || montant === undefined || !Number.isFinite(n) ? '—' : `${formatFcfa.format(n).replace(/[  ]/g, ' ')} FCFA`;
+  return montant === null || montant === undefined || !Number.isFinite(n) ? '—' : `${formatFcfa.format(n).replace(/[  ]/g, ' ')} FCFA`;
 }
 
 /** Date JJ/MM/AAAA à l'heure de Porto-Novo, ou « — ». */
@@ -63,37 +68,118 @@ export function sur20(valeur) {
   return Number.isFinite(n) ? `${n.toLocaleString('fr-FR', { maximumFractionDigits: 2 })}/20` : '—';
 }
 
+/** Initiales d'un nom (« AHO Kossi » → « AK »), pour les pastilles. */
+export function initiales(nom) {
+  const mots = String(nom ?? '').replace(/^(M\.|Mme|Mlle)\s+/i, '').split(/\s+/).filter(Boolean);
+  return ((mots[0]?.[0] ?? '') + (mots[1]?.[0] ?? '')).toUpperCase() || '?';
+}
+
+/**
+ * Contexte d'un espace : initiales du compte et nom de l'écran « compte »,
+ * pour la pastille de l'en-tête. Absent (écran monté seul, hors navigateur) :
+ * pas de pastille.
+ */
+export const EspaceContexte = createContext(null);
+
+/** Couleurs dérivées de la proposition C qui ne sont pas des jetons du thème. */
+export function useTeintes() {
+  const { colors, isDark } = useTheme();
+  return {
+    colors,
+    entete: isDark ? '#16382F' : '#0F5C4A',
+    surEntete: '#FFFDF8',
+    discretEntete: isDark ? '#BCCBC0' : '#CFE6DC',
+    teinte: colors.accentSubtle,
+    piste: isDark ? '#22362C' : '#E9E2D3',
+    alerteFond: isDark ? '#4A2A22' : '#F6DDD6',
+    surAccent: colors.surfaceRaised,
+    ondulation: isDark ? '#3C5145' : '#DDD5C5',
+  };
+}
+
 export function Texte({ style = undefined, variante = 'corps', children = null, ...props }) {
   const { colors } = useTheme();
   const base = {
     titre: { fontFamily: fonts.heading, fontSize: 22, color: colors.textPrimary },
-    sousTitre: { fontFamily: fonts.semibold, fontSize: 16, color: colors.textPrimary },
+    sousTitre: { fontFamily: fonts.heading, fontSize: 16, color: colors.textPrimary },
+    fort: { fontFamily: fonts.semibold, fontSize: 15, color: colors.textPrimary },
     corps: { fontFamily: fonts.body, fontSize: 15, color: colors.textPrimary },
     discret: { fontFamily: fonts.body, fontSize: 13, color: colors.textSecondary },
   }[variante];
   return <Text style={[base, style]} {...props}>{children}</Text>;
 }
 
-export function Ecran({ titre = undefined, sousTitre = undefined, onActualiser = undefined, actualisation = false, children = null }) {
-  const { colors } = useTheme();
+/**
+ * Écran d'un espace : en-tête vert (sur-titre, titre, sous-titre, retour,
+ * pastille du compte, puces de choix), contenu défilant, pied fixe éventuel.
+ */
+export function Ecran({
+  titre = undefined, sur = undefined, sousTitre = undefined, onRetour = undefined, retourLabel = 'Retour', puces = undefined,
+  sansCompte = false, onActualiser = undefined, actualisation = false, pied = null, children = null,
+}) {
+  const t = useTeintes();
+  const marges = useContext(SafeAreaInsetsContext) ?? { top: 0 };
+  const espace = useContext(EspaceContexte);
+  const navigation = useContext(NavigationContext);
+  const compte = !sansCompte && espace?.compte && navigation ? { initiales: espace.initiales, ouvrir: () => navigation.navigate(espace.compte) } : null;
   return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: colors.surface }}
-      contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 32 }}
-      keyboardShouldPersistTaps="handled"
-      refreshControl={onActualiser ? <RefreshControl refreshing={actualisation} onRefresh={onActualiser} tintColor={colors.accent} /> : undefined}
-    >
-      {titre ? <Texte variante="titre" accessibilityRole="header">{titre}</Texte> : null}
-      {sousTitre ? <Texte variante="discret">{sousTitre}</Texte> : null}
-      {children}
-    </ScrollView>
+    <View style={{ flex: 1, backgroundColor: t.colors.surface }}>
+      <StatusBar barStyle="light-content" backgroundColor={t.entete} />
+      <View style={{ backgroundColor: t.entete, paddingTop: (marges.top ?? 0) + 16, paddingBottom: 16, gap: 12 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 20 }}>
+          {onRetour ? (
+            <Pressable onPress={onRetour} accessibilityRole="button" accessibilityLabel={retourLabel} hitSlop={8}
+              style={{ width: 44, height: 44, marginLeft: -12, alignItems: 'center', justifyContent: 'center' }}>
+              <Icone nom="retour" couleur={t.surEntete} />
+            </Pressable>
+          ) : null}
+          <View style={{ flex: 1, gap: 2 }}>
+            {sur ? <Text style={{ fontFamily: fonts.body, fontSize: 13, color: t.discretEntete }}>{sur}</Text> : null}
+            {titre ? <Text accessibilityRole="header" style={{ fontFamily: fonts.heading, fontSize: 26, color: t.surEntete }}>{titre}</Text> : null}
+            {sousTitre ? <Text style={{ fontFamily: fonts.body, fontSize: 13, color: t.discretEntete }}>{sousTitre}</Text> : null}
+          </View>
+          {compte ? (
+            <Pressable onPress={compte.ouvrir} accessibilityRole="button" accessibilityLabel="Mon compte"
+              style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: t.surEntete, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ fontFamily: fonts.heading, fontSize: 15, color: t.entete }}>{compte.initiales}</Text>
+            </Pressable>
+          ) : null}
+        </View>
+        {puces && puces.options.length > 1 ? (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} accessibilityRole="tablist" contentContainerStyle={{ gap: 8, paddingHorizontal: 20 }}>
+            {puces.options.map((o) => {
+              const actif = o.valeur === puces.valeur;
+              return (
+                <Pressable key={String(o.valeur)} onPress={() => puces.onChange(o.valeur)} accessibilityRole="tab" accessibilityLabel={o.libelle}
+                  accessibilityState={{ selected: actif }}
+                  style={{ minHeight: 44, paddingHorizontal: 16, borderRadius: 22, justifyContent: 'center', borderWidth: 1,
+                    backgroundColor: actif ? t.surEntete : 'transparent', borderColor: actif ? t.surEntete : t.discretEntete }}>
+                  <Text style={{ fontFamily: actif ? fonts.heading : fonts.medium, fontSize: 14, color: actif ? t.entete : t.surEntete }}>{o.libelle}</Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        ) : null}
+      </View>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 32 }}
+        keyboardShouldPersistTaps="handled"
+        refreshControl={onActualiser ? <RefreshControl refreshing={actualisation} onRefresh={onActualiser} tintColor={t.colors.accent} /> : undefined}
+      >
+        {children}
+      </ScrollView>
+      {pied}
+    </View>
   );
 }
 
-export function Carte({ children = null, style = undefined, onPress = undefined, accessibilityLabel = undefined }) {
-  const { colors } = useTheme();
+export function Carte({ children = null, style = undefined, onPress = undefined, accessibilityLabel = undefined, ton = undefined }) {
+  const t = useTeintes();
+  const ocre = ton === 'ocre';
   const contenu = (
-    <View style={[{ backgroundColor: colors.surfaceRaised, borderColor: colors.border, borderWidth: 1, borderRadius: 12, padding: 14, gap: 6 }, style]}>
+    <View style={[{ backgroundColor: ocre ? t.colors.amberSubtle : t.colors.surfaceRaised, borderColor: t.colors.border, borderWidth: ocre ? 0 : 1,
+      borderRadius: 16, padding: 16, gap: 8 }, style]}>
       {children}
     </View>
   );
@@ -102,22 +188,100 @@ export function Carte({ children = null, style = undefined, onPress = undefined,
     : contenu;
 }
 
-export function Bouton({ titre, onPress, variante = 'principal', chargement = false, desactive = false, accessibilityLabel = undefined }) {
+/** Liste groupée dans une seule carte : un `Rang` par ligne, séparés d'un filet. */
+export function Liste({ children = null }) {
   const { colors } = useTheme();
-  const principal = variante === 'principal';
+  const rangs = React.Children.toArray(children);
+  if (rangs.length === 0) return null;
+  return (
+    <View style={{ backgroundColor: colors.surfaceRaised, borderColor: colors.border, borderWidth: 1, borderRadius: 16, overflow: 'hidden' }}>
+      {rangs.map((rang, i) => (
+        <View key={rang.key ?? i} style={i < rangs.length - 1 ? { borderBottomWidth: 1, borderBottomColor: colors.border } : undefined}>{rang}</View>
+      ))}
+    </View>
+  );
+}
+
+export function Rang({ children = null, onPress = undefined, accessibilityLabel = undefined, hauteur = 60 }) {
+  const t = useTeintes();
+  const style = { minHeight: hauteur, paddingHorizontal: 16, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 12 };
+  return onPress
+    ? <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={accessibilityLabel} android_ripple={{ color: t.ondulation }} style={style}>{children}</Pressable>
+    : <View style={style}>{children}</View>;
+}
+
+/** Titre et détail empilés, qui occupent la largeur restante d'un `Rang`. */
+export function Pile({ titre, detail = undefined, alerte = false, lignes = 1 }) {
+  const { colors } = useTheme();
+  return (
+    <View style={{ flex: 1, gap: 2 }}>
+      <Texte variante="fort">{titre}</Texte>
+      {detail ? <Texte variante="discret" numberOfLines={lignes} style={alerte ? { color: colors.error } : undefined}>{detail}</Texte> : null}
+    </View>
+  );
+}
+
+/** Chiffre clé ; lu d'un bloc par les lecteurs d'écran (« Moyenne : 13,4/20 »). */
+export function Tuile({ libelle, valeur, surCarte = true }) {
+  const { colors } = useTheme();
+  return (
+    <View accessible accessibilityLabel={`${libelle} : ${valeur}`}
+      style={{ flex: 1, backgroundColor: surCarte ? colors.surface : colors.surfaceRaised, borderRadius: 12, paddingVertical: 10, paddingHorizontal: 12, gap: 2 }}>
+      <Text style={{ fontFamily: fonts.body, fontSize: 12, color: colors.textSecondary }}>{libelle}</Text>
+      <Text numberOfLines={1} adjustsFontSizeToFit style={{ fontFamily: fonts.heading, fontSize: 19, color: colors.textPrimary }}>{valeur}</Text>
+    </View>
+  );
+}
+
+export function Tuiles({ children = null }) {
+  return <View style={{ flexDirection: 'row', gap: 8 }}>{children}</View>;
+}
+
+export function Badge({ texte, ton = 'neutre' }) {
+  const t = useTeintes();
+  const [fond, couleur] = {
+    succes: [t.teinte, t.colors.success],
+    alerte: [t.alerteFond, t.colors.error],
+    ocre: [t.colors.amberSubtle, t.colors.amber],
+    neutre: [t.piste, t.colors.textSecondary],
+  }[ton];
+  return (
+    <View style={{ backgroundColor: fond, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4 }}>
+      <Text style={{ fontFamily: fonts.semibold, fontSize: 12, color: couleur }}>{texte}</Text>
+    </View>
+  );
+}
+
+export function Pastille({ nom, taille = 40 }) {
+  const t = useTeintes();
+  return (
+    <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants"
+      style={{ width: taille, height: taille, borderRadius: taille / 2, backgroundColor: t.teinte, alignItems: 'center', justifyContent: 'center' }}>
+      <Text style={{ fontFamily: fonts.heading, fontSize: 14, color: t.colors.accent }}>{initiales(nom)}</Text>
+    </View>
+  );
+}
+
+export function Bouton({ titre, onPress, variante = 'principal', chargement = false, desactive = false, accessibilityLabel = undefined, style = undefined }) {
+  const t = useTeintes();
   const inactif = desactive || chargement;
+  const [fond, texte, bord] = {
+    principal: [t.colors.accent, t.surAccent, t.colors.accent],
+    secondaire: [t.colors.surfaceRaised, t.colors.accent, t.colors.accent],
+    ocre: [t.colors.amber, t.colors.amberSubtle, t.colors.amber],
+  }[variante];
   return (
     <Pressable
       onPress={inactif ? undefined : onPress}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? titre}
       accessibilityState={{ disabled: inactif, busy: chargement }}
-      style={{ minHeight: 44, borderRadius: 10, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center',
-        backgroundColor: principal ? colors.accent : colors.surfaceRaised, borderWidth: principal ? 0 : 1, borderColor: colors.border, opacity: inactif ? 0.6 : 1 }}
+      style={[{ minHeight: 48, borderRadius: 12, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center',
+        backgroundColor: fond, borderWidth: 1, borderColor: bord, opacity: inactif ? 0.5 : 1 }, style]}
     >
       {chargement
-        ? <ActivityIndicator color={principal ? colors.surfaceRaised : colors.accent} />
-        : <Text style={{ fontFamily: fonts.semibold, fontSize: 15, color: principal ? colors.surfaceRaised : colors.accent }}>{titre}</Text>}
+        ? <ActivityIndicator color={texte} />
+        : <Text style={{ fontFamily: fonts.semibold, fontSize: 15, color: texte, textAlign: 'center' }}>{titre}</Text>}
     </Pressable>
   );
 }
@@ -140,21 +304,116 @@ export function Etat({ requete, vide = '', estVide = false }) {
   return null;
 }
 
-/** Sélecteur à onglets segmentés (accessibles, 44 px). */
+/** Sélecteur segmenté sur une piste (accessible, 44 px) ; défile s'il déborde. */
 export function Segments({ options, valeur, onChange }) {
+  const t = useTeintes();
+  return (
+    <View style={{ backgroundColor: t.piste, borderRadius: 12 }}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} accessibilityRole="tablist" contentContainerStyle={{ padding: 4, gap: 2, flexGrow: 1 }}>
+        {options.map((o) => {
+          const actif = o.valeur === valeur;
+          return (
+            <Pressable key={String(o.valeur)} onPress={() => onChange(o.valeur)} accessibilityRole="tab" accessibilityLabel={o.libelle} accessibilityState={{ selected: actif }}
+              style={{ flexGrow: 1, minHeight: 44, paddingHorizontal: 10, borderRadius: 9, alignItems: 'center', justifyContent: 'center',
+                backgroundColor: actif ? t.colors.surfaceRaised : 'transparent' }}>
+              <Text style={{ fontFamily: actif ? fonts.heading : fonts.medium, fontSize: 13, color: actif ? t.colors.textPrimary : t.colors.textSecondary }}>{o.libelle}</Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+    </View>
+  );
+}
+
+/** Champ de saisie ; le libellé sert d'étiquette accessible et, au besoin, visible. */
+export function Champ({ libelle, etiquette = false, style = undefined, ...props }) {
   const { colors } = useTheme();
   return (
-    <View accessibilityRole="tablist" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-      {options.map((o) => {
-        const actif = o.valeur === valeur;
+    <View style={{ gap: 6 }}>
+      {etiquette ? <Text style={{ fontFamily: fonts.semibold, fontSize: 13, color: colors.textPrimary }}>{libelle}</Text> : null}
+      <TextInput accessibilityLabel={libelle} placeholder={libelle} placeholderTextColor={colors.textTertiary} {...props}
+        style={[{ minHeight: 48, borderWidth: 1, borderColor: colors.border, borderRadius: 12, paddingHorizontal: 14, backgroundColor: colors.surfaceRaised,
+          color: colors.textPrimary, fontFamily: fonts.body, fontSize: 15 }, style]} />
+    </View>
+  );
+}
+
+/** Liste déroulante : bouton « libellé / valeur », choix dans un volet du bas. */
+export function Choix({ libelle, valeur, options, onChange, vide = 'à choisir' }) {
+  const t = useTeintes();
+  const [ouvert, setOuvert] = useState(false);
+  const actuel = options.find((o) => o.valeur === valeur)?.libelle ?? vide;
+  return (
+    <>
+      <Pressable onPress={() => setOuvert(true)} accessibilityRole="button" accessibilityLabel={`${libelle} : ${actuel}`}
+        style={{ flex: 1, minHeight: 56, paddingVertical: 8, paddingHorizontal: 12, borderWidth: 1, borderColor: t.colors.border, borderRadius: 12,
+          backgroundColor: t.colors.surfaceRaised, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <View style={{ flex: 1, gap: 2 }}>
+          <Text style={{ fontFamily: fonts.body, fontSize: 11, color: t.colors.textSecondary }}>{libelle}</Text>
+          <Text numberOfLines={1} style={{ fontFamily: fonts.semibold, fontSize: 14, color: t.colors.textPrimary }}>{actuel}</Text>
+        </View>
+        <Icone nom="bas" taille={18} couleur={t.colors.textSecondary} />
+      </Pressable>
+      <Modal visible={ouvert} transparent animationType="fade" onRequestClose={() => setOuvert(false)}>
+        <Pressable onPress={() => setOuvert(false)} accessibilityLabel="Fermer la liste" style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(16, 30, 25, 0.5)' }}>
+          <Pressable onPress={() => {}} accessible={false} style={{ maxHeight: '70%', backgroundColor: t.colors.surfaceRaised, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingTop: 16, paddingBottom: 24 }}>
+            <Text accessibilityRole="header" style={{ fontFamily: fonts.heading, fontSize: 16, color: t.colors.textPrimary, paddingHorizontal: 20, paddingBottom: 8 }}>{libelle}</Text>
+            <ScrollView>
+              {options.length === 0 ? <Texte variante="discret" style={{ paddingHorizontal: 20, paddingVertical: 12 }}>Aucun choix disponible.</Texte> : null}
+              {options.map((o) => {
+                const actif = o.valeur === valeur;
+                return (
+                  <Pressable key={String(o.valeur)} onPress={() => { onChange(o.valeur); setOuvert(false); }} accessibilityRole="menuitem" accessibilityLabel={o.libelle}
+                    accessibilityState={{ selected: actif }} android_ripple={{ color: t.ondulation }}
+                    style={{ minHeight: 52, paddingHorizontal: 20, justifyContent: 'center', backgroundColor: actif ? t.teinte : 'transparent' }}>
+                    <Text style={{ fontFamily: actif ? fonts.heading : fonts.body, fontSize: 15, color: t.colors.textPrimary }}>{o.libelle}</Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          </Pressable>
+        </Pressable>
+      </Modal>
+    </>
+  );
+}
+
+/**
+ * Barre d'onglets à icônes (onglet actif surligné). Un écran dont
+ * `tabBarItemStyle.display` vaut 'none' n'a pas d'onglet (le compte) ; la
+ * barre disparaît quand l'écran courant met `tabBarStyle.display` à 'none'.
+ */
+export function BarreOnglets({ state, descriptors, navigation }) {
+  const t = useTeintes();
+  const marges = useContext(SafeAreaInsetsContext) ?? { bottom: 0 };
+  if (descriptors[state.routes[state.index].key].options.tabBarStyle?.display === 'none') return null;
+  return (
+    <View accessibilityRole="tablist" style={{ flexDirection: 'row', backgroundColor: t.colors.surfaceRaised, borderTopWidth: 1, borderTopColor: t.colors.border,
+      paddingTop: 8, paddingBottom: 8 + (marges.bottom ?? 0), paddingHorizontal: 4 }}>
+      {state.routes.map((route, i) => {
+        const { options } = descriptors[route.key];
+        if (options.tabBarItemStyle?.display === 'none') return null;
+        const actif = state.index === i;
+        const appui = () => {
+          const e = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+          if (!actif && !e.defaultPrevented) navigation.navigate(route.name);
+        };
         return (
-          <Pressable key={o.valeur} onPress={() => onChange(o.valeur)} accessibilityRole="tab" accessibilityLabel={o.libelle} accessibilityState={{ selected: actif }}
-            style={{ minHeight: 44, paddingHorizontal: 14, borderRadius: 22, justifyContent: 'center',
-              backgroundColor: actif ? colors.accent : colors.surfaceRaised, borderWidth: 1, borderColor: actif ? colors.accent : colors.border }}>
-            <Text style={{ fontFamily: fonts.medium, fontSize: 14, color: actif ? colors.surfaceRaised : colors.textPrimary }}>{o.libelle}</Text>
+          <Pressable key={route.key} onPress={appui} accessibilityRole="tab" accessibilityLabel={route.name} accessibilityState={{ selected: actif }}
+            style={{ flex: 1, minHeight: 56, alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+            <View style={{ width: 56, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: actif ? t.teinte : 'transparent' }}>
+              {options.tabBarIcon?.({ focused: actif, color: actif ? t.colors.accent : t.colors.textSecondary, size: 22 })}
+            </View>
+            <Text style={{ fontFamily: actif ? fonts.heading : fonts.medium, fontSize: 12, color: actif ? t.colors.textPrimary : t.colors.textSecondary }}>{route.name}</Text>
           </Pressable>
         );
       })}
     </View>
   );
 }
+
+/** Options d'un écran à onglet, ou d'un écran sans onglet ni barre (le compte). */
+export function onglet(icone) {
+  return { tabBarIcon: ({ color, size }) => <Icone nom={icone} couleur={color} taille={size} /> };
+}
+export const SANS_ONGLET = { tabBarItemStyle: { display: 'none' }, tabBarStyle: { display: 'none' } };

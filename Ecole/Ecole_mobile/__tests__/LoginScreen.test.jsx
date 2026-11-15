@@ -61,7 +61,9 @@ describe('LoginScreen', () => {
     expect(screen.getByText('École')).toBeTruthy();
     expect(screen.queryByText('Érudit')).toBeNull();
     expect(screen.getByText('Connexion')).toBeTruthy();
-    expect(screen.getByText('Email')).toBeTruthy();
+    expect(screen.getByText('Identifiant ou e-mail')).toBeTruthy();
+    // Même marque que le web : logo et nom réunis en une image accessible.
+    expect(screen.getByRole('image', { name: 'École' })).toBeTruthy();
     expect(screen.getByText('Mot de passe')).toBeTruthy();
     expect(screen.getByText('Se connecter')).toBeTruthy();
     expect(screen.getByText('Mot de passe oublié ?')).toBeTruthy();

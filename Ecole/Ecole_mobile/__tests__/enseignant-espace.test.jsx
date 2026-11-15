@@ -27,7 +27,9 @@ const monter = (Ecran) => render(<ThemeProvider><Ecran /></ThemeProvider>);
 
 async function ouvrirGrille() {
   monter(Notes);
-  fireEvent.press(await screen.findByRole('tab', { name: '3ème' }));
+  // La classe se choisit dans une liste déroulante (maquette du 15/11/2026).
+  fireEvent.press(await screen.findByRole('button', { name: 'Classe : à choisir' }));
+  fireEvent.press(await screen.findByRole('menuitem', { name: '3ème' }));
   return screen.findByLabelText('Note de AHO Kossi');
 }
 

@@ -40,51 +40,72 @@ describe('espace parent', () => {
 
   it('montre l’enfant et ne transforme pas une moyenne inconnue en 0', async () => {
     monter();
-    expect(await screen.findByText(/AHO Kossi/)).toBeTruthy();
-    expect(screen.getByText(/Moyenne : —/)).toBeTruthy();
+    expect(await screen.findByLabelText('Voir la scolarité de AHO Kossi')).toBeTruthy();
+    expect(screen.getAllByText('AHO Kossi').length).toBeGreaterThan(0);
+    expect(screen.getByLabelText('Moyenne : —')).toBeTruthy();
     expect(screen.queryByText(/0\/20/)).toBeNull();
+  });
+
+  it('présente quatre onglets ; le compte s’ouvre par la pastille d’initiales', async () => {
+    monter();
+    await screen.findByLabelText('Voir la scolarité de AHO Kossi');
+    for (const nom of ['Accueil', 'Scolarité', 'Paiements', 'Messages']) expect(screen.getByRole('tab', { name: nom })).toBeTruthy();
+    expect(screen.queryByRole('tab', { name: 'Compte' })).toBeNull();
+    fireEvent.press(screen.getByRole('button', { name: 'Mon compte' }));
+    expect(await screen.findByText('Avis par SMS')).toBeTruthy();
+    // Le compte n'a ni pastille ni barre d'onglets : on en revient par la flèche.
+    expect(screen.queryByRole('tab', { name: 'Accueil' })).toBeNull();
+    fireEvent.press(screen.getByRole('button', { name: 'Retour à l’accueil' }));
+    expect(await screen.findByRole('tab', { name: 'Accueil' })).toBeTruthy();
+  });
+
+  it('annonce la prochaine échéance sur l’accueil et mène au paiement', async () => {
+    monter();
+    expect(await screen.findByLabelText('Scolarité T1 : 50 000 FCFA restant')).toBeTruthy();
+    fireEvent.press(screen.getByRole('button', { name: 'Aller payer Scolarité T1 en ligne' }));
+    expect(await screen.findByLabelText('Montant à payer pour Scolarité T1')).toBeTruthy();
   });
 
   it('ouvre le paiement en ligne depuis le mobile, retour dans l’application', async () => {
     const ouvrir = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
     monter();
-    await screen.findByText(/AHO Kossi/);
-    fireEvent.press(screen.getByText('Paiements'));
+    await screen.findByLabelText('Voir la scolarité de AHO Kossi');
+    fireEvent.press(screen.getByRole('tab', { name: 'Paiements' }));
     fireEvent.changeText(await screen.findByLabelText('Montant à payer pour Scolarité T1'), '20000');
-    fireEvent.press(screen.getByText('Payer en ligne'));
+    fireEvent.press(screen.getByRole('button', { name: 'Payer en ligne' }));
     await waitFor(() => expect(api.post).toHaveBeenCalledWith('/payments/initialize', expect.objectContaining({
       eleve_id: 7, paiement_eleve_id: 3, amount: 20000, client: 'mobile',
     })));
     await waitFor(() => expect(ouvrir).toHaveBeenCalledWith('https://sandbox-process.fedapay.com/pay/x'));
-    expect(screen.getByText(/Reste : 50 000 FCFA/)).toBeTruthy();
+    expect(screen.getByLabelText('Reste à payer : 50 000 FCFA')).toBeTruthy();
   });
 
   it('refuse un montant supérieur au reste sans appeler l’API', async () => {
     const alerte = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
     monter();
-    await screen.findByText(/AHO Kossi/);
-    fireEvent.press(screen.getByText('Paiements'));
+    await screen.findByLabelText('Voir la scolarité de AHO Kossi');
+    fireEvent.press(screen.getByRole('tab', { name: 'Paiements' }));
     fireEvent.changeText(await screen.findByLabelText('Montant à payer pour Scolarité T1'), '90000');
-    fireEvent.press(screen.getByText('Payer en ligne'));
+    fireEvent.press(screen.getByRole('button', { name: 'Payer en ligne' }));
     expect(alerte).toHaveBeenCalledWith('Montant', expect.stringContaining('50 000 FCFA'));
     expect(api.post).not.toHaveBeenCalled();
   });
 
   it('écrit à un contact autorisé', async () => {
     monter();
-    await screen.findByText(/AHO Kossi/);
-    fireEvent.press(screen.getByText('Messages'));
+    await screen.findByLabelText('Voir la scolarité de AHO Kossi');
+    fireEvent.press(screen.getByRole('tab', { name: 'Messages' }));
     fireEvent.press(await screen.findByLabelText('Écrire à Mme DOSSOU'));
     fireEvent.changeText(await screen.findByLabelText('Votre message'), 'Bonjour madame');
-    fireEvent.press(screen.getByText('Envoyer'));
+    fireEvent.press(screen.getByRole('button', { name: 'Envoyer' }));
     await waitFor(() => expect(api.post).toHaveBeenCalledWith('/messages', { destinataire: '12', contenu: 'Bonjour madame' }));
   });
 
   it('enregistre une préférence d’avis et refuse un mot de passe non confirmé', async () => {
     const alerte = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
     monter();
-    await screen.findByText(/AHO Kossi/);
-    fireEvent.press(screen.getByText('Compte'));
+    await screen.findByLabelText('Voir la scolarité de AHO Kossi');
+    fireEvent.press(screen.getByRole('button', { name: 'Mon compte' }));
     fireEvent(await screen.findByLabelText('Absences et retards'), 'valueChange', false);
     await waitFor(() => expect(api.put).toHaveBeenCalledWith('/parent/preferences', expect.objectContaining({ absences: false })));
     fireEvent.changeText(screen.getByLabelText('Nouveau mot de passe'), 'motdepasse1');

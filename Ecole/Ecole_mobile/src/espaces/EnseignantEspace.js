@@ -7,6 +7,10 @@
  * grille l'affiche (note verrouillée en lecture seule). Un brouillon reste sur
  * le téléphone tant que l'API n'a pas confirmé l'enregistrement, et l'état
  * « en attente » est distinct de « enregistré ».
+ *
+ * Présentation (maquettes validées le 15/11/2026) : cinq onglets à icônes
+ * (Semaine, Classes, Notes, Bulletins, Messages) ; le compte s'ouvre par la
+ * pastille d'initiales de l'en-tête.
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, TextInput, View } from 'react-native';
@@ -17,10 +21,13 @@ import { lireTableurNotes } from './importNotes';
 import { api } from '../services/api';
 import { getBrouillon, listeBrouillons, setBrouillon } from '../services/secureStorage';
 import { useAuth } from '../context/AuthContext';
-import { useTheme } from '../theme';
 import { fonts } from '../theme/typography';
-import { Bouton, Carte, Ecran, Etat, Segments, Texte, dateFr, liste, messageErreur, sur20, useRequete } from './commun';
-import { Messages } from './ParentEspace';
+import {
+  BarreOnglets, Bouton, Carte, Champ, Choix, Ecran, EspaceContexte, Etat, Liste, Pastille, Pile, Rang, SANS_ONGLET, Segments, Texte,
+  dateFr, initiales, liste, messageErreur, onglet, sur20, useRequete, useTeintes,
+} from './commun';
+import { ChangerMotDePasse, Jour, Messages, nomCompte } from './ParentEspace';
+import { Icone } from './Icone';
 
 const Tab = createBottomTabNavigator();
 export const TYPES = ['Devoir1', 'Devoir2', 'Interrogation', '1ère evaluation', '2ème evaluation', '3ème evaluation', '4ème evaluation', '5ème evaluation', '6ème evaluation'];
@@ -42,20 +49,28 @@ function aujourdhui() {
 }
 
 const nom = (e) => [e?.nom ?? e?.user?.name, e?.prenom ?? e?.user?.prenom].filter(Boolean).join(' ') || `Élève ${e?.id}`;
+const effectif = (n) => `${n} élève${n > 1 ? 's' : ''}`;
 
 /* ─── Classes et élèves ────────────────────────────────────────────────── */
 function Classes() {
   const classes = useRequete('/enseignant/classes');
+  const t = useTeintes();
   const [ouverte, setOuverte] = useState(null);
   const liste_ = liste(classes.donnees);
   if (ouverte) {
+    const eleves = ouverte.eleves ?? [];
     return (
-      <Ecran titre={ouverte.nom_classe} sousTitre={`${(ouverte.eleves ?? []).length} élève(s)`}>
-        <Bouton titre="← Mes classes" variante="secondaire" onPress={() => setOuverte(null)} />
-        <Etat requete={{ chargement: false, erreur: null }} estVide={(ouverte.eleves ?? []).length === 0} vide="Aucun élève inscrit dans cette classe." />
-        {(ouverte.eleves ?? []).map((e) => (
-          <Carte key={e.id}><Texte>{nom(e)}</Texte><Texte variante="discret">Matricule {e.numero_matricule ?? e.matricule ?? '—'}</Texte></Carte>
-        ))}
+      <Ecran titre={ouverte.nom_classe} sousTitre={effectif(eleves.length)} onRetour={() => setOuverte(null)} retourLabel="Retour à mes classes">
+        <Etat requete={{ chargement: false, erreur: null }} estVide={eleves.length === 0} vide="Aucun élève inscrit dans cette classe." />
+        <Liste>
+          {eleves.map((e) => (
+            <Rang key={e.id} hauteur={56}>
+              <Pastille nom={nom(e)} taille={36} />
+              <Texte style={{ flex: 1, fontFamily: fonts.medium }}>{nom(e)}</Texte>
+              <Texte variante="discret">{e.numero_matricule ?? e.matricule ?? '—'}</Texte>
+            </Rang>
+          ))}
+        </Liste>
       </Ecran>
     );
   }
@@ -63,9 +78,12 @@ function Classes() {
     <Ecran titre="Mes classes" onActualiser={classes.recharger}>
       <Etat requete={classes} estVide={liste_.length === 0} vide="Aucune classe ne vous est affectée. La direction fait les affectations." />
       {liste_.map((c) => (
-        <Carte key={c.id} onPress={() => setOuverte(c)} accessibilityLabel={`Voir les élèves de ${c.nom_classe}`}>
-          <Texte variante="sousTitre">{c.nom_classe}</Texte>
-          <Texte variante="discret">{(c.eleves ?? []).length} élève(s) · {c.categorie_classe ?? ''}</Texte>
+        <Carte key={c.id} onPress={() => setOuverte(c)} accessibilityLabel={`Voir les élèves de ${c.nom_classe}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <View style={{ flex: 1, gap: 2 }}>
+            <Texte variante="sousTitre" style={{ fontSize: 17 }}>{c.nom_classe}</Texte>
+            <Texte variante="discret">{[effectif((c.eleves ?? []).length), c.categorie_classe].filter(Boolean).join(' · ')}</Texte>
+          </View>
+          <Icone nom="suivant" couleur={t.colors.accent} />
         </Carte>
       ))}
     </Ecran>
@@ -75,12 +93,13 @@ function Classes() {
 /* ─── Saisie des notes en grille, avec brouillon ───────────────────────── */
 export function Notes() {
   const classes = useRequete('/enseignant/classes');
+  const t = useTeintes();
   const [ev, setEv] = useState({ classe: null, matiere: null, type: TYPES[0], periode: PERIODES[0], date: aujourdhui() });
   const params = ev.classe && `?${new URLSearchParams({ type_evaluation: ev.type, periode: ev.periode, date_evaluation: ev.date, ...(ev.matiere ? { matiere_id: String(ev.matiere) } : {}) })}`;
   const grilleReq = useRequete(ev.classe ? `/notes/grille/${ev.classe}${params}` : null);
   const grille = grilleReq.donnees?.data;
   const eleves = useMemo(() => grille?.eleves ?? [], [grille]);
-  const matieres = grille?.matieres ?? [];
+  const matieres = useMemo(() => grille?.matieres ?? [], [grille]);
   const enregistrees = useMemo(() => Object.fromEntries((grille?.notes ?? []).map((n) => [n.eleve_id, n])), [grille]);
   const cle = ev.classe && ev.matiere ? `${ev.classe}:${ev.matiere}:${ev.type}:${ev.periode}:${ev.type === 'Interrogation' ? ev.date : ''}` : null;
   const [saisies, setSaisies] = useState({});
@@ -152,42 +171,52 @@ export function Notes() {
   };
 
   const listeClasses = liste(classes.donnees);
+  const classe = listeClasses.find((c) => c.id === ev.classe);
+  const couleurMessage = { erreur: t.colors.error, enregistre: t.colors.success, attente: t.colors.amber }[etat] ?? t.colors.textSecondary;
   return (
-    <Ecran titre="Saisie des notes">
+    <Ecran titre="Saisie des notes" sur={classe ? `${classe.nom_classe}${eleves.length ? ` · ${effectif(eleves.length)}` : ''}` : undefined}>
       <Etat requete={classes} estVide={listeClasses.length === 0} vide="Aucune classe ne vous est affectée." />
-      <Texte variante="sousTitre">Classe</Texte>
-      <Segments valeur={ev.classe} onChange={(v) => setEv((e) => ({ ...e, classe: v, matiere: null }))} options={listeClasses.map((c) => ({ valeur: c.id, libelle: c.nom_classe }))} />
-      {ev.classe && <>
-        <Texte variante="sousTitre">Matière</Texte>
-        <Segments valeur={ev.matiere} onChange={(v) => setEv((e) => ({ ...e, matiere: v }))} options={matieres.map((m) => ({ valeur: m.id, libelle: `${m.nom} (coef. ${m.coefficient ?? '—'})` }))} />
-        <Texte variante="sousTitre">Évaluation</Texte>
-        <Segments valeur={ev.type} onChange={(v) => setEv((e) => ({ ...e, type: v }))} options={TYPES.map((t) => ({ valeur: t, libelle: t }))} />
-        <Segments valeur={ev.periode} onChange={(v) => setEv((e) => ({ ...e, periode: v }))} options={PERIODES.map((p) => ({ valeur: p, libelle: p }))} />
+      <View style={{ gap: 8 }}>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          <Choix libelle="Classe" valeur={ev.classe} onChange={(v) => setEv((e) => ({ ...e, classe: v, matiere: null }))}
+            options={listeClasses.map((c) => ({ valeur: c.id, libelle: c.nom_classe }))} />
+          <Choix libelle="Matière" valeur={ev.matiere} onChange={(v) => setEv((e) => ({ ...e, matiere: v }))} vide={ev.classe ? 'à choisir' : 'classe d’abord'}
+            options={matieres.map((m) => ({ valeur: m.id, libelle: `${m.nom} (coef. ${m.coefficient ?? '—'})` }))} />
+        </View>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          <Choix libelle="Évaluation" valeur={ev.type} onChange={(v) => setEv((e) => ({ ...e, type: v }))} options={TYPES.map((x) => ({ valeur: x, libelle: x }))} />
+          <Choix libelle="Période" valeur={ev.periode} onChange={(v) => setEv((e) => ({ ...e, periode: v }))} options={PERIODES.map((p) => ({ valeur: p, libelle: p }))} />
+        </View>
         {ev.type === 'Interrogation' && (
-          <TextInput accessibilityLabel="Date de l’interrogation (AAAA-MM-JJ)" value={ev.date} onChangeText={(v) => setEv((e) => ({ ...e, date: v }))}
-            style={{ minHeight: 44, borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, fontFamily: fonts.body }} />
+          <Champ libelle="Date de l’interrogation (AAAA-MM-JJ)" etiquette value={ev.date} onChangeText={(v) => setEv((e) => ({ ...e, date: v }))} />
         )}
-      </>}
+      </View>
       {ev.classe && ev.matiere && <>
         <Etat requete={grilleReq} estVide={eleves.length === 0} vide="Aucun élève dans cette classe." />
-        {eleves.map((e) => {
-          const verrouillee = !!enregistrees[e.id]?.locked;
-          const invalide = Number.isNaN(lireNote(saisies[e.id]));
-          return (
-            <Carte key={e.id} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <View style={{ flex: 1 }}>
-                <Texte>{nom(e)}</Texte>
-                <Texte variante="discret">{verrouillee ? 'Note verrouillée (bulletin arrêté)' : invalide ? 'Note entre 0 et 20' : enregistrees[e.id] ? `Enregistrée : ${sur20(enregistrees[e.id].note)}` : ' '}</Texte>
-              </View>
-              <TextInput accessibilityLabel={`Note de ${nom(e)}`} editable={!verrouillee} keyboardType="decimal-pad" value={saisies[e.id] ?? ''}
-                onChangeText={(v) => saisir(e.id, v)}
-                style={{ width: 80, minHeight: 44, borderWidth: invalide ? 2 : 1, borderRadius: 10, textAlign: 'center', fontFamily: fonts.semibold, opacity: verrouillee ? 0.5 : 1 }} />
-            </Carte>
-          );
-        })}
-        {message ? <Carte><Texte accessibilityRole="alert">{etat === 'attente' ? '⏳ ' : etat === 'enregistre' ? '✓ ' : ''}{message}</Texte></Carte> : null}
-        <Bouton titre="Importer un tableur (CSV)" variante="secondaire" onPress={importer} />
-        <Bouton titre={`Enregistrer ${aEnvoyer.length} note(s)`} chargement={etat === 'envoi'} desactive={invalides.length > 0 || aEnvoyer.length === 0} onPress={enregistrer} />
+        <Liste>
+          {eleves.map((e) => {
+            const verrouillee = !!enregistrees[e.id]?.locked;
+            const invalide = Number.isNaN(lireNote(saisies[e.id]));
+            const detail = verrouillee ? 'Note verrouillée (bulletin arrêté)' : invalide ? 'Note entre 0 et 20' : enregistrees[e.id] ? `Enregistrée : ${sur20(enregistrees[e.id].note)}` : undefined;
+            return (
+              <Rang key={e.id} hauteur={58}>
+                <Pile titre={nom(e)} detail={detail} alerte={invalide} />
+                <TextInput accessibilityLabel={`Note de ${nom(e)}`} editable={!verrouillee} keyboardType="decimal-pad" value={saisies[e.id] ?? ''}
+                  onChangeText={(v) => saisir(e.id, v)}
+                  style={{ width: 76, minHeight: 44, borderWidth: invalide ? 2 : 1, borderColor: invalide ? t.colors.error : t.colors.border, borderRadius: 10,
+                    backgroundColor: t.colors.surface, color: invalide ? t.colors.error : t.colors.textPrimary, textAlign: 'center',
+                    fontFamily: fonts.semibold, fontSize: 17, opacity: verrouillee ? 0.5 : 1 }} />
+              </Rang>
+            );
+          })}
+        </Liste>
+        {message ? <Texte accessibilityRole="alert" variante="discret" style={{ color: couleurMessage }}>{message}</Texte> : null}
+        {invalides.length ? <Texte variante="discret" style={{ color: t.colors.error }}>Corrigez les notes hors de 0 à 20 pour pouvoir enregistrer.</Texte> : null}
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          <Bouton titre="Importer (CSV)" accessibilityLabel="Importer un tableur (CSV)" variante="secondaire" onPress={importer} style={{ flex: 1 }} />
+          <Bouton titre={`Enregistrer ${aEnvoyer.length} note(s)`} chargement={etat === 'envoi'} desactive={invalides.length > 0 || aEnvoyer.length === 0}
+            onPress={enregistrer} style={{ flex: 1.3 }} />
+        </View>
       </>}
     </Ecran>
   );
@@ -196,21 +225,28 @@ export function Notes() {
 /* ─── Bulletins de la classe (consultation) ────────────────────────────── */
 function Bulletins() {
   const classes = useRequete('/enseignant/classes');
-  const [classe, setClasse] = useState(null);
+  const listeClasses = liste(classes.donnees);
+  const [choisie, setClasse] = useState(null);
+  const classe = choisie ?? listeClasses[0]?.id ?? null;
   const [periode, setPeriode] = useState(PERIODES[0]);
   const req = useRequete(classe ? `/bulletins?${new URLSearchParams({ classe_id: String(classe), periode })}` : null);
+  const bulletins = [...liste(req.donnees)].sort((a, b) => (a.rang ?? Infinity) - (b.rang ?? Infinity));
   return (
-    <Ecran titre="Bulletins">
-      <Segments valeur={classe} onChange={setClasse} options={liste(classes.donnees).map((c) => ({ valeur: c.id, libelle: c.nom_classe }))} />
+    <Ecran titre="Bulletins" puces={{ options: listeClasses.map((c) => ({ valeur: c.id, libelle: c.nom_classe })), valeur: classe, onChange: setClasse }}
+      sousTitre={listeClasses.length === 1 ? listeClasses[0].nom_classe : undefined}>
+      <Etat requete={classes} estVide={listeClasses.length === 0} vide="Aucune classe ne vous est affectée." />
       <Segments valeur={periode} onChange={setPeriode} options={PERIODES.map((p) => ({ valeur: p, libelle: p }))} />
       {classe && <>
-        <Etat requete={req} estVide={liste(req.donnees).length === 0} vide="Aucun bulletin arrêté pour cette classe et cette période." />
-        {liste(req.donnees).map((b) => (
-          <Carte key={b.id}>
-            <Texte variante="sousTitre">{b.eleve?.nom ? nom(b.eleve) : `Élève ${b.eleve_id}`}</Texte>
-            <Texte>Moyenne : {sur20(b.moyenne_generale)} · Rang : {b.rang ? `${b.rang}/${b.total_eleves ?? '—'}` : '—'}{b.mention ? ` · ${b.mention}` : ''}</Texte>
-          </Carte>
-        ))}
+        <Etat requete={req} estVide={bulletins.length === 0} vide="Aucun bulletin arrêté pour cette classe et cette période." />
+        <Liste>
+          {bulletins.map((b) => (
+            <Rang key={b.id} hauteur={62}>
+              <Pile titre={b.eleve?.nom ? nom(b.eleve) : `Élève ${b.eleve_id}`}
+                detail={[b.rang ? `Rang ${b.rang}/${b.total_eleves ?? '—'}` : 'Rang —', b.mention].filter(Boolean).join(' · ')} />
+              <Texte variante="titre" style={{ fontSize: 18 }}>{sur20(b.moyenne_generale)}</Texte>
+            </Rang>
+          ))}
+        </Liste>
       </>}
     </Ecran>
   );
@@ -218,25 +254,25 @@ function Bulletins() {
 
 /* ─── Emploi du temps et annonces ──────────────────────────────────────── */
 function Semaine() {
+  const { user } = useAuth();
   const edt = useRequete('/emploi-du-temps');
   const annonces = useRequete('/communications');
   const cours = liste(edt.donnees);
   const parJour = JOURS.map((j) => ({ jour: j, cours: cours.filter((c) => String(c.jour).toLowerCase() === j) })).filter((j) => j.cours.length);
   return (
-    <Ecran titre="Ma semaine" onActualiser={() => { edt.recharger(); annonces.recharger(); }}>
+    <Ecran titre="Ma semaine" sur={nomCompte(user) ? `Bonjour, ${nomCompte(user)}` : undefined} onActualiser={() => { edt.recharger(); annonces.recharger(); }}>
       <Etat requete={edt} estVide={parJour.length === 0} vide="Aucun cours planifié." />
       {parJour.map(({ jour, cours: c }) => (
-        <Carte key={jour}>
-          <Texte variante="sousTitre">{jour.charAt(0).toUpperCase() + jour.slice(1)}</Texte>
-          {c.sort((x, y) => String(x.heure_debut).localeCompare(String(y.heure_debut))).map((x) => (
-            <Texte key={x.id}>{String(x.heure_debut).slice(0, 5)}–{String(x.heure_fin).slice(0, 5)} · {x.classe?.nom_classe ?? ''} · {x.matiere?.nom ?? ''}{x.salle ? ` · salle ${x.salle}` : ''}</Texte>
-          ))}
-        </Carte>
+        <Jour key={jour} jour={jour} cours={c} intitule={(x) => [x.classe?.nom_classe, x.matiere?.nom].filter(Boolean).join(' · ') || 'Cours'} />
       ))}
       <Texte variante="sousTitre" accessibilityRole="header">Annonces</Texte>
       <Etat requete={annonces} estVide={liste(annonces.donnees).length === 0} vide="Aucune annonce." />
       {liste(annonces.donnees).map((a) => (
-        <Carte key={a.id}><Texte variante="sousTitre">{a.titre}</Texte><Texte variante="discret">{dateFr(a.created_at)}</Texte><Texte>{a.contenu}</Texte></Carte>
+        <Carte key={a.id} style={{ gap: 4 }}>
+          <Texte variante="fort">{a.titre}</Texte>
+          <Texte variante="discret">{dateFr(a.created_at)}</Texte>
+          <Texte>{a.contenu}</Texte>
+        </Carte>
       ))}
     </Ecran>
   );
@@ -253,60 +289,40 @@ export async function confirmerDeconnexion(logout) {
   ]);
 }
 
-export function Compte() {
+export function Compte({ navigation = undefined }) {
   const { user, logout } = useAuth();
-  const [mdp, setMdp] = useState({ current_password: '', password: '', password_confirmation: '' });
-  const [envoi, setEnvoi] = useState(false);
-
-  const deconnecter = () => confirmerDeconnexion(logout);
-
-  const changerMdp = async () => {
-    if (mdp.password.length < 8 || mdp.password !== mdp.password_confirmation) {
-      Alert.alert('Mot de passe', 'Le nouveau mot de passe doit compter au moins 8 caractères et être confirmé à l’identique.');
-      return;
-    }
-    setEnvoi(true);
-    try {
-      await api.post('/auth/change-password', mdp);
-      setMdp({ current_password: '', password: '', password_confirmation: '' });
-      Alert.alert('Mot de passe', 'Votre mot de passe a été changé.');
-    } catch (err) {
-      Alert.alert('Mot de passe', messageErreur(err, 'Le mot de passe n’a pas été changé.'));
-    } finally {
-      setEnvoi(false);
-    }
-  };
+  const t = useTeintes();
+  const [enAttente, setEnAttente] = useState(0);
+  useEffect(() => { listeBrouillons().then((l) => setEnAttente(l.length)).catch(() => {}); }, []);
 
   return (
-    <Ecran titre="Mon compte" sousTitre={[user?.prenom, user?.name ?? user?.nom].filter(Boolean).join(' ')}>
-      {[['current_password', 'Mot de passe actuel'], ['password', 'Nouveau mot de passe'], ['password_confirmation', 'Confirmer le nouveau mot de passe']].map(([c, l]) => (
-        <TextInput key={c} accessibilityLabel={l} placeholder={l} secureTextEntry value={mdp[c]} onChangeText={(v) => setMdp((m) => ({ ...m, [c]: v }))}
-          style={{ minHeight: 44, borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, fontFamily: fonts.body }} />
-      ))}
-      <Bouton titre="Changer le mot de passe" chargement={envoi} onPress={changerMdp} />
-      <View style={{ height: 12 }} />
-      <Bouton titre="Se déconnecter" variante="secondaire" onPress={deconnecter} />
+    <Ecran titre="Mon compte" sousTitre={[nomCompte(user), 'enseignant'].filter(Boolean).join(' · ')} sansCompte
+      onRetour={navigation ? () => navigation.navigate('Semaine') : undefined} retourLabel="Retour à ma semaine">
+      <ChangerMotDePasse />
+      {enAttente ? (
+        <Carte ton="ocre" style={{ gap: 4, marginTop: 8 }}>
+          <Texte variante="fort" style={{ fontSize: 14, color: t.colors.amber }}>{enAttente} saisie{enAttente > 1 ? 's' : ''} de notes non enregistrée{enAttente > 1 ? 's' : ''}</Texte>
+          <Texte style={{ fontSize: 14 }}>Elles seront effacées de ce téléphone si vous vous déconnectez.</Texte>
+        </Carte>
+      ) : null}
+      <Bouton titre="Se déconnecter" variante="secondaire" onPress={() => confirmerDeconnexion(logout)} />
     </Ecran>
   );
 }
 
 export default function EnseignantEspace() {
-  const { colors } = useTheme();
+  const { user } = useAuth();
+  const espace = useMemo(() => ({ initiales: initiales(nomCompte(user)), compte: 'Compte' }), [user]);
   return (
-    <Tab.Navigator screenOptions={{
-      headerShown: false,
-      tabBarActiveTintColor: colors.accent,
-      tabBarInactiveTintColor: colors.textSecondary,
-      tabBarStyle: { backgroundColor: colors.surfaceRaised, borderTopColor: colors.border, minHeight: 56 },
-      tabBarLabelStyle: { fontFamily: fonts.medium, fontSize: 12 },
-      tabBarIcon: () => null,
-    }}>
-      <Tab.Screen name="Classes" component={Classes} />
-      <Tab.Screen name="Notes" component={Notes} />
-      <Tab.Screen name="Bulletins" component={Bulletins} />
-      <Tab.Screen name="Semaine" component={Semaine} />
-      <Tab.Screen name="Messages" component={Messages} />
-      <Tab.Screen name="Compte" component={Compte} />
-    </Tab.Navigator>
+    <EspaceContexte.Provider value={espace}>
+      <Tab.Navigator tabBar={(p) => <BarreOnglets {...p} />} screenOptions={{ headerShown: false }}>
+        <Tab.Screen name="Semaine" component={Semaine} options={onglet('calendrier')} />
+        <Tab.Screen name="Classes" component={Classes} options={onglet('groupe')} />
+        <Tab.Screen name="Notes" component={Notes} options={onglet('crayon')} />
+        <Tab.Screen name="Bulletins" component={Bulletins} options={onglet('document')} />
+        <Tab.Screen name="Messages" component={Messages} options={onglet('message')} />
+        <Tab.Screen name="Compte" component={Compte} options={SANS_ONGLET} />
+      </Tab.Navigator>
+    </EspaceContexte.Provider>
   );
 }

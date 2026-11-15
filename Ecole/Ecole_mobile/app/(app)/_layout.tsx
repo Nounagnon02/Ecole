@@ -14,6 +14,7 @@ import { useAuth } from '../../src/context/AuthContext';
 import { useTheme } from '../../src/theme';
 import { DASHBOARDS, hrefDashboard } from '../../src/navigation/routerBridge';
 import MotDePasseImpose from '../../src/espaces/MotDePasseImpose';
+import { Logo } from '../../src/espaces/Icone';
 
 export default function AppLayout() {
   const { user, loading, logout } = useAuth();
@@ -45,15 +46,8 @@ export default function AppLayout() {
         flex: 1, justifyContent: 'center', alignItems: 'center',
         backgroundColor: colors.surface,
       }}>
-        <View style={{
-          width: 64, height: 64, borderRadius: 16, marginBottom: 16,
-          backgroundColor: colors.primary,
-          alignItems: 'center', justifyContent: 'center',
-          shadowColor: colors.primary, shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.3, shadowRadius: 8, elevation: 6,
-        }}>
-          <ActivityIndicator size="large" color="#FFFFFF" />
-        </View>
+        <Logo taille={72} couleur={colors.accent} reliure={colors.surface} />
+        <ActivityIndicator size="large" color={colors.accent} style={{ marginTop: 16 }} accessibilityLabel="Chargement" />
       </View>
     );
   }
