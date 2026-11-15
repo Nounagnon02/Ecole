@@ -6,7 +6,7 @@ import React from 'react';
 import { Alert, Linking } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
-import ParentEspace, { bulletinHtml } from '../src/espaces/ParentEspace';
+import ParentEspace, { bulletinHtml, libelleSalle, nomCompte } from '../src/espaces/ParentEspace';
 import { ThemeProvider } from '../src/theme';
 import { api } from '../src/services/api';
 
@@ -134,5 +134,14 @@ describe('espace parent', () => {
     expect(html).toContain('15,5/20');
     expect(html).toContain('<td>5</td>');
     expect(html).toContain('3/6');
+  });
+
+  // Vu sur l'émulateur avec les données de recette (15/11/2026).
+  it('n’écrit ni « salle Salle 8 » ni un prénom en double', () => {
+    expect(libelleSalle('Salle 8')).toBe('Salle 8');
+    expect(libelleSalle('8')).toBe('salle 8');
+    expect(libelleSalle(null)).toBe('');
+    expect(nomCompte({ prenom: 'Enseignant', name: 'Enseignant Complexe Scolaire' })).toBe('Enseignant Complexe Scolaire');
+    expect(nomCompte({ prenom: 'Afi', name: 'AHO' })).toBe('Afi AHO');
   });
 });

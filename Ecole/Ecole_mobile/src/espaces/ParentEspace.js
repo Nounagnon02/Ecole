@@ -32,7 +32,20 @@ const useEnfant = () => useContext(EnfantContexte);
 
 const nomEnfant = (e) => [e?.nom, e?.prenom].filter(Boolean).join(' ') || 'Enfant';
 const classeEnfant = (e) => e?.classe?.nom ?? e?.classe?.nom_classe ?? 'Classe non renseignée';
-export const nomCompte = (u) => [u?.prenom, u?.name ?? u?.nom].filter(Boolean).join(' ');
+/** Nom affiché du compte ; le prénom n'est pas répété si le nom le contient déjà. */
+export function nomCompte(u) {
+  const prenom = String(u?.prenom ?? '').trim();
+  const nom = String(u?.name ?? u?.nom ?? '').trim();
+  if (prenom && nom.toLowerCase().includes(prenom.toLowerCase())) return nom;
+  return [prenom, nom].filter(Boolean).join(' ');
+}
+
+/** « 8 » → « salle 8 » ; « Salle 8 » reste « Salle 8 » (pas de « salle Salle 8 »). */
+export function libelleSalle(salle) {
+  const s = String(salle ?? '').trim();
+  if (!s) return '';
+  return /^salle\b/i.test(s) ? s : `salle ${s}`;
+}
 
 /** Puces de l'en-tête pour changer d'enfant (masquées s'il n'y en a qu'un). */
 function usePucesEnfants() {
@@ -136,7 +149,7 @@ export function Jour({ jour, cours, intitule }) {
         <View key={c.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 24 }}>
           <Texte style={{ width: 92, fontSize: 14, color: colors.textSecondary }}>{String(c.heure_debut).slice(0, 5)}–{String(c.heure_fin).slice(0, 5)}</Texte>
           <Texte variante="fort" style={{ flex: 1, fontSize: 14 }}>{intitule(c)}</Texte>
-          {c.salle ? <Texte variante="discret">salle {c.salle}</Texte> : null}
+          {c.salle ? <Texte variante="discret">{libelleSalle(c.salle)}</Texte> : null}
         </View>
       ))}
     </Carte>
