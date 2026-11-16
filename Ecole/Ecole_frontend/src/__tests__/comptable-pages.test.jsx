@@ -11,7 +11,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, within } from '@testing-library/react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { makeQueryClient } from './helpers/render';
 import FacturesPage from '@/app/features/comptable/FacturesPage';
@@ -164,6 +164,20 @@ describe('TransactionsPage', () => {
     // libellé « Transactions »).
     expect(screen.getByText('Recettes')).toBeInTheDocument();
     expect(screen.getAllByText('Transactions').length).toBeGreaterThan(0);
+  });
+
+  // R-41 (16/11/2026) : « Recettes » additionnait `montant` (75 000 ici), pas
+  // ce qui a été payé (50 000), et la ligne partielle affichait 50 000.
+  it('compte en recettes ce qui a été payé, et montre le dû sur chaque ligne', async () => {
+    http.onGet(PATH).reply(200, { success: true, data: [PAIEMENTS[0], { ...PAIEMENTS[1], montant_total: 50000 }] });
+
+    renderPage(<TransactionsPage />);
+
+    await waitFor(() => expect(screen.getByText('Kofi Mensah')).toBeInTheDocument());
+    const recettes = screen.getByText('Recettes').closest('.rounded-xl');
+    expect(within(recettes).getByText(/^50\s000\sF\sCFA$/)).toBeInTheDocument();
+    expect(screen.queryByText(/^75\s000\sF\sCFA$/)).not.toBeInTheDocument();
+    expect(screen.getByText(/^sur 50\s000\sF\sCFA dus$/)).toBeInTheDocument();
   });
 
   it('cherche dans la référence, le nom ou le motif', async () => {

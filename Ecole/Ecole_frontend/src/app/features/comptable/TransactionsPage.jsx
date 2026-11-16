@@ -61,8 +61,10 @@ export default function TransactionsPage() {
   const error = requete.isError ? (requete.error?.message ?? t('common.load_error')) : null;
 
   const stats = useMemo(() => {
-    const recettes = transactions.filter((t) => t.statut === 'payee' || t.statut === 'partiel');
-    const totalRecettes = recettes.reduce((s, t) => s + Number(t.montant || 0), 0);
+    // Recettes = ce qui a réellement été payé (`montant_paye`). La somme de
+    // `montant` sur les lignes payées ou partielles comptait des montants
+    // jamais versés : 4 625 595 contre 4 497 554 FCFA payés (R-41, 16/11/2026).
+    const totalRecettes = transactions.reduce((s, t) => s + Number(t.montant_paye ?? 0), 0);
     return {
       totalRecettes,
       totalDepenses: 0,
@@ -210,8 +212,13 @@ export default function TransactionsPage() {
                   </td>
                   <td className="py-3 pr-4">
                     <span className="text-sm font-semibold text-emerald-600">
-                      {formatCurrency(trx.montant)}
+                      {formatCurrency(Number(trx.montant_paye ?? 0))}
                     </span>
+                    {Number(trx.montant_total) > Number(trx.montant_paye ?? 0) && (
+                      <span className="block text-xs text-[var(--text-tertiary)]">
+                        {t('pages.paiements.paiements.sur_montant', { total: formatCurrency(Number(trx.montant_total)) })}
+                      </span>
+                    )}
                   </td>
                   <td className="py-3 pr-4">
                     <span className={cn(
