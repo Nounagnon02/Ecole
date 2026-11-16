@@ -128,10 +128,10 @@ class InfirmierDashboardController extends Controller
 
             return [
                 'stats' => [
-                    ['title' => 'Visites du Mois', 'value' => (string) $visitesMois, 'trend' => 0, 'trendLabel' => 'ce mois'],
-                    ['title' => 'En Cours', 'value' => (string) $visitesAujourdhui, 'trend' => 0, 'trendLabel' => 'aujourd\'hui'],
-                    ['title' => 'Cas Urgents', 'value' => (string) $casUrgents, 'trend' => 0, 'trendLabel' => 'ce mois'],
-                    ['title' => 'Consultations', 'value' => (string) $consultations, 'trend' => 0, 'trendLabel' => 'total'],
+                    ['title' => 'Visites du Mois', 'value' => (string) $visitesMois, 'trendLabel' => 'ce mois'],
+                    ['title' => 'En Cours', 'value' => (string) $visitesAujourdhui, 'trendLabel' => 'aujourd\'hui'],
+                    ['title' => 'Cas Urgents', 'value' => (string) $casUrgents, 'trendLabel' => 'ce mois'],
+                    ['title' => 'Consultations', 'value' => (string) $consultations, 'trendLabel' => 'total'],
                 ],
                 'frequentation' => $frequentation,
                 'motifs' => $motifs,
@@ -144,10 +144,10 @@ class InfirmierDashboardController extends Controller
                 \Log::error('Dashboard Infirmier error: ' . $e->getMessage());
                 return [
                     'stats' => [
-                        ['title' => 'Visites du Mois', 'value' => '0', 'trend' => 0, 'trendLabel' => 'ce mois'],
-                        ['title' => 'En Cours', 'value' => '0', 'trend' => 0, 'trendLabel' => 'aujourd\'hui'],
-                        ['title' => 'Cas Urgents', 'value' => '0', 'trend' => 0, 'trendLabel' => 'ce mois'],
-                        ['title' => 'Consultations', 'value' => '0', 'trend' => 0, 'trendLabel' => 'total'],
+                        ['title' => 'Visites du Mois', 'value' => '0', 'trendLabel' => 'ce mois'],
+                        ['title' => 'En Cours', 'value' => '0', 'trendLabel' => 'aujourd\'hui'],
+                        ['title' => 'Cas Urgents', 'value' => '0', 'trendLabel' => 'ce mois'],
+                        ['title' => 'Consultations', 'value' => '0', 'trendLabel' => 'total'],
                     ],
                     'frequentation' => [],
                     'motifs' => [],

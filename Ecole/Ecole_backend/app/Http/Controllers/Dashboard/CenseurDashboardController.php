@@ -126,10 +126,10 @@ class CenseurDashboardController extends Controller
 
             return [
                 'stats' => [
-                    ['title' => 'Total Élèves', 'value' => (string) $totalEleves, 'trend' => 0],
-                    ['title' => 'Sanctions du Mois', 'value' => (string) $sanctionsMois, 'trend' => 0],
-                    ['title' => 'Absences Non Justifiées', 'value' => (string) $absencesNonJustifiees, 'trend' => 0],
-                    ['title' => 'Avertissements', 'value' => (string) $avertissements, 'trend' => 0],
+                    ['title' => 'Total Élèves', 'value' => (string) $totalEleves],
+                    ['title' => 'Sanctions du Mois', 'value' => (string) $sanctionsMois],
+                    ['title' => 'Absences Non Justifiées', 'value' => (string) $absencesNonJustifiees],
+                    ['title' => 'Avertissements', 'value' => (string) $avertissements],
                 ],
                 'evolution' => $evolution,
                 'types_sanctions' => $typesSanctions,
@@ -142,10 +142,10 @@ class CenseurDashboardController extends Controller
                 \Log::error('Dashboard Censeur error: ' . $e->getMessage());
                 return [
                     'stats' => [
-                        ['title' => 'Total Élèves', 'value' => '0', 'trend' => 0],
-                        ['title' => 'Sanctions du Mois', 'value' => '0', 'trend' => 0],
-                        ['title' => 'Absences Non Justifiées', 'value' => '0', 'trend' => 0],
-                        ['title' => 'Avertissements', 'value' => '0', 'trend' => 0],
+                        ['title' => 'Total Élèves', 'value' => '0'],
+                        ['title' => 'Sanctions du Mois', 'value' => '0'],
+                        ['title' => 'Absences Non Justifiées', 'value' => '0'],
+                        ['title' => 'Avertissements', 'value' => '0'],
                     ],
                     'evolution' => [],
                     'types_sanctions' => [],

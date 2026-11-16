@@ -145,10 +145,10 @@ class SurveillantDashboardController extends Controller
 
             return [
                 'stats' => [
-                    ['title' => 'Total Élèves', 'value' => (string) $totalEleves, 'trend' => 0],
-                    ['title' => 'Présents Aujourd\'hui', 'value' => (string) $presents, 'trend' => 0],
-                    ['title' => 'Absents', 'value' => (string) $absentsAujourdhui, 'trend' => 0],
-                    ['title' => 'Alertes', 'value' => (string) $alertes, 'trend' => 0],
+                    ['title' => 'Total Élèves', 'value' => (string) $totalEleves],
+                    ['title' => 'Présents Aujourd\'hui', 'value' => (string) $presents],
+                    ['title' => 'Absents', 'value' => (string) $absentsAujourdhui],
+                    ['title' => 'Alertes', 'value' => (string) $alertes],
                 ],
                 'presences_semaine' => $presencesSemaine,
                 'points_surveillance' => $points,
@@ -161,10 +161,10 @@ class SurveillantDashboardController extends Controller
                 \Log::error('Dashboard Surveillant error: ' . $e->getMessage());
                 return [
                     'stats' => [
-                        ['title' => 'Total Élèves', 'value' => '0', 'trend' => 0],
-                        ['title' => 'Présents Aujourd\'hui', 'value' => '0', 'trend' => 0],
-                        ['title' => 'Absents', 'value' => '0', 'trend' => 0],
-                        ['title' => 'Alertes', 'value' => '0', 'trend' => 0],
+                        ['title' => 'Total Élèves', 'value' => '0'],
+                        ['title' => 'Présents Aujourd\'hui', 'value' => '0'],
+                        ['title' => 'Absents', 'value' => '0'],
+                        ['title' => 'Alertes', 'value' => '0'],
                     ],
                     'presences_semaine' => [],
                     'points_surveillance' => [],

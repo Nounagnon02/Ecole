@@ -126,10 +126,10 @@ class BibliothecaireDashboardController extends Controller
 
             return [
                 'stats' => [
-                    ['title' => 'Total Ouvrages', 'value' => (string) $totalLivres, 'trend' => 0, 'trendLabel' => 'au catalogue'],
-                    ['title' => 'Emprunts en Cours', 'value' => (string) $empruntsEnCours, 'trend' => 0],
-                    ['title' => 'Retards', 'value' => (string) $retards, 'trend' => 0],
-                    ['title' => 'Membres Actifs', 'value' => (string) $membresActifs, 'trend' => 0, 'trendLabel' => 'emprunteurs'],
+                    ['title' => 'Total Ouvrages', 'value' => (string) $totalLivres, 'trendLabel' => 'au catalogue'],
+                    ['title' => 'Emprunts en Cours', 'value' => (string) $empruntsEnCours],
+                    ['title' => 'Retards', 'value' => (string) $retards],
+                    ['title' => 'Membres Actifs', 'value' => (string) $membresActifs, 'trendLabel' => 'emprunteurs'],
                 ],
                 'activite' => $activite,
                 'categories' => $repartitionCategories,
@@ -142,10 +142,10 @@ class BibliothecaireDashboardController extends Controller
                 \Log::error('Dashboard Bibliothecaire error: ' . $e->getMessage());
                 return [
                     'stats' => [
-                        ['title' => 'Total Ouvrages', 'value' => '0', 'trend' => 0, 'trendLabel' => 'au catalogue'],
-                        ['title' => 'Emprunts en Cours', 'value' => '0', 'trend' => 0],
-                        ['title' => 'Retards', 'value' => '0', 'trend' => 0],
-                        ['title' => 'Membres Actifs', 'value' => '0', 'trend' => 0, 'trendLabel' => 'emprunteurs'],
+                        ['title' => 'Total Ouvrages', 'value' => '0', 'trendLabel' => 'au catalogue'],
+                        ['title' => 'Emprunts en Cours', 'value' => '0'],
+                        ['title' => 'Retards', 'value' => '0'],
+                        ['title' => 'Membres Actifs', 'value' => '0', 'trendLabel' => 'emprunteurs'],
                     ],
                     'activite' => [],
                     'categories' => [],

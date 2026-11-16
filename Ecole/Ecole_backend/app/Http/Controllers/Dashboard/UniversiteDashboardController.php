@@ -78,10 +78,10 @@ class UniversiteDashboardController extends Controller
 
             return [
                 'stats' => [
-                    ['title' => 'Facultés', 'value' => (string) $facultesCount, 'trend' => 0, 'trendLabel' => 'total'],
-                    ['title' => 'Départements', 'value' => (string) $departementsCount, 'trend' => 0, 'trendLabel' => 'total'],
-                    ['title' => 'Enseignants', 'value' => number_format($enseignantsCount), 'trend' => 0, 'trendLabel' => 'en activité'],
-                    ['title' => 'Étudiants', 'value' => number_format($etudiantsCount), 'trend' => 0, 'trendLabel' => 'inscrits'],
+                    ['title' => 'Facultés', 'value' => (string) $facultesCount, 'trendLabel' => 'total'],
+                    ['title' => 'Départements', 'value' => (string) $departementsCount, 'trendLabel' => 'total'],
+                    ['title' => 'Enseignants', 'value' => number_format($enseignantsCount), 'trendLabel' => 'en activité'],
+                    ['title' => 'Étudiants', 'value' => number_format($etudiantsCount), 'trendLabel' => 'inscrits'],
                 ],
                 'inscriptions' => $inscriptionsParAnnee->isNotEmpty()
                     ? $inscriptionsParAnnee

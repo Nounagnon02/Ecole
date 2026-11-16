@@ -129,10 +129,10 @@ class ComptableDashboardController extends Controller
 
             return [
                 'stats' => [
-                    ['title' => 'Revenus du Mois', 'value' => number_format($revenusMois, 0, ',', ' ') . ' F', 'trend' => 0, 'trendLabel' => 'ce mois'],
-                    ['title' => 'Factures en Attente', 'value' => (string) $enAttente, 'trend' => 0, 'trendLabel' => 'non soldées'],
-                    ['title' => 'Taux Recouvrement', 'value' => $tauxRecouvrement, 'trend' => 0, 'trendLabel' => 'ce mois'],
-                    ['title' => 'Dépenses du Mois', 'value' => number_format($depensesMois, 0, ',', ' ') . ' F', 'trend' => 0, 'trendLabel' => 'ce mois'],
+                    ['title' => 'Revenus du Mois', 'value' => number_format($revenusMois, 0, ',', ' ') . ' F', 'trendLabel' => 'ce mois'],
+                    ['title' => 'Factures en Attente', 'value' => (string) $enAttente, 'trendLabel' => 'non soldées'],
+                    ['title' => 'Taux Recouvrement', 'value' => $tauxRecouvrement, 'trendLabel' => 'ce mois'],
+                    ['title' => 'Dépenses du Mois', 'value' => number_format($depensesMois, 0, ',', ' ') . ' F', 'trendLabel' => 'ce mois'],
                 ],
                 'donnes_ca' => $donneesMensuelles,
                 'repartition' => $repartition,
@@ -149,10 +149,10 @@ class ComptableDashboardController extends Controller
                 \Log::error('Dashboard Comptable error: ' . $e->getMessage());
                 return [
                     'stats' => [
-                        ['title' => 'Revenus du Mois', 'value' => '0 F', 'trend' => 0, 'trendLabel' => 'ce mois'],
-                        ['title' => 'Factures en Attente', 'value' => '0', 'trend' => 0, 'trendLabel' => 'non soldées'],
-                        ['title' => 'Taux Recouvrement', 'value' => '—', 'trend' => 0, 'trendLabel' => 'ce mois'],
-                        ['title' => 'Dépenses du Mois', 'value' => '0 F', 'trend' => 0, 'trendLabel' => 'ce mois'],
+                        ['title' => 'Revenus du Mois', 'value' => '0 F', 'trendLabel' => 'ce mois'],
+                        ['title' => 'Factures en Attente', 'value' => '0', 'trendLabel' => 'non soldées'],
+                        ['title' => 'Taux Recouvrement', 'value' => '—', 'trendLabel' => 'ce mois'],
+                        ['title' => 'Dépenses du Mois', 'value' => '0 F', 'trendLabel' => 'ce mois'],
                     ],
                     'donnes_ca' => [],
                     'repartition' => [],

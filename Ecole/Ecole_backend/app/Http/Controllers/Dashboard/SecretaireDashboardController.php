@@ -122,10 +122,10 @@ class SecretaireDashboardController extends Controller
 
             return [
                 'stats' => [
-                    ['title' => 'Inscriptions', 'value' => (string) $totalInscriptions, 'trend' => 0, 'trendLabel' => 'total'],
-                    ['title' => 'Nouveaux ce Mois', 'value' => (string) $nouveauxMois, 'trend' => 0],
-                    ['title' => 'Dossiers en Cours', 'value' => (string) $dossiersEnCours, 'trend' => 0, 'trendLabel' => 'certificats'],
-                    ['title' => 'Documents Générés', 'value' => (string) $documentsGeneres, 'trend' => 0, 'trendLabel' => 'émis'],
+                    ['title' => 'Inscriptions', 'value' => (string) $totalInscriptions, 'trendLabel' => 'total'],
+                    ['title' => 'Nouveaux ce Mois', 'value' => (string) $nouveauxMois],
+                    ['title' => 'Dossiers en Cours', 'value' => (string) $dossiersEnCours, 'trendLabel' => 'certificats'],
+                    ['title' => 'Documents Générés', 'value' => (string) $documentsGeneres, 'trendLabel' => 'émis'],
                 ],
                 'flux_inscriptions' => $fluxInscriptions,
                 'rendez_vous' => $rendezVous,
@@ -137,10 +137,10 @@ class SecretaireDashboardController extends Controller
                 \Log::error('Dashboard Secretaire error: ' . $e->getMessage());
                 return [
                     'stats' => [
-                        ['title' => 'Inscriptions', 'value' => '0', 'trend' => 0, 'trendLabel' => 'total'],
-                        ['title' => 'Nouveaux ce Mois', 'value' => '0', 'trend' => 0],
-                        ['title' => 'Dossiers en Cours', 'value' => '0', 'trend' => 0, 'trendLabel' => 'certificats'],
-                        ['title' => 'Documents Générés', 'value' => '0', 'trend' => 0, 'trendLabel' => 'émis'],
+                        ['title' => 'Inscriptions', 'value' => '0', 'trendLabel' => 'total'],
+                        ['title' => 'Nouveaux ce Mois', 'value' => '0'],
+                        ['title' => 'Dossiers en Cours', 'value' => '0', 'trendLabel' => 'certificats'],
+                        ['title' => 'Documents Générés', 'value' => '0', 'trendLabel' => 'émis'],
                     ],
                     'flux_inscriptions' => [],
                     'rendez_vous' => [],

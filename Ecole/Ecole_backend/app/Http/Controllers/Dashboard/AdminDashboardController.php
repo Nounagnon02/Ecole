@@ -135,10 +135,10 @@ class AdminDashboardController extends Controller
 
             return [
                 'stats' => [
-                    ['title' => 'Utilisateurs Actifs', 'value' => number_format($activeUsers), 'trend' => $nouveautesSemaine, 'trendLabel' => 'nouveaux / 7j'],
-                    ['title' => 'Espace Disque', 'value' => $diskUsage . '%', 'trend' => 0, 'trendLabel' => 'utilisé'],
-                    ['title' => 'Erreurs API', 'value' => (string) $erreursApi, 'trend' => 0, 'trendLabel' => 'dans le journal'],
-                    ['title' => 'Uptime', 'value' => $uptime ?? '—', 'trend' => 0, 'trendLabel' => 'serveur'],
+                    ['title' => 'Utilisateurs Actifs', 'value' => number_format($activeUsers), 'trendLabel' => '+' . $nouveautesSemaine . ' ' . ($nouveautesSemaine > 1 ? 'nouveaux' : 'nouveau') . ' sur 7 jours'],
+                    ['title' => 'Espace Disque', 'value' => $diskUsage . '%', 'trendLabel' => 'utilisé'],
+                    ['title' => 'Erreurs API', 'value' => (string) $erreursApi, 'trendLabel' => 'dans le journal'],
+                    ['title' => 'Uptime', 'value' => $uptime ?? '—', 'trendLabel' => 'serveur'],
                 ],
                 'traffic'         => $traffic,
                 'health'          => $health,
@@ -158,10 +158,10 @@ class AdminDashboardController extends Controller
                 \Log::error('Dashboard Admin error: ' . $e->getMessage());
                 return [
                     'stats' => [
-                        ['title' => 'Utilisateurs Actifs', 'value' => '0', 'trend' => 0, 'trendLabel' => 'nouveaux / 7j'],
-                        ['title' => 'Espace Disque', 'value' => '0%', 'trend' => 0, 'trendLabel' => 'utilisé'],
-                        ['title' => 'Erreurs API', 'value' => '0', 'trend' => 0, 'trendLabel' => 'dans le journal'],
-                        ['title' => 'Uptime', 'value' => '—', 'trend' => 0, 'trendLabel' => 'serveur'],
+                        ['title' => 'Utilisateurs Actifs', 'value' => '0', 'trendLabel' => 'nouveaux / 7j'],
+                        ['title' => 'Espace Disque', 'value' => '0%', 'trendLabel' => 'utilisé'],
+                        ['title' => 'Erreurs API', 'value' => '0', 'trendLabel' => 'dans le journal'],
+                        ['title' => 'Uptime', 'value' => '—', 'trendLabel' => 'serveur'],
                     ],
                     'traffic'         => [],
                     'health'          => [],

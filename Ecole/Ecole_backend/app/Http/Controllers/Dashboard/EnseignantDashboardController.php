@@ -118,10 +118,10 @@ class EnseignantDashboardController extends Controller
             'success' => true,
             'data' => [
                 'stats' => [
-                    ['title' => 'Mes Élèves', 'value' => (string) $totalEleves, 'trend' => 0, 'trendLabel' => 'dans mes classes'],
-                    ['title' => 'Cours Cette Semaine', 'value' => (string) $coursSemaineCount, 'trend' => 0, 'trendLabel' => 'créneaux planifiés'],
-                    ['title' => 'Moyenne Classe', 'value' => $moyenneClasse !== null ? number_format($moyenneClasse, 2, ',', ' ') : '—', 'trend' => 0, 'trendLabel' => 'mes notes'],
-                    ['title' => 'Devoirs à Corriger', 'value' => (string) $devoirs->count(), 'trend' => 0, 'trendLabel' => 'échéance atteinte'],
+                    ['title' => 'Mes Élèves', 'value' => (string) $totalEleves, 'trendLabel' => 'dans mes classes'],
+                    ['title' => 'Cours Cette Semaine', 'value' => (string) $coursSemaineCount, 'trendLabel' => 'créneaux planifiés'],
+                    ['title' => 'Moyenne Classe', 'value' => $moyenneClasse !== null ? number_format($moyenneClasse, 2, ',', ' ') : '—', 'trendLabel' => 'mes notes'],
+                    ['title' => 'Devoirs à Corriger', 'value' => (string) $devoirs->count(), 'trendLabel' => 'échéance atteinte'],
                 ],
                 'emploi_temps' => $emploiTemps,
                 'devoirs' => $devoirs,
