@@ -15,6 +15,10 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from '
 import { Alert, Linking, Pressable, Switch, TextInput, View } from 'react-native';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
+import * as DocumentPicker from 'expo-document-picker';
+import * as FileSystem from 'expo-file-system';
+import { getToken } from '../services/secureStorage';
+import { URL_BASE_API } from '../../constants/api';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { fonts } from '../theme/typography';
@@ -392,11 +396,42 @@ export function Messages() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filOuvert]);
 
+  // Pièce jointe (R-31) : mêmes types et même limite que l'API (5 Mo).
+  const [piece, setPiece] = useState(null);
+  const choisirPiece = async () => {
+    const choix = await DocumentPicker.getDocumentAsync({ copyToCacheDirectory: true,
+      type: ['application/pdf', 'image/*', 'text/plain', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.oasis.opendocument.text'] });
+    const fichier = !choix.canceled && choix.assets?.[0];
+    if (!fichier) return;
+    if (fichier.size && fichier.size > 5 * 1024 * 1024) { Alert.alert('Pièce jointe', 'Le fichier dépasse 5 Mo.'); return; }
+    setPiece(fichier);
+  };
+  const ouvrirPiece = async (m) => {
+    try {
+      const nomFichier = String(m.piece_jointe.nom || 'piece-jointe').replace(/[^\w.\-]+/g, '_');
+      const { uri, status } = await FileSystem.downloadAsync(`${URL_BASE_API}/messages/${m.id}/piece-jointe`, `${FileSystem.cacheDirectory}${nomFichier}`,
+        { headers: { Authorization: `Bearer ${await getToken()}` } });
+      if (status !== 200) throw new Error('telechargement');
+      await Sharing.shareAsync(uri, { mimeType: m.piece_jointe.type, dialogTitle: m.piece_jointe.nom });
+    } catch {
+      Alert.alert('Pièce jointe', 'La pièce jointe n’a pas pu être ouverte.');
+    }
+  };
+
   const envoyer = async () => {
-    if (!texte.trim()) return;
+    if (!texte.trim() && !piece) return;
     setEnvoi(true);
     try {
-      await api.post('/messages', { destinataire: String(ouverte.id), contenu: texte.trim() });
+      if (piece) {
+        const corps = new FormData();
+        corps.append('destinataire', String(ouverte.id));
+        corps.append('contenu', texte.trim());
+        corps.append('piece_jointe', { uri: piece.uri, name: piece.name, type: piece.mimeType || 'application/octet-stream' });
+        await api.post('/messages', corps, { headers: { 'Content-Type': 'multipart/form-data' } });
+        setPiece(null);
+      } else {
+        await api.post('/messages', { destinataire: String(ouverte.id), contenu: texte.trim() });
+      }
       setTexte('');
       fil.recharger();
       conversations.recharger();
@@ -408,10 +443,24 @@ export function Messages() {
   };
 
   if (ouverte) {
-    const bloque = envoi || !texte.trim();
+    const bloque = envoi || (!texte.trim() && !piece);
     const pied = (
-      <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center', paddingVertical: 12, paddingHorizontal: 16, backgroundColor: t.colors.surfaceRaised,
-        borderTopWidth: 1, borderTopColor: t.colors.border }}>
+      <View style={{ paddingVertical: 12, paddingHorizontal: 16, gap: 8, backgroundColor: t.colors.surfaceRaised, borderTopWidth: 1, borderTopColor: t.colors.border }}>
+      {piece ? (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <Icone nom="trombone" taille={18} couleur={t.colors.accent} />
+          <Texte variante="discret" numberOfLines={1} style={{ flex: 1 }}>{piece.name}</Texte>
+          <Pressable onPress={() => setPiece(null)} accessibilityRole="button" accessibilityLabel={`Retirer la pièce jointe ${piece.name}`}
+            style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: 8 }}>
+            <Texte variante="fort" style={{ color: t.colors.error }}>Retirer</Texte>
+          </Pressable>
+        </View>
+      ) : null}
+      <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+        <Pressable onPress={choisirPiece} accessibilityRole="button" accessibilityLabel="Joindre un fichier"
+          style={{ width: 44, height: 48, alignItems: 'center', justifyContent: 'center' }}>
+          <Icone nom="trombone" couleur={t.colors.accent} taille={22} />
+        </Pressable>
         <TextInput accessibilityLabel="Votre message" multiline value={texte} onChangeText={setTexte} placeholder="Votre message"
           placeholderTextColor={t.colors.textTertiary}
           style={{ flex: 1, minHeight: 48, maxHeight: 120, borderWidth: 1, borderColor: t.colors.border, borderRadius: 24, paddingHorizontal: 16, paddingVertical: 12,
@@ -420,6 +469,7 @@ export function Messages() {
           style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: t.colors.accent, alignItems: 'center', justifyContent: 'center', opacity: bloque ? 0.5 : 1 }}>
           <Icone nom="envoyer" couleur={t.surAccent} taille={22} />
         </Pressable>
+      </View>
       </View>
     );
     return (
@@ -431,7 +481,14 @@ export function Messages() {
             <View key={m.id} style={{ alignSelf: moi ? 'flex-end' : 'flex-start', maxWidth: '82%', paddingVertical: 10, paddingHorizontal: 14, gap: 4,
               backgroundColor: moi ? t.colors.accent : t.colors.surfaceRaised, borderWidth: moi ? 0 : 1, borderColor: t.colors.border,
               borderRadius: 16, borderBottomRightRadius: moi ? 4 : 16, borderBottomLeftRadius: moi ? 16 : 4 }}>
-              <Texte style={{ color: moi ? t.surAccent : t.colors.textPrimary, lineHeight: 20 }}>{m.contenu}</Texte>
+              {m.contenu ? <Texte style={{ color: moi ? t.surAccent : t.colors.textPrimary, lineHeight: 20 }}>{m.contenu}</Texte> : null}
+              {m.piece_jointe ? (
+                <Pressable onPress={() => ouvrirPiece(m)} accessibilityRole="button" accessibilityLabel={`Ouvrir la pièce jointe ${m.piece_jointe.nom}`}
+                  style={{ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Icone nom="trombone" taille={18} couleur={moi ? t.surAccent : t.colors.accent} />
+                  <Texte style={{ flexShrink: 1, color: moi ? t.surAccent : t.colors.accent, textDecorationLine: 'underline' }}>{m.piece_jointe.nom}</Texte>
+                </Pressable>
+              ) : null}
               <Texte variante="discret" style={{ fontSize: 11, alignSelf: 'flex-end', color: moi ? t.discretEntete : t.colors.textSecondary }}>
                 {dateFr(m.created_at)}{moi && m.lu ? ' · lu' : ''}
               </Texte>

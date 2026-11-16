@@ -12,6 +12,8 @@ import { api } from '../src/services/api';
 
 jest.mock('../src/services/api', () => ({ api: { get: jest.fn(), post: jest.fn(), put: jest.fn() } }));
 jest.mock('expo-print', () => ({ printToFileAsync: jest.fn(() => Promise.resolve({ uri: 'file:///bulletin.pdf' })) }));
+jest.mock('expo-document-picker', () => ({ getDocumentAsync: jest.fn(() => Promise.resolve({ canceled: false, assets: [{ uri: 'file:///releve.pdf', name: 'releve.pdf', mimeType: 'application/pdf', size: 2048 }] })) }));
+jest.mock('expo-file-system', () => ({ cacheDirectory: 'file:///cache/', downloadAsync: jest.fn() }));
 jest.mock('expo-sharing', () => ({ isAvailableAsync: jest.fn(() => Promise.resolve(true)), shareAsync: jest.fn(() => Promise.resolve()) }));
 const mockLogout = jest.fn();
 jest.mock('../src/context/AuthContext', () => ({ useAuth: () => ({ user: { id: 50, name: 'Parent', role: 'parent' }, logout: mockLogout }) }));
@@ -169,6 +171,24 @@ describe('espace parent', () => {
     fireEvent.changeText(await screen.findByLabelText('Votre message'), 'Bonjour madame');
     fireEvent.press(screen.getByRole('button', { name: 'Envoyer' }));
     await waitFor(() => expect(api.post).toHaveBeenCalledWith('/messages', { destinataire: '12', contenu: 'Bonjour madame' }));
+  });
+
+  // R-31 : un message peut porter une pièce jointe (envoi multipart).
+  it('joint un fichier à un message et l’envoie', async () => {
+    monter();
+    await screen.findByLabelText('Voir la scolarité de AHO Kossi');
+    fireEvent.press(screen.getByRole('tab', { name: 'Messages' }));
+    fireEvent.press(await screen.findByLabelText('Écrire à Mme DOSSOU'));
+    fireEvent.press(await screen.findByRole('button', { name: 'Joindre un fichier' }));
+    expect(await screen.findByText('releve.pdf')).toBeTruthy();
+    const ajouts = [];
+    const espion = jest.spyOn(FormData.prototype, 'append').mockImplementation((cle, valeur) => { ajouts.push([cle, valeur]); });
+    fireEvent.press(screen.getByRole('button', { name: 'Envoyer' }));
+    await waitFor(() => expect(api.post).toHaveBeenCalledWith('/messages', expect.any(FormData), { headers: { 'Content-Type': 'multipart/form-data' } }));
+    espion.mockRestore();
+    const parties = Object.fromEntries(ajouts);
+    expect(parties.destinataire).toBe('12');
+    expect(parties.piece_jointe).toMatchObject({ uri: 'file:///releve.pdf', name: 'releve.pdf', type: 'application/pdf' });
   });
 
   it('enregistre une préférence d’avis et refuse un mot de passe non confirmé', async () => {

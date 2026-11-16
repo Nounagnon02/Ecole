@@ -21,6 +21,7 @@ const TRACES = {
   retour: [['p', 'M15 6l-6 6 6 6']],
   bas: [['p', 'M6 9l6 6 6-6']],
   envoyer: [['p', 'M4 12l16-8-6 16-3-7z']],
+  trombone: [['p', 'M21 11l-8.5 8.5a5 5 0 0 1-7-7L14 4a3.5 3.5 0 0 1 5 5l-8.5 8.5a2 2 0 0 1-3-3L15 7']],
 };
 
 export const NOMS_ICONES = Object.keys(TRACES);
