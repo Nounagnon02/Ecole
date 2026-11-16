@@ -50,12 +50,8 @@ class DirecteurDashboardController extends Controller
             // soldées : un versement partiel ne comptait jamais.
             $debutMois = now()->startOfMonth();
             $finMois = now()->endOfMonth();
-            $revenusMois = (float) \App\Models\TransactionPaiement::where('statut', \App\Models\TransactionPaiement::APPROUVE)
-                ->whereBetween('date_paiement', [$debutMois, $finMois])
-                ->sum('montant_paye')
-                + (float) \App\Models\Payment::where('status', 'completed')
-                ->whereBetween('paid_at', [$debutMois, $finMois])
-                ->sum('amount');
+            // Même définition que le comptable, saisies directes comprises (R-41).
+            $revenusMois = \App\Support\Encaissements::entre($debutMois, $finMois);
             $depensesMois = (float) \App\Models\Depense::whereMonth('date_depense', now()->month)
                 ->whereYear('date_depense', now()->year)
                 ->sum('montant');

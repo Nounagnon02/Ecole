@@ -23,7 +23,8 @@ beforeEach(function () {
     $this->comptable = User::factory()->create(['role' => 'comptable', 'ecole_id' => $this->ecole->id, 'is_active' => true]);
     $eleve = Eleve::factory()->forSchool($this->ecole)->create();
     $echeance = fn (array $m) => PaiementEleve::factory()->create(array_merge(['ecole_id' => $this->ecole->id, 'eleve_id' => $eleve->id, 'date_paiement' => now()], $m));
-    // Soldée (montant = payé) et partielle (`montant` différent du payé, comme en recette).
+    // Soldée par « Nouveau paiement » (aucune transaction : `storePaiement`
+    // crée l'échéance déjà payée) et partielle (`montant` différent du payé).
     $echeance(['montant' => 100000, 'montant_total' => 100000, 'montant_paye' => 100000, 'montant_restant' => 0, 'statut_global' => PaiementEleve::PAID]);
     $partielle = $echeance(['montant' => 45000, 'montant_total' => 50000, 'montant_paye' => 20000, 'montant_restant' => 30000, 'statut_global' => PaiementEleve::PARTIAL]);
 
@@ -43,13 +44,20 @@ function statComptable(array $stats, string $titre): array
     return collect($stats)->firstWhere('title', $titre) ?? [];
 }
 
-it('compte dans les revenus du mois tous les versements reçus, partiels compris', function () {
+it('compte dans les revenus du mois tous les versements reçus, partiels et directs compris', function () {
     $data = $this->actingAs($this->comptable)->getJson('/api/dashboard/comptable')->assertOk()->json('data');
 
-    // 20 000 en caisse + 15 000 en ligne ; la colonne `montant` aurait donné 100 000.
-    expect(statComptable($data['stats'], 'Revenus du Mois')['value'])->toBe('35 000 F')
-        ->and(collect($data['donnes_ca'])->last()['revenus'])->toEqual(35000)
-        ->and($data['tresorerie']['encaissements_mois'])->toEqual(35000);
+    // 20 000 en caisse + 15 000 en ligne + 100 000 saisis par « Nouveau
+    // paiement » ; le versement partiel déjà en caisse n'est pas compté deux fois.
+    expect(statComptable($data['stats'], 'Revenus du Mois')['value'])->toBe('135 000 F')
+        ->and(collect($data['donnes_ca'])->last()['revenus'])->toEqual(135000)
+        ->and($data['tresorerie']['encaissements_mois'])->toEqual(135000);
+});
+
+it('donne au directeur le même encaissé du mois que au comptable', function () {
+    $directeur = User::factory()->create(['role' => 'directeur', 'ecole_id' => $this->ecole->id, 'is_active' => true]);
+
+    expect($this->actingAs($directeur)->getJson('/api/dashboard/directeur/data')->assertOk()->json('data.finances.revenus_mois'))->toEqual(135000);
 });
 
 it('calcule le taux de recouvrement sur les montants, comme la page Factures', function () {

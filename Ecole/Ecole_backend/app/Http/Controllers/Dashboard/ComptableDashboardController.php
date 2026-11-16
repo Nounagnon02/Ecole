@@ -23,12 +23,7 @@ class ComptableDashboardController extends Controller
             // ligne confirmés, comme pour le directeur (R-26). Les échéances
             // soldées seules, lues dans `montant`, ignoraient tout versement
             // partiel (R-41, 16/11/2026).
-            $debutMois = now()->startOfMonth();
-            $finMois = now()->endOfMonth();
-            $revenusMois = (float) \App\Models\TransactionPaiement::where('statut', \App\Models\TransactionPaiement::APPROUVE)
-                ->whereBetween('date_paiement', [$debutMois, $finMois])->sum('montant_paye')
-                + (float) \App\Models\Payment::where('status', 'completed')
-                ->whereBetween('paid_at', [$debutMois, $finMois])->sum('amount');
+            $revenusMois = \App\Support\Encaissements::entre(now()->startOfMonth(), now()->endOfMonth());
 
             $enAttente = \App\Models\PaiementEleve::whereIn('statut_global', [
                 \App\Models\PaiementEleve::PENDING,
@@ -48,19 +43,11 @@ class ComptableDashboardController extends Controller
             // Évolution des finances — 6 derniers mois (revenus + dépenses),
             // agrégée en SQL (cf. audit P4) : l'ancien code chargeait toutes les
             // lignes de la fenêtre puis les regroupait en PHP.
-            $fenetre = [now()->startOfMonth()->subMonths(5), now()->endOfMonth()];
-            $enCaisse = \App\Models\TransactionPaiement::where('statut', \App\Models\TransactionPaiement::APPROUVE)
-                ->whereBetween('date_paiement', $fenetre)
-                ->selectRaw($this->monthExpression('date_paiement') . ' as mois, SUM(montant_paye) as total')
-                ->groupBy('mois')
-                ->pluck('total', 'mois');
-            $enLigne = \App\Models\Payment::where('status', 'completed')
-                ->whereBetween('paid_at', $fenetre)
-                ->selectRaw($this->monthExpression('paid_at') . ' as mois, SUM(amount) as total')
-                ->groupBy('mois')
-                ->pluck('total', 'mois');
-            $revenusParMois = $enCaisse->keys()->merge($enLigne->keys())->unique()
-                ->mapWithKeys(fn ($mois) => [$mois => (float) $enCaisse->get($mois, 0) + (float) $enLigne->get($mois, 0)]);
+            $revenusParMois = collect($this->sixDerniersMois())->map(function ($libelle, $cle) {
+                $debut = \Carbon\Carbon::createFromFormat('!Y-m', $cle)->startOfMonth();
+
+                return \App\Support\Encaissements::entre($debut, $debut->copy()->endOfMonth());
+            });
 
             $depensesParMois = \App\Models\Depense::whereBetween('date_depense', [
                 now()->startOfMonth()->subMonths(5), now()->endOfMonth(),
