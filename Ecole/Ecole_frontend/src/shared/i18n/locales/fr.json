@@ -1517,7 +1517,12 @@
         "import_erreur_colonnes": "Ligne {ligne} : il faut une colonne « matricule » et une colonne « note ».",
         "import_erreur_inconnu": "Ligne {ligne} : matricule « {valeur} » absent de cette classe.",
         "import_erreur_doublon": "Ligne {ligne} : le matricule « {valeur} » apparaît deux fois.",
-        "import_erreur_note": "Ligne {ligne} : « {valeur} » n’est pas une note entre 0 et 20."
+        "import_erreur_note": "Ligne {ligne} : « {valeur} » n’est pas une note entre 0 et 20.",
+        "conflit_rien_enregistre": "Rien n’a été enregistré : des notes ont changé entre-temps.",
+        "conflit_titre": "Notes modifiées sur un autre appareil",
+        "conflit_ligne": "{nom} : enregistrée {enregistree}/20, la vôtre {envoyee}/20",
+        "conflit_garder": "Garder les notes enregistrées",
+        "conflit_remplacer": "Remplacer par les miennes"
       }
     },
     "paiements": {

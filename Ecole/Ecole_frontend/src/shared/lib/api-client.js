@@ -223,6 +223,8 @@ apiClient.interceptors.response.use(
         'Une erreur est survenue',
       details: (typeof rawError === 'object' ? rawError?.details : null) || [],
       errors: error.response?.data?.errors || null,
+      // 409 de la saisie des notes : notes modifiées entre-temps (R-28).
+      conflits: error.response?.data?.conflits || null,
       isApiError: true
     };
 

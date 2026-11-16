@@ -124,25 +124,44 @@ export function Notes() {
 
   const invalides = eleves.filter((e) => Number.isNaN(lireNote(saisies[e.id])));
   const aEnvoyer = eleves.filter((e) => !enregistrees[e.id]?.locked)
-    .map((e) => ({ eleve_id: e.id, note: lireNote(saisies[e.id]) })).filter((n) => n.note !== null && !Number.isNaN(n.note));
+    // `base` : la note telle que chargée ici. Si un autre appareil l'a changée
+    // entre-temps, l'API refuse d'écraser et renvoie le conflit (R-28).
+    .map((e) => ({ eleve_id: e.id, note: lireNote(saisies[e.id]), base: enregistrees[e.id] ? Number(enregistrees[e.id].note) : null }))
+    .filter((n) => n.note !== null && !Number.isNaN(n.note));
 
-  const enregistrer = useCallback(async () => {
+  const enregistrer = useCallback(async (forcer = false) => {
     if (invalides.length || aEnvoyer.length === 0) return;
     setEtat('envoi'); setMessage(null);
     try {
       const { data } = await api.post('/notes/bulk', {
         classe_id: Number(ev.classe), matiere_id: Number(ev.matiere), type_evaluation: ev.type, periode: ev.periode, date_evaluation: ev.date, notes: aEnvoyer,
+        ...(forcer ? { forcer: true } : {}),
       });
       await setBrouillon(cle, null);
       setEtat('enregistre');
       setMessage(data?.warnings?.length ? data.warnings.join(' ') : `${aEnvoyer.length} note(s) enregistrée(s).`);
       grilleReq.recharger();
     } catch (err) {
+      if (err?.response?.status === 409 && Array.isArray(err.response.data?.conflits)) {
+        // Note modifiée entre-temps sur un autre appareil : rien n'a été
+        // enregistré ; l'enseignant choisit en connaissance de cause.
+        const lignes = err.response.data.conflits.map((c) => {
+          const e = eleves.find((x) => x.id === c.eleve_id);
+          return `${e ? nom(e) : `Élève ${c.eleve_id}`} : enregistrée ${sur20(c.enregistree)}, la vôtre ${sur20(c.envoyee)}`;
+        });
+        setEtat('erreur');
+        setMessage('Conflit : rien n’a été enregistré.');
+        Alert.alert('Notes modifiées sur un autre appareil', `${lignes.join('\n')}\n\nRien n’a été enregistré.`, [
+          { text: 'Garder les notes enregistrées', style: 'cancel', onPress: () => { setBrouillon(cle, null).catch(() => {}); grilleReq.recharger(); } },
+          { text: 'Remplacer par les miennes', style: 'destructive', onPress: () => enregistrer(true) },
+        ]);
+        return;
+      }
       // Sans réponse du serveur : le brouillon reste, rien n'est annoncé enregistré.
       setEtat(err?.response ? 'erreur' : 'attente');
       setMessage(err?.response ? messageErreur(err, 'Les notes n’ont pas été enregistrées.') : 'Hors connexion : notes gardées sur le téléphone, non enregistrées. Réessayez au retour du réseau.');
     }
-  }, [invalides.length, aEnvoyer, ev, cle, grilleReq]);
+  }, [invalides.length, aEnvoyer, ev, cle, grilleReq, eleves]);
 
   /** Import d'un tableur CSV (mêmes règles que le web) : remplit la grille, n'envoie rien. */
   const importer = async () => {
@@ -214,7 +233,7 @@ export function Notes() {
         <View style={{ flexDirection: 'row', gap: 8 }}>
           <Bouton titre="Importer (CSV)" accessibilityLabel="Importer un tableur (CSV)" variante="secondaire" onPress={importer} style={{ flex: 1 }} />
           <Bouton titre={`Enregistrer ${aEnvoyer.length} note(s)`} chargement={etat === 'envoi'} desactive={invalides.length > 0 || aEnvoyer.length === 0}
-            onPress={enregistrer} style={{ flex: 1.3 }} />
+            onPress={() => enregistrer(false)} style={{ flex: 1.3 }} />
         </View>
       </>}
     </Ecran>

@@ -90,7 +90,28 @@ describe('grille de saisie', () => {
     enregistrer();
 
     await waitFor(() => expect(envois()).toHaveLength(1));
-    expect(envois()[0].body.notes).toEqual([{ eleve_id: 1, note: 14 }]);
+    // `base` : la note chargée (12,5), pour détecter un conflit (R-28).
+    expect(envois()[0].body.notes).toEqual([{ eleve_id: 1, note: 14, base: 12.5 }]);
+  });
+
+  // R-28 : note modifiée entre-temps sur un autre appareil → rien n'est
+  // enregistré, le conflit est affiché, l'enseignant choisit.
+  it('affiche le conflit de modification et ne remplace que sur demande', async () => {
+    http.onGet('/notes/grille/4').reply(200, grille([{ id: 9, eleve_id: 1, note: 12.5, note_sur: 20, locked: false }]));
+    http.onPost('/notes/bulk').reply(409, { success: false, message: 'conflit', conflits: [{ eleve_id: 1, enregistree: 15, envoyee: 14 }] });
+    await ouvrir();
+    await waitFor(() => expect(champ('AGBO Luc')).toHaveValue('12,5'));
+    taper('AGBO Luc', '14');
+    enregistrer();
+
+    expect(await screen.findByText('Notes modifiées sur un autre appareil')).toBeInTheDocument();
+    expect(screen.getByText('AGBO Luc : enregistrée 15/20, la vôtre 14/20')).toBeInTheDocument();
+    expect(screen.queryByText('Notes enregistrées.')).not.toBeInTheDocument();
+
+    http.onPost('/notes/bulk').reply(201, { success: true, count: 1, warnings: [] });
+    fireEvent.click(screen.getByRole('button', { name: 'Remplacer par les miennes' }));
+    await waitFor(() => expect(envois()).toHaveLength(2));
+    expect(envois()[1].body.forcer).toBe(true);
   });
 
   it('bloque l’enregistrement tant qu’une note est hors de 0 à 20', async () => {

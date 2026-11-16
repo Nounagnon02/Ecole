@@ -376,6 +376,9 @@ class NotesCrudController extends Controller
             'notes.*.note' => 'required|numeric|min:0|max:20',
             'notes.*.note_sur' => 'nullable|numeric|min:1|max:20',
             'notes.*.observation' => 'nullable|string|max:500',
+            // R-28 : valeur que le client avait chargée (null : aucune note).
+            'notes.*.base' => 'nullable|numeric|min:0|max:20',
+            'forcer' => 'nullable|boolean',
         ]);
 
         if ($validator->fails()) {
@@ -395,6 +398,8 @@ class NotesCrudController extends Controller
         try {
             $imported = 0;
             $errors = [];
+            $conflits = [];
+            $forcer = $request->boolean('forcer');
 
             foreach ($request->notes as $item) {
                 $eleve = Eleve::find($item['eleve_id']);
@@ -422,6 +427,17 @@ class NotesCrudController extends Controller
                 if ($existante) {
                     if ($existante->locked) {
                         $errors[] = "Élève #{$item['eleve_id']} : note verrouillée, non modifiée";
+
+                        continue;
+                    }
+
+                    // R-28 : la note a changé depuis que ce client l'a chargée
+                    // (autre appareil) — on ne l'écrase pas sans le dire.
+                    $enregistree = (float) $existante->note;
+                    if (! $forcer && array_key_exists('base', $item)
+                        && abs($enregistree - (float) $item['note']) > 0.001
+                        && ($item['base'] === null || abs($enregistree - (float) $item['base']) > 0.001)) {
+                        $conflits[] = ['eleve_id' => (int) $item['eleve_id'], 'enregistree' => $enregistree, 'envoyee' => (float) $item['note']];
 
                         continue;
                     }
@@ -463,6 +479,16 @@ class NotesCrudController extends Controller
                 ]);
 
                 $imported++;
+            }
+
+            if ($conflits !== []) {
+                DB::rollBack();
+
+                return response()->json([
+                    'success' => false,
+                    'message' => count($conflits).' note(s) modifiée(s) entre-temps sur un autre appareil : rien n’a été enregistré. Vérifiez, puis confirmez pour remplacer.',
+                    'conflits' => $conflits,
+                ], 409);
             }
 
             if ($imported === 0) {

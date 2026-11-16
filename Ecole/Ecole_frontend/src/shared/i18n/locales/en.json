@@ -1517,7 +1517,12 @@
         "import_erreur_colonnes": "Row {ligne}: a “matricule” column and a “note” column are required.",
         "import_erreur_inconnu": "Row {ligne}: registration number “{valeur}” is not in this class.",
         "import_erreur_doublon": "Row {ligne}: registration number “{valeur}” appears twice.",
-        "import_erreur_note": "Row {ligne}: “{valeur}” is not a grade between 0 and 20."
+        "import_erreur_note": "Row {ligne}: “{valeur}” is not a grade between 0 and 20.",
+        "conflit_rien_enregistre": "Nothing was saved: some grades changed meanwhile.",
+        "conflit_titre": "Grades changed on another device",
+        "conflit_ligne": "{nom}: saved {enregistree}/20, yours {envoyee}/20",
+        "conflit_garder": "Keep the saved grades",
+        "conflit_remplacer": "Replace with mine"
       }
     },
     "paiements": {

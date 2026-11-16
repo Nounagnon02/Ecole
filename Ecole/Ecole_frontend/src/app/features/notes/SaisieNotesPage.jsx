@@ -49,6 +49,7 @@ export default function SaisieNotesPage() {
   const [saisies, setSaisies] = useState({});
   const [etat, setEtat] = useState('repos'); // repos | envoi | enregistre | attente | erreur
   const [message, setMessage] = useState(null);
+  const [conflits, setConflits] = useState(null);
   const champs = useRef({});
   const fichier = useRef(null);
   const [rapport, setRapport] = useState(null);
@@ -148,19 +149,23 @@ export default function SaisieNotesPage() {
   const invalides = eleves.filter((e) => Number.isNaN(lireNote(saisies[e.id])));
   const aEnvoyer = eleves
     .filter((e) => !enregistrees[e.id]?.locked)
-    .map((e) => ({ eleve_id: e.id, note: lireNote(saisies[e.id]) }))
+    // `base` : la note telle que chargée ici ; si un autre appareil l'a changée
+    // entre-temps, l'API refuse d'écraser et renvoie le conflit (R-28).
+    .map((e) => ({ eleve_id: e.id, note: lireNote(saisies[e.id]), base: enregistrees[e.id] ? Number(enregistrees[e.id].note) : null }))
     .filter((n) => n.note !== null && !Number.isNaN(n.note));
   const enAttente = etat === 'attente' || etat === 'erreur' ? aEnvoyer.length : 0;
 
-  const enregistrer = useCallback(async () => {
+  const enregistrer = useCallback(async (forcer = false) => {
     if (!pret || invalides.length > 0 || aEnvoyer.length === 0) return;
     setEtat('envoi');
     setMessage(null);
+    setConflits(null);
     try {
       const { data } = await apiClient.post('/notes/bulk', {
         classe_id: Number(evaluation.classe), matiere_id: Number(evaluation.matiere),
         type_evaluation: evaluation.type, periode: evaluation.periode, date_evaluation: evaluation.date,
         notes: aEnvoyer,
+        ...(forcer === true ? { forcer: true } : {}),
       });
       // Hors-ligne, le client HTTP met l'envoi en file et répond « queued » :
       // rien n'est encore enregistré. Le dire, et garder le brouillon — le
@@ -175,6 +180,12 @@ export default function SaisieNotesPage() {
       setMessage(data?.warnings?.length ? data.warnings.join(' ') : null);
       requeteGrille.refetch();
     } catch (err) {
+      if (err?.status === 409 && Array.isArray(err.conflits)) {
+        setEtat('erreur');
+        setMessage(p('conflit_rien_enregistre'));
+        setConflits(err.conflits);
+        return;
+      }
       // Sans réponse du serveur (status 0) : le réseau manque, le brouillon reste.
       const horsLigne = !err?.status;
       setEtat(horsLigne ? 'attente' : 'erreur');
@@ -293,8 +304,23 @@ export default function SaisieNotesPage() {
                     <span className="text-[var(--text-secondary)]">{p('aide_clavier')}</span>
                   )}
                   {message && <p className={etat === 'erreur' ? 'mt-1 text-[var(--error)]' : 'mt-1 text-[var(--text-secondary)]'}>{message}</p>}
+                  {conflits && (
+                    <div role="alert" className="mt-2 rounded-lg border border-[var(--error)] p-3 space-y-2">
+                      <p className="font-semibold text-[var(--text-primary)]">{p('conflit_titre')}</p>
+                      <ul className="list-disc pl-5">
+                        {conflits.map((c) => {
+                          const eleve = eleves.find((x) => x.id === c.eleve_id);
+                          return <li key={c.eleve_id}>{p('conflit_ligne', { nom: eleve ? `${eleve.nom} ${eleve.prenom}`.trim() : `#${c.eleve_id}`, enregistree: c.enregistree, envoyee: c.envoyee })}</li>;
+                        })}
+                      </ul>
+                      <div className="flex flex-wrap gap-2">
+                        <Button variant="secondary" size="sm" onClick={() => { ecrire(cle, null); setConflits(null); setMessage(null); setEtat('repos'); requeteGrille.refetch(); }}>{p('conflit_garder')}</Button>
+                        <Button variant="danger" size="sm" onClick={() => enregistrer(true)}>{p('conflit_remplacer')}</Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <Button icon={<Save size={16} />} onClick={enregistrer} loading={etat === 'envoi'} disabled={invalides.length > 0 || aEnvoyer.length === 0}>
+                <Button icon={<Save size={16} />} onClick={() => enregistrer(false)} loading={etat === 'envoi'} disabled={invalides.length > 0 || aEnvoyer.length === 0}>
                   {p('enregistrer')}
                 </Button>
               </div>

@@ -60,6 +60,47 @@ it('enregistre la grille, puis la corrige sans doublon quand on la réenregistre
         ->and((float) Notes::where('eleve_id', $c['eleves'][1]->id)->sole()->note)->toBe(9.5);
 });
 
+// R-28 (16/11/2026) : deux appareils modifient la même note. Le client envoie
+// la valeur qu'il avait chargée (`base`) ; si elle a changé entre-temps, rien
+// n'est écrasé et le conflit est rendu, sauf si l'enseignant force.
+function saisirAvecBase(array $c, array $lignes, array $extra = [])
+{
+    return test()->postJson('/api/notes/bulk', $extra + [
+        'classe_id' => $c['classe']->id, 'matiere_id' => $c['maths']->id, 'type_evaluation' => 'Devoir1',
+        'date_evaluation' => '2026-11-10', 'periode' => 'Trimestre 1',
+        'notes' => collect($lignes)->map(fn ($l, $i) => ['eleve_id' => $c['eleves'][$i]->id, 'note' => $l[0], 'base' => $l[1]])->values()->all(),
+    ]);
+}
+
+it('refuse d’écraser une note modifiée entre-temps sur un autre appareil, et le dit', function () {
+    $c = classeNotee();
+    saisir($c, [12, 8])->assertCreated();                      // appareil A
+    saisirAvecBase($c, [[14, 12], [9, 8]])->assertCreated();    // appareil B, à jour
+    $reponse = saisirAvecBase($c, [[10, 12], [9, 8]]);          // appareil A, resté sur 12
+
+    $reponse->assertStatus(409)
+        ->assertJsonPath('conflits.0.eleve_id', $c['eleves'][0]->id)
+        ->assertJsonPath('conflits.0.enregistree', 14)
+        ->assertJsonPath('conflits.0.envoyee', 10);
+    expect((float) Notes::where('eleve_id', $c['eleves'][0]->id)->sole()->note)->toBe(14.0);
+});
+
+it('écrase après confirmation explicite (forcer)', function () {
+    $c = classeNotee();
+    saisir($c, [12])->assertCreated();
+    saisirAvecBase($c, [[14, 12]])->assertCreated();
+    saisirAvecBase($c, [[10, 12]], ['forcer' => true])->assertCreated();
+
+    expect((float) Notes::where('eleve_id', $c['eleves'][0]->id)->sole()->note)->toBe(10.0);
+});
+
+it('ne voit pas de conflit quand la note enregistrée est déjà celle envoyée', function () {
+    $c = classeNotee();
+    saisir($c, [12])->assertCreated();
+    saisirAvecBase($c, [[14, 12]])->assertCreated();
+    saisirAvecBase($c, [[14, 12]])->assertCreated();
+});
+
 it('ne modifie pas une note verrouillée et le signale', function () {
     $c = classeNotee();
     saisir($c, [12, 8.5])->assertCreated();

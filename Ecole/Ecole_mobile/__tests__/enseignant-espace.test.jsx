@@ -55,10 +55,25 @@ describe('espace enseignant — notes', () => {
     fireEvent.changeText(champ, '12,5');
     fireEvent.press(screen.getByText('Enregistrer 1 note(s)'));
     await waitFor(() => expect(api.post).toHaveBeenCalledWith('/notes/bulk', expect.objectContaining({
-      classe_id: 1, matiere_id: 4, type_evaluation: 'Devoir1', periode: 'Trimestre 1', notes: [{ eleve_id: 21, note: 12.5 }],
+      classe_id: 1, matiere_id: 4, type_evaluation: 'Devoir1', periode: 'Trimestre 1', notes: [{ eleve_id: 21, note: 12.5, base: null }],
     })));
     expect(await screen.findByText(/1 note\(s\) enregistrée\(s\)/)).toBeTruthy();
     expect(await listeBrouillons()).toEqual([]);
+  });
+
+  // R-28 : note modifiée entre-temps sur un autre appareil → rien n'est
+  // enregistré, l'enseignant voit le conflit et choisit.
+  it('signale un conflit de modification et remplace seulement sur confirmation', async () => {
+    const alerte = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    api.post.mockRejectedValueOnce({ response: { status: 409, data: { conflits: [{ eleve_id: 21, enregistree: 14, envoyee: 12.5 }] } } })
+      .mockResolvedValueOnce({ data: { success: true } });
+    const champ = await ouvrirGrille();
+    fireEvent.changeText(champ, '12,5');
+    fireEvent.press(screen.getByText('Enregistrer 1 note(s)'));
+    await waitFor(() => expect(alerte).toHaveBeenCalledWith('Notes modifiées sur un autre appareil', expect.stringContaining('AHO Kossi : enregistrée 14/20, la vôtre 12,5/20'), expect.any(Array)));
+    expect(screen.queryByText(/note\(s\) enregistrée\(s\)/)).toBeNull();
+    alerte.mock.calls[0][2][1].onPress();
+    await waitFor(() => expect(api.post).toHaveBeenLastCalledWith('/notes/bulk', expect.objectContaining({ forcer: true })));
   });
 
   it('bloque l’envoi d’une note hors 0–20', async () => {
