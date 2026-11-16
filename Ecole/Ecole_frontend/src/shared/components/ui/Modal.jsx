@@ -32,9 +32,16 @@ export default function Modal({
   const closeRef = useRef(null);
   const titleId = useId();
 
+  // `onClose` lu par référence : les formulaires passent une fonction neuve à
+  // chaque rendu. En dépendre relançait l'effet ci-dessous à chaque frappe,
+  // et il remettait le focus sur le bouton de fermeture — seule la première
+  // lettre d'un champ passait (application Windows, 16/11/2026).
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
   const handleKeyDown = useCallback(
     (e) => {
-      if (e.key === 'Escape') onClose?.();
+      if (e.key === 'Escape') onCloseRef.current?.();
       if (e.key === 'Tab') {
         const modal = closeRef.current?.closest('[role="dialog"]');
         if (!modal) return;
@@ -53,7 +60,7 @@ export default function Modal({
         }
       }
     },
-    [onClose]
+    []
   );
 
   useEffect(() => {
