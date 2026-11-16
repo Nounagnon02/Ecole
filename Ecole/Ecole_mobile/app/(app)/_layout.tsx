@@ -34,6 +34,9 @@ export default function AppLayout() {
       logout().finally(() => router.replace('/'));
       return;
     }
+    // Seuls les écrans du groupe sont des espaces : un écran de la racine
+    // ouvert par-dessus (retour de paiement) n'est pas à rediriger.
+    if (segments[0] !== '(app)') return;
     const ecran = segments[segments.length - 1];
     if (ecran && `/(app)/${ecran}` !== espace) {
       router.replace(espace);

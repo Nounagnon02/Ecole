@@ -54,6 +54,17 @@ describe('garde du périmètre mobile', () => {
     expect(mockLogout).not.toHaveBeenCalled();
   });
 
+  // Parcours 6 (16/11/2026, émulateur) : au retour de FedaPay, l'écran
+  // « Paiement confirmé » était aussitôt remplacé par l'accueil, la garde
+  // prenant `paiement-retour` (hors du groupe) pour un espace étranger.
+  it('laisse s’afficher l’écran de retour de paiement, hors du groupe (app)', async () => {
+    mockAuth = { user: { id: 2, role: 'parent' }, loading: false, logout: mockLogout };
+    mockSegments = ['paiement-retour'];
+    render(<AppLayout />);
+    await new Promise((r) => setTimeout(r, 20));
+    expect(mockReplace).not.toHaveBeenCalled();
+  });
+
   it('impose le changement du mot de passe provisoire avant tout écran', async () => {
     mockAuth = { user: { id: 3, role: 'parent', password_change_required: true }, loading: false, logout: mockLogout };
     mockSegments = ['(app)', 'parent'];
