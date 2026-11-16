@@ -1323,6 +1323,8 @@
       "emploi_du_temps": {
         "title": "Emploi du temps",
         "subtitle": "Consultez les emplois du temps par classe",
+        "subtitle_eleve": "Votre emploi du temps de la semaine",
+        "subtitle_parent": "L’emploi du temps des classes de vos enfants",
         "ajouter_un_cours": "Ajouter un cours",
         "annee_scolaire_2025_2026": "Année scolaire 2025-2026",
         "filtrer_par_enseignant": "Filtrer par enseignant",

@@ -1323,6 +1323,8 @@
       "emploi_du_temps": {
         "title": "Schedule",
         "subtitle": "View timetables by class",
+        "subtitle_eleve": "Your weekly timetable",
+        "subtitle_parent": "The timetables of your children’s classes",
         "ajouter_un_cours": "Add a Course",
         "annee_scolaire_2025_2026": "School year 2025-2026",
         "filtrer_par_enseignant": "Filter by teacher",

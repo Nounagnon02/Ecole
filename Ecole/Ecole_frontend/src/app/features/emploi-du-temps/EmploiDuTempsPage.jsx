@@ -15,7 +15,7 @@ import { Clock, Loader2, MapPin, Pencil, Plus, Trash2, User } from 'lucide-react
 import apiClient, { useApiQuery } from '@/shared/lib/api-client';
 import { unwrapList } from '@/shared/lib/unwrap';
 import useAuthStore from '@/shared/stores/auth-store';
-import { ROLE_GROUPS } from '@/shared/types/roles';
+import { ROLES, ROLE_GROUPS } from '@/shared/types/roles';
 import Button from '@/shared/components/ui/Button';
 import Card from '@/shared/components/ui/Card';
 import Input from '@/shared/components/ui/Input';
@@ -112,11 +112,15 @@ export default function EmploiDuTempsPage() {
   const { t } = useTranslation();
   const p = (cle, valeurs) => t(`pages.emploi_du_temps.edition.${cle}`, valeurs);
   const peutModifier = useAuthStore((s) => s.hasAnyRole([...ROLE_GROUPS.DIRECTION]));
+  // L'API ne renvoie à la famille que ses classes (l'élève la sienne, le
+  // parent celles de ses enfants) : pas de choix parmi toutes les classes.
+  const estEleve = useAuthStore((s) => s.hasAnyRole([ROLES.ELEVE]));
+  const estFamille = useAuthStore((s) => s.hasAnyRole([ROLES.ELEVE, ROLES.PARENT]));
   const [classe, setClasse] = useState('');
   const [edition, setEdition] = useState(null);
   const [erreur, setErreur] = useState(null);
 
-  const requeteClasses = useApiQuery(['classes'], '/classes');
+  const requeteClasses = useApiQuery(['classes'], '/classes', { queryOptions: { enabled: !estFamille } });
   const classes = useMemo(() => (unwrapList(requeteClasses.data) ?? []).map((c) => ({ value: c.id, label: c.nom_classe })), [requeteClasses.data]);
   const requete = useApiQuery(['emploi-du-temps', classe], classe ? `/emploi-du-temps?classe_id=${classe}` : '/emploi-du-temps');
 
@@ -148,15 +152,17 @@ export default function EmploiDuTempsPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)]">{t('pages.emploi_du_temps.emploi_du_temps.title')}</h1>
-          <p className="text-sm text-[var(--text-secondary)]">{t('pages.emploi_du_temps.emploi_du_temps.subtitle')}</p>
+          <p className="text-sm text-[var(--text-secondary)]">
+            {t(estEleve ? 'pages.emploi_du_temps.emploi_du_temps.subtitle_eleve' : estFamille ? 'pages.emploi_du_temps.emploi_du_temps.subtitle_parent' : 'pages.emploi_du_temps.emploi_du_temps.subtitle')}
+          </p>
         </div>
         {peutModifier && <Button icon={<Plus size={18} />} onClick={() => setEdition({})}>{t('pages.emploi_du_temps.emploi_du_temps.ajouter_un_cours')}</Button>}
       </div>
 
       <Card padding>
-        <div className="max-w-sm">
+        {!estFamille && <div className="max-w-sm">
           <Select label={p('classe')} placeholder={p('toutes_les_classes')} options={classes} value={classe} onChange={(e) => setClasse(e.target.value)} />
-        </div>
+        </div>}
         {erreur && <p role="alert" className="mt-3 text-sm text-[var(--error)]">{erreur}</p>}
       </Card>
 
@@ -177,7 +183,7 @@ export default function EmploiDuTempsPage() {
                     <li key={c.id} className="space-y-1 px-3 py-2 text-xs" data-testid="cours">
                       <p className="flex items-center gap-1 font-semibold text-[var(--text-primary)]"><Clock size={12} aria-hidden="true" />{hh(c.heure_debut)} – {hh(c.heure_fin)}</p>
                       <p className="text-sm font-medium text-[var(--accent)]">{c.matiere?.nom ?? '—'}</p>
-                      {!classe && c.classe?.nom_classe && <p className="text-[var(--text-secondary)]">{c.classe.nom_classe}</p>}
+                      {!classe && !estEleve && c.classe?.nom_classe && <p className="text-[var(--text-secondary)]">{c.classe.nom_classe}</p>}
                       {nomProf(c) && <p className="flex items-center gap-1 text-[var(--text-secondary)]"><User size={12} aria-hidden="true" />{nomProf(c)}</p>}
                       {c.salle && <p className="flex items-center gap-1 text-[var(--text-tertiary)]"><MapPin size={12} aria-hidden="true" />{c.salle}</p>}
                       {peutModifier && (
