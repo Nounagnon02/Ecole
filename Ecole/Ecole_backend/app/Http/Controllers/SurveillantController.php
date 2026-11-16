@@ -244,8 +244,11 @@ class SurveillantController extends Controller
     public function statistiques()
     {
         // Incidents par mois (12 derniers mois)
+        // Expression du mois portable : DATE_FORMAT n'existe pas sous SQLite,
+        // où tourne la suite de la CI (500 sur cette route, R-47).
+        $mois = DB::getDriverName() === 'sqlite' ? "strftime('%Y-%m', date)" : "DATE_FORMAT(date, '%Y-%m')";
         $incidentsParMois = Incident::select(
-            DB::raw("DATE_FORMAT(date, '%Y-%m') as mois"),
+            DB::raw("$mois as mois"),
             DB::raw('COUNT(*) as total')
         )
             ->where('date', '>=', now()->subMonths(12))

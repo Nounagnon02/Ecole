@@ -40,6 +40,24 @@ describe.skipIf(!buildExists)('bundle de production — ordre d\'initialisation 
     root.id = 'root';
     document.body.appendChild(root);
 
+    // jsdom ne connaît pas `modulepreload` : le polyfill de Vite télécharge
+    // alors les chunks avec `fetch` sur localhost, et l'application montée
+    // appelle l'API. En CI, rien n'écoute : ces requêtes échouaient APRÈS le
+    // test (ECONNREFUSED non gérées, job rouge — R-47, 16/11/2026). Réseau
+    // remplacé par des requêtes qui ne répondent jamais : seul l'ordre
+    // d'évaluation des chunks est vérifié ici.
+    class XhrMuet {
+      open() {}
+      setRequestHeader() {}
+      getAllResponseHeaders() { return ''; }
+      addEventListener() {}
+      removeEventListener() {}
+      abort() {}
+      send() {}
+    }
+    globalThis.XMLHttpRequest = XhrMuet;
+    globalThis.fetch = () => new Promise(() => {});
+
     // Une ReferenceError levée ici -- qu'elle vienne de ce chunk ou d'un de
     // ceux qu'il importe -- se propage par le rejet de cette promesse.
     await expect(import(/* @vite-ignore */ entryPath)).resolves.toBeDefined();

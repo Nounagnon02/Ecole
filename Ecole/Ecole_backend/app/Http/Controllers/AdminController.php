@@ -24,7 +24,11 @@ class AdminController extends Controller
     public function __construct()
     {
         $this->middleware(function ($request, $next) {
-            if (!auth()->user()?->isAdmin()) {
+            // Le groupe de routes admet `admin` et `super-admin` ; le garde
+            // ne s'appuyait que sur `isAdmin()`, qui n'inclut pas toujours
+            // l'administrateur de plateforme — 403 en CI (R-47, 16/11/2026).
+            $user = auth()->user();
+            if (! $user || ! ($user->isAdmin() || in_array($user->role, ['admin', 'super-admin'], true))) {
                 return response()->json(['error' => 'Forbidden'], 403);
             }
             return $next($request);
