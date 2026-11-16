@@ -30,16 +30,52 @@ const TABS = [
   { id: 'notes', label: 'Mes Notes', icon: ClipboardList },
 ];
 
+/** « trimestre2 », « Trimestre 2 » → « trimestre 2 » ; autre libellé inchangé. */
+export function libellePeriode(periode) {
+  const m = String(periode ?? '').match(/^(trimestre|semestre)\s*(\d)$/i);
+  return m ? `${m[1].toLowerCase()} ${m[2]}` : periode;
+}
+
+const JOURS = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
+const minutes = (heure) => {
+  const [h, m] = String(heure ?? '').split(':').map(Number);
+  return Number.isFinite(h) ? h * 60 + (Number.isFinite(m) ? m : 0) : 0;
+};
+
+/**
+ * Cours rangés à partir de maintenant : ceux d'aujourd'hui pas encore
+ * commencés, puis les jours suivants, puis ceux de la semaine prochaine.
+ * L'API rangeait les jours par ordre alphabétique (revue du 16/11/2026).
+ */
+export function prochainsCours(emploi, maintenant = new Date()) {
+  const aujourdhui = (maintenant.getDay() + 6) % 7;
+  const instant = aujourdhui * 1440 + maintenant.getHours() * 60 + maintenant.getMinutes();
+  const semaine = 7 * 1440;
+  return emploi
+    .map((cours) => {
+      const jour = JOURS.indexOf(String(cours.jour ?? '').toLowerCase());
+      if (jour < 0) return { cours, delai: Infinity };
+      const ecart = jour * 1440 + minutes(cours.heure_debut) - instant;
+      return { cours, delai: ecart < 0 ? ecart + semaine : ecart };
+    })
+    .sort((a, b) => a.delai - b.delai)
+    .map(({ cours }) => cours);
+}
+
 function ApercuSection({ data, loading }) {
   const { t } = useTranslation();
   const eleve = data?.eleve ?? {};
   const stats = data?.stats ?? {};
   const matieres = data?.matieres ?? [];
-  const emploi = data?.emploi_du_temps ?? [];
+  const emploi = prochainsCours(data?.emploi_du_temps ?? []);
 
+  // Moyenne de la dernière période notée, calculée comme au bulletin mais
+  // avant l'arrêt du bulletin : dite « provisoire », avec sa période.
   const statsCards = [
     {
-      title: t('dashboards.eleve.stats.moyenne_generale'),
+      title: stats.periode
+        ? t('dashboards.eleve.stats.moyenne_periode', { periode: libellePeriode(stats.periode) })
+        : t('dashboards.eleve.stats.moyenne_provisoire'),
       value: stats.moyenne_generale ? `${stats.moyenne_generale}/20` : '—',
       icon: TrendingUp,
       color: 'emerald'
@@ -56,13 +92,19 @@ function ApercuSection({ data, loading }) {
       icon: AlertCircle,
       color: 'amber'
     },
+    {
+      title: t('dashboards.eleve.stats.retards_ce_mois'),
+      value: String(stats.retards_mois ?? 0),
+      icon: Clock,
+      color: 'amber'
+    },
   ];
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {loading
-          ? Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-28 rounded-2xl" />)
+          ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-28 rounded-2xl" />)
           : statsCards.map((s, i) => (
               <motion.div key={s.title} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}>
                 <StatsCard {...s} className="h-full" />
@@ -101,7 +143,7 @@ function ApercuSection({ data, loading }) {
           </Card.Body>
         </Card>
 
-        <Card>
+        <Card data-testid="prochains-cours">
           <Card.Header>
             <Card.Title>{t('dashboards.eleve.prochains_cours')}</Card.Title>
             <Card.Description>{t('dashboards.eleve.emploi_du_temps')}</Card.Description>

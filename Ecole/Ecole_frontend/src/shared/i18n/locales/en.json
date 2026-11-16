@@ -571,7 +571,10 @@
       "stats": {
         "moyenne_generale": "Overall Average",
         "total_notes": "Total Grades",
-        "absences_ce_mois": "Absences This Month"
+        "absences_ce_mois": "Absences This Month",
+        "retards_ce_mois": "Late arrivals this month",
+        "moyenne_periode": "Average for {periode} (provisional)",
+        "moyenne_provisoire": "Provisional average"
       },
       "notes_par_matiere": "Grades by Subject",
       "moyennes_par_matiere": "Averages by subject",

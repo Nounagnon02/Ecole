@@ -571,7 +571,10 @@
       "stats": {
         "moyenne_generale": "Moyenne générale",
         "total_notes": "Total notes",
-        "absences_ce_mois": "Absences ce mois"
+        "absences_ce_mois": "Absences ce mois",
+        "retards_ce_mois": "Retards ce mois",
+        "moyenne_periode": "Moyenne du {periode} (provisoire)",
+        "moyenne_provisoire": "Moyenne provisoire"
       },
       "notes_par_matiere": "Notes par matière",
       "moyennes_par_matiere": "Moyennes par matière",
