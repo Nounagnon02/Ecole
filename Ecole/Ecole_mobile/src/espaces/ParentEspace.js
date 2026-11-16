@@ -183,6 +183,7 @@ function Scolarite() {
   const absences = useRequete(id && vue === 'absences' ? `/parent/enfants/${id}/absences` : null);
   const edt = useRequete(id && vue === 'edt' ? `/parent/enfants/${id}/emploi-du-temps` : null);
   const bulletins = useRequete(id && vue === 'bulletins' ? '/bulletins' : null);
+  const devoirs = useRequete(id && vue === 'devoirs' ? `/parent/enfants/${id}/devoirs` : null);
   const [envoi, setEnvoi] = useState(null);
 
   const partagerBulletin = async (b) => {
@@ -207,8 +208,18 @@ function Scolarite() {
     <Ecran titre="Scolarité" sousTitre={puces.options.length > 1 ? undefined : nomEnfant(enfant)} puces={puces}>
       <Segments valeur={vue} onChange={setVue} options={[
         { valeur: 'notes', libelle: 'Notes' }, { valeur: 'absences', libelle: 'Absences' },
-        { valeur: 'edt', libelle: 'Emploi du temps' }, { valeur: 'bulletins', libelle: 'Bulletins' },
+        { valeur: 'edt', libelle: 'Emploi du temps' }, { valeur: 'devoirs', libelle: 'Devoirs' }, { valeur: 'bulletins', libelle: 'Bulletins' },
       ]} />
+      {vue === 'devoirs' && <>
+        <Etat requete={devoirs} estVide={liste(devoirs.donnees).length === 0} vide="Aucun devoir donné à la classe pour l’instant." />
+        {liste(devoirs.donnees).map((d) => (
+          <Carte key={d.id} style={{ gap: 4 }}>
+            <Texte variante="fort">{d.titre}</Texte>
+            <Texte variante="discret">{[d.matiere?.nom, d.date_limite ? `à rendre le ${dateFr(d.date_limite)}` : 'sans date limite'].filter(Boolean).join(' · ')}</Texte>
+            {d.description ? <Texte>{d.description}</Texte> : null}
+          </Carte>
+        ))}
+      </>}
       {vue === 'notes' && <>
         <Etat requete={notes} estVide={liste(notes.donnees).length === 0} vide="Aucune note publiée pour l’instant." />
         <Liste>

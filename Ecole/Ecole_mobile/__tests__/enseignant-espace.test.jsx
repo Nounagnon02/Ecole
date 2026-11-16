@@ -7,7 +7,7 @@ import { Alert } from 'react-native';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NavigationContainer } from '@react-navigation/native';
-import EnseignantEspace, { AppelClasse, Notes, confirmerDeconnexion, idEnseignant, lireNote } from '../src/espaces/EnseignantEspace';
+import EnseignantEspace, { AppelClasse, DevoirClasse, Notes, confirmerDeconnexion, idEnseignant, lireNote } from '../src/espaces/EnseignantEspace';
 import { ThemeProvider } from '../src/theme';
 import { api } from '../src/services/api';
 import { clearAll, listeBrouillons } from '../src/services/secureStorage';
@@ -207,5 +207,30 @@ describe('appel d’une classe', () => {
     fireEvent.press(screen.getByRole('button', { name: 'Enregistrer l’appel' }));
     expect(await screen.findByText(/Hors connexion : l’appel n’a pas été enregistré/)).toBeTruthy();
     expect(screen.queryByText(/Appel enregistré/)).toBeNull();
+  });
+});
+
+// R-30 (16/11/2026) : l'enseignant donne un devoir à sa classe depuis le mobile.
+describe('devoir donné à une classe', () => {
+  beforeEach(() => { jest.clearAllMocks(); api.post.mockResolvedValue({ data: { success: true } }); });
+
+  it('publie le devoir pour la classe et le confirme après la réponse', async () => {
+    render(<ThemeProvider><DevoirClasse classe={{ id: 1, nom_classe: '3ème' }} onRetour={() => {}} /></ThemeProvider>);
+    fireEvent.changeText(screen.getByLabelText('Consigne (titre)'), 'Exercices 3 et 4 p. 52');
+    fireEvent.changeText(screen.getByLabelText('À rendre le (AAAA-MM-JJ, facultatif)'), '2026-11-20');
+    fireEvent.press(screen.getByRole('button', { name: 'Publier le devoir' }));
+    await waitFor(() => expect(api.post).toHaveBeenCalledWith('/devoirs', {
+      classe_id: 1, titre: 'Exercices 3 et 4 p. 52', description: null, date_limite: '2026-11-20', publie: true,
+    }));
+    expect(await screen.findByText(/Devoir publié pour la 3ème/)).toBeTruthy();
+  });
+
+  it('refuse une date mal écrite sans rien envoyer', () => {
+    render(<ThemeProvider><DevoirClasse classe={{ id: 1, nom_classe: '3ème' }} onRetour={() => {}} /></ThemeProvider>);
+    fireEvent.changeText(screen.getByLabelText('Consigne (titre)'), 'Lire le chapitre 2');
+    fireEvent.changeText(screen.getByLabelText('À rendre le (AAAA-MM-JJ, facultatif)'), '20/11');
+    expect(screen.getByText('Date attendue sous la forme AAAA-MM-JJ.')).toBeTruthy();
+    fireEvent.press(screen.getByRole('button', { name: 'Publier le devoir' }));
+    expect(api.post).not.toHaveBeenCalled();
   });
 });

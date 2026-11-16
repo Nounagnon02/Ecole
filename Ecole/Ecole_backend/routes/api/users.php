@@ -109,6 +109,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/enfants/{enfantId}/notes', [EspaceParentController::class, 'enfantNotes']);
         Route::get('/enfants/{enfantId}/absences', [EspaceParentController::class, 'enfantAbsences']);
         Route::get('/enfants/{enfantId}/emploi-du-temps', [EspaceParentController::class, 'enfantEmploiDuTemps']);
+        Route::get('/enfants/{enfantId}/devoirs', [EspaceParentController::class, 'enfantDevoirs']);
         Route::get('/enfants/{enfantId}/paiements', [EspaceParentController::class, 'enfantPaiements']);
         Route::get('/preferences', [EspaceParentController::class, 'preferences']);
         Route::put('/preferences', [EspaceParentController::class, 'majPreferences']);

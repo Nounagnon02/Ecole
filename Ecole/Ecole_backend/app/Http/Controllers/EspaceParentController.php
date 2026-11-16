@@ -405,6 +405,23 @@ class EspaceParentController extends Controller
     }
 
     /**
+     * Devoirs publiés pour la classe d'un enfant (parcours 4, R-30).
+     * GET /parent/enfants/{enfantId}/devoirs
+     */
+    public function enfantDevoirs(int $enfantId)
+    {
+        $child = $this->ownChildOrFail($enfantId);
+
+        $devoirs = \App\Models\Devoir::with('matiere:id,nom')
+            ->where('classe_id', $child->classe_id)
+            ->where('publie', true)
+            ->orderByDesc('created_at')
+            ->get(['id', 'titre', 'description', 'type', 'date_limite', 'matiere_id', 'created_at']);
+
+        return response()->json(['success' => true, 'data' => $devoirs]);
+    }
+
+    /**
      * Payment history and balance of one child.
      * GET /parent/enfants/{enfantId}/paiements
      */

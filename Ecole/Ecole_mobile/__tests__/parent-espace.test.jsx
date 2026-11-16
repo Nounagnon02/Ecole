@@ -89,6 +89,19 @@ describe('espace parent', () => {
     expect(screen.getByRole('tab', { name: 'Absences' }).props.accessibilityState.selected).toBe(true);
   });
 
+  // R-30 : le parent lit les devoirs donnés à la classe de son enfant.
+  it('montre les devoirs de la classe de l’enfant', async () => {
+    api.get.mockImplementation((url) => Promise.resolve({ data: url === '/parent/enfants/7/devoirs'
+      ? { success: true, data: [{ id: 1, titre: 'Exercices 3 et 4 p. 52', date_limite: '2026-11-20', matiere: { nom: 'Maths' } }] }
+      : REPONSES[url] ?? { success: true, data: [] } }));
+    monter();
+    await screen.findByLabelText('Voir la scolarité de AHO Kossi');
+    fireEvent.press(screen.getByRole('tab', { name: 'Scolarité' }));
+    fireEvent.press(await screen.findByRole('tab', { name: 'Devoirs' }));
+    expect(await screen.findByText('Exercices 3 et 4 p. 52')).toBeTruthy();
+    expect(screen.getByText('Maths · à rendre le 20/11/2026')).toBeTruthy();
+  });
+
   it('annonce sur l’accueil le reste total à payer, sans inventer d’échéance, et mène au paiement', async () => {
     monter();
     expect(await screen.findByLabelText('Reste à payer pour AHO Kossi : 50 000 FCFA')).toBeTruthy();

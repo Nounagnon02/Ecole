@@ -105,19 +105,59 @@ export function AppelClasse({ classe, onRetour }) {
   );
 }
 
+/* ─── Devoir donné à une classe (R-30, 16/11/2026) ─────────────────────── */
+export function DevoirClasse({ classe, onRetour }) {
+  const t = useTeintes();
+  const [devoir, setDevoir] = useState({ titre: '', description: '', date_limite: '' });
+  const [etat, setEtat] = useState('repos');
+  const [message, setMessage] = useState(null);
+  const dateValide = !devoir.date_limite || /^\d{4}-\d{2}-\d{2}$/.test(devoir.date_limite);
+  const envoyer = async () => {
+    setEtat('envoi'); setMessage(null);
+    try {
+      await api.post('/devoirs', { classe_id: classe.id, titre: devoir.titre.trim(), description: devoir.description.trim() || null,
+        date_limite: devoir.date_limite || null, publie: true });
+      setEtat('enregistre');
+      setMessage(`Devoir publié pour la ${classe.nom_classe} : les familles le voient dans Scolarité › Devoirs.`);
+      setDevoir({ titre: '', description: '', date_limite: '' });
+    } catch (err) {
+      setEtat('erreur');
+      setMessage(err?.response ? messageErreur(err, 'Le devoir n’a pas été publié.') : 'Hors connexion : le devoir n’a pas été publié.');
+    }
+  };
+  return (
+    <Ecran titre={`Devoir · ${classe.nom_classe}`} onRetour={onRetour} retourLabel={`Retour à ${classe.nom_classe}`}>
+      <Champ libelle="Consigne (titre)" etiquette value={devoir.titre} onChangeText={(v) => setDevoir((d) => ({ ...d, titre: v }))} />
+      <Champ libelle="Détails (facultatif)" etiquette multiline value={devoir.description} onChangeText={(v) => setDevoir((d) => ({ ...d, description: v }))}
+        style={{ minHeight: 96, textAlignVertical: 'top', paddingVertical: 12 }} />
+      <Champ libelle="À rendre le (AAAA-MM-JJ, facultatif)" etiquette value={devoir.date_limite} onChangeText={(v) => setDevoir((d) => ({ ...d, date_limite: v }))} />
+      {!dateValide ? <Texte variante="discret" style={{ color: t.colors.error }}>Date attendue sous la forme AAAA-MM-JJ.</Texte> : null}
+      {message ? <Texte accessibilityRole="alert" variante="discret" style={{ color: etat === 'erreur' ? t.colors.error : t.colors.success }}>{message}</Texte> : null}
+      <Bouton titre="Publier le devoir" chargement={etat === 'envoi'} desactive={!devoir.titre.trim() || !dateValide} onPress={envoyer} />
+    </Ecran>
+  );
+}
+
 /* ─── Classes et élèves ────────────────────────────────────────────────── */
 function Classes() {
   const classes = useRequete('/enseignant/classes');
   const t = useTeintes();
   const [ouverte, setOuverte] = useState(null);
   const [appel, setAppel] = useState(false);
+  const [devoir, setDevoir] = useState(false);
   const liste_ = liste(classes.donnees);
   if (ouverte && appel) return <AppelClasse classe={ouverte} onRetour={() => setAppel(false)} />;
+  if (ouverte && devoir) return <DevoirClasse classe={ouverte} onRetour={() => setDevoir(false)} />;
   if (ouverte) {
     const eleves = ouverte.eleves ?? [];
     return (
       <Ecran titre={ouverte.nom_classe} sousTitre={effectif(eleves.length)} onRetour={() => setOuverte(null)} retourLabel="Retour à mes classes">
-        {eleves.length ? <Bouton titre="Faire l’appel" onPress={() => setAppel(true)} /> : null}
+        {eleves.length ? (
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <Bouton titre="Faire l’appel" onPress={() => setAppel(true)} style={{ flex: 1 }} />
+            <Bouton titre="Donner un devoir" variante="secondaire" onPress={() => setDevoir(true)} style={{ flex: 1 }} />
+          </View>
+        ) : null}
         <Etat requete={{ chargement: false, erreur: null }} estVide={eleves.length === 0} vide="Aucun élève inscrit dans cette classe." />
         <Liste>
           {eleves.map((e) => (

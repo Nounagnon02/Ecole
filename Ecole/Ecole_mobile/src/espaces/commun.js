@@ -308,6 +308,7 @@ export function Bouton({ titre, onPress, variante = 'principal', chargement = fa
   return (
     <Pressable
       onPress={inactif ? undefined : onPress}
+      disabled={inactif}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? titre}
       accessibilityState={{ disabled: inactif, busy: chargement }}

@@ -90,6 +90,12 @@ class DevoirController extends Controller
             return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
         }
 
+        // Un enseignant ne donne de devoir qu'à une classe qu'il enseigne (R-30).
+        if (\App\Support\Enseignement::estEnseignant($request->user())
+            && ! \App\Support\Enseignement::enseigneLaClasse($request->user(), (int) $request->classe_id)) {
+            return response()->json(['success' => false, 'message' => 'Cette classe ne vous est pas affectée.'], 403);
+        }
+
         $devoir = Devoir::create([
             'enseignant_id' => $request->user()->id,
             'classe_id' => $request->classe_id,
@@ -220,6 +226,24 @@ class DevoirController extends Controller
         $devoir = Devoir::with(['classe', 'matiere', 'enseignant', 'eleves' => function ($q) {
             $q->select('users.id', 'users.name', 'users.prenom');
         }])->findOrFail($id);
+
+        // Le détail (et la liste nominative des élèves) n'est ouvert qu'à
+        // l'auteur, à la direction, aux élèves de la classe et à leurs parents.
+        $user = auth()->user();
+        $autorise = match (true) {
+            $user->role === 'eleve' => (int) $user->eleve?->classe_id === (int) $devoir->classe_id,
+            $user->role === 'parent' => (bool) $user->parent?->eleves()->where('eleves.classe_id', $devoir->classe_id)->exists(),
+            \App\Support\Enseignement::estEnseignant($user) => (int) $devoir->enseignant_id === (int) $user->id
+                || \App\Support\Enseignement::enseigneLaClasse($user, (int) $devoir->classe_id),
+            default => true,
+        };
+        if (! $autorise) {
+            return response()->json(['success' => false, 'message' => 'Accès refusé'], 403);
+        }
+        // Une famille ne voit pas la liste des autres élèves.
+        if (in_array($user->role, ['eleve', 'parent'], true)) {
+            $devoir->unsetRelation('eleves');
+        }
 
         return response()->json([
             'success' => true,

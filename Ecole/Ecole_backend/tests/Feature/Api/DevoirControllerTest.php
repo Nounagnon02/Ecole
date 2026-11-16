@@ -39,6 +39,12 @@ class DevoirControllerTest extends TestCase
         $this->classe = Classes::factory()->create(['ecole_id' => $this->school->id]);
         $this->matiere = Matieres::factory()->create(['ecole_id' => $this->school->id]);
         $this->enseignantUser = User::factory()->create(['role' => 'enseignant', 'ecole_id' => $this->school->id]);
+        // Un enseignant ne publie de devoir que dans une classe qu'il enseigne
+        // (R-30, 16/11/2026) : celui-ci y est affecté.
+        $fiche = \App\Models\Enseignant::create(['user_id' => $this->enseignantUser->id, 'ecole_id' => $this->school->id]);
+        $serie = \Illuminate\Support\Facades\DB::table('series')->insertGetId(['ecole_id' => $this->school->id, 'nom' => 'Collège', 'created_at' => now(), 'updated_at' => now()]);
+        \Illuminate\Support\Facades\DB::table('enseignant_matiere')->insert(['ecole_id' => $this->school->id, 'enseignant_id' => $fiche->id,
+            'matiere_id' => $this->matiere->id, 'classe_id' => $this->classe->id, 'serie_id' => $serie]);
     }
 
     private function eleve(): array
