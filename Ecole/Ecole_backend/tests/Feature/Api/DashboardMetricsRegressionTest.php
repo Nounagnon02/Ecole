@@ -84,6 +84,13 @@ class DashboardMetricsRegressionTest extends TestCase
     /** @test */
     public function evolution_effectifs_suit_l_annee_scolaire_et_pas_l_annee_civile()
     {
+        // Date figée : le cas distingue « inscrit en septembre » de « inscrit ce
+        // mois-ci ». Exécuté un jour de septembre, les deux se confondent et le
+        // premier mois en comptait 3 au lieu de 2 — le test échouait tous les
+        // septembres, sans rapport avec le code testé. Un point fixe au milieu
+        // de l'année scolaire garde les deux mois distincts toute l'année.
+        \Illuminate\Support\Carbon::setTestNow('2026-01-15 09:00:00');
+
         $school = $this->school();
         $directeur = User::factory()->create(['role' => 'directeur', 'ecole_id' => $school->id]);
 
@@ -109,6 +116,8 @@ class DashboardMetricsRegressionTest extends TestCase
         $this->assertSame('Sept', $evolution[0]['name']);
         $this->assertSame(2, $evolution[0]['students']);
         $this->assertSame(3, collect($evolution)->sum('students'));
+
+        \Illuminate\Support\Carbon::setTestNow();
     }
 
     /* ─── surveillant : élèves distincts ─────────────────────────────── */

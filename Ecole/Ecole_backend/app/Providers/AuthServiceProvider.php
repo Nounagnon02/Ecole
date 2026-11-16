@@ -6,12 +6,14 @@ namespace App\Providers;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use App\Models\Notes;
 use App\Models\Absence;
+use App\Models\Bulletin;
 use App\Models\CahierDeTexte;
 use App\Models\Communication;
 use App\Models\Eleve;
 use App\Models\EmploiDuTemps;
 use App\Models\Enseignant;
 use App\Models\Matieres;
+use App\Models\Moyennes;
 use App\Models\Personnel;
 use App\Models\PaiementEleve;
 use App\Models\Series;
@@ -19,12 +21,14 @@ use App\Models\UserParent;
 use App\Models\Universite\Devoir as UniversiteDevoir;
 use App\Policies\NotePolicy;
 use App\Policies\AbsencePolicy;
+use App\Policies\BulletinPolicy;
 use App\Policies\CahierDeTextePolicy;
 use App\Policies\CommunicationPolicy;
 use App\Policies\ElevePolicy;
 use App\Policies\EmploiDuTempsPolicy;
 use App\Policies\EnseignantPolicy;
 use App\Policies\MatieresPolicy;
+use App\Policies\MoyennesPolicy;
 use App\Policies\PersonnelPolicy;
 use App\Policies\PaiementPolicy;
 use App\Policies\SeriesPolicy;
@@ -41,6 +45,7 @@ class AuthServiceProvider extends ServiceProvider
     protected $policies = [
         Notes::class => NotePolicy::class,
         Absence::class => AbsencePolicy::class,
+        Bulletin::class => BulletinPolicy::class,
         CahierDeTexte::class => CahierDeTextePolicy::class,
         Eleve::class => ElevePolicy::class,
         PaiementEleve::class => PaiementPolicy::class,
@@ -49,6 +54,7 @@ class AuthServiceProvider extends ServiceProvider
         Enseignant::class => EnseignantPolicy::class,
         EmploiDuTemps::class => EmploiDuTempsPolicy::class,
         Matieres::class => MatieresPolicy::class,
+        Moyennes::class => MoyennesPolicy::class,
         Personnel::class => PersonnelPolicy::class,
         UserParent::class => UserParentPolicy::class,
 

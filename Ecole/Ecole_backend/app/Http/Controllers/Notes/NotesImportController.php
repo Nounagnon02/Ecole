@@ -118,8 +118,8 @@ class NotesImportController extends Controller
             ]);
 
 } catch (\Exception $e) {
-            $this->rethrowIfMeaningful($e);
             DB::rollBack();
+            $this->rethrowIfMeaningful($e);
             \Illuminate\Support\Facades\Log::error('Erreur import notes: ' . $e->getMessage());
             
             return response()->json([

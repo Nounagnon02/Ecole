@@ -4,25 +4,24 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
   Clock, ClipboardList,
   TrendingUp, Award, BarChart3, DollarSign,
-  AlertCircle, RefreshCw
+  AlertCircle
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip,
   ResponsiveContainer } from 'recharts';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
 import { cn } from '@/shared/lib/utils';
 import { useDashboardStats } from '@/app/dashboards/hooks/useDashboardData';
+import DashboardShell from '@/app/dashboards/DashboardShell';
 import StatsCard from '@/shared/components/ui/StatsCard';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
-import Button from '@/shared/components/ui/Button';
 import Table from '@/shared/components/ui/Table';
 import { Skeleton } from '@/shared/components/ui/Skeleton';
+import { useTranslation } from '@/shared/i18n';
 
 const TABS = [
   { id: 'apercu', label: 'Aperçu', icon: BarChart3 },
@@ -32,6 +31,7 @@ const TABS = [
 ];
 
 function ApercuSection({ data, loading }) {
+  const { t } = useTranslation();
   const eleve = data?.eleve ?? {};
   const stats = data?.stats ?? {};
   const matieres = data?.matieres ?? [];
@@ -39,19 +39,19 @@ function ApercuSection({ data, loading }) {
 
   const statsCards = [
     {
-      title: 'Moyenne Générale',
+      title: t('dashboards.eleve.stats.moyenne_generale'),
       value: stats.moyenne_generale ? `${stats.moyenne_generale}/20` : '—',
       icon: TrendingUp,
       color: 'emerald'
     },
     {
-      title: 'Total Notes',
+      title: t('dashboards.eleve.stats.total_notes'),
       value: String(stats.total_notes ?? 0),
       icon: Award,
       color: 'primary'
     },
     {
-      title: 'Absences ce Mois',
+      title: t('dashboards.eleve.stats.absences_ce_mois'),
       value: String(stats.absences_mois ?? 0),
       icon: AlertCircle,
       color: 'amber'
@@ -76,8 +76,8 @@ function ApercuSection({ data, loading }) {
           <Card.Header>
             <div className="flex items-center justify-between">
               <div>
-                <Card.Title>Notes par Matière</Card.Title>
-                <Card.Description>Moyennes par matière</Card.Description>
+                <Card.Title>{t('dashboards.eleve.notes_par_matiere')}</Card.Title>
+                <Card.Description>{t('dashboards.eleve.moyennes_par_matiere')}</Card.Description>
               </div>
               {stats.moyenne_generale && (
                 <Badge variant="primary" size="sm">Moy: {stats.moyenne_generale}/20</Badge>
@@ -103,8 +103,8 @@ function ApercuSection({ data, loading }) {
 
         <Card>
           <Card.Header>
-            <Card.Title>Prochains Cours</Card.Title>
-            <Card.Description>Emploi du temps</Card.Description>
+            <Card.Title>{t('dashboards.eleve.prochains_cours')}</Card.Title>
+            <Card.Description>{t('dashboards.eleve.emploi_du_temps')}</Card.Description>
           </Card.Header>
           <Card.Body className="p-0">
             {loading ? (
@@ -112,7 +112,7 @@ function ApercuSection({ data, loading }) {
                 {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-12 rounded-lg" />)}
               </div>
             ) : emploi.length === 0 ? (
-              <p className="p-6 text-center text-sm text-neutral-400">Aucun cours planifié</p>
+              <p className="p-6 text-center text-sm text-neutral-400">{t('dashboards.eleve.aucun_cours_planifie')}</p>
             ) : (
               <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
                 {emploi.slice(0, 5).map((cours, i) => (
@@ -138,17 +138,18 @@ function ApercuSection({ data, loading }) {
 }
 
 function NotesSection({ data, loading }) {
+  const { t } = useTranslation();
   const matieres = data?.matieres ?? [];
 
   return (
     <div className="space-y-6">
-      <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Mes Notes</h2>
+      <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">{t('dashboards.eleve.mes_notes')}</h2>
       <Card padding={false}>
         <Table>
           <Table.Header>
-            <Table.Head>Matière</Table.Head>
-            <Table.Head>Note</Table.Head>
-            <Table.Head>Coefficient</Table.Head>
+            <Table.Head>{t('common.subject')}</Table.Head>
+            <Table.Head>{t('common.grade')}</Table.Head>
+            <Table.Head>{t('dashboards.eleve.coefficient')}</Table.Head>
           </Table.Header>
           <Table.Body>
             {loading && Array.from({ length: 5 }).map((_, i) => (
@@ -158,7 +159,7 @@ function NotesSection({ data, loading }) {
             ))}
             {!loading && matieres.length === 0 && (
               <Table.Row>
-                <td colSpan={3} className="p-8 text-center text-sm text-neutral-500">Aucune note disponible</td>
+                <td colSpan={3} className="p-8 text-center text-sm text-neutral-500">{t('dashboards.eleve.aucune_note_disponible')}</td>
               </Table.Row>
             )}
             {!loading && matieres.map((m, i) => (
@@ -184,6 +185,7 @@ function NotesSection({ data, loading }) {
 
 export default function EleveDashboard() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('apercu');
   const { data, loading, error, refetch } = useDashboardStats('eleve');
 
@@ -205,67 +207,17 @@ export default function EleveDashboard() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <motion.h1
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="font-fraunces text-2xl font-bold text-neutral-900 dark:text-white"
-          >
-            Mon Espace Élève
-          </motion.h1>
-          <p className="text-neutral-500 dark:text-neutral-400 mt-1">
-            {eleve.classe ? `Classe de ${eleve.classe} — ` : ''}
-            {format(new Date(), 'EEEE d MMMM yyyy', { locale: fr })}
-          </p>
-        </div>
-        <Button variant="ghost" size="sm" onClick={refetch} disabled={loading}>
-          <RefreshCw className={cn('h-4 w-4 mr-1', loading && 'animate-spin')} />
-          Actualiser
-        </Button>
-      </div>
-
-      {error && (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
-          Erreur de chargement : {error}
-        </div>
-      )}
-
-      <div className="border-b border-neutral-200 dark:border-neutral-800">
-        <nav className="flex gap-1 overflow-x-auto -mb-px">
-          {TABS.map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => handleTabClick(tab.id)}
-                className={cn(
-                  'flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-all whitespace-nowrap',
-                  activeTab === tab.id
-                    ? 'border-[var(--accent)] text-[var(--accent)]'
-                    : 'border-transparent text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200'
-                )}
-              >
-                <Icon className="h-4 w-4" />
-                {tab.label}
-              </button>
-            );
-          })}
-        </nav>
-      </div>
-
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
-          transition={{ duration: 0.2 }}
-        >
-          {renderSection()}
-        </motion.div>
-      </AnimatePresence>
-    </div>
+    <DashboardShell
+      title={t('dashboards.eleve.title')}
+      subtitle={eleve.classe ? t('dashboards.eleve.subtitle_classe', { classe: eleve.classe }) : null}
+      tabs={TABS.map((tab) => ({ ...tab, label: t(`dashboards.eleve.tabs.${tab.id}`) }))}
+      activeTab={activeTab}
+      onTabChange={handleTabClick}
+      loading={loading}
+      error={error}
+      onRefresh={refetch}
+    >
+      {renderSection()}
+    </DashboardShell>
   );
 }

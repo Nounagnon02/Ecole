@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 
@@ -86,8 +87,13 @@ class PasswordResetController extends Controller
             ], 400);
         }
 
-        // Vérifier l'expiration (1 heure)
-        if (now()->diffInMinutes($record->created_at) > 60) {
+        // Vérifier l'expiration (1 heure).
+        //
+        // Carbon 3 : `diffInMinutes()` est signé et négatif quand la date
+        // passée en argument est antérieure. `now()->diffInMinutes($passé) > 60`
+        // n'était donc jamais vrai, et un jeton de réinitialisation ne
+        // périmait jamais. On lit la règle directement : créé + 1 h, échu ?
+        if (Carbon::parse($record->created_at)->addHour()->isPast()) {
             DB::table('password_resets')->where('email', $request->email)->delete();
 
             return response()->json([

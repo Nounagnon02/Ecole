@@ -21,6 +21,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import ParametresPage from '@/app/features/parametres/ParametresPage';
 import useAuthStore from '@/shared/stores/auth-store';
+import { I18nProvider } from '@/shared/i18n';
 import { installHttpMock } from './helpers/http-mock';
 import { renderRoute, resetAuth } from './helpers/render';
 
@@ -37,7 +38,7 @@ afterEach(() => {
 });
 
 function renderPage() {
-  return renderRoute(<ParametresPage />, { path: '/parametres' });
+  return renderRoute(<ParametresPage />, { path: '/parametres', withQuery: true });
 }
 
 describe('ParametresPage — profil enseignant', () => {
@@ -188,5 +189,35 @@ describe('ParametresPage — profil enseignant', () => {
     await waitFor(() =>
       expect(document.querySelector('input[placeholder="Professeur de mathématiques"]')).not.toBeInTheDocument()
     );
+  });
+});
+
+describe('ParametresPage — langue de l\'interface', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    document.documentElement.lang = 'fr';
+    document.documentElement.dir = 'ltr';
+  });
+
+  // Le sélecteur « Langue » de cette section était décoratif : il ne
+  // rattachait rien au provider i18n, donc choisir « English » ne changeait ni
+  // le texte, ni la mémorisation du choix.
+  it('change réellement la langue de toute la page', async () => {
+    resetAuth({
+      user: { id: 1, name: 'Kouassi', prenom: 'Jean', email: 'j@ecole.bj', role: 'directeur' },
+      isAuthenticated: true,
+    });
+
+    renderRoute(<I18nProvider><ParametresPage /></I18nProvider>, { path: '/parametres', withQuery: true });
+
+    fireEvent.click(screen.getByRole('button', { name: /Préférences/i }));
+    expect(await screen.findByText('Préférences générales')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByRole('combobox', { name: 'Langue' }), { target: { value: 'en' } });
+
+    expect(await screen.findByText('General preferences')).toBeInTheDocument();
+    expect(screen.queryByText('Préférences générales')).not.toBeInTheDocument();
+    expect(document.documentElement.lang).toBe('en');
+    expect(localStorage.getItem('ecole-locale')).toBe('en');
   });
 });

@@ -24,6 +24,7 @@ import useRealtimeStore from '@/shared/stores/realtime-store';
 import { ROLE_LABELS } from '@/shared/types/roles';
 import { cn } from '@/shared/lib/utils';
 import { useTranslation } from '@/shared/i18n';
+import LanguageSwitcher from './LanguageSwitcher';
 
 /* ─── Animation variants ────────────────────────────────────────────────── */
 const dropdownVariants = {
@@ -153,11 +154,13 @@ export default function Header() {
           </kbd>
         </button>
 
-{/* Theme toggle */}
+<LanguageSwitcher />
+
+        {/* Theme toggle */}
         <button
           onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
           className="flex h-9 w-9 items-center justify-center rounded-lg text-[var(--text-tertiary)] transition-all hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
-          aria-label="Changer le thème"
+          aria-label={t('header.toggle_theme')}
         >
           <AnimatePresence mode="wait">
             {theme === 'dark' ? (
@@ -266,7 +269,7 @@ export default function Header() {
             </div>
             <div className="hidden text-left lg:block">
               <p className="text-sm font-medium leading-tight text-[var(--text-primary)]">
-                {user?.name || 'Utilisateur'}
+                {user?.name || t('common.user')}
               </p>
               <p className="text-xs leading-tight text-[var(--text-tertiary)]">
                 {ROLE_LABELS[user?.role] || user?.role || '—'}
@@ -290,7 +293,7 @@ export default function Header() {
                 className="absolute right-0 top-full mt-2 w-56 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface-raised)] shadow-[var(--shadow-4)]"
               >
                 <div className="border-b border-[var(--border-light)] px-4 py-3">
-                  <p className="text-sm font-medium text-[var(--text-primary)]">{user?.nom || 'Utilisateur'}</p>
+                  <p className="text-sm font-medium text-[var(--text-primary)]">{user?.nom || t('common.user')}</p>
                   <p className="text-xs text-[var(--text-tertiary)]">{user?.email || ''}</p>
                 </div>
 
@@ -300,14 +303,14 @@ export default function Header() {
                     className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
                   >
                     <User className="h-4 w-4" />
-                    Mon profil
+                    {t('header.mon_profil')}
                   </button>
                   <button
                     onClick={() => { setUserMenuOpen(false); navigate('/parametres'); }}
                     className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
                   >
                     <Settings className="h-4 w-4" />
-                    Paramètres
+                    {t('header.parametres')}
                   </button>
 
                   <div className="my-1 border-t border-[var(--border-light)]" />
@@ -317,7 +320,7 @@ export default function Header() {
                     className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-[var(--red)] transition-colors hover:bg-[var(--red-subtle)]"
                   >
                     <LogOut className="h-4 w-4" />
-                    Déconnexion
+                    {t('auth.logout')}
                   </button>
                 </div>
               </motion.div>

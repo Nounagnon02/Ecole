@@ -20,6 +20,7 @@ import {
 import { cn } from '@/shared/lib/utils';
 import Skeleton from './Skeleton';
 import Button from './Button';
+import { useTranslation } from '@/shared/i18n';
 
 /* ─── Interface de colonne ──────────────────────────────────────────── */
 /* {
@@ -35,6 +36,7 @@ import Button from './Button';
 
 /* ─── Pagination ──────────────────────────────────────────────────────── */
 function Pagination({ currentPage, totalPages, totalItems, onChange }) {
+  const { t } = useTranslation();
   const pages = useMemo(() => {
     const range = [];
     const start = Math.max(1, currentPage - 1);
@@ -60,7 +62,7 @@ function Pagination({ currentPage, totalPages, totalItems, onChange }) {
           disabled={currentPage <= 1}
           onClick={() => onChange(currentPage - 1)}
           className="flex h-11 w-11 items-center justify-center rounded-lg text-neutral-500 transition-colors hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-30 dark:text-neutral-400 dark:hover:bg-neutral-800"
-          aria-label="Page précédente"
+          aria-label={t('components.data_table.page_precedente')}
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
@@ -92,7 +94,7 @@ function Pagination({ currentPage, totalPages, totalItems, onChange }) {
           disabled={currentPage >= totalPages}
           onClick={() => onChange(currentPage + 1)}
           className="flex h-11 w-11 items-center justify-center rounded-lg text-neutral-500 transition-colors hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-30 dark:text-neutral-400 dark:hover:bg-neutral-800"
-          aria-label="Page suivante"
+          aria-label={t('components.data_table.page_suivante')}
         >
           <ChevronRight className="h-4 w-4" />
         </button>
@@ -168,6 +170,7 @@ const DataTable = forwardRef(function DataTable(
   },
   ref
 ) {
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   const [currentPage, setCurrentPage] = useState(1);
@@ -317,8 +320,8 @@ const DataTable = forwardRef(function DataTable(
                 type="text"
                 value={searchTerm}
                 onChange={handleSearch}
-                placeholder="Rechercher…"
-                aria-label="Rechercher dans le tableau"
+                placeholder={t('components.data_table.rechercher')}
+                aria-label={t('components.data_table.rechercher_dans_le_tableau')}
                 className="w-full rounded-lg border border-neutral-200 bg-white py-2 pl-9 pr-3 text-sm text-neutral-900 outline-none transition-colors placeholder:text-neutral-400 focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent-subtle)] dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:placeholder:text-neutral-500 dark:focus:border-[var(--accent)] dark:focus:ring-[var(--accent-subtle)]"
               />
             </div>
@@ -326,7 +329,7 @@ const DataTable = forwardRef(function DataTable(
           {exportable && (
             <Button variant="ghost" size="sm" onClick={handleExport}>
               <Download className="mr-1.5 h-4 w-4" />
-              Exporter
+              {t('common.export')}
             </Button>
           )}
         </div>
@@ -366,7 +369,7 @@ const DataTable = forwardRef(function DataTable(
               ))}
               {showActions && (
                 <th className="w-24 px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
-                  Actions
+                  {t('common.actions')}
                 </th>
               )}
             </tr>
@@ -419,8 +422,8 @@ const DataTable = forwardRef(function DataTable(
                               type="button"
                               onClick={(e) => { e.stopPropagation(); onView(item); }}
                               className="flex h-11 w-11 items-center justify-center rounded-lg text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-600 dark:hover:bg-neutral-800 dark:hover:text-neutral-300"
-                              aria-label={`Voir ${resolveValue(item, columns[0]?.accessor || columns[0]?.key) || 'l\'élément'}`}
-                              title="Voir"
+                              aria-label={`Voir ${resolveValue(item, columns[0]?.accessor || columns[0]?.key) || t('components.data_table.l_element')}`}
+                              title={t('common.view')}
                             >
                               <Eye className="h-4 w-4" />
                             </button>
@@ -430,8 +433,8 @@ const DataTable = forwardRef(function DataTable(
                               type="button"
                               onClick={(e) => { e.stopPropagation(); onEdit(item); }}
                               className="flex h-11 w-11 items-center justify-center rounded-lg text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-[var(--accent)] dark:hover:bg-neutral-800 dark:hover:text-[var(--accent)]"
-                              aria-label={`Modifier ${resolveValue(item, columns[0]?.accessor || columns[0]?.key) || 'l\'élément'}`}
-                              title="Modifier"
+                              aria-label={`Modifier ${resolveValue(item, columns[0]?.accessor || columns[0]?.key) || t('components.data_table.l_element')}`}
+                              title={t('common.edit')}
                             >
                               <Edit2 className="h-4 w-4" />
                             </button>
@@ -441,8 +444,8 @@ const DataTable = forwardRef(function DataTable(
                               type="button"
                               onClick={(e) => { e.stopPropagation(); onDelete(item); }}
                               className="flex h-11 w-11 items-center justify-center rounded-lg text-neutral-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30 dark:hover:text-red-400"
-                              aria-label={`Supprimer ${resolveValue(item, columns[0]?.accessor || columns[0]?.key) || 'l\'élément'}`}
-                              title="Supprimer"
+                              aria-label={`Supprimer ${resolveValue(item, columns[0]?.accessor || columns[0]?.key) || t('components.data_table.l_element')}`}
+                              title={t('common.delete')}
                             >
                               <Trash2 className="h-4 w-4" />
                             </button>

@@ -91,6 +91,68 @@ jobs:
         continue-on-error: true
         run: vendor/bin/pest --coverage --min=60
 
+  # La suite tourne sur SQLite en mémoire (phpunit.xml) alors que la production
+  # est sur MySQL 8. L'écart n'est pas théorique : au premier passage sur MySQL,
+  # dix tests ont échoué — un type `YEAR` qui refuse toute publication
+  # antérieure à 1901, vingt-deux tables qui cascadaient encore sur `ecole_id`,
+  # une clé étrangère visant le mauvais espace d'identifiants, des décimaux
+  # rendus en chaîne, et deux assertions qui ne vérifiaient rien parce que
+  # SQLite transforme un identifiant inconnu en chaîne littérale (cf. audit
+  # P2.1).
+  #
+  # Ce job rejoue la même suite sur le moteur de production. Il est séparé de
+  # `test` pour que l'on distingue « la logique est cassée » de « le moteur
+  # diverge ».
+  test-mysql:
+    runs-on: ubuntu-22.04
+    needs: lint
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: ecole_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.2
+          extensions: mbstring, dom, fileinfo, pdo, pdo_mysql, mysqli, bcmath, ctype, json, xml, zip
+          coverage: none
+          tools: composer:v2
+      - name: Get composer cache
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+      - uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('Ecole/Ecole_backend/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+      - name: Install dependencies
+        run: composer install --no-progress --prefer-dist --optimize-autoloader
+      - name: Prepare environment
+        run: |
+          cp .env.example .env 2>/dev/null || true
+          php artisan key:generate --ansi
+      # Les variables d'environnement l'emportent sur les `<env>` de
+      # phpunit.xml, qui ne sont pas marqués `force`.
+      - name: Run Pest tests on MySQL
+        env:
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: ecole_test
+          DB_USERNAME: root
+          DB_PASSWORD: root
+        run: vendor/bin/pest
+
   # Les tests tournent avec QUEUE_CONNECTION=sync : les cinq classes de
   # app/Jobs/ y sont exécutées en ligne, jamais sérialisées ni reprises par un
   # worker. Ce job vérifie le minimum qui casse en production sans jamais
@@ -140,7 +202,7 @@ jobs:
 
   deploy:
     runs-on: ubuntu-22.04
-    needs: [test, queue]
+    needs: [test, test-mysql, queue]
     if: github.ref == 'refs/heads/main' && inputs.deploy
     steps:
       - uses: actions/checkout@v4

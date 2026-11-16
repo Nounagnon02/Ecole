@@ -5,48 +5,47 @@
  * Données dynamiques via API /api/universite/mes-cours
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import { useApiQuery } from '@/shared/lib/api-client';
+import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
-  BookOpen, Search, Filter, Clock, Users, Calendar, GraduationCap,
-  FileText, Download, Eye, Video, MapPin, Loader2, AlertCircle,
+  BookOpen, Search, Clock, Users, Calendar, GraduationCap,
+  FileText, Eye, MapPin, Loader2, AlertCircle,
 } from 'lucide-react';
-import { cn, formatDate } from '@/shared/lib/utils';
+import { cn } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
-import { useApi } from '@/hooks/useApi';
-import logger from '@/shared/lib/logger';
+import { useTranslation } from '@/shared/i18n';
 
 export default function MesCoursPage() {
-  const { loading, error, get } = useApi();
-  const [cours, setCours] = useState([]);
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
 
-  useEffect(() => {
-    (async () => {
-      try {
-        // GET /api/universite/mes-cours — un étudiant y reçoit les matières de
-        // sa filière, un enseignant celles qu'il assure. Le serveur résout le
-        // profil via `etudiants.user_id` / `uni_enseignants.user_id`.
-        const res = await get('/universite/mes-cours');
-        const items = Array.isArray(res?.data?.data) ? res.data.data
-          : Array.isArray(res?.data) ? res.data
-          : Array.isArray(res) ? res
-          : [];
-        setCours(items.map(c => ({
+  // GET /api/universite/mes-cours — un étudiant y reçoit les matières de
+  // sa filière, un enseignant celles qu'il assure. Le serveur résout le
+  // profil via `etudiants.user_id` / `uni_enseignants.user_id`.
+  // Le chargement passait par un `useState` doublé d'un `useEffect` de
+  // premier rendu, sans cache ni déduplication : deux composants montés
+  // ensemble lançaient deux requêtes, et un retour sur la page rechargeait
+  // tout (cf. audit P4.1). `unwrapList` traverse les trois formes
+  // d'enveloppe que renvoient les contrôleurs.
+  const requete = useApiQuery(['universite-mes-cours'], '/universite/mes-cours');
+
+  const cours = useMemo(
+    () => (unwrapList(requete.data) ?? []).map(c => ({
           ...c,
           progression: c.progression || c.avancement || 0,
           prochainCours: c.prochain_cours || c.prochainCours || null,
           statut: c.statut || 'en_cours',
-        })));
-      } catch (e) {
-        logger.error('Erreur chargement mes cours:', e);
-      }
-    })();
-  }, [get]);
+        })),
+    [requete.data],
+  );
+  const loading = requete.isPending;
+  const error = requete.isError ? (requete.error?.message ?? t('common.load_error')) : null;
 
   const stats = useMemo(() => ({
     total: cours.length,
@@ -84,23 +83,23 @@ export default function MesCoursPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Mes Cours</h1>
-          <p className="text-sm text-neutral-500">Cours qui vous sont assignés</p>
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.universite.mes_cours.title')}</h1>
+          <p className="text-sm text-neutral-500">{t('pages.universite.mes_cours.subtitle')}</p>
         </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-4">
-        <StatsCard title="Total" value={String(stats.total)} icon={BookOpen} color="primary" />
-        <StatsCard title="En cours" value={String(stats.enCours)} icon={Clock} color="emerald" />
-        <StatsCard title="Terminés" value={String(stats.termines)} icon={GraduationCap} color="sky" />
-        <StatsCard title="Étudiants" value={String(stats.totalEtudiants)} icon={Users} color="amber" />
+        <StatsCard title={t('common.total')} value={String(stats.total)} icon={BookOpen} color="primary" />
+        <StatsCard title={t('common.status.in_progress')} value={String(stats.enCours)} icon={Clock} color="emerald" />
+        <StatsCard title={t('common.finished')} value={String(stats.termines)} icon={GraduationCap} color="sky" />
+        <StatsCard title={t('common.students')} value={String(stats.totalEtudiants)} icon={Users} color="amber" />
       </div>
 
       <Card>
         <div className="relative max-w-sm">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
           <Input
-            placeholder="Rechercher un cours..."
+            placeholder={t('common.search_course')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
@@ -113,7 +112,7 @@ export default function MesCoursPage() {
           <Card>
             <div className="text-center py-8 text-neutral-500">
               <BookOpen className="mx-auto h-8 w-8 mb-2" />
-              <p className="text-sm">Aucun cours trouvé</p>
+              <p className="text-sm">{t('common.no_course_found')}</p>
             </div>
           </Card>
         )}
@@ -131,7 +130,7 @@ export default function MesCoursPage() {
                   <span className="text-sm font-semibold text-neutral-900 dark:text-white">{c.intitule}</span>
                   <Badge variant="outline" size="sm">{c.code}</Badge>
                   <Badge variant={c.statut === 'termine' || c.statut === 'terminé' ? 'outline' : 'primary'} size="sm">
-                    {c.statut === 'termine' || c.statut === 'terminé' ? 'Terminé' : 'En cours'}
+                    {c.statut === 'termine' || c.statut === 'terminé' ? t('pages.universite.mes_cours.termine') : t('common.status.in_progress')}
                   </Badge>
                 </div>
                 <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-neutral-500">
@@ -146,7 +145,7 @@ export default function MesCoursPage() {
                 {/* Barre de progression */}
                 <div className="mt-3">
                   <div className="flex items-center justify-between text-xs mb-1">
-                    <span className="text-neutral-500">Progression</span>
+                    <span className="text-neutral-500">{t('pages.universite.mes_cours.progression')}</span>
                     <span className="font-medium text-neutral-700 dark:text-neutral-300">{c.progression}%</span>
                   </div>
                   <div className="h-2 bg-neutral-200 dark:bg-neutral-700 rounded-full overflow-hidden">
@@ -161,8 +160,8 @@ export default function MesCoursPage() {
                 </div>
               </div>
               <div className="flex gap-1">
-                <Button variant="outline" size="sm" icon={<Eye />}>Détails</Button>
-                <Button variant="ghost" size="sm" icon={<FileText />}>Notes</Button>
+                <Button variant="outline" size="sm" icon={<Eye />}>{t('common.details')}</Button>
+                <Button variant="ghost" size="sm" icon={<FileText />}>{t('pages.universite.mes_cours.notes')}</Button>
               </div>
             </div>
           </Card>

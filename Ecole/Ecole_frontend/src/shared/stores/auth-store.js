@@ -11,7 +11,7 @@ import { devtools } from 'zustand/middleware';
 import axios from 'axios';
 import apiClient from '@/shared/lib/api-client';
 import { cacheClear } from '@/shared/lib/db';
-import { clearDashboardCache } from '@/shared/lib/dashboard-cache';
+import { clearDashboardCache } from '@/shared/lib/query-client';
 import { normalizeRole } from '@/shared/types/roles';
 
 export const SESSION_CHECK_INTERVAL = 5 * 60 * 1000; // 5 min entre vérifications
@@ -28,9 +28,17 @@ const initialState = {
 
 /**
  * Récupère l'URL racine (sans /api) pour les appels hors API.
+ *
+ * Le repli doit être celui d'`api-client.js` (`/api`), pas une adresse en dur.
+ * Avec `http://localhost:8000/api`, un build de production dont
+ * `VITE_API_URL` n'est pas défini allait chercher son cookie CSRF sur le poste
+ * du visiteur : la connexion échouait sans que rien ne le dise. Le repli
+ * relatif donne une origine vide, donc une requête same-origin — correcte
+ * derrière le proxy Vite en développement comme derrière le même domaine en
+ * production.
  */
 function getBackendOrigin() {
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+  const apiUrl = import.meta.env.VITE_API_URL || '/api';
   // Supprime /api, /api/v1 ou trailing slash pour obtenir l'origine nue
   return apiUrl.replace(/\/api(\/v1)?$/, '').replace(/\/$/, '');
 }
@@ -139,10 +147,10 @@ const useAuthStore = create(
         // par l'utilisateur suivant sur un poste partagé (cf. audit S17).
         await cacheClear().catch(() => {});
 
-        // Même problème pour le cache mémoire des tableaux de bord, indexé
-        // par rôle et non par utilisateur : sans purge, l'utilisateur suivant
-        // voyait les effectifs et finances du précédent, éventuellement
-        // d'un autre établissement.
+        // Même problème pour le cache serveur de react-query, qui porte les
+        // réponses des tableaux de bord : sans purge, l'utilisateur suivant
+        // voyait les effectifs et finances du précédent, éventuellement d'un
+        // autre établissement.
         clearDashboardCache();
 
         set({ ...initialState, isLoading: false });

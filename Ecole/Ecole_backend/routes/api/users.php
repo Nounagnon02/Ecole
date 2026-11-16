@@ -4,7 +4,7 @@ use App\Http\Controllers\{
     EnseignantController,
     EnseignantsMaternellePrimaireController,
     ParentsController,
-    ParentController,
+    EspaceParentController,
     ComptableController,
     SurveillantController,
     CenseurController,
@@ -96,18 +96,18 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ============ PARENT DASHBOARD ============
     Route::prefix('parent')->middleware('role:parent')->group(function () {
-        Route::get('/enfants', [ParentController::class, 'enfants']);
-        Route::get('/bulletins', [ParentController::class, 'bulletins']);
-        Route::get('/bulletin/{enfantId}/{periode}', [ParentController::class, 'bulletinDetail']);
-        Route::get('/messages', [ParentController::class, 'messages']);
-        Route::get('/rendez-vous', [ParentController::class, 'rendezVous']);
+        Route::get('/enfants', [EspaceParentController::class, 'enfants']);
+        Route::get('/bulletins', [EspaceParentController::class, 'bulletins']);
+        Route::get('/bulletin/{enfantId}/{periode}', [EspaceParentController::class, 'bulletinDetail']);
+        Route::get('/messages', [EspaceParentController::class, 'messages']);
+        Route::get('/rendez-vous', [EspaceParentController::class, 'rendezVous']);
 
         // Sous-ressources par enfant. Chacune vérifie dans le contrôleur que
         // l'enfant appartient bien au parent connecté.
-        Route::get('/enfants/{enfantId}/notes', [ParentController::class, 'enfantNotes']);
-        Route::get('/enfants/{enfantId}/absences', [ParentController::class, 'enfantAbsences']);
-        Route::get('/enfants/{enfantId}/emploi-du-temps', [ParentController::class, 'enfantEmploiDuTemps']);
-        Route::get('/enfants/{enfantId}/paiements', [ParentController::class, 'enfantPaiements']);
+        Route::get('/enfants/{enfantId}/notes', [EspaceParentController::class, 'enfantNotes']);
+        Route::get('/enfants/{enfantId}/absences', [EspaceParentController::class, 'enfantAbsences']);
+        Route::get('/enfants/{enfantId}/emploi-du-temps', [EspaceParentController::class, 'enfantEmploiDuTemps']);
+        Route::get('/enfants/{enfantId}/paiements', [EspaceParentController::class, 'enfantPaiements']);
     });
 
     // ============ COMPTABLE ============

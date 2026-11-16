@@ -14,7 +14,6 @@ use App\Http\Controllers\Notes\{
     NotesCrudController,
     NotesImportController,
     NotesStatsController,
-    NotesQueryController,
 };
 use App\Http\Controllers\PeriodesController;
 use Illuminate\Support\Facades\Route;

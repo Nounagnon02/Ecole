@@ -5,7 +5,9 @@
  * Données dynamiques via API /surveillant/incidents et /surveillant/absences
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import { useApiQuery } from '@/shared/lib/api-client';
+import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
   Shield, AlertTriangle, CheckCircle,
@@ -16,8 +18,7 @@ import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import StatsCard from '@/shared/components/ui/StatsCard';
-import { useApi } from '@/hooks/useApi';
-import logger from '@/shared/lib/logger';
+import { useTranslation } from '@/shared/i18n';
 
 const getStatutVariant = (statut) => {
   switch (statut) {
@@ -31,17 +32,6 @@ const getStatutVariant = (statut) => {
   }
 };
 
-const getStatutLabel = (statut) => {
-  switch (statut) {
-    case 'termine':
-    case 'terminee': return 'Terminé';
-    case 'en_cours': return 'En cours';
-    case 'signalé':
-    case 'signale': return 'Signalé';
-    default: return statut || '—';
-  }
-};
-
 const getGraviteColor = (gravite) => {
   switch (gravite) {
     case 'grave': return 'text-red-500 bg-red-100 dark:bg-red-900/20';
@@ -51,25 +41,29 @@ const getGraviteColor = (gravite) => {
   }
 };
 
+const STATUT_LABEL_KEYS = {
+  termine: 'pages.bibliothecaire.emprunts.termine',
+  terminee: 'pages.bibliothecaire.emprunts.termine',
+  en_cours: 'common.status.in_progress',
+  signalé: 'pages.surveillant.surveillance.signale',
+  signale: 'pages.surveillant.surveillance.signale',
+};
+
 export default function SurveillancePage() {
-  const { loading, error, get } = useApi();
-  const [incidents, setIncidents] = useState([]);
+  const { t } = useTranslation();
+  const statutLabel = (v) => (STATUT_LABEL_KEYS[v] ? t(STATUT_LABEL_KEYS[v]) : (v || '—'));
   const [filterGravite, setFilterGravite] = useState('');
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await get('/surveillant/incidents');
-        const items = Array.isArray(res?.data?.data) ? res.data.data
-          : Array.isArray(res?.data) ? res.data
-          : Array.isArray(res) ? res
-          : [];
-        setIncidents(items);
-      } catch (e) {
-        logger.error('Erreur chargement incidents:', e);
-      }
-    })();
-  }, [get]);
+  // Le chargement passait par un `useState` doublé d'un `useEffect` de
+  // premier rendu, sans cache ni déduplication : deux composants montés
+  // ensemble lançaient deux requêtes, et un retour sur la page rechargeait
+  // tout (cf. audit P4.1). `unwrapList` traverse les trois formes
+  // d'enveloppe que renvoient les contrôleurs.
+  const requete = useApiQuery(['surveillant-incidents'], '/surveillant/incidents');
+
+  const incidents = useMemo(() => unwrapList(requete.data) ?? [], [requete.data]);
+  const loading = requete.isPending;
+  const error = requete.isError ? (requete.error?.message ?? t('common.load_error')) : null;
 
   const stats = useMemo(() => ({
     total: incidents.length,
@@ -103,7 +97,7 @@ export default function SurveillancePage() {
           onClick={() => window.location.reload()}
           className="mt-4 inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors"
         >
-          Réessayer
+          {t('common.retry')}
         </button>
       </div>
     );
@@ -112,16 +106,16 @@ export default function SurveillancePage() {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Surveillance</h1>
-        <p className="text-sm text-neutral-500">Registre des incidents et signalements</p>
+        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.surveillant.surveillance.title')}</h1>
+        <p className="text-sm text-neutral-500">{t('pages.surveillant.surveillance.subtitle')}</p>
       </div>
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-4">
-        <StatsCard title="Total" value={String(stats.total)} icon={Shield} color="primary" />
-        <StatsCard title="En cours" value={String(stats.enCours)} icon={AlertTriangle} color="amber" />
-        <StatsCard title="Terminés" value={String(stats.termines)} icon={CheckCircle} color="emerald" />
-        <StatsCard title="Graves" value={String(stats.graves)} icon={AlertCircle} color="red" />
+        <StatsCard title={t('common.total')} value={String(stats.total)} icon={Shield} color="primary" />
+        <StatsCard title={t('common.status.in_progress')} value={String(stats.enCours)} icon={AlertTriangle} color="amber" />
+        <StatsCard title={t('common.finished')} value={String(stats.termines)} icon={CheckCircle} color="emerald" />
+        <StatsCard title={t('pages.surveillant.surveillance.graves')} value={String(stats.graves)} icon={AlertCircle} color="red" />
       </div>
 
       {/* Filtres */}
@@ -131,16 +125,16 @@ export default function SurveillancePage() {
             <select
               value={filterGravite}
               onChange={(e) => setFilterGravite(e.target.value)}
-              aria-label="Filtrer par gravité"
+              aria-label={t('pages.surveillant.surveillance.filtrer_par_gravite')}
               className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
             >
-              <option value="">Toutes les gravités</option>
-              <option value="faible">Faible</option>
-              <option value="moyenne">Moyenne</option>
-              <option value="grave">Grave</option>
+              <option value="">{t('pages.surveillant.surveillance.toutes_les_gravites')}</option>
+              <option value="faible">{t('pages.surveillant.surveillance.faible')}</option>
+              <option value="moyenne">{t('common.average')}</option>
+              <option value="grave">{t('pages.surveillant.surveillance.grave')}</option>
             </select>
           </div>
-          <Button size="sm" icon={<Plus />}>Nouvel incident</Button>
+          <Button size="sm" icon={<Plus />}>{t('pages.surveillant.surveillance.nouvel_incident')}</Button>
         </div>
       </Card>
 
@@ -150,7 +144,7 @@ export default function SurveillancePage() {
           <Card>
             <div className="text-center py-8 text-neutral-500">
               <Shield className="mx-auto h-8 w-8 mb-2" />
-              <p className="text-sm">Aucun incident trouvé</p>
+              <p className="text-sm">{t('pages.surveillant.surveillance.aucun_incident_trouve')}</p>
             </div>
           </Card>
         )}
@@ -173,11 +167,11 @@ export default function SurveillancePage() {
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-sm font-semibold text-neutral-900 dark:text-white">{s.description}</span>
-                  <Badge variant={getStatutVariant(s.statut)} size="sm">{getStatutLabel(s.statut)}</Badge>
+                  <Badge variant={getStatutVariant(s.statut)} size="sm">{statutLabel(s.statut)}</Badge>
                 </div>
                 <div className="mt-2 flex items-center gap-4 text-sm text-neutral-600 dark:text-neutral-400">
                   <span className={cn('inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium', getGraviteColor(s.gravite))}>
-                    {s.gravite ? `Gravité: ${s.gravite}` : 'Non définie'}
+                    {s.gravite ? `Gravité: ${s.gravite}` : t('pages.surveillant.surveillance.non_definie')}
                   </span>
                   <span className="flex items-center gap-1">
                     <Calendar className="h-3.5 w-3.5" />
@@ -185,7 +179,7 @@ export default function SurveillancePage() {
                   </span>
                 </div>
               </div>
-              <Button variant="ghost" size="sm">Détails</Button>
+              <Button variant="ghost" size="sm">{t('common.details')}</Button>
             </div>
           </Card>
         ))}

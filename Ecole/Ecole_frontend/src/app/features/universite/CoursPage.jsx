@@ -5,7 +5,9 @@
  * Données dynamiques via API /api/universite/cours
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import { useApiQuery } from '@/shared/lib/api-client';
+import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
   BookOpen, Plus, Search, Clock, Users,
@@ -17,35 +19,32 @@ import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
-import { useApi } from '@/hooks/useApi';
-import logger from '@/shared/lib/logger';
+import { useTranslation } from '@/shared/i18n';
 
 export default function CoursPage() {
-  const { loading, error, get } = useApi();
-  const [cours, setCours] = useState([]);
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [filterNiveau, setFilterNiveau] = useState('');
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await get('/universite/matieres');
-        const items = Array.isArray(res?.data?.data) ? res.data.data
-          : Array.isArray(res?.data) ? res.data
-          : Array.isArray(res) ? res
-          : [];
-        setCours(items.map(c => ({
+  // Le chargement passait par un `useState` doublé d'un `useEffect` de
+  // premier rendu, sans cache ni déduplication : deux composants montés
+  // ensemble lançaient deux requêtes, et un retour sur la page rechargeait
+  // tout (cf. audit P4.1). `unwrapList` traverse les trois formes
+  // d'enveloppe que renvoient les contrôleurs.
+  const requete = useApiQuery(['universite-matieres'], '/universite/matieres');
+
+  const cours = useMemo(
+    () => (unwrapList(requete.data) ?? []).map(c => ({
           ...c,
           credits: c.credits || c.ects || 0,
           heures: c.heures || c.volume_horaire || 0,
           etudiants: c.etudiants_count || c.etudiants || 0,
           statut: c.statut || 'actif'
-        })));
-      } catch (e) {
-        logger.error('Erreur chargement cours:', e);
-      }
-    })();
-  }, [get]);
+        })),
+    [requete.data],
+  );
+  const loading = requete.isPending;
+  const error = requete.isError ? (requete.error?.message ?? t('common.load_error')) : null;
 
   const stats = useMemo(() => ({
     total: cours.length,
@@ -86,17 +85,17 @@ export default function CoursPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Cours</h1>
-          <p className="text-sm text-neutral-500">Planification et gestion des cours universitaires</p>
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.universite.cours.title')}</h1>
+          <p className="text-sm text-neutral-500">{t('pages.universite.cours.subtitle')}</p>
         </div>
-        <Button size="sm" icon={<Plus />}>Ajouter un cours</Button>
+        <Button size="sm" icon={<Plus />}>{t('pages.universite.cours.ajouter_un_cours')}</Button>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-4">
-        <StatsCard title="Total Cours" value={String(stats.total)} icon={BookOpen} color="primary" />
-        <StatsCard title="En cours" value={String(stats.actifs)} icon={Clock} color="emerald" />
-        <StatsCard title="Terminés" value={String(stats.termines)} icon={GraduationCap} color="sky" />
-        <StatsCard title="Crédits" value={String(stats.creditsTotal)} icon={Building2} color="amber" />
+        <StatsCard title={t('pages.universite.cours.total_cours')} value={String(stats.total)} icon={BookOpen} color="primary" />
+        <StatsCard title={t('common.status.in_progress')} value={String(stats.actifs)} icon={Clock} color="emerald" />
+        <StatsCard title={t('common.finished')} value={String(stats.termines)} icon={GraduationCap} color="sky" />
+        <StatsCard title={t('pages.universite.cours.credits')} value={String(stats.creditsTotal)} icon={Building2} color="amber" />
       </div>
 
       <Card>
@@ -104,7 +103,7 @@ export default function CoursPage() {
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
             <Input
-              placeholder="Rechercher un cours..."
+              placeholder={t('common.search_course')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
@@ -135,7 +134,7 @@ export default function CoursPage() {
             <Card>
               <div className="text-center py-8 text-neutral-500">
                 <BookOpen className="mx-auto h-8 w-8 mb-2" />
-                <p className="text-sm">Aucun cours trouvé</p>
+                <p className="text-sm">{t('common.no_course_found')}</p>
               </div>
             </Card>
           </div>
@@ -147,7 +146,7 @@ export default function CoursPage() {
                 <BookOpen className="h-5 w-5 text-emerald-500" />
               </div>
               <Badge variant={c.statut === 'actif' ? 'primary' : 'outline'} size="sm">
-                {c.statut === 'actif' ? 'En cours' : 'Terminé'}
+                {c.statut === 'actif' ? t('common.status.in_progress') : t('pages.universite.cours.termine')}
               </Badge>
             </div>
             <h3 className="font-semibold text-sm text-neutral-900 dark:text-white">{c.intitule}</h3>
@@ -163,7 +162,7 @@ export default function CoursPage() {
               <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {c.etudiants}</span>
             </div>
             <div className="mt-3">
-              <Button variant="outline" size="sm" icon={<Eye />}>Détails</Button>
+              <Button variant="outline" size="sm" icon={<Eye />}>{t('common.details')}</Button>
             </div>
           </Card>
         ))}

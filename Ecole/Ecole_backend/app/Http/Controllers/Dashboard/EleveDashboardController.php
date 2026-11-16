@@ -44,7 +44,11 @@ class EleveDashboardController extends Controller
             return [
                 'name' => $nom,
                 'note' => round($group->avg('note'), 2),
-                'coeff' => $coefficients[$group->first()->matiere_id] ?? 1,
+                // `(float)` : `coefficient` est un `decimal`, que MySQL rend en
+                // chaîne et SQLite en nombre. Le repli voisin vaut `1`, un
+                // entier — le champ est numérique, il doit l'être sur les deux
+                // moteurs (cf. audit P2.1).
+                'coeff' => (float) ($coefficients[$group->first()->matiere_id] ?? 1),
             ];
         })->values();
 

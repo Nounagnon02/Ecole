@@ -19,7 +19,11 @@ class BulletinService
     public function bulletinMaternellePrimaire($eleveId, $periode)
     {
         $eleve = Eleve::with(['classe', 'notes.matiere'])->findOrFail($eleveId);
-        $notes = $eleve->notes()->where('periode', $periode)->with('matiere')->get();
+        // `eleve` est chargé avec : `calculerRang()` lit `$note->eleve->classe_id`
+        // pour borner le classement à la classe. Sans cet eager load, chaque note
+        // déclenchait sa propre requête — un N+1 que `preventLazyLoading` a mis
+        // au jour (cf. audit P2.6).
+        $notes = $eleve->notes()->where('periode', $periode)->with(['matiere', 'eleve'])->get();
 
         $evaluations = $notes->groupBy('matiere.nom')->map(function ($notesMatiere, $matiere) {
             $evaluationsMatiere = [];
@@ -46,7 +50,11 @@ class BulletinService
     public function bulletinSecondaire($eleveId, $periode)
     {
         $eleve = Eleve::with(['classe', 'notes.matiere'])->findOrFail($eleveId);
-        $notes = $eleve->notes()->where('periode', $periode)->with('matiere')->get();
+        // `eleve` est chargé avec : `calculerRang()` lit `$note->eleve->classe_id`
+        // pour borner le classement à la classe. Sans cet eager load, chaque note
+        // déclenchait sa propre requête — un N+1 que `preventLazyLoading` a mis
+        // au jour (cf. audit P2.6).
+        $notes = $eleve->notes()->where('periode', $periode)->with(['matiere', 'eleve'])->get();
 
         $moyennesParMatiere = $notes->groupBy('matiere_id')->map(function ($notesMatiere) use ($eleve) {
             $matiere = $notesMatiere->first()->matiere;

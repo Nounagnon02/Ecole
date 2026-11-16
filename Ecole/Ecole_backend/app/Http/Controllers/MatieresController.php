@@ -6,7 +6,6 @@ use App\Models\Coefficients;
 use App\Models\Matieres;
 use App\Models\Series;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
 class MatieresController extends Controller
 {
@@ -19,34 +18,6 @@ class MatieresController extends Controller
     public function index()
     {
         return Matieres::paginate(50);
-    }
-
-    public function Serie_avec_matieres()
-    {
-        return Series::with('matieres')->get();
-    }
-
-    public function indexWithSeries()
-    {
-        $matieres = Matieres::with(['series' => function($query) {
-            $query->select('series.id', 'series.nom')
-                ->withPivot('coefficient','classe_id');
-        }])->get();
-
-        return response()->json($matieres->map(function($matiere) {
-            return [
-                'id' => $matiere->id,
-                'nom' => $matiere->nom,
-                'classe_id' => $matiere->classe_id,
-                'series' => $matiere->series->map(function($serie) {
-                    return [
-                        'id' => $serie->id,
-                        'nom' => $serie->nom,
-                        'coefficient' => $serie->pivot->coefficient
-                    ];
-                })
-            ];
-        }));
     }
 
     public function store(Request $request)
@@ -68,17 +39,6 @@ class MatieresController extends Controller
             $this->rethrowIfMeaningful($e);
             return response()->json(['message' => 'Erreur lors de la création', 'error' => $this->clientErrorMessage($e)], 500);
         }
-    }
-
-    public function show($id)
-    {
-        $matiere = Matieres::find($id);
-
-        if (!$matiere) {
-            return response()->json(['message' => 'Matière non trouvée'], 404);
-        }
-
-        return response()->json($matiere);
     }
 
     public function update(Request $request, $id)
@@ -137,25 +97,6 @@ class MatieresController extends Controller
             $this->rethrowIfMeaningful($e);
             return response()->json(['message' => 'Erreur lors de la suppression', 'error' => $this->clientErrorMessage($e)], 500);
         }
-    }
-
-    public function getSeries($id)
-    {
-        $matiere = Matieres::find($id);
-
-        if (!$matiere) {
-            return response()->json(['message' => 'Matière non trouvée'], 404);
-        }
-
-        $series = $matiere->series()->get()->map(function ($serie) {
-            return [
-                'id' => $serie->id,
-                'nom' => $serie->nom,
-                'coefficient' => $serie->pivot->coefficient
-            ];
-        });
-
-        return response()->json($series);
     }
 
     private function matieresParNiveau(string $niveau, bool $flatten = false)
@@ -240,11 +181,17 @@ class MatieresController extends Controller
             return response()->json(['message' => 'Matière non trouvée'], 404);
         }
 
+        // `Rule::exists()` interroge la table brute, sans le scope `ecole` de
+        // `BelongsToEcole` : un directeur pouvait lier sa matière à la série ou
+        // la classe d'un autre établissement (cf. App\Validation\SchoolExistsRule,
+        // déjà appliquée ailleurs — ce contrôleur était resté à l'écart de cette
+        // remédiation). `school_exists` reproduit `exists` en restreignant à
+        // l'école courante.
         $validated = $request->validate([
             'series' => 'required|array',
-            'series.*.serie_id' => ['required', Rule::exists('series', 'id')],
+            'series.*.serie_id' => 'required|school_exists:series,id',
             'series.*.coefficient' => 'nullable|numeric|min:0.5|max:20',
-            'series.*.classe_id' => ['required', Rule::exists('classes', 'id')],
+            'series.*.classe_id' => 'required|school_exists:classes,id',
         ]);
 
         foreach ($validated['series'] as $lien) {

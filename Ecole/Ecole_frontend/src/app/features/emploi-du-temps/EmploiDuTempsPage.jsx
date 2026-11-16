@@ -5,18 +5,19 @@
  * Données dynamiques via API /api/emploi-du-temps
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import { useApiQuery } from '@/shared/lib/api-client';
+import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
   Clock, ChevronLeft, ChevronRight, Filter,
   MapPin, User, Download, Plus, Loader2
 } from 'lucide-react';
 import { cn } from '@/shared/lib/utils';
-import logger from '@/shared/lib/logger';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
-import { useApi } from '@/hooks/useApi';
+import { useTranslation } from '@/shared/i18n';
 
 /* ─── Jours et créneaux ───────────────────────────────────────────── */
 const JOURS = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
@@ -34,54 +35,51 @@ const CRENEAUX = [
 ];
 
 export default function EmploiDuTempsPage() {
-  const { loading, error, get } = useApi();
-  const [edt, setEdt] = useState({});
+  const { t } = useTranslation();
   const [semaine, setSemaine] = useState(0);
   const [filterMatiere, setFilterMatiere] = useState('Toutes');
   const [filterClasse, setFilterClasse] = useState('Toutes');
   const [filterEnseignant, setFilterEnseignant] = useState('Toutes');
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await get('/emploi-du-temps');
-        const raw = res?.data?.data || res?.data || res || [];
-        const items = Array.isArray(raw) ? raw : [];
+  // Le chargement passait par un `useState` doublé d'un `useEffect`, sans
+  // cache ni déduplication (cf. audit P4.1). La grille est dérivée de la
+  // réponse, pas stockée à côté d'elle.
+  const requete = useApiQuery(['emploi-du-temps'], '/emploi-du-temps');
+  const loading = requete.isPending;
+  const error = requete.isError ? (requete.error?.message ?? t('common.load_error')) : null;
 
-        // Construire la structure EDT par jour et créneau
-        const structure = {};
-        JOURS.forEach(j => { structure[j] = []; });
+  const edt = useMemo(() => {
+    const items = unwrapList(requete.data) ?? [];
 
-        items.forEach(cours => {
-          const jour = (cours.jour || cours.jour_semaine || '').toLowerCase();
-          if (!structure[jour]) structure[jour] = [];
-          structure[jour].push({
-            ...cours,
-            matiere: typeof cours.matiere === 'object' ? cours.matiere?.nom : (cours.matiere || ''),
-            professeur: typeof cours.enseignant === 'object'
-              ? (cours.enseignant?.user?.name || cours.enseignant?.specialite || '')
-              : (cours.enseignant_nom || cours.professeur || ''),
-            salle: cours.salle || '',
-            groupe: typeof cours.classe === 'object' ? cours.classe?.nom_classe : (cours.classe_nom || cours.groupe || ''),
-          });
-        });
+    // Construire la structure EDT par jour et créneau
+    const structure = {};
+    JOURS.forEach(j => { structure[j] = []; });
 
-        // Trier par heure de début
-        Object.keys(structure).forEach(j => {
-          structure[j].sort((a, b) => {
-            const ha = (a.heure_debut || '00:00').split(':')[0];
-            const hb = (b.heure_debut || '00:00').split(':')[0];
-            return parseInt(ha) - parseInt(hb);
-          });
-        });
+    items.forEach(cours => {
+      const jour = (cours.jour || cours.jour_semaine || '').toLowerCase();
+      if (!structure[jour]) structure[jour] = [];
+      structure[jour].push({
+        ...cours,
+        matiere: typeof cours.matiere === 'object' ? cours.matiere?.nom : (cours.matiere || ''),
+        professeur: typeof cours.enseignant === 'object'
+          ? (cours.enseignant?.user?.name || cours.enseignant?.specialite || '')
+          : (cours.enseignant_nom || cours.professeur || ''),
+        salle: cours.salle || '',
+        groupe: typeof cours.classe === 'object' ? cours.classe?.nom_classe : (cours.classe_nom || cours.groupe || ''),
+      });
+    });
 
-        setEdt(structure);
+    // Trier par heure de début
+    Object.keys(structure).forEach(j => {
+      structure[j].sort((a, b) => {
+        const ha = (a.heure_debut || '00:00').split(':')[0];
+        const hb = (b.heure_debut || '00:00').split(':')[0];
+        return parseInt(ha) - parseInt(hb);
+      });
+    });
 
-      } catch (e) {
-        logger.error('Erreur chargement EDT:', e);
-      }
-    })();
-  }, [get]);
+    return structure;
+  }, [requete.data]);
 
   // Données de démo si pas de données API
   const hasData = useMemo(() => Object.values(edt).some(arr => arr.length > 0), [edt]);
@@ -154,15 +152,15 @@ export default function EmploiDuTempsPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Emploi du Temps</h1>
-          <p className="text-sm text-neutral-500">Consultez les emplois du temps par classe</p>
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.emploi_du_temps.emploi_du_temps.title')}</h1>
+          <p className="text-sm text-neutral-500">{t('pages.emploi_du_temps.emploi_du_temps.subtitle')}</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" icon={<Download />}>
-            Exporter
+            {t('common.export')}
           </Button>
           <Button size="sm" icon={<Plus />}>
-            Ajouter un Cours
+            {t('pages.emploi_du_temps.emploi_du_temps.ajouter_un_cours')}
           </Button>
         </div>
       </div>
@@ -179,7 +177,7 @@ export default function EmploiDuTempsPage() {
             </button>
             <div className="text-center">
               <p className="text-sm font-medium text-neutral-900 dark:text-white">{semaineLabel}</p>
-              <p className="text-xs text-neutral-500">Année scolaire 2025-2026</p>
+              <p className="text-xs text-neutral-500">{t('pages.emploi_du_temps.emploi_du_temps.annee_scolaire_2025_2026')}</p>
             </div>
             <button
               onClick={() => setSemaine(Math.min(4, semaine + 1))}
@@ -193,7 +191,7 @@ export default function EmploiDuTempsPage() {
             <select
               value={filterMatiere}
               onChange={(e) => setFilterMatiere(e.target.value)}
-              aria-label="Filtrer par matière"
+              aria-label={t('common.filter_by_subject')}
               className="h-9 rounded-lg border border-neutral-300 bg-white px-2.5 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
             >
               {matieresList.map((m) => <option key={m} value={m}>{m}</option>)}
@@ -201,7 +199,7 @@ export default function EmploiDuTempsPage() {
             <select
               value={filterClasse}
               onChange={(e) => setFilterClasse(e.target.value)}
-              aria-label="Filtrer par classe"
+              aria-label={t('common.filter_by_class')}
               className="h-9 rounded-lg border border-neutral-300 bg-white px-2.5 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
             >
               {classesList.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -209,7 +207,7 @@ export default function EmploiDuTempsPage() {
             <select
               value={filterEnseignant}
               onChange={(e) => setFilterEnseignant(e.target.value)}
-              aria-label="Filtrer par enseignant"
+              aria-label={t('pages.emploi_du_temps.emploi_du_temps.filtrer_par_enseignant')}
               className="h-9 rounded-lg border border-neutral-300 bg-white px-2.5 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
             >
               {enseignantsList.map((e) => <option key={e} value={e}>{e}</option>)}
@@ -246,7 +244,7 @@ export default function EmploiDuTempsPage() {
                 creneau.pause && 'bg-amber-50 dark:bg-amber-900/10'
               )}>
                 <span className="text-[11px] font-medium text-neutral-800 dark:text-neutral-200">{creneau.heure}</span>
-                {creneau.pause && <span className="text-[10px] text-amber-600 mt-0.5">Pause</span>}
+                {creneau.pause && <span className="text-[10px] text-amber-600 mt-0.5">{t('pages.emploi_du_temps.emploi_du_temps.pause')}</span>}
               </div>
 
               {/* Colonnes jours */}
@@ -259,7 +257,7 @@ export default function EmploiDuTempsPage() {
                 if (creneau.pause) {
                   return (
                     <div key={jIdx} className="bg-amber-50 dark:bg-amber-900/10 flex items-center justify-center">
-                      <span className="text-xs text-amber-500 italic">Pause</span>
+                      <span className="text-xs text-amber-500 italic">{t('pages.emploi_du_temps.emploi_du_temps.pause')}</span>
                     </div>
                   );
                 }
@@ -296,14 +294,14 @@ export default function EmploiDuTempsPage() {
       <div className="flex flex-wrap gap-4 text-xs text-neutral-500">
         <div className="flex items-center gap-1.5">
           <div className="h-2.5 w-2.5 rounded bg-white dark:bg-neutral-900 border border-neutral-300" />
-          <span>Disponible</span>
+          <span>{t('pages.emploi_du_temps.emploi_du_temps.disponible')}</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="h-2.5 w-2.5 rounded bg-amber-50 dark:bg-amber-900/10 border border-amber-200" />
-          <span>Pause</span>
+          <span>{t('pages.emploi_du_temps.emploi_du_temps.pause')}</span>
         </div>
-        {hasData && <span className="text-amber-500 text-xs">Données chargées depuis l'API</span>}
-        {!hasData && <span className="text-neutral-400 text-xs">Mode démo (API indisponible)</span>}
+        {hasData && <span className="text-amber-500 text-xs">{t('pages.emploi_du_temps.emploi_du_temps.donnees_chargees_depuis_l_api')}</span>}
+        {!hasData && <span className="text-neutral-400 text-xs">{t('pages.emploi_du_temps.emploi_du_temps.mode_demo_api_indisponible')}</span>}
       </div>
     </motion.div>
   );

@@ -5,20 +5,21 @@
  * Données dynamiques via API /api/universite/planning
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import { useApiQuery } from '@/shared/lib/api-client';
+import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
-  CalendarDays, Plus, Search, Filter, Clock, Users, MapPin, BookOpen,
+  CalendarDays, Plus, Search, Clock, Users, MapPin, BookOpen,
   CheckCircle, AlertCircle, GraduationCap, Loader2,
 } from 'lucide-react';
-import { cn, formatDate } from '@/shared/lib/utils';
+import { cn } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
-import { useApi } from '@/hooks/useApi';
-import logger from '@/shared/lib/logger';
+import { useTranslation } from '@/shared/i18n';
 
 const TYPE_CONFIG = {
   cours: { label: 'Cours', color: 'text-blue-500 bg-blue-100 dark:bg-blue-900/20', icon: BookOpen },
@@ -32,25 +33,24 @@ const TYPE_CONFIG = {
 };
 
 export default function PlanningPage() {
-  const { loading, error, get } = useApi();
-  const [evenements, setEvenements] = useState([]);
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState('');
 
-  useEffect(() => {
-    (async () => {
-      try {
-        // GET /api/universite/planning — séances datées. Un étudiant n'y reçoit
-        // que sa filière et les séances communes (filiere_id null), le personnel
-        // reçoit tout le calendrier.
-        const res = await get('/universite/planning');
-        const items = Array.isArray(res?.data?.data) ? res.data.data
-          : Array.isArray(res?.data) ? res.data
-          : Array.isArray(res) ? res
-          : [];
-        setEvenements(items.map((e) => ({
+  // GET /api/universite/planning — séances datées. Un étudiant n'y reçoit
+  // que sa filière et les séances communes (filiere_id null), le personnel
+  // reçoit tout le calendrier.
+  // Le chargement passait par un `useState` doublé d'un `useEffect` de
+  // premier rendu, sans cache ni déduplication : deux composants montés
+  // ensemble lançaient deux requêtes, et un retour sur la page rechargeait
+  // tout (cf. audit P4.1). `unwrapList` traverse les trois formes
+  // d'enveloppe que renvoient les contrôleurs.
+  const requete = useApiQuery(['universite-planning'], '/universite/planning');
+
+  const evenements = useMemo(
+    () => (unwrapList(requete.data) ?? []).map((e) => ({
           ...e,
-          titre: e.titre || e.intitule || 'Événement',
+          titre: e.titre || e.intitule || t('pages.universite.planning.evenement'),
           type: e.type || 'evenement',
           date: e.date ? new Date(e.date) : new Date(),
           debut: e.heure_debut || e.debut || '08:00',
@@ -65,12 +65,11 @@ export default function PlanningPage() {
             (e.enseignant ? `${e.enseignant.prenom || ''} ${e.enseignant.nom || ''}`.trim() : '') ||
             '—',
           statut: e.statut || 'planifie',
-        })));
-      } catch (e) {
-        logger.error('Erreur chargement planning:', e);
-      }
-    })();
-  }, [get]);
+        })),
+    [requete.data, t],
+  );
+  const loading = requete.isPending;
+  const error = requete.isError ? (requete.error?.message ?? t('common.load_error')) : null;
 
   const stats = useMemo(() => ({
     total: evenements.length,
@@ -111,17 +110,17 @@ export default function PlanningPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Planning</h1>
-          <p className="text-sm text-neutral-500">Calendrier universitaire des cours et événements</p>
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.universite.planning.title')}</h1>
+          <p className="text-sm text-neutral-500">{t('pages.universite.planning.subtitle')}</p>
         </div>
-        <Button size="sm" icon={<Plus />}>Nouvel événement</Button>
+        <Button size="sm" icon={<Plus />}>{t('pages.universite.planning.nouvel_evenement')}</Button>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-4">
-        <StatsCard title="Total" value={String(stats.total)} icon={CalendarDays} color="primary" />
-        <StatsCard title="Planifiés" value={String(stats.planifies)} icon={Clock} color="sky" />
-        <StatsCard title="Terminés" value={String(stats.termines)} icon={CheckCircle} color="emerald" />
-        <StatsCard title="Aujourd'hui" value={String(stats.aujourdhui)} icon={AlertCircle} color="amber" />
+        <StatsCard title={t('common.total')} value={String(stats.total)} icon={CalendarDays} color="primary" />
+        <StatsCard title={t('pages.universite.planning.planifies')} value={String(stats.planifies)} icon={Clock} color="sky" />
+        <StatsCard title={t('common.finished')} value={String(stats.termines)} icon={CheckCircle} color="emerald" />
+        <StatsCard title={t('common.today')} value={String(stats.aujourdhui)} icon={AlertCircle} color="amber" />
       </div>
 
       <Card>
@@ -129,7 +128,7 @@ export default function PlanningPage() {
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
             <Input
-              placeholder="Rechercher un événement..."
+              placeholder={t('pages.universite.planning.rechercher_un_evenement')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
@@ -159,7 +158,7 @@ export default function PlanningPage() {
           <Card>
             <div className="text-center py-8 text-neutral-500">
               <CalendarDays className="mx-auto h-8 w-8 mb-2" />
-              <p className="text-sm">Aucun événement trouvé</p>
+              <p className="text-sm">{t('pages.universite.planning.aucun_evenement_trouve')}</p>
             </div>
           </Card>
         )}
@@ -181,7 +180,7 @@ export default function PlanningPage() {
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-sm font-semibold text-neutral-900 dark:text-white">{evt.titre}</span>
                     <Badge variant={evt.statut === 'termine' ? 'primary' : 'warning'} size="sm">
-                      {evt.statut === 'termine' ? 'Terminé' : 'Planifié'}
+                      {evt.statut === 'termine' ? t('pages.universite.planning.termine') : t('pages.universite.planning.planifie')}
                     </Badge>
                   </div>
                   <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-neutral-500">
@@ -203,7 +202,7 @@ export default function PlanningPage() {
                     </span>
                   </div>
                 </div>
-                <Button variant="ghost" size="sm">Détails</Button>
+                <Button variant="ghost" size="sm">{t('common.details')}</Button>
               </div>
             </Card>
           );

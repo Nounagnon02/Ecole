@@ -7,7 +7,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDashboardStats } from '../hooks/useDashboardData';
-import { motion, AnimatePresence } from 'framer-motion';
+import DashboardShell from '../DashboardShell';
+import { motion } from 'framer-motion';
 import {
   Shield, Users, AlertTriangle, BarChart3, UserCheck, UserX, Camera, MapPin, Clock
 } from 'lucide-react';
@@ -15,16 +16,12 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip,
   ResponsiveContainer
 } from 'recharts';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
-import { cn } from '@/shared/lib/utils';
 import StatsCard from '@/shared/components/ui/StatsCard';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Table from '@/shared/components/ui/Table';
 import Button from '@/shared/components/ui/Button';
-import { RefreshButton } from '@/shared/components/ui';
-import { ErrorDisplay } from '@/shared/components/ui/EmptyState';
+import { useTranslation } from '@/shared/i18n';
 
 const TABS = [
   { id: 'apercu', label: 'Aperçu', icon: BarChart3 },
@@ -33,13 +30,14 @@ const TABS = [
 ];
 
 const STATS_META = [
-  { title: 'Total Élèves', icon: Users, color: 'primary' },
-  { title: 'Présents Aujourd\'hui', icon: UserCheck, color: 'emerald' },
-  { title: 'Absents', icon: UserX, color: 'red' },
-  { title: 'Alertes', icon: AlertTriangle, color: 'amber' },
+  { title: 'Total Élèves', key: 'total_eleves', icon: Users, color: 'primary' },
+  { title: 'Présents Aujourd\'hui', key: 'presents_aujourdhui', icon: UserCheck, color: 'emerald' },
+  { title: 'Absents', key: 'absents', icon: UserX, color: 'red' },
+  { title: 'Alertes', key: 'alertes', icon: AlertTriangle, color: 'amber' },
 ];
 
 function ApercuSection({ stats, presences, retards, data }) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -53,8 +51,8 @@ function ApercuSection({ stats, presences, retards, data }) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <Card.Header>
-            <Card.Title>Présences de la Semaine</Card.Title>
-            <Card.Description>Tendance quotidienne</Card.Description>
+            <Card.Title>{t('dashboards.surveillant.presences_de_la_semaine')}</Card.Title>
+            <Card.Description>{t('dashboards.surveillant.tendance_quotidienne')}</Card.Description>
           </Card.Header>
           <Card.Body>
             <div className="h-[260px]">
@@ -74,8 +72,8 @@ function ApercuSection({ stats, presences, retards, data }) {
 
         <Card>
           <Card.Header>
-            <Card.Title>Points de Surveillance</Card.Title>
-            <Card.Description>Zones actives aujourd'hui</Card.Description>
+            <Card.Title>{t('dashboards.surveillant.points_de_surveillance')}</Card.Title>
+            <Card.Description>{t('dashboards.surveillant.zones_actives_aujourd_hui')}</Card.Description>
           </Card.Header>
           <Card.Body>
             {data?.points_surveillance && data.points_surveillance.length > 0 ? (
@@ -96,7 +94,7 @@ function ApercuSection({ stats, presences, retards, data }) {
             ) : (
               <div className="flex flex-col items-center justify-center py-8 text-[var(--text-tertiary)]">
                 <MapPin className="h-8 w-8 mb-2 opacity-30" />
-                <p className="text-sm">Aucun point de surveillance</p>
+                <p className="text-sm">{t('dashboards.surveillant.aucun_point_de_surveillance')}</p>
               </div>
             )}
           </Card.Body>
@@ -106,18 +104,18 @@ function ApercuSection({ stats, presences, retards, data }) {
       <Card>
         <Card.Header>
           <div className="flex items-center justify-between">
-            <Card.Title>Retards du Jour</Card.Title>
+            <Card.Title>{t('dashboards.surveillant.retards_du_jour')}</Card.Title>
             <Badge variant="warning" size="sm">{retards.length} signalés</Badge>
           </div>
         </Card.Header>
         <Card.Body className="p-0">
           <Table>
             <Table.Header>
-              <Table.Head>Élève</Table.Head>
-              <Table.Head>Classe</Table.Head>
-              <Table.Head>Retard</Table.Head>
-              <Table.Head>Motif</Table.Head>
-              <Table.Head>Récurrent</Table.Head>
+              <Table.Head>{t('common.student')}</Table.Head>
+              <Table.Head>{t('common.class')}</Table.Head>
+              <Table.Head>{t('common.late')}</Table.Head>
+              <Table.Head>{t('common.reason')}</Table.Head>
+              <Table.Head>{t('dashboards.surveillant.recurrent')}</Table.Head>
             </Table.Header>
             <Table.Body>
               {retards.map((r) => (
@@ -127,7 +125,7 @@ function ApercuSection({ stats, presences, retards, data }) {
                   <Table.Cell>{r.temps}</Table.Cell>
                   <Table.Cell>{r.motif}</Table.Cell>
                   <Table.Cell>
-                    {r.recurrent ? <Badge variant="danger" size="sm">Récurrent</Badge> : <Badge variant="neutral" size="sm">Ponctuel</Badge>}
+                    {r.recurrent ? <Badge variant="danger" size="sm">{t('dashboards.surveillant.recurrent')}</Badge> : <Badge variant="neutral" size="sm">{t('dashboards.surveillant.ponctuel')}</Badge>}
                   </Table.Cell>
                 </Table.Row>
               ))}
@@ -140,7 +138,7 @@ function ApercuSection({ stats, presences, retards, data }) {
         <Card>
           <Card.Header>
             <div className="flex items-center justify-between">
-              <Card.Title>Absents du Jour</Card.Title>
+              <Card.Title>{t('dashboards.surveillant.absents_du_jour')}</Card.Title>
               {data?.absents_jour?.length > 0 && (
                 <Badge variant="danger" size="sm">{data.absents_jour.length}</Badge>
               )}
@@ -150,9 +148,9 @@ function ApercuSection({ stats, presences, retards, data }) {
             {data?.absents_jour?.length > 0 ? (
             <Table>
               <Table.Header>
-                <Table.Head>Élève</Table.Head>
-                <Table.Head>Classe</Table.Head>
-                <Table.Head>Justifié</Table.Head>
+                <Table.Head>{t('common.student')}</Table.Head>
+                <Table.Head>{t('common.class')}</Table.Head>
+                <Table.Head>{t('dashboards.surveillant.justifie')}</Table.Head>
               </Table.Header>
               <Table.Body>
                 {data.absents_jour.map((a) => (
@@ -160,7 +158,7 @@ function ApercuSection({ stats, presences, retards, data }) {
                     <Table.Cell><span className="font-medium text-neutral-900 dark:text-white">{a.eleve}</span></Table.Cell>
                     <Table.Cell>{a.classe}</Table.Cell>
                     <Table.Cell>
-                      {a.justifiee ? <Badge variant="success" size="sm">Oui</Badge> : <Badge variant="danger" size="sm">Non</Badge>}
+                      {a.justifiee ? <Badge variant="success" size="sm">{t('dashboards.surveillant.oui')}</Badge> : <Badge variant="danger" size="sm">{t('dashboards.surveillant.non')}</Badge>}
                     </Table.Cell>
                   </Table.Row>
                 ))}
@@ -169,7 +167,7 @@ function ApercuSection({ stats, presences, retards, data }) {
             ) : (
               <div className="flex flex-col items-center justify-center py-8 text-[var(--text-tertiary)]">
                 <UserCheck className="h-8 w-8 mb-2 opacity-30" />
-                <p className="text-sm">Aucun absent signalé aujourd'hui</p>
+                <p className="text-sm">{t('dashboards.surveillant.aucun_absent_signale_aujourd_hui')}</p>
               </div>
             )}
           </Card.Body>
@@ -178,7 +176,7 @@ function ApercuSection({ stats, presences, retards, data }) {
         <Card>
           <Card.Header>
             <div className="flex items-center justify-between">
-              <Card.Title>Incidents Récents</Card.Title>
+              <Card.Title>{t('dashboards.surveillant.incidents_recents')}</Card.Title>
               {data?.incidents?.length > 0 && (
                 <Badge variant="warning" size="sm">{data.incidents.length}</Badge>
               )}
@@ -188,9 +186,9 @@ function ApercuSection({ stats, presences, retards, data }) {
             {data?.incidents?.length > 0 ? (
             <Table>
               <Table.Header>
-                <Table.Head>Incident</Table.Head>
-                <Table.Head>Date</Table.Head>
-                <Table.Head>Gravité</Table.Head>
+                <Table.Head>{t('dashboards.surveillant.incident')}</Table.Head>
+                <Table.Head>{t('common.date')}</Table.Head>
+                <Table.Head>{t('dashboards.surveillant.gravite')}</Table.Head>
               </Table.Header>
               <Table.Body>
                 {data.incidents.map((i) => (
@@ -207,7 +205,7 @@ function ApercuSection({ stats, presences, retards, data }) {
             ) : (
               <div className="flex flex-col items-center justify-center py-8 text-[var(--text-tertiary)]">
                 <AlertTriangle className="h-8 w-8 mb-2 opacity-30" />
-                <p className="text-sm">Aucun incident récent</p>
+                <p className="text-sm">{t('dashboards.surveillant.aucun_incident_recent')}</p>
               </div>
             )}
           </Card.Body>
@@ -216,7 +214,7 @@ function ApercuSection({ stats, presences, retards, data }) {
         <Card>
           <Card.Header>
             <div className="flex items-center justify-between">
-              <Card.Title>Absences Non Justifiées</Card.Title>
+              <Card.Title>{t('dashboards.surveillant.absences_non_justifiees')}</Card.Title>
               {data?.absences_non_justifiees?.length > 0 && (
                 <Badge variant="danger" size="sm">{data.absences_non_justifiees.length}</Badge>
               )}
@@ -226,8 +224,8 @@ function ApercuSection({ stats, presences, retards, data }) {
             {data?.absences_non_justifiees?.length > 0 ? (
             <Table>
               <Table.Header>
-                <Table.Head>Élève</Table.Head>
-                <Table.Head>Date</Table.Head>
+                <Table.Head>{t('common.student')}</Table.Head>
+                <Table.Head>{t('common.date')}</Table.Head>
               </Table.Header>
               <Table.Body>
                 {data.absences_non_justifiees.map((a) => (
@@ -241,7 +239,7 @@ function ApercuSection({ stats, presences, retards, data }) {
             ) : (
               <div className="flex flex-col items-center justify-center py-8 text-[var(--text-tertiary)]">
                 <Clock className="h-8 w-8 mb-2 opacity-30" />
-                <p className="text-sm">Toutes les absences sont justifiées</p>
+                <p className="text-sm">{t('dashboards.surveillant.toutes_les_absences_sont_justifiees')}</p>
               </div>
             )}
           </Card.Body>
@@ -253,10 +251,16 @@ function ApercuSection({ stats, presences, retards, data }) {
 
 export default function SurveillantDashboard() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('apercu');
   const { data, loading, error, refetch } = useDashboardStats('surveillant');
 
-  const stats = data?.stats?.map((s, i) => ({ ...s, icon: STATS_META[i]?.icon, color: STATS_META[i]?.color })) || [];
+  const stats = data?.stats?.map((s, i) => ({
+    ...s,
+    title: STATS_META[i]?.key ? t(`dashboards.surveillant.stats.${STATS_META[i].key}`) : s.title,
+    icon: STATS_META[i]?.icon,
+    color: STATS_META[i]?.color,
+  })) || [];
   const presences = data?.presences_semaine || [];
   const retards = data?.retards || [];
 
@@ -274,53 +278,22 @@ export default function SurveillantDashboard() {
  };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <motion.h1 initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-            className="text-2xl font-bold text-neutral-900 dark:text-white"
-          >
-            Surveillance
-          </motion.h1>
-          <p className="text-neutral-500 dark:text-neutral-400 mt-1">
-            Suivi des présences — {format(new Date(), 'EEEE d MMMM yyyy', { locale: fr })}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <RefreshButton loading={loading} onRefresh={refetch} />
-          <Button variant="ghost" size="sm"><Shield className="h-4 w-4 mr-1" /> Mon Service</Button>
-        </div>
-      </div>
-
-      {error && (
-        <ErrorDisplay message={error} onRetry={refetch} />
-      )}
-
-      <div className="border-b border-neutral-200 dark:border-neutral-800">
-        <nav className="flex gap-1 overflow-x-auto -mb-px">
-          {TABS.map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <button key={tab.id} onClick={() => handleTabClick(tab.id)}
-                className={cn(
-                  'flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-all whitespace-nowrap',
-                  activeTab === tab.id
-                    ? 'border-[var(--accent)] text-[var(--accent)] dark:text-[var(--accent)]'
-                    : 'border-transparent text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200'
-                )}
-              >
-                <Icon className="h-4 w-4" /> {tab.label}
-              </button>
-            );
- })}
-        </nav>
-      </div>
-
-      <AnimatePresence mode="wait">
-        <motion.div key={activeTab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }}>
-          {renderSection()}
-        </motion.div>
-      </AnimatePresence>
-    </div>
+    <DashboardShell
+      title={t('dashboards.surveillant.title')}
+      subtitle={t('dashboards.surveillant.subtitle')}
+      tabs={TABS.map((tab) => ({ ...tab, label: t(`dashboards.surveillant.tabs.${tab.id}`) }))}
+      activeTab={activeTab}
+      onTabChange={handleTabClick}
+      loading={loading}
+      error={error}
+      onRefresh={refetch}
+      actions={
+        <>
+    <Button variant="ghost" size="sm"><Shield className="h-4 w-4 mr-1" /> {t('dashboards.surveillant.mon_service')}</Button>
+        </>
+      }
+    >
+      {renderSection()}
+    </DashboardShell>
   );
 }

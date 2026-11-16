@@ -5,7 +5,9 @@
  * Données dynamiques via API /evenements
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import { useApiQuery } from '@/shared/lib/api-client';
+import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
   CalendarDays, Plus, Search, Clock, Users, MapPin, BookOpen,
@@ -17,8 +19,7 @@ import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
-import { useApi } from '@/hooks/useApi';
-import logger from '@/shared/lib/logger';
+import { useTranslation } from '@/shared/i18n';
 
 const TYPE_CONFIG = {
   reunion: { label: 'Réunion', color: 'text-blue-500 bg-blue-100 dark:bg-blue-900/20' },
@@ -40,23 +41,20 @@ const getTypeIcon = (type) => {
 };
 
 export default function PlanningPage() {
-  const { loading, error, get } = useApi();
-  const [evenements, setEvenements] = useState([]);
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState('');
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await get('/evenements');
-        const raw = res?.data?.data || res?.data || res || [];
-        const items = Array.isArray(raw) ? raw : [];
-        setEvenements(items);
-      } catch (e) {
-        logger.error('Erreur chargement événements:', e);
-      }
-    })();
-  }, [get]);
+  // Le chargement passait par un `useState` doublé d'un `useEffect` de
+  // premier rendu, sans cache ni déduplication : deux composants montés
+  // ensemble lançaient deux requêtes, et un retour sur la page rechargeait
+  // tout (cf. audit P4.1). `unwrapList` traverse les trois formes
+  // d'enveloppe que renvoient les contrôleurs.
+  const requete = useApiQuery(['evenements'], '/evenements');
+
+  const evenements = useMemo(() => unwrapList(requete.data) ?? [], [requete.data]);
+  const loading = requete.isPending;
+  const error = requete.isError ? (requete.error?.message ?? t('common.load_error')) : null;
 
   const stats = useMemo(() => {
     const now = new Date();
@@ -105,18 +103,18 @@ export default function PlanningPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Planning</h1>
-          <p className="text-sm text-neutral-500">Planification des événements et rendez-vous</p>
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.secretaire.planning.title')}</h1>
+          <p className="text-sm text-neutral-500">{t('pages.secretaire.planning.subtitle')}</p>
         </div>
-        <Button size="sm" icon={<Plus />}>Nouvel événement</Button>
+        <Button size="sm" icon={<Plus />}>{t('pages.secretaire.planning.nouvel_evenement')}</Button>
       </div>
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-4">
-        <StatsCard title="Total" value={String(stats.total)} icon={CalendarDays} color="primary" />
-        <StatsCard title="Planifiés" value={String(stats.planifies)} icon={Clock} color="sky" />
-        <StatsCard title="Terminés" value={String(stats.termines)} icon={CheckCircle} color="emerald" />
-        <StatsCard title="Aujourd'hui" value={String(stats.aujourdhui)} icon={AlertCircle} color="amber" />
+        <StatsCard title={t('common.total')} value={String(stats.total)} icon={CalendarDays} color="primary" />
+        <StatsCard title={t('pages.secretaire.planning.planifies')} value={String(stats.planifies)} icon={Clock} color="sky" />
+        <StatsCard title={t('common.finished')} value={String(stats.termines)} icon={CheckCircle} color="emerald" />
+        <StatsCard title={t('common.today')} value={String(stats.aujourdhui)} icon={AlertCircle} color="amber" />
       </div>
 
       {/* Filtres */}
@@ -125,7 +123,7 @@ export default function PlanningPage() {
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
             <Input
-              placeholder="Rechercher un événement..."
+              placeholder={t('pages.secretaire.planning.rechercher_un_evenement')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
@@ -156,7 +154,7 @@ export default function PlanningPage() {
           <Card>
             <div className="text-center py-8 text-neutral-500">
               <CalendarDays className="mx-auto h-8 w-8 mb-2" />
-              <p className="text-sm">Aucun événement trouvé</p>
+              <p className="text-sm">{t('pages.secretaire.planning.aucun_evenement_trouve')}</p>
             </div>
           </Card>
         )}
@@ -184,7 +182,7 @@ export default function PlanningPage() {
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-sm font-semibold text-neutral-900 dark:text-white">{evt.titre}</span>
                       <Badge variant={estFutur ? 'warning' : 'primary'} size="sm">
-                        {estFutur ? 'Planifié' : 'Terminé'}
+                        {estFutur ? t('pages.secretaire.planning.planifie') : t('pages.secretaire.planning.termine')}
                       </Badge>
                     </div>
                     <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-neutral-500">
@@ -209,7 +207,7 @@ export default function PlanningPage() {
                     )}
                   </div>
 
-                  <Button variant="ghost" size="sm">Détails</Button>
+                  <Button variant="ghost" size="sm">{t('common.details')}</Button>
                 </div>
               </Card>
             );

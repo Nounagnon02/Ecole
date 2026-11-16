@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\Notification;
 use App\Models\User;
+use App\Support\SchoolContext;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -32,18 +33,22 @@ class SendNotificationJob implements ShouldQueue
 
     public function handle(): void
     {
+        // `User` est exempté du scope `ecole`, la recherche aboutit donc sans
+        // contexte. `Notification` ne l'est pas : sans école liée, la ligne
+        // s'écrivait avec `ecole_id = null` et n'était plus jamais lisible
+        // (audit A2). L'école du destinataire cadre l'écriture.
         $user = User::find($this->data['user_id']);
-        if (!$user) return;
+        if (!$user || !$user->ecole_id) return;
 
         // Créer la notification en base
-        $notification = Notification::create([
+        $notification = SchoolContext::for((int) $user->ecole_id, fn () => Notification::create([
             'user_id' => $user->id,
             'type' => $this->data['type'] ?? 'info',
             'title' => $this->data['title'],
             'body' => $this->data['body'],
             'action_url' => $this->data['action_url'] ?? null,
             'data' => $this->data['data'] ?? null,
-        ]);
+        ]));
 
         // Canal email si activé
         if ($user->email && ($this->data['channels']['email'] ?? true)) {

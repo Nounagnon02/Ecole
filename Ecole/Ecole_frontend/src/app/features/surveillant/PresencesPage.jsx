@@ -5,7 +5,9 @@
  * Données dynamiques via API /surveillant/absences
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import { useApiQuery } from '@/shared/lib/api-client';
+import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
   Users, Clock, CheckCircle, XCircle,
@@ -18,86 +20,65 @@ import Avatar from '@/shared/components/ui/Avatar';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
-import { useApi } from '@/hooks/useApi';
-import logger from '@/shared/lib/logger';
+import { useTranslation } from '@/shared/i18n';
 
 export default function PresencesPage() {
-  const { loading, error, get } = useApi();
-  const [presences, setPresences] = useState([]);
-  const [eleves, setEleves] = useState([]);
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [filterClasse, setFilterClasse] = useState('');
   const [filterStatut, setFilterStatut] = useState('');
   const today = new Date();
 
-  useEffect(() => {
-    (async () => {
-      try {
-        // Fetch absences for status, and all students
-        const [absRes, eleveRes] = await Promise.allSettled([
-          get('/surveillant/absences'),
-          get('/eleves'),
-        ]);
+  // Deux requêtes indépendantes remplacent le `Promise.allSettled` derrière un
+  // `useApi()` à l'état partagé : chacune porte son erreur, et le roster
+  // d'élèves reste en cache entre les visites (cf. audit P4.1).
+  const requeteAbsences = useApiQuery(['surveillant-absences'], '/surveillant/absences');
+  const requeteEleves = useApiQuery(['eleves'], '/eleves');
 
-        const absences = absRes.value
-          ? (Array.isArray(absRes.value?.data?.data) ? absRes.value.data.data
-            : Array.isArray(absRes.value?.data) ? absRes.value.data
-            : Array.isArray(absRes.value) ? absRes.value
-            : [])
-          : [];
+  const loading = requeteAbsences.isPending;
+  const error = requeteAbsences.isError
+    ? (requeteAbsences.error?.message ?? t('common.load_error'))
+    : null;
 
-        const elevesList = eleveRes.value
-          ? (Array.isArray(eleveRes.value?.data?.data) ? eleveRes.value.data.data
-            : Array.isArray(eleveRes.value?.data) ? eleveRes.value.data
-            : Array.isArray(eleveRes.value) ? eleveRes.value
-            : [])
-          : [];
+  // La liste de présence est dérivée, pas stockée : les absences du jour
+  // reportées sur le roster. Sans roster, on retombe sur les seules absences.
+  const presences = useMemo(() => {
+    const absences = unwrapList(requeteAbsences.data) ?? [];
+    const elevesList = unwrapList(requeteEleves.data) ?? [];
 
-        setEleves(elevesList);
+    const todayAbsences = absences.filter((a) => {
+      if (!a.date) return false;
+      return new Date(a.date).toDateString() === today.toDateString();
+    });
 
-        // Build presence list: students with today's absence status
-        const todayStr = today.toISOString().split('T')[0];
-        const todayAbsences = absences.filter((a) => {
-          if (!a.date) return false;
-          const d = new Date(a.date);
-          return d.toDateString() === today.toDateString();
-        });
+    const absenceMap = new Map();
+    todayAbsences.forEach((a) => {
+      absenceMap.set(a.eleve_id || a.eleve?.id, a);
+    });
 
-        const absenceMap = new Map();
-        todayAbsences.forEach((a) => {
-          absenceMap.set(a.eleve_id || a.eleve?.id, a);
-        });
+    if (elevesList.length > 0) {
+      return elevesList.map((e) => {
+        const abs = absenceMap.get(e.id);
+        return {
+          id: e.id,
+          nom: `${e.prenom || ''} ${e.nom || ''}`.trim(),
+          classe: e.classe?.nom_classe || e.classe_id || '—',
+          statut: abs ? (abs.type === 'retard' ? 'retard' : 'absent') : 'present',
+          heureArrivee: '—',
+          motif: abs?.motif || '',
+        };
+      });
+    }
 
-        // If we have student list, combine with absences
-        if (elevesList.length > 0) {
-          const combined = elevesList.map((e) => {
-            const abs = absenceMap.get(e.id);
-            return {
-              id: e.id,
-              nom: `${e.prenom || ''} ${e.nom || ''}`.trim(),
-              classe: e.classe?.nom_classe || e.classe_id || '—',
-              statut: abs ? (abs.type === 'retard' ? 'retard' : 'absent') : 'present',
-              heureArrivee: '—',
-              motif: abs?.motif || ''
-            };
-          });
-          setPresences(combined);
-        } else {
-          // Fallback: just show the absences
-          setPresences(absences.map((a) => ({
-            id: a.id,
-            nom: `${a.eleve?.prenom || ''} ${a.eleve?.nom || ''}`.trim() || 'Élève',
-            classe: a.eleve?.classe?.nom_classe || '—',
-            statut: a.type === 'retard' ? 'retard' : 'absent',
-            heureArrivee: '—',
-            motif: a.motif || ''
-          })));
-        }
-      } catch (e) {
-        logger.error('Erreur chargement présences:', e);
-      }
-    })();
-  }, [get]);
+    return absences.map((a) => ({
+      id: a.id,
+      nom: `${a.eleve?.prenom || ''} ${a.eleve?.nom || ''}`.trim() || t('common.student'),
+      classe: a.eleve?.classe?.nom_classe || '—',
+      statut: a.type === 'retard' ? 'retard' : 'absent',
+      heureArrivee: '—',
+      motif: a.motif || '',
+    }));
+  }, [requeteAbsences.data, requeteEleves.data, t]);
 
   const stats = useMemo(() => ({
     total: presences.length,
@@ -161,18 +142,18 @@ export default function PresencesPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Présences</h1>
-          <p className="text-sm text-neutral-500">Suivi des présences du {formatDate(today)}</p>
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.surveillant.presences.title')}</h1>
+          <p className="text-sm text-neutral-500">{t('pages.surveillant.presences.subtitle', { date: formatDate(today) })}</p>
         </div>
-        <Button variant="outline" size="sm" icon={<Download />}>Exporter</Button>
+        <Button variant="outline" size="sm" icon={<Download />}>{t('common.export')}</Button>
       </div>
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-4">
-        <StatsCard title="Total" value={String(stats.total)} icon={Users} color="primary" />
-        <StatsCard title="Présents" value={String(stats.presents)} icon={CheckCircle} color="emerald" />
-        <StatsCard title="Retards" value={String(stats.retards)} icon={Clock} color="amber" />
-        <StatsCard title="Absents" value={String(stats.absents)} icon={XCircle} color="red" />
+        <StatsCard title={t('common.total')} value={String(stats.total)} icon={Users} color="primary" />
+        <StatsCard title={t('pages.surveillant.presences.presents')} value={String(stats.presents)} icon={CheckCircle} color="emerald" />
+        <StatsCard title={t('pages.surveillant.presences.retards')} value={String(stats.retards)} icon={Clock} color="amber" />
+        <StatsCard title={t('pages.surveillant.presences.absents')} value={String(stats.absents)} icon={XCircle} color="red" />
       </div>
 
       {/* Filtres */}
@@ -181,7 +162,7 @@ export default function PresencesPage() {
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
             <Input
-              placeholder="Rechercher un élève..."
+              placeholder={t('common.search_student')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
@@ -190,22 +171,22 @@ export default function PresencesPage() {
           <select
             value={filterClasse}
             onChange={(e) => setFilterClasse(e.target.value)}
-            aria-label="Filtrer par classe"
+            aria-label={t('common.filter_by_class')}
             className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
           >
-            <option value="">Toutes les classes</option>
+            <option value="">{t('common.all_classes')}</option>
             {classesList.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
           <select
             value={filterStatut}
             onChange={(e) => setFilterStatut(e.target.value)}
-            aria-label="Filtrer par statut"
+            aria-label={t('common.filter_by_status')}
             className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
           >
-            <option value="">Tous les statuts</option>
-            <option value="present">Présent</option>
-            <option value="retard">Retard</option>
-            <option value="absent">Absent</option>
+            <option value="">{t('common.all_statuses')}</option>
+            <option value="present">{t('pages.surveillant.presences.present')}</option>
+            <option value="retard">{t('common.late')}</option>
+            <option value="absent">{t('pages.surveillant.presences.absent')}</option>
           </select>
         </div>
       </Card>
@@ -216,19 +197,19 @@ export default function PresencesPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-neutral-200 dark:border-neutral-700 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                <th scope="col" className="pb-3 pr-4">Élève</th>
-                <th scope="col" className="pb-3 pr-4">Classe</th>
-                <th scope="col" className="pb-3 pr-4">Statut</th>
-                <th scope="col" className="pb-3 pr-4">Heure</th>
-                <th scope="col" className="pb-3 pr-4">Motif</th>
-                <th scope="col" className="pb-3 text-right">Actions</th>
+                <th scope="col" className="pb-3 pr-4">{t('common.student')}</th>
+                <th scope="col" className="pb-3 pr-4">{t('common.class')}</th>
+                <th scope="col" className="pb-3 pr-4">{t('common.status_label')}</th>
+                <th scope="col" className="pb-3 pr-4">{t('common.time')}</th>
+                <th scope="col" className="pb-3 pr-4">{t('common.reason')}</th>
+                <th scope="col" className="pb-3 text-right">{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 && (
                 <tr>
                   <td colSpan={6} className="py-8 text-center text-sm text-neutral-500">
-                    Aucune présence trouvée
+                    {t('pages.surveillant.presences.aucune_presence_trouvee')}
                   </td>
                 </tr>
               )}
@@ -246,7 +227,7 @@ export default function PresencesPage() {
                   <td className="py-3 pr-4">
                     <span className={cn('inline-flex items-center gap-1 text-sm font-medium', getStatutClass(p.statut))}>
                       {getStatutIcon(p.statut)}
-                      <span className="capitalize">{p.statut === 'retard' ? 'Retard' : p.statut}</span>
+                      <span className="capitalize">{p.statut === 'retard' ? t('common.late') : p.statut}</span>
                     </span>
                   </td>
                   <td className="py-3 pr-4">
@@ -256,7 +237,7 @@ export default function PresencesPage() {
                     <span className="text-sm text-neutral-500 italic">{p.motif || '—'}</span>
                   </td>
                   <td className="py-3 text-right">
-                    <Button variant="ghost" size="sm">Modifier</Button>
+                    <Button variant="ghost" size="sm">{t('common.edit')}</Button>
                   </td>
                 </tr>
               ))}

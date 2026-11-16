@@ -3,6 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\{Classes, ConseilClasse, Examen, Notes, Eleve};
+use App\Http\Requests\Censeur\StoreConseilClasseRequest;
+use App\Http\Requests\Censeur\UpdateConseilClasseRequest;
+use App\Http\Requests\Censeur\StoreExamenRequest;
+use App\Http\Requests\Censeur\UpdateExamenRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -94,18 +98,9 @@ class CenseurController extends Controller
     /**
      * Créer un conseil de classe
      */
-    public function storeConseilClasse(Request $request)
+    public function storeConseilClasse(StoreConseilClasseRequest $request)
     {
-        $validated = $request->validate([
-            'classe_id' => 'required|school_exists:classes,id',
-            'date' => 'required|date',
-            'trimestre' => 'required|string',
-            'participants' => 'array',
-            'decisions' => 'array',
-            'statut' => 'string|in:planifie,en_cours,termine'
-        ]);
-
-        $conseil = ConseilClasse::create($validated);
+        $conseil = ConseilClasse::create($request->validated());
 
         return response()->json([
             'message' => 'Conseil de classe créé avec succès',
@@ -116,20 +111,11 @@ class CenseurController extends Controller
     /**
      * Mettre à jour un conseil de classe
      */
-    public function updateConseilClasse(Request $request, $id)
+    public function updateConseilClasse(UpdateConseilClasseRequest $request, $id)
     {
         $conseil = ConseilClasse::findOrFail($id);
 
-        $validated = $request->validate([
-            'classe_id' => 'sometimes|school_exists:classes,id',
-            'date' => 'sometimes|date',
-            'trimestre' => 'sometimes|string',
-            'participants' => 'sometimes|array',
-            'decisions' => 'sometimes|array',
-            'statut' => 'sometimes|string|in:planifie,en_cours,termine'
-        ]);
-
-        $conseil->update($validated);
+        $conseil->update($request->validated());
 
         return response()->json([
             'message' => 'Conseil de classe mis à jour avec succès',
@@ -153,19 +139,9 @@ class CenseurController extends Controller
     /**
      * Créer un examen
      */
-    public function storeExamen(Request $request)
+    public function storeExamen(StoreExamenRequest $request)
     {
-        $validated = $request->validate([
-            'nom' => 'required|string|max:255',
-            'type' => 'required|string',
-            'date_debut' => 'required|date',
-            'date_fin' => 'required|date|after_or_equal:date_debut',
-            'classes' => 'array',
-            'matieres' => 'array',
-            'statut' => 'string|in:planifie,en_cours,termine'
-        ]);
-
-        $examen = Examen::create($validated);
+        $examen = Examen::create($request->validated());
 
         return response()->json([
             'message' => 'Examen créé avec succès',
@@ -176,21 +152,11 @@ class CenseurController extends Controller
     /**
      * Mettre à jour un examen
      */
-    public function updateExamen(Request $request, $id)
+    public function updateExamen(UpdateExamenRequest $request, $id)
     {
         $examen = Examen::findOrFail($id);
 
-        $validated = $request->validate([
-            'nom' => 'sometimes|string|max:255',
-            'type' => 'sometimes|string',
-            'date_debut' => 'sometimes|date',
-            'date_fin' => 'sometimes|date|after_or_equal:date_debut',
-            'classes' => 'sometimes|array',
-            'matieres' => 'sometimes|array',
-            'statut' => 'sometimes|string|in:planifie,en_cours,termine'
-        ]);
-
-        $examen->update($validated);
+        $examen->update($request->validated());
 
         return response()->json([
             'message' => 'Examen mis à jour avec succès',

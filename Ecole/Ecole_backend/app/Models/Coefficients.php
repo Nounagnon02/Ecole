@@ -30,6 +30,19 @@ class Coefficients extends Model
         'ecole_id',
     ];
 
+    /**
+     * `coefficient` est un `decimal(5,2)`. Sans cast, PDO le rend en chaîne sur
+     * MySQL et en nombre sur SQLite : `/api/matieres/{id}/coefficients` livrait
+     * « 3.00 » en production et 3 en test. `decimal:2` fixe la même forme
+     * partout, comme sur `Notes`, `Moyennes` et `PaiementEleve`.
+     *
+     * NB : `CoefficientMatiere` porte la même table et le même cast. Deux
+     * modèles pour `coefficient_matieres` est une duplication à résorber.
+     */
+    protected $casts = [
+        'coefficient' => 'decimal:2',
+    ];
+
     // Relation avec le modèle Matiere
     public function matiere()
     {

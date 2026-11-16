@@ -5,7 +5,8 @@
  * Données dynamiques via API /api/v1/admin/analytics/overview
  */
 
-import { useState, useEffect } from 'react';
+import { useApiQuery } from '@/shared/lib/api-client';
+import { useTranslation } from '@/shared/i18n';
 import { motion } from 'framer-motion';
 import {
   TrendingUp, Users, Building2, BookOpen,
@@ -16,8 +17,6 @@ import { cn, formatNumber } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import StatsCard from '@/shared/components/ui/StatsCard';
-import { useApi } from '@/hooks/useApi';
-import logger from '@/shared/lib/logger';
 
 const ACTIVITE_CONFIG = {
   inscription: { icon: Users, color: 'text-emerald-500 bg-emerald-100 dark:bg-emerald-900/20' },
@@ -29,19 +28,16 @@ const ACTIVITE_CONFIG = {
 };
 
 export default function StatistiquesPage() {
-  const { loading, error, get } = useApi();
-  const [stats, setStats] = useState(null);
+  const { t } = useTranslation();
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await get('/v1/admin/analytics/overview');
-        setStats(res?.data || res);
-      } catch (e) {
-        logger.error('Erreur chargement statistiques:', e);
-      }
-    })();
-  }, [get]);
+  const requete = useApiQuery(['analytics', 'overview'], '/v1/admin/analytics/overview');
+
+  // `useState` + `useEffect` de premier rendu, sans cache ni déduplication —
+  // le motif répété sur trente-neuf pages (cf. audit P4.1). L'enveloppe
+  // `{ data }` n'est pas systématique côté contrôleurs, d'où le repli.
+  const stats = requete.data?.data ?? requete.data ?? null;
+  const loading = requete.isPending;
+  const error = requete.isError ? (requete.error?.message ?? t('common.load_error')) : null;
 
   if (loading) {
     return (
@@ -64,10 +60,10 @@ export default function StatistiquesPage() {
 
   // Calculer la répartition des rôles à partir des données API si disponibles
   const repartitionRoles = data.repartition_roles || data.roles_distribution || [
-    { role: 'Élèves', count: data.total_eleves || data.total_students || 0, pct: 0, color: 'bg-[var(--primary)]' },
-    { role: 'Enseignants', count: data.total_enseignants || data.total_teachers || 0, pct: 0, color: 'bg-emerald-500' },
-    { role: 'Parents', count: data.total_parents || 0, pct: 0, color: 'bg-amber-500' },
-    { role: 'Personnel', count: data.total_personnel || 0, pct: 0, color: 'bg-sky-500' },
+    { role: t('pages.admin.statistiques.eleves'), count: data.total_eleves || data.total_students || 0, pct: 0, color: 'bg-[var(--primary)]' },
+    { role: t('common.teachers'), count: data.total_enseignants || data.total_teachers || 0, pct: 0, color: 'bg-emerald-500' },
+    { role: t('pages.admin.statistiques.parents'), count: data.total_parents || 0, pct: 0, color: 'bg-amber-500' },
+    { role: t('pages.admin.statistiques.personnel'), count: data.total_personnel || 0, pct: 0, color: 'bg-sky-500' },
   ];
 
   // Calculer les pourcentages
@@ -80,18 +76,18 @@ export default function StatistiquesPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Statistiques</h1>
-          <p className="text-sm text-neutral-500">Indicateurs clés et analytics du système</p>
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.admin.statistiques.title')}</h1>
+          <p className="text-sm text-neutral-500">{t('pages.admin.statistiques.subtitle')}</p>
         </div>
         <Badge variant="primary" size="sm">
           <Clock className="h-3 w-3 mr-1" />
-          Mis à jour en temps réel
+          {t('pages.admin.statistiques.mis_a_jour_en_temps_reel')}
         </Badge>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-4">
         <StatsCard
-          title="Établissements"
+          title={t('pages.admin.statistiques.etablissements')}
           value={String(data.total_schools ?? data.total_ecoles ?? '—')}
           icon={Building2}
           color="primary"
@@ -103,7 +99,7 @@ export default function StatistiquesPage() {
           }
         />
         <StatsCard
-          title="Utilisateurs"
+          title={t('pages.admin.statistiques.utilisateurs')}
           value={formatNumber(data.total_users ?? data.total_utilisateurs ?? 0)}
           icon={Users}
           color="emerald"
@@ -115,7 +111,7 @@ export default function StatistiquesPage() {
           }
         />
         <StatsCard
-          title="Revenus Mensuels"
+          title={t('pages.admin.statistiques.revenus_mensuels')}
           value={data.monthly_revenue ? `${(data.monthly_revenue / 1000000).toFixed(1)}M` : '—'}
           icon={DollarSign}
           color="amber"
@@ -127,7 +123,7 @@ export default function StatistiquesPage() {
           }
         />
         <StatsCard
-          title="Taux de Réussite"
+          title={t('pages.admin.statistiques.taux_de_reussite')}
           value={data.success_rate ? `${data.success_rate}%` : '—'}
           icon={TrendingUp}
           color="sky"
@@ -142,7 +138,7 @@ export default function StatistiquesPage() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
-          <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-4">Répartition des utilisateurs</h3>
+          <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-4">{t('pages.admin.statistiques.repartition_des_utilisateurs')}</h3>
           <div className="space-y-4">
             {rolesWithPct.map((item) => (
               <div key={item.role}>
@@ -159,7 +155,7 @@ export default function StatistiquesPage() {
         </Card>
 
         <Card>
-          <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-4">Activité récente</h3>
+          <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-4">{t('pages.admin.statistiques.activite_recente')}</h3>
           <div className="space-y-3">
             {data.recent_activities?.length > 0 ? (
               data.recent_activities.map((a, i) => {
@@ -179,7 +175,7 @@ export default function StatistiquesPage() {
                 );
               })
             ) : (
-              <p className="text-sm text-neutral-400 text-center py-4">Aucune activité récente</p>
+              <p className="text-sm text-neutral-400 text-center py-4">{t('pages.admin.statistiques.aucune_activite_recente')}</p>
             )}
           </div>
         </Card>
@@ -192,7 +188,7 @@ export default function StatistiquesPage() {
               <CheckCircle className="h-5 w-5 text-emerald-500" />
             </div>
             <div>
-              <p className="text-xs text-neutral-500">Taux de présence</p>
+              <p className="text-xs text-neutral-500">{t('pages.admin.statistiques.taux_de_presence')}</p>
               <p className="text-lg font-bold text-neutral-900 dark:text-white">{data.attendance_rate ?? '—'}%</p>
             </div>
           </div>
@@ -203,7 +199,7 @@ export default function StatistiquesPage() {
               <BookOpen className="h-5 w-5 text-amber-500" />
             </div>
             <div>
-              <p className="text-xs text-neutral-500">Cours programmés</p>
+              <p className="text-xs text-neutral-500">{t('pages.admin.statistiques.cours_programmes')}</p>
               <p className="text-lg font-bold text-neutral-900 dark:text-white">{data.total_courses ? formatNumber(data.total_courses) : '—'}</p>
             </div>
           </div>

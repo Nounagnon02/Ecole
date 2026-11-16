@@ -15,18 +15,20 @@ import { cn } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
 import Button from '@/shared/components/ui/Button';
 import apiClient from '@/shared/lib/api-client';
+import { useTranslation } from '@/shared/i18n';
 
 export default function PaiementCallbackPage() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const transactionId = searchParams.get('transaction_id');
   const [status, setStatus] = useState<'pending' | 'approved' | 'failed' | 'unknown'>('pending');
-  const [message, setMessage] = useState('Vérification du paiement en cours...');
+  const [message, setMessage] = useState({ key: 'pages.paiements.callback.messages.verifying' });
 
   useEffect(() => {
     if (!transactionId) {
       setStatus('failed');
-      setMessage('Identifiant de transaction manquant.');
+      setMessage({ key: 'pages.paiements.callback.messages.missing_id' });
       return;
     }
 
@@ -35,18 +37,20 @@ export default function PaiementCallbackPage() {
         const { data } = await apiClient.get(`/comptable/paiement/verifier/${transactionId}`);
         if (data.success) {
           setStatus(data.status === 'approved' ? 'approved' : data.status === 'pending' ? 'pending' : 'failed');
-          setMessage(data.status === 'approved'
-            ? 'Paiement confirmé avec succès !'
-            : data.status === 'pending'
-              ? 'Paiement en attente de confirmation...'
-              : 'Le paiement a échoué.');
+          setMessage({
+            key: data.status === 'approved'
+              ? 'pages.paiements.callback.messages.approved'
+              : data.status === 'pending'
+                ? 'pages.paiements.callback.messages.pending'
+                : 'pages.paiements.callback.messages.failed',
+          });
         } else {
           setStatus('failed');
-          setMessage(data.message ?? 'Échec de la vérification.');
+          setMessage(data.message ? { text: data.message } : { key: 'pages.paiements.callback.messages.verification_failed' });
         }
       } catch (e) {
         setStatus('failed');
-        setMessage('Erreur réseau lors de la vérification.');
+        setMessage({ key: 'pages.paiements.callback.messages.network_error' });
       }
     };
 
@@ -81,13 +85,10 @@ export default function PaiementCallbackPage() {
         </div>
 
         <h1 className="text-xl font-semibold text-[var(--text-primary)] mb-2">
-          {status === 'approved' && 'Paiement confirmé'}
-          {status === 'failed' && 'Échec du paiement'}
-          {status === 'pending' && 'Vérification en cours...'}
-          {status === 'unknown' && 'Statut indéterminé'}
+          {t(`pages.paiements.callback.status.${status}`)}
         </h1>
 
-        <p className="text-[var(--text-secondary)] mb-6">{message}</p>
+        <p className="text-[var(--text-secondary)] mb-6">{message.text ?? t(message.key)}</p>
 
         {status !== 'pending' && (
           <div className="flex flex-col gap-3">
@@ -95,10 +96,10 @@ export default function PaiementCallbackPage() {
               onClick={() => navigate('/paiements?tab=echeancier')}
               icon={<ArrowRight className="h-4 w-4" />}
             >
-              Retour à l'échéancier
+              {t('pages.paiements.callback.back')}
             </Button>
             <p className="text-xs text-[var(--text-muted)]">
-              Redirection automatique dans 3 secondes...
+              {t('pages.paiements.callback.redirect')}
             </p>
           </div>
         )}

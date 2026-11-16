@@ -10,7 +10,10 @@ use App\Models\Payment;
 use App\Models\PaymentHistory;
 use App\Models\PaiementEleve;
 use App\Models\Eleve;
+use App\Http\Requests\Payment\InitializePaymentRequest;
+use App\Http\Requests\Payment\MobileMoneyRequest;
 use App\Services\Billing\PaymentProvider;
+use App\Support\SchoolContext;
 
 class PaymentController extends Controller
 {
@@ -76,16 +79,8 @@ class PaymentController extends Controller
     /**
      * Initialiser un paiement
      */
-    public function initializePayment(Request $request)
+    public function initializePayment(InitializePaymentRequest $request)
     {
-        $request->validate([
-            'eleve_id' => 'required|school_exists:eleves,id',
-            'paiement_eleve_id' => 'nullable|school_exists:paiements,id',
-            'amount' => 'required|numeric|min:100',
-            'description' => 'required|string',
-            'type' => 'required|in:scolarite,cantine,transport,autre',
-            'periode' => 'nullable|string'
-        ]);
 
         DB::beginTransaction();
         try {
@@ -163,8 +158,13 @@ class PaymentController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            $this->rethrowIfMeaningful($e);
+            // Rollback D'ABORD : `rethrowIfMeaningful` relance immédiatement
+            // les exceptions « signifiantes » (403/404/422/...) — les
+            // relancer avant le rollback désynchronise la comptabilité de
+            // transactions de Laravel de la connexion PDO réelle (même bug
+            // que celui trouvé dans AuthController::inscription()).
             DB::rollBack();
+            $this->rethrowIfMeaningful($e);
             Log::error('Payment initialization error', ['error' => $e->getMessage()]);
             return response()->json(['success' => false, 'message' => 'Erreur lors de l\'initialisation du paiement'], 500);
         }
@@ -173,13 +173,8 @@ class PaymentController extends Controller
     /**
      * Traiter paiement Mobile Money
      */
-    public function processMobileMoney(Request $request)
+    public function processMobileMoney(MobileMoneyRequest $request)
     {
-        $request->validate([
-            'payment_id' => 'required|school_exists:payments,id',
-            'phone_number' => 'required|string',
-            'operator' => 'required|in:mtn,moov'
-        ]);
 
         try {
             $payment = $this->authorizedPayment((int) $request->payment_id);
@@ -286,15 +281,31 @@ class PaymentController extends Controller
     }
 
     /**
-     * Webhook
+     * Webhook de la passerelle de paiement.
+     *
+     * Seul point d'entrée du contrôleur qui s'exécute sans utilisateur
+     * authentifié : la passerelle rappelle le serveur, elle ne se connecte pas.
+     * `Payment`, `PaymentHistory` et `PaiementEleve` portent tous le scope
+     * `ecole`, qui se résout depuis l'utilisateur courant ou la session — ni
+     * l'un ni l'autre n'existe ici. La recherche retombait donc sur
+     * `whereRaw('1 = 0')` : `$payment` était systématiquement null, le webhook
+     * répondait 200 et n'encaissait rien (audit A1).
+     *
+     * D'où les deux temps ci-dessous : lever le scope pour retrouver la
+     * transaction — c'est son identifiant, émis par la passerelle, qui fait
+     * autorité, pas une école ambiante — puis lier l'école de ce paiement pour
+     * tout le traitement, afin que l'historique et la réconciliation de
+     * l'échéance s'écrivent dans le bon établissement.
      */
     public function webhook(Request $request)
     {
         $signature = $request->header('X-FedaPay-Signature');
         $payload = $request->getContent();
-        $expectedSignature = hash_hmac('sha256', $payload, config('services.fedapay.webhook_secret'));
+        $expectedSignature = hash_hmac('sha256', $payload, (string) config('services.fedapay.webhook_secret'));
 
-        if (!hash_equals($expectedSignature, $signature)) {
+        // Un en-tête absent donne null, que `hash_equals` n'accepte pas : le
+        // comparer tel quel émet une dépréciation avant de retomber sur false.
+        if (!is_string($signature) || !hash_equals($expectedSignature, $signature)) {
             return response()->json(['error' => 'Invalid signature'], 401);
         }
 
@@ -305,33 +316,27 @@ class PaymentController extends Controller
                 $transactionId = $data['entity']['transaction']['id'];
                 $status = $data['entity']['transaction']['status'];
 
-                $payment = Payment::where('transaction_id', $transactionId)->first();
+                $payment = Payment::withoutGlobalScope('ecole')
+                    ->where('transaction_id', $transactionId)
+                    ->first();
+
+                if ($payment && !$payment->ecole_id) {
+                    // Rattacher un encaissement à un établissement inconnu
+                    // écrirait un historique orphelin, invisible de tous.
+                    // Mieux vaut un échec bruyant que ce silence.
+                    Log::error('Webhook: paiement sans école, traitement abandonné', [
+                        'transaction_id' => $transactionId,
+                        'payment_id'     => $payment->id,
+                    ]);
+
+                    return response()->json(['error' => 'Payment has no school'], 422);
+                }
 
                 if ($payment) {
-                    if ($status === 'approved') {
-                        // Filet de sécurité : vérifier côté provider que la
-                        // transaction est bien approuvée (audit S3). Si l'appel
-                        // échoue (timeout, indisponibilité), on fait quand même
-                        // confiance à la signature HMAC déjà validée.
-                        try {
-                            $verification = $this->provider->verifyPayment($transactionId);
-                            if (!$verification['success']) {
-                                Log::warning('S3: provider verify returned non-approved, trusting HMAC signature', [
-                                    'transaction_id' => $transactionId,
-                                    'provider_error' => $verification['error'] ?? null,
-                                ]);
-                            }
-                        } catch (\Throwable $e) {
-                            Log::warning('S3: provider verify unreachable, trusting HMAC signature', [
-                                'transaction_id' => $transactionId,
-                                'error' => $e->getMessage(),
-                            ]);
-                        }
-                        $this->confirmPayment($payment, 'Paiement approuvé via webhook (vérifié)');
-                    } elseif ($status === 'declined') {
-                        $payment->update(['status' => 'failed']);
-                        $this->recordHistory($payment, 'failed', 'Paiement refusé');
-                    }
+                    SchoolContext::for(
+                        (int) $payment->ecole_id,
+                        fn () => $this->applyGatewayOutcome($payment, $status, $transactionId),
+                    );
                 }
             }
 
@@ -393,6 +398,9 @@ class PaymentController extends Controller
             $payment = Payment::findOrFail($request->payment_id);
 
             if ($payment->refund_status !== 'requested') {
+                // Rien n'a encore été écrit, mais la transaction reste
+                // ouverte tant qu'elle n'est pas explicitement fermée.
+                DB::rollBack();
                 return response()->json(['success' => false, 'message' => 'Aucune demande de remboursement'], 400);
             }
 
@@ -413,8 +421,8 @@ class PaymentController extends Controller
             return response()->json(['success' => true, 'message' => 'Remboursement effectué']);
 
         } catch (\Exception $e) {
-            $this->rethrowIfMeaningful($e);
             DB::rollBack();
+            $this->rethrowIfMeaningful($e);
             Log::error('Refund processing error', ['error' => $e->getMessage()]);
             return response()->json(['success' => false, 'message' => 'Erreur lors du remboursement'], 500);
         }
@@ -430,6 +438,45 @@ class PaymentController extends Controller
      * jamais deux fois l'échéance (le rapprochement n'est joué que lors du
      * premier passage pending → completed).
      */
+    /**
+     * Appliquer le verdict de la passerelle à un paiement.
+     *
+     * Appelé sous `SchoolContext` : l'historique et la réconciliation écrivent
+     * donc dans l'école du paiement, sans utilisateur authentifié.
+     */
+    private function applyGatewayOutcome(Payment $payment, string $status, $transactionId): void
+    {
+        if ($status === 'approved') {
+            // Filet de sécurité : vérifier côté provider que la transaction est
+            // bien approuvée (audit S3). Si l'appel échoue (timeout,
+            // indisponibilité), on fait quand même confiance à la signature
+            // HMAC déjà validée.
+            try {
+                $verification = $this->provider->verifyPayment($transactionId);
+                if (!$verification['success']) {
+                    Log::warning('S3: provider verify returned non-approved, trusting HMAC signature', [
+                        'transaction_id' => $transactionId,
+                        'provider_error' => $verification['error'] ?? null,
+                    ]);
+                }
+            } catch (\Throwable $e) {
+                Log::warning('S3: provider verify unreachable, trusting HMAC signature', [
+                    'transaction_id' => $transactionId,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
+            $this->confirmPayment($payment, 'Paiement approuvé via webhook (vérifié)');
+
+            return;
+        }
+
+        if ($status === 'declined') {
+            $payment->update(['status' => 'failed']);
+            $this->recordHistory($payment, 'failed', 'Paiement refusé');
+        }
+    }
+
     private function confirmPayment(Payment $payment, string $note, ?string $paymentMethod = null): void
     {
         if ($payment->status === 'completed') {

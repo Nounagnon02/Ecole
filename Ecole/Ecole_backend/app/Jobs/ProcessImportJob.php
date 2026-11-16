@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\User;
+use App\Support\SchoolContext;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -31,17 +32,32 @@ class ProcessImportJob implements ShouldQueue
 
     public function handle(): void
     {
+        // Sans école liée, le crochet `creating` de `BelongsToEcole` écrivait
+        // `ecole_id = null` sur chaque ligne importée : des élèves réels,
+        // rattachés à aucun établissement, donc invisibles de tous — y compris
+        // de celui qui venait de les importer (audit A2).
+        if (!$this->user->ecole_id) {
+            Log::error('Import annulé : utilisateur sans école', [
+                'user_id' => $this->user->id,
+                'type'    => $this->type,
+            ]);
+
+            return;
+        }
+
         $imported = 0;
         $errors = [];
 
-        foreach ($this->data as $index => $row) {
-            try {
-                $this->processRow($row);
-                $imported++;
-            } catch (\Exception $e) {
-                $errors[] = "Ligne " . ($index + 2) . " : " . $e->getMessage();
+        SchoolContext::for((int) $this->user->ecole_id, function () use (&$imported, &$errors) {
+            foreach ($this->data as $index => $row) {
+                try {
+                    $this->processRow($row);
+                    $imported++;
+                } catch (\Exception $e) {
+                    $errors[] = "Ligne " . ($index + 2) . " : " . $e->getMessage();
+                }
             }
-        }
+        });
 
         $message = "Import {$this->type} terminé : {$imported} lignes importées";
         if (count($errors) > 0) {

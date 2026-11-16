@@ -13,7 +13,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import App from '@/App';
 import useAuthStore from '@/shared/stores/auth-store';
 import { ROLES } from '@/shared/types/roles';
-import { clearDashboardCache } from '@/shared/lib/dashboard-cache';
+import { clearDashboardCache } from '@/shared/lib/query-client';
 import { installHttpMock } from './helpers/http-mock';
 import { makeQueryClient, resetAuth } from './helpers/render';
 

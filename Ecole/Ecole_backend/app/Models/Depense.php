@@ -22,5 +22,8 @@ class Depense extends Model
 
     protected $casts = [
         'date_depense' => 'date',
+        // `decimal(12,2)` : sans cast, MySQL le rend en chaîne et SQLite en
+        // nombre. Même convention que les autres montants du domaine.
+        'montant'      => 'decimal:2',
     ];
 }

@@ -28,7 +28,7 @@ class EmploiDuTemps extends Model
      * bien qu'aucune création par assignation de masse ne pouvait aboutir —
      * `class_id` visait une colonne absente, et `classe_id`, hors de cette
      * liste, était silencieusement écarté. Les deux lecteurs du modèle
-     * (ParentController, DashboardController) interrogent déjà `classe_id`.
+     * (EspaceParentController, DashboardController) interrogent déjà `classe_id`.
      */
     protected $fillable = [
         'classe_id', 'matiere_id', 'enseignant_id', 'jour', 'heure_debut', 'heure_fin', 'salle', 'ecole_id'

@@ -6,6 +6,7 @@
  */
 
 import { cn } from '@/shared/lib/utils';
+import { useTranslation } from '@/shared/i18n';
 
 const variants = {
   default: 'bg-[var(--surface-subtle)] text-[var(--text-secondary)]',
@@ -51,6 +52,7 @@ export default function Badge({
   removable,
   onRemove,
 }) {
+  const { t } = useTranslation();
   return (
     <span
       className={cn(
@@ -68,7 +70,7 @@ export default function Badge({
         <button
           onClick={onRemove}
           className="ml-0.5 inline-flex h-3.5 w-3.5 items-center justify-center rounded-full opacity-60 transition-opacity hover:opacity-100"
-          aria-label="Supprimer"
+          aria-label={t('common.delete')}
         >
           <svg width="8" height="8" viewBox="0 0 8 8" fill="currentColor">
             <path d="M1 1l6 6M7 1l-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />

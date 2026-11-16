@@ -112,6 +112,25 @@ it('replaces experiences wholesale and syncs mastered subjects', function () {
         ->and(EnseignantMatiereMaitrisee::where('enseignant_id', $enseignant->id)->count())->toBe(1);
 });
 
+it('rejects a mastered subject that belongs to another school', function () {
+    $user = User::factory()->create([
+        'role' => 'enseignant',
+        'ecole_id' => $this->ecole->id,
+    ]);
+    Enseignant::factory()->create(['user_id' => $user->id, 'ecole_id' => $this->ecole->id]);
+
+    $autreEcole = Ecole::factory()->create();
+    $matiereEtrangere = Matieres::factory()->create(['ecole_id' => $autreEcole->id]);
+
+    $this->actingAs($user)->putJson('/api/auth/profile', [
+        'matieres_maitrisees' => [$matiereEtrangere->id],
+    ])->assertStatus(422)
+        ->assertJsonValidationErrors(['matieres_maitrisees.0']);
+
+    expect(EnseignantMatiereMaitrisee::withoutGlobalScopes()
+        ->where('matiere_id', $matiereEtrangere->id)->count())->toBe(0);
+});
+
 it('validates experience rows', function () {
     $user = User::factory()->create([
         'role' => 'enseignant',

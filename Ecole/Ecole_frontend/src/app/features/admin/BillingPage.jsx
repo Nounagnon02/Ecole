@@ -5,7 +5,10 @@
  * Données dynamiques via API /api/v1/admin/billing/invoices
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import { useApiQuery } from '@/shared/lib/api-client';
+import { useTranslation } from '@/shared/i18n';
+import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
 import {
@@ -21,8 +24,6 @@ import StatsCard from '@/shared/components/ui/StatsCard';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer
 } from 'recharts';
-import { useApi } from '@/hooks/useApi';
-import logger from '@/shared/lib/logger';
 
 const STATUS_BADGE = {
   paid: { variant: 'success', label: 'Payé' },
@@ -31,37 +32,28 @@ const STATUS_BADGE = {
 };
 
 export default function BillingPage() {
-  const { loading, error, get } = useApi();
-  const [invoices, setInvoices] = useState([]);
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
-  const [revenusMensuels, setRevenusMensuels] = useState([]);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const [invoicesRes, revenusRes] = await Promise.allSettled([
-          get('/v1/admin/billing/invoices'),
-          get('/v1/admin/analytics/revenue'),
-        ]);
+  // Deux requêtes indépendantes, et c'est le point.
+  //
+  // `Promise.allSettled` isolait bien les deux appels, mais `useApi()` expose
+  // un `error` partagé : un 500 sur les revenus — une donnée d'appoint —
+  // faisait basculer toute la page en écran d'erreur et effaçait les factures
+  // déjà reçues. Chaque requête react-query porte son propre état, donc
+  // l'échec de l'une ne dit plus rien de l'autre (cf. audit P4.1).
+  const requeteFactures = useApiQuery(['billing', 'invoices'], '/v1/admin/billing/invoices');
+  const requeteRevenus = useApiQuery(['billing', 'revenue'], '/v1/admin/analytics/revenue');
 
-        const invoicesData = invoicesRes.status === 'fulfilled'
-          ? (Array.isArray(invoicesRes.value?.data?.data) ? invoicesRes.value.data.data
-            : Array.isArray(invoicesRes.value?.data) ? invoicesRes.value.data
-            : Array.isArray(invoicesRes.value) ? invoicesRes.value : [])
-          : [];
-        setInvoices(invoicesData);
+  const invoices = useMemo(() => unwrapList(requeteFactures.data) ?? [], [requeteFactures.data]);
+  const revenusMensuels = useMemo(() => unwrapList(requeteRevenus.data) ?? [], [requeteRevenus.data]);
 
-        const revenusData = revenusRes.status === 'fulfilled'
-          ? (Array.isArray(revenusRes.value?.data?.data) ? revenusRes.value.data.data
-            : Array.isArray(revenusRes.value?.data) ? revenusRes.value.data
-            : Array.isArray(revenusRes.value) ? revenusRes.value : [])
-          : [];
-        setRevenusMensuels(revenusData);
-      } catch (e) {
-        logger.error('Erreur chargement facturation:', e);
-      }
-    })();
-  }, [get]);
+  // Les factures commandent l'écran : sans elles, il n'y a rien à montrer.
+  // Les revenus manquants dégradent un graphique, ils ne cachent pas la page.
+  const loading = requeteFactures.isPending;
+  const error = requeteFactures.isError
+    ? (requeteFactures.error?.message ?? t('common.load_error'))
+    : null;
 
   const stats = useMemo(() => ({
     total: invoices.length,
@@ -98,29 +90,29 @@ export default function BillingPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Facturation</h1>
-        <p className="text-sm text-neutral-500 mt-1">Transactions, abonnements et revenus</p>
+        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('pages.admin.billing.title')}</h1>
+        <p className="text-sm text-neutral-500 mt-1">{t('pages.admin.billing.subtitle')}</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0 }}>
-          <StatsCard title="Revenu total" value={`${stats.totalRevenue.toLocaleString()} FCFA`} icon={DollarSign} color="primary" />
+          <StatsCard title={t('pages.admin.billing.revenu_total')} value={`${stats.totalRevenue.toLocaleString()} FCFA`} icon={DollarSign} color="primary" />
         </motion.div>
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
-          <StatsCard title="Factures payées" value={String(stats.paid)} icon={CheckCircle2} color="emerald" />
+          <StatsCard title={t('pages.admin.billing.factures_payees')} value={String(stats.paid)} icon={CheckCircle2} color="emerald" />
         </motion.div>
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <StatsCard title="En attente" value={String(stats.pending)} icon={Clock} color="amber" />
+          <StatsCard title={t('common.status.pending')} value={String(stats.pending)} icon={Clock} color="amber" />
         </motion.div>
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-          <StatsCard title="Total factures" value={String(stats.total)} icon={CreditCard} color="sky" />
+          <StatsCard title={t('pages.admin.billing.total_factures')} value={String(stats.total)} icon={CreditCard} color="sky" />
         </motion.div>
       </div>
 
       <Card>
         <div className="border-b border-neutral-200 p-4 dark:border-neutral-700">
-          <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">Revenus</h3>
-          <p className="text-xs text-neutral-500">Évolution sur 6 mois</p>
+          <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">{t('pages.admin.billing.revenus')}</h3>
+          <p className="text-xs text-neutral-500">{t('pages.admin.billing.evolution_sur_6_mois')}</p>
         </div>
         <div className="p-4">
           <div className="h-[250px]">
@@ -148,24 +140,24 @@ export default function BillingPage() {
         <div className="border-b border-neutral-200 p-4 dark:border-neutral-700">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">Factures récentes</h3>
-              <p className="text-xs text-neutral-500">Historique des transactions</p>
+              <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">{t('pages.admin.billing.factures_recentes')}</h3>
+              <p className="text-xs text-neutral-500">{t('pages.admin.billing.historique_des_transactions')}</p>
             </div>
             <div className="flex items-center gap-2">
               <Input
-                placeholder="Rechercher..."
+                placeholder={t('common.search_ellipsis')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-48"
               />
-              <Button variant="ghost" size="sm" icon={<Download />}>Exporter</Button>
+              <Button variant="ghost" size="sm" icon={<Download />}>{t('common.export')}</Button>
             </div>
           </div>
         </div>
         <div className="p-0">
           <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
             {filtered.length === 0 && (
-              <div className="px-6 py-8 text-center text-sm text-neutral-500">Aucune facture trouvée</div>
+              <div className="px-6 py-8 text-center text-sm text-neutral-500">{t('pages.admin.billing.aucune_facture_trouvee')}</div>
             )}
             {filtered.map((inv) => {
               const statusConf = STATUS_BADGE[inv.status] || STATUS_BADGE.pending;

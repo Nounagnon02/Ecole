@@ -3,22 +3,28 @@
 namespace App\Http\Controllers;
 
 use App\Http\Middleware\AccountLockout;
-use App\Models\Eleve;
-use App\Models\Enseignant;
 use App\Models\User;
-use App\Models\UserParent;
+use App\Services\AuthService;
+use App\Services\ProfileService;
 use App\Support\Roles;
+use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 
 class AuthController extends Controller
 {
+    public function __construct(
+        private ProfileService $profiles,
+        private AuthService $auth,
+    ) {
+    }
+
     /**
      * Authentification unifiée.
      *
@@ -30,28 +36,12 @@ class AuthController extends Controller
      * part —, si bien que l'application mobile n'obtenait jamais de token et
      * recevait 401 sur toutes les routes protégées (cf. audit F2).
      */
-    public function connexion(Request $request)
+    public function connexion(LoginRequest $request)
     {
-        // Le contrat était ambigu : le champ s'appelait `email` mais acceptait
-        // aussi un identifiant (l'interface le libelle « Email ou identifiant »),
-        // et beaucoup de comptes n'ont pas d'adresse — la colonne est nullable.
-        // Les deux noms de champ sont désormais acceptés, l'un ou l'autre suffit.
-        $request->validate([
-            'email'       => 'required_without:identifiant|nullable|string',
-            'identifiant' => 'required_without:email|nullable|string',
-            'password'    => 'required|string',
-            'device_name' => 'nullable|string|max:255',
-        ]);
+        $login = $request->login();
+        $user = $this->auth->attempt($login, $request->password);
 
-        $login = $request->input('identifiant') ?: $request->input('email');
-
-        // Parenthèses explicites : sans le groupement, un `orWhere` se
-        // combinerait mal avec toute condition ajoutée par la suite.
-        $user = User::where(function ($q) use ($login) {
-            $q->where('email', $login)->orWhere('identifiant', $login);
-        })->first();
-
-        if (!$user || !Hash::check($request->password, $user->password)) {
+        if (!$user) {
             return response()->json(['message' => 'Identifiants incorrects'], 401);
         }
 
@@ -66,7 +56,7 @@ class AuthController extends Controller
         // contrôle, `ecoles.status` n'était lu nulle part à la connexion : la
         // désactivation était purement décorative et tout le monde continuait
         // à travailler normalement.
-        if ($message = $this->schoolAccessDenied($user)) {
+        if ($message = $this->auth->schoolAccessDenied($user)) {
             return response()->json(['message' => $message], 403);
         }
 
@@ -90,7 +80,7 @@ class AuthController extends Controller
             'user'        => $user,
             'role'        => $user->role,
             'ecole_id'    => $user->ecole_id,
-            'redirect_to' => $this->getRedirectRouteBasedOnRole($user->role),
+            'redirect_to' => $this->auth->redirectRouteFor($user->role),
         ];
 
         // Client stateful (SPA sur domaine déclaré dans sanctum.stateful) :
@@ -121,34 +111,6 @@ class AuthController extends Controller
     }
 
     /**
-     * Reason to refuse sign-in because of the user's school, or null.
-     *
-     * A platform super-admin has no school of their own and is never blocked
-     * here — otherwise a suspended establishment would lock out the very
-     * account needed to reactivate it.
-     */
-    private function schoolAccessDenied(User $user): ?string
-    {
-        if ($user->role === 'super-admin' || !$user->ecole_id) {
-            return null;
-        }
-
-        // withTrashed: a soft-deleted school must not silently behave like an
-        // active one just because the row is hidden from ordinary queries.
-        $school = \App\Models\Ecole::withTrashed()->find($user->ecole_id);
-
-        if (!$school || $school->trashed()) {
-            return "Cet établissement n'est plus accessible. Contactez l'administrateur.";
-        }
-
-        if ($school->status !== 'active') {
-            return 'Cet établissement est désactivé. Contactez l\'administrateur.';
-        }
-
-        return null;
-    }
-
-    /**
      * La requête vient-elle d'un front first-party gérant les cookies ?
      * Sanctum considère « stateful » les origines listées dans sanctum.stateful.
      */
@@ -170,47 +132,8 @@ class AuthController extends Controller
 
         return response()->json([
             'success' => true,
-            'user' => $this->profilePayload($user),
+            'user' => $this->profiles->payload($user),
         ]);
-    }
-
-    /**
-     * Payload profil : champs du compte + données métier selon le rôle.
-     *
-     * Les champs de base sont partagés par toutes les surfaces. Pour un
-     * enseignant (scolaire), on embarque aussi son profil `enseignants`
-     * (spécialité, grade) et ses données de profil étendues — expériences et
-     * matières maîtrisées (cf. audit F3).
-     */
-    private function profilePayload(User $user): array
-    {
-        $payload = $user->only([
-            'id', 'name', 'prenom', 'email', 'identifiant',
-            'role', 'ecole_id', 'telephone', 'avatar', 'is_active',
-            'email_verified_at', 'created_at', 'updated_at',
-        ]);
-
-        if ($user->role === Roles::TEACHER || str_contains($user->role, 'enseignement')) {
-            $enseignant = $user->enseignant;
-            $payload['profil'] = $enseignant
-                ? [
-                    'id' => $enseignant->id,
-                    'specialite' => $enseignant->specialite,
-                    'grade' => $enseignant->grade,
-                    'date_naissance' => $enseignant->date_naissance,
-                    'lieu_naissance' => $enseignant->lieu_naissance,
-                    'sexe' => $enseignant->sexe,
-                    'experiences' => $enseignant->experiences()->orderByDesc('date_debut')->get([
-                        'id', 'poste', 'etablissement', 'date_debut', 'date_fin', 'description',
-                    ]),
-                    'matieres_maitrisees' => $enseignant->matieresMaitrisees()
-                        ->orderBy('matieres.nom')
-                        ->get(['matieres.id', 'matieres.nom']),
-                ]
-                : null;
-        }
-
-        return $payload;
     }
 
     /**
@@ -245,91 +168,40 @@ class AuthController extends Controller
             'experiences.*.date_fin' => 'nullable|date|after_or_equal:experiences.*.date_debut',
             'experiences.*.description' => 'nullable|string|max:1000',
             'matieres_maitrisees' => 'sometimes|array|max:50',
-            'matieres_maitrisees.*' => 'integer|exists:matieres,id',
+            // `exists:` interroge la table brute, sans le scope `ecole` : un
+            // enseignant pouvait déclarer maîtriser une matière d'un autre
+            // établissement. `school_exists` restreint à l'école de l'appelant.
+            'matieres_maitrisees.*' => 'integer|school_exists:matieres,id',
         ]);
 
-        $user->update(collect($validated)->only([
-            'name', 'prenom', 'email', 'telephone', 'avatar',
-        ])->all());
-
-        if ($user->role === Roles::TEACHER || str_contains($user->role, 'enseignement')) {
-            $this->syncTeacherProfile($user, $validated);
-        }
+        $this->profiles->update($user, $validated);
 
         return response()->json([
             'success' => true,
             'message' => 'Profil mis à jour',
-            'user' => $this->profilePayload($user),
+            'user' => $this->profiles->payload($user),
         ]);
     }
 
     /**
-     * Synchronise le profil professionnel de l'enseignant :
-     * champs de la ligne `enseignants`, expériences et matières maîtrisées.
-     */
-    private function syncTeacherProfile(User $user, array $validated): void
-    {
-        $enseignant = $user->enseignant;
-
-        if (!$enseignant) {
-            return;
-        }
-
-        if (array_key_exists('specialite', $validated) || array_key_exists('grade', $validated)) {
-            $enseignant->update(collect($validated)->only(['specialite', 'grade'])->all());
-        }
-
-        // Les expériences sont remplacées en bloc : le front envoie la liste
-        // complète. Une entrée portant un `id` existant est mise à jour, une
-        // entrée sans `id` est créée, et toute expérience persistée absente de
-        // la liste est supprimée.
-        if (array_key_exists('experiences', $validated)) {
-            $sentIds = [];
-
-            foreach ($validated['experiences'] as $row) {
-                if (($row['id'] ?? null) !== null) {
-                    $sentIds[] = (int) $row['id'];
-                    $enseignant->experiences()->whereKey($row['id'])->update([
-                        'poste' => $row['poste'],
-                        'etablissement' => $row['etablissement'] ?? null,
-                        'date_debut' => $row['date_debut'],
-                        'date_fin' => $row['date_fin'] ?? null,
-                        'description' => $row['description'] ?? null,
-                    ]);
-                } else {
-                    $experience = $enseignant->experiences()->create([
-                        'poste' => $row['poste'],
-                        'etablissement' => $row['etablissement'] ?? null,
-                        'date_debut' => $row['date_debut'],
-                        'date_fin' => $row['date_fin'] ?? null,
-                        'description' => $row['description'] ?? null,
-                    ]);
-                    $sentIds[] = (int) $experience->id;
-                }
-            }
-
-            $enseignant->experiences()
-                ->whereNotIn('id', $sentIds ?: [0])
-                ->delete();
-        }
-
-        if (array_key_exists('matieres_maitrisees', $validated)) {
-            $enseignant->matieresMaitrisees()->sync($validated['matieres_maitrisees'] ?? []);
-        }
-    }
-
-    /**
-     * Inscription (Généralement gérée par un administrateur).
+     * Inscription
+ (Généralement gérée par un administrateur).
      */
     public function inscription(Request $request)
     {
-        // Seul un admin ou directeur peut inscrire des gens dans le système réel
-        // Mais pour la flexibilité initiale, on laisse ouvert ou on check le user connecté
-        
+        // La route est déjà gardée par `role:directeur,super-admin,admin`
+        // (routes/api/auth.php). Mais `ecole_id` était pris tel quel dans le
+        // corps de la requête et seulement vérifié `exists:ecoles,id` — sans
+        // égard à l'école de l'appelant. Un directeur ou un admin (des rôles
+        // d'établissement, pas seulement le super-admin transverse) pouvait
+        // donc injecter un compte, de n'importe quel rôle, dans l'école de son
+        // choix. `role` n'était pas davantage borné : `required|string`
+        // acceptait `super-admin` lui-même. Même schéma déjà fermé sur
+        // `selectSchool()` — celui-ci était resté ouvert.
         $validated = $request->validate([
             'name' => 'required|string',
             'prenom' => 'required|string',
-            'role' => 'required|string',
+            'role' => 'required|string|in:' . implode(',', Roles::provisionable()),
             'email' => 'nullable|email|unique:users,email',
             'identifiant' => 'required|string|unique:users,identifiant',
             'password' => ['required', 'string', Password::defaults()],
@@ -337,40 +209,26 @@ class AuthController extends Controller
             'telephone' => 'nullable|string',
         ]);
 
+        $ecoleId = $request->user()->role === Roles::SUPER_ADMIN
+            ? $validated['ecole_id']
+            : $request->user()->ecole_id;
+
+        // Validée avant l'ouverture de la transaction (dans
+        // AuthService::registerUser) : une `ValidationException` ici ne
+        // laisse donc rien à annuler. C'est ce qui manquait à l'ancien code —
+        // cette validation vivait à l'intérieur du bloc transactionnel, et sa
+        // levée devait franchir tout le `catch` avant d'atteindre le rollback
+        // (cf. AuthRegistrationTest::a_validation_failure_mid_transaction_does_not_leave_it_open).
+        $profileData = $validated['role'] === Roles::ELEVE
+            ? $request->validate([
+                'numero_matricule' => 'required|string|unique:eleves',
+                'classe_id' => 'required|school_exists:classes,id',
+                'serie_id' => 'nullable|school_exists:series,id',
+            ])
+            : null;
+
         try {
-            \DB::beginTransaction();
-
-            $user = User::create([
-                'name' => $validated['name'],
-                'prenom' => $validated['prenom'],
-                'role' => $validated['role'],
-                'email' => $validated['email'],
-                'identifiant' => $validated['identifiant'],
-                'password' => Hash::make($validated['password']),
-                'ecole_id' => $validated['ecole_id'],
-                'telephone' => $validated['telephone'],
-            ]);
-
-            // Création du profil selon le rôle
-            if ($user->role === 'eleve') {
-                $profileData = $request->validate([
-                    'numero_matricule' => 'required|string|unique:eleves',
-                    'classe_id' => 'required|school_exists:classes,id',
-                    'serie_id' => 'nullable|school_exists:series,id',
-                ]);
-                Eleve::create([
-                    'user_id' => $user->id,
-                    'numero_matricule' => $profileData['numero_matricule'],
-                    'classe_id' => $profileData['classe_id'],
-                    'serie_id' => $profileData['serie_id'],
-                ]);
-            } elseif ($user->role === 'parent') {
-                UserParent::create(['user_id' => $user->id]);
-            } elseif (str_contains($user->role, 'enseignant')) {
-                Enseignant::create(['user_id' => $user->id]);
-            }
-
-            \DB::commit();
+            $user = $this->auth->registerUser($validated, $ecoleId, $profileData);
 
             // Traçabilité : qui a créé cet utilisateur (audit S28).
             Log::info('Utilisateur créé', [
@@ -381,10 +239,11 @@ class AuthController extends Controller
             ]);
 
             return response()->json(['message' => 'Utilisateur créé avec succès', 'user' => $user], 201);
-
         } catch (\Exception $e) {
+            // `DB::transaction()` (dans AuthService::registerUser) referme
+            // elle-même la transaction sur toute exception avant de la
+            // relancer : pas de rollback manuel à faire ici.
             $this->rethrowIfMeaningful($e);
-            \DB::rollBack();
             return response()->json(['message' => 'Erreur lors de l\'inscription', 'error' => $this->clientErrorMessage($e)], 500);
         }
     }
@@ -446,38 +305,8 @@ class AuthController extends Controller
             'user' => $user,
             'role' => $user->role,
             'ecole_id' => $request->ecole_id,
-            'redirect_to' => $this->getRedirectRouteBasedOnRole($user->role),
+            'redirect_to' => $this->auth->redirectRouteFor($user->role),
         ]);
-    }
-
-    protected function getRedirectRouteBasedOnRole($role)
-    {
-        $routes = [
-            Roles::ELEVE => '/dashboard-eleve',
-            Roles::PARENT => '/dashboard-parent',
-            Roles::TEACHER => '/dashboard-enseignant',
-            Roles::TEACHER_KINDERGARTEN => '/dashboard-enseignant',
-            Roles::TEACHER_PRIMARY => '/dashboard-enseignant',
-            Roles::TEACHER_SECONDARY => '/dashboard-enseignant',
-            Roles::DIRECTOR => '/dashboard-admin',
-            Roles::DIRECTOR_KINDERGARTEN => '/dashboard-admin',
-            Roles::DIRECTOR_PRIMARY => '/dashboard-admin',
-            Roles::DIRECTOR_SECONDARY => '/dashboard-admin',
-            Roles::ADMIN => '/dashboard-admin',
-            Roles::COMPTABLE => '/dashboard-comptable',
-            Roles::CENSEUR => '/dashboard-censeur',
-            Roles::SURVEILLANT => '/dashboard-surveillant',
-            Roles::SECRETAIRE => '/dashboard-secretaire',
-            Roles::INFIRMIER => '/dashboard-infirmier',
-            Roles::BIBLIOTHECAIRE => '/dashboard-bibliothecaire',
-            Roles::CHANCELLOR => '/dashboard-universite',
-            Roles::DEAN => '/dashboard-universite',
-            Roles::PROFESSOR => '/dashboard-universite',
-            Roles::STUDENT => '/dashboard-universite',
-            Roles::STAFF => '/dashboard-universite',
-        ];
-
-        return $routes[$role] ?? '/dashboard';
     }
 
     /**
@@ -519,7 +348,11 @@ class AuthController extends Controller
             ->where('token', sha1($token))
             ->first();
 
-        if (!$record || now()->diffInMinutes($record->created_at) > 60) {
+        // Carbon 3 : `diffInMinutes()` est signé et négatif quand la date
+        // passée en argument est antérieure. L'ancien
+        // `now()->diffInMinutes($record->created_at) > 60` n'était jamais
+        // vrai : un lien de vérification ne périmait jamais.
+        if (!$record || Carbon::parse($record->created_at)->addHour()->isPast()) {
             return response()->json(['message' => 'Token invalide ou expiré'], 422);
         }
 
