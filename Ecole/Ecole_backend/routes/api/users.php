@@ -36,6 +36,9 @@ Route::post('/public/parent/register', [ParentsController::class, 'register']);
 */
 
 Route::middleware('auth:sanctum')->group(function () {
+    // Pièce jointe d'un message (R-31) : seuls l'expéditeur et le destinataire.
+    Route::get('/messages/{id}/piece-jointe', [\App\Http\Controllers\MessageController::class, 'pieceJointe']);
+
 
     // ============ ENSEIGNANTS ============
     Route::prefix('enseignants')->group(function () {
