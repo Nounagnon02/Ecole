@@ -45,6 +45,14 @@ describe('garde du périmètre mobile', () => {
     expect(mockLogout).not.toHaveBeenCalled();
   });
 
+  it('renvoie un étudiant qui ouvre l’espace professeur vers le sien', async () => {
+    mockAuth = { user: { id: 4, role: 'etudiant' }, loading: false, logout: mockLogout };
+    mockSegments = ['(app)', 'professeur'];
+    render(<AppLayout />);
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/(app)/etudiant'));
+    expect(mockLogout).not.toHaveBeenCalled();
+  });
+
   it('laisse un parent sur son espace', async () => {
     mockAuth = { user: { id: 2, role: 'parent' }, loading: false, logout: mockLogout };
     mockSegments = ['(app)', 'parent'];

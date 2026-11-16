@@ -1,8 +1,8 @@
 /**
  * (app) Layout — routes authentifiées du mobile.
  *
- * Périmètre (14/11/2026) : parents et enseignants seulement. Un compte d'un
- * autre rôle est déconnecté (jeton révoqué, stockage purgé) ; un parent qui
+ * Périmètre : parents et enseignants (14/11/2026), professeurs et étudiants
+ * d'université (16/11/2026). Un compte d'un autre rôle est déconnecté (jeton révoqué, stockage purgé) ; un parent qui
  * ouvrirait l'espace enseignant par lien profond, ou l'inverse, est renvoyé
  * vers le sien. Les droits réels restent vérifiés par l'API à chaque appel.
  */
@@ -15,6 +15,8 @@ import { useTheme } from '../../src/theme';
 import { DASHBOARDS, hrefDashboard } from '../../src/navigation/routerBridge';
 import MotDePasseImpose from '../../src/espaces/MotDePasseImpose';
 import { Logo } from '../../src/espaces/Icone';
+
+const TITRES = { parent: 'Parent', enseignant: 'Enseignant', professeur: 'Enseignant (université)', etudiant: 'Étudiant' };
 
 export default function AppLayout() {
   const { user, loading, logout } = useAuth();
@@ -66,7 +68,7 @@ export default function AppLayout() {
         <Stack.Screen
           key={nom}
           name={nom}
-          options={{ title: nom === 'parent' ? 'Parent' : 'Enseignant' }}
+          options={{ title: TITRES[nom] }}
         />
       ))}
     </Stack>

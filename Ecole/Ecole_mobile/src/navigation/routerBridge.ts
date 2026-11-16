@@ -21,14 +21,15 @@ const HREFS_ECRANS: Record<string, string> = {
   ResetPassword: '/reset-password',
 };
 
-/** Dashboards réellement présents dans `app/(app)/`. */
 /**
- * Espaces du mobile. Périmètre décidé le 14/11/2026 : l'application native
- * sert les parents et les enseignants ; l'administration passe par le desktop
- * ou le web, les élèves et étudiants par le web. Les anciens écrans
- * administratifs ont été retirés : un lien profond vers eux ne mène nulle part.
+ * Espaces du mobile, chacun présent dans `app/(app)/`. Périmètre décidé le
+ * 14/11/2026 (parents et enseignants), élargi le 16/11/2026 à l'université :
+ * professeurs et étudiants. L'administration (école et université) passe par
+ * le desktop ou le web, les élèves du secondaire par le web. Les anciens
+ * écrans administratifs ont été retirés : un lien profond vers eux ne mène
+ * nulle part.
  */
-export const DASHBOARDS = ['enseignant', 'parent'] as const;
+export const DASHBOARDS = ['enseignant', 'parent', 'professeur', 'etudiant'] as const;
 
 export type Dashboard = (typeof DASHBOARDS)[number];
 
@@ -38,6 +39,8 @@ const DASHBOARD_PAR_ROLE: Record<string, Dashboard> = {
   enseignement: 'enseignant',
   enseignementM: 'enseignant',
   enseignementP: 'enseignant',
+  professeur: 'professeur',
+  etudiant: 'etudiant',
 };
 
 export function hrefDashboard(role?: string | null): string | null {

@@ -152,7 +152,21 @@ describe('LoginScreen', () => {
     expect((await getUser()).password_change_required).toBe(true);
   });
 
-  it.each(['comptable', 'directeur', 'eleve', 'personnel'])(
+  // Décision du 16/11/2026 : l'université entre dans l'application.
+  it.each([['professeur', '/(app)/professeur'], ['etudiant', '/(app)/etudiant']])(
+    'ouvre au compte « %s » son espace universitaire',
+    async (role, espace) => {
+      api.post.mockResolvedValue({ data: { token: 'jeton', user: { id: 11, role } } });
+      const navigation = { replace: jest.fn() };
+      await afficherConnexion(navigation);
+      fireEvent.changeText(screen.getByPlaceholderText('exemple@ecole.bj'), 'u@univ.bj');
+      fireEvent.changeText(screen.getByPlaceholderText('••••••••'), 'secret123');
+      fireEvent.press(screen.getByText('Se connecter'));
+      await waitFor(() => expect(navigation.replace).toHaveBeenCalledWith(espace));
+    }
+  );
+
+  it.each(['comptable', 'directeur', 'eleve', 'personnel', 'recteur'])(
     'refuse un compte « %s » : avertit, ne redirige pas et purge la session',
     async (role) => {
       const alerte = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
@@ -165,7 +179,7 @@ describe('LoginScreen', () => {
       fireEvent.press(screen.getByText('Se connecter'));
 
       await waitFor(() =>
-        expect(alerte).toHaveBeenCalledWith('Application réservée', expect.stringContaining('parents et aux enseignants'))
+        expect(alerte).toHaveBeenCalledWith('Application réservée', expect.stringContaining('L’administration utilise l’application de bureau'))
       );
       expect(navigation.replace).not.toHaveBeenCalled();
       // Le jeton émis ne doit pas rester sur le téléphone.

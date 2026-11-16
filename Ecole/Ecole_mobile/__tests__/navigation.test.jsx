@@ -25,12 +25,17 @@ const RACINE_APP = path.join(__dirname, '..', 'app');
 const routesDashboard = {
   enseignant: () => require('../app/(app)/enseignant'),
   parent: () => require('../app/(app)/parent'),
+  professeur: () => require('../app/(app)/professeur'),
+  etudiant: () => require('../app/(app)/etudiant'),
 };
 
-/** Rôles hors du mobile (périmètre du 14/11/2026 : parents et enseignants seulement). */
+/**
+ * Rôles hors du mobile. Périmètre du 14/11/2026 (parents et enseignants),
+ * élargi le 16/11/2026 aux professeurs et étudiants d'université.
+ */
 const HORS_MOBILE = [
   'admin', 'super-admin', 'bibliothecaire', 'censeur', 'comptable', 'directeur', 'directeurM', 'directeurP',
-  'directeurS', 'secretaire', 'surveillant', 'infirmier', 'eleve', 'etudiant', 'recteur', 'doyen', 'personnel',
+  'directeurS', 'secretaire', 'surveillant', 'infirmier', 'eleve', 'recteur', 'doyen', 'personnel',
 ];
 
 describe('point d’entrée', () => {
@@ -92,13 +97,18 @@ describe('dashboards par rôle', () => {
     }
   });
 
+  it('envoie le professeur et l’étudiant d’université vers leur espace (16/11/2026)', () => {
+    expect(hrefDashboard('professeur')).toBe('/(app)/professeur');
+    expect(hrefDashboard('etudiant')).toBe('/(app)/etudiant');
+  });
+
   it.each(HORS_MOBILE)('refuse le rôle « %s » : pas d’espace mobile', (role) => {
     expect(hrefDashboard(role)).toBeNull();
   });
 
   it('ne garde aucune route administrative ou élève dans app/(app)/ (lien profond impossible)', () => {
     const fichiers = fs.readdirSync(path.join(RACINE_APP, '(app)')).sort();
-    expect(fichiers).toEqual(['_layout.tsx', 'enseignant.tsx', 'parent.tsx']);
+    expect(fichiers).toEqual(['_layout.tsx', 'enseignant.tsx', 'etudiant.tsx', 'parent.tsx', 'professeur.tsx']);
   });
 
   it('renvoie null plutôt qu’une route inexistante pour un rôle sans espace mobile', () => {

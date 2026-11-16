@@ -39,7 +39,7 @@ export default function LoginScreen({ navigation }) {
         await logout();
         Alert.alert(
           'Application réservée',
-          "Cette application est réservée aux parents et aux enseignants. L'administration utilise l'application de bureau de l'école ; les élèves et étudiants, le site web."
+          'Cette application sert les familles, les enseignants, les professeurs et les étudiants d’université. L’administration utilise l’application de bureau de l’établissement ; les élèves, le site web.'
         );
         return;
       }
@@ -64,7 +64,7 @@ export default function LoginScreen({ navigation }) {
         <View style={{ gap: 6, marginTop: 16, marginBottom: 8 }}>
           <Text accessibilityRole="header" style={{ fontFamily: fonts.heading, fontSize: 30, color: colors.textPrimary }}>Connexion</Text>
           <Text style={{ fontFamily: fonts.body, fontSize: 15, lineHeight: 21, color: colors.textSecondary }}>
-            Suivez la scolarité de vos enfants ou gérez vos classes.
+            Suivez la scolarité de vos enfants, gérez vos classes ou vos cours, consultez vos notes.
           </Text>
         </View>
 
@@ -92,7 +92,7 @@ export default function LoginScreen({ navigation }) {
 
         <View style={{ flex: 1 }} />
         <Text style={{ fontFamily: fonts.body, fontSize: 13, lineHeight: 18, textAlign: 'center', color: colors.textSecondary }}>
-          Application réservée aux parents et aux enseignants.
+          Familles, enseignants, professeurs et étudiants.
         </Text>
       </ScrollView>
     </KeyboardAvoidingView>
