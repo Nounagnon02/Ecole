@@ -8,7 +8,7 @@
  *   conformes aux maquettes validées le 15/11/2026 : en-tête vert, barre
  *   d'onglets à icônes, compte ouvert par la pastille d'initiales.
  */
-import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, BackHandler, Modal, Pressable, RefreshControl, ScrollView, StatusBar, Text, TextInput, View } from 'react-native';
 import { SafeAreaInsetsContext } from 'react-native-safe-area-context';
 import { api } from '../services/api';
@@ -157,6 +157,16 @@ export function Ecran({
   const marges = useContext(SafeAreaInsetsContext) ?? { top: 0 };
   const espace = useContext(EspaceContexte);
   const navigation = useContext(NavigationEspace);
+  // Bouton Retour d'Android : ferme d'abord ce sous-écran (classe ouverte,
+  // appel, conversation, compte) plutôt que de changer d'onglet (constaté
+  // sur l'émulateur le 16/11/2026).
+  const retourRef = useRef(onRetour);
+  retourRef.current = onRetour;
+  const aRetour = !!onRetour;
+  useEffect(() => {
+    if (!aRetour || !navigation?.enregistrerRetour) return undefined;
+    return navigation.enregistrerRetour(() => retourRef.current?.());
+  }, [aRetour, navigation]);
   const compte = !sansCompte && espace?.compte && navigation ? { initiales: espace.initiales, ouvrir: () => navigation.navigate(espace.compte) } : null;
   return (
     <View style={{ flex: 1, backgroundColor: t.colors.surface }}>
@@ -470,8 +480,15 @@ export function Onglets({ ecrans }) {
     setActif(nom);
     setVisites((v) => (v.includes(nom) ? v : [...v, nom]));
   }, []);
+  // Sous-écrans ouverts, par onglet : le plus récent répond au bouton Retour.
+  const retours = useRef({});
   const navigations = React.useMemo(() => Object.fromEntries(ecrans.map((e) => [e.nom, {
     navigate: aller,
+    enregistrerRetour: (fn) => {
+      const pile = (retours.current[e.nom] ??= []);
+      pile.push(fn);
+      return () => { retours.current[e.nom] = pile.filter((f) => f !== fn); };
+    },
     setOptions: (opts) => {
       const masquee = opts?.tabBarStyle?.display === 'none';
       setMasquees((m) => (!!m[e.nom] === masquee ? m : { ...m, [e.nom]: masquee }));
@@ -480,6 +497,8 @@ export function Onglets({ ecrans }) {
 
   useEffect(() => {
     const abonnement = BackHandler.addEventListener('hardwareBackPress', () => {
+      const pile = retours.current[actif] ?? [];
+      if (pile.length) { pile[pile.length - 1](); return true; }
       if (actif === premier) return false;
       aller(premier);
       return true;
