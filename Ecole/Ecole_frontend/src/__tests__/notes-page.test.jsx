@@ -93,6 +93,24 @@ describe('NotesPage — réponse paginée de l’API', () => {
     expect(await screen.findByText(/AGBODJAN/)).toBeInTheDocument();
   });
 
+  // R-39 (16/11/2026) : moyenne et taux étaient calculés sur la seule page.
+  it('affiche la moyenne et les taux de toutes les notes, donnés par l’API', async () => {
+    http.onGet('/notes/eleve').reply(200, {
+      ...page([note(1, 'AGBODJAN', '14.50'), note(2, 'DOSSOU', '16.00')], 1, 2, 51),
+      stats: { total: 51, moyenne: 11.84, taux_reussite: 98 },
+    });
+
+    monter();
+
+    await screen.findByText(/AGBODJAN/);
+    expect(screen.getByText('Moyenne des notes')).toBeInTheDocument();
+    expect(screen.getByText('11.84/20')).toBeInTheDocument();
+    expect(screen.getByText('98%')).toBeInTheDocument();
+    expect(screen.getByText('2%')).toBeInTheDocument();
+    // La moyenne de la page (15,25) n'est plus affichée.
+    expect(screen.queryByText(/15\.3\/20|15\.25\/20/)).not.toBeInTheDocument();
+  });
+
   it('sans aucune note, n’affiche pas un taux d’échec de 100 %', async () => {
     http.onGet('/notes/eleve').reply(200, page([], 1, 1, 0));
 

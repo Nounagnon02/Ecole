@@ -105,15 +105,23 @@ export default function NotesPage() {
 
   const colonnes = 9 - (estEleve ? 2 : 0) - (peutVerrouiller ? 0 : 1);
 
-  const moyenneGenerale = notes.length > 0
-    ? (notes.reduce((a, n) => a + parseFloat(n.note ?? 0), 0) / notes.length).toFixed(1)
-    : '—';
+  // Statistiques de toutes les notes visées, calculées par l'API : la page
+  // ne voit que ses 50 lignes (R-39, 16/11/2026). Repli sur la page pour
+  // l'ancienne forme de réponse (simple tableau, sans `stats`).
+  const statsApi = notesData?.stats ?? null;
+  const moyenneGenerale = statsApi
+    ? (statsApi.moyenne ?? '—')
+    : notes.length > 0
+      ? (notes.reduce((a, n) => a + parseFloat(n.note ?? 0), 0) / notes.length).toFixed(1)
+      : '—';
 
   // Sans note, un taux n'a pas de sens : « 0 % de réussite, 100 % d'échecs »
   // était affiché sur une classe qui n'avait simplement pas encore été notée.
-  const tauxReussite = notes.length > 0
-    ? Math.round((notes.filter((n) => parseFloat(n.note) >= 10).length / notes.length) * 100)
-    : null;
+  const tauxReussite = statsApi
+    ? (statsApi.taux_reussite ?? null)
+    : notes.length > 0
+      ? Math.round((notes.filter((n) => parseFloat(n.note) >= 10).length / notes.length) * 100)
+      : null;
 
   const handleExport = () => {
     const params = new URLSearchParams();
@@ -232,7 +240,7 @@ export default function NotesPage() {
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatsCard title={t('pages.notes.notes.moyenne_generale')} value={`${moyenneGenerale}/20`} icon={Award} color="primary" />
+          <StatsCard title={t('pages.notes.notes.moyenne_des_notes')} value={moyenneGenerale === '—' ? '—' : `${moyenneGenerale}/20`} icon={Award} color="primary" />
           <StatsCard title={t('pages.notes.notes.total_evaluations')} value={String(totalNotes)} icon={BookOpen} color="emerald" />
           <StatsCard title={t('pages.notes.notes.taux_de_reussite')} value={tauxReussite === null ? '—' : `${tauxReussite}%`} icon={TrendingUp} color="sky" />
           <StatsCard title={t('pages.notes.notes.echecs')} value={tauxReussite === null ? '—' : `${100 - tauxReussite}%`} icon={TrendingDown} color="red" />

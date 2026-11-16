@@ -1449,6 +1449,7 @@
         "subtitle": "Consultez et gérez les notes des élèves",
         "subtitle_eleve": "Vos notes, évaluation par évaluation",
         "subtitle_parent": "Les notes de vos enfants, évaluation par évaluation",
+        "moyenne_des_notes": "Moyenne des notes",
         "importer": "Importer",
         "pagination": "Pagination des notes",
         "page_x_sur_y": "Page {page} sur {total}",
