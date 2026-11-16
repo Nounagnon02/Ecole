@@ -52,9 +52,23 @@ class NotesCrudController extends Controller
             $query->where('classe_id', $request->classe_id);
         }
 
+        // Statistiques de TOUTES les notes visées (mêmes filtres), notes
+        // ramenées sur 20 comme au bulletin : la page les calculait sur ses
+        // seules 50 lignes affichées (R-39, 16/11/2026).
+        $sur20 = 'note * 20 / COALESCE(NULLIF(note_sur, 0), 20)';
+        $agregat = (clone $query)->toBase()
+            ->selectRaw("COUNT(*) as total, AVG($sur20) as moyenne, SUM(CASE WHEN $sur20 >= 10 THEN 1 ELSE 0 END) as reussites")
+            ->first();
+        $total = (int) ($agregat->total ?? 0);
+
         return response()->json([
             'success' => true,
             'data' => $query->latest('date_evaluation')->paginate(50),
+            'stats' => [
+                'total' => $total,
+                'moyenne' => $total > 0 ? round((float) $agregat->moyenne, 2) : null,
+                'taux_reussite' => $total > 0 ? (int) round(((int) $agregat->reussites / $total) * 100) : null,
+            ],
         ]);
     }
 
