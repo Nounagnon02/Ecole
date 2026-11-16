@@ -2,7 +2,7 @@
  * CoursPage — Mes cours pour les élèves
  *
  * L'élève consulte ses cours, devoirs et ressources pédagogiques.
- * Données dynamiques via API /eleve/cours
+ * Données : cahier de textes (/eleves/me/cours) et devoirs (/devoirs/eleve).
  */
 
 import { useState, useMemo } from 'react';
@@ -10,16 +10,17 @@ import { useApiQuery } from '@/shared/lib/api-client';
 import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
-  BookOpen, FileText, Clock, Download, Eye,
+  BookOpen, FileText, Clock, Download,
   Play, Search, Calendar,
   CheckCircle, AlertCircle, Loader2
 } from 'lucide-react';
 import { cn, formatDate } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
-import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import { useTranslation } from '@/shared/i18n';
+
+const COURTE = { day: '2-digit', month: '2-digit', year: 'numeric' };
 
 export default function CoursPage() {
   const { t } = useTranslation();
@@ -33,26 +34,45 @@ export default function CoursPage() {
   // tout (cf. audit P4.1). `unwrapList` traverse les trois formes
   // d'enveloppe que renvoient les contrôleurs.
   const requete = useApiQuery(['eleves-me-cours'], '/eleves/me/cours');
+  // Devoirs publiés pour la classe : la page les annonçait mais ne lisait que
+  // le cahier de textes, si bien que l'élève ne voyait jamais ses devoirs sur
+  // le web, alors que son parent les recevait sur le téléphone (16/11/2026).
+  const devoirsRequete = useApiQuery(['devoirs-eleve'], '/devoirs/eleve');
 
   const cours = useMemo(
-    () => (unwrapList(requete.data) ?? []).map(c => ({
+    () => [
+      ...(unwrapList(devoirsRequete.data) ?? []).map((d) => ({
+        id: `devoir-${d.id}`,
+        type: 'devoir',
+        titre: d.titre,
+        resume: d.description || '',
+        matiere: d.matiere,
+        echeance: d.date_limite,
+        status: d.rendu ? 'rendu' : 'a_rendre',
+        note: d.note,
+        ressources: [],
+      })),
+      ...(unwrapList(requete.data) ?? []).map(c => ({
           ...c,
           type: c.type || 'cours',
           status: c.status || c.statut || 'prevue',
-          duree: c.duree || '—',
           resume: c.resume || c.description || '',
           ressources: c.ressources || c.documents || []
         })),
-    [requete.data],
+    ],
+    [requete.data, devoirsRequete.data],
   );
-  const loading = requete.isPending;
-  const error = requete.isError ? (requete.error?.message ?? t('common.load_error')) : null;
+  const loading = requete.isPending || devoirsRequete.isPending;
+  const enErreur = requete.isError ? requete : devoirsRequete.isError ? devoirsRequete : null;
+  const error = enErreur ? (enErreur.error?.message ?? t('common.load_error')) : null;
 
   const matieres = useMemo(() => [...new Set(cours.map((c) => c.matiere?.nom || c.matiere).filter(Boolean))], [cours]);
 
   const filtered = useMemo(() =>
     cours.filter((c) => {
-      if (search && !c.chapitre?.toLowerCase().includes(search.toLowerCase()) && !(c.matiere?.nom || c.matiere || '').toLowerCase().includes(search.toLowerCase())) return false;
+      const cherche = search.toLowerCase();
+      const titre = String(c.chapitre || c.intitule || c.titre || '').toLowerCase();
+      if (search && !titre.includes(cherche) && !(c.matiere?.nom || c.matiere || '').toLowerCase().includes(cherche)) return false;
       if (filterMatiere && (c.matiere?.nom || c.matiere) !== filterMatiere) return false;
       if (filterType && c.type !== filterType) return false;
       return true;
@@ -177,14 +197,18 @@ export default function CoursPage() {
 
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <Badge variant="primary" size="sm">{c.matiere?.nom || c.matiere || t('common.subject')}</Badge>
+                    {c.matiere?.nom || (typeof c.matiere === 'string' && c.matiere) ? (
+                      <Badge variant="primary" size="sm">{c.matiere?.nom || c.matiere}</Badge>
+                    ) : null}
                     <span className="text-xs text-[var(--text-secondary)] capitalize">
                       {c.type === 'tp' ? 'TP' : c.type}
                     </span>
-                    <div className="flex items-center gap-1 text-xs text-[var(--text-tertiary)]">
-                      <Clock className="h-3 w-3" />
-                      {c.duree}
-                    </div>
+                    {c.duree ? (
+                      <div className="flex items-center gap-1 text-xs text-[var(--text-tertiary)]">
+                        <Clock className="h-3 w-3" />
+                        {c.duree}
+                      </div>
+                    ) : null}
                   </div>
                   <h3 className="mt-1 text-base font-semibold text-[var(--text-primary)] ">
                     {c.chapitre || c.intitule || c.titre || t('common.courses')}
@@ -194,10 +218,15 @@ export default function CoursPage() {
                   <div className="mt-3 flex items-center gap-4">
                     <span className="text-xs text-[var(--text-secondary)] flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
-                      {c.date > new Date() ? 'Prévu le ' : 'Le '}
-                      {formatDate(c.date)}
+                      {c.type === 'devoir'
+                        ? (c.echeance
+                          ? t('pages.eleve.cours.a_rendre_le', { date: formatDate(c.echeance, COURTE) })
+                          : t('pages.eleve.cours.sans_date_limite'))
+                        : c.date ? t('pages.eleve.cours.le', { date: formatDate(c.date, COURTE) }) : null}
                     </span>
-                    <span className="text-xs text-[var(--text-secondary)]">{c.prof || c.enseignant || '—'}</span>
+                    {c.prof || c.enseignant ? (
+                      <span className="text-xs text-[var(--text-secondary)]">{c.prof || c.enseignant}</span>
+                    ) : null}
                   </div>
 
                   {/* Ressources */}
@@ -226,12 +255,9 @@ export default function CoursPage() {
                       {getStatusLabel(c.status)}
                     </span>
                   </div>
-                  {c.note && (
+                  {c.note !== null && c.note !== undefined && (
                     <span className="text-lg font-bold text-[var(--accent)]">{c.note}/20</span>
                   )}
-                  <Button variant="ghost" size="sm" icon={<Eye />}>
-                    {t('common.view')}
-                  </Button>
                 </div>
               </div>
             </Card>

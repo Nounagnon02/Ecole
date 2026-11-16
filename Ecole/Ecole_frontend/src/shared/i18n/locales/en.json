@@ -1189,7 +1189,10 @@
         "devoir": "Assignment",
         "rendu": "Submitted",
         "a_venir": "Upcoming",
-        "a_rendre": "To submit"
+        "a_rendre": "To submit",
+        "a_rendre_le": "Due {date}",
+        "sans_date_limite": "No due date",
+        "le": "On {date}"
       }
     },
     "eleves": {

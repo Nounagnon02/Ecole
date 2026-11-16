@@ -1189,7 +1189,10 @@
         "devoir": "Devoir",
         "rendu": "Rendu",
         "a_venir": "À venir",
-        "a_rendre": "À rendre"
+        "a_rendre": "À rendre",
+        "a_rendre_le": "À rendre le {date}",
+        "sans_date_limite": "Sans date limite",
+        "le": "Le {date}"
       }
     },
     "eleves": {
