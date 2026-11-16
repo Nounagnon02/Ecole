@@ -232,16 +232,20 @@ jobs:
         run: |
           cp .env.example .env 2>/dev/null || true
           php artisan key:generate --ansi
+      # `--min` est lu à la fois par la mutation (score) et par la couverture
+      # quand `--coverage` est présent : celle-ci exigeait 100 % de couverture
+      # de TOUTE l'application (0,7 %) et le job échouait. `--mutate` collecte
+      # lui-même la couverture dont il a besoin (R-47, 16/11/2026).
       # Score mesuré au moment de l'écriture : 100 % (4/4 mutants tués).
       - name: Mutation testing — App\Support\Alerting
-        run: php -d memory_limit=1G vendor/bin/pest --mutate --coverage --class='App\Support\Alerting' --min=100 --no-progress
+        run: php -d memory_limit=1G vendor/bin/pest --mutate --class='App\Support\Alerting' --min=100 --no-progress
       # Score mesuré : 80 % (16/20). Les 4 survivants sont soit un cast
       # défensif équivalent au comportement sans cast avec le pilote de
       # cache utilisé en test (RemoveBooleanCast/RemoveIntegerCast), soit un
       # décalage d'une seconde sur le délai de répit du coupe-circuit
       # (60 s → 59/61 s) sans conséquence observable -- pas de vrai trou.
       - name: Mutation testing — App\Support\CircuitBreaker
-        run: php -d memory_limit=1G vendor/bin/pest --mutate --coverage --class='App\Support\CircuitBreaker' --min=75 --no-progress
+        run: php -d memory_limit=1G vendor/bin/pest --mutate --class='App\Support\CircuitBreaker' --min=75 --no-progress
 
   # Le bug le plus répété de l'audit initial (`exists:` au lieu de
   # `school_exists:`, laissant valider l'ID d'une ressource d'un autre

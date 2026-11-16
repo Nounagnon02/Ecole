@@ -16,7 +16,7 @@
  * `build/`, pour ne pas faire échouer un lancement de tests qui n'a pas
  * construit l'application (le poste de développement courant, par exemple).
  */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { existsSync, readFileSync } from 'fs';
 import { resolve } from 'path';
 
@@ -57,9 +57,13 @@ describe.skipIf(!buildExists)('bundle de production — ordre d\'initialisation 
     }
     globalThis.XMLHttpRequest = XhrMuet;
     globalThis.fetch = () => new Promise(() => {});
+    // Minuteries figées : le travail différé de l'application ne s'exécute
+    // pas après la fin du test (« document is not defined » en CI, R-47).
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'setImmediate', 'clearImmediate', 'requestAnimationFrame', 'cancelAnimationFrame'] });
 
     // Une ReferenceError levée ici -- qu'elle vienne de ce chunk ou d'un de
     // ceux qu'il importe -- se propage par le rejet de cette promesse.
     await expect(import(/* @vite-ignore */ entryPath)).resolves.toBeDefined();
+    vi.clearAllTimers();
   });
 });

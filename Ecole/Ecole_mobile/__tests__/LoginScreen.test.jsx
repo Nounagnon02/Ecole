@@ -50,14 +50,20 @@ async function afficherConnexion(navigation = {}) {
 jest.setTimeout(20000);
 
 describe('LoginScreen', () => {
+  // Une seule horloge simulée pour tout le fichier : basculer entre temps réel
+  // et simulé à chaque cas laissait, sous Node 20 (CI), des animations du
+  // premier rendu attachées à une horloge abandonnée — deux cas restaient
+  // bloqués jusqu'au délai (R-47, 16/11/2026).
+  beforeAll(() => { jest.useFakeTimers(); });
+  afterAll(() => { jest.useRealTimers(); });
+
   beforeEach(async () => {
-    jest.useFakeTimers();
     jest.clearAllMocks();
     await clearAll();
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    act(() => { jest.runOnlyPendingTimers(); });
   });
 
   it('se rend avec le titre, les champs et le bouton de connexion', async () => {

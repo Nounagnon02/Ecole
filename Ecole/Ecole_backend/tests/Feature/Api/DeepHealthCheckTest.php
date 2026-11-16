@@ -30,14 +30,27 @@ class DeepHealthCheckTest extends TestCase
     /** @test */
     public function reports_down_with_503_when_the_database_is_unreachable()
     {
-        config(['database.connections.sqlite.database' => '/chemin/qui/n/existe/pas.sqlite']);
-        // Forcer une nouvelle connexion : celle déjà ouverte sur `:memory:`
-        // resterait valide sinon, le changement de config ne suffit pas seul.
-        \Illuminate\Support\Facades\DB::purge('sqlite');
+        // Panne simulée sur la connexion par défaut, quel que soit le pilote :
+        // fichier absent pour SQLite, port injoignable pour MySQL. Seul SQLite
+        // était cassé, et le job `test-mysql` recevait 200 (R-47, 16/11/2026).
+        $connexion = config('database.default');
+        $origine = config("database.connections.$connexion");
+        config(["database.connections.$connexion" => array_merge($origine, [
+            'database' => $origine['driver'] === 'sqlite' ? '/chemin/qui/n/existe/pas.sqlite' : $origine['database'],
+            'host' => '127.0.0.1',
+            'port' => 1,
+        ])]);
+        // Forcer une nouvelle connexion : celle déjà ouverte resterait valide
+        // sinon, le changement de config ne suffit pas seul.
+        \Illuminate\Support\Facades\DB::purge($connexion);
 
         Log::spy();
 
         $response = $this->getJson('/api/health');
+
+        // Connexion rétablie pour la suite (annulation de la transaction de test).
+        config(["database.connections.$connexion" => $origine]);
+        \Illuminate\Support\Facades\DB::purge($connexion);
 
         $response->assertStatus(503)
             ->assertJson(['status' => 'DOWN'])
