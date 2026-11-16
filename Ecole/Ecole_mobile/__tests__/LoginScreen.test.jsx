@@ -44,10 +44,7 @@ async function afficherConnexion(navigation = {}) {
   return rendu;
 }
 
-// Le premier rendu (polices, animations) prend plusieurs secondes sur les
-// machines de la CI : deux cas y dépassaient les 5 s par défaut (R-47,
-// 16/11/2026). Budget de temps seulement ; aucune assertion n'est relâchée.
-jest.setTimeout(20000);
+// Budget de temps des machines de la CI : `testTimeout` dans jest.config.js.
 
 describe('LoginScreen', () => {
   // Une seule horloge simulée pour tout le fichier : basculer entre temps réel

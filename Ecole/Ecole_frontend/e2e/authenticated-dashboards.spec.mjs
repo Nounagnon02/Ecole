@@ -30,7 +30,9 @@ const ROLE_DASHBOARD = {
   recteur: '/universite/dashboard',
   doyen: '/universite/dashboard',
   professeur: '/universite/dashboard',
-  etudiant: '/universite/dashboard',
+  // L'étudiant n'a pas le tableau de bord de la direction universitaire :
+  // son accueil est « Mes cours » (8316500, 16/11/2026).
+  etudiant: '/universite/mes-cours',
   personnel: '/universite/dashboard',
   'super-admin': '/admin/dashboard',
   admin: '/admin/dashboard',

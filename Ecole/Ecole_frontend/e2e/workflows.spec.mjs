@@ -197,34 +197,19 @@ test.describe('Critical Workflows', () => {
     });
   });
 
-  test.describe('AI Features', () => {
-    test('directeur AI insights redirects when unauthenticated', async ({ page }) => {
-      await page.goto('/directeur/ai-insights', { waitUntil: 'domcontentloaded' });
-      await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
-      const url = page.url();
-      expect(url.includes('connexion') || url.includes('login')).toBeTruthy();
-    });
-
-    test('enseignant AI assistant redirects when unauthenticated', async ({ page }) => {
-      await page.goto('/enseignant/ai-assistant', { waitUntil: 'domcontentloaded' });
-      await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
-      const url = page.url();
-      expect(url.includes('connexion') || url.includes('login')).toBeTruthy();
-    });
-
-    test('parent AI report redirects when unauthenticated', async ({ page }) => {
-      await page.goto('/parent/ai-report', { waitUntil: 'domcontentloaded' });
-      await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
-      const url = page.url();
-      expect(url.includes('connexion') || url.includes('login')).toBeTruthy();
-    });
-
-    test('eleve AI tutor redirects when unauthenticated', async ({ page }) => {
-      await page.goto('/eleve/tutor', { waitUntil: 'domcontentloaded' });
-      await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
-      const url = page.url();
-      expect(url.includes('connexion') || url.includes('login')).toBeTruthy();
-    });
+  // Assistant IA : hors plan, ses routes ont été retirées (route-config.js).
+  // Les anciennes adresses mènent à la page introuvable : rien n'y est
+  // exposé, et aucune redirection vers la connexion ne laisse croire qu'une
+  // page existe derrière (ces tests attendaient encore la redirection, CI du
+  // 16/11/2026).
+  test.describe('AI Features (hors plan : adresses retirées)', () => {
+    for (const adresse of ['/directeur/ai-insights', '/enseignant/ai-assistant', '/parent/ai-report', '/eleve/tutor']) {
+      test(`${adresse} mène à la page introuvable`, async ({ page }) => {
+        await page.goto(adresse, { waitUntil: 'domcontentloaded' });
+        await expect(page).toHaveURL(/\/404$/, { timeout: 15000 });
+        await expect(page.getByRole('heading', { name: 'Page introuvable' })).toBeVisible({ timeout: 15000 });
+      });
+    }
   });
 
   test.describe('Error Pages', () => {
