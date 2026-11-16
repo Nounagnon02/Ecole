@@ -49,16 +49,75 @@ function aujourdhui() {
 const nom = (e) => [e?.nom ?? e?.user?.name, e?.prenom ?? e?.user?.prenom].filter(Boolean).join(' ') || `Élève ${e?.id}`;
 const effectif = (n) => `${n} élève${n > 1 ? 's' : ''}`;
 
+/* ─── Appel d'une classe (décision du 16/11/2026) ──────────────────────── */
+const STATUTS_APPEL = [{ valeur: 'present', libelle: 'Présent' }, { valeur: 'absent', libelle: 'Absent' }, { valeur: 'retard', libelle: 'Retard' }];
+
+/**
+ * Appel du jour : tous présents par défaut, l'enseignant marque les absents
+ * et les retards. L'API ne crée qu'une absence par élève et par jour : un
+ * second enregistrement corrige le premier. « Enregistré » n'est affiché
+ * qu'après la réponse du serveur.
+ */
+export function AppelClasse({ classe, onRetour }) {
+  const t = useTeintes();
+  const feuille = useRequete(`/enseignant/appel/${classe.id}`);
+  const eleves = feuille.donnees?.data?.eleves ?? [];
+  const [statuts, setStatuts] = useState({});
+  const [etat, setEtat] = useState('repos');
+  const [message, setMessage] = useState(null);
+  useEffect(() => {
+    setStatuts(Object.fromEntries(eleves.map((e) => [e.id, e.statut || 'present'])));
+  }, [feuille.donnees]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const absents = Object.values(statuts).filter((v) => v === 'absent').length;
+  const retards = Object.values(statuts).filter((v) => v === 'retard').length;
+
+  const enregistrer = async () => {
+    setEtat('envoi'); setMessage(null);
+    try {
+      await api.post('/enseignant/appel', {
+        classe_id: classe.id, date: feuille.donnees?.data?.date,
+        eleves: eleves.map((e) => ({ eleve_id: e.id, statut: statuts[e.id] || 'present' })),
+      });
+      setEtat('enregistre');
+      setMessage(`Appel enregistré : ${absents} absent(s), ${retards} retard(s).`);
+    } catch (err) {
+      setEtat('erreur');
+      setMessage(err?.response ? messageErreur(err, 'L’appel n’a pas été enregistré.') : 'Hors connexion : l’appel n’a pas été enregistré. Réessayez au retour du réseau.');
+    }
+  };
+
+  return (
+    <Ecran titre={`Appel · ${classe.nom_classe}`} sousTitre={feuille.donnees?.data?.date ? `Le ${dateFr(feuille.donnees.data.date)}` : undefined}
+      onRetour={onRetour} retourLabel={`Retour à ${classe.nom_classe}`}>
+      <Etat requete={feuille} estVide={!feuille.chargement && eleves.length === 0} vide="Aucun élève inscrit dans cette classe." />
+      {eleves.map((e) => (
+        <Carte key={e.id} style={{ gap: 8 }}>
+          <Texte variante="fort">{[e.nom, e.prenom].filter(Boolean).join(' ')}</Texte>
+          <Segments valeur={statuts[e.id] || 'present'} onChange={(v) => setStatuts((x) => ({ ...x, [e.id]: v }))}
+            options={STATUTS_APPEL.map((o) => ({ ...o, libelle: o.libelle }))} />
+        </Carte>
+      ))}
+      {eleves.length ? <Texte variante="discret">{absents} absent(s) · {retards} retard(s) · {eleves.length - absents - retards} présent(s)</Texte> : null}
+      {message ? <Texte accessibilityRole="alert" variante="discret" style={{ color: etat === 'erreur' ? t.colors.error : t.colors.success }}>{message}</Texte> : null}
+      {eleves.length ? <Bouton titre="Enregistrer l’appel" chargement={etat === 'envoi'} onPress={enregistrer} /> : null}
+    </Ecran>
+  );
+}
+
 /* ─── Classes et élèves ────────────────────────────────────────────────── */
 function Classes() {
   const classes = useRequete('/enseignant/classes');
   const t = useTeintes();
   const [ouverte, setOuverte] = useState(null);
+  const [appel, setAppel] = useState(false);
   const liste_ = liste(classes.donnees);
+  if (ouverte && appel) return <AppelClasse classe={ouverte} onRetour={() => setAppel(false)} />;
   if (ouverte) {
     const eleves = ouverte.eleves ?? [];
     return (
       <Ecran titre={ouverte.nom_classe} sousTitre={effectif(eleves.length)} onRetour={() => setOuverte(null)} retourLabel="Retour à mes classes">
+        {eleves.length ? <Bouton titre="Faire l’appel" onPress={() => setAppel(true)} /> : null}
         <Etat requete={{ chargement: false, erreur: null }} estVide={eleves.length === 0} vide="Aucun élève inscrit dans cette classe." />
         <Liste>
           {eleves.map((e) => (

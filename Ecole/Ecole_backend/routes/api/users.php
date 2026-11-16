@@ -70,6 +70,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('enseignant')->middleware('role:enseignant,directeur')->group(function () {
         Route::get('/classes', [EnseignantController::class, 'classes']);
         Route::get('/notes', [EnseignantController::class, 'notes']);
+        // Appel de SES classes depuis le mobile (décision du 16/11/2026) :
+        // même traitement que l'appel de la vie scolaire, borné à ses classes.
+        Route::get('/appel/{classeId}', [SurveillantController::class, 'feuilleAppel']);
+        Route::post('/appel', [SurveillantController::class, 'enregistrerAppel']);
     });
 
     // ============ PARENTS ============

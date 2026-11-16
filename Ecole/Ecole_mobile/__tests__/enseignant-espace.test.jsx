@@ -7,7 +7,7 @@ import { Alert } from 'react-native';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NavigationContainer } from '@react-navigation/native';
-import EnseignantEspace, { Notes, confirmerDeconnexion, idEnseignant, lireNote } from '../src/espaces/EnseignantEspace';
+import EnseignantEspace, { AppelClasse, Notes, confirmerDeconnexion, idEnseignant, lireNote } from '../src/espaces/EnseignantEspace';
 import { ThemeProvider } from '../src/theme';
 import { api } from '../src/services/api';
 import { clearAll, listeBrouillons } from '../src/services/secureStorage';
@@ -175,5 +175,37 @@ describe('ma semaine — seulement les cours de l’enseignant', () => {
     expect(screen.getByText('Salle 8')).toBeTruthy();
     expect(api.get).toHaveBeenCalledWith('/emploi-du-temps?enseignant_id=4');
     expect(api.get).not.toHaveBeenCalledWith('/emploi-du-temps');
+  });
+});
+
+// Décision du 16/11/2026 : l'enseignant fait l'appel de ses classes sur le mobile.
+describe('appel d’une classe', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    api.get.mockResolvedValue({ data: { success: true, data: { classe: { id: 1, nom_classe: '3ème' }, date: '2026-11-16',
+      eleves: [{ id: 21, nom: 'AHO', prenom: 'Kossi', statut: 'present' }, { id: 22, nom: 'DOSSOU', prenom: 'Afi', statut: 'present' }] } } });
+    api.post.mockResolvedValue({ data: { success: true } });
+  });
+
+  it('marque un absent, enregistre l’appel de la classe et le confirme seulement après la réponse', async () => {
+    render(<ThemeProvider><AppelClasse classe={{ id: 1, nom_classe: '3ème' }} onRetour={() => {}} /></ThemeProvider>);
+    expect(await screen.findByText('AHO Kossi')).toBeTruthy();
+    expect(api.get).toHaveBeenCalledWith('/enseignant/appel/1');
+    fireEvent.press(screen.getAllByRole('tab', { name: 'Absent' })[0]);
+    expect(screen.getByText('1 absent(s) · 0 retard(s) · 1 présent(s)')).toBeTruthy();
+    fireEvent.press(screen.getByRole('button', { name: 'Enregistrer l’appel' }));
+    await waitFor(() => expect(api.post).toHaveBeenCalledWith('/enseignant/appel', {
+      classe_id: 1, date: '2026-11-16', eleves: [{ eleve_id: 21, statut: 'absent' }, { eleve_id: 22, statut: 'present' }],
+    }));
+    expect(await screen.findByText('Appel enregistré : 1 absent(s), 0 retard(s).')).toBeTruthy();
+  });
+
+  it('hors connexion, ne dit pas « enregistré »', async () => {
+    api.post.mockRejectedValue(new Error('Network Error'));
+    render(<ThemeProvider><AppelClasse classe={{ id: 1, nom_classe: '3ème' }} onRetour={() => {}} /></ThemeProvider>);
+    await screen.findByText('AHO Kossi');
+    fireEvent.press(screen.getByRole('button', { name: 'Enregistrer l’appel' }));
+    expect(await screen.findByText(/Hors connexion : l’appel n’a pas été enregistré/)).toBeTruthy();
+    expect(screen.queryByText(/Appel enregistré/)).toBeNull();
   });
 });

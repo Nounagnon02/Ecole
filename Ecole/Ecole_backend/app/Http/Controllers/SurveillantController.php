@@ -13,6 +13,23 @@ use Illuminate\Support\Facades\DB;
 class SurveillantController extends Controller
 {
     /**
+     * La vie scolaire fait l'appel de toutes les classes ; un enseignant,
+     * seulement de celles qu'il enseigne (par matière, ou comme maître de la
+     * classe en maternelle et primaire) — décision du 16/11/2026.
+     */
+    private function peutFaireLAppel(int $classeId): bool
+    {
+        $user = auth()->user();
+        if (! in_array($user->role, \App\Support\Roles::teachers(), true)) {
+            return true;
+        }
+        $fiche = DB::table('enseignants')->where('user_id', $user->id)->value('id');
+
+        return ($fiche && DB::table('enseignant_matiere')->where('enseignant_id', $fiche)->where('classe_id', $classeId)->exists())
+            || DB::table('enseignants_maternelle_primaire')->where('user_id', $user->id)->where('classe_id', $classeId)->exists();
+    }
+
+    /**
      * Absences et retards, filtrables par jour et par classe. Sans filtre, les
      * 500 plus récents : la liste complète d'une année grossissait sans fin.
      */
@@ -35,6 +52,9 @@ class SurveillantController extends Controller
         $request->validate(['date' => 'nullable|date']);
         $date = $request->input('date', now()->toDateString());
         $classe = Classes::findOrFail($classeId);
+        if (! $this->peutFaireLAppel((int) $classe->id)) {
+            return response()->json(['success' => false, 'message' => 'Cette classe ne vous est pas affectée.'], 403);
+        }
 
         $releves = Absence::whereDate('date', $date)
             ->whereIn('eleve_id', Eleve::where('classe_id', $classe->id)->pluck('id'))
@@ -78,6 +98,10 @@ class SurveillantController extends Controller
             'eleves.*.statut' => 'required|in:present,absent,retard',
             'eleves.*.motif' => 'nullable|string|max:255',
         ]);
+
+        if (! $this->peutFaireLAppel((int) $donnees['classe_id'])) {
+            return response()->json(['success' => false, 'message' => 'Cette classe ne vous est pas affectée.'], 403);
+        }
 
         $ids = Eleve::where('classe_id', $donnees['classe_id'])->pluck('id')->all();
         $etrangers = collect($donnees['eleves'])->pluck('eleve_id')->diff($ids);
