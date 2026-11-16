@@ -38,7 +38,7 @@ class Notes extends Model
     ];
 
     protected $casts = [
-        'date_evaluation' => 'date',
+        'date_evaluation' => \App\Casts\JourCalendaire::class,
         'note' => 'decimal:2',
         'note_sur' => 'decimal:2',
         'locked' => 'boolean',

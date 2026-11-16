@@ -22,7 +22,7 @@ class Note extends Model
 
     protected $casts = [
         'note' => 'decimal:2',
-        'date_evaluation' => 'date',
+        'date_evaluation' => \App\Casts\JourCalendaire::class,
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];

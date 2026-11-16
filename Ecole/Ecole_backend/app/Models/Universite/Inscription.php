@@ -19,7 +19,7 @@ class Inscription extends Model
     ];
 
     protected $casts = [
-        'date_inscription' => 'date',
+        'date_inscription' => \App\Casts\JourCalendaire::class,
         'montant_frais' => 'decimal:2',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',

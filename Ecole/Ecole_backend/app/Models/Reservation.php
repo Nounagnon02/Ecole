@@ -15,8 +15,8 @@ class Reservation extends Model
     ];
 
     protected $casts = [
-        'date_reservation' => 'date',
-        'date_limite' => 'date'
+        'date_reservation' => \App\Casts\JourCalendaire::class,
+        'date_limite' => \App\Casts\JourCalendaire::class
     ];
 
     public function livre()

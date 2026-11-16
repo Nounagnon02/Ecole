@@ -15,8 +15,8 @@ class Vaccination extends Model
     ];
 
     protected $casts = [
-        'date_vaccination' => 'date',
-        'date_rappel' => 'date',
+        'date_vaccination' => \App\Casts\JourCalendaire::class,
+        'date_rappel' => \App\Casts\JourCalendaire::class,
         'effets_secondaires' => 'boolean'
     ];
 

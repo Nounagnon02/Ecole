@@ -27,7 +27,7 @@ class ConseilClasse extends Model
     ];
 
     protected $casts = [
-        'date' => 'date',
+        'date' => \App\Casts\JourCalendaire::class,
         'participants' => 'array',
         'decisions' => 'array'
     ];

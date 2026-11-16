@@ -26,7 +26,7 @@ class Absence extends Model
     ];
 
     protected $casts = [
-        'date' => 'date',
+        'date' => \App\Casts\JourCalendaire::class,
         'justifiee' => 'boolean'
     ];
 

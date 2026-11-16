@@ -26,7 +26,7 @@ class Sanction extends Model
     ];
 
     protected $casts = [
-        'date' => 'date'
+        'date' => \App\Casts\JourCalendaire::class
     ];
 
     public function eleve()

@@ -12,5 +12,5 @@ class Courrier extends Model
 
     protected $fillable = ['ecole_id', 'type', 'reference', 'expediteur', 'destinataire', 'objet', 'date_reception', 'observation', 'created_by'];
 
-    protected $casts = ['date_reception' => 'date'];
+    protected $casts = ['date_reception' => \App\Casts\JourCalendaire::class];
 }

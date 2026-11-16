@@ -59,7 +59,7 @@ class PaiementEleve extends Model
     ];
 
     protected $casts = [
-        'date_paiement' => 'date',
+        'date_paiement' => \App\Casts\JourCalendaire::class,
         'montant' => 'decimal:2',
         'montant_total' => 'decimal:2',
         'montant_paye' => 'decimal:2',

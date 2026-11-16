@@ -32,7 +32,7 @@ class CahierDeTexte extends Model
     ];
 
     protected $casts = [
-        'date' => 'date',
+        'date' => \App\Casts\JourCalendaire::class,
     ];
 
     public function classe()

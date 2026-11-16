@@ -41,7 +41,7 @@ class Eleve extends Model
     ];
 
     protected $casts = [
-        'date_naissance' => 'date',
+        'date_naissance' => \App\Casts\JourCalendaire::class,
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',
