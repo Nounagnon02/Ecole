@@ -44,10 +44,18 @@ class DirecteurDashboardController extends Controller
 
         $data = Cache::remember($this->directoryCacheKey(), 300, function () {
             // ─── KPI financiers du directeur (compteur, pas la compta) ───
-            $revenusMois = (float) \App\Models\PaiementEleve::whereMonth('date_paiement', now()->month)
-                ->whereYear('date_paiement', now()->year)
-                ->where('statut_global', \App\Models\PaiementEleve::PAID)
-                ->sum('montant');
+            // Ce qui a été réellement encaissé ce mois (R-26, 16/11/2026) :
+            // versements approuvés au guichet, partiels compris, et paiements
+            // en ligne confirmés. L'ancien calcul ne prenait que les échéances
+            // soldées : un versement partiel ne comptait jamais.
+            $debutMois = now()->startOfMonth();
+            $finMois = now()->endOfMonth();
+            $revenusMois = (float) \App\Models\TransactionPaiement::where('statut', \App\Models\TransactionPaiement::APPROUVE)
+                ->whereBetween('date_paiement', [$debutMois, $finMois])
+                ->sum('montant_paye')
+                + (float) \App\Models\Payment::where('status', 'completed')
+                ->whereBetween('paid_at', [$debutMois, $finMois])
+                ->sum('amount');
             $depensesMois = (float) \App\Models\Depense::whereMonth('date_depense', now()->month)
                 ->whereYear('date_depense', now()->year)
                 ->sum('montant');
@@ -68,17 +76,6 @@ class DirecteurDashboardController extends Controller
             $incidentsOuverts = \App\Models\Incident::whereIn('statut', ['ouvert', 'en_cours'])->count();
             $sanctionsMois = \App\Models\Sanction::whereMonth('date', now()->month)
                 ->whereYear('date', now()->year)->count();
-
-            // ─── Messages récents adressés à l'établissement ─────────────
-            $messagesRecents = \App\Models\Message::latest()
-                ->take(5)
-                ->get()
-                ->map(fn ($m) => [
-                    'id'        => $m->id,
-                    'sujet'     => $m->sujet,
-                    'expediteur'=> $m->expediteur ?? 'École',
-                    'date'      => $m->created_at?->format('d/m/Y'),
-                ]);
 
             return [
                 'classes' => Classes::with('series')->get(),
@@ -112,9 +109,23 @@ class DirecteurDashboardController extends Controller
                     'incidents_ouverts' => $incidentsOuverts,
                     'sanctions_mois' => $sanctionsMois,
                 ],
-                'messages_recents' => $messagesRecents,
             ];
         });
+
+        // Messages reçus par la personne connectée seulement, hors du cache
+        // partagé par l'école (R-26, 16/11/2026) : l'ancienne liste prenait les
+        // 5 derniers messages de toute l'école, conversations privées comprises.
+        $moi = (string) auth()->id();
+        $data['messages_recents'] = \App\Models\Message::where('destinataire', $moi)
+            ->latest()
+            ->take(5)
+            ->get(['id', 'sujet', 'expediteur', 'created_at'])
+            ->map(fn ($m) => [
+                'id' => $m->id,
+                'sujet' => $m->sujet,
+                'expediteur' => \App\Models\User::whereKey($m->expediteur)->value('name') ?? 'École',
+                'date' => $m->created_at?->format('d/m/Y'),
+            ])->all();
 
         return response()->json([
             'success' => true,

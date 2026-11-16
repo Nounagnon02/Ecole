@@ -122,6 +122,50 @@ class DirecteurDashboardControllerTest extends TestCase
         $this->assertEquals(5000.0, $data['finances']['impayes']);
     }
 
+    /**
+     * R-26 (corrigé le 16/11/2026) : « revenus du mois » ne comptait que les
+     * échéances soldées. Il additionne maintenant ce qui a été réellement
+     * encaissé ce mois : versements approuvés au guichet (partiels compris)
+     * et paiements en ligne confirmés. Rien d'un autre mois ni d'une autre école.
+     */
+    /** @test */
+    public function monthly_revenue_counts_every_payment_received_this_month()
+    {
+        $eleve = Eleve::factory()->forSchool($this->school)->create();
+        $echeance = PaiementEleve::factory()->create([
+            'ecole_id' => $this->school->id, 'eleve_id' => $eleve->id,
+            'montant_total' => 50000, 'montant_paye' => 20000, 'montant_restant' => 30000,
+        ]);
+        $versement = fn (float $montant, $date, string $statut = \App\Models\TransactionPaiement::APPROUVE) => (new \App\Models\TransactionPaiement)->forceFill([
+            'id_paiement_eleve' => $echeance->id, 'ecole_id' => $this->school->id, 'tranche' => 'Scolarité',
+            'montant_paye' => $montant, 'date_paiement' => $date, 'statut' => $statut, 'methode_paiement' => 'ESPECES',
+            'reference_transaction' => 'REF-'.uniqid(), 'recu_par' => $this->directeur->id,
+        ])->save();
+        $versement(20000, now());                                             // partiel, ce mois : compté
+        $versement(7000, now()->subMonths(2));                                // autre mois : non compté
+        $versement(9000, now(), \App\Models\TransactionPaiement::EN_ATTENTE); // non confirmé : non compté
+        \App\Models\Payment::factory()->complete()->create([
+            'ecole_id' => $this->school->id, 'eleve_id' => $eleve->id, 'amount' => 15000,
+        ]);                                                                   // en ligne, confirmé : compté
+
+        $data = $this->getJson('/api/dashboard/directeur/data')->assertOk()->json('data');
+        $this->assertEquals(35000.0, $data['finances']['revenus_mois']);
+    }
+
+    /** R-26 : seuls les messages reçus par le directeur connecté, jamais ceux des autres. */
+    /** @test */
+    public function recent_messages_are_only_those_received_by_the_director()
+    {
+        $autre = User::factory()->create(['role' => 'enseignant', 'ecole_id' => $this->school->id]);
+        \App\Models\Message::factory()->create(['ecole_id' => $this->school->id, 'expediteur' => (string) $autre->id,
+            'destinataire' => (string) $this->directeur->id, 'sujet' => 'Pour le directeur']);
+        \App\Models\Message::factory()->create(['ecole_id' => $this->school->id, 'expediteur' => (string) $autre->id,
+            'destinataire' => '999999', 'sujet' => 'Conversation privée d’un parent']);
+
+        $sujets = collect($this->getJson('/api/dashboard/directeur/data')->assertOk()->json('data.messages_recents'))->pluck('sujet')->all();
+        $this->assertSame(['Pour le directeur'], $sujets);
+    }
+
     private function asDirectorOf(Ecole $school, callable $callback)
     {
         $previous = auth()->user();
