@@ -152,7 +152,6 @@ const ROLE_MENUS = {
     { icon: MessageSquare, label: 'nav.annonces', path: '/communications' },
   ],
   [ROLES.ETUDIANT]: [
-    { icon: LayoutDashboard, label: 'nav.dashboard', path: '/universite/dashboard' },
     { icon: BookOpen, label: 'nav.mes_cours', path: '/universite/mes-cours' },
     { icon: BarChart3, label: 'nav.notes', path: '/universite/notes' },
     { icon: Calendar, label: 'nav.emploi_du_temps', path: '/emploi-du-temps' },

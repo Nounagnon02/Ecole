@@ -21,6 +21,8 @@ describe('droits des pages', () => {
     ['universiteEnseignants', ['professeur']],
     ['universiteNotes', ['etudiant']],
     ['eleveCours', ['etudiant']],
+    // Effectifs de l'université et noms des derniers inscrits (16/11/2026).
+    ['universiteDashboard', ['etudiant']],
   ])('%s est fermée aux rôles que l’API refuse', (cle, roles) => {
     expect(roles.filter((role) => peut(cle, role))).toEqual([]);
   });

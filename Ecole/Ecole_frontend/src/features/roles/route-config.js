@@ -333,7 +333,9 @@ export const ROUTE_CONFIG = {
   universiteDashboard: {
     path: '/universite/dashboard',
     component: lazy(() => import('@/app/dashboards/universite')),
-    roles: [ROLES.RECTEUR, ROLES.DOYEN, ROLES.PROFESSEUR, ROLES.ETUDIANT, ROLES.PERSONNEL],
+    // Sans l'étudiant : effectifs de l'université et noms des derniers
+    // inscrits ne le concernent pas (revue web du 16/11/2026).
+    roles: [ROLES.RECTEUR, ROLES.DOYEN, ROLES.PROFESSEUR, ROLES.PERSONNEL],
   },
 
   // ─── PAIEMENT EN LIGNE ────────────────────────────────────────────────
@@ -430,7 +432,7 @@ const BASE_ROLE_REDIRECTS = {
   [ROLES.RECTEUR]: '/universite/dashboard',
   [ROLES.DOYEN]: '/universite/dashboard',
   [ROLES.PROFESSEUR]: '/universite/dashboard',
-  [ROLES.ETUDIANT]: '/universite/dashboard',
+  [ROLES.ETUDIANT]: '/universite/mes-cours',
   [ROLES.PERSONNEL]: '/universite/dashboard',
   [ROLES.SUPER_ADMIN]: '/admin/dashboard',
   [ROLES.ADMIN]: '/admin/dashboard',

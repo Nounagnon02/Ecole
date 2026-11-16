@@ -147,7 +147,7 @@ describe('connexion réussie', () => {
     [ROLES.RECTEUR, '/universite/dashboard'],
     [ROLES.DOYEN, '/universite/dashboard'],
     [ROLES.PROFESSEUR, '/universite/dashboard'],
-    [ROLES.ETUDIANT, '/universite/dashboard'],
+    [ROLES.ETUDIANT, '/universite/mes-cours'],
     [ROLES.PERSONNEL, '/universite/dashboard'],
     [ROLES.ADMIN, '/admin/dashboard'],
     [ROLES.SUPER_ADMIN, '/admin/dashboard'],

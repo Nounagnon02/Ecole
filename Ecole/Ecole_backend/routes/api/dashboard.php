@@ -44,7 +44,9 @@ Route::middleware('auth:sanctum')->prefix('dashboard')->group(function () {
     Route::get('/admin', [AdminDashboardController::class, 'admin'])->middleware('role:admin,super-admin');
 
     // ─── Université ──────────────────────────────────────────────────
-    Route::get('/universite', [UniversiteDashboardController::class, 'universite'])->middleware('role:recteur,doyen,professeur,etudiant,personnel');
+    // Sans l'étudiant : effectifs de l'université et noms des derniers
+    // inscrits ne le concernent pas (revue web du 16/11/2026).
+    Route::get('/universite', [UniversiteDashboardController::class, 'universite'])->middleware('role:recteur,doyen,professeur,personnel');
 
     // ─── Staff (6 rôles — R4) ────────────────────────────────────────
     Route::get('/comptable', [ComptableDashboardController::class, 'comptable'])->middleware('role:comptable');

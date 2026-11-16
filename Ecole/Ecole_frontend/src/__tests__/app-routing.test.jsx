@@ -128,7 +128,8 @@ describe('session restaurée au démarrage', () => {
     [ROLES.COMPTABLE, '/comptable/dashboard'],
     [ROLES.ADMIN, '/admin/dashboard'],
     [ROLES.SUPER_ADMIN, '/admin/dashboard'],
-    [ROLES.ETUDIANT, '/universite/dashboard'],
+    // L'étudiant n'a pas le tableau de bord de l'université (16/11/2026).
+    [ROLES.ETUDIANT, '/universite/mes-cours'],
   ])('depuis /, le rôle %s arrive sur %s', async (role, expected) => {
     serverSession(role);
     const router = renderApp(['/']);
