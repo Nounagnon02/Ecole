@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Classe;
 use App\Support\Reglement;
+use App\Support\Sql;
 use App\Models\PaiementEleve;
 use Illuminate\Support\Facades\DB;
 
@@ -71,8 +72,8 @@ class PaiementService extends BaseService
                 ->get()
                 ->toArray(),
             'recettes_mensuelles' => (clone $query)
-                ->select(DB::raw('MONTH(date_paiement) as mois'), DB::raw('SUM(montant) as total'))
-                ->groupBy(DB::raw('MONTH(date_paiement)'))
+                ->select(DB::raw(Sql::mois('date_paiement') . ' as mois'), DB::raw('SUM(montant) as total'))
+                ->groupBy(DB::raw(Sql::mois('date_paiement')))
                 ->orderBy('mois')
                 ->get()
                 ->toArray(),

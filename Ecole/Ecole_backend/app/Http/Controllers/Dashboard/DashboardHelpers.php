@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Dashboard;
 
 use App\Support\Roles;
+use App\Support\Sql;
 
 /**
  * DashboardHelpers — méthodes utilitaires partagées par tous les contrôleurs
@@ -65,9 +66,7 @@ trait DashboardHelpers
 
     private function monthExpression(string $column): string
     {
-        return \Illuminate\Support\Facades\DB::getDriverName() === 'sqlite'
-            ? "strftime('%Y-%m', {$column})"
-            : "DATE_FORMAT({$column}, '%Y-%m')";
+        return Sql::anneeMois($column);
     }
 
     private function parentEvolution($children): array

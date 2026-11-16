@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\Payment;
+use App\Support\Sql;
 
 class PaymentQueryController extends Controller
 {
@@ -77,7 +78,7 @@ class PaymentQueryController extends Controller
             'monthly_revenue' => Payment::where('ecole_id', $ecoleId)
                 ->where('status', 'completed')
                 ->whereYear('paid_at', date('Y'))
-                ->select(DB::raw('MONTH(paid_at) as month'), DB::raw('SUM(amount) as total'))
+                ->select(DB::raw(Sql::mois('paid_at') . ' as month'), DB::raw('SUM(amount) as total'))
                 ->groupBy('month')
                 ->get()
         ];

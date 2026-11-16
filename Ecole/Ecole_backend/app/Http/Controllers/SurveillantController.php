@@ -7,6 +7,7 @@ use App\Models\Classes;
 use App\Models\Eleve;
 use App\Models\Incident;
 use App\Models\Sanction;
+use App\Support\Sql;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -246,9 +247,8 @@ class SurveillantController extends Controller
         // Incidents par mois (12 derniers mois)
         // Expression du mois portable : DATE_FORMAT n'existe pas sous SQLite,
         // où tourne la suite de la CI (500 sur cette route, R-47).
-        $mois = DB::getDriverName() === 'sqlite' ? "strftime('%Y-%m', date)" : "DATE_FORMAT(date, '%Y-%m')";
         $incidentsParMois = Incident::select(
-            DB::raw("$mois as mois"),
+            DB::raw(Sql::anneeMois('date') . ' as mois'),
             DB::raw('COUNT(*) as total')
         )
             ->where('date', '>=', now()->subMonths(12))

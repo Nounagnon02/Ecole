@@ -6,6 +6,7 @@ use App\Models\AuditLog;
 use App\Models\SaaS\Tenant;
 use App\Models\SaaS\Subscription;
 use App\Models\SaaS\Plan;
+use App\Support\Sql;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
@@ -53,8 +54,8 @@ class AnalyticsController extends Controller
     public function revenue()
     {
         $monthly = Subscription::select(
-            DB::raw('YEAR(created_at) as year'),
-            DB::raw('MONTH(created_at) as month'),
+            DB::raw(Sql::annee('created_at') . ' as year'),
+            DB::raw(Sql::mois('created_at') . ' as month'),
             DB::raw('SUM(amount) as total'),
             DB::raw('COUNT(*) as count')
         )
