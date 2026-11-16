@@ -12,7 +12,7 @@
  * (Semaine, Classes, Notes, Bulletins, Messages) ; le compte s'ouvre par la
  * pastille d'initiales de l'en-tête.
  */
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, TextInput, View } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
@@ -204,13 +204,24 @@ export function Notes() {
   const [message, setMessage] = useState(null);
 
   useEffect(() => { if (!ev.matiere && matieres.length === 1) setEv((e) => ({ ...e, matiere: matieres[0].id })); }, [matieres, ev.matiere]);
+  // Grille déjà affichée : un simple rechargement (après un envoi) ne doit pas
+  // effacer la confirmation « n note(s) enregistrée(s) » (parcours 9).
+  const cleAffichee = useRef(null);
   useEffect(() => {
     let actif = true;
     (async () => {
       if (!cle) return;
       const brouillon = await getBrouillon(cle);
       const base = Object.fromEntries(Object.values(enregistrees).map((n) => [n.eleve_id, String(n.note).replace('.', ',')]));
-      if (actif) { setSaisies({ ...base, ...(brouillon ?? {}) }); setEtat(brouillon ? 'attente' : 'repos'); setMessage(brouillon ? 'Brouillon non enregistré retrouvé sur ce téléphone.' : null); }
+      if (!actif) return;
+      const memeGrille = cleAffichee.current === cle;
+      cleAffichee.current = cle;
+      setSaisies({ ...base, ...(brouillon ?? {}) });
+      if (brouillon) {
+        setEtat('attente'); setMessage('Brouillon non enregistré retrouvé sur ce téléphone.');
+      } else if (!memeGrille) {
+        setEtat('repos'); setMessage(null);
+      }
     })();
     return () => { actif = false; };
   }, [cle, enregistrees]);
@@ -226,7 +237,9 @@ export function Notes() {
     // `base` : la note telle que chargée ici. Si un autre appareil l'a changée
     // entre-temps, l'API refuse d'écraser et renvoie le conflit (R-28).
     .map((e) => ({ eleve_id: e.id, note: lireNote(saisies[e.id]), base: enregistrees[e.id] ? Number(enregistrees[e.id].note) : null }))
-    .filter((n) => n.note !== null && !Number.isNaN(n.note));
+    // Une note identique à celle déjà enregistrée n'est pas à renvoyer : le
+    // bouton proposait encore « Enregistrer 1 note(s) » après l'envoi.
+    .filter((n) => n.note !== null && !Number.isNaN(n.note) && n.note !== n.base);
 
   const enregistrer = useCallback(async (forcer = false) => {
     if (invalides.length || aEnvoyer.length === 0) return;

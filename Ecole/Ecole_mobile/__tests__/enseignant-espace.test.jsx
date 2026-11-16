@@ -76,6 +76,23 @@ describe('espace enseignant — notes', () => {
     await waitFor(() => expect(api.post).toHaveBeenLastCalledWith('/notes/bulk', expect.objectContaining({ forcer: true })));
   });
 
+  // Parcours 9 (émulateur, 16/11/2026) : la vraie API renvoie une grille neuve
+  // au rechargement ; la confirmation s'effaçait aussitôt et le bouton
+  // proposait encore d'enregistrer la note qui venait de l'être.
+  it('garde la confirmation après rechargement et ne repropose pas une note déjà enregistrée', async () => {
+    let enregistree = false;
+    api.get.mockImplementation((url) => Promise.resolve({ data: url.startsWith('/notes/grille/1')
+      ? { success: true, data: { ...GRILLE.data, notes: enregistree ? [...GRILLE.data.notes, { eleve_id: 21, note: 12.5, locked: false }] : GRILLE.data.notes } }
+      : url === '/enseignant/classes' ? { success: true, data: [{ id: 1, nom_classe: '3ème', eleves: [] }] } : { success: true, data: [] } }));
+    api.post.mockImplementation(() => { enregistree = true; return Promise.resolve({ data: { success: true } }); });
+    const champ = await ouvrirGrille();
+    fireEvent.changeText(champ, '12,5');
+    fireEvent.press(screen.getByText('Enregistrer 1 note(s)'));
+    await waitFor(() => expect(api.get.mock.calls.filter(([u]) => u.startsWith('/notes/grille/1')).length).toBeGreaterThan(1));
+    expect(await screen.findByText(/1 note\(s\) enregistrée\(s\)/)).toBeTruthy();
+    expect(screen.queryByText('Enregistrer 1 note(s)')).toBeNull();
+  });
+
   it('bloque l’envoi d’une note hors 0–20', async () => {
     const champ = await ouvrirGrille();
     fireEvent.changeText(champ, '25');
