@@ -2165,7 +2165,12 @@
         "aucun_message": "Aucun message",
         "zone_conversations": "Conversations",
         "zone_contacts": "Contacts",
-        "zone_messages": "Messages de la conversation"
+        "zone_messages": "Messages de la conversation",
+        "joindre_fichier": "Joindre un fichier",
+        "retirer_piece": "Retirer",
+        "piece_trop_lourde": "Le fichier dépasse 5 Mo.",
+        "piece_echec": "La pièce jointe n’a pas pu être téléchargée.",
+        "telecharger_piece": "Télécharger la pièce jointe {nom}"
       }
     },
     "auth": {

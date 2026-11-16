@@ -17,7 +17,7 @@
  *     jamais. L'ouverture d'un fil appelle PUT …/read puis rafraîchit la liste.
  */
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useApiQuery } from '@/shared/lib/api-client';
 import { useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
@@ -115,6 +115,7 @@ export default function MessageriePage() {
       id: m.id,
       from: String(m.expediteur) === String(currentUserId) ? 'me' : 'them',
       text: m.contenu || '',
+      piece: m.piece_jointe || null,
       time: m.created_at || new Date().toISOString(),
     }));
   }, [requeteFil.data, selectedConv, currentUserId]);
@@ -191,15 +192,45 @@ export default function MessageriePage() {
       c.lastMessage?.toLowerCase().includes(search.toLowerCase())
     ), [search, conversations]);
 
+  // Pièce jointe (R-31) : mêmes types et même limite que l'API (5 Mo).
+  const [piece, setPiece] = useState(null);
+  const [erreurPiece, setErreurPiece] = useState(null);
+  const champFichier = useRef(null);
+  const choisirPiece = (e) => {
+    const fichier = e.target.files?.[0];
+    e.target.value = '';
+    if (!fichier) return;
+    if (fichier.size > 5 * 1024 * 1024) { setErreurPiece(t('pages.messagerie.messagerie.piece_trop_lourde')); return; }
+    setErreurPiece(null);
+    setPiece(fichier);
+  };
+  const telechargerPiece = async (msg) => {
+    try {
+      const res = await api.get(`/messages/${msg.id}/piece-jointe`, { responseType: 'blob' });
+      const url = URL.createObjectURL(res.data);
+      const lien = document.createElement('a');
+      lien.href = url; lien.download = msg.piece.nom; lien.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      logger.error('Erreur pièce jointe:', e);
+      setErreurPiece(t('pages.messagerie.messagerie.piece_echec'));
+    }
+  };
+
   const sendMessage = async () => {
-    if (!messageText.trim() || !selectedConv) return;
+    if ((!messageText.trim() && !piece) || !selectedConv) return;
     const text = messageText.trim();
     setMessageText('');
     try {
-      const res = await api.post('/messages', {
-        destinataire: String(selectedConv.id),
-        contenu: text
-      });
+      let corps = { destinataire: String(selectedConv.id), contenu: text };
+      if (piece) {
+        corps = new FormData();
+        corps.append('destinataire', String(selectedConv.id));
+        corps.append('contenu', text);
+        corps.append('piece_jointe', piece);
+      }
+      const res = await api.post('/messages', corps, piece ? { headers: { 'Content-Type': 'multipart/form-data' } } : undefined);
+      setPiece(null);
       const newMsg = res?.data?.data || res?.data || res;
       appendMessage({
         id: newMsg.id || Date.now(),
@@ -412,7 +443,13 @@ export default function MessageriePage() {
                         ? 'bg-[var(--action)] text-white rounded-br-md'
                         : 'bg-[var(--surface-subtle)] text-[var(--text-primary)]   rounded-bl-md'
                     )}>
-                      <p className="text-sm leading-relaxed">{msg.text}</p>
+                      {msg.text ? <p className="text-sm leading-relaxed">{msg.text}</p> : null}
+                      {msg.piece ? (
+                        <button type="button" onClick={() => telechargerPiece(msg)} className="mt-1 inline-flex items-center gap-1 text-sm underline"
+                          aria-label={t('pages.messagerie.messagerie.telecharger_piece', { nom: msg.piece.nom })}>
+                          <Paperclip className="h-4 w-4" aria-hidden="true" />{msg.piece.nom}
+                        </button>
+                      ) : null}
                       <p className={cn(
                         'text-[10px] mt-1',
                         msg.from === 'me' ? 'text-[var(--accent)]/60' : 'text-[var(--text-tertiary)]'
@@ -426,8 +463,17 @@ export default function MessageriePage() {
 
               {/* Input */}
               <div className="border-t border-[var(--border)] p-4 ">
+                {piece ? (
+                  <p className="mb-2 flex items-center gap-2 text-sm text-[var(--text-secondary)]">
+                    <Paperclip className="h-4 w-4" aria-hidden="true" />{piece.name}
+                    <button type="button" className="underline text-[var(--error)]" onClick={() => setPiece(null)}>{t('pages.messagerie.messagerie.retirer_piece')}</button>
+                  </p>
+                ) : null}
+                {erreurPiece ? <p role="alert" className="mb-2 text-sm text-[var(--error)]">{erreurPiece}</p> : null}
                 <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="sm" icon={<Paperclip />} />
+                  <input ref={champFichier} type="file" hidden onChange={choisirPiece} data-testid="champ-piece-jointe"
+                    accept=".pdf,.doc,.docx,.odt,.txt,.jpg,.jpeg,.png,.webp" />
+                  <Button variant="ghost" size="sm" icon={<Paperclip />} aria-label={t('pages.messagerie.messagerie.joindre_fichier')} onClick={() => champFichier.current?.click()} />
                   <input
                     type="text"
                     value={messageText}
@@ -440,7 +486,7 @@ export default function MessageriePage() {
                       }
                     }}
                   />
-                  <Button size="sm" icon={<Send />} disabled={!messageText.trim()} onClick={sendMessage}>
+                  <Button size="sm" icon={<Send />} disabled={!messageText.trim() && !piece} onClick={sendMessage}>
                     {t('pages.messagerie.messagerie.envoyer')}
                   </Button>
                 </div>

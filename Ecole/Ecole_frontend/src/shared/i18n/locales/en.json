@@ -2165,7 +2165,12 @@
         "aucun_message": "No message",
         "zone_conversations": "Conversations",
         "zone_contacts": "Contacts",
-        "zone_messages": "Conversation messages"
+        "zone_messages": "Conversation messages",
+        "joindre_fichier": "Attach a file",
+        "retirer_piece": "Remove",
+        "piece_trop_lourde": "The file is larger than 5 MB.",
+        "piece_echec": "The attachment could not be downloaded.",
+        "telecharger_piece": "Download attachment {nom}"
       }
     },
     "auth": {

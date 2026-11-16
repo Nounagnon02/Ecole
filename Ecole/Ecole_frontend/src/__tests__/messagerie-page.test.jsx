@@ -152,6 +152,29 @@ describe('MessageriePage', () => {
     expect(calls[0].body).toEqual({ destinataire: '10', contenu: 'Reçu, merci !' });
   });
 
+  // R-31 (16/11/2026) : le trombone joint un fichier ; l'envoi part en multipart.
+  it('joint un fichier, l’affiche, et l’envoie avec le message', async () => {
+    mockConversations();
+    mockThread();
+    mockReadConversation();
+    http.onPost('/messages').reply(201, { success: true, data: { id: 4 } });
+    renderPage();
+    await waitForListReady();
+    await waitFor(() => expect(screen.getByText('Bonjour Amin, à demain')).toBeInTheDocument());
+
+    const fichier = new File(['%PDF'], 'releve.pdf', { type: 'application/pdf' });
+    fireEvent.change(screen.getByTestId('champ-piece-jointe'), { target: { files: [fichier] } });
+    expect(await screen.findByText('releve.pdf')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Joindre un fichier' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('Envoyer'));
+    await waitFor(() => expect(http.callsTo('POST', '/messages').length).toBe(1));
+    const corps = http.callsTo('POST', '/messages')[0].body;
+    expect(corps).toBeInstanceOf(FormData);
+    expect(corps.get('destinataire')).toBe('10');
+    expect(corps.get('piece_jointe').name).toBe('releve.pdf');
+  });
+
   it('ouvre une nouvelle conversation depuis le contacteur', async () => {
     mockConversations();
     mockThread();
