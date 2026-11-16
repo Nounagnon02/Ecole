@@ -495,7 +495,6 @@ export default function PaiementsPage() {
                                 className="p-1.5 rounded-lg text-[var(--text-tertiary)] hover:text-[var(--accent)] hover:bg-[var(--accent-subtle)] transition-colors"
                                 title={t('pages.paiements.paiements.voir_le_recu')}
                                 aria-label={t('pages.paiements.paiements.voir_le_recu')}
-                        aria-label={t('pages.paiements.paiements.voir_le_recu')}
                               >
                                 <Eye className="h-4 w-4" />
                               </button>

@@ -393,7 +393,10 @@ class EspaceParentController extends Controller
     {
         $child = $this->ownChildOrFail($enfantId);
 
-        $slots = EmploiDuTemps::where('classe_id', $child->classe_id)
+        // Nom de la matière et de l'enseignant avec chaque créneau (R-13) : le
+        // seul `matiere_id` laissait le mobile afficher « Cours ».
+        $slots = EmploiDuTemps::with(['matiere:id,nom', 'enseignant.user:id,name,prenom'])
+            ->where('classe_id', $child->classe_id)
             ->orderBy('jour')
             ->orderBy('heure_debut')
             ->get();
