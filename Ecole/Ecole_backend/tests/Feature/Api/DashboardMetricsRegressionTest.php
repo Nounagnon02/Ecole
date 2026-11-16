@@ -4,7 +4,6 @@ namespace Tests\Feature\Api;
 
 use App\Models\Absence;
 use App\Models\Classes;
-use App\Models\Coefficients;
 use App\Models\ConsultationMedicale;
 use App\Models\Ecole;
 use App\Models\Eleve;
@@ -181,7 +180,10 @@ class DashboardMetricsRegressionTest extends TestCase
         ]);
 
         $matiere = Matieres::factory()->create(['ecole_id' => $school->id]);
-        Coefficients::create([
+        // Coefficient lu à la source du bulletin (`serie_matieres`) depuis le
+        // 16/11/2026 : `coefficient_matieres` est vide en recette, et le
+        // tableau de bord n'affichait donc jamais le coefficient du bulletin.
+        \Illuminate\Support\Facades\DB::table('serie_matieres')->insert([
             'matiere_id'  => $matiere->id,
             'classe_id'   => $classe->id,
             'serie_id'    => $serie->id,

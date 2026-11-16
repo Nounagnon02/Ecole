@@ -21,41 +21,34 @@ class EleveDashboardController extends Controller
             return response()->json(['success' => false, 'message' => 'Profil élève non trouvé'], 404);
         }
 
-        $notes = \App\Models\Notes::where('eleve_id', $eleve->id)
-            ->with('matiere')
-            ->get();
+        $totalNotes = \App\Models\Notes::where('eleve_id', $eleve->id)->count();
 
-        $moyenneGenerale = $notes->avg('note');
+        // Moyennes de la dernière période notée, calculées comme au bulletin
+        // (types d'évaluation ramenés sur 20, coefficients du bulletin). La
+        // moyenne brute de toutes les notes de l'année, sans coefficient, ne
+        // correspondait à aucun bulletin (revue du 16/11/2026).
+        $moyennes = app(\App\Services\BulletinService::class)->moyennesProvisoires($eleve);
+
         // Le filtre année manquait : oùMonth seul additionnait le même mois sur
-        // toutes les années (cf. audit P3).
-        $absences = \App\Models\Absence::where('eleve_id', $eleve->id)
+        // toutes les années (cf. audit P3). Les retards sont comptés à part :
+        // « Absences ce mois » les incluait.
+        $duMois = \App\Models\Absence::where('eleve_id', $eleve->id)
             ->whereMonth('date', now()->month)
             ->whereYear('date', now()->year)
-            ->count();
+            ->get(['type']);
+        $retards = $duMois->where('type', 'retard')->count();
 
-        // Coefficients réels par (matière, classe, série). `matiere->coefficient`
-        // n'existe pas (la colonne vit sur `coefficient_matieres`), donc l'ancien
-        // code affichait toujours le repli `?? 1` (cf. audit P3).
-        $coefficients = \App\Models\Coefficients::where('classe_id', $eleve->classe_id)
-            ->where('serie_id', $eleve->serie_id)
-            ->pluck('coefficient', 'matiere_id');
-
-        $notesByMatiere = $notes->groupBy('matiere.nom')->map(function ($group, $nom) use ($coefficients) {
-            return [
-                'name' => $nom,
-                'note' => round($group->avg('note'), 2),
-                // `(float)` : `coefficient` est un `decimal`, que MySQL rend en
-                // chaîne et SQLite en nombre. Le repli voisin vaut `1`, un
-                // entier — le champ est numérique, il doit l'être sur les deux
-                // moteurs (cf. audit P2.1).
-                'coeff' => (float) ($coefficients[$group->first()->matiere_id] ?? 1),
-            ];
-        })->values();
-
+        // Jours dans l'ordre de la semaine : `orderBy('jour')` les rangeait par
+        // ordre alphabétique (jeudi avant lundi).
+        $rangJour = array_flip(['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche']);
         $emploiDuTemps = \App\Models\EmploiDuTemps::where('classe_id', $eleve->classe_id)
             ->with(['matiere', 'enseignant.user'])
-            ->orderBy('jour')
-            ->get();
+            ->get()
+            ->sortBy([
+                fn ($a, $b) => ($rangJour[mb_strtolower($a->jour)] ?? 9) <=> ($rangJour[mb_strtolower($b->jour)] ?? 9),
+                fn ($a, $b) => strcmp((string) $a->heure_debut, (string) $b->heure_debut),
+            ])
+            ->values();
 
         return response()->json([
             'success' => true,
@@ -68,11 +61,13 @@ class EleveDashboardController extends Controller
                     'matricule' => $eleve->numero_matricule,
                 ],
                 'stats' => [
-                    'moyenne_generale' => $moyenneGenerale ? round($moyenneGenerale, 2) : null,
-                    'total_notes' => $notes->count(),
-                    'absences_mois' => $absences,
+                    'moyenne_generale' => $moyennes['moyenne_generale'],
+                    'periode' => $moyennes['periode'],
+                    'total_notes' => $totalNotes,
+                    'absences_mois' => $duMois->count() - $retards,
+                    'retards_mois' => $retards,
                 ],
-                'matieres' => $notesByMatiere,
+                'matieres' => $moyennes['matieres'],
                 'emploi_du_temps' => $emploiDuTemps,
             ],
         ]);
