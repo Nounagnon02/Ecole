@@ -18,6 +18,14 @@ class EmploiDuTempsController extends Controller
     {
         $query = EmploiDuTemps::with(['classe:id,nom_classe', 'matiere:id,nom', 'enseignant.user:id,name,prenom']);
 
+        // La famille ne lit que ses classes : l'élève la sienne, le parent
+        // celles de ses enfants. L'élève recevait l'emploi du temps de toute
+        // l'école, sa classe noyée parmi les autres (revue du 16/11/2026).
+        $classesFamille = $this->classesDeLaFamille($request->user());
+        if ($classesFamille !== null) {
+            $query->whereIn('classe_id', $classesFamille);
+        }
+
         if ($request->has('classe_id')) {
             $query->where('classe_id', $request->classe_id);
         }
@@ -33,6 +41,21 @@ class EmploiDuTempsController extends Controller
         $filtre = $request->filled('classe_id') || $request->filled('enseignant_id');
 
         return response()->json($filtre ? ['data' => $query->get()] : $query->paginate(200));
+    }
+
+    /**
+     * Classes visibles par un élève ou un parent ; null pour le personnel,
+     * qui garde l'emploi du temps de toute l'école.
+     *
+     * @return array<int, int>|null
+     */
+    private function classesDeLaFamille($user): ?array
+    {
+        return match ($user?->role) {
+            'eleve' => array_filter([$user->eleve?->classe_id]),
+            'parent' => $user->parent?->eleves()->pluck('eleves.classe_id')->filter()->unique()->values()->all() ?? [],
+            default => null,
+        };
     }
 
     public function store(Request $request)
