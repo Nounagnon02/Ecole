@@ -279,6 +279,7 @@ function Scolarite() {
 }
 
 /* ─── Paiements : solde, échéances, paiement en ligne, historique ──────── */
+const OUVERTURE_IMPOSSIBLE = 'Le paiement n’a pas pu être ouvert.';
 const STATUTS = { PAYE: ['Soldé', 'succes'], PARTIEL: ['Partiellement payé', 'ocre'], EN_ATTENTE: ['À payer', 'ocre'], EN_RETARD: ['En retard', 'alerte'], ANNULE: ['Annulé', 'neutre'] };
 const MODES = { ESPECES: 'en espèces', MOBILE_MONEY: 'par mobile money', CHEQUE: 'par chèque', VIREMENT: 'par virement', FEDAPAY: 'en ligne' };
 const modePaiement = (m) => MODES[String(m ?? '').toUpperCase()] ?? (m ? `(${String(m).toLowerCase()})` : '');
@@ -306,13 +307,16 @@ function Paiements() {
         eleve_id: enfant.id, paiement_eleve_id: e.id, amount: montant, type: 'scolarite', description: e.libelle, client: 'mobile',
       });
       const url = data?.data?.checkout_url;
-      if (!data?.success || !url) throw new Error(data?.message || 'Le paiement n’a pas pu être ouvert.');
+      if (!data?.success || !url) throw Object.assign(new Error(data?.message || OUVERTURE_IMPOSSIBLE), { pourLeParent: true });
       // Le paiement n'est crédité qu'après confirmation de la passerelle au
       // serveur ; la liste se rafraîchit au retour dans l'application.
       await Linking.openURL(url);
       requete.recharger();
     } catch (err) {
-      Alert.alert('Paiement', err?.response ? messageErreur(err) : (err?.message || 'Le paiement n’a pas pu être ouvert.'));
+      // Jamais de message technique (« Network Error », erreur du système) :
+      // coupure réseau → message de connexion ; le reste → message générique.
+      const reseau = err?.response || err?.isAxiosError || err?.request;
+      Alert.alert('Paiement', err?.pourLeParent ? err.message : reseau ? messageErreur(err) : OUVERTURE_IMPOSSIBLE);
     } finally {
       setEnvoi(null);
     }

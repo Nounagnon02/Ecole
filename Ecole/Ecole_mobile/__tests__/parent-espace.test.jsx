@@ -152,6 +152,20 @@ describe('espace parent', () => {
     expect(screen.getByLabelText('Reste à payer : 50 000 FCFA')).toBeTruthy();
   });
 
+  // Vu sur l'émulateur (16/11/2026, parcours 6) : une coupure réseau
+  // affichait au parent le texte brut d'Axios « Network Error ».
+  it('annonce une coupure réseau en français, sans le message technique', async () => {
+    const alerte = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    api.post.mockRejectedValueOnce(Object.assign(new Error('Network Error'), { isAxiosError: true, request: {} }));
+    monter();
+    await screen.findByLabelText('Voir la scolarité de AHO Kossi');
+    fireEvent.press(screen.getByRole('tab', { name: 'Paiements' }));
+    fireEvent.changeText(await screen.findByLabelText('Montant à payer pour Scolarité T1'), '20000');
+    fireEvent.press(screen.getByRole('button', { name: 'Payer en ligne' }));
+    await waitFor(() => expect(alerte).toHaveBeenCalledWith('Paiement', expect.stringContaining('Pas de connexion au serveur')));
+    expect(alerte.mock.calls[0][1]).not.toContain('Network Error');
+  });
+
   it('refuse un montant supérieur au reste sans appeler l’API', async () => {
     const alerte = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
     monter();
