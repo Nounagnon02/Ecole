@@ -15,9 +15,12 @@ use Illuminate\Support\Facades\DB;
  * autres parents par leur nom et pouvait leur écrire.
  *
  * Règle :
- *  - le personnel (école ou université) joint tout le monde dans l'école ;
+ *  - le reste du personnel (école ou université) joint tout le monde dans l'école ;
  *  - un parent joint l'administration de l'école et les enseignants de ses
  *    enfants, pas les autres enseignants (règle décidée le 14/11/2026) ;
+ *  - un enseignant joint l'administration, ses collègues enseignants, et les
+ *    élèves et parents de SES classes seulement (règle décidée le 16/11/2026 :
+ *    il voyait jusqu'ici toute l'école, élèves d'autres classes compris) ;
  *  - un élève joint le personnel de l'école ;
  *  - un étudiant ne joint que le personnel de l'université ;
  *  - chacun peut toujours répondre à quelqu'un qui lui a déjà écrit.
@@ -44,6 +47,9 @@ final class MessagingContacts
 
     private const UNIVERSITY_STAFF = [Roles::CHANCELLOR, Roles::DEAN, Roles::PROFESSOR, Roles::STAFF];
 
+    /** Enseignants de l'école (toutes variantes) : collègues entre eux. */
+    private const TEACHERS = [Roles::TEACHER, Roles::TEACHER_SECONDARY, Roles::TEACHER_KINDERGARTEN, Roles::TEACHER_PRIMARY];
+
     /**
      * Rôles que `$user` peut contacter de sa propre initiative, ou null s'il
      * n'y a pas de restriction (personnel).
@@ -54,6 +60,8 @@ final class MessagingContacts
     {
         return match ($user->role) {
             Roles::PARENT => self::ADMINISTRATION,
+            Roles::TEACHER, Roles::TEACHER_SECONDARY, Roles::TEACHER_KINDERGARTEN, Roles::TEACHER_PRIMARY
+                => array_merge(self::ADMINISTRATION, self::TEACHERS),
             Roles::ELEVE => self::SCHOOL_STAFF,
             Roles::STUDENT => self::UNIVERSITY_STAFF,
             default => null,
@@ -74,9 +82,9 @@ final class MessagingContacts
             return $query;
         }
 
-        $enseignants = self::enseignantsDesEnfants($user);
+        $personnes = array_merge(self::enseignantsDesEnfants($user), self::famillesDesClasses($user));
 
-        return $query->where(fn (Builder $q) => $q->whereIn('role', $roles)->orWhereIn('id', $enseignants));
+        return $query->where(fn (Builder $q) => $q->whereIn('role', $roles)->orWhereIn('id', $personnes));
     }
 
     /**
@@ -112,6 +120,39 @@ final class MessagingContacts
         return $parMatiere->merge($maitres)->filter()->map(fn ($id) => (int) $id)->unique()->values()->all();
     }
 
+    /**
+     * Comptes des élèves des classes d'un enseignant et de leurs parents :
+     * classes affectées par matière (collège, lycée) ou dont il est le maître
+     * (maternelle, primaire). Vide pour tout autre rôle.
+     *
+     * @return list<int>
+     */
+    public static function famillesDesClasses(User $user): array
+    {
+        if (! in_array($user->role, self::TEACHERS, true)) {
+            return [];
+        }
+
+        $fiche = DB::table('enseignants')->where('user_id', $user->id)->where('ecole_id', $user->ecole_id)->value('id');
+        $classes = collect($fiche ? DB::table('enseignant_matiere')->where('enseignant_id', $fiche)->pluck('classe_id') : [])
+            ->merge(DB::table('enseignants_maternelle_primaire')->where('user_id', $user->id)->where('ecole_id', $user->ecole_id)->pluck('classe_id'))
+            ->filter()->unique()->values()->all();
+
+        if ($classes === []) {
+            return [];
+        }
+
+        $eleves = DB::table('eleves')->whereIn('classe_id', $classes)->where('ecole_id', $user->ecole_id)
+            ->whereNull('deleted_at')->get(['id', 'user_id']);
+
+        $parents = DB::table('eleves_parents')
+            ->join('parents', 'parents.id', '=', 'eleves_parents.parent_id')
+            ->whereIn('eleves_parents.eleve_id', $eleves->pluck('id'))
+            ->pluck('parents.user_id');
+
+        return $eleves->pluck('user_id')->merge($parents)->filter()->map(fn ($id) => (int) $id)->unique()->values()->all();
+    }
+
     /** `$user` peut-il écrire à `$recipient` ? */
     public static function canWrite(User $user, User $recipient): bool
     {
@@ -122,7 +163,8 @@ final class MessagingContacts
         $roles = self::allowedRoles($user);
 
         if ($roles === null || in_array($recipient->role, $roles, true)
-            || in_array((int) $recipient->id, self::enseignantsDesEnfants($user), true)) {
+            || in_array((int) $recipient->id, self::enseignantsDesEnfants($user), true)
+            || in_array((int) $recipient->id, self::famillesDesClasses($user), true)) {
             return true;
         }
 

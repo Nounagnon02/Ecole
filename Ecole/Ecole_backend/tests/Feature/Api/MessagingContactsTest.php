@@ -45,6 +45,7 @@ beforeEach(function () {
 
     // Les enfants du parent : un au collège (6ème), un au primaire (CE1).
     $sixieme = Classes::factory()->create(['ecole_id' => $this->ecole->id]);
+    $this->sixieme = $sixieme;
     $ce1 = Classes::factory()->create(['ecole_id' => $this->ecole->id]);
     $autreClasse = Classes::factory()->create(['ecole_id' => $this->ecole->id]);
     $famille = UserParent::factory()->create(['ecole_id' => $this->ecole->id, 'user_id' => $this->parent->id]);
@@ -103,8 +104,31 @@ it('ne montre à un étudiant que le personnel de l’université', function () 
     expect(rolesDesContacts($this, $this->etudiant))->toBe(['professeur']);
 });
 
-it('laisse le personnel joindre parents et élèves', function () {
-    expect(rolesDesContacts($this, $this->enseignant))->toContain('parent', 'eleve', 'directeur');
+it('laisse le personnel administratif joindre parents et élèves', function () {
+    expect(rolesDesContacts($this, $this->secretaire))->toContain('parent', 'eleve', 'directeur');
+});
+
+// Règle décidée le 16/11/2026 : un enseignant joint l'administration, ses
+// collègues, et les élèves et parents de SES classes seulement.
+it('montre à un enseignant l’administration, ses collègues, et les familles de ses classes seulement', function () {
+    $noms = nomsDesContacts($this, $this->enseignant);
+    $enfantDeSixieme = UserParent::where('user_id', $this->parent->id)->first()->eleves()->with('user')->get()->first(fn ($e) => $e->classe_id === $this->sixieme->id)->user;
+
+    expect($noms)->toContain('X Directeur', 'X Secretaire', 'X Comptable', 'X Maitre', 'X AutreEnseignant', 'X Parent',
+        trim($enfantDeSixieme->prenom.' '.$enfantDeSixieme->name))
+        ->and($noms)->not->toContain('X AutreParent', 'X Eleve', 'X AutreEleve', 'X Etudiant', 'X Professeur');
+});
+
+it('refuse à un enseignant d’écrire à un élève ou un parent hors de ses classes, même en forgeant la requête', function (string $cible) {
+    $this->actingAs($this->enseignant)
+        ->postJson('/api/messages', ['destinataire' => (string) $this->{$cible}->id, 'contenu' => 'Bonjour'])
+        ->assertStatus(403);
+})->with(['autreEleve', 'autreParent', 'etudiant']);
+
+it('laisse un enseignant écrire au parent d’un élève de sa classe', function () {
+    $this->actingAs($this->enseignant)
+        ->postJson('/api/messages', ['destinataire' => (string) $this->parent->id, 'contenu' => 'Bonjour'])
+        ->assertCreated();
 });
 
 it('refuse à un parent d’écrire à un élève ou à un autre parent, même en forgeant la requête', function (string $cible) {
