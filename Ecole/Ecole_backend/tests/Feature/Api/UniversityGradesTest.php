@@ -202,3 +202,29 @@ it('restreint le planning du professeur à ses séances quand il le demande', fu
     expect(collect($this->getJson('/api/universite/planning?perso=1')->assertOk()->json('data'))->pluck('id')->all())->toBe([$a->id])
         ->and($this->getJson('/api/universite/planning')->json('meta.total'))->toBe(2);
 });
+
+/* ─── Copies d'un devoir ───────────────────────────────────────────────── */
+
+// Constaté sur l'émulateur (16/11/2026) : le détail fusionnait deux tableaux
+// avec `+` ; la clé `soumissions` (le compteur) masquait la liste des copies,
+// que le professeur ne recevait jamais : écran blanc sur le mobile.
+it('donne au professeur la liste des copies d’un devoir, et à l’étudiant seulement la sienne', function () {
+    $c = campus();
+    $mienne = ue($c);
+    $camarade = Etudiant::factory()->create(['filiere_id' => $c['filiere']->id]);
+    $devoir = \App\Models\Universite\Devoir::factory()->create(['matiere_id' => $mienne->id, 'publie' => true]);
+    $devoir->etudiants()->attach($c['etudiant']->id, ['rendu' => true]);
+    $devoir->etudiants()->attach($camarade->id, ['rendu' => false]);
+
+    $vuProf = $this->actingAs($c['profCompte'])->getJson("/api/universite/devoirs/{$devoir->id}")->assertOk()->json('data');
+
+    expect($vuProf['soumissions'])->toBe(1)
+        ->and($vuProf['total_etudiants'])->toBe(2)
+        ->and(collect($vuProf['copies'])->pluck('rendu', 'etudiant_id')->all())
+        ->toEqual([$c['etudiant']->id => true, $camarade->id => false]);
+
+    $vuEtudiant = $this->actingAs($c['etuCompte'])->getJson("/api/universite/devoirs/{$devoir->id}")->assertOk()->json('data');
+
+    expect($vuEtudiant['copies'])->toBeNull()
+        ->and($vuEtudiant['ma_soumission']['rendu'])->toBeTrue();
+});

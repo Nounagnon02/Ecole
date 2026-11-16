@@ -91,7 +91,10 @@ class DevoirController extends Controller
             'success' => true,
             'data'    => $this->present($devoir, $student) + [
                 // Only the people who mark it get the roll of submissions.
-                'soumissions' => $request->user()->can('grade', $devoir)
+                // Its own key: under `soumissions` the `+` union kept the
+                // counter from `present()` and silently dropped this list
+                // (blank copies screen on the mobile, 16/11/2026).
+                'copies' => $request->user()->can('grade', $devoir)
                     ? $devoir->etudiants()->get()->map(fn(Etudiant $e) => [
                         'etudiant_id' => $e->id,
                         'matricule'   => $e->matricule,

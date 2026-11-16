@@ -181,8 +181,14 @@ describe('devoirs universitaires', () => {
     expect(etatDevoir({ date_limite: '2026-11-30T23:59:00Z', ma_soumission: null }, maintenant).texte).toBe('À rendre');
   });
 
+  it('un détail sans liste de copies affiche un état vide, pas un écran blanc', async () => {
+    api.get.mockResolvedValue({ data: { success: true, data: { id: 9, soumissions: 1, total_etudiants: 2 } } });
+    monter(<CopiesDevoir devoir={devoir} onRetour={() => {}} />);
+    expect(await screen.findByText('Aucun étudiant concerné par ce devoir.')).toBeTruthy();
+  });
+
   it('le professeur note une copie rendue', async () => {
-    api.get.mockResolvedValue({ data: { success: true, data: { id: 9, soumissions: [
+    api.get.mockResolvedValue({ data: { success: true, data: { id: 9, soumissions: 1, total_etudiants: 2, copies: [
       { etudiant_id: 41, nom: 'Rémi AGOSSOU', rendu: true, note: null, date_remise: '2026-11-18T09:00:00Z' },
       { etudiant_id: 42, nom: 'Bella ZINSOU', rendu: false, note: null, date_remise: null },
     ] } } });

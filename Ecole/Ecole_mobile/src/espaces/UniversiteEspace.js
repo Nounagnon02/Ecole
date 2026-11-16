@@ -424,7 +424,9 @@ export function NouveauDevoirUniv({ onRetour }) {
 export function CopiesDevoir({ devoir, onRetour }) {
   const t = useTeintes();
   const req = useRequete(`/universite/devoirs/${devoir.id}`);
-  const copies = req.donnees?.data?.soumissions ?? [];
+  // `copies` : la liste ; `soumissions` reste le compteur. Une forme
+  // inattendue donne un état vide, jamais un écran blanc (16/11/2026).
+  const copies = Array.isArray(req.donnees?.data?.copies) ? req.donnees.data.copies : [];
   const [saisies, setSaisies] = useState({});
   const [retours, setRetours] = useState({});
 
