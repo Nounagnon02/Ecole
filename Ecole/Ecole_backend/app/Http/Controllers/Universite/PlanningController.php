@@ -32,6 +32,12 @@ class PlanningController extends Controller
             $query->forFiliere($filiereId);
         }
 
+        // « Mes séances » du professeur (espace mobile) : sans ce filtre, il
+        // reçoit le calendrier de tout l'établissement.
+        if ($request->boolean('perso') && $request->user()->role === Roles::PROFESSOR) {
+            $query->where('enseignant_id', $request->user()->enseignantUniversite?->id ?? 0);
+        }
+
         // A calendar without bounds grows without bounds. The window is optional
         // so the page can ask for a month, a week or everything.
         if ($from = $request->query('date_debut')) {

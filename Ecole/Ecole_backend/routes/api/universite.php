@@ -11,6 +11,7 @@ use App\Http\Controllers\Universite\{
     MatiereController as UnivMatiereController,
     NoteController as UnivNoteController,
     MyCoursesController,
+    MesNotesController,
     PlanningController,
     DevoirController as UnivDevoirController
 };
@@ -56,7 +57,20 @@ Route::middleware(['auth:sanctum', 'role:recteur,doyen,professeur,etudiant,perso
         ->names('universite.matieres')
         ->middleware('role:recteur,doyen,professeur,super-admin');
 
-    // Notes
+    // Notes. Grille d'une évaluation et enregistrement d'une grille en un envoi
+    // (espace mobile du professeur, 16/11/2026) ; le contrôleur borne le
+    // professeur à ses UE. Déclarées avant la ressource : `notes/lot` serait
+    // sinon lu comme `notes/{note}`.
+    Route::get('matieres/{matiere}/grille', [UnivNoteController::class, 'grille'])
+        ->whereNumber('matiere')
+        ->middleware('role:recteur,doyen,professeur,super-admin');
+    Route::post('notes/lot', [UnivNoteController::class, 'lot'])
+        ->middleware('role:recteur,doyen,professeur,super-admin');
+
+    // Relevé de l'étudiant connecté : ses UE, ses notes, ses crédits.
+    Route::get('mes-notes', [MesNotesController::class, 'index'])
+        ->middleware('role:etudiant');
+
     Route::apiResource('notes', UnivNoteController::class)
         ->names('universite.notes')
         ->middleware('role:recteur,doyen,professeur,super-admin');
