@@ -10,12 +10,16 @@ import {
   BookOpen, Search, Download, Plus, TrendingUp, TrendingDown, Award,
   FileSpreadsheet, RefreshCw, Lock, Unlock, Trophy, FileText,
 } from 'lucide-react';
-import { cn } from '@/shared/lib/utils';
+import { cn, formatDate } from '@/shared/lib/utils';
 import { useApiQuery, useApiMutation, api } from '@/shared/lib/api-client';
 import { unwrapList } from '@/shared/lib/unwrap';
 import useAuthStore from '@/shared/stores/auth-store';
 import { useNavigate } from 'react-router-dom';
-import { ROLE_GROUPS } from '@/shared/types/roles';
+import { ROLES, ROLE_GROUPS } from '@/shared/types/roles';
+
+// Jour local de l'école : l'API sérialise les dates seules à minuit de
+// Porto-Novo exprimé en UTC (la veille, 23 h), affiché tel quel jusqu'ici.
+const JOUR_ECOLE = { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Africa/Porto-Novo' };
 import StatsCard from '@/shared/components/ui/StatsCard';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
@@ -39,6 +43,11 @@ export default function NotesPage() {
   // `notes/{id}/lock`). Le bouton était montré aux parents et aux élèves, qui
   // recevaient un refus.
   const peutVerrouiller = useAuthStore((st) => st.hasAnyRole([...ROLE_GROUPS.DIRECTION, ...ROLE_GROUPS.ENSEIGNANTS]));
+  // La famille (élève, parent) lit ses notes : ni classement ni bulletins de
+  // classe (refusés par l'API à ces rôles), ni taux calculés pour la classe.
+  // L'élève ne voit que ses notes : son nom et sa classe ne sont pas répétés.
+  const estEleve = useAuthStore((st) => st.hasAnyRole([ROLES.ELEVE]));
+  const estFamille = useAuthStore((st) => st.hasAnyRole([ROLES.ELEVE, ROLES.PARENT]));
   const [page, setPage] = useState(1);
 
   const { data: notesData, isLoading, error, refetch } = useApiQuery(
@@ -93,6 +102,8 @@ export default function NotesPage() {
     }),
     [notes, search, filterMatiere, filterClasse]
   );
+
+  const colonnes = 9 - (estEleve ? 2 : 0) - (peutVerrouiller ? 0 : 1);
 
   const moyenneGenerale = notes.length > 0
     ? (notes.reduce((a, n) => a + parseFloat(n.note ?? 0), 0) / notes.length).toFixed(1)
@@ -193,7 +204,9 @@ export default function NotesPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.notes.notes.title')}</h1>
-          <p className="text-sm text-[var(--text-secondary)]">{t('pages.notes.notes.subtitle')}</p>
+          <p className="text-sm text-[var(--text-secondary)]">
+            {t(estEleve ? 'pages.notes.notes.subtitle_eleve' : estFamille ? 'pages.notes.notes.subtitle_parent' : 'pages.notes.notes.subtitle')}
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" aria-label={t('common.refresh')} title={t('common.refresh')} onClick={refetch} disabled={isLoading}>
@@ -213,15 +226,21 @@ export default function NotesPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatsCard title={t('pages.notes.notes.moyenne_generale')} value={`${moyenneGenerale}/20`} icon={Award} color="primary" />
-        <StatsCard title={t('pages.notes.notes.total_evaluations')} value={String(totalNotes)} icon={BookOpen} color="emerald" />
-        <StatsCard title={t('pages.notes.notes.taux_de_reussite')} value={tauxReussite === null ? '—' : `${tauxReussite}%`} icon={TrendingUp} color="sky" />
-        <StatsCard title={t('pages.notes.notes.echecs')} value={tauxReussite === null ? '—' : `${100 - tauxReussite}%`} icon={TrendingDown} color="red" />
-      </div>
+      {estFamille ? (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StatsCard title={t('pages.notes.notes.total_evaluations')} value={String(totalNotes)} icon={BookOpen} color="emerald" />
+        </div>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StatsCard title={t('pages.notes.notes.moyenne_generale')} value={`${moyenneGenerale}/20`} icon={Award} color="primary" />
+          <StatsCard title={t('pages.notes.notes.total_evaluations')} value={String(totalNotes)} icon={BookOpen} color="emerald" />
+          <StatsCard title={t('pages.notes.notes.taux_de_reussite')} value={tauxReussite === null ? '—' : `${tauxReussite}%`} icon={TrendingUp} color="sky" />
+          <StatsCard title={t('pages.notes.notes.echecs')} value={tauxReussite === null ? '—' : `${100 - tauxReussite}%`} icon={TrendingDown} color="red" />
+        </div>
+      )}
 
       {/* Tabs */}
-      <div className="flex gap-4 border-b border-[var(--border)] ">
+      {!estFamille && <div className="flex gap-4 border-b border-[var(--border)] ">
         <button
           onClick={() => setTab('notes')}
           className={cn(
@@ -258,7 +277,7 @@ export default function NotesPage() {
           <FileText className="h-4 w-4 inline mr-1.5" />
           {t('pages.notes.notes.bulletins')}
         </button>
-      </div>
+      </div>}
 
       {/* Tab: Notes */}
       {tab === 'notes' && (
@@ -266,7 +285,7 @@ export default function NotesPage() {
           {/* Filters */}
           <Card padding>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <div className="relative flex-1 max-w-sm">
+              {!estEleve && <div className="relative flex-1 max-w-sm">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
                 <Input
                   placeholder={t('common.search_student')}
@@ -274,8 +293,8 @@ export default function NotesPage() {
                   onChange={(e) => setSearch(e.target.value)}
                   className="pl-9"
                 />
-              </div>
-              <select
+              </div>}
+              {!estEleve && <select
                 value={filterClasse}
                 onChange={(e) => setFilterClasse(e.target.value)}
                 aria-label={t('common.filter_by_class')}
@@ -283,7 +302,7 @@ export default function NotesPage() {
               >
                 <option value="">{t('common.all_classes')}</option>
                 {classes.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
+              </select>}
               <select
                 value={filterMatiere}
                 onChange={(e) => setFilterMatiere(e.target.value)}
@@ -305,41 +324,41 @@ export default function NotesPage() {
             )}
             <Table>
               <Table.Header>
-                <Table.Head>{t('common.student')}</Table.Head>
-                <Table.Head>{t('common.class')}</Table.Head>
+                {!estEleve && <Table.Head>{t('common.student')}</Table.Head>}
+                {!estEleve && <Table.Head>{t('common.class')}</Table.Head>}
                 <Table.Head>{t('pages.notes.notes.matiere')}</Table.Head>
                 <Table.Head>{t('common.grade')}</Table.Head>
                 <Table.Head>{t('common.type')}</Table.Head>
                 <Table.Head>{t('pages.notes.notes.periode')}</Table.Head>
                 <Table.Head>{t('common.date')}</Table.Head>
                 <Table.Head className="text-center">{t('common.status_label')}</Table.Head>
-                <Table.Head className="text-right">{t('pages.notes.notes.action')}</Table.Head>
+                {peutVerrouiller && <Table.Head className="text-right">{t('pages.notes.notes.action')}</Table.Head>}
               </Table.Header>
               <Table.Body>
                 {isLoading && Array.from({ length: 5 }).map((_, i) => (
                   <Table.Row key={i}>
-                    {Array.from({ length: 9 }).map((__, j) => (
+                    {Array.from({ length: colonnes }).map((__, j) => (
                       <Table.Cell key={j}><Skeleton className="h-4 w-full" /></Table.Cell>
                     ))}
                   </Table.Row>
                 ))}
                 {!isLoading && filtered.length === 0 && (
                   <Table.Row>
-                    <td colSpan={9} className="p-8 text-center text-sm text-[var(--text-secondary)]">
+                    <td colSpan={colonnes} className="p-8 text-center text-sm text-[var(--text-secondary)]">
                       {t('pages.notes.notes.aucune_note_trouvee')}
                     </td>
                   </Table.Row>
                 )}
                 {!isLoading && filtered.map((n) => (
                   <Table.Row key={n.id}>
-                    <Table.Cell>
+                    {!estEleve && <Table.Cell>
                       <span className="font-medium text-[var(--text-primary)] ">
                         {n.eleve?.user?.name} {n.eleve?.user?.prenom}
                       </span>
-                    </Table.Cell>
-                    <Table.Cell>
+                    </Table.Cell>}
+                    {!estEleve && <Table.Cell>
                       <Badge variant="outline">{n.classe?.nom_classe ?? '—'}</Badge>
-                    </Table.Cell>
+                    </Table.Cell>}
                     <Table.Cell>{n.matiere?.nom ?? '—'}</Table.Cell>
                     <Table.Cell>
                       <span className={cn(
@@ -355,7 +374,7 @@ export default function NotesPage() {
                       <Badge variant="info" size="sm">{n.type_evaluation}</Badge>
                     </Table.Cell>
                     <Table.Cell className="text-xs text-[var(--text-secondary)]">{n.periode}</Table.Cell>
-                    <Table.Cell className="text-xs text-[var(--text-secondary)]">{n.date_evaluation}</Table.Cell>
+                    <Table.Cell className="text-xs text-[var(--text-secondary)]">{n.date_evaluation ? formatDate(n.date_evaluation, JOUR_ECOLE) : '—'}</Table.Cell>
                     <Table.Cell className="text-center">
                       {n.locked ? (
                         <Lock className="h-4 w-4 text-amber-500 mx-auto" title={t('pages.notes.notes.verrouillee')} />
@@ -363,8 +382,8 @@ export default function NotesPage() {
                         <Unlock className="h-4 w-4 text-[var(--text-secondary)] mx-auto" title={t('pages.notes.notes.deverrouillee')} />
                       )}
                     </Table.Cell>
-                    <Table.Cell className="text-right">
-                      {peutVerrouiller && <button
+                    {peutVerrouiller && <Table.Cell className="text-right">
+                      <button
                         type="button"
                         aria-label={n.locked ? t('pages.notes.notes.deverrouiller') : t('pages.notes.notes.verrouiller')}
                         onClick={() => handleLock(n.id, n.locked)}
@@ -377,8 +396,8 @@ export default function NotesPage() {
                         title={n.locked ? t('pages.notes.notes.deverrouiller') : t('pages.notes.notes.verrouiller')}
                       >
                         {n.locked ? <Unlock className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
-                      </button>}
-                    </Table.Cell>
+                      </button>
+                    </Table.Cell>}
                   </Table.Row>
                 ))}
               </Table.Body>

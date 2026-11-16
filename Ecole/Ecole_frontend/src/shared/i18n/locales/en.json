@@ -1445,6 +1445,8 @@
       "notes": {
         "title": "Grades",
         "subtitle": "View and manage student grades",
+        "subtitle_eleve": "Your marks, assessment by assessment",
+        "subtitle_parent": "Your children’s marks, assessment by assessment",
         "importer": "Import",
         "pagination": "Grades pagination",
         "page_x_sur_y": "Page {page} of {total}",
