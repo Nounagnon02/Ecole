@@ -445,7 +445,7 @@ export function CopiesDevoir({ devoir, onRetour }) {
 
   const rendues = copies.filter((c) => c.rendu);
   return (
-    <Ecran titre={devoir.titre} sousTitre={`${rendues.length}/${pluriel(copies.length, 'copie')} rendue${rendues.length > 1 ? 's' : ''}`}
+    <Ecran titre={devoir.titre} sousTitre={`${pluriel(rendues.length, 'copie')} rendue${rendues.length > 1 ? 's' : ''} sur ${copies.length}`}
       onRetour={onRetour} retourLabel="Retour à mes devoirs" onActualiser={req.recharger}>
       <Etat requete={req} estVide={!req.chargement && copies.length === 0} vide="Aucun étudiant concerné par ce devoir." />
       <Liste>

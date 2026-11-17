@@ -196,6 +196,8 @@ describe('devoirs universitaires', () => {
     monter(<CopiesDevoir devoir={devoir} onRetour={() => {}} />);
 
     fireEvent.changeText(await screen.findByLabelText('Note de Rémi AGOSSOU'), '16');
+    // Constaté sur l'émulateur : « 1/2 copies rendue ».
+    expect(screen.getByText('1 copie rendue sur 2')).toBeTruthy();
     expect(screen.queryByLabelText('Note de Bella ZINSOU')).toBeNull();
     fireEvent.press(screen.getByRole('button', { name: 'Noter Rémi AGOSSOU' }));
     await waitFor(() => expect(api.post).toHaveBeenCalledWith('/universite/devoirs/9/etudiants/41/noter', { note: 16 }));
