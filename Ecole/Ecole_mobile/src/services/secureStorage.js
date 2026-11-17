@@ -85,8 +85,30 @@ export async function listeBrouillons() {
   return cles.filter((c) => c.startsWith(PREFIXE_BROUILLON)).map((c) => c.slice(PREFIXE_BROUILLON.length));
 }
 
+/*
+ * Dernière réponse de chaque lecture réussie, pour consulter hors connexion
+ * ce qui a déjà été vu (17/11/2026). Effacée à la déconnexion avec le reste :
+ * le compte suivant sur le même téléphone n'en voit rien.
+ */
+const PREFIXE_CACHE = '@ecole_cache:';
+const TAILLE_MAX_CACHE = 300000;
+
+export async function setCache(chemin, donnees) {
+  const texte = JSON.stringify({ donnees, le: Date.now() });
+  if (texte.length > TAILLE_MAX_CACHE) return;
+  await AsyncStorage.setItem(PREFIXE_CACHE + chemin, texte);
+}
+
+export async function getCache(chemin) {
+  try {
+    return JSON.parse((await AsyncStorage.getItem(PREFIXE_CACHE + chemin)) ?? 'null');
+  } catch {
+    return null;
+  }
+}
+
 export async function clearAll() {
-  const brouillons = (await AsyncStorage.getAllKeys().catch(() => [])).filter((c) => c.startsWith(PREFIXE_BROUILLON));
+  const brouillons = (await AsyncStorage.getAllKeys().catch(() => [])).filter((c) => c.startsWith(PREFIXE_BROUILLON) || c.startsWith(PREFIXE_CACHE));
   await Promise.all([
     removeToken().catch(() => {}),
     AsyncStorage.removeItem(USER_KEY),

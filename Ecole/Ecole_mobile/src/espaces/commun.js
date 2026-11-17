@@ -12,6 +12,7 @@ import React, { createContext, useCallback, useContext, useEffect, useRef, useSt
 import { ActivityIndicator, BackHandler, Modal, Pressable, RefreshControl, ScrollView, StatusBar, Text, TextInput, View } from 'react-native';
 import { SafeAreaInsetsContext } from 'react-native-safe-area-context';
 import { api } from '../services/api';
+import { getCache, setCache } from '../services/secureStorage';
 import { useTheme } from '../theme';
 import { fonts } from '../theme/typography';
 import { Icone } from './Icone';
@@ -29,20 +30,65 @@ export function messageErreur(err, defaut = 'Le chargement a échoué.') {
   return err.response?.data?.message || defaut;
 }
 
-/** Requête GET avec états ; `chemin` nul = rien à charger. */
+/*
+ * Écrans affichant des données gardées sur le téléphone faute de réseau :
+ * l'en-tête de l'écran le dit une seule fois, avec la date la plus ancienne.
+ */
+const horsLigneActifs = new Map();
+const ecouteursHorsLigne = new Set();
+function signalerHorsLigne(cle, le) {
+  if (le) horsLigneActifs.set(cle, le); else horsLigneActifs.delete(cle);
+  ecouteursHorsLigne.forEach((f) => f());
+}
+/** Horodatage des plus anciennes données hors connexion affichées, ou null. */
+export function useHorsLigne() {
+  const [, maj] = useState(0);
+  useEffect(() => {
+    const f = () => maj((x) => x + 1);
+    ecouteursHorsLigne.add(f);
+    return () => { ecouteursHorsLigne.delete(f); };
+  }, []);
+  return horsLigneActifs.size ? Math.min(...horsLigneActifs.values()) : null;
+}
+
+/** « 16/11 à 17:34 », à l'heure de Porto-Novo. */
+export function dateHeureCourte(ms) {
+  const p = Object.fromEntries(new Intl.DateTimeFormat('fr-FR', { timeZone: 'Africa/Porto-Novo', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false })
+    .formatToParts(new Date(ms)).map((x) => [x.type, x.value]));
+  return `${p.day}/${p.month} à ${p.hour}:${p.minute}`;
+}
+
+/**
+ * Requête GET avec états ; `chemin` nul = rien à charger.
+ *
+ * Hors connexion (aucune réponse du serveur), la dernière réponse gardée sur
+ * le téléphone est affichée et marquée comme telle (`horsLigne` = date de la
+ * lecture). Un refus de l'API (401, 403, 404…) n'utilise jamais ce cache.
+ */
 export function useRequete(chemin) {
-  const [etat, setEtat] = useState({ donnees: null, chargement: !!chemin, erreur: null });
+  const [etat, setEtat] = useState({ donnees: null, chargement: !!chemin, erreur: null, horsLigne: null });
+  const cle = useRef(Symbol('requete')).current;
   const charger = useCallback(async () => {
-    if (!chemin) { setEtat({ donnees: null, chargement: false, erreur: null }); return; }
+    if (!chemin) { setEtat({ donnees: null, chargement: false, erreur: null, horsLigne: null }); signalerHorsLigne(cle, null); return; }
     setEtat((e) => ({ ...e, chargement: true, erreur: null }));
     try {
       const { data } = await api.get(chemin);
-      setEtat({ donnees: data, chargement: false, erreur: null });
+      setEtat({ donnees: data, chargement: false, erreur: null, horsLigne: null });
+      signalerHorsLigne(cle, null);
+      setCache(chemin, data).catch(() => {});
     } catch (err) {
-      setEtat({ donnees: null, chargement: false, erreur: messageErreur(err) });
+      const garde = err?.response ? null : await getCache(chemin);
+      if (garde) {
+        setEtat({ donnees: garde.donnees, chargement: false, erreur: null, horsLigne: garde.le });
+        signalerHorsLigne(cle, garde.le);
+        return;
+      }
+      setEtat({ donnees: null, chargement: false, erreur: messageErreur(err), horsLigne: null });
+      signalerHorsLigne(cle, null);
     }
-  }, [chemin]);
+  }, [chemin, cle]);
   useEffect(() => { charger(); }, [charger]);
+  useEffect(() => () => signalerHorsLigne(cle, null), [cle]);
   return { ...etat, recharger: charger };
 }
 
@@ -153,6 +199,7 @@ export function Ecran({
   titre = undefined, sur = undefined, sousTitre = undefined, onRetour = undefined, retourLabel = 'Retour', puces = undefined,
   sansCompte = false, onActualiser = undefined, actualisation = false, pied = null, children = null,
 }) {
+  const horsLigne = useHorsLigne();
   const t = useTeintes();
   const marges = useContext(SafeAreaInsetsContext) ?? { top: 0 };
   const espace = useContext(EspaceContexte);
@@ -212,6 +259,13 @@ export function Ecran({
         keyboardShouldPersistTaps="handled"
         refreshControl={onActualiser ? <RefreshControl refreshing={actualisation} onRefresh={onActualiser} tintColor={t.colors.accent} /> : undefined}
       >
+        {horsLigne ? (
+          <Carte ton="ocre">
+            <Texte accessibilityRole="alert" style={{ fontSize: 14 }}>
+              Hors connexion : données enregistrées sur ce téléphone le {dateHeureCourte(horsLigne)}. Elles ont pu changer depuis.
+            </Texte>
+          </Carte>
+        ) : null}
         {children}
       </ScrollView>
       {pied}
