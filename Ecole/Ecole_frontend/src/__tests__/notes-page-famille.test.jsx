@@ -39,7 +39,8 @@ describe('NotesPage — famille', () => {
   it('montre à l’élève ses notes, sans outils du personnel', async () => {
     signIn(ROLES.ELEVE);
     monter();
-    expect(await screen.findByText('Devoir2')).toBeInTheDocument();
+    // Libellé lisible, comme sur le mobile, depuis le 17/11/2026.
+    expect(await screen.findByText('Devoir 2')).toBeInTheDocument();
     expect(screen.getByText('Vos notes, évaluation par évaluation')).toBeInTheDocument();
     expect(screen.queryByText(/gérez les notes/)).not.toBeInTheDocument();
     for (const absent of ['Classement', 'Bulletins', 'Taux de réussite', 'Échecs', 'Moyenne générale', 'Action']) {

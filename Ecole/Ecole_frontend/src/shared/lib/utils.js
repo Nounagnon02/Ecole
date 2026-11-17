@@ -12,6 +12,29 @@ export function formatNumber(value, decimals = 0) {
   }).format(value);
 }
 
+/**
+ * Note sur son barème, à la française : « 13/20 », « 12,5/20 » ; « — » si
+ * inconnue. L'API renvoie des décimaux en texte (« 13.00 », « 20.00 ») :
+ * affichés tels quels, ils donnaient « 13.00/20.00 » (17/11/2026).
+ */
+export function noteSur(valeur, sur = 20) {
+  const n = Number(valeur);
+  if (valeur === null || valeur === undefined || valeur === '' || !Number.isFinite(n)) return '—';
+  const bareme = Number(sur) || 20;
+  const fr = (x) => x.toLocaleString('fr-FR', { maximumFractionDigits: 2 });
+  return `${fr(n)}/${fr(bareme)}`;
+}
+
+/** Nom lisible d'une évaluation, comme sur le mobile (« Devoir1 » → « Devoir 1 »). */
+export function libelleEvaluation(type) {
+  const t = String(type ?? '');
+  const devoir = t.match(/^Devoir\s*(\d+)$/i);
+  if (devoir) return `Devoir ${devoir[1]}`;
+  const rang = t.match(/^(\d+)(?:ère|ème|e)\s+[ée]valuation$/i);
+  if (rang) return `${rang[1]}${rang[1] === '1' ? 're' : 'e'} évaluation`;
+  return t;
+}
+
 export function formatCurrency(value) {
   return new Intl.NumberFormat('fr-FR', {
     style: 'currency',

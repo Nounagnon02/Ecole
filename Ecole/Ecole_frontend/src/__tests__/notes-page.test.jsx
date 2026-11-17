@@ -104,7 +104,8 @@ describe('NotesPage — réponse paginée de l’API', () => {
 
     await screen.findByText(/AGBODJAN/);
     expect(screen.getByText('Moyenne des notes')).toBeInTheDocument();
-    expect(screen.getByText('11.84/20')).toBeInTheDocument();
+    // Format français depuis le 17/11/2026 (le point décimal s'affichait).
+    expect(screen.getByText('11,84/20')).toBeInTheDocument();
     expect(screen.getByText('98%')).toBeInTheDocument();
     expect(screen.getByText('2%')).toBeInTheDocument();
     // La moyenne de la page (15,25) n'est plus affichée.

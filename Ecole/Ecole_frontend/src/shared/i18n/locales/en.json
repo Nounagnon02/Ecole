@@ -1493,7 +1493,8 @@
         "deverrouiller": "Unlock",
         "verrouiller": "Lock",
         "publie": "Published",
-        "verrouille": "Locked"
+        "verrouille": "Locked",
+        "modifiable": "Editable"
       },
       "saisie": {
         "title": "Grade entry",

@@ -10,7 +10,7 @@ import {
   BookOpen, Search, Download, Plus, TrendingUp, TrendingDown, Award,
   FileSpreadsheet, RefreshCw, Lock, Unlock, Trophy, FileText,
 } from 'lucide-react';
-import { cn, formatDate } from '@/shared/lib/utils';
+import { cn, formatDate, libelleEvaluation, noteSur } from '@/shared/lib/utils';
 import { useApiQuery, useApiMutation, api } from '@/shared/lib/api-client';
 import { unwrapList } from '@/shared/lib/unwrap';
 import useAuthStore from '@/shared/stores/auth-store';
@@ -240,7 +240,7 @@ export default function NotesPage() {
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatsCard title={t('pages.notes.notes.moyenne_des_notes')} value={moyenneGenerale === '—' ? '—' : `${moyenneGenerale}/20`} icon={Award} color="primary" />
+          <StatsCard title={t('pages.notes.notes.moyenne_des_notes')} value={noteSur(moyenneGenerale)} icon={Award} color="primary" />
           <StatsCard title={t('pages.notes.notes.total_evaluations')} value={String(totalNotes)} icon={BookOpen} color="emerald" />
           <StatsCard title={t('pages.notes.notes.taux_de_reussite')} value={tauxReussite === null ? '—' : `${tauxReussite}%`} icon={TrendingUp} color="sky" />
           <StatsCard title={t('pages.notes.notes.echecs')} value={tauxReussite === null ? '—' : `${100 - tauxReussite}%`} icon={TrendingDown} color="red" />
@@ -375,20 +375,20 @@ export default function NotesPage() {
                           : parseFloat(n.note) >= 10 ? 'text-amber-500'
                           : 'text-red-500'
                       )}>
-                        {n.note}/{n.note_sur ?? 20}
+                        {noteSur(n.note, n.note_sur ?? 20)}
                       </span>
                     </Table.Cell>
                     <Table.Cell>
-                      <Badge variant="info" size="sm">{n.type_evaluation}</Badge>
+                      <Badge variant="info" size="sm">{libelleEvaluation(n.type_evaluation)}</Badge>
                     </Table.Cell>
                     <Table.Cell className="text-xs text-[var(--text-secondary)]">{n.periode}</Table.Cell>
                     <Table.Cell className="text-xs text-[var(--text-secondary)]">{n.date_evaluation ? formatDate(n.date_evaluation, JOUR_ECOLE) : '—'}</Table.Cell>
                     <Table.Cell className="text-center">
-                      {n.locked ? (
-                        <Lock className="h-4 w-4 text-amber-500 mx-auto" title={t('pages.notes.notes.verrouillee')} />
-                      ) : (
-                        <Unlock className="h-4 w-4 text-[var(--text-secondary)] mx-auto" title={t('pages.notes.notes.deverrouillee')} />
-                      )}
+                      {/* L'état en mots : deux cadenas de sens contraires (état ici,
+                          action inverse à côté) se lisaient mal (17/11/2026). */}
+                      <Badge variant={n.locked ? 'warning' : 'outline'} size="sm">
+                        {n.locked ? t('pages.notes.notes.verrouillee') : t('pages.notes.notes.modifiable')}
+                      </Badge>
                     </Table.Cell>
                     {peutVerrouiller && <Table.Cell className="text-right">
                       <button
@@ -396,14 +396,15 @@ export default function NotesPage() {
                         aria-label={n.locked ? t('pages.notes.notes.deverrouiller') : t('pages.notes.notes.verrouiller')}
                         onClick={() => handleLock(n.id, n.locked)}
                         className={cn(
-                          'p-1.5 rounded-lg transition-colors',
+                          'inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium transition-colors',
                           n.locked
                             ? 'text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-500/10'
                             : 'text-[var(--text-tertiary)] hover:bg-[var(--surface-subtle)] '
                         )}
                         title={n.locked ? t('pages.notes.notes.deverrouiller') : t('pages.notes.notes.verrouiller')}
                       >
-                        {n.locked ? <Unlock className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+                        {n.locked ? <Unlock className="h-4 w-4" aria-hidden="true" /> : <Lock className="h-4 w-4" aria-hidden="true" />}
+                        {n.locked ? t('pages.notes.notes.deverrouiller') : t('pages.notes.notes.verrouiller')}
                       </button>
                     </Table.Cell>}
                   </Table.Row>
@@ -535,7 +536,7 @@ export default function NotesPage() {
                               : row.moyenne >= 10 ? 'text-amber-500'
                               : 'text-red-500'
                           )}>
-                            {row.moyenne.toFixed(2)}
+                            {noteSur(row.moyenne)}
                           </span>
                         </Table.Cell>
                         <Table.Cell className="text-right text-sm text-[var(--text-secondary)]">{row.total_notes}</Table.Cell>
@@ -652,7 +653,7 @@ export default function NotesPage() {
                           {row.eleve?.user?.name} {row.eleve?.user?.prenom}
                         </span>
                       </Table.Cell>
-                      <Table.Cell className="text-right font-semibold">{parseFloat(row.valeur).toFixed(2)}/20</Table.Cell>
+                      <Table.Cell className="text-right font-semibold">{noteSur(row.valeur)}</Table.Cell>
                       <Table.Cell className="text-right text-[var(--text-secondary)]">{row.total_eleves}</Table.Cell>
                     </Table.Row>
                   ))}
@@ -706,7 +707,7 @@ export default function NotesPage() {
                         </span>
                       </Table.Cell>
                       <Table.Cell className="text-right font-semibold">
-                        {parseFloat(b.moyenne_generale).toFixed(2)}/20
+                        {noteSur(b.moyenne_generale)}
                       </Table.Cell>
                       <Table.Cell>
                         <span className={cn('font-medium text-sm', mentionColor(b.mention))}>{b.mention}</span>

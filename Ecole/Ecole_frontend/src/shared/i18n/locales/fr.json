@@ -1493,7 +1493,8 @@
         "deverrouiller": "Déverrouiller",
         "verrouiller": "Verrouiller",
         "publie": "Publié",
-        "verrouille": "Verrouillé"
+        "verrouille": "Verrouillé",
+        "modifiable": "Modifiable"
       },
       "saisie": {
         "title": "Saisie des notes",

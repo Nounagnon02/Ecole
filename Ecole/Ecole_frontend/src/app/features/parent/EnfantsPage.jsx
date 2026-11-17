@@ -13,7 +13,7 @@ import {
   User, GraduationCap, BookOpen, TrendingUp, Calendar,
   AlertTriangle, FileText, Clock, Loader2
 } from 'lucide-react';
-import { cn, formatNumber, formatDate } from '@/shared/lib/utils';
+import { cn, formatNumber, formatDate, noteSur } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Avatar from '@/shared/components/ui/Avatar';
@@ -209,9 +209,9 @@ export default function EnfantsPage() {
                         'text-lg font-bold',
                         parseFloat(n.note || 0) >= 14 ? 'text-[var(--green)]' : parseFloat(n.note || 0) >= 10 ? 'text-[var(--amber)]' : 'text-[var(--red)]'
                       )}>
-                        {n.note}/{n.note_sur || 20}
+                        {noteSur(n.note, n.note_sur || 20)}
                       </p>
-                      <p className="text-xs text-[var(--text-secondary)]">Moy. classe: {n.moyenne_classe || n.moyenne || '—'}</p>
+                      <p className="text-xs text-[var(--text-secondary)]">Moy. classe : {noteSur(n.moyenne_classe ?? n.moyenne)}</p>
                     </div>
                   </div>
                 ))
