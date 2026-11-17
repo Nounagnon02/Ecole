@@ -6,7 +6,9 @@
 
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import useAuthStore from '@/shared/stores/auth-store';
+import { ROLES } from '@/shared/types/roles';
 import {
   DollarSign, Search, Download, Plus, CreditCard,
   TrendingUp, TrendingDown, Receipt, RefreshCw, Calendar, Eye,
@@ -25,7 +27,7 @@ import { Skeleton } from '@/shared/components/ui/Skeleton';
 import { toast } from 'sonner';
 import { useTranslation } from '@/shared/i18n';
 import EncaissementDialog from './EncaissementDialog';
-import { telechargerRecuVersement } from '@/shared/lib/telecharger';
+import { aujourdhuiIso, telechargerCsv, telechargerRecuVersement } from '@/shared/lib/telecharger';
 
 const STATUT_COLORS = {
   payee: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400',
@@ -50,6 +52,8 @@ export default function PaiementsPage() {
   const [echeanceData, setEcheanceData] = useState(null);
   const [echeanceLoading, setEcheanceLoading] = useState(false);
   const [aEncaisser, setAEncaisser] = useState(null);
+  const navigate = useNavigate();
+  const estComptable = useAuthStore((s) => s.user?.role) === ROLES.COMPTABLE;
 
   const { data: paiementsData, isLoading, error, refetch } = useApiQuery(
     ['paiements'],
@@ -193,9 +197,21 @@ export default function PaiementsPage() {
           <Button variant="ghost" size="sm" aria-label={t('common.refresh')} title={t('common.refresh')} onClick={refetch} disabled={isLoading}>
             <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} />
           </Button>
-          <Button variant="outline" size="sm" icon={<Receipt />}>{t('pages.paiements.paiements.factures')}</Button>
-          <Button variant="outline" size="sm" icon={<Download />}>{t('common.export')}</Button>
-          <Button size="sm" icon={<Plus />}>{t('pages.paiements.paiements.nouveau_paiement')}</Button>
+          {/* Ces trois boutons ne faisaient rien (constaté le 17/11/2026). Les
+              factures ne sont ouvertes qu'au comptable : le lien n'est proposé
+              qu'à lui. Un paiement s'encaisse sur l'échéancier d'un élève. */}
+          {estComptable ? (
+            <Button variant="outline" size="sm" icon={<Receipt />} onClick={() => navigate('/comptable/factures')}>{t('pages.paiements.paiements.factures')}</Button>
+          ) : null}
+          <Button variant="outline" size="sm" icon={<Download />} disabled={filtered.length === 0}
+            onClick={() => telechargerCsv(`paiements-${aujourdhuiIso()}.csv`, [
+              ['Référence', 'Élève', 'Classe', 'Type', 'Payé (FCFA)', 'Montant dû (FCFA)', 'Date', 'Statut'],
+              ...filtered.map((p) => [p.reference, [p.eleve?.user?.name, p.eleve?.user?.prenom].filter(Boolean).join(' '), p.eleve?.classe?.nom_classe,
+                p.type_paiement, payeDe(p), totalDe(p), p.date_paiement, p.statut_label ?? p.statut]),
+            ])}>{t('common.export')}</Button>
+          <Button size="sm" icon={<Plus />} onClick={() => { setTab('echeancier'); setTimeout(() => document.getElementById('recherche-eleve-echeancier')?.focus(), 0); }}>
+            {t('pages.paiements.paiements.nouveau_paiement')}
+          </Button>
         </div>
       </div>
 
@@ -354,6 +370,8 @@ export default function PaiementsPage() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
                 <Input
+                  id="recherche-eleve-echeancier"
+                  aria-label={t('common.search_student')}
                   placeholder={t('common.search_student')}
                   value={echeanceSearch}
                   onChange={(e) => setEcheanceSearch(e.target.value)}

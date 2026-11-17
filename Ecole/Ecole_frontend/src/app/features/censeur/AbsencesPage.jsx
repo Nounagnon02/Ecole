@@ -11,13 +11,12 @@ import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
   Calendar, Users, CheckCircle, XCircle, AlertCircle,
-  Search, FileText, Loader2
+  Search, Loader2
 } from 'lucide-react';
 import { formatDate } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Avatar from '@/shared/components/ui/Avatar';
-import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
 import { useTranslation } from '@/shared/i18n';
@@ -152,13 +151,12 @@ export default function AbsencesPage() {
                 <th scope="col" className="pb-3 pr-4">{t('common.type')}</th>
                 <th scope="col" className="pb-3 pr-4">{t('pages.censeur.absences.justifiee')}</th>
                 <th scope="col" className="pb-3 pr-4">{t('common.reason')}</th>
-                <th scope="col" className="pb-3 text-right">{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center text-sm text-[var(--text-secondary)]">
+                  <td colSpan={6} className="py-8 text-center text-sm text-[var(--text-secondary)]">
                     {t('pages.censeur.absences.aucune_absence_trouvee')}
                   </td>
                 </tr>
@@ -193,9 +191,6 @@ export default function AbsencesPage() {
                   </td>
                   <td className="py-3 pr-4">
                     <span className="text-sm text-[var(--text-secondary)] ">{a.motif || '—'}</span>
-                  </td>
-                  <td className="py-3 text-right">
-                    <Button variant="ghost" size="sm" icon={<FileText />} title={t('common.details')} />
                   </td>
                 </tr>
               ))}

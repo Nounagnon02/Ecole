@@ -607,33 +607,10 @@ function SecuriteSection() {
 
       <TwoFactorCard />
 
-      <Card>
-        <Card.Header title={t('pages.parametres.parametres.sessions_actives')} />
-        <Card.Body>
-        <div className="space-y-3">
-          <div className="flex items-center justify-between rounded-lg border border-[var(--border)] p-3 ">
-            <div className="flex items-center gap-3">
-              <Smartphone className="h-5 w-5 text-[var(--text-tertiary)]" />
-              <div>
-                <p className="text-sm font-medium text-[var(--text-primary)] ">{t('pages.parametres.parametres.chrome_sur_windows')}</p>
-                <p className="text-xs text-[var(--text-secondary)]">{t('pages.parametres.parametres.ip_192_168_1_42_derniere_activite_il_y_a_2_min')}</p>
-              </div>
-            </div>
-            <Badge variant="outline" className="text-emerald-600">{t('pages.parametres.parametres.active')}</Badge>
-          </div>
-          <div className="flex items-center justify-between rounded-lg border border-[var(--border)] p-3 ">
-            <div className="flex items-center gap-3">
-              <Smartphone className="h-5 w-5 text-[var(--text-tertiary)]" />
-              <div>
-                <p className="text-sm font-medium text-[var(--text-primary)] ">{t('pages.parametres.parametres.safari_sur_macos')}</p>
-                <p className="text-xs text-[var(--text-secondary)]">{t('pages.parametres.parametres.ip_10_0_0_15_derniere_activite_il_y_a_3_jours')}</p>
-              </div>
-            </div>
-            <Button variant="ghost" size="sm">{t('pages.parametres.parametres.revoquer')}</Button>
-          </div>
-        </div>
-        </Card.Body>
-      </Card>
+      {/* La carte « Sessions actives » montrait deux sessions inventées
+          (« Safari sur macOS, IP 10.0.0.15… ») et un bouton « Révoquer » sans
+          effet : l'API ne liste pas les sessions. Retirée le 17/11/2026 ; la
+          gestion des sessions des autres appareils reste à construire. */}
     </div>
   );
 }

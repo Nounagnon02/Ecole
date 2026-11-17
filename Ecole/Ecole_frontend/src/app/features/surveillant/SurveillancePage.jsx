@@ -19,6 +19,7 @@ import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import StatsCard from '@/shared/components/ui/StatsCard';
 import { useTranslation } from '@/shared/i18n';
+import { IncidentDialog } from '@/app/features/censeur/DisciplineDialogs';
 
 const getStatutVariant = (statut) => {
   switch (statut) {
@@ -53,6 +54,7 @@ export default function SurveillancePage() {
   const { t } = useTranslation();
   const statutLabel = (v) => (STATUT_LABEL_KEYS[v] ? t(STATUT_LABEL_KEYS[v]) : (v || '—'));
   const [filterGravite, setFilterGravite] = useState('');
+  const [nouvelIncident, setNouvelIncident] = useState(false);
 
   // Le chargement passait par un `useState` doublé d'un `useEffect` de
   // premier rendu, sans cache ni déduplication : deux composants montés
@@ -134,7 +136,7 @@ export default function SurveillancePage() {
               <option value="grave">{t('pages.surveillant.surveillance.grave')}</option>
             </select>
           </div>
-          <Button size="sm" icon={<Plus />}>{t('pages.surveillant.surveillance.nouvel_incident')}</Button>
+          <Button size="sm" icon={<Plus />} onClick={() => setNouvelIncident(true)}>{t('pages.surveillant.surveillance.nouvel_incident')}</Button>
         </div>
       </Card>
 
@@ -171,7 +173,7 @@ export default function SurveillancePage() {
                 </div>
                 <div className="mt-2 flex items-center gap-4 text-sm text-[var(--text-secondary)] ">
                   <span className={cn('inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium', getGraviteColor(s.gravite))}>
-                    {s.gravite ? `Gravité: ${s.gravite}` : t('pages.surveillant.surveillance.non_definie')}
+                    {s.gravite ? `Gravité : ${s.gravite}` : t('pages.surveillant.surveillance.non_definie')}
                   </span>
                   <span className="flex items-center gap-1">
                     <Calendar className="h-3.5 w-3.5" />
@@ -179,11 +181,11 @@ export default function SurveillancePage() {
                   </span>
                 </div>
               </div>
-              <Button variant="ghost" size="sm">{t('common.details')}</Button>
             </div>
           </Card>
         ))}
       </div>
+      <IncidentDialog open={nouvelIncident} onClose={() => setNouvelIncident(false)} onDone={() => requete.refetch()} />
     </motion.div>
   );
 }

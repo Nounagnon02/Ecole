@@ -22,8 +22,8 @@ import { useApiQuery } from '@/shared/lib/api-client';
 import { useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import {
-  Search, Send, Paperclip, Trash2, Star, MessageSquare, Users,
-  Phone, Video, Loader2, AlertCircle, X
+  Search, Send, Paperclip, MessageSquare, Users,
+  Loader2, AlertCircle, X
 } from 'lucide-react';
 import { cn, formatRelativeTime } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
@@ -410,12 +410,9 @@ export default function MessageriePage() {
                     <p className="text-xs text-[var(--text-secondary)]">{selectedConv.role}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-1">
-                  <Button variant="ghost" size="sm" icon={<Phone />} />
-                  <Button variant="ghost" size="sm" icon={<Video />} />
-                  <Button variant="ghost" size="sm" icon={<Star />} />
-                  <Button variant="ghost" size="sm" icon={<Trash2 />} />
-                </div>
+                {/* Appel, visio, favori et suppression : quatre icônes sans
+                    fonction ni libellé (l'API n'offre ni appel ni suppression
+                    de conversation). Retirées le 17/11/2026. */}
               </div>
 
               {/* Messages */}
