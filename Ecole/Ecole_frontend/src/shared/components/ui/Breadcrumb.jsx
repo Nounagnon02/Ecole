@@ -65,6 +65,7 @@ const ROUTE_KEY_LABELS = {
   universiteCours: 'Cours',
   universiteMesCours: 'Mes Cours',
   universiteNotes: 'Notes',
+  universiteMesNotes: 'Mes notes',
   universiteTaches: 'Tâches',
   universitePlanning: 'Planning',
   universiteDashboard: 'Dashboard',

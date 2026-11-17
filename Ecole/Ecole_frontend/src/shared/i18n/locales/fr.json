@@ -55,7 +55,8 @@
     "assistant": "Assistant",
     "personnel": "Personnel",
     "saisie_notes": "Saisir des notes",
-    "programme": "Programme des classes"
+    "programme": "Programme des classes",
+    "mes_notes": "Mes notes"
   },
   "common": {
     "coming_soon": "Bientôt disponible",
@@ -2041,6 +2042,31 @@
         "dans_x_jours": "Dans {n} jours",
         "tache": "Tâche",
         "terminee": "Terminée"
+      },
+      "mes_notes": {
+        "title": "Mes notes",
+        "provisoire": "Relevé provisoire",
+        "jury": "Les résultats officiels (compensation, rattrapage) sont ceux de la délibération du jury.",
+        "regle": "Moyenne d’UE : {cc} % contrôle continu (CC, TP), {examen} % examen · UE validée à {seuil}/20.",
+        "aucune_ue": "Aucune UE n’est encore programmée pour votre filière.",
+        "semestres": "Semestres",
+        "moyenne": "Moyenne {semestre}",
+        "credits_acquis": "Crédits acquis",
+        "moyenne_partielle": "Moyenne du semestre calculée sur les seules UE dont l’examen est noté.",
+        "ue": "UE",
+        "credits": "Crédits",
+        "cc": "Contrôle continu",
+        "examen": "Examen",
+        "moyenne_ue": "Moyenne",
+        "detail_de": "Détail de {code}",
+        "enseignant": "Enseignant : {nom}",
+        "aucune_note": "Aucune note pour le moment.",
+        "statut": {
+          "validee": "Validée",
+          "non_validee": "Non validée",
+          "en_cours": "En cours",
+          "pas_de_note": "Pas de note"
+        }
       }
     },
     "affectations": {

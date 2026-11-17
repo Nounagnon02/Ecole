@@ -315,6 +315,13 @@ export const ROUTE_CONFIG = {
     component: lazy(() => import('@/app/features/universite/MesCoursPage')),
     roles: [ROLES.PROFESSEUR, ROLES.ETUDIANT],
   },
+  // Relevé de l'étudiant (17/11/2026) : « Notes » ci-dessous est la page du
+  // professeur ; l'étudiant n'avait aucune page de notes sur le web.
+  universiteMesNotes: {
+    path: '/universite/mes-notes',
+    component: lazy(() => import('@/app/features/universite/MesNotesPage')),
+    roles: [ROLES.ETUDIANT],
+  },
   universiteNotes: {
     path: '/universite/notes',
     component: lazy(() => import('@/app/features/universite/NotesPage')),

@@ -55,7 +55,8 @@
     "assistant": "Assistant",
     "personnel": "Staff",
     "saisie_notes": "Enter grades",
-    "programme": "Class curriculum"
+    "programme": "Class curriculum",
+    "mes_notes": "My grades"
   },
   "common": {
     "coming_soon": "Coming soon",
@@ -2041,6 +2042,31 @@
         "dans_x_jours": "In {n} days",
         "tache": "Task",
         "terminee": "Completed"
+      },
+      "mes_notes": {
+        "title": "My grades",
+        "provisoire": "Provisional transcript",
+        "jury": "Official results (compensation, resits) are those of the jury's deliberation.",
+        "regle": "Course unit average: {cc}% continuous assessment (CC, TP), {examen}% exam · unit passed at {seuil}/20.",
+        "aucune_ue": "No course unit is scheduled for your programme yet.",
+        "semestres": "Semesters",
+        "moyenne": "{semestre} average",
+        "credits_acquis": "Credits earned",
+        "moyenne_partielle": "Semester average computed over the units whose exam is graded.",
+        "ue": "Unit",
+        "credits": "Credits",
+        "cc": "Continuous assessment",
+        "examen": "Exam",
+        "moyenne_ue": "Average",
+        "detail_de": "{code} details",
+        "enseignant": "Lecturer: {nom}",
+        "aucune_note": "No grade yet.",
+        "statut": {
+          "validee": "Passed",
+          "non_validee": "Not passed",
+          "en_cours": "In progress",
+          "pas_de_note": "No grade"
+        }
       }
     },
     "affectations": {
