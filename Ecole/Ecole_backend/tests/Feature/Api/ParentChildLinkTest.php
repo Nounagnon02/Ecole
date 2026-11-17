@@ -146,7 +146,10 @@ class ParentChildLinkTest extends TestCase
             ->assertJsonPath('success', true)
             ->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.id', $slot->id)
-            ->assertJsonPath('data.0.classe_id', $classe->id);
+            ->assertJsonPath('data.0.classe_id', $classe->id)
+            // R-13 : le nom de la matière accompagne le créneau ; sans lui,
+            // le mobile affichait « Cours » à la place.
+            ->assertJsonPath('data.0.matiere.nom', \App\Models\Matieres::find($slot->matiere_id)->nom);
     }
 
     /* ─── A3 : le règlement nomme le parent du dossier ───────────────── */

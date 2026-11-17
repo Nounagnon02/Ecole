@@ -15,6 +15,7 @@ class BibliothecaireDashboardController extends Controller
     public function bibliothecaire()
     {
         $data = Cache::remember('dashboard_bibliothecaire_' . (\App\Models\Eleve::currentEcoleId() ?? 'global'), 120, function () {
+            try {
             $totalLivres = \App\Models\Livre::count();
             $empruntsEnCours = \App\Models\Emprunt::whereNull('date_retour_effective')->count();
             $retards = \App\Models\Emprunt::whereNull('date_retour_effective')
@@ -53,12 +54,13 @@ class BibliothecaireDashboardController extends Controller
             }
 
             // Répartition par catégorie d'ouvrage (en %)
-            $categories = \App\Models\Livre::select('categorie')
-                ->get()->groupBy('categorie');
-            $totalCategories = max($categories->flatten()->count(), 1);
-            $repartitionCategories = $categories->map(fn ($g, $nom) => [
-                'name' => $nom,
-                'value' => round(($g->count() / $totalCategories) * 100),
+            $categoriesRows = \App\Models\Livre::select('categorie', \DB::raw('COUNT(*) as total'))
+                ->groupBy('categorie')
+                ->get();
+            $totalCategories = max($categoriesRows->sum('total'), 1);
+            $repartitionCategories = $categoriesRows->map(fn ($row) => [
+                'name' => $row->categorie,
+                'value' => round(($row->total / $totalCategories) * 100),
             ])->values();
 
             $derniersEmprunts = \App\Models\Emprunt::with(['eleve.user', 'eleve.classe', 'livre'])
@@ -95,7 +97,10 @@ class BibliothecaireDashboardController extends Controller
                     'classe' => $e->eleve?->classe?->nom_classe,
                     'ouvrage' => $e->livre?->titre,
                     'dateRetour' => $e->date_retour_prevue?->format('d/m/Y'),
-                    'jours_retard' => (int) today()->diffInDays($e->date_retour_prevue),
+                    // Carbon 3 : `diffInDays()` est signé. `today()->diffInDays($échéance)`
+                    // avec une échéance passée donnait un retard négatif ; on part
+                    // de l'échéance pour obtenir le nombre de jours écoulés.
+                    'jours_retard' => (int) $e->date_retour_prevue->diffInDays(today()),
                 ]);
 
             $nouveautes = \App\Models\Livre::latest('created_at')
@@ -108,21 +113,23 @@ class BibliothecaireDashboardController extends Controller
                     'categorie' => $l->categorie,
                 ]);
 
-            $populaires = \App\Models\Emprunt::select('livre_id')
+            $populaires = \App\Models\Emprunt::select('livre_id', \DB::raw('COUNT(*) as emprunts'))
                 ->with('livre')
-                ->get()
                 ->groupBy('livre_id')
-                ->map(fn ($g) => [
-                    'titre' => $g->first()->livre?->titre ?? 'Inconnu',
-                    'emprunts' => $g->count(),
-                ])->sortByDesc('emprunts')->take(5)->values();
+                ->orderByDesc('emprunts')
+                ->limit(5)
+                ->get()
+                ->map(fn ($row) => [
+                    'titre' => $row->livre?->titre ?? 'Inconnu',
+                    'emprunts' => $row->emprunts,
+                ]);
 
             return [
                 'stats' => [
-                    ['title' => 'Total Ouvrages', 'value' => (string) $totalLivres, 'trend' => 0, 'trendLabel' => 'au catalogue'],
-                    ['title' => 'Emprunts en Cours', 'value' => (string) $empruntsEnCours, 'trend' => 0],
-                    ['title' => 'Retards', 'value' => (string) $retards, 'trend' => 0],
-                    ['title' => 'Membres Actifs', 'value' => (string) $membresActifs, 'trend' => 0, 'trendLabel' => 'emprunteurs'],
+                    ['title' => 'Total Ouvrages', 'value' => (string) $totalLivres, 'trendLabel' => 'au catalogue'],
+                    ['title' => 'Emprunts en Cours', 'value' => (string) $empruntsEnCours],
+                    ['title' => 'Retards', 'value' => (string) $retards],
+                    ['title' => 'Membres Actifs', 'value' => (string) $membresActifs, 'trendLabel' => 'emprunteurs'],
                 ],
                 'activite' => $activite,
                 'categories' => $repartitionCategories,
@@ -131,6 +138,23 @@ class BibliothecaireDashboardController extends Controller
                 'nouveautes' => $nouveautes,
                 'populaires' => $populaires,
             ];
+            } catch (\Exception $e) {
+                \Log::error('Dashboard Bibliothecaire error: ' . $e->getMessage());
+                return [
+                    'stats' => [
+                        ['title' => 'Total Ouvrages', 'value' => '0', 'trendLabel' => 'au catalogue'],
+                        ['title' => 'Emprunts en Cours', 'value' => '0'],
+                        ['title' => 'Retards', 'value' => '0'],
+                        ['title' => 'Membres Actifs', 'value' => '0', 'trendLabel' => 'emprunteurs'],
+                    ],
+                    'activite' => [],
+                    'categories' => [],
+                    'emprunts' => [],
+                    'retards_liste' => [],
+                    'nouveautes' => [],
+                    'populaires' => [],
+                ];
+            }
         });
 
         return response()->json(['success' => true, 'data' => $data]);

@@ -5,7 +5,8 @@
  * Données dynamiques via API /api/v1/admin/analytics/overview
  */
 
-import { useState, useEffect } from 'react';
+import { useApiQuery } from '@/shared/lib/api-client';
+import { useTranslation } from '@/shared/i18n';
 import { motion } from 'framer-motion';
 import {
   TrendingUp, Users, Building2, BookOpen,
@@ -16,7 +17,6 @@ import { cn, formatNumber } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import StatsCard from '@/shared/components/ui/StatsCard';
-import { useApi } from '@/hooks/useApi';
 
 const ACTIVITE_CONFIG = {
   inscription: { icon: Users, color: 'text-emerald-500 bg-emerald-100 dark:bg-emerald-900/20' },
@@ -28,31 +28,28 @@ const ACTIVITE_CONFIG = {
 };
 
 export default function StatistiquesPage() {
-  const { loading, error, get } = useApi();
-  const [stats, setStats] = useState(null);
+  const { t } = useTranslation();
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await get('/v1/admin/analytics/overview');
-        setStats(res?.data || res);
-      } catch (e) {
-        console.error('Erreur chargement statistiques:', e);
-      }
-    })();
-  }, []);
+  const requete = useApiQuery(['analytics', 'overview'], '/v1/admin/analytics/overview');
+
+  // `useState` + `useEffect` de premier rendu, sans cache ni déduplication —
+  // le motif répété sur trente-neuf pages (cf. audit P4.1). L'enveloppe
+  // `{ data }` n'est pas systématique côté contrôleurs, d'où le repli.
+  const stats = requete.data?.data ?? requete.data ?? null;
+  const loading = requete.isPending;
+  const error = requete.isError ? (requete.error?.message ?? t('common.load_error')) : null;
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--text-tertiary)]" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
+      <div className="flex flex-col items-center justify-center h-64 text-[var(--text-secondary)]">
         <AlertCircle className="h-8 w-8 mb-2 text-red-400" />
         <p className="text-sm">{error}</p>
       </div>
@@ -63,10 +60,10 @@ export default function StatistiquesPage() {
 
   // Calculer la répartition des rôles à partir des données API si disponibles
   const repartitionRoles = data.repartition_roles || data.roles_distribution || [
-    { role: 'Élèves', count: data.total_eleves || data.total_students || 0, pct: 0, color: 'bg-[var(--primary)]' },
-    { role: 'Enseignants', count: data.total_enseignants || data.total_teachers || 0, pct: 0, color: 'bg-emerald-500' },
-    { role: 'Parents', count: data.total_parents || 0, pct: 0, color: 'bg-amber-500' },
-    { role: 'Personnel', count: data.total_personnel || 0, pct: 0, color: 'bg-sky-500' },
+    { role: t('pages.admin.statistiques.eleves'), count: data.total_eleves || data.total_students || 0, pct: 0, color: 'bg-[var(--action)]' },
+    { role: t('common.teachers'), count: data.total_enseignants || data.total_teachers || 0, pct: 0, color: 'bg-emerald-500' },
+    { role: t('pages.admin.statistiques.parents'), count: data.total_parents || 0, pct: 0, color: 'bg-amber-500' },
+    { role: t('pages.admin.statistiques.personnel'), count: data.total_personnel || 0, pct: 0, color: 'bg-sky-500' },
   ];
 
   // Calculer les pourcentages
@@ -79,18 +76,18 @@ export default function StatistiquesPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Statistiques</h1>
-          <p className="text-sm text-neutral-500">Indicateurs clés et analytics du système</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.admin.statistiques.title')}</h1>
+          <p className="text-sm text-[var(--text-secondary)]">{t('pages.admin.statistiques.subtitle')}</p>
         </div>
         <Badge variant="primary" size="sm">
           <Clock className="h-3 w-3 mr-1" />
-          Mis à jour en temps réel
+          {t('pages.admin.statistiques.mis_a_jour_en_temps_reel')}
         </Badge>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-4">
         <StatsCard
-          title="Établissements"
+          title={t('pages.admin.statistiques.etablissements')}
           value={String(data.total_schools ?? data.total_ecoles ?? '—')}
           icon={Building2}
           color="primary"
@@ -102,7 +99,7 @@ export default function StatistiquesPage() {
           }
         />
         <StatsCard
-          title="Utilisateurs"
+          title={t('pages.admin.statistiques.utilisateurs')}
           value={formatNumber(data.total_users ?? data.total_utilisateurs ?? 0)}
           icon={Users}
           color="emerald"
@@ -114,7 +111,7 @@ export default function StatistiquesPage() {
           }
         />
         <StatsCard
-          title="Revenus Mensuels"
+          title={t('pages.admin.statistiques.revenus_mensuels')}
           value={data.monthly_revenue ? `${(data.monthly_revenue / 1000000).toFixed(1)}M` : '—'}
           icon={DollarSign}
           color="amber"
@@ -126,7 +123,7 @@ export default function StatistiquesPage() {
           }
         />
         <StatsCard
-          title="Taux de Réussite"
+          title={t('pages.admin.statistiques.taux_de_reussite')}
           value={data.success_rate ? `${data.success_rate}%` : '—'}
           icon={TrendingUp}
           color="sky"
@@ -140,16 +137,16 @@ export default function StatistiquesPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-4">Répartition des utilisateurs</h3>
+        <Card padding>
+          <h3 className="text-sm font-semibold text-[var(--text-primary)]  mb-4">{t('pages.admin.statistiques.repartition_des_utilisateurs')}</h3>
           <div className="space-y-4">
             {rolesWithPct.map((item) => (
               <div key={item.role}>
                 <div className="flex justify-between text-xs mb-1">
-                  <span className="text-neutral-600 dark:text-neutral-400">{item.role}</span>
-                  <span className="font-medium text-neutral-900 dark:text-white">{formatNumber(item.count)} ({item.pct}%)</span>
+                  <span className="text-[var(--text-secondary)] ">{item.role}</span>
+                  <span className="font-medium text-[var(--text-primary)] ">{formatNumber(item.count)} ({item.pct}%)</span>
                 </div>
-                <div className="h-2 bg-neutral-200 dark:bg-neutral-700 rounded-full overflow-hidden">
+                <div className="h-2 bg-[var(--surface-subtle)]  rounded-full overflow-hidden">
                   <div className={cn('h-full rounded-full transition-all', item.color)} style={{ width: `${item.pct}%` }} />
                 </div>
               </div>
@@ -157,12 +154,12 @@ export default function StatistiquesPage() {
           </div>
         </Card>
 
-        <Card>
-          <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-4">Activité récente</h3>
+        <Card padding>
+          <h3 className="text-sm font-semibold text-[var(--text-primary)]  mb-4">{t('pages.admin.statistiques.activite_recente')}</h3>
           <div className="space-y-3">
             {data.recent_activities?.length > 0 ? (
               data.recent_activities.map((a, i) => {
-                const cfg = ACTIVITE_CONFIG[a.type] || { icon: Activity, color: 'text-neutral-500 bg-neutral-100 dark:bg-neutral-800' };
+                const cfg = ACTIVITE_CONFIG[a.type] || { icon: Activity, color: 'text-[var(--text-secondary)] bg-[var(--surface-subtle)] ' };
                 const IconComponent = cfg.icon;
                 return (
                   <div key={i} className="flex items-start gap-3">
@@ -170,51 +167,51 @@ export default function StatistiquesPage() {
                       <IconComponent className="h-4 w-4" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-neutral-900 dark:text-white">{a.action}</p>
-                      <p className="text-xs text-neutral-500">{a.entite || a.entity}</p>
+                      <p className="text-sm font-medium text-[var(--text-primary)] ">{a.action}</p>
+                      <p className="text-xs text-[var(--text-secondary)]">{a.entite || a.entity}</p>
                     </div>
-                    <span className="text-xs text-neutral-400 shrink-0">{a.date}</span>
+                    <span className="text-xs text-[var(--text-tertiary)] shrink-0">{a.date}</span>
                   </div>
                 );
               })
             ) : (
-              <p className="text-sm text-neutral-400 text-center py-4">Aucune activité récente</p>
+              <p className="text-sm text-[var(--text-tertiary)] text-center py-4">{t('pages.admin.statistiques.aucune_activite_recente')}</p>
             )}
           </div>
         </Card>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <Card>
+        <Card padding>
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/20 flex items-center justify-center">
               <CheckCircle className="h-5 w-5 text-emerald-500" />
             </div>
             <div>
-              <p className="text-xs text-neutral-500">Taux de présence</p>
-              <p className="text-lg font-bold text-neutral-900 dark:text-white">{data.attendance_rate ?? '—'}%</p>
+              <p className="text-xs text-[var(--text-secondary)]">{t('pages.admin.statistiques.taux_de_presence')}</p>
+              <p className="text-lg font-bold text-[var(--text-primary)] ">{data.attendance_rate ?? '—'}%</p>
             </div>
           </div>
         </Card>
-        <Card>
+        <Card padding>
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-xl bg-amber-100 dark:bg-amber-900/20 flex items-center justify-center">
               <BookOpen className="h-5 w-5 text-amber-500" />
             </div>
             <div>
-              <p className="text-xs text-neutral-500">Cours programmés</p>
-              <p className="text-lg font-bold text-neutral-900 dark:text-white">{data.total_courses ? formatNumber(data.total_courses) : '—'}</p>
+              <p className="text-xs text-[var(--text-secondary)]">{t('pages.admin.statistiques.cours_programmes')}</p>
+              <p className="text-lg font-bold text-[var(--text-primary)] ">{data.total_courses ? formatNumber(data.total_courses) : '—'}</p>
             </div>
           </div>
         </Card>
-        <Card>
+        <Card padding>
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-xl bg-sky-100 dark:bg-sky-900/20 flex items-center justify-center">
               <GraduationCap className="h-5 w-5 text-sky-500" />
             </div>
             <div>
-              <p className="text-xs text-neutral-500">Diplômés {new Date().getFullYear()}</p>
-              <p className="text-lg font-bold text-neutral-900 dark:text-white">{data.graduates ?? '—'}</p>
+              <p className="text-xs text-[var(--text-secondary)]">Diplômés {new Date().getFullYear()}</p>
+              <p className="text-lg font-bold text-[var(--text-primary)] ">{data.graduates ?? '—'}</p>
             </div>
           </div>
         </Card>

@@ -49,3 +49,19 @@ Modifier les variables d'environnement dans `.env` :
 - jsPDF (génération PDF)
 - Recharts (graphiques)
 - Axios (API calls)
+
+## Client API typé (TypeScript)
+
+`src/shared/lib/api-typed.ts` type les réponses de `api-client.js` (qui reste
+le seul à parler au réseau) contre le schéma OpenAPI réel, généré par
+Scramble depuis les contrôleurs Laravel. Régénérer après un changement côté
+API :
+
+```bash
+npm run generate:api-client   # backend attendu sur http://localhost:8000 (ou API_URL=... en préfixe)
+npm run typecheck             # tsc --noEmit sur le client généré uniquement
+```
+
+`tsconfig.json` ne couvre volontairement que ces fichiers, pas les pages
+`.jsx` existantes — une page migre vers ce client en s'y ajoutant, au cas par
+cas, pas en un seul passage.

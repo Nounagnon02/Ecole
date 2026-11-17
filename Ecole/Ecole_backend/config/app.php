@@ -71,6 +71,9 @@ return [
 
     'asset_url' => env('ASSET_URL'),
 
+    // Retour de la passerelle de paiement vers l'application mobile (schéma déclaré dans app.json).
+    'mobile_return_url' => env('MOBILE_RETURN_URL', 'ecole://paiement-retour'),
+
     'frontend_url' => env('FRONTEND_URL', 'http://localhost:3000'),
 
     /*
@@ -84,7 +87,9 @@ return [
     |
     */
 
-    'timezone' => 'UTC',
+    // Le Bénin est à UTC+1, sans heure d'été. En UTC, un paiement fait à
+    // 00 h 30 était daté de la veille sur le reçu.
+    'timezone' => env('APP_TIMEZONE', 'Africa/Porto-Novo'),
 
     /*
     |--------------------------------------------------------------------------
@@ -97,7 +102,7 @@ return [
     |
     */
 
-    'locale' => 'en',
+    'locale' => env('APP_LOCALE', 'fr'),
 
     /*
     |--------------------------------------------------------------------------
@@ -169,53 +174,15 @@ return [
     |
     */
 
-    'providers' => [
-
-        /*
-         * Laravel Framework Service Providers...
-         */
-        Illuminate\Auth\AuthServiceProvider::class,
-        Illuminate\Broadcasting\BroadcastServiceProvider::class,
-        Illuminate\Bus\BusServiceProvider::class,
-        Illuminate\Cache\CacheServiceProvider::class,
-        Illuminate\Foundation\Providers\ConsoleSupportServiceProvider::class,
-        Illuminate\Cookie\CookieServiceProvider::class,
-        Illuminate\Database\DatabaseServiceProvider::class,
-        Illuminate\Encryption\EncryptionServiceProvider::class,
-        Illuminate\Filesystem\FilesystemServiceProvider::class,
-        Illuminate\Foundation\Providers\FoundationServiceProvider::class,
-        Illuminate\Hashing\HashServiceProvider::class,
-        Illuminate\Mail\MailServiceProvider::class,
-        Illuminate\Notifications\NotificationServiceProvider::class,
-        Illuminate\Pagination\PaginationServiceProvider::class,
-        Illuminate\Pipeline\PipelineServiceProvider::class,
-        Illuminate\Queue\QueueServiceProvider::class,
-        Illuminate\Redis\RedisServiceProvider::class,
-        Illuminate\Auth\Passwords\PasswordResetServiceProvider::class,
-        Illuminate\Session\SessionServiceProvider::class,
-        Illuminate\Translation\TranslationServiceProvider::class,
-        Illuminate\Validation\ValidationServiceProvider::class,
-        Illuminate\View\ViewServiceProvider::class,
-
-        /*
-         * Package Service Providers...
-         */
-
-        /*
-         * Application Service Providers...
-         */
-        App\Providers\AppServiceProvider::class,
-        App\Providers\AuthServiceProvider::class,
-        // App\Providers\BroadcastServiceProvider::class,
-        App\Providers\EventServiceProvider::class,
-        App\Providers\RouteServiceProvider::class,
-
-        // Sans cet enregistrement, mapRoutes() n'était jamais appelé et
-        // routes/tenant.php (dont tous les endpoints IA EduPilot) n'était
-        // jamais chargé (cf. audit F1).
-        App\Providers\TenancyServiceProvider::class,
-
-    ],
+    /*
+    |--------------------------------------------------------------------------
+    | Providers
+    |--------------------------------------------------------------------------
+    |
+    | Déclarés dans bootstrap/providers.php depuis le passage au squelette
+    | Laravel 11. Les providers du framework sont découverts automatiquement.
+    |
+    */
 
     /*
     |--------------------------------------------------------------------------

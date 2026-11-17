@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 
@@ -70,9 +71,17 @@ class PasswordResetController extends Controller
     public function reset(Request $request)
     {
         $request->validate([
+            // `users.ecole_id` existe, mais cette recherche doit rester
+            // globale par nature : à ce stade (avant toute authentification)
+            // aucun contexte d'école n'est résolu, et `email` est unique sur
+            // toute la table (`users_email_unique`), pas par établissement.
+            // `school_exists:` retournerait `1 = 0` faute de contexte et
+            // casserait la réinitialisation pour tout le monde — même
+            // exemption documentée que `User` dans BelongsToEcole.
+            // nosemgrep: laravel-exists-without-tenant-scope
             'email' => 'required|email|exists:users,email',
             'token' => 'required|string',
-            'password' => 'required|string|min:6|confirmed',
+            'password' => 'required|string|min:8|confirmed',
         ]);
 
         // Vérifier le token
@@ -86,8 +95,13 @@ class PasswordResetController extends Controller
             ], 400);
         }
 
-        // Vérifier l'expiration (1 heure)
-        if (now()->diffInMinutes($record->created_at) > 60) {
+        // Vérifier l'expiration (1 heure).
+        //
+        // Carbon 3 : `diffInMinutes()` est signé et négatif quand la date
+        // passée en argument est antérieure. `now()->diffInMinutes($passé) > 60`
+        // n'était donc jamais vrai, et un jeton de réinitialisation ne
+        // périmait jamais. On lit la règle directement : créé + 1 h, échu ?
+        if (Carbon::parse($record->created_at)->addHour()->isPast()) {
             DB::table('password_resets')->where('email', $request->email)->delete();
 
             return response()->json([
@@ -98,6 +112,8 @@ class PasswordResetController extends Controller
         // Mettre à jour le mot de passe
         $user = User::where('email', $request->email)->first();
         $user->password = Hash::make($request->password);
+        // Choisi par son titulaire : ce n'est plus un mot de passe provisoire.
+        $user->password_change_required = false;
         $user->setRememberToken(Str::random(60));
         $user->save();
 

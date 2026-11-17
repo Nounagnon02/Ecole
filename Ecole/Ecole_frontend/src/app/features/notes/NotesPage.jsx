@@ -10,8 +10,16 @@ import {
   BookOpen, Search, Download, Plus, TrendingUp, TrendingDown, Award,
   FileSpreadsheet, RefreshCw, Lock, Unlock, Trophy, FileText,
 } from 'lucide-react';
-import { cn } from '@/shared/lib/utils';
+import { cn, formatDate, libelleEvaluation, noteSur } from '@/shared/lib/utils';
 import { useApiQuery, useApiMutation, api } from '@/shared/lib/api-client';
+import { unwrapList } from '@/shared/lib/unwrap';
+import useAuthStore from '@/shared/stores/auth-store';
+import { useNavigate } from 'react-router-dom';
+import { ROLES, ROLE_GROUPS } from '@/shared/types/roles';
+
+// Jour local de l'école : l'API sérialise les dates seules à minuit de
+// Porto-Novo exprimé en UTC (la veille, 23 h), affiché tel quel jusqu'ici.
+const JOUR_ECOLE = { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Africa/Porto-Novo' };
 import StatsCard from '@/shared/components/ui/StatsCard';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
@@ -19,8 +27,11 @@ import Button from '@/shared/components/ui/Button';
 import Table from '@/shared/components/ui/Table';
 import Input from '@/shared/components/ui/Input';
 import { Skeleton } from '@/shared/components/ui/Skeleton';
+import { useTranslation } from '@/shared/i18n';
 
 export default function NotesPage() {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [filterMatiere, setFilterMatiere] = useState('');
   const [filterClasse, setFilterClasse] = useState('');
@@ -28,20 +39,29 @@ export default function NotesPage() {
   const [classementClasse, setClassementClasse] = useState('');
   const [classementPeriode, setClassementPeriode] = useState('Trimestre 1');
 
+  // Verrouiller une note est réservé à la direction et aux enseignants (routes
+  // `notes/{id}/lock`). Le bouton était montré aux parents et aux élèves, qui
+  // recevaient un refus.
+  const peutVerrouiller = useAuthStore((st) => st.hasAnyRole([...ROLE_GROUPS.DIRECTION, ...ROLE_GROUPS.ENSEIGNANTS]));
+  // La famille (élève, parent) lit ses notes : ni classement ni bulletins de
+  // classe (refusés par l'API à ces rôles), ni taux calculés pour la classe.
+  // L'élève ne voit que ses notes : son nom et sa classe ne sont pas répétés.
+  const estEleve = useAuthStore((st) => st.hasAnyRole([ROLES.ELEVE]));
+  const estFamille = useAuthStore((st) => st.hasAnyRole([ROLES.ELEVE, ROLES.PARENT]));
+  const [page, setPage] = useState(1);
+
   const { data: notesData, isLoading, error, refetch } = useApiQuery(
-    ['notes'],
-    '/notes/eleve',
+    ['notes', page],
+    page > 1 ? `/notes/eleve?page=${page}` : '/notes/eleve',
   );
 
-  const classementClasseId = classementClasse ? classMap.get(classementClasse) : null;
-
-  const { data: classementData, isLoading: classementLoading, refetch: refetchClassement } = useApiQuery(
-    ['classement', classementClasseId, classementPeriode],
-    classementClasseId ? `/notes/classement/${classementClasseId}/${classementPeriode}` : null,
-    { queryOptions: { enabled: !!classementClasseId } },
-  );
-
-  const notes = notesData?.data ?? notesData ?? [];
+  // L'API renvoie une enveloppe contenant un paginateur Laravel
+  // (`data.data.data`). Ne lire que `data` donnait une liste vide : la page
+  // affichait « 0 évaluation » alors que la base en contenait des centaines.
+  const notes = useMemo(() => unwrapList(notesData), [notesData]);
+  const paginateur = notesData?.data && !Array.isArray(notesData.data) ? notesData.data : null;
+  const dernierePage = paginateur?.last_page ?? 1;
+  const totalNotes = paginateur?.total ?? notes.length;
 
   const matiereMap = useMemo(() => {
     const map = new Map();
@@ -64,6 +84,14 @@ export default function NotesPage() {
   }, [notes]);
   const classes = useMemo(() => [...classMap.keys()], [classMap]);
 
+  const classementClasseId = classementClasse ? classMap.get(classementClasse) : null;
+
+  const { data: classementData, isLoading: classementLoading, refetch: refetchClassement } = useApiQuery(
+    ['classement', classementClasseId, classementPeriode],
+    classementClasseId ? `/notes/classement/${classementClasseId}/${classementPeriode}` : null,
+    { queryOptions: { enabled: !!classementClasseId } },
+  );
+
   const filtered = useMemo(() =>
     notes.filter((n) => {
       const nomEleve = `${n.eleve?.user?.name ?? ''} ${n.eleve?.user?.prenom ?? ''}`.toLowerCase();
@@ -75,13 +103,25 @@ export default function NotesPage() {
     [notes, search, filterMatiere, filterClasse]
   );
 
-  const moyenneGenerale = notes.length > 0
-    ? (notes.reduce((a, n) => a + parseFloat(n.note ?? 0), 0) / notes.length).toFixed(1)
-    : '—';
+  const colonnes = 9 - (estEleve ? 2 : 0) - (peutVerrouiller ? 0 : 1);
 
-  const tauxReussite = notes.length > 0
-    ? Math.round((notes.filter((n) => parseFloat(n.note) >= 10).length / notes.length) * 100)
-    : 0;
+  // Statistiques de toutes les notes visées, calculées par l'API : la page
+  // ne voit que ses 50 lignes (R-39, 16/11/2026). Repli sur la page pour
+  // l'ancienne forme de réponse (simple tableau, sans `stats`).
+  const statsApi = notesData?.stats ?? null;
+  const moyenneGenerale = statsApi
+    ? (statsApi.moyenne ?? '—')
+    : notes.length > 0
+      ? (notes.reduce((a, n) => a + parseFloat(n.note ?? 0), 0) / notes.length).toFixed(1)
+      : '—';
+
+  // Sans note, un taux n'a pas de sens : « 0 % de réussite, 100 % d'échecs »
+  // était affiché sur une classe qui n'avait simplement pas encore été notée.
+  const tauxReussite = statsApi
+    ? (statsApi.taux_reussite ?? null)
+    : notes.length > 0
+      ? Math.round((notes.filter((n) => parseFloat(n.note) >= 10).length / notes.length) * 100)
+      : null;
 
   const handleExport = () => {
     const params = new URLSearchParams();
@@ -90,7 +130,7 @@ export default function NotesPage() {
     if (filterClasseId) params.set('classe_id', filterClasseId);
     if (filterMatiereId) params.set('matiere_id', filterMatiereId);
     const qs = params.toString();
-    window.open(`/api/notes/export${qs ? `?${qs}` : ''}`, '_blank');
+    window.open(`/api/notes/export${qs ? `?${qs}` : ''}`, '_blank', 'noopener,noreferrer');
   };
 
   const handleLock = async (id, currentlyLocked) => {
@@ -156,8 +196,8 @@ export default function NotesPage() {
     verrouillerMutation.mutate({ classe_id: bulletinClasseId, periode: bulletinPeriode, annee_scolaire: bulletinAnnee });
   };
 
-  const moyennesGenerales = (moyennesData?.data ?? []).filter((r) => !r.matiere_id);
-  const bulletins = bulletinsData?.data ?? [];
+  const moyennesGenerales = (Array.isArray(moyennesData?.data) ? moyennesData.data : []).filter((r) => !r.matiere_id);
+  const bulletins = Array.isArray(bulletinsData?.data) ? bulletinsData.data : [];
 
   const mentionColor = (m) =>
     m === 'Très Bien' ? 'text-emerald-600'
@@ -171,98 +211,113 @@ export default function NotesPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Notes</h1>
-          <p className="text-sm text-neutral-500">Consultez et gérez les notes des élèves</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.notes.notes.title')}</h1>
+          <p className="text-sm text-[var(--text-secondary)]">
+            {t(estEleve ? 'pages.notes.notes.subtitle_eleve' : estFamille ? 'pages.notes.notes.subtitle_parent' : 'pages.notes.notes.subtitle')}
+          </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={refetch} disabled={isLoading}>
+          <Button variant="ghost" size="sm" aria-label={t('common.refresh')} title={t('common.refresh')} onClick={refetch} disabled={isLoading}>
             <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} />
           </Button>
-          <Button variant="outline" size="sm" icon={<FileSpreadsheet />} onClick={handleExport}>
-            Exporter
-          </Button>
-          <Button variant="outline" size="sm" icon={<Download />}>Importer</Button>
-          <Button size="sm" icon={<Plus />}>Nouvelle Note</Button>
+          {/* Export, import et saisie : réservés à ceux que l'API y autorise. */}
+          {peutVerrouiller && (
+            <>
+              <Button variant="outline" size="sm" icon={<FileSpreadsheet />} onClick={handleExport}>
+                {t('common.export')}
+              </Button>
+              <Button variant="outline" size="sm" icon={<Download />} onClick={() => navigate('/notes/saisie')}>{t('pages.notes.notes.importer')}</Button>
+              <Button size="sm" icon={<Plus />} onClick={() => navigate('/notes/saisie')}>{t('pages.notes.notes.nouvelle_note')}</Button>
+            </>
+          )}
         </div>
       </div>
 
       {/* Stats */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatsCard title="Moyenne Générale" value={`${moyenneGenerale}/20`} icon={Award} color="primary" />
-        <StatsCard title="Total Évaluations" value={String(notes.length)} icon={BookOpen} color="emerald" />
-        <StatsCard title="Taux de Réussite" value={`${tauxReussite}%`} icon={TrendingUp} color="sky" />
-        <StatsCard title="Échecs" value={`${100 - tauxReussite}%`} icon={TrendingDown} color="red" />
-      </div>
+      {estFamille ? (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StatsCard title={t('pages.notes.notes.total_evaluations')} value={String(totalNotes)} icon={BookOpen} color="emerald" />
+        </div>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StatsCard title={t('pages.notes.notes.moyenne_des_notes')} value={noteSur(moyenneGenerale)} icon={Award} color="primary" />
+          <StatsCard title={t('pages.notes.notes.total_evaluations')} value={String(totalNotes)} icon={BookOpen} color="emerald" />
+          <StatsCard title={t('pages.notes.notes.taux_de_reussite')} value={tauxReussite === null ? '—' : `${tauxReussite}%`} icon={TrendingUp} color="sky" />
+          <StatsCard title={t('pages.notes.notes.echecs')} value={tauxReussite === null ? '—' : `${100 - tauxReussite}%`} icon={TrendingDown} color="red" />
+        </div>
+      )}
 
       {/* Tabs */}
-      <div className="flex gap-4 border-b border-neutral-200 dark:border-neutral-800">
+      {!estFamille && <div className="flex gap-4 border-b border-[var(--border)] ">
         <button
           onClick={() => setTab('notes')}
           className={cn(
-            'pb-2 text-sm font-medium border-b-2 transition-colors',
+            'min-h-11 pb-2 text-sm font-medium border-b-2 transition-colors',
             tab === 'notes'
               ? 'border-[var(--accent)] text-[var(--accent)]'
-              : 'border-transparent text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'
+              : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] '
           )}
         >
           <BookOpen className="h-4 w-4 inline mr-1.5" />
-          Notes
+          {t('pages.notes.notes.notes')}
         </button>
         <button
           onClick={() => setTab('classement')}
           className={cn(
-            'pb-2 text-sm font-medium border-b-2 transition-colors',
+            'min-h-11 pb-2 text-sm font-medium border-b-2 transition-colors',
             tab === 'classement'
               ? 'border-[var(--accent)] text-[var(--accent)]'
-              : 'border-transparent text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'
+              : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] '
           )}
         >
           <Trophy className="h-4 w-4 inline mr-1.5" />
-          Classement
+          {t('pages.notes.notes.classement')}
         </button>
         <button
           onClick={() => setTab('bulletins')}
           className={cn(
-            'pb-2 text-sm font-medium border-b-2 transition-colors',
+            'min-h-11 pb-2 text-sm font-medium border-b-2 transition-colors',
             tab === 'bulletins'
               ? 'border-[var(--accent)] text-[var(--accent)]'
-              : 'border-transparent text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'
+              : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] '
           )}
         >
           <FileText className="h-4 w-4 inline mr-1.5" />
-          Bulletins
+          {t('pages.notes.notes.bulletins')}
         </button>
-      </div>
+      </div>}
 
       {/* Tab: Notes */}
       {tab === 'notes' && (
         <>
           {/* Filters */}
-          <Card>
+          <Card padding>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <div className="relative flex-1 max-w-sm">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+              {!estEleve && <div className="relative flex-1 max-w-sm">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
                 <Input
-                  placeholder="Rechercher un élève..."
+                  placeholder={t('common.search_student')}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="pl-9"
                 />
-              </div>
-              <select
+              </div>}
+              {!estEleve && <select
                 value={filterClasse}
                 onChange={(e) => setFilterClasse(e.target.value)}
-                className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm text-neutral-700 outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+                aria-label={t('common.filter_by_class')}
+                className="h-10 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--accent)]/40   "
               >
-                <option value="">Toutes les classes</option>
+                <option value="">{t('common.all_classes')}</option>
                 {classes.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
+              </select>}
               <select
                 value={filterMatiere}
                 onChange={(e) => setFilterMatiere(e.target.value)}
-                className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm text-neutral-700 outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+                aria-label={t('common.filter_by_subject')}
+                className="h-10 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--accent)]/40   "
               >
-                <option value="">Toutes les matières</option>
+                <option value="">{t('pages.notes.notes.toutes_les_matieres')}</option>
                 {matieres.map((m) => <option key={m} value={m}>{m}</option>)}
               </select>
             </div>
@@ -272,46 +327,46 @@ export default function NotesPage() {
           <Card padding={false}>
             {error && (
               <div className="p-6 text-center text-sm text-red-500">
-                Erreur : {error.message ?? 'Impossible de récupérer les notes'}
+                Erreur : {error.message ?? t('pages.notes.notes.impossible_de_recuperer_les_notes')}
               </div>
             )}
             <Table>
               <Table.Header>
-                <Table.Head>Élève</Table.Head>
-                <Table.Head>Classe</Table.Head>
-                <Table.Head>matière</Table.Head>
-                <Table.Head>Note</Table.Head>
-                <Table.Head>Type</Table.Head>
-                <Table.Head>Période</Table.Head>
-                <Table.Head>Date</Table.Head>
-                <Table.Head className="text-center">Statut</Table.Head>
-                <Table.Head className="text-right">Action</Table.Head>
+                {!estEleve && <Table.Head>{t('common.student')}</Table.Head>}
+                {!estEleve && <Table.Head>{t('common.class')}</Table.Head>}
+                <Table.Head>{t('pages.notes.notes.matiere')}</Table.Head>
+                <Table.Head>{t('common.grade')}</Table.Head>
+                <Table.Head>{t('common.type')}</Table.Head>
+                <Table.Head>{t('pages.notes.notes.periode')}</Table.Head>
+                <Table.Head>{t('common.date')}</Table.Head>
+                <Table.Head className="text-center">{t('common.status_label')}</Table.Head>
+                {peutVerrouiller && <Table.Head className="text-right">{t('pages.notes.notes.action')}</Table.Head>}
               </Table.Header>
               <Table.Body>
                 {isLoading && Array.from({ length: 5 }).map((_, i) => (
                   <Table.Row key={i}>
-                    {Array.from({ length: 9 }).map((__, j) => (
+                    {Array.from({ length: colonnes }).map((__, j) => (
                       <Table.Cell key={j}><Skeleton className="h-4 w-full" /></Table.Cell>
                     ))}
                   </Table.Row>
                 ))}
                 {!isLoading && filtered.length === 0 && (
                   <Table.Row>
-                    <td colSpan={9} className="p-8 text-center text-sm text-neutral-500">
-                      Aucune note trouvée
+                    <td colSpan={colonnes} className="p-8 text-center text-sm text-[var(--text-secondary)]">
+                      {t('pages.notes.notes.aucune_note_trouvee')}
                     </td>
                   </Table.Row>
                 )}
                 {!isLoading && filtered.map((n) => (
                   <Table.Row key={n.id}>
-                    <Table.Cell>
-                      <span className="font-medium text-neutral-900 dark:text-white">
+                    {!estEleve && <Table.Cell>
+                      <span className="font-medium text-[var(--text-primary)] ">
                         {n.eleve?.user?.name} {n.eleve?.user?.prenom}
                       </span>
-                    </Table.Cell>
-                    <Table.Cell>
+                    </Table.Cell>}
+                    {!estEleve && <Table.Cell>
                       <Badge variant="outline">{n.classe?.nom_classe ?? '—'}</Badge>
-                    </Table.Cell>
+                    </Table.Cell>}
                     <Table.Cell>{n.matiere?.nom ?? '—'}</Table.Cell>
                     <Table.Cell>
                       <span className={cn(
@@ -320,39 +375,62 @@ export default function NotesPage() {
                           : parseFloat(n.note) >= 10 ? 'text-amber-500'
                           : 'text-red-500'
                       )}>
-                        {n.note}/{n.note_sur ?? 20}
+                        {noteSur(n.note, n.note_sur ?? 20)}
                       </span>
                     </Table.Cell>
                     <Table.Cell>
-                      <Badge variant="info" size="sm">{n.type_evaluation}</Badge>
+                      <Badge variant="info" size="sm">{libelleEvaluation(n.type_evaluation)}</Badge>
                     </Table.Cell>
-                    <Table.Cell className="text-xs text-neutral-500">{n.periode}</Table.Cell>
-                    <Table.Cell className="text-xs text-neutral-500">{n.date_evaluation}</Table.Cell>
+                    <Table.Cell className="text-xs text-[var(--text-secondary)]">{n.periode}</Table.Cell>
+                    <Table.Cell className="text-xs text-[var(--text-secondary)]">{n.date_evaluation ? formatDate(n.date_evaluation, JOUR_ECOLE) : '—'}</Table.Cell>
                     <Table.Cell className="text-center">
-                      {n.locked ? (
-                        <Lock className="h-4 w-4 text-amber-500 mx-auto" title="Verrouillée" />
-                      ) : (
-                        <Unlock className="h-4 w-4 text-neutral-300 mx-auto" title="Déverrouillée" />
-                      )}
+                      {/* L'état en mots : deux cadenas de sens contraires (état ici,
+                          action inverse à côté) se lisaient mal (17/11/2026). */}
+                      <Badge variant={n.locked ? 'warning' : 'outline'} size="sm">
+                        {n.locked ? t('pages.notes.notes.verrouillee') : t('pages.notes.notes.modifiable')}
+                      </Badge>
                     </Table.Cell>
-                    <Table.Cell className="text-right">
+                    {peutVerrouiller && <Table.Cell className="text-right">
                       <button
+                        type="button"
+                        aria-label={n.locked ? t('pages.notes.notes.deverrouiller') : t('pages.notes.notes.verrouiller')}
                         onClick={() => handleLock(n.id, n.locked)}
                         className={cn(
-                          'p-1.5 rounded-lg transition-colors',
+                          'inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium transition-colors',
                           n.locked
                             ? 'text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-500/10'
-                            : 'text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800'
+                            : 'text-[var(--text-tertiary)] hover:bg-[var(--surface-subtle)] '
                         )}
-                        title={n.locked ? 'Déverrouiller' : 'Verrouiller'}
+                        title={n.locked ? t('pages.notes.notes.deverrouiller') : t('pages.notes.notes.verrouiller')}
                       >
-                        {n.locked ? <Unlock className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+                        {n.locked ? <Unlock className="h-4 w-4" aria-hidden="true" /> : <Lock className="h-4 w-4" aria-hidden="true" />}
+                        {n.locked ? t('pages.notes.notes.deverrouiller') : t('pages.notes.notes.verrouiller')}
                       </button>
-                    </Table.Cell>
+                    </Table.Cell>}
                   </Table.Row>
                 ))}
               </Table.Body>
             </Table>
+            {dernierePage > 1 && (
+              <nav
+                className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--border)] px-4 py-3"
+                aria-label={t('pages.notes.notes.pagination')}
+              >
+                <p className="text-sm text-[var(--text-secondary)]" role="status">
+                  {t('pages.notes.notes.page_x_sur_y', { page, total: dernierePage })}
+                  {' · '}
+                  {t('pages.notes.notes.stats_sur_la_page', { n: notes.length })}
+                </p>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" disabled={page <= 1 || isLoading} onClick={() => setPage((p) => Math.max(1, p - 1))}>
+                    {t('pages.notes.notes.page_precedente')}
+                  </Button>
+                  <Button variant="outline" size="sm" disabled={page >= dernierePage || isLoading} onClick={() => setPage((p) => Math.min(dernierePage, p + 1))}>
+                    {t('pages.notes.notes.page_suivante')}
+                  </Button>
+                </div>
+              </nav>
+            )}
           </Card>
         </>
       )}
@@ -362,27 +440,29 @@ export default function NotesPage() {
         <Card>
           <div className="p-4 space-y-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">
+              <h3 className="text-lg font-semibold text-[var(--text-primary)] ">
                 <Trophy className="h-5 w-5 inline mr-2 text-amber-500" />
-                Classement des élèves
+                {t('pages.notes.notes.classement_des_eleves')}
               </h3>
               <div className="flex items-center gap-2">
                 <select
                   value={classementClasse}
                   onChange={(e) => setClassementClasse(e.target.value)}
-                  className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm text-neutral-700 outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+                  aria-label={t('pages.notes.notes.selectionner_une_classe')}
+                  className="h-10 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--accent)]/40   "
                 >
-                  <option value="">Sélectionner une classe</option>
+                  <option value="">{t('pages.notes.notes.selectionner_une_classe')}</option>
                   {classes.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
                 <select
                   value={classementPeriode}
                   onChange={(e) => setClassementPeriode(e.target.value)}
-                  className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm text-neutral-700 outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+                  aria-label={t('pages.notes.notes.filtrer_par_periode')}
+                  className="h-10 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--accent)]/40   "
                 >
-                  <option value="Trimestre 1">Trimestre 1</option>
-                  <option value="Trimestre 2">Trimestre 2</option>
-                  <option value="Trimestre 3">Trimestre 3</option>
+                  <option value="Trimestre 1">{t('pages.notes.notes.trimestre_1')}</option>
+                  <option value="Trimestre 2">{t('pages.notes.notes.trimestre_2')}</option>
+                  <option value="Trimestre 3">{t('pages.notes.notes.trimestre_3')}</option>
                 </select>
                 <Button
                   size="sm"
@@ -396,8 +476,8 @@ export default function NotesPage() {
             </div>
 
             {!classementClasse && (
-              <div className="py-12 text-center text-sm text-neutral-500">
-                Sélectionnez une classe et une période pour voir le classement
+              <div className="py-12 text-center text-sm text-[var(--text-secondary)]">
+                {t('pages.notes.notes.selectionnez_une_classe_et_une_periode_pour')}
               </div>
             )}
 
@@ -411,16 +491,16 @@ export default function NotesPage() {
 
             {classement && !classementLoading && (
               <>
-                <div className="text-sm text-neutral-500 mb-2">
+                <div className="text-sm text-[var(--text-secondary)] mb-2">
                   {classement.classe} · {classement.periode} · {classement.effectif} élèves
                 </div>
                 <Table>
                   <Table.Header>
-                    <Table.Head className="w-12">Rang</Table.Head>
-                    <Table.Head>Élève</Table.Head>
-                    <Table.Head>Matricule</Table.Head>
-                    <Table.Head className="text-right">Moyenne</Table.Head>
-                    <Table.Head className="text-right">Notes</Table.Head>
+                    <Table.Head className="w-12">{t('common.rank')}</Table.Head>
+                    <Table.Head>{t('common.student')}</Table.Head>
+                    <Table.Head>{t('common.matricule')}</Table.Head>
+                    <Table.Head className="text-right">{t('common.average')}</Table.Head>
+                    <Table.Head className="text-right">{t('pages.notes.notes.notes')}</Table.Head>
                   </Table.Header>
                   <Table.Body>
                     {classement.classement?.map((row) => (
@@ -428,7 +508,7 @@ export default function NotesPage() {
                         key={row.eleve_id}
                         className={cn(
                           row.rang === 1 && 'bg-amber-50 dark:bg-amber-900/10',
-                          row.rang === 2 && 'bg-neutral-50 dark:bg-neutral-800/30',
+                          row.rang === 2 && 'bg-[var(--surface)] ',
                           row.rang === 3 && 'bg-orange-50 dark:bg-orange-900/10',
                         )}
                       >
@@ -436,19 +516,19 @@ export default function NotesPage() {
                           <span className={cn(
                             'inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold',
                             row.rang === 1 ? 'bg-amber-200 text-amber-800 dark:bg-amber-600 dark:text-amber-100'
-                              : row.rang === 2 ? 'bg-neutral-300 text-neutral-800 dark:bg-neutral-600 dark:text-neutral-100'
+                              : row.rang === 2 ? 'bg-[var(--border-heavy)] text-[var(--text-primary)]  '
                               : row.rang === 3 ? 'bg-orange-200 text-orange-800 dark:bg-orange-600 dark:text-orange-100'
-                              : 'text-neutral-500'
+                              : 'text-[var(--text-secondary)]'
                           )}>
                             {row.rang}
                           </span>
                         </Table.Cell>
                         <Table.Cell>
-                          <span className="font-medium text-neutral-900 dark:text-white">
+                          <span className="font-medium text-[var(--text-primary)] ">
                             {row.nom} {row.prenom}
                           </span>
                         </Table.Cell>
-                        <Table.Cell className="text-xs text-neutral-400 font-mono">{row.matricule}</Table.Cell>
+                        <Table.Cell className="text-xs text-[var(--text-tertiary)] font-mono">{row.matricule}</Table.Cell>
                         <Table.Cell className="text-right">
                           <span className={cn(
                             'font-bold text-lg',
@@ -456,10 +536,10 @@ export default function NotesPage() {
                               : row.moyenne >= 10 ? 'text-amber-500'
                               : 'text-red-500'
                           )}>
-                            {row.moyenne.toFixed(2)}
+                            {noteSur(row.moyenne)}
                           </span>
                         </Table.Cell>
-                        <Table.Cell className="text-right text-sm text-neutral-500">{row.total_notes}</Table.Cell>
+                        <Table.Cell className="text-right text-sm text-[var(--text-secondary)]">{row.total_notes}</Table.Cell>
                       </Table.Row>
                     ))}
                   </Table.Body>
@@ -475,32 +555,35 @@ export default function NotesPage() {
         <div className="space-y-6">
           <Card>
             <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
-              <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">
+              <h3 className="text-lg font-semibold text-[var(--text-primary)] ">
                 <FileText className="h-5 w-5 inline mr-2 text-[var(--accent)]" />
-                Bulletins
+                {t('pages.notes.notes.bulletins')}
               </h3>
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <select
                   value={bulletinClasse}
                   onChange={(e) => setBulletinClasse(e.target.value)}
-                  className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm text-neutral-700 outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+                  aria-label={t('pages.notes.notes.selectionner_une_classe')}
+                  className="h-10 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--accent)]/40   "
                 >
-                  <option value="">Sélectionner une classe</option>
+                  <option value="">{t('pages.notes.notes.selectionner_une_classe')}</option>
                   {classes.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
                 <select
                   value={bulletinPeriode}
                   onChange={(e) => setBulletinPeriode(e.target.value)}
-                  className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm text-neutral-700 outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+                  aria-label={t('pages.notes.notes.filtrer_par_periode')}
+                  className="h-10 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--accent)]/40   "
                 >
-                  <option value="Trimestre 1">Trimestre 1</option>
-                  <option value="Trimestre 2">Trimestre 2</option>
-                  <option value="Trimestre 3">Trimestre 3</option>
+                  <option value="Trimestre 1">{t('pages.notes.notes.trimestre_1')}</option>
+                  <option value="Trimestre 2">{t('pages.notes.notes.trimestre_2')}</option>
+                  <option value="Trimestre 3">{t('pages.notes.notes.trimestre_3')}</option>
                 </select>
                 <select
                   value={bulletinAnnee}
                   onChange={(e) => setBulletinAnnee(e.target.value)}
-                  className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm text-neutral-700 outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+                  aria-label={t('pages.notes.notes.selectionner_une_annee')}
+                  className="h-10 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--accent)]/40   "
                 >
                   {annees.map((a) => <option key={a} value={a}>{a}</option>)}
                 </select>
@@ -514,7 +597,7 @@ export default function NotesPage() {
                 onClick={handleRecalculer}
                 disabled={!bulletinClasse || recalculerMutation.isPending}
               >
-                Recalculer l'instantané
+                {t('pages.notes.notes.recalculer_l_instantane')}
               </Button>
               <Button
                 size="sm"
@@ -522,19 +605,19 @@ export default function NotesPage() {
                 onClick={handleVerrouiller}
                 disabled={!bulletinClasse || verrouillerMutation.isPending}
               >
-                Verrouiller le bulletin
+                {t('pages.notes.notes.verrouiller_le_bulletin')}
               </Button>
             </div>
           </Card>
 
           <Card>
-            <div className="border-b border-neutral-200 p-4 dark:border-neutral-800">
-              <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">Moyennes de la classe</h3>
-              <p className="text-xs text-neutral-500">Instantané {bulletinPeriode} · {bulletinAnnee}</p>
+            <div className="border-b border-[var(--border)] p-4 ">
+              <h3 className="text-sm font-semibold text-[var(--text-primary)] ">{t('pages.notes.notes.moyennes_de_la_classe')}</h3>
+              <p className="text-xs text-[var(--text-secondary)]">Instantané {bulletinPeriode} · {bulletinAnnee}</p>
             </div>
             {!bulletinClasse && (
-              <div className="py-10 text-center text-sm text-neutral-500">
-                Sélectionnez une classe pour consulter les moyennes
+              <div className="py-10 text-center text-sm text-[var(--text-secondary)]">
+                {t('pages.notes.notes.selectionnez_une_classe_pour_consulter_les')}
               </div>
             )}
             {bulletinClasse && moyennesLoading && (
@@ -545,33 +628,33 @@ export default function NotesPage() {
               </div>
             )}
             {bulletinClasse && !moyennesLoading && moyennesGenerales.length === 0 && (
-              <div className="py-10 text-center text-sm text-neutral-500">
-                Aucun instantané pour cette classe et cette période. Cliquez sur « Recalculer l'instantané ».
+              <div className="py-10 text-center text-sm text-[var(--text-secondary)]">
+                {t('pages.notes.notes.aucun_instantane_pour_cette_classe_et_cette')}
               </div>
             )}
             {bulletinClasse && !moyennesLoading && moyennesGenerales.length > 0 && (
               <Table>
                 <Table.Header>
-                  <Table.Head className="w-12">Rang</Table.Head>
-                  <Table.Head>Élève</Table.Head>
-                  <Table.Head className="text-right">Moyenne Générale</Table.Head>
-                  <Table.Head className="text-right">Effectif</Table.Head>
+                  <Table.Head className="w-12">{t('common.rank')}</Table.Head>
+                  <Table.Head>{t('common.student')}</Table.Head>
+                  <Table.Head className="text-right">{t('pages.notes.notes.moyenne_generale')}</Table.Head>
+                  <Table.Head className="text-right">{t('pages.notes.notes.effectif')}</Table.Head>
                 </Table.Header>
                 <Table.Body>
                   {moyennesGenerales.map((row) => (
                     <Table.Row key={row.eleve_id}>
                       <Table.Cell>
-                        <span className="inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold bg-neutral-100 dark:bg-neutral-800">
+                        <span className="inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold bg-[var(--surface-subtle)] ">
                           {row.rang}
                         </span>
                       </Table.Cell>
                       <Table.Cell>
-                        <span className="font-medium text-neutral-900 dark:text-white">
+                        <span className="font-medium text-[var(--text-primary)] ">
                           {row.eleve?.user?.name} {row.eleve?.user?.prenom}
                         </span>
                       </Table.Cell>
-                      <Table.Cell className="text-right font-semibold">{parseFloat(row.valeur).toFixed(2)}/20</Table.Cell>
-                      <Table.Cell className="text-right text-neutral-500">{row.total_eleves}</Table.Cell>
+                      <Table.Cell className="text-right font-semibold">{noteSur(row.valeur)}</Table.Cell>
+                      <Table.Cell className="text-right text-[var(--text-secondary)]">{row.total_eleves}</Table.Cell>
                     </Table.Row>
                   ))}
                 </Table.Body>
@@ -580,13 +663,13 @@ export default function NotesPage() {
           </Card>
 
           <Card>
-            <div className="border-b border-neutral-200 p-4 dark:border-neutral-800">
-              <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">Bulletins verrouillés</h3>
-              <p className="text-xs text-neutral-500">Archives immuables {bulletinPeriode} · {bulletinAnnee}</p>
+            <div className="border-b border-[var(--border)] p-4 ">
+              <h3 className="text-sm font-semibold text-[var(--text-primary)] ">{t('pages.notes.notes.bulletins_verrouilles')}</h3>
+              <p className="text-xs text-[var(--text-secondary)]">Archives immuables {bulletinPeriode} · {bulletinAnnee}</p>
             </div>
             {!bulletinClasse && (
-              <div className="py-10 text-center text-sm text-neutral-500">
-                Sélectionnez une classe pour consulter les bulletins
+              <div className="py-10 text-center text-sm text-[var(--text-secondary)]">
+                {t('pages.notes.notes.selectionnez_une_classe_pour_consulter_les_2')}
               </div>
             )}
             {bulletinClasse && bulletinsLoading && (
@@ -597,41 +680,41 @@ export default function NotesPage() {
               </div>
             )}
             {bulletinClasse && !bulletinsLoading && bulletins.length === 0 && (
-              <div className="py-10 text-center text-sm text-neutral-500">
-                Aucun bulletin verrouillé. Recalculez l'instantané puis verrouillez le bulletin.
+              <div className="py-10 text-center text-sm text-[var(--text-secondary)]">
+                {t('pages.notes.notes.aucun_bulletin_verrouille_recalculez_l')}
               </div>
             )}
             {bulletinClasse && !bulletinsLoading && bulletins.length > 0 && (
               <Table>
                 <Table.Header>
-                  <Table.Head className="w-12">Rang</Table.Head>
-                  <Table.Head>Élève</Table.Head>
-                  <Table.Head className="text-right">Moyenne Générale</Table.Head>
-                  <Table.Head>Mention</Table.Head>
-                  <Table.Head className="text-right">Statut</Table.Head>
+                  <Table.Head className="w-12">{t('common.rank')}</Table.Head>
+                  <Table.Head>{t('common.student')}</Table.Head>
+                  <Table.Head className="text-right">{t('pages.notes.notes.moyenne_generale')}</Table.Head>
+                  <Table.Head>{t('pages.notes.notes.mention')}</Table.Head>
+                  <Table.Head className="text-right">{t('common.status_label')}</Table.Head>
                 </Table.Header>
                 <Table.Body>
                   {bulletins.map((b) => (
                     <Table.Row key={b.id}>
                       <Table.Cell>
-                        <span className="inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold bg-neutral-100 dark:bg-neutral-800">
+                        <span className="inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold bg-[var(--surface-subtle)] ">
                           {b.rang}
                         </span>
                       </Table.Cell>
                       <Table.Cell>
-                        <span className="font-medium text-neutral-900 dark:text-white">
+                        <span className="font-medium text-[var(--text-primary)] ">
                           {b.eleve?.user?.name} {b.eleve?.user?.prenom}
                         </span>
                       </Table.Cell>
                       <Table.Cell className="text-right font-semibold">
-                        {parseFloat(b.moyenne_generale).toFixed(2)}/20
+                        {noteSur(b.moyenne_generale)}
                       </Table.Cell>
                       <Table.Cell>
                         <span className={cn('font-medium text-sm', mentionColor(b.mention))}>{b.mention}</span>
                       </Table.Cell>
                       <Table.Cell className="text-right">
                         <Badge variant={b.publie ? 'success' : 'neutral'} size="sm">
-                          {b.publie ? 'Publié' : 'Verrouillé'}
+                          {b.publie ? t('pages.notes.notes.publie') : t('pages.notes.notes.verrouille')}
                         </Badge>
                       </Table.Cell>
                     </Table.Row>

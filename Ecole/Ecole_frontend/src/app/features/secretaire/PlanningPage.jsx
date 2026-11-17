@@ -5,7 +5,10 @@
  * Données dynamiques via API /evenements
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import apiClient, { useApiQuery } from '@/shared/lib/api-client';
+import FormDialog from '@/shared/components/ui/FormDialog';
+import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
   CalendarDays, Plus, Search, Clock, Users, MapPin, BookOpen,
@@ -17,7 +20,7 @@ import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
-import { useApi } from '@/hooks/useApi';
+import { useTranslation } from '@/shared/i18n';
 
 const TYPE_CONFIG = {
   reunion: { label: 'Réunion', color: 'text-blue-500 bg-blue-100 dark:bg-blue-900/20' },
@@ -39,23 +42,42 @@ const getTypeIcon = (type) => {
 };
 
 export default function PlanningPage() {
-  const { loading, error, get } = useApi();
-  const [evenements, setEvenements] = useState([]);
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState('');
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await get('/evenements');
-        const raw = res?.data?.data || res?.data || res || [];
-        const items = Array.isArray(raw) ? raw : [];
-        setEvenements(items);
-      } catch (e) {
-        console.error('Erreur chargement événements:', e);
-      }
-    })();
-  }, []);
+  // Le chargement passait par un `useState` doublé d'un `useEffect` de
+  // premier rendu, sans cache ni déduplication : deux composants montés
+  // ensemble lançaient deux requêtes, et un retour sur la page rechargeait
+  // tout (cf. audit P4.1). `unwrapList` traverse les trois formes
+  // d'enveloppe que renvoient les contrôleurs.
+  // `/evenements` est fermé au secrétariat ; ses propres routes servent le
+  // planning sur une période (du mois écoulé aux six prochains).
+  const requete = useApiQuery(['planning'], '/secretaire/evenements');
+  const [edition, setEdition] = useState(null);
+  const champsEvenement = [
+    { name: 'titre', label: t('pages.secretaire.planning_edition.titre'), required: true },
+    { name: 'type', label: t('pages.secretaire.planning_edition.type'), type: 'select', options: Object.entries(TYPE_CONFIG).map(([value, cfg]) => ({ value, label: cfg.label })) },
+    { name: 'date_debut', label: t('pages.secretaire.planning_edition.debut'), type: 'datetime-local', required: true },
+    { name: 'date_fin', label: t('pages.secretaire.planning_edition.fin'), type: 'datetime-local' },
+    { name: 'lieu', label: t('pages.secretaire.planning_edition.lieu') },
+    { name: 'description', label: t('pages.secretaire.planning_edition.description'), type: 'textarea' },
+  ];
+  const versChamp = (d) => (d ? String(d).replace(' ', 'T').slice(0, 16) : '');
+  const enregistrer = async (valeurs) => {
+    if (edition?.id) await apiClient.put(`/secretaire/evenements/${edition.id}`, valeurs);
+    else await apiClient.post('/secretaire/evenements', valeurs);
+    requete.refetch();
+  };
+  const supprimer = async (evt) => {
+    if (!window.confirm(t('pages.secretaire.planning_edition.confirmer_suppression', { titre: evt.titre }))) return;
+    await apiClient.delete(`/secretaire/evenements/${evt.id}`);
+    requete.refetch();
+  };
+
+  const evenements = useMemo(() => unwrapList(requete.data) ?? [], [requete.data]);
+  const loading = requete.isPending;
+  const error = requete.isError ? (requete.error?.message ?? t('common.load_error')) : null;
 
   const stats = useMemo(() => {
     const now = new Date();
@@ -84,14 +106,14 @@ export default function PlanningPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--text-tertiary)]" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
+      <div className="flex flex-col items-center justify-center h-64 text-[var(--text-secondary)]">
         <AlertCircle className="h-8 w-8 mb-2 text-red-400" />
         <p className="text-sm">{error}</p>
       </div>
@@ -104,27 +126,35 @@ export default function PlanningPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Planning</h1>
-          <p className="text-sm text-neutral-500">Planification des événements et rendez-vous</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.secretaire.planning.title')}</h1>
+          <p className="text-sm text-[var(--text-secondary)]">{t('pages.secretaire.planning.subtitle')}</p>
         </div>
-        <Button size="sm" icon={<Plus />}>Nouvel événement</Button>
+        <Button size="sm" icon={<Plus />} onClick={() => setEdition({})}>{t('pages.secretaire.planning.nouvel_evenement')}</Button>
       </div>
+      <FormDialog
+        open={edition !== null}
+        title={edition?.id ? t('pages.secretaire.planning_edition.modifier') : t('pages.secretaire.planning.nouvel_evenement')}
+        fields={champsEvenement}
+        initial={edition?.id ? { ...edition, date_debut: versChamp(edition.date_debut), date_fin: versChamp(edition.date_fin) } : { type: 'evenement' }}
+        onSubmit={enregistrer}
+        onClose={() => setEdition(null)}
+      />
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-4">
-        <StatsCard title="Total" value={String(stats.total)} icon={CalendarDays} color="primary" />
-        <StatsCard title="Planifiés" value={String(stats.planifies)} icon={Clock} color="sky" />
-        <StatsCard title="Terminés" value={String(stats.termines)} icon={CheckCircle} color="emerald" />
-        <StatsCard title="Aujourd'hui" value={String(stats.aujourdhui)} icon={AlertCircle} color="amber" />
+        <StatsCard title={t('common.total')} value={String(stats.total)} icon={CalendarDays} color="primary" />
+        <StatsCard title={t('pages.secretaire.planning.planifies')} value={String(stats.planifies)} icon={Clock} color="sky" />
+        <StatsCard title={t('common.finished')} value={String(stats.termines)} icon={CheckCircle} color="emerald" />
+        <StatsCard title={t('common.today')} value={String(stats.aujourdhui)} icon={AlertCircle} color="amber" />
       </div>
 
       {/* Filtres */}
-      <Card>
+      <Card padding>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
             <Input
-              placeholder="Rechercher un événement..."
+              placeholder={t('pages.secretaire.planning.rechercher_un_evenement')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
@@ -139,7 +169,7 @@ export default function PlanningPage() {
                   'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
                   filterType === key
                     ? 'bg-[var(--primary-subtle)] text-[var(--accent)] dark:text-[var(--accent)]'
-                    : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700'
+                    : 'bg-[var(--surface-subtle)] text-[var(--text-secondary)] hover:bg-[var(--surface-subtle)]   '
                 )}
               >
                 {cfg.label}
@@ -152,10 +182,10 @@ export default function PlanningPage() {
       {/* Timeline */}
       <div className="space-y-3">
         {filtered.length === 0 && (
-          <Card>
-            <div className="text-center py-8 text-neutral-500">
+          <Card padding>
+            <div className="text-center py-8 text-[var(--text-secondary)]">
               <CalendarDays className="mx-auto h-8 w-8 mb-2" />
-              <p className="text-sm">Aucun événement trouvé</p>
+              <p className="text-sm">{t('pages.secretaire.planning.aucun_evenement_trouve')}</p>
             </div>
           </Card>
         )}
@@ -166,14 +196,14 @@ export default function PlanningPage() {
             const estFutur = dateObj >= now;
             const typeCfg = TYPE_CONFIG[evt.type] || TYPE_CONFIG.evenement;
             return (
-              <Card key={evt.id} hover>
+              <Card padding key={evt.id} hover>
                 <div className="flex items-start gap-4">
                   {/* Date badge */}
-                  <div className="flex flex-col items-center justify-center w-14 h-14 rounded-xl bg-neutral-100 dark:bg-neutral-800 shrink-0">
-                    <span className="text-lg font-bold text-neutral-900 dark:text-white leading-none">
+                  <div className="flex flex-col items-center justify-center w-14 h-14 rounded-xl bg-[var(--surface-subtle)]  shrink-0">
+                    <span className="text-lg font-bold text-[var(--text-primary)]  leading-none">
                       {dateObj.getDate()}
                     </span>
-                    <span className="text-[10px] text-neutral-500 uppercase mt-0.5">
+                    <span className="text-[10px] text-[var(--text-secondary)] uppercase mt-0.5">
                       {dateObj.toLocaleDateString('fr-FR', { month: 'short' })}
                     </span>
                   </div>
@@ -181,12 +211,12 @@ export default function PlanningPage() {
                   {/* Content */}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm font-semibold text-neutral-900 dark:text-white">{evt.titre}</span>
+                      <span className="text-sm font-semibold text-[var(--text-primary)] ">{evt.titre}</span>
                       <Badge variant={estFutur ? 'warning' : 'primary'} size="sm">
-                        {estFutur ? 'Planifié' : 'Terminé'}
+                        {estFutur ? t('pages.secretaire.planning.planifie') : t('pages.secretaire.planning.termine')}
                       </Badge>
                     </div>
-                    <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-neutral-500">
+                    <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-[var(--text-secondary)]">
                       <span className={cn('inline-flex items-center gap-1 px-1.5 py-0.5 rounded', typeCfg.color)}>
                         {getTypeIcon(evt.type)}
                         {typeCfg.label}
@@ -204,11 +234,14 @@ export default function PlanningPage() {
                       )}
                     </div>
                     {evt.description && (
-                      <p className="mt-1 text-xs text-neutral-400 italic">{evt.description}</p>
+                      <p className="mt-1 text-xs text-[var(--text-tertiary)] italic">{evt.description}</p>
                     )}
                   </div>
 
-                  <Button variant="ghost" size="sm">Détails</Button>
+                  <div className="flex gap-1">
+                    <Button variant="outline" size="sm" onClick={() => setEdition(evt)}>{t('common.edit')}</Button>
+                    <Button variant="ghost" size="sm" onClick={() => supprimer(evt)}>{t('common.delete')}</Button>
+                  </div>
                 </div>
               </Card>
             );

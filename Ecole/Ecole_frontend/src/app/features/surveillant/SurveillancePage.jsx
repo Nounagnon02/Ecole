@@ -5,7 +5,9 @@
  * Données dynamiques via API /surveillant/incidents et /surveillant/absences
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import { useApiQuery } from '@/shared/lib/api-client';
+import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
   Shield, AlertTriangle, CheckCircle,
@@ -16,7 +18,8 @@ import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import StatsCard from '@/shared/components/ui/StatsCard';
-import { useApi } from '@/hooks/useApi';
+import { useTranslation } from '@/shared/i18n';
+import { IncidentDialog } from '@/app/features/censeur/DisciplineDialogs';
 
 const getStatutVariant = (statut) => {
   switch (statut) {
@@ -30,45 +33,39 @@ const getStatutVariant = (statut) => {
   }
 };
 
-const getStatutLabel = (statut) => {
-  switch (statut) {
-    case 'termine':
-    case 'terminee': return 'Terminé';
-    case 'en_cours': return 'En cours';
-    case 'signalé':
-    case 'signale': return 'Signalé';
-    default: return statut || '—';
-  }
-};
-
 const getGraviteColor = (gravite) => {
   switch (gravite) {
     case 'grave': return 'text-red-500 bg-red-100 dark:bg-red-900/20';
     case 'moyenne': return 'text-amber-500 bg-amber-100 dark:bg-amber-900/20';
     case 'faible': return 'text-emerald-500 bg-emerald-100 dark:bg-emerald-900/20';
-    default: return 'text-neutral-500 bg-neutral-100 dark:bg-neutral-800';
+    default: return 'text-[var(--text-secondary)] bg-[var(--surface-subtle)] ';
   }
 };
 
-export default function SurveillancePage() {
-  const { loading, error, get } = useApi();
-  const [incidents, setIncidents] = useState([]);
-  const [filterGravite, setFilterGravite] = useState('');
+const STATUT_LABEL_KEYS = {
+  termine: 'pages.bibliothecaire.emprunts.termine',
+  terminee: 'pages.bibliothecaire.emprunts.termine',
+  en_cours: 'common.status.in_progress',
+  signalé: 'pages.surveillant.surveillance.signale',
+  signale: 'pages.surveillant.surveillance.signale',
+};
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await get('/surveillant/incidents');
-        const items = Array.isArray(res?.data?.data) ? res.data.data
-          : Array.isArray(res?.data) ? res.data
-          : Array.isArray(res) ? res
-          : [];
-        setIncidents(items);
-      } catch (e) {
-        console.error('Erreur chargement incidents:', e);
-      }
-    })();
-  }, []);
+export default function SurveillancePage() {
+  const { t } = useTranslation();
+  const statutLabel = (v) => (STATUT_LABEL_KEYS[v] ? t(STATUT_LABEL_KEYS[v]) : (v || '—'));
+  const [filterGravite, setFilterGravite] = useState('');
+  const [nouvelIncident, setNouvelIncident] = useState(false);
+
+  // Le chargement passait par un `useState` doublé d'un `useEffect` de
+  // premier rendu, sans cache ni déduplication : deux composants montés
+  // ensemble lançaient deux requêtes, et un retour sur la page rechargeait
+  // tout (cf. audit P4.1). `unwrapList` traverse les trois formes
+  // d'enveloppe que renvoient les contrôleurs.
+  const requete = useApiQuery(['surveillant-incidents'], '/surveillant/incidents');
+
+  const incidents = useMemo(() => unwrapList(requete.data) ?? [], [requete.data]);
+  const loading = requete.isPending;
+  const error = requete.isError ? (requete.error?.message ?? t('common.load_error')) : null;
 
   const stats = useMemo(() => ({
     total: incidents.length,
@@ -88,21 +85,21 @@ export default function SurveillancePage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--text-tertiary)]" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
+      <div className="flex flex-col items-center justify-center h-64 text-[var(--text-secondary)]">
         <AlertCircle className="h-8 w-8 mb-2 text-red-400" />
         <p className="text-sm">{error}</p>
         <button
           onClick={() => window.location.reload()}
           className="mt-4 inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors"
         >
-          Réessayer
+          {t('common.retry')}
         </button>
       </div>
     );
@@ -111,71 +108,72 @@ export default function SurveillancePage() {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Surveillance</h1>
-        <p className="text-sm text-neutral-500">Registre des incidents et signalements</p>
+        <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.surveillant.surveillance.title')}</h1>
+        <p className="text-sm text-[var(--text-secondary)]">{t('pages.surveillant.surveillance.subtitle')}</p>
       </div>
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-4">
-        <StatsCard title="Total" value={String(stats.total)} icon={Shield} color="primary" />
-        <StatsCard title="En cours" value={String(stats.enCours)} icon={AlertTriangle} color="amber" />
-        <StatsCard title="Terminés" value={String(stats.termines)} icon={CheckCircle} color="emerald" />
-        <StatsCard title="Graves" value={String(stats.graves)} icon={AlertCircle} color="red" />
+        <StatsCard title={t('common.total')} value={String(stats.total)} icon={Shield} color="primary" />
+        <StatsCard title={t('common.status.in_progress')} value={String(stats.enCours)} icon={AlertTriangle} color="amber" />
+        <StatsCard title={t('common.finished')} value={String(stats.termines)} icon={CheckCircle} color="emerald" />
+        <StatsCard title={t('pages.surveillant.surveillance.graves')} value={String(stats.graves)} icon={AlertCircle} color="red" />
       </div>
 
       {/* Filtres */}
-      <Card>
+      <Card padding>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex gap-2">
             <select
               value={filterGravite}
               onChange={(e) => setFilterGravite(e.target.value)}
-              className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+              aria-label={t('pages.surveillant.surveillance.filtrer_par_gravite')}
+              className="h-10 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40   "
             >
-              <option value="">Toutes les gravités</option>
-              <option value="faible">Faible</option>
-              <option value="moyenne">Moyenne</option>
-              <option value="grave">Grave</option>
+              <option value="">{t('pages.surveillant.surveillance.toutes_les_gravites')}</option>
+              <option value="faible">{t('pages.surveillant.surveillance.faible')}</option>
+              <option value="moyenne">{t('common.average')}</option>
+              <option value="grave">{t('pages.surveillant.surveillance.grave')}</option>
             </select>
           </div>
-          <Button size="sm" icon={<Plus />}>Nouvel incident</Button>
+          <Button size="sm" icon={<Plus />} onClick={() => setNouvelIncident(true)}>{t('pages.surveillant.surveillance.nouvel_incident')}</Button>
         </div>
       </Card>
 
       {/* Liste des incidents */}
       <div className="grid gap-3">
         {filtered.length === 0 && (
-          <Card>
-            <div className="text-center py-8 text-neutral-500">
+          <Card padding>
+            <div className="text-center py-8 text-[var(--text-secondary)]">
               <Shield className="mx-auto h-8 w-8 mb-2" />
-              <p className="text-sm">Aucun incident trouvé</p>
+              <p className="text-sm">{t('pages.surveillant.surveillance.aucun_incident_trouve')}</p>
             </div>
           </Card>
         )}
         {filtered.map((s) => (
-          <Card key={s.id} hover>
+          <Card padding key={s.id} hover>
             <div className="flex items-start gap-4">
               <div className={cn(
                 'h-12 w-12 rounded-xl flex items-center justify-center shrink-0',
                 s.gravite === 'grave' ? 'bg-red-100 dark:bg-red-900/20' :
                 s.gravite === 'moyenne' ? 'bg-amber-100 dark:bg-amber-900/20' :
-                'bg-neutral-100 dark:bg-neutral-800'
+                'bg-[var(--surface-subtle)] '
               )}>
                 <Shield className={cn(
                   'h-6 w-6',
                   s.gravite === 'grave' ? 'text-red-500' :
                   s.gravite === 'moyenne' ? 'text-amber-500' :
-                  'text-neutral-400'
+                  'text-[var(--text-tertiary)]'
                 )} />
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-sm font-semibold text-neutral-900 dark:text-white">{s.description}</span>
-                  <Badge variant={getStatutVariant(s.statut)} size="sm">{getStatutLabel(s.statut)}</Badge>
+                  <span className="text-sm font-semibold text-[var(--text-primary)] ">{s.description}</span>
+                  <Badge variant={getStatutVariant(s.statut)} size="sm">{statutLabel(s.statut)}</Badge>
                 </div>
-                <div className="mt-2 flex items-center gap-4 text-sm text-neutral-600 dark:text-neutral-400">
+                <div className="mt-2 flex items-center gap-4 text-sm text-[var(--text-secondary)] ">
                   <span className={cn('inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium', getGraviteColor(s.gravite))}>
-                    {s.gravite ? `Gravité: ${s.gravite}` : 'Non définie'}
+                    {s.gravite ? `Gravité : ${s.gravite}` : t('pages.surveillant.surveillance.non_definie')}
                   </span>
                   <span className="flex items-center gap-1">
                     <Calendar className="h-3.5 w-3.5" />
@@ -183,11 +181,11 @@ export default function SurveillancePage() {
                   </span>
                 </div>
               </div>
-              <Button variant="ghost" size="sm">Détails</Button>
             </div>
           </Card>
         ))}
       </div>
+      <IncidentDialog open={nouvelIncident} onClose={() => setNouvelIncident(false)} onDone={() => requete.refetch()} />
     </motion.div>
   );
 }

@@ -12,12 +12,9 @@ class VerifyCsrfToken extends Middleware
      * @var array<int, string>
      */
     protected $except = [
-        'api/*',
-        'api/payment/webhook',
-        'cinetpay/notify',
-        'cinetpay/return',
-        'cinetpay/*',
-        
+        // Webhooks serveur-à-serveur uniquement (signature vérifiée dans les contrôleurs)
+        '*/payments/webhook',
+        'api/v1/billing/webhook/*',
     ];
 
 

@@ -10,9 +10,30 @@ import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import axios from 'axios';
 import apiClient from '@/shared/lib/api-client';
-import { cacheClear } from '@/shared/lib/db';
-import { clearDashboardCache } from '@/shared/lib/dashboard-cache';
+import { cacheClear, viderCachesApi } from '@/shared/lib/db';
+
+/**
+ * Brouillons de saisie (notes, appel) gardés dans `localStorage` pour ne
+ * rien perdre hors ligne. Sur un téléphone partagé, l'enseignant suivant
+ * les retrouvait préremplis et pouvait les envoyer sous son nom (audit du
+ * 14/11, N-07). La file hors ligne, elle, est déjà vidée avec IndexedDB.
+ */
+function viderBrouillons() {
+  try {
+    const cles = [];
+    for (let i = 0; i < localStorage.length; i += 1) {
+      const cle = localStorage.key(i);
+      if (cle?.startsWith('ecole:brouillon-')) cles.push(cle);
+    }
+    cles.forEach((cle) => localStorage.removeItem(cle));
+  } catch {
+    // Stockage indisponible (navigation privée) : rien à effacer.
+  }
+}
+import { clearDashboardCache } from '@/shared/lib/query-client';
 import { normalizeRole } from '@/shared/types/roles';
+import { memoriserAide } from '@/shared/lib/aideEcole';
+import { definirJetonDesktop, estDesktop } from '@/shared/lib/jeton-desktop';
 
 export const SESSION_CHECK_INTERVAL = 5 * 60 * 1000; // 5 min entre vérifications
 
@@ -23,14 +44,27 @@ const initialState = {
   sessionLastVerified: null,
   pendingSchools: null, // [{ id, name }] quand le login necessite le choix de l'ecole
   pendingToken: null,   // token temporaire pour finaliser le choix d'ecole
-  step: 'initial',      // 'initial' | 'pick-school'
+  pendingTwoFactorToken: null, // jeton '2fa:pending' pour /auth/2fa/verify-login
+  // Rôle à 2FA obligatoire (directeur, comptable, admin…) qui ne l'a pas encore
+  // activée : connecté, mais l'API refuse tout sauf l'enrôlement. Tant que ce
+  // drapeau est levé, ProtectedRoute renvoie vers /activation-2fa.
+  twoFactorSetupRequired: false,
+  step: 'initial',      // 'initial' | 'pick-school' | 'verify-2fa'
 };
 
 /**
  * Récupère l'URL racine (sans /api) pour les appels hors API.
+ *
+ * Le repli doit être celui d'`api-client.js` (`/api`), pas une adresse en dur.
+ * Avec `http://localhost:8000/api`, un build de production dont
+ * `VITE_API_URL` n'est pas défini allait chercher son cookie CSRF sur le poste
+ * du visiteur : la connexion échouait sans que rien ne le dise. Le repli
+ * relatif donne une origine vide, donc une requête same-origin — correcte
+ * derrière le proxy Vite en développement comme derrière le même domaine en
+ * production.
  */
 function getBackendOrigin() {
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+  const apiUrl = import.meta.env.VITE_API_URL || '/api';
   // Supprime /api, /api/v1 ou trailing slash pour obtenir l'origine nue
   return apiUrl.replace(/\/api(\/v1)?$/, '').replace(/\/$/, '');
 }
@@ -68,14 +102,44 @@ const useAuthStore = create(
        * pour selection apres le login.
        */
       login: async (credentials) => {
-        // Etape 1 : Recuperer le cookie CSRF
-        const origin = getBackendOrigin();
-        await axios.get(`${origin}/sanctum/csrf-cookie`, {
-          withCredentials: true,
-        });
+        // Etape 1 : Recuperer le cookie CSRF (web seulement : le desktop
+        // s'authentifie par jeton, cf. jeton-desktop.js)
+        if (!estDesktop()) {
+          const origin = getBackendOrigin();
+          await axios.get(`${origin}/sanctum/csrf-cookie`, {
+            withCredentials: true,
+          });
+        }
 
         // Etape 2 : Authentification sans ecole_id
         const { data } = await apiClient.post('/auth/login', credentials);
+
+        // 2FA activée : ni school ni user tant que le code n'est pas vérifié.
+        if (data.requires_2fa) {
+          set({
+            pendingTwoFactorToken: data.token || null,
+            step: 'verify-2fa',
+            isLoading: false,
+          });
+          return { requiresTwoFactor: true };
+        }
+
+        // 2FA obligatoire pour ce rôle mais jamais activée : le mot de passe
+        // est bon et la session est ouverte, mais l'API ne laisse passer que
+        // l'enrôlement. Sans cette branche, le cas générique ci-dessous
+        // envoyait la personne sur un tableau de bord vide, chaque appel
+        // répondant 403 « Authentification à deux facteurs obligatoire ».
+        if (data.requires_2fa_setup) {
+          definirJetonDesktop(data.token);
+          set({
+            user: data.user,
+            isAuthenticated: true,
+            isLoading: false,
+            twoFactorSetupRequired: true,
+            step: 'initial',
+          });
+          return { requiresTwoFactorSetup: true, user: data.user };
+        }
 
         // Si plusieurs ecoles → l'utilisateur doit choisir
         if (data.schools && Array.isArray(data.schools) && data.schools.length > 0) {
@@ -89,6 +153,7 @@ const useAuthStore = create(
         }
 
         // Connexion directe
+        definirJetonDesktop(data.token);
         set({
           user: data.user,
           isAuthenticated: true,
@@ -112,6 +177,7 @@ const useAuthStore = create(
           token: pendingToken,
         });
 
+        definirJetonDesktop(data.token);
         set({
           user: data.user,
           isAuthenticated: true,
@@ -119,6 +185,38 @@ const useAuthStore = create(
           step: 'initial',
           pendingSchools: null,
           pendingToken: null,
+        });
+
+        return data.user;
+      },
+
+      /**
+       * Finalise la connexion en soumettant le code TOTP.
+       *
+       * Le jeton en attente ('2fa:pending', abilities restreintes côté
+       * backend) doit être envoyé en Authorization: Bearer — c'est ainsi que
+       * /auth/2fa/verify-login authentifie l'appelant, indépendamment de la
+       * session cookie normale que le reste de l'app utilise partout
+       * ailleurs. Passé en en-tête PAR APPEL (3e argument d'apiClient.post),
+       * jamais dans apiClient.defaults : il ne doit jamais s'attacher aux
+       * requêtes suivantes une fois la vraie session établie côté serveur.
+       */
+      verifyTwoFactorLogin: async (code) => {
+        const { pendingTwoFactorToken } = get();
+
+        const { data } = await apiClient.post(
+          '/auth/2fa/verify-login',
+          { code },
+          { headers: { Authorization: `Bearer ${pendingTwoFactorToken}` } }
+        );
+
+        definirJetonDesktop(data.token);
+        set({
+          user: data.user,
+          isAuthenticated: true,
+          isLoading: false,
+          step: 'initial',
+          pendingTwoFactorToken: null,
         });
 
         return data.user;
@@ -138,12 +236,15 @@ const useAuthStore = create(
         // dossiers médicaux. Il survivait à la déconnexion et restait lisible
         // par l'utilisateur suivant sur un poste partagé (cf. audit S17).
         await cacheClear().catch(() => {});
+        await viderCachesApi().catch(() => {});
+        viderBrouillons();
 
-        // Même problème pour le cache mémoire des tableaux de bord, indexé
-        // par rôle et non par utilisateur : sans purge, l'utilisateur suivant
-        // voyait les effectifs et finances du précédent, éventuellement
-        // d'un autre établissement.
+        // Même problème pour le cache serveur de react-query, qui porte les
+        // réponses des tableaux de bord : sans purge, l'utilisateur suivant
+        // voyait les effectifs et finances du précédent, éventuellement d'un
+        // autre établissement.
         clearDashboardCache();
+        definirJetonDesktop(null);
 
         set({ ...initialState, isLoading: false });
       },
@@ -153,7 +254,10 @@ const useAuthStore = create(
        */
       clearSession: () => {
         cacheClear().catch(() => {});
+        viderCachesApi().catch(() => {});
+        viderBrouillons();
         clearDashboardCache();
+        definirJetonDesktop(null);
         set({ ...initialState, isLoading: false });
       },
 
@@ -173,6 +277,43 @@ const useAuthStore = create(
         } catch {
           set({ ...initialState, isLoading: false });
         }
+      },
+
+      /**
+       * L'API a refusé un appel faute de 2FA activée (403 requires_2fa_setup) :
+       * ProtectedRoute redirige alors vers /activation-2fa. Couvre une session
+       * déjà ouverte, par exemple après rechargement de la page.
+       */
+      requireTwoFactorSetup: () => {
+        if (!get().twoFactorSetupRequired) set({ twoFactorSetupRequired: true });
+      },
+
+      /**
+       * L'API a refusé un appel parce que le mot de passe est provisoire
+       * (403 requires_password_change) : ProtectedRoute mène alors à l'écran
+       * de changement.
+       */
+      requirePasswordChange: () => {
+        const { user } = get();
+        if (user && !user.password_change_required) set({ user: { ...user, password_change_required: true } });
+      },
+
+      /** Le mot de passe provisoire vient d'être remplacé : l'accès est rétabli. */
+      completePasswordChange: () => {
+        const { user } = get();
+        set({ user: user ? { ...user, password_change_required: false } : user, sessionLastVerified: Date.now() });
+      },
+
+      /**
+       * La 2FA vient d'être activée (/auth/2fa/verify) : l'accès est rétabli.
+       */
+      completeTwoFactorSetup: () => {
+        const { user } = get();
+        set({
+          twoFactorSetupRequired: false,
+          user: user ? { ...user, two_factor_enabled: true } : user,
+          sessionLastVerified: Date.now(),
+        });
       },
 
       /**
@@ -209,5 +350,11 @@ const useAuthStore = create(
     { name: 'auth-store' }
   )
 );
+
+// Chaque profil reçu (connexion, /auth/me) met à jour le numéro d'aide que
+// la page de connexion affichera la prochaine fois sur cet appareil.
+useAuthStore.subscribe((state, prev) => {
+  if (state.user?.ecole && state.user.ecole !== prev.user?.ecole) memoriserAide(state.user.ecole);
+});
 
 export default useAuthStore;

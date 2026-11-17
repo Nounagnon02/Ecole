@@ -15,6 +15,7 @@ class SurveillantDashboardController extends Controller
     public function surveillant()
     {
         $data = Cache::remember('dashboard_surveillant_' . (\App\Models\Eleve::currentEcoleId() ?? 'global'), 60, function () {
+            try {
             $totalEleves = \App\Models\Eleve::count();
 
             // Un élève absent compte une fois, même avec plusieurs lignes dans
@@ -32,9 +33,9 @@ class SurveillantDashboardController extends Controller
             $joursSemaine = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
             $absencesSemaine = \App\Models\Absence::where('type', 'absence')
                 ->whereBetween('date', [now()->startOfWeek(), now()->endOfWeek()])
-                ->get()
-                ->groupBy(fn ($a) => $a->date?->format('Y-m-d'))
-                ->map(fn ($jour) => $jour->pluck('eleve_id')->unique()->count());
+                ->selectRaw('DATE(date) as jour, COUNT(DISTINCT eleve_id) as total')
+                ->groupBy('jour')
+                ->pluck('total', 'jour');
 
             $presencesSemaine = [];
             foreach (range(0, 6) as $i) {
@@ -51,7 +52,8 @@ class SurveillantDashboardController extends Controller
             // Une seule agrégation pour toutes les zones, au lieu d'un comptage
             // d'enseignants par catégorie (N+1, cf. audit P4) — les deux requêtes
             // restent scopées à l'école résolue.
-            $personnelsParCategorie = \App\Models\Enseignant::with('classes:id,categorie_classe')
+            $personnelsParCategorie = \App\Models\Enseignant::select('id')
+                ->with('classes:id,categorie_classe')
                 ->get()
                 ->flatMap(fn ($e) => $e->classes->pluck('categorie_classe'))
                 ->countBy()
@@ -143,10 +145,10 @@ class SurveillantDashboardController extends Controller
 
             return [
                 'stats' => [
-                    ['title' => 'Total Élèves', 'value' => (string) $totalEleves, 'trend' => 0],
-                    ['title' => 'Présents Aujourd\'hui', 'value' => (string) $presents, 'trend' => 0],
-                    ['title' => 'Absents', 'value' => (string) $absentsAujourdhui, 'trend' => 0],
-                    ['title' => 'Alertes', 'value' => (string) $alertes, 'trend' => 0],
+                    ['title' => 'Total Élèves', 'value' => (string) $totalEleves],
+                    ['title' => 'Présents Aujourd\'hui', 'value' => (string) $presents],
+                    ['title' => 'Absents', 'value' => (string) $absentsAujourdhui],
+                    ['title' => 'Alertes', 'value' => (string) $alertes],
                 ],
                 'presences_semaine' => $presencesSemaine,
                 'points_surveillance' => $points,
@@ -155,6 +157,23 @@ class SurveillantDashboardController extends Controller
                 'incidents' => $incidents,
                 'absences_non_justifiees' => $absencesNonJustifiees,
             ];
+            } catch (\Exception $e) {
+                \Log::error('Dashboard Surveillant error: ' . $e->getMessage());
+                return [
+                    'stats' => [
+                        ['title' => 'Total Élèves', 'value' => '0'],
+                        ['title' => 'Présents Aujourd\'hui', 'value' => '0'],
+                        ['title' => 'Absents', 'value' => '0'],
+                        ['title' => 'Alertes', 'value' => '0'],
+                    ],
+                    'presences_semaine' => [],
+                    'points_surveillance' => [],
+                    'retards' => [],
+                    'absents_jour' => [],
+                    'incidents' => [],
+                    'absences_non_justifiees' => [],
+                ];
+            }
         });
 
         return response()->json(['success' => true, 'data' => $data]);

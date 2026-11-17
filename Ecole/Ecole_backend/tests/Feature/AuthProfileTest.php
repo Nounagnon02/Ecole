@@ -9,6 +9,34 @@ beforeEach(function () {
     $this->ecole = Ecole::factory()->create();
 });
 
+it('exposes two_factor_enabled so the frontend can offer enable or disable', function () {
+    $withoutTwoFactor = User::factory()->create([
+        'ecole_id' => $this->ecole->id,
+        'two_factor_enabled' => false,
+    ]);
+    $withTwoFactor = User::factory()->create([
+        'ecole_id' => $this->ecole->id,
+        'two_factor_enabled' => true,
+    ]);
+
+    $this->actingAs($withoutTwoFactor)->getJson('/api/auth/me')
+        ->assertOk()->assertJsonPath('user.two_factor_enabled', false);
+
+    $this->actingAs($withTwoFactor)->getJson('/api/auth/me')
+        ->assertOk()->assertJsonPath('user.two_factor_enabled', true);
+});
+
+it('never exposes the two_factor_secret itself', function () {
+    $user = User::factory()->create([
+        'ecole_id' => $this->ecole->id,
+        'two_factor_enabled' => true,
+        'two_factor_secret' => encrypt('SOMESECRETVALUE'),
+    ]);
+
+    $this->actingAs($user)->getJson('/api/auth/me')
+        ->assertOk()->assertJsonMissingPath('user.two_factor_secret');
+});
+
 it('returns avatar and teacher profile fields in getProfile', function () {
     $user = User::factory()->create([
         'role' => 'enseignant',
@@ -112,6 +140,25 @@ it('replaces experiences wholesale and syncs mastered subjects', function () {
         ->and(EnseignantMatiereMaitrisee::where('enseignant_id', $enseignant->id)->count())->toBe(1);
 });
 
+it('rejects a mastered subject that belongs to another school', function () {
+    $user = User::factory()->create([
+        'role' => 'enseignant',
+        'ecole_id' => $this->ecole->id,
+    ]);
+    Enseignant::factory()->create(['user_id' => $user->id, 'ecole_id' => $this->ecole->id]);
+
+    $autreEcole = Ecole::factory()->create();
+    $matiereEtrangere = Matieres::factory()->create(['ecole_id' => $autreEcole->id]);
+
+    $this->actingAs($user)->putJson('/api/auth/profile', [
+        'matieres_maitrisees' => [$matiereEtrangere->id],
+    ])->assertStatus(422)
+        ->assertJsonValidationErrors(['matieres_maitrisees.0']);
+
+    expect(EnseignantMatiereMaitrisee::withoutGlobalScopes()
+        ->where('matiere_id', $matiereEtrangere->id)->count())->toBe(0);
+});
+
 it('validates experience rows', function () {
     $user = User::factory()->create([
         'role' => 'enseignant',
@@ -127,4 +174,22 @@ it('validates experience rows', function () {
 
     $response->assertStatus(422)
         ->assertJsonValidationErrors(['experiences.0.poste', 'experiences.0.date_debut']);
+});
+
+it('gives the school name and phone so the login page can show who to call', function () {
+    $ecole = Ecole::factory()->create(['nom' => 'CEG Les Palmiers', 'phone' => '+229 01 97 00 00 00']);
+    $user = User::factory()->create(['ecole_id' => $ecole->id]);
+
+    $this->actingAs($user)->getJson('/api/auth/me')
+        ->assertOk()
+        ->assertJsonPath('user.ecole.nom', 'CEG Les Palmiers')
+        ->assertJsonPath('user.ecole.telephone', '+229 01 97 00 00 00');
+});
+
+it('gives no school to an account without one', function () {
+    $user = User::factory()->create(['role' => 'super-admin', 'ecole_id' => null]);
+
+    $this->actingAs($user)->getJson('/api/auth/me')
+        ->assertOk()
+        ->assertJsonPath('user.ecole', null);
 });

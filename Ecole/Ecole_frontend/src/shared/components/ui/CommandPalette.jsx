@@ -23,7 +23,6 @@ import {
   DollarSign,
   Calendar,
   Search,
-  Sparkles,
   BarChart3,
   CreditCard,
   ClipboardList,
@@ -35,7 +34,51 @@ import useAuthStore from '@/shared/stores/auth-store';
 import useUIStore from '@/shared/stores/ui-store';
 import apiClient from '@/shared/lib/api-client';
 import { ROUTE_CONFIG } from '@/features/roles/route-config';
-import { ROLES, normalizeRole } from '@/shared/types/roles';
+import { getRoleNavigation } from '@/features/roles/navigation-config';
+import { ROLES, hasRole, normalizeRole } from '@/shared/types/roles';
+import { useTranslation } from '@/shared/i18n';
+import { formatCurrency, libelle } from '@/shared/lib/utils';
+
+/**
+ * Résultats de recherche → lignes de la palette.
+ *
+ * `classe` arrive de l'API sous forme d'objet (`{ id, nom_classe }`) : l'afficher
+ * tel quel faisait planter React et la palette disparaissait à la première
+ * lettre. Les destinations pointaient aussi vers `/eleves/:id` et `/classes/:id`,
+ * qui n'existent pas ; elles mènent maintenant à la liste des élèves.
+ */
+const nomEleve = (el) => (typeof el === 'string' ? el : libelle(el?.nom_complet)
+  || [el?.user?.name ?? el?.nom, el?.user?.prenom ?? el?.prenom].filter((v) => typeof v === 'string' && v).join(' '));
+
+const versEleve = (el) => ({
+  key: el.id,
+  label: nomEleve(el) || `Élève ${el.id}`,
+  sublabel: libelle(el.classe) || libelle(el.classe_nom),
+  path: '/eleves',
+  icon: Users,
+  _type: 'eleve',
+});
+// Le paiement porte l'élève complet en objet : le rendre tel quel faisait
+// planter la palette dès qu'un paiement existait (BUG-007, audit du 14/11).
+const versPaiement = (p) => {
+  const montant = Number(p.amount ?? p.montant);
+  return {
+    key: p.id,
+    label: nomEleve(p.eleve) || libelle(p.eleve_nom) || `Paiement ${p.id}`,
+    sublabel: Number.isFinite(montant) && montant > 0 ? formatCurrency(montant) : libelle(p.date),
+    path: '/paiements',
+    icon: CreditCard,
+    _type: 'paiement',
+  };
+};
+const versClasse = (cl) => ({
+  key: cl.id,
+  label: libelle(cl.nom_classe ?? cl.nom) || `Classe ${cl.id}`,
+  sublabel: libelle(cl.niveau) || libelle(cl.section),
+  path: '/eleves',
+  icon: BookOpen,
+  _type: 'classe',
+});
 
 /* ─── Debounce helper ────────────────────────────────────────────────── */
 function useDebouncedValue(value, delay = 300) {
@@ -61,25 +104,21 @@ const ROLE_ACTIONS = {
     { icon: BookOpen, label: 'Saisir une note', action: 'navigate', path: '/notes' },
     { icon: DollarSign, label: 'Enregistrer un paiement', action: 'navigate', path: '/paiements' },
     { icon: Calendar, label: 'Planifier un cours', action: 'navigate', path: '/emploi-du-temps' },
-    { icon: BarChart3, label: 'Rapport IA', action: 'navigate', path: '/directeur/ai-insights' },
   ],
   [ROLES.ENSEIGNANT]: [
     { icon: ClipboardList, label: 'Saisir une note', action: 'navigate', path: '/notes' },
     { icon: Users, label: 'Voir mes élèves', action: 'navigate', path: '/eleves' },
     { icon: Calendar, label: 'Mon emploi du temps', action: 'navigate', path: '/emploi-du-temps' },
-    { icon: Sparkles, label: 'Assistant de cours IA', action: 'navigate', path: '/enseignant/ai-assistant' },
   ],
   [ROLES.ELEVE]: [
     { icon: BookOpen, label: 'Mes notes', action: 'navigate', path: '/notes' },
     { icon: Calendar, label: 'Emploi du temps', action: 'navigate', path: '/emploi-du-temps' },
     { icon: CreditCard, label: 'Mes paiements', action: 'navigate', path: '/paiements' },
-    { icon: Sparkles, label: 'Tuteur IA', action: 'navigate', path: '/eleve/tutor' },
   ],
   [ROLES.PARENT]: [
     { icon: Users, label: 'Voir mes enfants', action: 'navigate', path: '/parent/enfants' },
-    { icon: DollarSign, label: 'Paiements', action: 'navigate', path: '/paiements' },
+    { icon: DollarSign, label: 'Paiements', action: 'navigate', path: '/parent/paiements' },
     { icon: BookOpen, label: 'Notes des enfants', action: 'navigate', path: '/notes' },
-    { icon: Sparkles, label: 'Rapport hebdomadaire', action: 'navigate', path: '/parent/ai-report' },
   ],
   [ROLES.COMPTABLE]: [
     { icon: DollarSign, label: 'Enregistrer un paiement', action: 'navigate', path: '/paiements' },
@@ -105,21 +144,8 @@ const ROLE_ACTIONS = {
   ],
 };
 
-/* ─── Helper : extraire les pages du route config ───────────────── */
-function getAllRoutes(userRole) {
-  const effective = normalizeRole(userRole);
-  return Object.entries(ROUTE_CONFIG)
-    .filter(([, cfg]) => cfg.roles === null || (effective && cfg.roles.includes(effective)))
-    .map(([key, cfg]) => ({
-      key,
-      label: cfg.label || key.charAt(0).toUpperCase() + key.slice(1),
-      path: cfg.path,
-      icon: cfg.icon || ArrowRight,
-      group: cfg.group || 'navigation',
-    }));
-}
-
 export default function CommandPalette() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const { commandPaletteOpen, closeCommandPalette } = useUIStore();
@@ -136,13 +162,27 @@ export default function CommandPalette() {
   const listRef = useRef(null);
 
   /* ─── Pages accessibles à l'utilisateur ─────────────────────────── */
-  const pages = useMemo(() => getAllRoutes(user?.role), [user?.role]);
+  // Les pages du rôle, nommées comme dans son menu. La palette les tirait
+  // de la configuration des routes, sous leur clé technique (« AuditLog »).
+  const pages = useMemo(
+    () => getRoleNavigation(user?.role).map((item) => ({
+      key: item.path, label: t(item.label), path: item.path, icon: item.icon ?? ArrowRight, group: 'navigation',
+    })),
+    [user?.role, t],
+  );
 
   /* ─── Actions rapides pour le rôle ──────────────────────────────── */
   const actions = useMemo(() => {
     if (!user?.role) return [];
     const effective = normalizeRole(user.role);
-    return ROLE_ACTIONS[user.role] || ROLE_ACTIONS[effective] || DEFAULT_ACTIONS;
+    // Une action ne mène qu'à une page que ce rôle peut ouvrir : « Mes
+    // paiements » conduisait l'élève sur « Accès non autorisé ».
+    const actions = ROLE_ACTIONS[user.role] || ROLE_ACTIONS[effective] || DEFAULT_ACTIONS;
+    return actions.filter((action) => {
+      if (action.action !== 'navigate') return true;
+      const route = Object.values(ROUTE_CONFIG).find((r) => r.path === action.path);
+      return !route?.roles || hasRole(user.role, route.roles);
+    });
   }, [user?.role]);
 
   /* ─── Filtrage local (pages + actions) ──────────────────────────── */
@@ -188,6 +228,8 @@ export default function CommandPalette() {
         const data = res.value?.data;
         if (Array.isArray(data)) return data;
         if (Array.isArray(data?.data)) return data.data;
+        // Enveloppe contenant un paginateur Laravel.
+        if (Array.isArray(data?.data?.data)) return data.data.data;
         if (Array.isArray(data?.eleves)) return data.eleves;
         if (Array.isArray(data?.results)) return data.results;
         return [];
@@ -211,32 +253,12 @@ export default function CommandPalette() {
 
     filteredActions.forEach((action) => items.push({ ...action, _type: 'action' }));
     apiResults.eleves.forEach((el) =>
-      items.push({
-        label: el.nom_complet || el.nom || `${el.prenom || ''} ${el.nom || ''}`.trim(),
-        sublabel: el.classe || el.classe_nom || '',
-        path: `/eleves/${el.id}`,
-        icon: Users,
-        _type: 'eleve',
-      })
+      items.push(versEleve(el))
     );
     apiResults.classes.forEach((cl) =>
-      items.push({
-        label: cl.nom || cl.nom_classe || `Classe ${cl.id}`,
-        sublabel: cl.niveau || cl.section || '',
-        path: `/classes/${cl.id}`,
-        icon: BookOpen,
-        _type: 'classe',
-      })
+      items.push(versClasse(cl))
     );
-    apiResults.paiements.forEach((p) =>
-      items.push({
-        label: p.eleve || p.eleve_nom || `Paiement #${p.id}`,
-        sublabel: p.montant ? `${p.montant} FCFA` : p.date || '',
-        path: `/paiements`,
-        icon: CreditCard,
-        _type: 'paiement',
-      })
-    );
+    apiResults.paiements.forEach((p) => items.push(versPaiement(p)));
     filteredPages.forEach((page) => items.push({ ...page, _type: 'page' }));
 
     return items;
@@ -327,7 +349,8 @@ export default function CommandPalette() {
 
     return (
       <button
-        key={`${item._type}-${item.key || item.label || idx}`}
+        // Deux homonymes ont le même libellé : la clé suit l'identifiant.
+        key={`${item._type}-${item.key ?? item.path ?? item.label}-${idx}`}
         data-active={isActive}
         onClick={() => handleSelect(item)}
         onMouseEnter={() => setActiveIndex(currentIndex)}
@@ -338,7 +361,7 @@ export default function CommandPalette() {
         }`}
       >
         <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${
-          isActive ? 'bg-[var(--accent)] text-white' : 'bg-[var(--border-light)] text-[var(--text-tertiary)]'
+          isActive ? 'bg-[var(--action)] text-white' : 'bg-[var(--border-light)] text-[var(--text-tertiary)]'
         }`}>
           <item.icon className="h-3.5 w-3.5" />
         </span>
@@ -383,7 +406,7 @@ export default function CommandPalette() {
           {/* Palette */}
           <motion.div
             role="dialog"
-            aria-label="Palette de commandes"
+            aria-label={t('components.command_palette.palette_de_commandes')}
             aria-modal="true"
             initial={{ opacity: 0, scale: 0.96, y: -12 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -405,7 +428,7 @@ export default function CommandPalette() {
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Rechercher élèves, classes, paiements..."
+                  placeholder={t('components.command_palette.rechercher_eleves_classes_paiements')}
                   role="combobox"
                   aria-expanded={hasResults}
                   aria-autocomplete="list"
@@ -427,7 +450,7 @@ export default function CommandPalette() {
                 ref={listRef}
                 id="command-palette-list"
                 role="listbox"
-                aria-label="Résultats de recherche"
+                aria-label={t('components.command_palette.resultats_de_recherche')}
                 className="max-h-80 overflow-y-auto p-2"
               >
                 {!hasResults && debouncedQuery.trim() && !apiLoading && (
@@ -437,14 +460,14 @@ export default function CommandPalette() {
                       Aucun résultat pour &ldquo;{debouncedQuery}&rdquo;
                     </p>
                     <p className="text-xs text-[var(--text-tertiary)]">
-                      Essayez un nom d&apos;élève, de classe ou une action
+                      {t('components.command_palette.essayez_un_nom_d_eleve_de_classe_ou_une_action')}
                     </p>
                   </div>
                 )}
 
                 {!debouncedQuery.trim() && (
                   <div className="mb-2 px-2 py-1.5 text-xs font-medium text-[var(--text-tertiary)] uppercase tracking-wider">
-                    Suggestions
+                    {t('components.command_palette.suggestions')}
                   </div>
                 )}
 
@@ -452,38 +475,20 @@ export default function CommandPalette() {
                 {renderGroup('Actions', filteredActions)}
 
                 {/* API Results: Élèves */}
-                {renderGroup('Élèves', apiResults.eleves.map((el) => ({
-                  label: el.nom_complet || el.nom || `${el.prenom || ''} ${el.nom || ''}`.trim(),
-                  sublabel: el.classe || el.classe_nom || '',
-                  path: `/eleves/${el.id}`,
-                  icon: Users,
-                  _type: 'eleve',
-                })))}
+                {renderGroup('Élèves', apiResults.eleves.map((el) => (versEleve(el))))}
 
                 {/* API Results: Classes */}
-                {renderGroup('Classes', apiResults.classes.map((cl) => ({
-                  label: cl.nom || cl.nom_classe || `Classe ${cl.id}`,
-                  sublabel: cl.niveau || cl.section || '',
-                  path: `/classes/${cl.id}`,
-                  icon: BookOpen,
-                  _type: 'classe',
-                })))}
+                {renderGroup('Classes', apiResults.classes.map((cl) => (versClasse(cl))))}
 
                 {/* API Results: Paiements */}
-                {renderGroup('Paiements', apiResults.paiements.map((p) => ({
-                  label: p.eleve || p.eleve_nom || `Paiement #${p.id}`,
-                  sublabel: p.montant ? `${p.montant} FCFA` : p.date || '',
-                  path: '/paiements',
-                  icon: CreditCard,
-                  _type: 'paiement',
-                })))}
+                {renderGroup('Paiements', apiResults.paiements.map(versPaiement))}
 
                 {/* Navigation pages */}
                 {renderGroup('Pages', filteredPages)}
 
                 {!debouncedQuery.trim() && !hasResults && (
                   <div className="px-4 py-8 text-center text-sm text-[var(--text-tertiary)]">
-                    Tapez pour commencer à rechercher...
+                    {t('components.command_palette.tapez_pour_commencer_a_rechercher')}
                   </div>
                 )}
               </div>
@@ -492,15 +497,15 @@ export default function CommandPalette() {
               <div className="flex items-center gap-4 border-t border-[var(--border-light)] px-4 py-2.5">
                 <div className="flex items-center gap-1.5 text-[11px] text-[var(--text-tertiary)]">
                   <kbd className="rounded border border-[var(--border)] bg-[var(--surface-subtle)] px-1 py-0.5 text-[10px]">↑↓</kbd>
-                  <span>Naviguer</span>
+                  <span>{t('components.command_palette.naviguer')}</span>
                 </div>
                 <div className="flex items-center gap-1.5 text-[11px] text-[var(--text-tertiary)]">
                   <kbd className="rounded border border-[var(--border)] bg-[var(--surface-subtle)] px-1 py-0.5 text-[10px]">↵</kbd>
-                  <span>Ouvrir</span>
+                  <span>{t('components.command_palette.ouvrir')}</span>
                 </div>
                 <div className="flex items-center gap-1.5 text-[11px] text-[var(--text-tertiary)]">
                   <kbd className="rounded border border-[var(--border)] bg-[var(--surface-subtle)] px-1 py-0.5 text-[10px]">Esc</kbd>
-                  <span>Fermer</span>
+                  <span>{t('common.close')}</span>
                 </div>
               </div>
             </div>

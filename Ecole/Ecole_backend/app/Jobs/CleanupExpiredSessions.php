@@ -29,10 +29,15 @@ class CleanupExpiredSessions implements ShouldQueue
             return;
         }
 
+        // `last_activity` est un `integer` (timestamp Unix — migration
+        // `create_sessions_table`), pas un `datetime` : comparer à un Carbon
+        // le sérialise en chaîne `'2026-09-20 10:35:31'` au moment du binding
+        // PDO, que MySQL refuse (`Invalid datetime format`). `getTimestamp()`
+        // compare entier contre entier, comme la colonne l'exige.
         $deleted = DB::table('sessions')
             ->where('last_activity', '<', now()->subMinutes(
                 (int) config('session.lifetime', 120)
-            ))
+            )->getTimestamp())
             ->delete();
 
         Log::info("[SessionCleanup] {$deleted} sessions expirées supprimées.");

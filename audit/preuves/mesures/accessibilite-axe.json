@@ -1,0 +1,116 @@
+{
+ "/connexion": [],
+ "/parent/dashboard": [
+  {
+   "id": "button-name",
+   "impact": "critical",
+   "n": 1,
+   "aide": "Buttons must have discernible text"
+  }
+ ],
+ "/parent/enfants": [
+  {
+   "id": "color-contrast",
+   "impact": "serious",
+   "n": 14,
+   "aide": "Elements must meet minimum color contrast ratio thresholds"
+  }
+ ],
+ "/messagerie": [],
+ "/directeur/dashboard": [
+  {
+   "id": "svg-img-alt",
+   "impact": "serious",
+   "n": 4,
+   "aide": "<svg> elements with an img or image role must have alternative text"
+  }
+ ],
+ "/eleves": [
+  {
+   "id": "button-name",
+   "impact": "critical",
+   "n": 1,
+   "aide": "Buttons must have discernible text"
+  },
+  {
+   "id": "color-contrast",
+   "impact": "serious",
+   "n": 32,
+   "aide": "Elements must meet minimum color contrast ratio thresholds"
+  }
+ ],
+ "/notes": [
+  {
+   "id": "button-name",
+   "impact": "critical",
+   "n": 1,
+   "aide": "Buttons must have discernible text"
+  }
+ ],
+ "/emploi-du-temps": [
+  {
+   "id": "button-name",
+   "impact": "critical",
+   "n": 2,
+   "aide": "Buttons must have discernible text"
+  },
+  {
+   "id": "color-contrast",
+   "impact": "serious",
+   "n": 8,
+   "aide": "Elements must meet minimum color contrast ratio thresholds"
+  }
+ ],
+ "/parametres": [
+  {
+   "id": "color-contrast",
+   "impact": "serious",
+   "n": 1,
+   "aide": "Elements must meet minimum color contrast ratio thresholds"
+  },
+  {
+   "id": "label",
+   "impact": "critical",
+   "n": 4,
+   "aide": "Form elements must have labels"
+  }
+ ],
+ "/directeur/dashboard (sombre)": [
+  {
+   "id": "svg-img-alt",
+   "impact": "serious",
+   "n": 4,
+   "aide": "<svg> elements with an img or image role must have alternative text"
+  }
+ ],
+ "/comptable/dashboard": [
+  {
+   "id": "svg-img-alt",
+   "impact": "serious",
+   "n": 1,
+   "aide": "<svg> elements with an img or image role must have alternative text"
+  }
+ ],
+ "/comptable/transactions": [
+  {
+   "id": "button-name",
+   "impact": "critical",
+   "n": 42,
+   "aide": "Buttons must have discernible text"
+  },
+  {
+   "id": "color-contrast",
+   "impact": "serious",
+   "n": 42,
+   "aide": "Elements must meet minimum color contrast ratio thresholds"
+  }
+ ],
+ "/paiements": [
+  {
+   "id": "button-name",
+   "impact": "critical",
+   "n": 1,
+   "aide": "Buttons must have discernible text"
+  }
+ ]
+}

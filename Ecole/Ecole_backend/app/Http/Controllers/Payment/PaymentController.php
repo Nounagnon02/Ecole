@@ -10,7 +10,12 @@ use App\Models\Payment;
 use App\Models\PaymentHistory;
 use App\Models\PaiementEleve;
 use App\Models\Eleve;
+use App\Http\Requests\Payment\InitializePaymentRequest;
+use App\Http\Requests\Payment\MobileMoneyRequest;
 use App\Services\Billing\PaymentProvider;
+use App\Support\Alerting;
+use App\Support\FedaPayWebhook;
+use App\Support\SchoolContext;
 
 class PaymentController extends Controller
 {
@@ -76,16 +81,8 @@ class PaymentController extends Controller
     /**
      * Initialiser un paiement
      */
-    public function initializePayment(Request $request)
+    public function initializePayment(InitializePaymentRequest $request)
     {
-        $request->validate([
-            'eleve_id' => 'required|school_exists:eleves,id',
-            'paiement_eleve_id' => 'nullable|school_exists:paiements,id',
-            'amount' => 'required|numeric|min:100',
-            'description' => 'required|string',
-            'type' => 'required|in:scolarite,cantine,transport,autre',
-            'periode' => 'nullable|string'
-        ]);
 
         DB::beginTransaction();
         try {
@@ -112,6 +109,46 @@ class PaymentController extends Controller
                 }
             }
 
+            // FedaPay ne documente aucune clé d'idempotence côté fournisseur
+            // (vérifié dans leur documentation) : un double clic ou un retry
+            // réseau du client sur cet endpoint rouvrirait sans cela une
+            // deuxième transaction FedaPay pour la même intention de
+            // paiement. On rend l'opération idempotente ici, côté
+            // application, en réutilisant une ouverture identique toute
+            // récente plutôt que d'en créer une nouvelle.
+            $doublon = Payment::where('eleve_id', $request->eleve_id)
+                ->when(
+                    $request->filled('paiement_eleve_id'),
+                    fn ($query) => $query->where('paiement_eleve_id', $request->paiement_eleve_id),
+                    fn ($query) => $query->whereNull('paiement_eleve_id'),
+                )
+                ->where('amount', $request->amount)
+                ->where('type', $request->type)
+                ->awaitingGateway()
+                ->latest()
+                ->first();
+
+            if ($doublon) {
+                DB::commit();
+
+                return response()->json([
+                    'success' => true,
+                    'data' => [
+                        'payment_id' => $doublon->id,
+                        'transaction_id' => $doublon->transaction_id,
+                        'checkout_url' => $doublon->checkout_url,
+                        'amount' => $doublon->amount,
+                    ],
+                    'message' => 'Paiement déjà initialisé',
+                ]);
+            }
+
+            if ($refus = $this->refusSurEcheance($request)) {
+                DB::rollBack();
+
+                return response()->json(['success' => false, 'message' => $refus], 422);
+            }
+
             // Créer l'enregistrement de paiement
             $payment = Payment::create([
                 'eleve_id' => $request->eleve_id,
@@ -131,7 +168,8 @@ class PaymentController extends Controller
                 'currency' => 'XOF',
                 'description' => $request->description,
                 'reference' => 'PAY_' . $payment->id . '_' . uniqid(),
-                'callback_url' => route('payment.callback'),
+                // Paiement ouvert depuis le mobile : le retour ramène dans l'application.
+                'callback_url' => route('payment.callback', $request->input('client') === 'mobile' ? ['client' => 'mobile'] : []),
                 'metadata' => [
                     'payment_id' => $payment->id,
                     'eleve_id' => $eleve->id,
@@ -142,10 +180,15 @@ class PaymentController extends Controller
             ]);
 
             if ($result['success']) {
-                $payment->update(['transaction_id' => $result['transaction_id']]);
+                $payment->update([
+                    'transaction_id' => $result['transaction_id'],
+                    'checkout_url' => $result['payment_url'],
+                ]);
             }
 
             DB::commit();
+
+            \Cache::forget('dashboard_directeur_' . (auth()->user()->ecole_id ?? 'global'));
 
             return response()->json([
                 'success' => $result['success'],
@@ -161,23 +204,64 @@ class PaymentController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            $this->rethrowIfMeaningful($e);
+            // Rollback D'ABORD : `rethrowIfMeaningful` relance immédiatement
+            // les exceptions « signifiantes » (403/404/422/...) — les
+            // relancer avant le rollback désynchronise la comptabilité de
+            // transactions de Laravel de la connexion PDO réelle (même bug
+            // que celui trouvé dans AuthController::inscription()).
             DB::rollBack();
+            $this->rethrowIfMeaningful($e);
             Log::error('Payment initialization error', ['error' => $e->getMessage()]);
             return response()->json(['success' => false, 'message' => 'Erreur lors de l\'initialisation du paiement'], 500);
         }
     }
 
     /**
+     * Motif de refus d'une ouverture rattachée à une échéance, ou null.
+     *
+     * On ne peut engager que ce qui reste dû, diminué de ce qui attend déjà la
+     * réponse de la passerelle : sans cela, deux ouvertures successives
+     * (montants différents, donc non reconnues comme doublon) encaissaient
+     * plus que l'échéance, et le trop-perçu disparaissait dans `credit()`, qui
+     * borne le reste à zéro.
+     */
+    private function refusSurEcheance(InitializePaymentRequest $request): ?string
+    {
+        if (! $request->filled('paiement_eleve_id')) {
+            return null;
+        }
+
+        $echeance = PaiementEleve::find($request->paiement_eleve_id);
+        $reste = (float) ($echeance?->montant_restant ?? 0);
+
+        if ($reste <= 0) {
+            return 'Cette échéance est déjà soldée.';
+        }
+
+        $fcfa = fn (float $montant) => number_format($montant, 0, ',', ' ').' FCFA';
+        $montant = (float) $request->amount;
+
+        if ($montant > $reste) {
+            return "Le montant dépasse le reste à payer de cette échéance ({$fcfa($reste)}).";
+        }
+
+        $enCours = (float) Payment::where('paiement_eleve_id', $echeance->id)->awaitingGateway()->sum('amount');
+        $disponible = $reste - $enCours;
+
+        if ($enCours > 0 && $montant > $disponible) {
+            return $disponible > 0
+                ? "Un paiement de {$fcfa($enCours)} est déjà en cours sur cette échéance. Terminez-le, ou payez au plus {$fcfa($disponible)}."
+                : "Un paiement de {$fcfa($enCours)} est déjà en cours sur cette échéance. Terminez-le avant d'en ouvrir un autre.";
+        }
+
+        return null;
+    }
+
+    /**
      * Traiter paiement Mobile Money
      */
-    public function processMobileMoney(Request $request)
+    public function processMobileMoney(MobileMoneyRequest $request)
     {
-        $request->validate([
-            'payment_id' => 'required|school_exists:payments,id',
-            'phone_number' => 'required|string',
-            'operator' => 'required|in:mtn,moov'
-        ]);
 
         try {
             $payment = $this->authorizedPayment((int) $request->payment_id);
@@ -200,6 +284,8 @@ class PaymentController extends Controller
 
             if ($verification['status'] === 'completed') {
                 $this->confirmPayment($payment, 'Paiement Mobile Money confirmé par le provider', 'mobile_money');
+
+                \Cache::forget('dashboard_directeur_' . (auth()->user()->ecole_id ?? 'global'));
 
                 return response()->json(['success' => true, 'message' => 'Paiement confirmé']);
             }
@@ -253,81 +339,122 @@ class PaymentController extends Controller
     }
 
     /**
-     * Callback
+     * Retour du navigateur après la page de la passerelle.
+     *
+     * Le web n'avait aucune page aux adresses `/payment/success|failed|error`
+     * vers lesquelles ce retour redirigeait : le payeur finissait sur une page
+     * introuvable. Et un paiement mobile money encore en attente de validation
+     * sur le téléphone était annoncé comme échoué. Trois issues distinctes
+     * désormais, sur une page qui existe.
      */
     public function callback(Request $request)
     {
         $transactionId = $request->query('id');
+        // Retour vers l'application d'origine. La destination mobile est fixe
+        // (configuration) : le paramètre ne choisit qu'entre deux adresses
+        // connues, il ne peut pas rediriger ailleurs.
+        $versMobile = $request->query('client') === 'mobile';
+        $retour = fn (string $statut) => $versMobile
+            ? redirect()->away(rtrim((string) config('app.mobile_return_url'), '?').'?statut='.$statut)
+            : redirect(rtrim((string) config('app.frontend_url'), '/').'/paiement/retour?statut='.$statut);
 
         try {
-            $payment = Payment::where('transaction_id', $transactionId)->first();
-            if (!$payment) {
-                return redirect(config('app.frontend_url') . '/payment/error');
+            // Retour sans session garantie : la transaction, émise par la
+            // passerelle, fait autorité (même raisonnement que le webhook).
+            $payment = $transactionId
+                ? Payment::withoutGlobalScope('ecole')->where('transaction_id', $transactionId)->first()
+                : null;
+
+            if (! $payment || ! $payment->ecole_id) {
+                return $retour('erreur');
             }
 
-            $result = $this->provider->verifyPayment($transactionId);
+            $result = $this->provider->verifyPayment((string) $transactionId);
 
             if ($result['success']) {
-                $this->confirmPayment($payment, 'Paiement approuvé');
-                return redirect(config('app.frontend_url') . '/payment/success?id=' . $payment->id);
+                SchoolContext::for(
+                    (int) $payment->ecole_id,
+                    fn () => $this->confirmPayment($payment, 'Paiement approuvé'),
+                );
+
+                return $retour('confirme');
             }
 
-            return redirect(config('app.frontend_url') . '/payment/failed?id=' . $payment->id);
+            return $retour(($result['status'] ?? null) === 'pending' && empty($result['error']) ? 'attente' : 'echoue');
 
         } catch (\Exception $e) {
             $this->rethrowIfMeaningful($e);
             Log::error('Callback error', ['error' => $e->getMessage()]);
-            return redirect(config('app.frontend_url') . '/payment/error');
+
+            return $retour('erreur');
         }
     }
 
     /**
-     * Webhook
+     * Webhook de la passerelle de paiement.
+     *
+     * Seul point d'entrée du contrôleur qui s'exécute sans utilisateur
+     * authentifié : la passerelle rappelle le serveur, elle ne se connecte pas.
+     * `Payment`, `PaymentHistory` et `PaiementEleve` portent tous le scope
+     * `ecole`, qui se résout depuis l'utilisateur courant ou la session — ni
+     * l'un ni l'autre n'existe ici. La recherche retombait donc sur
+     * `whereRaw('1 = 0')` : `$payment` était systématiquement null, le webhook
+     * répondait 200 et n'encaissait rien (audit A1).
+     *
+     * D'où les deux temps ci-dessous : lever le scope pour retrouver la
+     * transaction — c'est son identifiant, émis par la passerelle, qui fait
+     * autorité, pas une école ambiante — puis lier l'école de ce paiement pour
+     * tout le traitement, afin que l'historique et la réconciliation de
+     * l'échéance s'écrivent dans le bon établissement.
      */
     public function webhook(Request $request)
     {
         $signature = $request->header('X-FedaPay-Signature');
         $payload = $request->getContent();
-        $expectedSignature = hash_hmac('sha256', $payload, config('services.fedapay.webhook_secret'));
+        $secret = (string) config('services.fedapay.webhook_secret');
 
-        if (!hash_equals($expectedSignature, $signature)) {
+        // Format FedaPay (`t=…,s=…`, anti-rejeu) ; à défaut, l'ancien HMAC
+        // simple du corps, tant que des outils internes le produisent encore.
+        $signatureValide = FedaPayWebhook::signatureValide($payload, $signature, $secret)
+            || (is_string($signature) && hash_equals(hash_hmac('sha256', $payload, $secret), $signature));
+
+        if (! $signatureValide) {
+            Alerting::anomaly('Webhook de paiement rejeté (signature invalide)', [
+                'ip' => $request->ip(),
+                'signature_present' => is_string($signature),
+            ]);
+
             return response()->json(['error' => 'Invalid signature'], 401);
         }
 
         $data = $request->all();
 
         try {
-            if (isset($data['entity']['transaction'])) {
-                $transactionId = $data['entity']['transaction']['id'];
-                $status = $data['entity']['transaction']['status'];
+            if ($transaction = FedaPayWebhook::transaction($data)) {
+                $transactionId = $transaction['id'];
+                $status = $transaction['status'];
 
-                $payment = Payment::where('transaction_id', $transactionId)->first();
+                $payment = Payment::withoutGlobalScope('ecole')
+                    ->where('transaction_id', $transactionId)
+                    ->first();
+
+                if ($payment && !$payment->ecole_id) {
+                    // Rattacher un encaissement à un établissement inconnu
+                    // écrirait un historique orphelin, invisible de tous.
+                    // Mieux vaut un échec bruyant que ce silence.
+                    Log::error('Webhook: paiement sans école, traitement abandonné', [
+                        'transaction_id' => $transactionId,
+                        'payment_id'     => $payment->id,
+                    ]);
+
+                    return response()->json(['error' => 'Payment has no school'], 422);
+                }
 
                 if ($payment) {
-                    if ($status === 'approved') {
-                        // Filet de sécurité : vérifier côté provider que la
-                        // transaction est bien approuvée (audit S3). Si l'appel
-                        // échoue (timeout, indisponibilité), on fait quand même
-                        // confiance à la signature HMAC déjà validée.
-                        try {
-                            $verification = $this->provider->verifyPayment($transactionId);
-                            if (!$verification['success']) {
-                                Log::warning('S3: provider verify returned non-approved, trusting HMAC signature', [
-                                    'transaction_id' => $transactionId,
-                                    'provider_error' => $verification['error'] ?? null,
-                                ]);
-                            }
-                        } catch (\Throwable $e) {
-                            Log::warning('S3: provider verify unreachable, trusting HMAC signature', [
-                                'transaction_id' => $transactionId,
-                                'error' => $e->getMessage(),
-                            ]);
-                        }
-                        $this->confirmPayment($payment, 'Paiement approuvé via webhook (vérifié)');
-                    } elseif ($status === 'declined') {
-                        $payment->update(['status' => 'failed']);
-                        $this->recordHistory($payment, 'failed', 'Paiement refusé');
-                    }
+                    SchoolContext::for(
+                        (int) $payment->ecole_id,
+                        fn () => $this->applyGatewayOutcome($payment, $status, $transactionId),
+                    );
                 }
             }
 
@@ -389,6 +516,9 @@ class PaymentController extends Controller
             $payment = Payment::findOrFail($request->payment_id);
 
             if ($payment->refund_status !== 'requested') {
+                // Rien n'a encore été écrit, mais la transaction reste
+                // ouverte tant qu'elle n'est pas explicitement fermée.
+                DB::rollBack();
                 return response()->json(['success' => false, 'message' => 'Aucune demande de remboursement'], 400);
             }
 
@@ -409,8 +539,8 @@ class PaymentController extends Controller
             return response()->json(['success' => true, 'message' => 'Remboursement effectué']);
 
         } catch (\Exception $e) {
-            $this->rethrowIfMeaningful($e);
             DB::rollBack();
+            $this->rethrowIfMeaningful($e);
             Log::error('Refund processing error', ['error' => $e->getMessage()]);
             return response()->json(['success' => false, 'message' => 'Erreur lors du remboursement'], 500);
         }
@@ -426,6 +556,45 @@ class PaymentController extends Controller
      * jamais deux fois l'échéance (le rapprochement n'est joué que lors du
      * premier passage pending → completed).
      */
+    /**
+     * Appliquer le verdict de la passerelle à un paiement.
+     *
+     * Appelé sous `SchoolContext` : l'historique et la réconciliation écrivent
+     * donc dans l'école du paiement, sans utilisateur authentifié.
+     */
+    private function applyGatewayOutcome(Payment $payment, string $status, $transactionId): void
+    {
+        if (in_array($status, ['approved', 'transferred'], true)) {
+            // Filet de sécurité : vérifier côté provider que la transaction est
+            // bien approuvée (audit S3). Si l'appel échoue (timeout,
+            // indisponibilité), on fait quand même confiance à la signature
+            // HMAC déjà validée.
+            try {
+                $verification = $this->provider->verifyPayment($transactionId);
+                if (!$verification['success']) {
+                    Log::warning('S3: provider verify returned non-approved, trusting HMAC signature', [
+                        'transaction_id' => $transactionId,
+                        'provider_error' => $verification['error'] ?? null,
+                    ]);
+                }
+            } catch (\Throwable $e) {
+                Log::warning('S3: provider verify unreachable, trusting HMAC signature', [
+                    'transaction_id' => $transactionId,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
+            $this->confirmPayment($payment, 'Paiement approuvé via webhook (vérifié)');
+
+            return;
+        }
+
+        if (in_array($status, ['declined', 'canceled', 'expired'], true)) {
+            $payment->update(['status' => 'failed']);
+            $this->recordHistory($payment, 'failed', 'Paiement refusé');
+        }
+    }
+
     private function confirmPayment(Payment $payment, string $note, ?string $paymentMethod = null): void
     {
         if ($payment->status === 'completed') {
@@ -441,6 +610,16 @@ class PaymentController extends Controller
             $this->recordHistory($payment, 'completed', $note);
             $this->reconcile($payment);
         });
+
+        // Reçu par SMS, une seule fois : on n'arrive ici qu'au premier passage
+        // à « completed ».
+        if ($payment->eleve) {
+            $echeance = $payment->paiement_eleve_id ? PaiementEleve::find($payment->paiement_eleve_id) : null;
+            \App\Support\AvisParents::envoyer($payment->eleve->loadMissing('user:id,name,prenom'), 'recu', [
+                'montant' => \App\Support\AvisParents::fcfa((float) $payment->amount), 'libelle' => $payment->description ?? 'scolarité',
+                'reste' => \App\Support\AvisParents::fcfa((float) ($echeance?->montant_restant ?? 0)), 'reference' => $payment->transaction_id ?? $payment->id,
+            ]);
+        }
     }
 
     /**

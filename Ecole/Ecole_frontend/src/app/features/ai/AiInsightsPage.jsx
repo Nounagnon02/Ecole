@@ -20,66 +20,34 @@ import useAuthStore from '@/shared/stores/auth-store';
 import apiClient from '@/shared/lib/api-client';
 import { cn } from '@/shared/lib/utils';
 import { ROLES } from '@/shared/types/roles';
+import { useTranslation } from '@/shared/i18n';
 
 /* ─── Messages de bienvenue par rôle ────────────────────────────── */
+// Les textes vivent dans les locales (`pages.ai.welcome.<clé>`) ; il ne reste
+// ici que les icônes, qui ne se traduisent pas. L'ordre des icônes suit celui
+// des suggestions `s1`…`s4`.
 const WELCOME_MESSAGES = {
-  [ROLES.DIRECTEUR]: {
-    title: 'Tableau de bord prédictif',
-    subtitle: 'Analyses, tendances et alertes intelligentes',
-    suggestions: [
-      { icon: BarChart3, label: 'Analyser les résultats' },
-      { icon: TrendingUp, label: 'Tendances trimestrielles' },
-      { icon: AlertTriangle, label: 'Alertes et risques' },
-      { icon: Lightbulb, label: 'Recommandations' },
-    ]
-  },
-  [ROLES.ENSEIGNANT]: {
-    title: 'Assistant pédagogique IA',
-    subtitle: 'Préparez vos cours et suivez vos élèves',
-    suggestions: [
-      { icon: BookOpen, label: 'Planifier un cours' },
-      { icon: BarChart3, label: 'Analyser ma classe' },
-      { icon: FileText, label: 'Générer un exercice' },
-      { icon: GraduationCap, label: 'Conseil pédagogique' },
-    ]
-  },
-  [ROLES.ELEVE]: {
-    title: 'Tuteur IA',
-    subtitle: 'Posez vos questions, apprenez à votre rythme',
-    suggestions: [
-      { icon: BookOpen, label: 'Aide en maths' },
-      { icon: BookOpen, label: 'Aide en français' },
-      { icon: BookOpen, label: 'Aide en physique' },
-      { icon: GraduationCap, label: 'Réviser un contrôle' },
-    ]
-  },
-  [ROLES.PARENT]: {
-    title: 'Assistant parental',
-    subtitle: 'Suivi intelligent de la scolarité',
-    suggestions: [
-      { icon: School, label: 'Rapport de mon enfant' },
-      { icon: TrendingUp, label: 'Progrès récents' },
-      { icon: MessageSquare, label: 'Conseil éducatif' },
-      { icon: Target, label: 'Objectifs trimestre' },
-    ]
-  }
+  [ROLES.DIRECTEUR]: { key: 'directeur', icons: [BarChart3, TrendingUp, AlertTriangle, Lightbulb] },
+  [ROLES.ENSEIGNANT]: { key: 'enseignant', icons: [BookOpen, BarChart3, FileText, GraduationCap] },
+  [ROLES.ELEVE]: { key: 'eleve', icons: [BookOpen, BookOpen, BookOpen, GraduationCap] },
+  [ROLES.PARENT]: { key: 'parent', icons: [School, TrendingUp, MessageSquare, Target] },
 };
 
-const DEFAULT_WELCOME = {
-  title: 'Assistant IA',
-  subtitle: 'Comment puis-je vous aider ?',
-  suggestions: [
-    { icon: Sparkles, label: 'Analyse générale' },
-    { icon: BarChart3, label: 'Statistiques' },
-    { icon: FileText, label: 'Rapport' },
-    { icon: HelpCircle, label: 'Aide' },
-  ]
-};
+const DEFAULT_WELCOME = { key: 'default', icons: [Sparkles, BarChart3, FileText, HelpCircle] };
 
 export default function AiInsightsPage() {
+  const { t } = useTranslation();
   const { user } = useAuthStore();
   const role = user?.role;
-  const welcome = WELCOME_MESSAGES[role] || DEFAULT_WELCOME;
+  const { key: welcomeKey, icons: welcomeIcons } = WELCOME_MESSAGES[role] || DEFAULT_WELCOME;
+  const welcome = {
+    title: t(`pages.ai.welcome.${welcomeKey}.title`),
+    subtitle: t(`pages.ai.welcome.${welcomeKey}.subtitle`),
+    suggestions: welcomeIcons.map((icon, i) => ({
+      icon,
+      label: t(`pages.ai.welcome.${welcomeKey}.suggestions.s${i + 1}`),
+    })),
+  };
 
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
@@ -115,12 +83,12 @@ export default function AiInsightsPage() {
       const data = response.data;
       setMessages((prev) => [
         ...prev,
-        { role: 'assistant', content: data.content || 'Je n\'ai pas pu traiter votre demande.' },
+        { role: 'assistant', content: data.content || t('pages.ai.errors.no_answer') },
       ]);
     } catch {
       setMessages((prev) => [
         ...prev,
-        { role: 'assistant', content: 'Service IA momentanément indisponible. Veuillez réessayer.' },
+        { role: 'assistant', content: t('pages.ai.errors.unavailable') },
       ]);
     } finally {
       setIsLoading(false);
@@ -152,23 +120,23 @@ export default function AiInsightsPage() {
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--accent)] shadow-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--action)] shadow-3">
             <Sparkles className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-neutral-900 dark:text-neutral-100">
+            <h1 className="text-xl font-bold text-[var(--text-primary)] ">
               {welcome.title}
             </h1>
-            <p className="text-sm text-neutral-500">{welcome.subtitle}</p>
+            <p className="text-sm text-[var(--text-secondary)]">{welcome.subtitle}</p>
           </div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="mb-6 flex items-center gap-1 rounded-xl border border-neutral-200 bg-white p-1 dark:border-neutral-800 dark:bg-neutral-900">
+      <div className="mb-6 flex items-center gap-1 rounded-xl border border-[var(--border)] bg-[var(--surface-raised)] p-1  ">
         {[
-          { key: 'chat', label: 'Chat IA', icon: MessageSquare },
-          { key: 'analysis', label: 'Analyses', icon: BarChart3 },
+          { key: 'chat', label: t('pages.ai.tabs.chat'), icon: MessageSquare },
+          { key: 'analysis', label: t('pages.ai.tabs.analysis'), icon: BarChart3 },
         ].map((tab) => {
           const Icon = tab.icon;
           return (
@@ -179,7 +147,7 @@ export default function AiInsightsPage() {
                 'flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all',
                 activeTab === tab.key
                   ? 'bg-[var(--accent-subtle)] text-[var(--accent)]'
-                  : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] '
               )}
             >
               <Icon className="h-4 w-4" />
@@ -190,7 +158,7 @@ export default function AiInsightsPage() {
       </div>
 
       {activeTab === 'chat' && (
-        <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900">
+        <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface-raised)]  ">
           {/* Messages */}
           <div className="h-[400px] overflow-y-auto p-6">
             {messages.length === 0 && (
@@ -205,8 +173,8 @@ export default function AiInsightsPage() {
                     EduPilot IA
                   </span>
                 </motion.div>
-                <p className="mb-6 text-sm text-neutral-500 text-center max-w-md">
-                  Posez une question ou choisissez une suggestion ci-dessous
+                <p className="mb-6 text-sm text-[var(--text-secondary)] text-center max-w-md">
+                  {t('pages.ai.empty_hint')}
                 </p>
                 <div className="grid grid-cols-2 gap-3 w-full max-w-lg">
                   {welcome.suggestions.map((s) => {
@@ -215,7 +183,7 @@ export default function AiInsightsPage() {
                       <button
                         key={s.label}
                         onClick={() => handleSuggestion(s.label)}
-                        className="flex items-center gap-3 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm text-neutral-600 transition-all hover:border-[var(--accent)]/30 hover:bg-[var(--accent-subtle)] hover:text-[var(--accent)] dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400"
+                        className="flex items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm text-[var(--text-secondary)] transition-all hover:border-[var(--accent)]/30 hover:bg-[var(--accent-subtle)] hover:text-[var(--accent)]   "
                       >
                         <Icon className="h-4 w-4 shrink-0" />
                         <span>{s.label}</span>
@@ -241,8 +209,8 @@ export default function AiInsightsPage() {
                 <div className={cn(
                   'max-w-[75%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed',
                   msg.role === 'user'
-                    ? 'bg-[var(--accent)] text-white'
-                    : 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300'
+                    ? 'bg-[var(--action)] text-white'
+                    : 'bg-[var(--surface-subtle)] text-[var(--text-primary)]  '
                 )}>
                   {msg.content}
                 </div>
@@ -259,9 +227,9 @@ export default function AiInsightsPage() {
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent-subtle)]">
                   <Bot className="h-4 w-4 text-[var(--accent)]" />
                 </div>
-                <div className="flex items-center gap-2 rounded-2xl bg-neutral-100 px-4 py-3 dark:bg-neutral-800">
+                <div className="flex items-center gap-2 rounded-2xl bg-[var(--surface-subtle)] px-4 py-3 ">
                   <Loader2 className="h-4 w-4 animate-spin text-[var(--accent)]" />
-                  <span className="text-sm text-neutral-500">Réflexion...</span>
+                  <span className="text-sm text-[var(--text-secondary)]">{t('pages.ai.thinking')}</span>
                 </div>
               </div>
             )}
@@ -270,21 +238,21 @@ export default function AiInsightsPage() {
           </div>
 
           {/* Input */}
-          <div className="border-t border-neutral-200 p-4 dark:border-neutral-800">
+          <div className="border-t border-[var(--border)] p-4 ">
             <form onSubmit={handleSend} className="flex gap-2">
               <input
                 ref={inputRef}
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Posez votre question..."
+                placeholder={t('pages.ai.placeholder')}
                 disabled={isLoading}
-                className="h-11 flex-1 rounded-xl border border-neutral-200 bg-neutral-50 px-4 text-sm text-neutral-900 outline-none transition-all focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]/20 disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
+                className="h-11 flex-1 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 text-sm text-[var(--text-primary)] outline-none transition-all focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]/20 disabled:opacity-50    dark:placeholder-neutral-500"
               />
               <button
                 type="submit"
                 disabled={!input.trim() || isLoading}
-                className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--accent)] text-white transition-all hover:bg-[var(--accent-hover)] disabled:opacity-50"
+                className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--action)] text-white transition-all hover:bg-[var(--action-hover)] disabled:opacity-50"
               >
                 <Send className="h-4 w-4" />
               </button>
@@ -296,12 +264,12 @@ export default function AiInsightsPage() {
       {activeTab === 'analysis' && (
         <div className="space-y-6">
           {/* Analyse prédictive */}
-          <div className="rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900">
+          <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-raised)] p-6  ">
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <TrendingUp className="h-5 w-5 text-[var(--accent)]" />
-                <h2 className="text-base font-semibold text-neutral-900 dark:text-neutral-100">
-                  Analyse prédictive
+                <h2 className="text-base font-semibold text-[var(--text-primary)] ">
+                  {t('pages.ai.predictive.title')}
                 </h2>
               </div>
               <button
@@ -310,21 +278,21 @@ export default function AiInsightsPage() {
                 className="inline-flex items-center gap-2 rounded-lg bg-[var(--accent-subtle)] px-4 py-2 text-sm font-medium text-[var(--accent)] transition-colors hover:bg-[var(--accent-subtle)] disabled:opacity-50"
               >
                 <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} />
-                Analyser
+                {t('pages.ai.predictive.run')}
               </button>
             </div>
 
             {analysisData?.error && (
-              <p className="text-sm text-neutral-500 text-center py-8">
-                Configurez la clé API Anthropic dans config/services.php pour activer l'analyse IA.
+              <p className="text-sm text-[var(--text-secondary)] text-center py-8">
+                {t('pages.ai.predictive.not_configured')}
               </p>
             )}
 
             {!analysisData && (
               <div className="flex flex-col items-center gap-4 py-8 text-center">
-                <BarChart3 className="h-12 w-12 text-neutral-300 dark:text-neutral-600" />
-                <p className="text-sm text-neutral-500">
-                  Cliquez sur "Analyser" pour générer un rapport prédictif basé sur les données de votre établissement.
+                <BarChart3 className="h-12 w-12 text-[var(--text-secondary)] " />
+                <p className="text-sm text-[var(--text-secondary)]">
+                  {t('pages.ai.predictive.hint')}
                 </p>
               </div>
             )}
@@ -332,14 +300,14 @@ export default function AiInsightsPage() {
             {analysisData && !analysisData.error && (
               <div className="grid gap-4 sm:grid-cols-2">
                 {analysisData.trends?.map((trend, i) => (
-                  <div key={i} className="rounded-xl border border-neutral-100 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-800/50">
+                  <div key={i} className="rounded-xl border border-[var(--border-light)] bg-[var(--surface)] p-4  ">
                     <div className="mb-2 flex items-center gap-2">
                       <TrendingUp className="h-4 w-4 text-[var(--accent)]" />
                       <span className="text-xs font-semibold uppercase tracking-wider text-[var(--accent)]">
-                        Tendance {i + 1}
+                        {t('pages.ai.predictive.trend', { n: i + 1 })}
                       </span>
                     </div>
-                    <p className="text-sm text-neutral-700 dark:text-neutral-300">{trend}</p>
+                    <p className="text-sm text-[var(--text-primary)] ">{trend}</p>
                   </div>
                 ))}
               </div>
@@ -348,26 +316,26 @@ export default function AiInsightsPage() {
 
           {/* Stats rapides */}
           <div className="grid gap-4 sm:grid-cols-3">
-            <div className="rounded-2xl border border-neutral-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900">
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-raised)] p-5  ">
               <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-950/30">
                 <Target className="h-5 w-5 text-emerald-500" />
               </div>
-              <p className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">—</p>
-              <p className="text-xs text-neutral-500">Performances moyennes</p>
+              <p className="text-2xl font-bold text-[var(--text-primary)] ">—</p>
+              <p className="text-xs text-[var(--text-secondary)]">{t('pages.ai.stats.performance')}</p>
             </div>
-            <div className="rounded-2xl border border-neutral-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900">
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-raised)] p-5  ">
               <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-950/30">
                 <AlertTriangle className="h-5 w-5 text-amber-500" />
               </div>
-              <p className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">—</p>
-              <p className="text-xs text-neutral-500">Alertes actives</p>
+              <p className="text-2xl font-bold text-[var(--text-primary)] ">—</p>
+              <p className="text-xs text-[var(--text-secondary)]">{t('pages.ai.stats.alerts')}</p>
             </div>
-            <div className="rounded-2xl border border-neutral-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900">
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-raised)] p-5  ">
               <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--accent-subtle)]">
                 <Lightbulb className="h-5 w-5 text-[var(--accent)]" />
               </div>
-              <p className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">—</p>
-              <p className="text-xs text-neutral-500">Recommandations</p>
+              <p className="text-2xl font-bold text-[var(--text-primary)] ">—</p>
+              <p className="text-xs text-[var(--text-secondary)]">{t('pages.ai.stats.recommendations')}</p>
             </div>
           </div>
         </div>

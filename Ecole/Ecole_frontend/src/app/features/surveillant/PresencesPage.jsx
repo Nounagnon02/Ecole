@@ -1,266 +1,202 @@
 /**
- * PresencesPage — Gestion des présences
+ * PresencesPage — l'appel d'une classe (lot 6.1).
  *
- * Le surveillant enregistre et consulte les présences des élèves.
- * Données dynamiques via API /surveillant/absences
+ * La page n'affichait que des absences déjà saisies ailleurs, sur tout
+ * l'effectif de l'école. On choisit maintenant une classe et un jour, chaque
+ * élève est présent par défaut, et une touche le marque absent ou en retard.
+ * Comme la grille de notes, l'appel est gardé sur l'appareil et repart seul
+ * au retour du réseau ; l'enregistrement se rejoue sans doublon. Les absences
+ * du jour se justifient ensuite ligne par ligne.
  */
 
-import { useState, useEffect, useMemo } from 'react';
-import { motion } from 'framer-motion';
-import {
-  Users, Clock, CheckCircle, XCircle,
-  Search, Download, Loader2
-} from 'lucide-react';
-import { cn, formatDate } from '@/shared/lib/utils';
-import Card from '@/shared/components/ui/Card';
-import Badge from '@/shared/components/ui/Badge';
-import Avatar from '@/shared/components/ui/Avatar';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { CheckCircle, Clock, CloudOff, Loader2, Save, XCircle } from 'lucide-react';
+import apiClient, { useApiQuery } from '@/shared/lib/api-client';
+import { unwrapList } from '@/shared/lib/unwrap';
 import Button from '@/shared/components/ui/Button';
+import Card from '@/shared/components/ui/Card';
 import Input from '@/shared/components/ui/Input';
-import StatsCard from '@/shared/components/ui/StatsCard';
-import { useApi } from '@/hooks/useApi';
+import Select from '@/shared/components/ui/Select';
+import { useTranslation } from '@/shared/i18n';
+import { aujourdhui } from '@/shared/lib/jour';
+
+export const STATUTS = ['present', 'absent', 'retard'];
+const ICONES = { present: CheckCircle, absent: XCircle, retard: Clock };
+const COULEURS = { present: 'var(--success)', absent: 'var(--error)', retard: 'var(--warning)' };
+const cleBrouillon = (classe, date) => `ecole:brouillon-appel:${classe}:${date}`;
+const lire = (cle) => { try { return JSON.parse(localStorage.getItem(cle) ?? 'null'); } catch { return null; } };
+const ecrire = (cle, valeur) => { try { if (valeur) localStorage.setItem(cle, JSON.stringify(valeur)); else localStorage.removeItem(cle); } catch { /* stockage indisponible */ } };
 
 export default function PresencesPage() {
-  const { loading, error, get } = useApi();
-  const [presences, setPresences] = useState([]);
-  const [eleves, setEleves] = useState([]);
-  const [search, setSearch] = useState('');
-  const [filterClasse, setFilterClasse] = useState('');
-  const [filterStatut, setFilterStatut] = useState('');
-  const today = new Date();
+  const { t } = useTranslation();
+  const p = (cle, valeurs) => t(`pages.surveillant.appel.${cle}`, valeurs);
+  const [classe, setClasse] = useState('');
+  const [date, setDate] = useState(aujourdhui());
+  const [statuts, setStatuts] = useState({});
+  const [etat, setEtat] = useState('repos'); // repos | envoi | enregistre | attente | erreur
+  const [message, setMessage] = useState(null);
 
+  const requeteClasses = useApiQuery(['classes'], '/classes');
+  const classes = useMemo(() => (unwrapList(requeteClasses.data) ?? []).map((c) => ({ value: c.id, label: c.nom_classe })), [requeteClasses.data]);
+
+  const requeteFeuille = useApiQuery(['appel', classe, date], `/surveillant/appel/${classe}?date=${date}`, { queryOptions: { enabled: !!classe, staleTime: 0 } });
+  const eleves = useMemo(() => requeteFeuille.data?.data?.eleves ?? [], [requeteFeuille.data]);
+  const cle = classe ? cleBrouillon(classe, date) : null;
+
+  const requeteAbsences = useApiQuery(['absences-du-jour', classe, date], `/surveillant/absences?date=${date}&classe_id=${classe}`, { queryOptions: { enabled: !!classe, staleTime: 0 } });
+  const absences = useMemo(() => unwrapList(requeteAbsences.data) ?? [], [requeteAbsences.data]);
+
+  // Le brouillon de l'appareil s'il existe, sinon ce que le serveur a relevé.
   useEffect(() => {
-    (async () => {
-      try {
-        // Fetch absences for status, and all students
-        const [absRes, eleveRes] = await Promise.allSettled([
-          get('/surveillant/absences'),
-          get('/eleves'),
-        ]);
+    if (!cle || !requeteFeuille.data) return;
+    const brouillon = lire(cle);
+    setStatuts(brouillon ?? Object.fromEntries(eleves.map((e) => [e.id, e.statut])));
+    setEtat(brouillon ? 'attente' : 'repos');
+    setMessage(null);
+  }, [cle, requeteFeuille.data]); // eslint-disable-line
 
-        const absences = absRes.value
-          ? (Array.isArray(absRes.value?.data?.data) ? absRes.value.data.data
-            : Array.isArray(absRes.value?.data) ? absRes.value.data
-            : Array.isArray(absRes.value) ? absRes.value
-            : [])
-          : [];
+  const marquer = (eleveId, statut) => {
+    setStatuts((precedent) => {
+      const suivant = { ...precedent, [eleveId]: statut };
+      ecrire(cle, suivant);
+      return suivant;
+    });
+    setEtat('attente');
+    setMessage(null);
+  };
 
-        const elevesList = eleveRes.value
-          ? (Array.isArray(eleveRes.value?.data?.data) ? eleveRes.value.data.data
-            : Array.isArray(eleveRes.value?.data) ? eleveRes.value.data
-            : Array.isArray(eleveRes.value) ? eleveRes.value
-            : [])
-          : [];
+  const compte = useMemo(() => {
+    const c = { present: 0, absent: 0, retard: 0 };
+    eleves.forEach((e) => { c[statuts[e.id] ?? 'present'] += 1; });
+    return c;
+  }, [eleves, statuts]);
 
-        setEleves(elevesList);
-
-        // Build presence list: students with today's absence status
-        const todayStr = today.toISOString().split('T')[0];
-        const todayAbsences = absences.filter((a) => {
-          if (!a.date) return false;
-          const d = new Date(a.date);
-          return d.toDateString() === today.toDateString();
-        });
-
-        const absenceMap = new Map();
-        todayAbsences.forEach((a) => {
-          absenceMap.set(a.eleve_id || a.eleve?.id, a);
-        });
-
-        // If we have student list, combine with absences
-        if (elevesList.length > 0) {
-          const combined = elevesList.map((e) => {
-            const abs = absenceMap.get(e.id);
-            return {
-              id: e.id,
-              nom: `${e.prenom || ''} ${e.nom || ''}`.trim(),
-              classe: e.classe?.nom_classe || e.classe_id || '—',
-              statut: abs ? (abs.type === 'retard' ? 'retard' : 'absent') : 'present',
-              heureArrivee: '—',
-              motif: abs?.motif || ''
-            };
-          });
-          setPresences(combined);
-        } else {
-          // Fallback: just show the absences
-          setPresences(absences.map((a) => ({
-            id: a.id,
-            nom: `${a.eleve?.prenom || ''} ${a.eleve?.nom || ''}`.trim() || 'Élève',
-            classe: a.eleve?.classe?.nom_classe || '—',
-            statut: a.type === 'retard' ? 'retard' : 'absent',
-            heureArrivee: '—',
-            motif: a.motif || ''
-          })));
-        }
-      } catch (e) {
-        console.error('Erreur chargement présences:', e);
-      }
-    })();
-  }, []);
-
-  const stats = useMemo(() => ({
-    total: presences.length,
-    presents: presences.filter((p) => p.statut === 'present').length,
-    retards: presences.filter((p) => p.statut === 'retard').length,
-    absents: presences.filter((p) => p.statut === 'absent').length
-  }), [presences]);
-
-  const classesList = useMemo(() => {
-    const set = new Set(presences.map((p) => p.classe).filter(Boolean));
-    return Array.from(set);
-  }, [presences]);
-
-  const filtered = useMemo(() =>
-    presences.filter((p) => {
-      const q = search.toLowerCase();
-      if (search && !p.nom.toLowerCase().includes(q)) return false;
-      if (filterClasse && p.classe !== filterClasse) return false;
-      if (filterStatut && p.statut !== filterStatut) return false;
-      return true;
-    }),
-    [search, filterClasse, filterStatut, presences]
-  );
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
-        <XCircle className="h-8 w-8 mb-2 text-red-400" />
-        <p className="text-sm">{error}</p>
-      </div>
-    );
-  }
-
-  const getStatutIcon = (statut) => {
-    switch (statut) {
-      case 'present': return <CheckCircle className="h-4 w-4" />;
-      case 'retard': return <Clock className="h-4 w-4" />;
-      case 'absent': return <XCircle className="h-4 w-4" />;
-      default: return null;
+  const enregistrer = async () => {
+    if (!classe || eleves.length === 0) return;
+    setEtat('envoi');
+    setMessage(null);
+    try {
+      const { data } = await apiClient.post('/surveillant/appel', {
+        classe_id: Number(classe), date,
+        eleves: eleves.map((e) => ({ eleve_id: e.id, statut: statuts[e.id] ?? 'present' })),
+      });
+      if (data?.queued) { setEtat('attente'); setMessage(p('hors_ligne')); return; }
+      ecrire(cle, null);
+      setEtat('enregistre');
+      requeteAbsences.refetch();
+    } catch (err) {
+      const horsLigne = !err?.status;
+      setEtat(horsLigne ? 'attente' : 'erreur');
+      setMessage(horsLigne ? p('hors_ligne') : (err?.message ?? p('echec')));
     }
   };
 
-  const getStatutClass = (statut) => {
-    switch (statut) {
-      case 'present': return 'text-emerald-600';
-      case 'retard': return 'text-amber-600';
-      case 'absent': return 'text-red-600';
-      default: return '';
+  const enregistrerRef = useRef(enregistrer);
+  enregistrerRef.current = enregistrer;
+  const etatRef = useRef(etat);
+  etatRef.current = etat;
+  useEffect(() => {
+    const auRetour = () => { if (etatRef.current === 'attente') enregistrerRef.current(); };
+    window.addEventListener('online', auRetour);
+    return () => window.removeEventListener('online', auRetour);
+  }, []);
+
+  const justifier = async (absence) => {
+    const motif = window.prompt(p('motif_question'), absence.motif ?? '');
+    if (motif === null) return;
+    try {
+      await apiClient.patch(`/surveillant/absences/${absence.id}`, { justifiee: true, motif: motif.trim() || null });
+      requeteAbsences.refetch();
+    } catch (err) {
+      setMessage(err?.message ?? p('echec'));
     }
   };
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Présences</h1>
-          <p className="text-sm text-neutral-500">Suivi des présences du {formatDate(today)}</p>
-        </div>
-        <Button variant="outline" size="sm" icon={<Download />}>Exporter</Button>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-[var(--text-primary)]">{p('title')}</h1>
+        <p className="text-sm text-[var(--text-secondary)]">{p('subtitle')}</p>
       </div>
 
-      {/* Stats */}
-      <div className="grid gap-4 sm:grid-cols-4">
-        <StatsCard title="Total" value={String(stats.total)} icon={Users} color="primary" />
-        <StatsCard title="Présents" value={String(stats.presents)} icon={CheckCircle} color="emerald" />
-        <StatsCard title="Retards" value={String(stats.retards)} icon={Clock} color="amber" />
-        <StatsCard title="Absents" value={String(stats.absents)} icon={XCircle} color="red" />
-      </div>
-
-      {/* Filtres */}
-      <Card>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
-            <Input
-              placeholder="Rechercher un élève..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
-            />
-          </div>
-          <select
-            value={filterClasse}
-            onChange={(e) => setFilterClasse(e.target.value)}
-            className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
-          >
-            <option value="">Toutes les classes</option>
-            {classesList.map((c) => <option key={c} value={c}>{c}</option>)}
-          </select>
-          <select
-            value={filterStatut}
-            onChange={(e) => setFilterStatut(e.target.value)}
-            className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
-          >
-            <option value="">Tous les statuts</option>
-            <option value="present">Présent</option>
-            <option value="retard">Retard</option>
-            <option value="absent">Absent</option>
-          </select>
+      <Card padding>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Select label={p('classe')} placeholder={p('choisir_classe')} options={classes} value={classe} onChange={(e) => setClasse(e.target.value)} />
+          <Input type="date" label={p('date')} max={aujourdhui()} value={date} onChange={(e) => setDate(e.target.value)} />
         </div>
       </Card>
 
-      {/* Tableau */}
-      <Card>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-neutral-200 dark:border-neutral-700 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                <th className="pb-3 pr-4">Élève</th>
-                <th className="pb-3 pr-4">Classe</th>
-                <th className="pb-3 pr-4">Statut</th>
-                <th className="pb-3 pr-4">Heure</th>
-                <th className="pb-3 pr-4">Motif</th>
-                <th className="pb-3 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="py-8 text-center text-sm text-neutral-500">
-                    Aucune présence trouvée
-                  </td>
-                </tr>
-              )}
-              {filtered.map((p) => (
-                <tr key={p.id} className="border-b border-neutral-100 dark:border-neutral-800">
-                  <td className="py-3 pr-4">
-                    <div className="flex items-center gap-3">
-                      <Avatar name={p.nom} size="sm" />
-                      <span className="text-sm font-medium text-neutral-900 dark:text-white">{p.nom}</span>
-                    </div>
-                  </td>
-                  <td className="py-3 pr-4">
-                    <Badge variant="outline" size="sm">{p.classe}</Badge>
-                  </td>
-                  <td className="py-3 pr-4">
-                    <span className={cn('inline-flex items-center gap-1 text-sm font-medium', getStatutClass(p.statut))}>
-                      {getStatutIcon(p.statut)}
-                      <span className="capitalize">{p.statut === 'retard' ? 'Retard' : p.statut}</span>
-                    </span>
-                  </td>
-                  <td className="py-3 pr-4">
-                    <span className="text-sm text-neutral-600 dark:text-neutral-400">{p.heureArrivee || '—'}</span>
-                  </td>
-                  <td className="py-3 pr-4">
-                    <span className="text-sm text-neutral-500 italic">{p.motif || '—'}</span>
-                  </td>
-                  <td className="py-3 text-right">
-                    <Button variant="ghost" size="sm">Modifier</Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Card>
-    </motion.div>
+      {classe && (
+        <Card padding>
+          {requeteFeuille.isPending ? (
+            <div className="flex h-32 items-center justify-center" role="status" aria-label={t('common.loading')}><Loader2 className="h-6 w-6 animate-spin text-[var(--text-tertiary)]" /></div>
+          ) : requeteFeuille.isError ? (
+            <p role="alert" className="py-6 text-center text-sm text-[var(--error)]">{requeteFeuille.error?.message ?? t('common.load_error')}</p>
+          ) : eleves.length === 0 ? (
+            <p className="py-8 text-center text-sm text-[var(--text-secondary)]">{p('aucun_eleve')}</p>
+          ) : (
+            <>
+              <ul className="divide-y divide-[var(--border-light)]">
+                {eleves.map((eleve) => {
+                  const nom = `${eleve.nom ?? ''} ${eleve.prenom ?? ''}`.trim();
+                  const actuel = statuts[eleve.id] ?? 'present';
+                  return (
+                    <li key={eleve.id} className="flex flex-col gap-2 py-2 sm:flex-row sm:items-center sm:justify-between">
+                      <span className="font-medium text-[var(--text-primary)]">{nom} <span className="ml-1 font-mono text-xs text-[var(--text-secondary)]">{eleve.matricule}</span></span>
+                      <div role="group" aria-label={p('statut_de', { nom })} className="flex gap-1">
+                        {STATUTS.map((statut) => {
+                          const Icone = ICONES[statut];
+                          const choisi = actuel === statut;
+                          return (
+                            <button
+                              key={statut}
+                              type="button"
+                              aria-pressed={choisi}
+                              onClick={() => marquer(eleve.id, statut)}
+                              className="inline-flex min-h-11 items-center gap-1 rounded-md border px-3 text-sm"
+                              style={choisi ? { borderColor: COULEURS[statut], color: COULEURS[statut], fontWeight: 600 } : { borderColor: 'var(--border)', color: 'var(--text-secondary)' }}
+                            >
+                              <Icone size={16} aria-hidden="true" />{p(statut)}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+              <div className="mt-4 flex flex-col gap-3 border-t border-[var(--border)] pt-4 sm:flex-row sm:items-center sm:justify-between">
+                <div role="status" aria-live="polite" className="text-sm">
+                  <p className="text-[var(--text-primary)]">{p('compte', compte)}</p>
+                  {etat === 'enregistre' && <p className="text-[var(--success)]">{p('enregistre')}</p>}
+                  {etat === 'attente' && !message && <p className="inline-flex items-center gap-1 text-[var(--text-primary)]"><CloudOff size={16} aria-hidden="true" />{p('en_attente')}</p>}
+                  {message && <p className={etat === 'erreur' ? 'text-[var(--error)]' : 'text-[var(--text-secondary)]'}>{message}</p>}
+                </div>
+                <Button icon={<Save size={16} />} onClick={enregistrer} loading={etat === 'envoi'}>{p('enregistrer')}</Button>
+              </div>
+            </>
+          )}
+        </Card>
+      )}
+
+      {classe && absences.length > 0 && (
+        <Card padding>
+          <h2 className="mb-3 text-base font-semibold text-[var(--text-primary)]">{p('absences_du_jour')}</h2>
+          <ul className="divide-y divide-[var(--border-light)]" data-testid="absences">
+            {absences.map((a) => (
+              <li key={a.id} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
+                <span>
+                  <span className="font-medium">{`${a.eleve?.user?.name ?? ''} ${a.eleve?.user?.prenom ?? ''}`.trim()}</span>
+                  <span className="ml-2 text-[var(--text-secondary)]">{a.type === 'retard' ? p('retard') : p('absent')}{a.motif ? ` · ${a.motif}` : ''}</span>
+                </span>
+                {a.justifiee
+                  ? <span className="text-[var(--success)]">{p('justifiee')}</span>
+                  : <Button size="sm" variant="outline" onClick={() => justifier(a)}>{p('justifier')}</Button>}
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
+    </div>
   );
 }

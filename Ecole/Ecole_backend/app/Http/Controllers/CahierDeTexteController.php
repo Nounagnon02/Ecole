@@ -8,9 +8,6 @@ use Illuminate\Support\Facades\Auth;
 
 class CahierDeTexteController extends Controller
 {
-    /**
-     * Liste des leçons pour l'école (Admin) ou l'enseignant connecté
-     */
     public function index(Request $request)
     {
         $user = Auth::user();
@@ -24,18 +21,12 @@ class CahierDeTexteController extends Controller
             $query->where('classe_id', $request->classe_id);
         }
 
-        return response()->json($query->latest('date')->get());
+        return response()->json($query->latest('date')->paginate(50));
     }
 
-    /**
-     * Saisir une nouvelle leçon
-     */
     public function store(Request $request)
     {
-        $user = Auth::user();
-        if ($user->role !== 'enseignant' && $user->role !== 'directeur') {
-            return response()->json(['message' => 'Non autorisé'], 403);
-        }
+        $this->authorize('create', CahierDeTexte::class);
 
         $validated = $request->validate([
             'classe_id' => 'required|school_exists:classes,id',
@@ -44,26 +35,35 @@ class CahierDeTexteController extends Controller
             'titre_lecon' => 'required|string|max:255',
             'contenu' => 'required|string',
             'devoirs_donnes' => 'nullable|string',
+            // `school_exists`, pas `exists` : un directeur pouvait jusqu'ici
+            // attribuer la leçon à l'enseignant de n'importe quel
+            // établissement — l'entrée héritait de l'école du directeur
+            // (BelongsToEcole) mais pointait vers un enseignant d'une autre
+            // école, un identifiant non vérifié n'ayant jamais été validé.
+            'enseignant_id' => 'nullable|school_exists:enseignants,id',
         ]);
 
-        $enseignantId = $user->role === 'enseignant' 
-            ? $user->enseignant->id 
-            : $request->input('enseignant_id');
+        $user = Auth::user();
+        $enseignantId = $user->role === 'enseignant'
+            ? $user->enseignant->id
+            : ($validated['enseignant_id'] ?? null);
 
         if (!$enseignantId) {
             return response()->json(['message' => 'L\'enseignant est requis'], 422);
         }
 
-        $entry = CahierDeTexte::create(array_merge($validated, [
-            'enseignant_id' => $enseignantId
-        ]));
+        try {
+            $entry = CahierDeTexte::create(array_merge($validated, [
+                'enseignant_id' => $enseignantId
+            ]));
 
-        return response()->json($entry->load(['classe', 'matiere', 'enseignant.user']), 201);
+            return response()->json($entry->load(['classe', 'matiere', 'enseignant.user']), 201);
+        } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
+            return response()->json(['message' => 'Erreur lors de la création', 'error' => $this->clientErrorMessage($e)], 500);
+        }
     }
 
-    /**
-     * Voir les leçons d'une classe (pour les élèves/parents)
-     */
     public function getByClasse($classeId)
     {
         $entries = CahierDeTexte::where('classe_id', $classeId)

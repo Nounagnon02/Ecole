@@ -10,13 +10,8 @@ use App\Http\Controllers\Universite\{
     EnseignantController as UnivEnseignantController,
     MatiereController as UnivMatiereController,
     NoteController as UnivNoteController,
-    InscriptionController,
-    SemestreController,
-    AnneeAcademiqueController,
-    PersonnelController,
-    PaiementController as UnivPaiementController,
-    DiplomeController,
     MyCoursesController,
+    MesNotesController,
     PlanningController,
     DevoirController as UnivDevoirController
 };
@@ -53,10 +48,32 @@ Route::middleware(['auth:sanctum', 'role:recteur,doyen,professeur,etudiant,perso
     Route::apiResource('enseignants', UnivEnseignantController::class)->middleware('role:recteur,doyen,super-admin');
 
     // Matières/UE
-    Route::apiResource('matieres', UnivMatiereController::class)->middleware('role:recteur,doyen,professeur,super-admin');
+    //
+    // `->names()` explicite : sans lui, ces ressources reprennent le nom par
+    // défaut `matieres.*` / `notes.*`, déjà pris par l'API tenant de
+    // routes/tenant.php — et `route:cache` refuse deux routes de même nom
+    // (voir tests/Feature/RouteNamesTest.php).
+    Route::apiResource('matieres', UnivMatiereController::class)
+        ->names('universite.matieres')
+        ->middleware('role:recteur,doyen,professeur,super-admin');
 
-    // Notes
-    Route::apiResource('notes', UnivNoteController::class)->middleware('role:recteur,doyen,professeur,super-admin');
+    // Notes. Grille d'une évaluation et enregistrement d'une grille en un envoi
+    // (espace mobile du professeur, 16/11/2026) ; le contrôleur borne le
+    // professeur à ses UE. Déclarées avant la ressource : `notes/lot` serait
+    // sinon lu comme `notes/{note}`.
+    Route::get('matieres/{matiere}/grille', [UnivNoteController::class, 'grille'])
+        ->whereNumber('matiere')
+        ->middleware('role:recteur,doyen,professeur,super-admin');
+    Route::post('notes/lot', [UnivNoteController::class, 'lot'])
+        ->middleware('role:recteur,doyen,professeur,super-admin');
+
+    // Relevé de l'étudiant connecté : ses UE, ses notes, ses crédits.
+    Route::get('mes-notes', [MesNotesController::class, 'index'])
+        ->middleware('role:etudiant');
+
+    Route::apiResource('notes', UnivNoteController::class)
+        ->names('universite.notes')
+        ->middleware('role:recteur,doyen,professeur,super-admin');
 
     /*
     |----------------------------------------------------------------------

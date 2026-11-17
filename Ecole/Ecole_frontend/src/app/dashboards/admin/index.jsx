@@ -1,61 +1,62 @@
 /**
  * AdminDashboard — Tableau de bord premium pour Super Admin
  *
- * Sections : Aperçu Système | Utilisateurs | Configuration | Logs | Sauvegardes
+ * Sections : Aperçu Système | Utilisateurs | Configuration | Logs
  */
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
-  Users,
-  Settings,
-  Activity,
-  Database,
-  HardDrive,
-  AlertTriangle,
-  CheckCircle2,
-  Download,
-  RefreshCw,
-  Bell,
-  Terminal
+  Users, Activity, HardDrive, AlertTriangle, CheckCircle2, Download, RefreshCw, Terminal,
 } from 'lucide-react';
 import {
   XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer,
   Area, AreaChart
 } from 'recharts';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
 import { cn } from '@/shared/lib/utils';
+import { useTranslation } from '@/shared/i18n';
 import { useDashboardStats } from '@/app/dashboards/hooks/useDashboardData';
+import DashboardShell from '@/app/dashboards/DashboardShell';
 import StatsCard from '@/shared/components/ui/StatsCard';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
-import { RefreshButton } from '@/shared/components/ui';
-import { ErrorDisplay } from '@/shared/components/ui/EmptyState';
 
 // ─── Constantes ───────────────────────────────────────────────
 
+// Les `id`/`key` ci-dessous sont aussi le dernier segment de la clé i18n
+// (`dashboards.admin.tabs.<id>`, `dashboards.admin.stats.<key>`) : le texte
+// affiché vient de `t()`, ces tableaux ne portent plus que la structure.
+// Seuls les onglets qui s'affichent ici : ceux qui menaient vers une
+// autre page doublaient le menu (audit, recommandation B4).
 const TABS = [
   { id: 'apercu', label: 'Aperçu', icon: Activity },
-  { id: 'utilisateurs', label: 'Utilisateurs', icon: Users },
-  { id: 'configuration', label: 'Configuration', icon: Settings },
   { id: 'logs', label: 'Logs Système', icon: Terminal },
-  { id: 'sauvegardes', label: 'Sauvegardes', icon: Database },
 ];
 
 const STATS_META = [
-  { title: 'Utilisateurs Actifs', icon: Users, color: 'primary' },
-  { title: 'Espace Disque', icon: HardDrive, color: 'sky' },
-  { title: 'Erreurs API', icon: AlertTriangle, color: 'red' },
-  { title: 'Uptime', icon: CheckCircle2, color: 'emerald' },
+  { title: 'Utilisateurs Actifs', key: 'utilisateurs_actifs', icon: Users, color: 'primary' },
+  { title: 'Espace Disque', key: 'espace_disque', icon: HardDrive, color: 'sky' },
+  { title: 'Erreurs API', key: 'erreurs_api', icon: AlertTriangle, color: 'red' },
+  { title: 'Uptime', key: 'uptime', icon: CheckCircle2, color: 'emerald' },
 ];
 
 // ─── Sections ─────────────────────────────────────────────────
 
 function ApercuSection({ data, loading, onRefresh }) {
-  const safeStats = data?.stats?.map((s, i) => ({ ...s, icon: STATS_META[i]?.icon, color: STATS_META[i]?.color })) || [];
+  const navigate = useNavigate();
+  const { t } = useTranslation();
+  // Le titre affiché est traduit côté front, pas celui renvoyé par l'API :
+  // le backend n'a pas de notion de locale, et les deux tableaux restent
+  // alignés par position comme `icon`/`color` juste à côté.
+  const safeStats = data?.stats?.map((s, i) => ({
+    ...s,
+    title: STATS_META[i]?.key ? t(`dashboards.admin.stats.${STATS_META[i].key}`) : s.title,
+    icon: STATS_META[i]?.icon,
+    color: STATS_META[i]?.color,
+  })) || [];
   const safeTraffic = data?.traffic || [];
   const safeLogs = data?.logs || [];
   const safeHealth = data?.health || [];
@@ -76,17 +77,17 @@ function ApercuSection({ data, loading, onRefresh }) {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Activité plateforme */}
         <Card className="lg:col-span-2">
           <Card.Header>
             <div className="flex items-center justify-between">
               <div>
-                <Card.Title>Activité Plateforme</Card.Title>
-                <Card.Description>Actions auditées — 7 derniers jours</Card.Description>
+                <Card.Title>{t('dashboards.admin.activite_plateforme')}</Card.Title>
+                <Card.Description>{t('dashboards.admin.actions_auditees_7_derniers_jours')}</Card.Description>
               </div>
               <Button variant="ghost" size="sm" onClick={onRefresh} disabled={loading}>
-                <RefreshCw className={cn('h-4 w-4 mr-1', loading && 'animate-spin')} /> Actualiser
+                <RefreshCw className={cn('h-4 w-4 mr-1', loading && 'animate-spin')} /> {t('dashboards.admin.actualiser')}
               </Button>
             </div>
           </Card.Header>
@@ -114,17 +115,17 @@ function ApercuSection({ data, loading, onRefresh }) {
         {/* System health */}
         <Card>
           <Card.Header>
-            <Card.Title>Santé Système</Card.Title>
-            <Card.Description>Indicateurs clés</Card.Description>
+            <Card.Title>{t('dashboards.admin.sante_systeme')}</Card.Title>
+            <Card.Description>{t('dashboards.admin.indicateurs_cles')}</Card.Description>
           </Card.Header>
           <Card.Body className="space-y-4">
             {safeHealth.map((item) => (
               <div key={item.label}>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-medium text-neutral-500">{item.label}</span>
-                  <span className="text-xs text-neutral-700 dark:text-neutral-300">{item.value}</span>
+                  <span className="text-xs font-medium text-[var(--text-secondary)]">{item.label}</span>
+                  <span className="text-xs text-[var(--text-primary)] ">{item.value}</span>
                 </div>
-                <div className="h-2 rounded-full bg-neutral-100 dark:bg-neutral-800">
+                <div className="h-2 rounded-full bg-[var(--surface-subtle)] ">
                   <div
                     className={cn('h-full rounded-full transition-all', item.color)}
                     style={{ width: item.width }}
@@ -140,14 +141,14 @@ function ApercuSection({ data, loading, onRefresh }) {
       <Card>
         <Card.Header>
           <div className="flex items-center justify-between">
-            <Card.Title>Logs Système — Temps Réel</Card.Title>
+            <Card.Title>{t('dashboards.admin.logs_systeme_temps_reel')}</Card.Title>
             <Badge variant="danger" size="sm">{safeLogs.filter(l => l.level === 'ERROR').length} erreurs</Badge>
           </div>
         </Card.Header>
         <Card.Body className="p-0">
-          <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
+          <div className="divide-y divide-[var(--border-light)] ">
             {safeLogs.slice(0, 4).map((log) => (
-              <div key={log.id} className="flex items-start gap-3 px-6 py-3 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 text-sm font-mono">
+              <div key={log.id} className="flex items-start gap-3 px-6 py-3 hover:bg-[var(--surface)]  text-sm font-mono">
                 <span className={cn(
                   'text-xs font-semibold uppercase min-w-[4rem]',
                   log.level === 'ERROR' && 'text-[var(--red)]',
@@ -156,16 +157,16 @@ function ApercuSection({ data, loading, onRefresh }) {
                 )}>
                   {log.level}
                 </span>
-                <span className="text-neutral-500 text-xs min-w-[5rem]">{log.time}</span>
-                <span className="text-neutral-700 dark:text-neutral-300 flex-1">{log.message}</span>
-                <span className="text-neutral-400 text-xs">{log.module}</span>
+                <span className="text-[var(--text-secondary)] text-xs min-w-[5rem]">{log.time}</span>
+                <span className="text-[var(--text-primary)]  flex-1">{log.message}</span>
+                <span className="text-[var(--text-tertiary)] text-xs">{log.module}</span>
               </div>
             ))}
           </div>
         </Card.Body>
         <Card.Footer>
-          <Button variant="ghost" size="sm" className="w-full">
-            Voir tous les logs <Terminal className="h-4 w-4 ml-1" />
+          <Button variant="ghost" size="sm" className="w-full" onClick={() => navigate('/admin/journal-audit')}>
+            {t('dashboards.admin.voir_tous_les_logs')} <Terminal className="h-4 w-4 ml-1" />
           </Button>
         </Card.Footer>
       </Card>
@@ -174,27 +175,27 @@ function ApercuSection({ data, loading, onRefresh }) {
       <Card>
         <Card.Header>
           <div className="flex items-center justify-between">
-            <Card.Title>Utilisateurs Récents</Card.Title>
+            <Card.Title>{t('dashboards.admin.utilisateurs_recents')}</Card.Title>
             <Badge size="sm">{safeUtilisateurs.length} comptes</Badge>
           </div>
         </Card.Header>
         <Card.Body className="p-0">
           {safeUtilisateurs.length === 0 ? (
-            <p className="text-neutral-500 text-center py-8 text-sm">Aucun utilisateur récent</p>
+            <p className="text-[var(--text-secondary)] text-center py-8 text-sm">{t('dashboards.admin.aucun_utilisateur_recent')}</p>
           ) : (
-            <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
+            <div className="divide-y divide-[var(--border-light)] ">
               {safeUtilisateurs.map((u) => (
-                <div key={u.id} className="flex items-center gap-3 px-6 py-3 hover:bg-neutral-50 dark:hover:bg-neutral-800/50">
-                  <div className="h-9 w-9 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
-                    <Users className="h-4 w-4 text-neutral-500" />
+                <div key={u.id} className="flex items-center gap-3 px-6 py-3 hover:bg-[var(--surface)] ">
+                  <div className="h-9 w-9 rounded-full bg-[var(--surface-subtle)]  flex items-center justify-center">
+                    <Users className="h-4 w-4 text-[var(--text-secondary)]" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-neutral-900 dark:text-white truncate">{u.name}</p>
-                    <p className="text-xs text-neutral-500 truncate">{u.email} · {u.ecole}</p>
+                    <p className="text-sm font-medium text-[var(--text-primary)]  truncate">{u.name}</p>
+                    <p className="text-xs text-[var(--text-secondary)] truncate">{u.email} · {u.ecole}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge size="sm" variant={u.is_active ? 'success' : 'default'}>{u.role}</Badge>
-                    <span className="text-xs text-neutral-400">{format(new Date(u.created_at), 'dd/MM/yyyy')}</span>
+                    <span className="text-xs text-[var(--text-tertiary)]">{format(new Date(u.created_at), 'dd/MM/yyyy')}</span>
                   </div>
                 </div>
               ))}
@@ -207,6 +208,7 @@ function ApercuSection({ data, loading, onRefresh }) {
 }
 
 function LogsSection({ data, loading }) {
+  const { t } = useTranslation();
   const logs = data?.logs || [];
   const [niveau, setNiveau] = useState('Tous');
   const [recherche, setRecherche] = useState('');
@@ -222,22 +224,23 @@ function LogsSection({ data, loading }) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Logs Système</h2>
-          <p className="text-sm text-neutral-500 mt-1">Journalisation détaillée — {logs.length} entrées</p>
+          <h2 className="font-heading text-xl font-semibold text-[var(--text-primary)] ">{t('dashboards.admin.logs_systeme')}</h2>
+          <p className="text-sm text-[var(--text-secondary)] mt-1">Journalisation détaillée — {logs.length} entrées</p>
         </div>
         <Button variant="ghost" size="sm" onClick={() => window.print()}>
-          <Download className="h-4 w-4 mr-1" /> Exporter
+          <Download className="h-4 w-4 mr-1" /> {t('common.export')}
         </Button>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Terminal className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
+          <Terminal className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)]" />
           <input
             value={recherche}
             onChange={(e) => setRecherche(e.target.value)}
-            placeholder="Rechercher dans les logs…"
-            className="w-full pl-9 pr-4 py-2 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+            placeholder={t('dashboards.admin.rechercher_dans_les_logs')}
+            aria-label={t('dashboards.admin.rechercher_dans_les_logs_2')}
+            className="w-full pl-9 pr-4 py-2 rounded-lg border border-[var(--border)]  bg-[var(--surface-raised)]  text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
           />
         </div>
         <div className="flex gap-1">
@@ -248,8 +251,8 @@ function LogsSection({ data, loading }) {
               className={cn(
                 'px-3 py-2 rounded-lg text-xs font-medium transition-colors',
                 niveau === n
-                  ? 'bg-[var(--accent)] text-white'
-                  : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700'
+                  ? 'bg-[var(--action)] text-white'
+                  : 'bg-[var(--surface-subtle)]  text-[var(--text-secondary)]  hover:bg-[var(--surface-subtle)] '
               )}
             >
               {n}
@@ -261,13 +264,13 @@ function LogsSection({ data, loading }) {
       <Card>
         <Card.Body className="p-0">
           {loading ? (
-            <p className="text-neutral-500 text-center py-12">Chargement des logs…</p>
+            <p className="text-[var(--text-secondary)] text-center py-12">{t('dashboards.admin.chargement_des_logs')}</p>
           ) : filtres.length === 0 ? (
-            <p className="text-neutral-500 text-center py-12">Aucune entrée de journal pour ce filtre</p>
+            <p className="text-[var(--text-secondary)] text-center py-12">{t('dashboards.admin.aucune_entree_de_journal_pour_ce_filtre')}</p>
           ) : (
-            <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
+            <div className="divide-y divide-[var(--border-light)] ">
               {filtres.map((log) => (
-                <div key={log.id} className="flex items-start gap-3 px-6 py-3 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 text-sm font-mono">
+                <div key={log.id} className="flex items-start gap-3 px-6 py-3 hover:bg-[var(--surface)]  text-sm font-mono">
                   <span className={cn(
                     'text-xs font-semibold uppercase min-w-[4rem]',
                     log.level === 'ERROR' && 'text-[var(--red)]',
@@ -276,9 +279,9 @@ function LogsSection({ data, loading }) {
                   )}>
                     {log.level}
                   </span>
-                  <span className="text-neutral-500 text-xs min-w-[5rem]">{log.time}</span>
-                  <span className="text-neutral-700 dark:text-neutral-300 flex-1">{log.message}</span>
-                  <span className="text-neutral-400 text-xs">{log.module}</span>
+                  <span className="text-[var(--text-secondary)] text-xs min-w-[5rem]">{log.time}</span>
+                  <span className="text-[var(--text-primary)]  flex-1">{log.message}</span>
+                  <span className="text-[var(--text-tertiary)] text-xs">{log.module}</span>
                 </div>
               ))}
             </div>
@@ -289,33 +292,11 @@ function LogsSection({ data, loading }) {
   );
 }
 
-function SauvegardesSection() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Sauvegardes</h2>
-          <p className="text-sm text-neutral-500 mt-1">Gestion des backups</p>
-        </div>
-        <Button>
-          <Database className="h-4 w-4 mr-2" /> Sauvegarder
-        </Button>
-      </div>
-      <Card>
-        <Card.Body>
-          <p className="text-neutral-500 text-center py-12">
-            Backups automatiques, restauration et planification
-          </p>
-        </Card.Body>
-      </Card>
-    </div>
-  );
-}
-
 // ─── Composant Principal ──────────────────────────────────────
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('apercu');
   const { data, loading, error, refetch } = useDashboardStats('admin');
 
@@ -339,75 +320,22 @@ export default function AdminDashboard() {
     switch (activeTab) {
       case 'apercu': return <ApercuSection data={data} loading={loading} onRefresh={refetch} />;
       case 'logs': return <LogsSection data={data} loading={loading} />;
-      case 'sauvegardes': return <SauvegardesSection />;
       default: return <ApercuSection data={data} loading={loading} onRefresh={refetch} />;
     }
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <motion.h1
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="font-fraunces text-2xl font-bold text-neutral-900 dark:text-white"
-          >
-            Administration Système
-          </motion.h1>
-          <p className="text-neutral-500 dark:text-neutral-400 mt-1">
-            Gestion de la plateforme — {format(new Date(), 'EEEE d MMMM yyyy', { locale: fr })}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <RefreshButton loading={loading} onRefresh={refetch} />
-          <Button variant="ghost" size="sm">
-            <Bell className="h-4 w-4 mr-1" /> Alertes
-          </Button>
-          <Button variant="ghost" size="sm">
-            <Settings className="h-4 w-4 mr-1" /> Paramètres
-          </Button>
-        </div>
-      </div>
-
-      {error && (
-        <ErrorDisplay message={error} onRetry={refetch} />
-      )}
-
-      <div className="border-b border-neutral-200 dark:border-neutral-800">
-        <nav className="flex gap-1 overflow-x-auto -mb-px">
-          {TABS.map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => handleTabClick(tab.id)}
-                className={cn(
-                  'flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-all whitespace-nowrap',
-                  activeTab === tab.id
-                    ? 'border-[var(--accent)] text-[var(--accent)] dark:text-[var(--accent)]'
-                    : 'border-transparent text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200'
-                )}
-              >
-                <Icon className="h-4 w-4" />
-                {tab.label}
-              </button>
-            );
-          })}
-        </nav>
-      </div>
-
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
-          transition={{ duration: 0.2 }}
-        >
-          {renderSection()}
-        </motion.div>
-      </AnimatePresence>
-    </div>
+    <DashboardShell
+      title={t('dashboards.admin.title')}
+      subtitle={t('dashboards.admin.subtitle')}
+      tabs={TABS.map((tab) => ({ ...tab, label: t(`dashboards.admin.tabs.${tab.id}`) }))}
+      activeTab={activeTab}
+      onTabChange={handleTabClick}
+      loading={loading}
+      error={error}
+      onRefresh={refetch}
+    >
+      {renderSection()}
+    </DashboardShell>
   );
 }

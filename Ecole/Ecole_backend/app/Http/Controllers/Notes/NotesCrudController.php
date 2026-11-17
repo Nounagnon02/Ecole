@@ -7,6 +7,7 @@ use App\Models\Notes;
 use App\Models\Eleve;
 use App\Models\Classes;
 use App\Support\AnneeScolaire;
+use App\Http\Requests\Notes\StoreNoteRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -34,6 +35,11 @@ class NotesCrudController extends Controller
 
         $query = Notes::with(['eleve.user', 'matiere', 'classe']);
 
+        // Sans identifiant, la liste n'était bornée qu'à l'école : un parent
+        // ou un élève recevait les notes de tous les élèves. Même règle que
+        // pour les bulletins : famille → ses enfants, élève → lui-même.
+        $this->restrictToCallerScope($query);
+
         if ($eleveId) {
             $query->where('eleve_id', $eleveId);
         }
@@ -46,38 +52,31 @@ class NotesCrudController extends Controller
             $query->where('classe_id', $request->classe_id);
         }
 
+        // Statistiques de TOUTES les notes visées (mêmes filtres), notes
+        // ramenées sur 20 comme au bulletin : la page les calculait sur ses
+        // seules 50 lignes affichées (R-39, 16/11/2026).
+        $sur20 = 'note * 20 / COALESCE(NULLIF(note_sur, 0), 20)';
+        $agregat = (clone $query)->toBase()
+            ->selectRaw("COUNT(*) as total, AVG($sur20) as moyenne, SUM(CASE WHEN $sur20 >= 10 THEN 1 ELSE 0 END) as reussites")
+            ->first();
+        $total = (int) ($agregat->total ?? 0);
+
         return response()->json([
             'success' => true,
-            'data' => $query->latest('date_evaluation')->get(),
+            'data' => $query->latest('date_evaluation')->paginate(50),
+            'stats' => [
+                'total' => $total,
+                'moyenne' => $total > 0 ? round((float) $agregat->moyenne, 2) : null,
+                'taux_reussite' => $total > 0 ? (int) round(((int) $agregat->reussites / $total) * 100) : null,
+            ],
         ]);
     }
 
-    public function getNotesByEleves($eleveId)
-    {
-        $eleve = Eleve::find($eleveId);
-        if (!$eleve) {
-            return response()->json(['success' => false, 'message' => 'Élève non trouvé'], 404);
-        }
-        $this->authorize('view', $eleve);
-
-        $notes = Notes::with('eleve')
-            ->where('eleve_id', $eleveId)
-            ->get();
-
-        return response()->json($notes);
-    }
-
-    public function getNotesBySession($sessionId)
-    {
-        $this->authorize('viewAny', Notes::class);
-
-        $notes = Notes::with('eleve')
-            ->where('sessions_id', $sessionId)
-            ->get();
-
-        return response()->json($notes);
-    }
-
+    /**
+     * `getNotesByEleves` et `getNotesBySession` retirées : ni routées, ni
+     * appelées, ni testées. Cette seconde interrogeait au passage
+     * `sessions_id`, une colonne qui n'existe pas.
+     */
     public function show($id)
     {
         $note = Notes::with(['eleve', 'classe', 'matiere', 'enseignant'])->find($id);
@@ -98,31 +97,9 @@ class NotesCrudController extends Controller
     }
 
 
-    public function store(Request $request)
+    public function store(StoreNoteRequest $request)
         {
             $this->authorize('create', Notes::class);
-
-            // Validation des données
-            $validator = Validator::make($request->all(), [
-                'eleve_id' => 'required|school_exists:eleves,id',
-                'classe_id' => 'required|school_exists:classes,id',
-                'matiere_id' => 'required|school_exists:matieres,id',
-                'note' => 'required|numeric|min:0|max:20',
-                'note_sur' => 'required|numeric|min:1|max:20',
-                'type_evaluation' => 'required|in:Devoir1,Devoir2,Interrogation,1ère evaluation,2ème evaluation,3ème evaluation,4ème evaluation,5ème evaluation,6ème evaluation',
-                'date_evaluation' => 'required|date',
-                'periode' => 'required|in:Trimestre 1,Trimestre 2,Trimestre 3',
-                'annee_scolaire' => 'nullable|string|regex:/^\d{4}-\d{4}$/',
-                'observation' => 'nullable|string|max:500'
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Données invalides',
-                    'errors' => $validator->errors()
-                ], 422);
-            }
 
             try {
                 DB::beginTransaction();
@@ -130,6 +107,7 @@ class NotesCrudController extends Controller
                 // Vérifier que l'élève appartient bien à la classe
                 $eleve = Eleve::find($request->eleve_id);
                 if ($eleve->classe_id != $request->classe_id) {
+                    DB::rollBack();
                     return response()->json([
                         'success' => false,
                         'message' => 'L\'élève n\'appartient pas à cette classe'
@@ -142,6 +120,7 @@ class NotesCrudController extends Controller
                     : true;
                 
                 if (!$serieHasMatiere) {
+                    DB::rollBack();
                     return response()->json([
                         'success' => false,
                         'message' => 'Cette matière n\'est pas disponible pour la série de cet élève'
@@ -151,6 +130,7 @@ class NotesCrudController extends Controller
                 // Validation spécifique selon le type d'évaluation
                 $validationResult = $this->validateNoteByType($request);
                 if (!$validationResult['success']) {
+                    DB::rollBack();
                     return response()->json($validationResult, 400);
                 }
 
@@ -171,6 +151,8 @@ class NotesCrudController extends Controller
 
                 DB::commit();
 
+                \Cache::forget('dashboard_directeur_' . (auth()->user()->ecole_id ?? 'global'));
+
                 return response()->json([
                     'success' => true,
                     'message' => 'Note enregistrée avec succès',
@@ -178,9 +160,14 @@ class NotesCrudController extends Controller
                 ], 201);
 
             } catch (\Exception $e) {
-                $this->rethrowIfMeaningful($e);
+                // Rollback D'ABORD : `rethrowIfMeaningful` relance
+                // immédiatement les exceptions « signifiantes »
+                // (403/404/422/...) — les relancer avant le rollback
+                // désynchronise la comptabilité de transactions de Laravel
+                // de la connexion PDO réelle.
                 DB::rollBack();
-                
+                $this->rethrowIfMeaningful($e);
+
                 return response()->json([
                     'success' => false,
                     'message' => 'Erreur lors de l\'enregistrement de la note',
@@ -194,23 +181,29 @@ class NotesCrudController extends Controller
      */
     public function update(Request $request, $id)
     {
-        // Vérifier que la note n'est pas verrouillée
         $note = Notes::find($id);
-        if ($note && $note->locked) {
+        if (!$note) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Note non trouvée'
+            ], 404);
+        }
+        $this->authorize('update', $note);
+
+        if ($note->locked) {
             return response()->json([
                 'success' => false,
                 'message' => 'Impossible de modifier une note verrouillée'
             ], 403);
         }
 
-        // Validation des données
         $validator = Validator::make($request->all(), [
             'eleve_id' => 'required|school_exists:eleves,id',
             'classe_id' => 'required|school_exists:classes,id',
             'matiere_id' => 'required|school_exists:matieres,id',
-            'note' => 'required|numeric|min:0|max:100',
-            'note_sur' => 'required|numeric|min:1|max:100',
-            'type_evaluation' => 'required|in:Devoir1,Devoir2,Interrogation',
+            'note' => 'required|numeric|min:0|max:20',
+            'note_sur' => 'required|numeric|min:1|max:20',
+            'type_evaluation' => 'required|in:Devoir1,Devoir2,Interrogation,1ère evaluation,2ème evaluation,3ème evaluation,4ème evaluation,5ème evaluation,6ème evaluation',
             'date_evaluation' => 'required|date',
             'periode' => 'required|in:Trimestre 1,Trimestre 2,Trimestre 3',
             'observation' => 'nullable|string|max:500'
@@ -227,59 +220,38 @@ class NotesCrudController extends Controller
         try {
             DB::beginTransaction();
 
-            // Trouver la note à modifier
-            $note = Notes::find($id);
-            if (!$note) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Note non trouvée'
-                ], 404);
-            }
-
-            $this->authorize('update', $note);
-
-            // Vérifier que l'élève appartient bien à la classe
             $eleve = Eleve::find($request->eleve_id);
             if ($eleve->classe_id != $request->classe_id) {
+                DB::rollBack();
                 return response()->json([
                     'success' => false,
                     'message' => 'L\'élève n\'appartient pas à cette classe'
                 ], 400);
             }
 
-            // Vérifier que la matière existe pour la série de l'élève
             $serieHasMatiere = $eleve->serie
                 ? $eleve->serie->matieres()->where('matiere_id', $request->matiere_id)->exists()
                 : true;
 
             if (!$serieHasMatiere) {
+                DB::rollBack();
                 return response()->json([
                     'success' => false,
                     'message' => 'Cette matière n\'est pas disponible pour la série de cet élève'
                 ], 400);
             }
 
-            // Validation spécifique selon le type d'évaluation (en excluant la note actuelle)
             $validationResult = $this->validateNoteByType($request, $id);
             if (!$validationResult['success']) {
+                DB::rollBack();
                 return response()->json($validationResult, 400);
             }
 
-            // Mettre à jour la note
-            $note->update([
-                'eleve_id' => $request->eleve_id,
-                'classe_id' => $request->classe_id,
-                'matiere_id' => $request->matiere_id,
-                'note' => $request->note,
-                'note_sur' => $request->note_sur,
-                'type_evaluation' => $request->type_evaluation,
-                'date_evaluation' => $request->date_evaluation,
-                'periode' => $request->periode,
-                'annee_scolaire' => $request->annee_scolaire ?? $note->annee_scolaire ?? AnneeScolaire::courante(),
-                'observation' => $request->observation
-            ]);
+            $note->update($validator->validated());
 
             DB::commit();
+
+            \Cache::forget('dashboard_directeur_' . (auth()->user()->ecole_id ?? 'global'));
 
             return response()->json([
                 'success' => true,
@@ -288,9 +260,9 @@ class NotesCrudController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
-            $this->rethrowIfMeaningful($e);
             DB::rollBack();
-            
+            $this->rethrowIfMeaningful($e);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Erreur lors de la mise à jour de la note',
@@ -326,6 +298,8 @@ class NotesCrudController extends Controller
 
             $note->delete();
 
+            \Cache::forget('dashboard_directeur_' . (auth()->user()->ecole_id ?? 'global'));
+
             return response()->json([
                 'success' => true,
                 'message' => 'Note supprimée avec succès'
@@ -352,6 +326,8 @@ class NotesCrudController extends Controller
 
             $note->update(['locked' => true]);
 
+            \Cache::forget('dashboard_directeur_' . (auth()->user()->ecole_id ?? 'global'));
+
             return response()->json([
                 'success' => true,
                 'message' => 'Note verrouillée'
@@ -375,6 +351,8 @@ class NotesCrudController extends Controller
             $this->authorize('update', $note);
 
             $note->update(['locked' => false]);
+
+            \Cache::forget('dashboard_directeur_' . (auth()->user()->ecole_id ?? 'global'));
 
             return response()->json([
                 'success' => true,
@@ -404,7 +382,7 @@ class NotesCrudController extends Controller
         $validator = Validator::make($request->all(), [
             'classe_id' => 'required|school_exists:classes,id',
             'matiere_id' => 'required|school_exists:matieres,id',
-            'type_evaluation' => 'required|in:Devoir1,Devoir2,Interrogation',
+            'type_evaluation' => 'required|in:Devoir1,Devoir2,Interrogation,1ère evaluation,2ème evaluation,3ème evaluation,4ème evaluation,5ème evaluation,6ème evaluation',
             'date_evaluation' => 'required|date',
             'periode' => 'required|in:Trimestre 1,Trimestre 2,Trimestre 3',
             'notes' => 'required|array|min:1',
@@ -412,6 +390,9 @@ class NotesCrudController extends Controller
             'notes.*.note' => 'required|numeric|min:0|max:20',
             'notes.*.note_sur' => 'nullable|numeric|min:1|max:20',
             'notes.*.observation' => 'nullable|string|max:500',
+            // R-28 : valeur que le client avait chargée (null : aucune note).
+            'notes.*.base' => 'nullable|numeric|min:0|max:20',
+            'forcer' => 'nullable|boolean',
         ]);
 
         if ($validator->fails()) {
@@ -422,11 +403,17 @@ class NotesCrudController extends Controller
             ], 422);
         }
 
+        if (! $this->peutNoter((int) $request->classe_id, (int) $request->matiere_id)) {
+            return response()->json(['success' => false, 'message' => 'Cette matière ne vous est pas affectée dans cette classe.'], 403);
+        }
+
         DB::beginTransaction();
 
         try {
             $imported = 0;
             $errors = [];
+            $conflits = [];
+            $forcer = $request->boolean('forcer');
 
             foreach ($request->notes as $item) {
                 $eleve = Eleve::find($item['eleve_id']);
@@ -442,6 +429,41 @@ class NotesCrudController extends Controller
 
                 if (!$serieHasMatiere) {
                     $errors[] = "Élève #{$item['eleve_id']} : matière absente de sa série";
+                    continue;
+                }
+
+                // La grille se réenregistre : une note déjà saisie pour cette
+                // évaluation est corrigée, pas doublée. Sans cela, corriger
+                // une seule note d'un devoir renvoyait toute la classe en
+                // erreur « plus d'une note de Devoir1 ».
+                $existante = $this->noteDeLEvaluation($request, (int) $item['eleve_id'])->first();
+
+                if ($existante) {
+                    if ($existante->locked) {
+                        $errors[] = "Élève #{$item['eleve_id']} : note verrouillée, non modifiée";
+
+                        continue;
+                    }
+
+                    // R-28 : la note a changé depuis que ce client l'a chargée
+                    // (autre appareil) — on ne l'écrase pas sans le dire.
+                    $enregistree = (float) $existante->note;
+                    if (! $forcer && array_key_exists('base', $item)
+                        && abs($enregistree - (float) $item['note']) > 0.001
+                        && ($item['base'] === null || abs($enregistree - (float) $item['base']) > 0.001)) {
+                        $conflits[] = ['eleve_id' => (int) $item['eleve_id'], 'enregistree' => $enregistree, 'envoyee' => (float) $item['note']];
+
+                        continue;
+                    }
+
+                    $existante->update([
+                        'note' => $item['note'],
+                        'note_sur' => $item['note_sur'] ?? 20,
+                        'date_evaluation' => $request->date_evaluation,
+                        'observation' => $item['observation'] ?? $existante->observation,
+                    ]);
+                    $imported++;
+
                     continue;
                 }
 
@@ -473,6 +495,16 @@ class NotesCrudController extends Controller
                 $imported++;
             }
 
+            if ($conflits !== []) {
+                DB::rollBack();
+
+                return response()->json([
+                    'success' => false,
+                    'message' => count($conflits).' note(s) modifiée(s) entre-temps sur un autre appareil : rien n’a été enregistré. Vérifiez, puis confirmez pour remplacer.',
+                    'conflits' => $conflits,
+                ], 409);
+            }
+
             if ($imported === 0) {
                 DB::rollBack();
                 return response()->json([
@@ -484,6 +516,8 @@ class NotesCrudController extends Controller
 
             DB::commit();
 
+            \Cache::forget('dashboard_directeur_' . (auth()->user()->ecole_id ?? 'global'));
+
             return response()->json([
                 'success' => true,
                 'message' => "$imported notes enregistrées",
@@ -492,8 +526,8 @@ class NotesCrudController extends Controller
             ], 201);
 
         } catch (\Exception $e) {
-            $this->rethrowIfMeaningful($e);
             DB::rollBack();
+            $this->rethrowIfMeaningful($e);
 
             return response()->json([
                 'success' => false,
@@ -517,8 +551,15 @@ class NotesCrudController extends Controller
             return response()->json(['success' => false, 'message' => 'Classe non trouvée'], 404);
         }
 
+        $matieresAffectees = $this->matieresAffectees((int) $classeId);
+
+        if ($matieresAffectees !== null && $matieresAffectees === []) {
+            return response()->json(['success' => false, 'message' => 'Cette classe ne vous est pas affectée.'], 403);
+        }
+
         $eleves = Eleve::with('user:id,name,prenom')
             ->where('classe_id', $classeId)
+            ->where('statut', '!=', 'inactive')
             ->orderBy('numero_matricule')
             ->get(['id', 'user_id', 'numero_matricule'])
             ->map(fn($e) => [
@@ -547,6 +588,24 @@ class NotesCrudController extends Controller
                 ->map(fn($m) => ['id' => $m->id, 'nom' => $m->nom, 'coefficient' => null]);
         }
 
+        // Un enseignant ne voit que ses matières dans cette classe.
+        if ($matieresAffectees !== null) {
+            $matieres = collect($matieres)->whereIn('id', $matieresAffectees)->values();
+        }
+
+        // Notes déjà saisies pour l'évaluation demandée : la grille s'ouvre
+        // sur ce qui existe, pour corriger plutôt que ressaisir.
+        $notes = [];
+        $requete = request();
+        if ($requete->filled(['matiere_id', 'type_evaluation', 'periode'])) {
+            $notes = $this->noteDeLEvaluation($requete->merge(['classe_id' => $classeId]))
+                ->get(['id', 'eleve_id', 'note', 'note_sur', 'locked', 'date_evaluation'])
+                ->map(fn ($n) => [
+                    'id' => $n->id, 'eleve_id' => $n->eleve_id, 'note' => (float) $n->note,
+                    'note_sur' => (float) $n->note_sur, 'locked' => (bool) $n->locked,
+                ])->values();
+        }
+
         return response()->json([
             'success' => true,
             'data' => [
@@ -557,7 +616,62 @@ class NotesCrudController extends Controller
                 ],
                 'eleves' => $eleves,
                 'matieres' => $matieres,
+                'notes' => $notes,
             ],
         ]);
+    }
+
+    /**
+     * Les notes d'une évaluation : une par élève, matière, type et période —
+     * et par date pour les interrogations, qui peuvent être plusieurs.
+     */
+    private function noteDeLEvaluation(Request $request, ?int $eleveId = null)
+    {
+        return Notes::where('classe_id', $request->classe_id)
+            ->where('matiere_id', $request->matiere_id)
+            ->where('type_evaluation', $request->type_evaluation)
+            ->where('periode', $request->periode)
+            ->when($eleveId, fn ($q) => $q->where('eleve_id', $eleveId))
+            ->when(
+                $request->type_evaluation === 'Interrogation' && $request->filled('date_evaluation'),
+                fn ($q) => $q->whereDate('date_evaluation', $request->date_evaluation)
+            );
+    }
+
+    /**
+     * Matières que l'utilisateur enseigne dans cette classe, ou null s'il
+     * n'est pas tenu par les affectations (direction).
+     *
+     * @return array<int, int>|null
+     */
+    private function matieresAffectees(int $classeId): ?array
+    {
+        $user = auth()->user();
+
+        if (\App\Support\Roles::isDirector($user->role)) {
+            return null;
+        }
+
+        $enseignantId = $user->enseignant?->id;
+
+        if (! $enseignantId) {
+            return [];
+        }
+
+        return DB::table('enseignant_matiere')
+            ->where('enseignant_id', $enseignantId)->where('classe_id', $classeId)
+            ->pluck('matiere_id')->map(fn ($id) => (int) $id)->unique()->values()->all();
+    }
+
+    /**
+     * Un enseignant ne note que les matières qui lui sont affectées dans la
+     * classe : jusqu'ici, n'importe quel enseignant pouvait noter n'importe
+     * quelle classe de l'école.
+     */
+    private function peutNoter(int $classeId, int $matiereId): bool
+    {
+        $affectees = $this->matieresAffectees($classeId);
+
+        return $affectees === null || in_array($matiereId, $affectees, true);
     }
 }

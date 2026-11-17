@@ -44,7 +44,9 @@ Route::middleware('auth:sanctum')->prefix('dashboard')->group(function () {
     Route::get('/admin', [AdminDashboardController::class, 'admin'])->middleware('role:admin,super-admin');
 
     // ─── Université ──────────────────────────────────────────────────
-    Route::get('/universite', [UniversiteDashboardController::class, 'universite'])->middleware('role:recteur,doyen,professeur,etudiant,personnel');
+    // Sans l'étudiant : effectifs de l'université et noms des derniers
+    // inscrits ne le concernent pas (revue web du 16/11/2026).
+    Route::get('/universite', [UniversiteDashboardController::class, 'universite'])->middleware('role:recteur,doyen,professeur,personnel');
 
     // ─── Staff (6 rôles — R4) ────────────────────────────────────────
     Route::get('/comptable', [ComptableDashboardController::class, 'comptable'])->middleware('role:comptable');
@@ -60,4 +62,8 @@ Route::middleware('auth:sanctum')->prefix('directeur')->group(function () {
     Route::get('/stats', [DirecteurController::class, 'stats'])->middleware('role:directeur');
     Route::get('/classes', [DirecteurController::class, 'classes'])->middleware('role:directeur');
     Route::get('/enseignants', [DirecteurController::class, 'enseignants'])->middleware('role:directeur');
+    // « Ce qui demande une décision » (recommandation D8) et ses relances.
+    Route::get('/decisions', [\App\Http\Controllers\Dashboard\DecisionsController::class, 'index'])->middleware('role:directeur');
+    Route::post('/decisions/relancer', [\App\Http\Controllers\Dashboard\DecisionsController::class, 'relancer'])
+        ->middleware(['role:directeur', 'throttle:30,1,decisions-relance']);
 });

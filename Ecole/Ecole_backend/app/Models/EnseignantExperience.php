@@ -21,8 +21,8 @@ class EnseignantExperience extends Model
     ];
 
     protected $casts = [
-        'date_debut' => 'date',
-        'date_fin'   => 'date',
+        'date_debut' => \App\Casts\JourCalendaire::class,
+        'date_fin'   => \App\Casts\JourCalendaire::class,
     ];
 
     public function enseignant()

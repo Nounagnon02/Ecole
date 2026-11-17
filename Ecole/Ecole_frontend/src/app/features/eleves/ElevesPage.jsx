@@ -5,8 +5,7 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Users, Search, Download, Plus, GraduationCap,
-  MoreHorizontal, UserCheck, UserX, RefreshCw, Trash2,
+  Users, Search, Download, Plus, Upload, Eye, UserCheck, UserX, RefreshCw, Trash2,
 } from 'lucide-react';
 import { cn } from '@/shared/lib/utils';
 import { useApiQuery } from '@/shared/lib/api-client';
@@ -21,16 +20,39 @@ import Table from '@/shared/components/ui/Table';
 import Input from '@/shared/components/ui/Input';
 import { Skeleton } from '@/shared/components/ui/Skeleton';
 import { toast } from 'sonner';
+import { useTranslation } from '@/shared/i18n';
+import useAuthStore from '@/shared/stores/auth-store';
+import { ROLES, ROLE_GROUPS } from '@/shared/types/roles';
+import InscriptionDialog from './InscriptionDialog';
+import ImportDialog from './ImportDialog';
+import FicheDialog from './FicheDialog';
+import { aujourdhui } from '@/shared/lib/jour';
 
 const STATUT_COLORS = {
   actif: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400',
-  inactif: 'bg-neutral-100 text-neutral-700 dark:bg-neutral-500/20 dark:text-neutral-400',
+  inactif: 'bg-[var(--surface-subtle)] text-[var(--text-primary)]  ',
   suspendu: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400',
 };
 
+/**
+ * Un élève est-il dans les effectifs ?
+ *
+ * Le retrait écrit `eleves.statut = 'inactive'`. La page lisait
+ * `user.is_active`, que la liste ne renvoie pas : un élève retiré restait
+ * affiché « actif », sans message, et le directeur ne savait pas si son
+ * action avait eu lieu.
+ */
+const estActif = (eleve) => (eleve.statut ? eleve.statut !== 'inactive' : eleve.user?.is_active !== false);
+
 export default function ElevesPage() {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [filterClasse, setFilterClasse] = useState('');
+  const [inscription, setInscription] = useState(false);
+  const [importation, setImportation] = useState(false);
+  const [ficheId, setFicheId] = useState(null);
+  // Mêmes rôles que `ElevePolicy::create` côté API.
+  const peutInscrire = useAuthStore((etat) => etat.hasAnyRole([...ROLE_GROUPS.DIRECTION, ROLES.SECRETAIRE]));
 
   const { data: elevesData, isLoading, error, refetch } = useApiQuery(
     ['eleves'],
@@ -46,13 +68,26 @@ export default function ElevesPage() {
     }
     try {
       await apiClient.post(`/eleves/${eleve.id}/deactivate`);
-      queryClient.invalidateQueries({ queryKey: ['eleves'] });
+      await queryClient.invalidateQueries({ queryKey: ['eleves'] });
+      toast.success(t('pages.eleves.eleves.eleve_retire', { nom }));
     } catch (e) {
-      toast.error(e?.response?.data?.message ?? 'Impossible de retirer l\'élève');
+      toast.error(e?.response?.data?.message ?? t('pages.eleves.eleves.impossible_de_retirer_l_eleve'));
     }
   };
 
-  const eleves = elevesData?.data ?? elevesData ?? [];
+  const handleReintegrer = async (eleve) => {
+    const nom = `${eleve.user?.name ?? ''} ${eleve.user?.prenom ?? ''}`.trim() || `élève n°${eleve.id}`;
+    try {
+      await apiClient.post(`/eleves/${eleve.id}/activate`);
+      await queryClient.invalidateQueries({ queryKey: ['eleves'] });
+      toast.success(t('pages.eleves.eleves.eleve_reintegre', { nom }));
+    } catch (e) {
+      toast.error(e?.response?.data?.message ?? t('pages.eleves.eleves.impossible_de_reintegrer_l_eleve'));
+    }
+  };
+
+  const eleves = Array.isArray(elevesData?.data) ? elevesData.data
+    : Array.isArray(elevesData) ? elevesData : [];
 
   const classes = useMemo(() => [...new Set(eleves.map((e) => e.classe?.nom_classe).filter(Boolean))], [eleves]);
 
@@ -66,47 +101,73 @@ export default function ElevesPage() {
     [eleves, search, filterClasse]
   );
 
-  const actifs = eleves.filter((e) => e.user?.is_active !== false).length;
+  const actifs = eleves.filter(estActif).length;
   const inactifs = eleves.length - actifs;
-  const moyenneGenerale = eleves.length > 0
-    ? (eleves.reduce((acc, e) => acc + (e.moyenne ?? 0), 0) / eleves.length).toFixed(1)
-    : '—';
+  // Pas de « moyenne générale » ici (revue de pertinence, 15/11/2026) : elle
+  // faisait la moyenne des seuls élèves chargés, comptait 0 pour une moyenne
+  // inconnue et n'avait pas de période. Les moyennes officielles sont celles
+  // des bulletins arrêtés.
 
   const STATS = [
-    { title: 'Total Élèves', value: String(eleves.length), icon: Users, color: 'primary' },
-    { title: 'Actifs', value: String(actifs), icon: UserCheck, color: 'emerald' },
-    { title: 'Inactifs', value: String(inactifs), icon: UserX, color: 'amber' },
-    { title: 'Moyenne Générale', value: `${moyenneGenerale}/20`, icon: GraduationCap, color: 'sky' },
+    { title: t('pages.eleves.eleves.total_eleves'), value: String(eleves.length), icon: Users, color: 'primary' },
+    { title: t('pages.eleves.eleves.actifs'), value: String(actifs), icon: UserCheck, color: 'emerald' },
+    { title: t('pages.eleves.eleves.inactifs'), value: String(inactifs), icon: UserX, color: 'amber' },
   ];
+
+  // Export de la liste affichée (filtres compris). Séparateur « ; » et BOM :
+  // c'est ce qu'ouvre correctement un tableur réglé en français.
+  const exporter = () => {
+    const cellule = (v) => { const texte = String(v ?? ''); return /[;"\n]/.test(texte) ? `"${texte.replace(/"/g, '""')}"` : texte; };
+    const lignes = [
+      ['Matricule', 'Nom', 'Prénom', 'Classe', 'Statut'],
+      ...filtered.map((e) => [e.numero_matricule, e.user?.name, e.user?.prenom, e.classe?.nom_classe, estActif(e) ? t('pages.eleves.eleves.actifs') : t('pages.eleves.eleves.inactifs')]),
+    ];
+    const url = URL.createObjectURL(new Blob(['\uFEFF' + lignes.map((l) => l.map(cellule).join(';')).join('\r\n')], { type: 'text/csv;charset=utf-8' }));
+    const lien = document.createElement('a');
+    lien.href = url;
+    lien.download = `eleves-${aujourdhui()}.csv`;
+    document.body.appendChild(lien);
+    lien.click();
+    lien.remove();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+      <FicheDialog eleveId={ficheId} peutModifier={peutInscrire} onClose={() => setFicheId(null)} onChanged={() => refetch()} />
+      <ImportDialog open={importation} onClose={() => setImportation(false)} onDone={() => refetch()} />
+      <InscriptionDialog open={inscription} onClose={() => setInscription(false)} onDone={() => refetch()} />
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Élèves</h1>
-          <p className="text-sm text-neutral-500">Gérez l'ensemble des élèves inscrits</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.eleves.eleves.title')}</h1>
+          <p className="text-sm text-[var(--text-secondary)]">{t('pages.eleves.eleves.subtitle')}</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={refetch} disabled={isLoading}>
+          <Button variant="ghost" size="sm" aria-label={t('common.refresh')} title={t('common.refresh')} onClick={refetch} disabled={isLoading}>
             <RefreshCw className={cn('h-4 w-4 mr-1', isLoading && 'animate-spin')} />
           </Button>
-          <Button variant="outline" size="sm" icon={<Download />}>Exporter</Button>
-          <Button size="sm" icon={<Plus />}>Nouvel Élève</Button>
+          <Button variant="outline" size="sm" icon={<Download />} onClick={exporter} disabled={filtered.length === 0}>{t('common.export')}</Button>
+          {peutInscrire && (
+            <Button variant="outline" size="sm" icon={<Upload />} onClick={() => setImportation(true)}>{t('pages.eleves.import.bouton')}</Button>
+          )}
+          {peutInscrire && (
+            <Button size="sm" icon={<Plus />} onClick={() => setInscription(true)}>{t('pages.eleves.eleves.nouvel_eleve')}</Button>
+          )}
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-3">
         {STATS.map((stat) => (
           <StatsCard key={stat.title} {...stat} />
         ))}
       </div>
 
-      <Card>
+      <Card padding>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
             <Input
-              placeholder="Rechercher un élève..."
+              placeholder={t('common.search_student')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
@@ -115,9 +176,10 @@ export default function ElevesPage() {
           <select
             value={filterClasse}
             onChange={(e) => setFilterClasse(e.target.value)}
-            className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm text-neutral-700 outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+            aria-label={t('common.filter_by_class')}
+            className="h-10 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--accent)]/40   "
           >
-            <option value="">Toutes les classes</option>
+            <option value="">{t('common.all_classes')}</option>
             {classes.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
         </div>
@@ -126,16 +188,16 @@ export default function ElevesPage() {
       <Card padding={false}>
         {error && (
           <div className="p-6 text-center text-sm text-red-500">
-            Erreur de chargement : {error.message ?? 'Impossible de récupérer les élèves'}
+            Erreur de chargement : {error.message ?? t('pages.eleves.eleves.impossible_de_recuperer_les_eleves')}
           </div>
         )}
         <Table>
           <Table.Header>
-            <Table.Head>Élève</Table.Head>
-            <Table.Head>Classe</Table.Head>
-            <Table.Head>Matricule</Table.Head>
-            <Table.Head>Statut</Table.Head>
-            <Table.Head className="text-right">Actions</Table.Head>
+            <Table.Head>{t('common.student')}</Table.Head>
+            <Table.Head>{t('common.class')}</Table.Head>
+            <Table.Head>{t('common.matricule')}</Table.Head>
+            <Table.Head>{t('common.status_label')}</Table.Head>
+            <Table.Head className="text-right">{t('common.actions')}</Table.Head>
           </Table.Header>
           <Table.Body>
             {isLoading && Array.from({ length: 5 }).map((_, i) => (
@@ -147,8 +209,8 @@ export default function ElevesPage() {
             ))}
             {!isLoading && filtered.length === 0 && (
               <Table.Row>
-                <td colSpan={5} className="p-8 text-center text-sm text-neutral-500">
-                  Aucun élève trouvé
+                <td colSpan={5} className="p-8 text-center text-sm text-[var(--text-secondary)]">
+                  {t('common.no_student_found')}
                 </td>
               </Table.Row>
             )}
@@ -158,38 +220,45 @@ export default function ElevesPage() {
                   <div className="flex items-center gap-3">
                     <Avatar name={`${eleve.user?.name ?? ''} ${eleve.user?.prenom ?? ''}`} size="sm" />
                     <div>
-                      <p className="font-medium text-neutral-900 dark:text-white">
+                      <p className="font-medium text-[var(--text-primary)] ">
                         {eleve.user?.name} {eleve.user?.prenom}
                       </p>
-                      <p className="text-xs text-neutral-500">{eleve.user?.email}</p>
+                      <p className="text-xs text-[var(--text-secondary)]">{eleve.user?.email}</p>
                     </div>
                   </div>
                 </Table.Cell>
                 <Table.Cell>
                   <Badge variant="outline">{eleve.classe?.nom_classe ?? '—'}</Badge>
                 </Table.Cell>
-                <Table.Cell className="text-xs font-mono text-neutral-500">
+                <Table.Cell className="text-xs font-mono text-[var(--text-secondary)]">
                   {eleve.numero_matricule ?? '—'}
                 </Table.Cell>
                 <Table.Cell>
                   <span className={cn(
                     'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium',
-                    eleve.user?.is_active !== false ? STATUT_COLORS.actif : STATUT_COLORS.inactif
+                    estActif(eleve) ? STATUT_COLORS.actif : STATUT_COLORS.inactif
                   )}>
-                    {eleve.user?.is_active !== false ? 'actif' : 'inactif'}
+                    {estActif(eleve) ? 'actif' : 'inactif'}
                   </span>
                 </Table.Cell>
                 <Table.Cell className="text-right">
                   <div className="flex justify-end gap-1">
-                    <Button variant="ghost" size="sm" icon={<MoreHorizontal />} title="Plus d'actions" />
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      icon={<Trash2 />}
-                      title="Retirer des effectifs"
-                      className="text-red-500 hover:text-red-600"
-                      onClick={() => handleRetirer(eleve)}
-                    />
+                    <Button variant="ghost" size="sm" icon={<Eye />} onClick={() => setFicheId(eleve.id)}>{t('pages.eleves.fiche.ouvrir')}</Button>
+                    {estActif(eleve) ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        icon={<Trash2 />}
+                        title={t('pages.eleves.eleves.retirer_des_effectifs')}
+                        aria-label={t('pages.eleves.eleves.retirer_des_effectifs')}
+                        className="text-red-500 hover:text-red-600"
+                        onClick={() => handleRetirer(eleve)}
+                      />
+                    ) : (
+                      <Button variant="outline" size="sm" onClick={() => handleReintegrer(eleve)}>
+                        {t('pages.eleves.eleves.reintegrer')}
+                      </Button>
+                    )}
                   </div>
                 </Table.Cell>
               </Table.Row>

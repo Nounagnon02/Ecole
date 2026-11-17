@@ -1,19 +1,17 @@
 <?php
 
-use App\Http\Controllers\{
-    EnseignantController,
-    EnseignantsMaternellePrimaireController,
-    ParentsController,
-    ParentController,
-    ComptableController,
-    SurveillantController,
-    CenseurController,
-    InfirmierController,
-    BibliothecaireController,
-    SecretaireController,
-    AuthController,
-    ImportController
-};
+use App\Http\Controllers\BibliothecaireController;
+use App\Http\Controllers\CenseurController;
+use App\Http\Controllers\ComptableController;
+use App\Http\Controllers\EnseignantController;
+use App\Http\Controllers\EnseignantsMaternellePrimaireController;
+use App\Http\Controllers\EspaceParentController;
+use App\Http\Controllers\EvenementController;
+use App\Http\Controllers\ImportController;
+use App\Http\Controllers\InfirmierController;
+use App\Http\Controllers\ParentsController;
+use App\Http\Controllers\SecretaireController;
+use App\Http\Controllers\SurveillantController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -38,6 +36,9 @@ Route::post('/public/parent/register', [ParentsController::class, 'register']);
 */
 
 Route::middleware('auth:sanctum')->group(function () {
+    // Pièce jointe d'un message (R-31) : seuls l'expéditeur et le destinataire.
+    Route::get('/messages/{id}/piece-jointe', [\App\Http\Controllers\MessageController::class, 'pieceJointe']);
+
 
     // ============ ENSEIGNANTS ============
     Route::prefix('enseignants')->group(function () {
@@ -72,6 +73,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('enseignant')->middleware('role:enseignant,directeur')->group(function () {
         Route::get('/classes', [EnseignantController::class, 'classes']);
         Route::get('/notes', [EnseignantController::class, 'notes']);
+        // Appel de SES classes depuis le mobile (décision du 16/11/2026) :
+        // même traitement que l'appel de la vie scolaire, borné à ses classes.
+        Route::get('/appel/{classeId}', [SurveillantController::class, 'feuilleAppel']);
+        Route::post('/appel', [SurveillantController::class, 'enregistrerAppel']);
     });
 
     // ============ PARENTS ============
@@ -88,7 +93,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/{id}', [ParentsController::class, 'update'])->middleware('role:directeur');
         // Suppression douce du compte parent (directeur).
         Route::delete('/{id}', [ParentsController::class, 'destroy'])->middleware('role:directeur');
-        
+
         // Gestion invitations parents
         Route::post('/invite', [ParentsController::class, 'invite']);
         Route::post('/{eleveId}/generate-code', [ParentsController::class, 'generateParentCode']);
@@ -96,49 +101,66 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ============ PARENT DASHBOARD ============
     Route::prefix('parent')->middleware('role:parent')->group(function () {
-        Route::get('/enfants', [ParentController::class, 'enfants']);
-        Route::get('/bulletins', [ParentController::class, 'bulletins']);
-        Route::get('/bulletin/{enfantId}/{periode}', [ParentController::class, 'bulletinDetail']);
-        Route::get('/messages', [ParentController::class, 'messages']);
-        Route::get('/rendez-vous', [ParentController::class, 'rendezVous']);
+        Route::get('/enfants', [EspaceParentController::class, 'enfants']);
+        Route::get('/bulletins', [EspaceParentController::class, 'bulletins']);
+        Route::get('/bulletin/{enfantId}/{periode}', [EspaceParentController::class, 'bulletinDetail']);
+        Route::get('/messages', [EspaceParentController::class, 'messages']);
+        Route::get('/rendez-vous', [EspaceParentController::class, 'rendezVous']);
 
         // Sous-ressources par enfant. Chacune vérifie dans le contrôleur que
         // l'enfant appartient bien au parent connecté.
-        Route::get('/enfants/{enfantId}/notes', [ParentController::class, 'enfantNotes']);
-        Route::get('/enfants/{enfantId}/absences', [ParentController::class, 'enfantAbsences']);
-        Route::get('/enfants/{enfantId}/emploi-du-temps', [ParentController::class, 'enfantEmploiDuTemps']);
-        Route::get('/enfants/{enfantId}/paiements', [ParentController::class, 'enfantPaiements']);
+        Route::get('/enfants/{enfantId}/notes', [EspaceParentController::class, 'enfantNotes']);
+        Route::get('/enfants/{enfantId}/absences', [EspaceParentController::class, 'enfantAbsences']);
+        Route::get('/enfants/{enfantId}/emploi-du-temps', [EspaceParentController::class, 'enfantEmploiDuTemps']);
+        Route::get('/enfants/{enfantId}/devoirs', [EspaceParentController::class, 'enfantDevoirs']);
+        Route::get('/enfants/{enfantId}/paiements', [EspaceParentController::class, 'enfantPaiements']);
+        Route::get('/preferences', [EspaceParentController::class, 'preferences']);
+        Route::put('/preferences', [EspaceParentController::class, 'majPreferences']);
     });
 
     // ============ COMPTABLE ============
-    Route::prefix('comptable')->middleware('role:directeur,comptable')->group(function () {
+    Route::prefix('comptable')->middleware(['role:directeur,comptable', 'throttle:60,1,comptable'])->group(function () {
         Route::get('/paiements', [ComptableController::class, 'paiements']);
         Route::get('/finances', [ComptableController::class, 'finances']);
         Route::get('/bourses', [ComptableController::class, 'bourses']);
         Route::post('/paiements', [ComptableController::class, 'storePaiement']);
+        // Échéances dues : un élève, ou toute une classe.
+        Route::post('/echeances', [ComptableController::class, 'storeEcheances']);
         Route::post('/bourses', [ComptableController::class, 'storeBourse']);
         Route::get('/depenses', [ComptableController::class, 'depenses']);
         Route::post('/depenses', [ComptableController::class, 'storeDepense']);
         Route::delete('/depenses/{id}', [ComptableController::class, 'destroyDepense']);
         Route::get('/paiements/{id}/recu', [ComptableController::class, 'recu']);
+        Route::get('/versements/{id}/recu', [ComptableController::class, 'recuVersement']);
         Route::get('/echeancier/{eleveId}', [ComptableController::class, 'echeancier']);
         // Paiement en ligne (FedaPay). Le nom de route `comptable.fedapay.callback`
         // est celui que FedaPayService renvoie au provider en `callback_url`.
+        Route::post('/echeancier/{paiementId}/encaisser', [ComptableController::class, 'encaisserEcheance']);
         Route::post('/echeancier/{paiementId}/initier-paiement', [ComptableController::class, 'initierPaiementEcheance']);
         Route::get('/paiement/callback', [ComptableController::class, 'paiementCallback'])->name('comptable.fedapay.callback');
         Route::get('/paiement/verifier/{transactionId}', [ComptableController::class, 'verifierPaiement']);
     });
 
     // ============ SURVEILLANT ============
-    Route::prefix('surveillant')->middleware('role:directeur,surveillant')->group(function () {
+    Route::prefix('surveillant')->middleware('role:directeur,surveillant,censeur')->group(function () {
         Route::get('/absences', [SurveillantController::class, 'absences']);
         Route::post('/absences', [SurveillantController::class, 'storeAbsence']);
+        Route::patch('/absences/{id}', [SurveillantController::class, 'justifierAbsence']);
+        // Appel d'une classe : feuille du jour, puis enregistrement rejouable.
+        Route::get('/appel/{classeId}', [SurveillantController::class, 'feuilleAppel']);
+        Route::post('/appel', [SurveillantController::class, 'enregistrerAppel']);
     });
 
     // ============ IMPORTS DE DONNÉES ============
-    Route::prefix('imports')->middleware(['role:directeur', 'throttle:exports'])->group(function () {
-        Route::post('/eleves', [ImportController::class, 'importEleves']);
-    });
+    // Inscription en masse par CSV. Le secrétariat importe élèves et parents ;
+    // les lignes du personnel sont refusées par le service hors direction.
+    Route::post('imports/comptes', [ImportController::class, 'importComptes'])
+        ->middleware(['role:directeur,secretaire', 'throttle:exports']);
+
+    // Comptes du personnel : la direction les crée un par un ici, ou en masse
+    // par le fichier ci-dessus.
+    Route::get('personnel/comptes', [ImportController::class, 'comptesPersonnel'])->middleware('role:directeur');
+    Route::post('personnel/comptes', [ImportController::class, 'creerComptePersonnel'])->middleware(['role:directeur', 'throttle:30,1,comptes-personnel']);
 
     // ============ CENSEUR ============
     Route::prefix('censeur')->middleware('role:directeur,censeur')->group(function () {
@@ -182,6 +204,13 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ============ SECRETAIRE ============
     Route::prefix('secretaire')->middleware('role:directeur,secretaire')->group(function () {
+        // Planning de l'établissement. Les routes `/evenements` (services.php)
+        // sont réservées à la direction pour l'écriture et fermées au
+        // secrétariat en lecture : la page Planning répondait 403.
+        Route::get('/evenements', [EvenementController::class, 'planning']);
+        Route::post('/evenements', [EvenementController::class, 'store']);
+        Route::put('/evenements/{id}', [EvenementController::class, 'update']);
+        Route::delete('/evenements/{id}', [EvenementController::class, 'destroy']);
         Route::get('/dossiers-eleves', [SecretaireController::class, 'dossiersEleves']);
         Route::get('/rendez-vous', [SecretaireController::class, 'rendezVous']);
         Route::get('/certificats', [SecretaireController::class, 'certificats']);
@@ -196,11 +225,13 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // ============ SURVEILLANT (complément) ============
-    Route::prefix('surveillant')->middleware('role:directeur,surveillant')->group(function () {
+    Route::prefix('surveillant')->middleware('role:directeur,surveillant,censeur')->group(function () {
         Route::get('/incidents', [SurveillantController::class, 'incidents']);
         Route::post('/incidents', [SurveillantController::class, 'storeIncident']);
         Route::get('/sanctions', [SurveillantController::class, 'sanctions']);
         Route::post('/sanctions', [SurveillantController::class, 'storeSanction']);
+        Route::patch('/incidents/{id}', [SurveillantController::class, 'majIncident']);
+        Route::patch('/sanctions/{id}', [SurveillantController::class, 'majSanction']);
         Route::get('/statistiques', [SurveillantController::class, 'statistiques']);
     });
 });

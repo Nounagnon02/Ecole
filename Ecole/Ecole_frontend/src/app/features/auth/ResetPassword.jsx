@@ -13,44 +13,20 @@ import { motion } from 'framer-motion';
 import { Lock, ArrowLeft, AlertCircle, CheckCircle2, KeyRound } from 'lucide-react';
 import { Button, Input } from '@/shared/components/ui';
 import { api } from '@/shared/services/api';
-
-/* ─── Composants décoratifs ──────────────────────────────────────── */
-function TopDecorativeBand() {
-  return (
-    <div className="absolute top-0 left-0 right-0 h-1 flex pointer-events-none">
-      <div className="flex-1 bg-[var(--primary)]" />
-      <div className="w-24 bg-[var(--accent)]" />
-      <div className="flex-1 bg-[var(--primary)]" />
-    </div>
-  );
-}
-
-function DividerOrnament({ className }) {
-  return (
-    <svg className={className} viewBox="0 0 120 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M0 8h40" stroke="currentColor" strokeWidth="0.5" />
-      <path d="M80 8h40" stroke="currentColor" strokeWidth="0.5" />
-      <path d="M48 8c0-4 4-8 12-8s12 4 12 8-4 8-12 8-12-4-12-8z" stroke="currentColor" strokeWidth="0.5" />
-      <path d="M54 8c0-3 2.5-5 6-5s6 2 6 5-2.5 5-6 5-6-2-6-5z" stroke="currentColor" strokeWidth="0.5" />
-      <path d="M57 8c0-1.5 1.5-3 3-3s3 1.5 3 3-1.5 3-3 3-3-1.5-3-3z" stroke="currentColor" strokeWidth="0.5" fill="currentColor" />
-    </svg>
-  );
-}
-
-/* ─── Variants d'animation ───────────────────────────────────────── */
-const fadeUp = {
-  hidden: { opacity: 0, y: 16 },
-  visible: { opacity: 1, y: 0 },
-};
-const container = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.06, delayChildren: 0.05 } },
-};
+import {
+  TopDecorativeBand,
+  DividerOrnament,
+  fadeUp,
+  container,
+} from '@/shared/components/auth/AuthDecorations';
+import { useTranslation } from '@/shared/i18n';
+import LanguageSwitcher from '@/shared/components/layout/LanguageSwitcher';
 
 /* ═══════════════════════════════════════════════════════════════════
  *  COMPOSANT PRINCIPAL
  * ═══════════════════════════════════════════════════════════════════ */
 export default function ResetPassword() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -79,15 +55,15 @@ export default function ResetPassword() {
   const validate = useCallback(() => {
     const newErrors = {};
     if (!form.password) {
-      newErrors.password = 'Veuillez entrer un mot de passe';
+      newErrors.password = t('pages.auth.reset_password.veuillez_entrer_un_mot_de_passe');
     } else if (form.password.length < 6) {
-      newErrors.password = 'Le mot de passe doit contenir au moins 6 caractères';
+      newErrors.password = t('pages.auth.reset_password.le_mot_de_passe_doit_contenir_au_moins_6');
     }
     if (form.password !== form.password_confirmation) {
-      newErrors.password_confirmation = 'Les mots de passe ne correspondent pas';
+      newErrors.password_confirmation = t('pages.auth.reset_password.les_mots_de_passe_ne_correspondent_pas');
     }
     return newErrors;
-  }, [form]);
+  }, [form, t]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -95,7 +71,7 @@ export default function ResetPassword() {
 
     // Vérifier que token et email sont présents
     if (!token || !email) {
-      setErrors({ _general: 'Lien de réinitialisation invalide ou incomplet.' });
+      setErrors({ _general: t('pages.auth.reset_password.lien_de_reinitialisation_invalide_ou_incomplet') });
       return;
     }
 
@@ -117,7 +93,7 @@ export default function ResetPassword() {
       });
       setSuccess(true);
     } catch (err) {
-      const serverErrors = err.response?.data?.errors;
+      const serverErrors = err.errors;
       if (serverErrors && typeof serverErrors === 'object') {
         const mapped = {};
         Object.entries(serverErrors).forEach(([field, msgs]) => {
@@ -127,8 +103,8 @@ export default function ResetPassword() {
       } else {
         setErrors({
           _general:
-            err.response?.data?.message ||
-            'Erreur lors de la réinitialisation. Veuillez réessayer.',
+            err.message ||
+            t('pages.auth.reset_password.erreur_lors_de_la_reinitialisation_veuillez'),
         });
       }
     } finally {
@@ -141,6 +117,7 @@ export default function ResetPassword() {
     return (
       <div className="relative min-h-screen bg-[var(--surface)] overflow-hidden">
         <TopDecorativeBand />
+        <div className="absolute end-4 top-4 z-20"><LanguageSwitcher /></div>
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(184,86,46,0.03),transparent_60%)] pointer-events-none" />
         <div className="relative z-10 flex min-h-screen items-center justify-center px-6">
           <motion.div
@@ -148,26 +125,25 @@ export default function ResetPassword() {
             animate={{ opacity: 1, y: 0 }}
             className="w-full max-w-md"
           >
-            <div className="border border-[var(--border)] border-t-4 border-t-[var(--red)] bg-white dark:bg-[var(--surface-raised)] shadow-3 p-10 text-center">
+            <div className="border border-[var(--border)] border-t-4 border-t-[var(--red)] bg-[var(--surface-raised)] dark:bg-[var(--surface-raised)] shadow-3 p-10 text-center">
               <div className="flex justify-center mb-6">
                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--red-subtle)] text-[var(--red)]">
                   <AlertCircle className="h-8 w-8" />
                 </div>
               </div>
-              <h1 className="font-fraunces text-2xl font-semibold text-[var(--text-primary)]">
-                Lien invalide
+              <h1 className="font-heading text-2xl font-semibold text-[var(--text-primary)]">
+                {t('pages.auth.reset_password.lien_invalide')}
               </h1>
               <p className="mt-3 text-sm text-[var(--text-secondary)] leading-relaxed">
-                Le lien de réinitialisation est invalide ou a expiré.
-                Veuillez refaire une demande.
+                {t('pages.auth.reset_password.le_lien_de_reinitialisation_est_invalide_ou_a')}
               </p>
               <div className="mt-8">
                 <Link
                   to="/forgot-password"
-                  className="inline-flex items-center gap-2 rounded-lg bg-[var(--accent)] px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[var(--accent-hover)]"
+                  className="inline-flex items-center gap-2 rounded-lg bg-[var(--action)] px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[var(--action-hover)]"
                 >
                   <ArrowLeft className="h-4 w-4" />
-                  Nouvelle demande
+                  {t('pages.auth.reset_password.nouvelle_demande')}
                 </Link>
               </div>
             </div>
@@ -182,6 +158,7 @@ export default function ResetPassword() {
     return (
       <div className="relative min-h-screen bg-[var(--surface)] overflow-hidden">
         <TopDecorativeBand />
+        <div className="absolute end-4 top-4 z-20"><LanguageSwitcher /></div>
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(184,86,46,0.03),transparent_60%)] pointer-events-none" />
         <div className="relative z-10 flex min-h-screen items-center justify-center px-6">
           <motion.div
@@ -189,25 +166,24 @@ export default function ResetPassword() {
             animate={{ opacity: 1, y: 0 }}
             className="w-full max-w-md"
           >
-            <div className="border border-[var(--border)] border-t-4 border-t-[var(--green)] bg-white dark:bg-[var(--surface-raised)] shadow-3 p-10 text-center">
+            <div className="border border-[var(--border)] border-t-4 border-t-[var(--green)] bg-[var(--surface-raised)] dark:bg-[var(--surface-raised)] shadow-3 p-10 text-center">
               <div className="flex justify-center mb-6">
                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--green-subtle)] text-[var(--green)]">
                   <CheckCircle2 className="h-8 w-8" />
                 </div>
               </div>
-              <h1 className="font-fraunces text-2xl font-semibold text-[var(--text-primary)]">
-                Mot de passe réinitialisé
+              <h1 className="font-heading text-2xl font-semibold text-[var(--text-primary)]">
+                {t('pages.auth.reset_password.mot_de_passe_reinitialise')}
               </h1>
               <p className="mt-3 text-sm text-[var(--text-secondary)] leading-relaxed">
-                Votre mot de passe a été modifié avec succès.
-                Vous pouvez maintenant vous connecter avec votre nouveau mot de passe.
+                {t('pages.auth.reset_password.votre_mot_de_passe_a_ete_modifie_avec_succes')}
               </p>
               <div className="mt-8">
                 <button
                   onClick={() => navigate('/connexion', { replace: true })}
-                  className="inline-flex items-center gap-2 rounded-lg bg-[var(--accent)] px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[var(--accent-hover)]"
+                  className="inline-flex items-center gap-2 rounded-lg bg-[var(--action)] px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[var(--action-hover)]"
                 >
-                  Se connecter
+                  {t('pages.auth.reset_password.se_connecter')}
                   <ArrowLeft className="h-4 w-4 rotate-180" />
                 </button>
               </div>
@@ -222,6 +198,7 @@ export default function ResetPassword() {
   return (
     <div className="relative min-h-screen bg-[var(--surface)] overflow-hidden">
       <TopDecorativeBand />
+      <div className="absolute end-4 top-4 z-20"><LanguageSwitcher /></div>
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(184,86,46,0.03),transparent_60%)] pointer-events-none" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(26,58,60,0.04),transparent_50%)] pointer-events-none" />
 
@@ -245,9 +222,9 @@ export default function ResetPassword() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.5 }}
-            className="font-fraunces text-2xl font-semibold text-[var(--text-primary)] mt-6"
+            className="font-heading text-2xl font-semibold text-[var(--text-primary)] mt-6"
           >
-            Nouveau mot de passe
+            {t('pages.auth.reset_password.nouveau_mot_de_passe')}
           </motion.h2>
           <motion.p
             initial={{ opacity: 0 }}
@@ -255,7 +232,7 @@ export default function ResetPassword() {
             transition={{ delay: 0.5, duration: 0.6 }}
             className="text-sm text-[var(--text-secondary)] mt-2 text-center max-w-xs"
           >
-            Choisissez un mot de passe sécurisé d'au moins 6 caractères.
+            {t('pages.auth.reset_password.choisissez_un_mot_de_passe_securise_d_au_moins')}
           </motion.p>
         </motion.div>
 
@@ -267,18 +244,18 @@ export default function ResetPassword() {
             animate="visible"
             className="relative w-full max-w-sm"
           >
-            <div className="relative border border-[var(--border)] border-t-4 border-t-[var(--primary)] bg-white dark:bg-[var(--surface-raised)] shadow-3">
+            <div className="relative border border-[var(--border)] border-t-4 border-t-[var(--primary)] bg-[var(--surface-raised)] dark:bg-[var(--surface-raised)] shadow-3">
               <div className="flex justify-center -mt-3 mb-6">
                 <DividerOrnament className="h-2.5 w-20 text-[var(--primary)] opacity-25" />
               </div>
 
               <div className="px-10 pt-4 pb-6">
                 <motion.div variants={fadeUp}>
-                  <h1 className="font-fraunces text-2xl font-semibold text-[var(--text-primary)]">
-                    Réinitialiser
+                  <h1 className="font-heading text-2xl font-semibold text-[var(--text-primary)]">
+                    {t('pages.auth.reset_password.reinitialiser')}
                   </h1>
                   <p className="mt-1.5 text-sm text-[var(--text-secondary)]">
-                    Pour <strong className="text-[var(--text-primary)]">{email}</strong>
+                    {t('pages.auth.reset_password.for')}{' '}<strong className="text-[var(--text-primary)]">{email}</strong>
                   </p>
                 </motion.div>
 
@@ -299,8 +276,8 @@ export default function ResetPassword() {
                     <Input
                       id="reset-password"
                       type="password"
-                      label="Nouveau mot de passe"
-                      placeholder="Au moins 6 caractères"
+                      label={t('pages.auth.reset_password.nouveau_mot_de_passe')}
+                      placeholder={t('pages.auth.reset_password.au_moins_6_caracteres')}
                       value={form.password}
                       onChange={setField('password')}
                       error={errors.password}
@@ -314,8 +291,8 @@ export default function ResetPassword() {
                     <Input
                       id="reset-password-confirm"
                       type="password"
-                      label="Confirmer le mot de passe"
-                      placeholder="Répétez le mot de passe"
+                      label={t('pages.auth.reset_password.confirmer_le_mot_de_passe')}
+                      placeholder={t('pages.auth.reset_password.repetez_le_mot_de_passe')}
                       value={form.password_confirmation}
                       onChange={setField('password_confirmation')}
                       error={errors.password_confirmation}
@@ -335,7 +312,7 @@ export default function ResetPassword() {
                     >
                       {!loading && (
                         <span className="flex items-center gap-2">
-                          Réinitialiser
+                          {t('pages.auth.reset_password.reinitialiser')}
                           <ArrowLeft className="h-4 w-4 rotate-180" />
                         </span>
                       )}
@@ -350,7 +327,7 @@ export default function ResetPassword() {
                     to="/connexion"
                     className="font-medium text-[var(--accent)] transition-colors hover:text-[var(--accent-hover)]"
                   >
-                    Retour à la connexion
+                    {t('pages.auth.reset_password.retour_a_la_connexion')}
                   </Link>
                 </p>
               </div>

@@ -8,6 +8,7 @@
 const { app, BrowserWindow, Tray, Menu, Notification, nativeImage, ipcMain, shell, protocol } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const { initialiserMisesAJour } = require('./updater');
 
 // ─── Configuration ──────────────────────────────────────────────────────────
 const DEV_MODE = process.env.NODE_ENV === 'development';
@@ -161,6 +162,11 @@ function createWindow() {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
+      // Adresse de l'API transmise à l'interface (preload → electronAPI.apiUrl) :
+      // un même installateur sert toutes les écoles, sans recompiler le web.
+      additionalArguments: origineDe(process.env.ECOLE_API_URL, 'ECOLE_API_URL')
+        ? [`--ecole-api-url=${origineDe(process.env.ECOLE_API_URL, 'ECOLE_API_URL')}`]
+        : [],
     },
   });
 
@@ -302,6 +308,11 @@ app.whenReady().then(() => {
 
   createWindow();
   createTray();
+
+  // Les binaires n'avaient aucun chemin de mise à jour : une version
+  // installée le restait, correctifs de sécurité compris. Sans configuration
+  // de publication, l'appel est silencieux.
+  initialiserMisesAJour(mainWindow, { devMode: DEV_MODE });
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();

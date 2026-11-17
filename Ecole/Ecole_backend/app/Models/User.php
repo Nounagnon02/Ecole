@@ -28,19 +28,19 @@ class User extends Authenticatable
         'password',
         'role',
         'ecole_id',
+        'two_factor_enabled',
     ];
 
-    /**
-     * Inerte tant que `$fillable` est renseigné — Eloquent ne consulte `$guarded`
-     * que si `$fillable` est vide. La protection réelle de `is_active` vient de
-     * son absence du `$fillable` ci-dessus.
-     *
-     * Conservé pour que l'intention reste lisible : l'état d'un compte ne se
-     * règle pas depuis une charge de requête, seulement depuis du code serveur
-     * par affectation directe.
-     */
     protected $guarded = [
-        'is_active'
+        'id',
+        'is_active',
+        'two_factor_secret',
+        'two_factor_verified_at',
+        'created_at',
+        'updated_at',
+        'deleted_at',
+        'email_verified_at',
+        'remember_token',
     ];
 
     /**
@@ -49,6 +49,7 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'two_factor_secret',
     ];
 
     /**
@@ -56,11 +57,9 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'two_factor_verified_at' => 'datetime',
         'is_active' => 'boolean',
-        // Sans ce cast, `User::create(['password' => 'clair'])` stockait le mot
-        // de passe en clair : le hachage reposait entièrement sur la discipline
-        // de chaque appelant. Le cast est idempotent (il vérifie
-        // Hash::isHashed), donc les Hash::make() existants restent corrects.
+        'two_factor_enabled' => 'boolean',
         'password' => 'hashed',
     ];
 
@@ -113,6 +112,11 @@ class User extends Authenticatable
     public function enseignantUniversite()
     {
         return $this->hasOne(\App\Models\Universite\Enseignant::class);
+    }
+
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class);
     }
 
     /**

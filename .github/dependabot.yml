@@ -1,0 +1,73 @@
+version: 2
+
+# Avant ce fichier : `composer audit`/`npm audit` restaient manuels, donc une
+# CVE connue pouvait rester ouverte indéfiniment sans que personne ne le
+# remarque (cf. plan d'ajouts, dimension Sécurité). Un groupe par écosystème
+# limite le nombre de PR à revoir sans perdre la traçabilité individuelle des
+# mises à jour majeures, jamais groupées.
+
+updates:
+  - package-ecosystem: composer
+    directory: /Ecole/Ecole_backend
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    groups:
+      mineures-et-correctifs:
+        update-types: [minor, patch]
+    commit-message:
+      prefix: 'chore(deps)'
+
+  - package-ecosystem: npm
+    directory: /Ecole/Ecole_frontend
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    groups:
+      mineures-et-correctifs:
+        update-types: [minor, patch]
+    commit-message:
+      prefix: 'chore(deps)'
+
+  - package-ecosystem: npm
+    directory: /Ecole/Ecole_mobile
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    groups:
+      mineures-et-correctifs:
+        update-types: [minor, patch]
+    commit-message:
+      prefix: 'chore(deps)'
+
+  - package-ecosystem: npm
+    directory: /Ecole/Ecole_desktop
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    groups:
+      mineures-et-correctifs:
+        update-types: [minor, patch]
+    commit-message:
+      prefix: 'chore(deps)'
+
+  # `Ecole_backend/package.json` est le squelette Vite/Blade par défaut d'une
+  # installation Laravel neuve — l'API réelle ne sert que du JSON, le vrai
+  # frontend est le projet React séparé ci-dessus. Personne n'y lance
+  # `npm install` aujourd'hui, mais tant qu'il est versionné, autant éviter
+  # qu'il dérive en silence.
+  - package-ecosystem: npm
+    directory: /Ecole/Ecole_backend
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: 'chore(deps)'
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: 'chore(ci)'

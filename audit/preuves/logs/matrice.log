@@ -1,0 +1,11 @@
+directeur_ecole1: accueil /directeur/dashboard, 12 routes autorisées, 0 avec refus API, 0 bloquées
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+locator.count: Target page, context or browser has been closed
+    at /tmp/claude-1000/-home-rosegohoue-Mes-projets-Ecole/977d6079-0ff9-4f7e-a71b-b135794614e5/scratchpad/matrice.mjs:15:50 {
+  log: []
+}
+
+Node.js v24.16.0

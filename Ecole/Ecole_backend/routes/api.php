@@ -16,16 +16,10 @@
 | - services.php  : Paiements, messagerie, contributions
 | - universite.php: Module universitaire
 | - admin.php     : Super admin — utilisateurs, configuration, logs
-| - ia.php        : Assistant IA EduPilot (/api/v1/ia/*)
+| - audit.php     : Journal d'audit — consultation (directeur/admin)
+| - ia.php        : Assistant IA EduPilot (/api/v1/ia/*), seulement si MODULE_IA=true
 |
 */
-
-// Sonde de santé également disponible sous /api/v1/health, pour les clients
-// et sondes d'infrastructure qui ciblent l'API versionnée.
-Illuminate\Support\Facades\Route::get('/v1/health', fn() => response()->json([
-    'status' => 'UP',
-    'timestamp' => now()->toIso8601String(),
-]))->name('health.v1');
 
 // Charger les routes modulaires
 require __DIR__.'/api/auth.php';
@@ -36,4 +30,8 @@ require __DIR__.'/api/users.php';
 require __DIR__.'/api/services.php';
 require __DIR__.'/api/universite.php';
 require __DIR__.'/api/admin.php';
-require __DIR__.'/api/ia.php';
+require __DIR__.'/api/audit.php';
+// Assistant IA : hors plan, coupé sauf MODULE_IA=true (config/modules.php).
+if (config('modules.ia')) {
+    require __DIR__.'/api/ia.php';
+}

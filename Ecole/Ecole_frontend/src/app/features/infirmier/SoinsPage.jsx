@@ -5,7 +5,11 @@
  * Données dynamiques via API /infirmier/consultations
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import apiClient, { useApiQuery } from '@/shared/lib/api-client';
+import FormDialog from '@/shared/components/ui/FormDialog';
+import useElevesOptions from '@/shared/lib/useElevesOptions';
+import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
   Heart, Plus, Search, Clock, AlertTriangle, CheckCircle,
@@ -18,7 +22,8 @@ import Avatar from '@/shared/components/ui/Avatar';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
-import { useApi } from '@/hooks/useApi';
+import { useTranslation } from '@/shared/i18n';
+import { aujourdhui } from '@/shared/lib/jour';
 
 const getTypeIcon = (urgence) => {
   if (urgence) return <Activity className="h-4 w-4" />;
@@ -30,29 +35,30 @@ const getTypeColor = (urgence) => {
   return 'text-emerald-500 bg-emerald-100 dark:bg-emerald-900/20';
 };
 
-const getTypeLabel = (urgence) => urgence ? 'Urgence' : 'Consultation';
-
 export default function SoinsPage() {
-  const { loading, error, get } = useApi();
-  const [soins, setSoins] = useState([]);
+  const { t } = useTranslation();
+  const getTypeLabel = (urgence) => t(urgence ? 'pages.infirmier.soins.urgence' : 'pages.infirmier.soins.consultation');
   const [search, setSearch] = useState('');
   const [filterUrgence, setFilterUrgence] = useState('');
   const [filterStatut, setFilterStatut] = useState('');
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await get('/infirmier/consultations');
-        const items = Array.isArray(res?.data?.data) ? res.data.data
-          : Array.isArray(res?.data) ? res.data
-          : Array.isArray(res) ? res
-          : [];
-        setSoins(items);
-      } catch (e) {
-        console.error('Erreur chargement soins:', e);
-      }
-    })();
-  }, []);
+  // Le chargement passait par un `useState` doublé d'un `useEffect` de
+  // premier rendu, sans cache ni déduplication : deux composants montés
+  // ensemble lançaient deux requêtes, et un retour sur la page rechargeait
+  // tout (cf. audit P4.1). `unwrapList` traverse les trois formes
+  // d'enveloppe que renvoient les contrôleurs.
+  const requete = useApiQuery(['infirmier-consultations'], '/infirmier/consultations');
+  const [nouveau, setNouveau] = useState(false);
+  const eleves = useElevesOptions(nouveau);
+  const f = (cle) => t(`pages.infirmier.formulaires.${cle}`);
+  const enregistrer = async (v) => {
+    await apiClient.post('/infirmier/consultations', { ...v, eleve_id: Number(v.eleve_id), urgence: v.urgence === 'oui' });
+    requete.refetch();
+  };
+
+  const soins = useMemo(() => unwrapList(requete.data) ?? [], [requete.data]);
+  const loading = requete.isPending;
+  const error = requete.isError ? (requete.error?.message ?? t('common.load_error')) : null;
 
   const stats = useMemo(() => {
     const today = new Date().toDateString();
@@ -68,7 +74,7 @@ export default function SoinsPage() {
     soins.filter((s) => {
       const q = search.toLowerCase();
       if (search) {
-        const nom = `${s.eleve?.prenom || ''} ${s.eleve?.nom || ''}`;
+        const nom = `${s.eleve?.user?.prenom || ''} ${s.eleve?.user?.name || ''}`;
         if (!nom.toLowerCase().includes(q) && !(s.motif || '').toLowerCase().includes(q)) return false;
       }
       if (filterUrgence === 'urgence' && !s.urgence) return false;
@@ -83,14 +89,14 @@ export default function SoinsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--text-tertiary)]" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
+      <div className="flex flex-col items-center justify-center h-64 text-[var(--text-secondary)]">
         <AlertCircle className="h-8 w-8 mb-2 text-red-400" />
         <p className="text-sm">{error}</p>
       </div>
@@ -101,27 +107,42 @@ export default function SoinsPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Soins Infirmiers</h1>
-          <p className="text-sm text-neutral-500">Registre des soins dispensés aux élèves</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.infirmier.soins.title')}</h1>
+          <p className="text-sm text-[var(--text-secondary)]">{t('pages.infirmier.soins.subtitle')}</p>
         </div>
-        <Button size="sm" icon={<Plus />}>Nouveau soin</Button>
+        <Button size="sm" icon={<Plus />} onClick={() => setNouveau(true)}>{t('pages.infirmier.soins.nouveau_soin')}</Button>
       </div>
+      <FormDialog
+        open={nouveau}
+        title={t('pages.infirmier.soins.nouveau_soin')}
+        initial={{ date: aujourdhui(), urgence: 'non' }}
+        fields={[
+          { name: 'eleve_id', label: f('eleve'), type: 'select', options: eleves, required: true },
+          { name: 'date', label: f('date'), type: 'date', required: true },
+          { name: 'motif', label: f('motif'), required: true },
+          { name: 'urgence', label: f('urgence'), type: 'select', options: [{ value: 'non', label: f('non') }, { value: 'oui', label: f('oui') }] },
+          { name: 'diagnostic', label: f('diagnostic'), type: 'textarea', required: true },
+          { name: 'traitement', label: f('traitement'), type: 'textarea' },
+        ]}
+        onSubmit={enregistrer}
+        onClose={() => setNouveau(false)}
+      />
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-4">
-        <StatsCard title="Total Soins" value={String(stats.total)} icon={Heart} color="primary" />
-        <StatsCard title="Aujourd'hui" value={String(stats.aujourdhui)} icon={Clock} color="amber" />
-        <StatsCard title="Urgences" value={String(stats.urgences)} icon={AlertTriangle} color="red" />
-        <StatsCard title="Traités" value={String(stats.traites)} icon={CheckCircle} color="emerald" />
+        <StatsCard title={t('pages.infirmier.soins.total_soins')} value={String(stats.total)} icon={Heart} color="primary" />
+        <StatsCard title={t('common.today')} value={String(stats.aujourdhui)} icon={Clock} color="amber" />
+        <StatsCard title={t('pages.infirmier.soins.urgences')} value={String(stats.urgences)} icon={AlertTriangle} color="red" />
+        <StatsCard title={t('pages.infirmier.soins.traites')} value={String(stats.traites)} icon={CheckCircle} color="emerald" />
       </div>
 
       {/* Filtres */}
-      <Card>
+      <Card padding>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
             <Input
-              placeholder="Rechercher un élève..."
+              placeholder={t('common.search_student')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
@@ -131,20 +152,22 @@ export default function SoinsPage() {
             <select
               value={filterUrgence}
               onChange={(e) => setFilterUrgence(e.target.value)}
-              className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+              aria-label={t('pages.infirmier.soins.filtrer_par_type_d_urgence')}
+              className="h-10 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40   "
             >
-              <option value="">Tous les types</option>
-              <option value="urgence">Urgence</option>
-              <option value="consultation">Consultation</option>
+              <option value="">{t('common.all_types')}</option>
+              <option value="urgence">{t('pages.infirmier.soins.urgence')}</option>
+              <option value="consultation">{t('pages.infirmier.soins.consultation')}</option>
             </select>
             <select
               value={filterStatut}
               onChange={(e) => setFilterStatut(e.target.value)}
-              className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+              aria-label={t('common.filter_by_status')}
+              className="h-10 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40   "
             >
-              <option value="">Tous les statuts</option>
-              <option value="traite">Traité</option>
-              <option value="en_cours">En cours</option>
+              <option value="">{t('common.all_statuses')}</option>
+              <option value="traite">{t('pages.infirmier.soins.traite')}</option>
+              <option value="en_cours">{t('common.status.in_progress')}</option>
             </select>
           </div>
         </div>
@@ -153,36 +176,36 @@ export default function SoinsPage() {
       {/* Liste */}
       <div className="space-y-3">
         {filtered.length === 0 && (
-          <Card>
-            <div className="text-center py-8 text-neutral-500">
+          <Card padding>
+            <div className="text-center py-8 text-[var(--text-secondary)]">
               <Heart className="mx-auto h-8 w-8 mb-2" />
-              <p className="text-sm">Aucun soin trouvé</p>
+              <p className="text-sm">{t('pages.infirmier.soins.aucun_soin_trouve')}</p>
             </div>
           </Card>
         )}
         {filtered.map((soin) => (
-          <Card key={soin.id} hover>
+          <Card padding key={soin.id} hover>
             <div className="flex items-start gap-4">
               <div className={cn('h-10 w-10 rounded-xl flex items-center justify-center shrink-0', getTypeColor(soin.urgence))}>
                 {getTypeIcon(soin.urgence)}
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-sm font-semibold text-neutral-900 dark:text-white">{soin.motif || 'Consultation'}</span>
+                  <span className="text-sm font-semibold text-[var(--text-primary)] ">{soin.motif || t('pages.infirmier.soins.consultation')}</span>
                   <Badge variant={soin.traitement ? 'primary' : 'warning'} size="sm">
-                    {soin.traitement ? 'Traité' : 'En cours'}
+                    {soin.traitement ? t('pages.infirmier.soins.traite') : t('common.status.in_progress')}
                   </Badge>
                   <Badge variant={soin.urgence ? 'danger' : 'outline'} size="sm">
                     {getTypeLabel(soin.urgence)}
                   </Badge>
                 </div>
                 {soin.diagnostic && (
-                  <p className="text-xs text-neutral-500 mt-1 italic">{soin.diagnostic}</p>
+                  <p className="text-xs text-[var(--text-secondary)] mt-1 italic">{soin.diagnostic}</p>
                 )}
-                <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-neutral-500">
+                <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-[var(--text-secondary)]">
                   <span className="flex items-center gap-1">
-                    <Avatar name={`${soin.eleve?.prenom || ''} ${soin.eleve?.nom || ''}`} size="xs" />
-                    {soin.eleve?.prenom} {soin.eleve?.nom} · {soin.eleve?.classe?.nom_classe || '—'}
+                    <Avatar name={`${soin.eleve?.user?.prenom || ''} ${soin.eleve?.user?.name || ''}`} size="xs" />
+                    {soin.eleve?.user?.prenom} {soin.eleve?.user?.name} · {soin.eleve?.classe?.nom_classe || '—'}
                   </span>
                   <span className="flex items-center gap-1">
                     <Clock className="h-3 w-3" />
@@ -190,7 +213,7 @@ export default function SoinsPage() {
                   </span>
                 </div>
               </div>
-              <Button variant="ghost" size="sm">Détails</Button>
+              {soin.traitement && <p className="max-w-xs text-xs text-[var(--text-secondary)]">{soin.traitement}</p>}
             </div>
           </Card>
         ))}

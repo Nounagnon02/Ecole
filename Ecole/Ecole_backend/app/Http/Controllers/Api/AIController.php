@@ -3,7 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\ApiResponse;
+use App\Models\Classes;
+use App\Models\Eleve;
+use App\Models\Notes;
+use App\Models\PaiementEleve;
+use App\Models\User;
 use App\Services\AIService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -34,9 +38,9 @@ class AIController extends Controller
 
         $systemPrompts = [
             'tuteur' => "Tu es un tuteur IA patient et pédagogue. Guide l'élève vers la compréhension.",
-            'assistant' => "Tu es un assistant pédagogique pour enseignants. Aide à préparer les cours et à analyser les résultats.",
-            'conseiller' => "Tu es un conseiller pédagogique pour parents. Donne des conseils éducatifs pratiques.",
-            'general' => "Tu es un assistant IA polyvalent pour le système de gestion scolaire École.",
+            'assistant' => 'Tu es un assistant pédagogique pour enseignants. Aide à préparer les cours et à analyser les résultats.',
+            'conseiller' => 'Tu es un conseiller pédagogique pour parents. Donne des conseils éducatifs pratiques.',
+            'general' => 'Tu es un assistant IA polyvalent pour le système de gestion scolaire École.',
         ];
 
         $systemPrompt = $systemPrompts[$validated['mode']] ?? $systemPrompts['general'];
@@ -45,7 +49,7 @@ class AIController extends Controller
             ['role' => 'user', 'content' => $validated['message']],
         ];
 
-        $result = $this->ai->chat($systemPrompt, $messages);
+        $result = $this->safeAiCall(fn () => $this->ai->chat($systemPrompt, $messages));
 
         return response()->json([
             'success' => $result['success'],
@@ -65,12 +69,12 @@ class AIController extends Controller
 
         // Récupérer les données statistiques
         $stats = $this->getDashboardStats($request->periode_id);
-        $result = $this->ai->analysePredictive($stats);
+        $result = $this->safeAiCall(fn () => $this->ai->analysePredictive($stats));
 
         return response()->json([
             'success' => $result['success'],
             'data' => $result['success'] ? json_decode($result['content'], true) : null,
-            'fallback' => !$result['success'],
+            'fallback' => ! $result['success'],
         ]);
     }
 
@@ -87,7 +91,7 @@ class AIController extends Controller
             'niveau' => 'nullable|string|max:50',
         ]);
 
-        $result = $this->ai->generateLessonPlan(
+        $result = $this->safeAiCall(fn () => $this->ai->generateLessonPlan(
             $validated['matiere'],
             $validated['classe'],
             $validated['sujet'],
@@ -95,7 +99,7 @@ class AIController extends Controller
                 'duration' => $validated['duree'] ?? '1 heure',
                 'level' => $validated['niveau'] ?? 'intermédiaire',
             ]
-        );
+        ));
 
         return response()->json([
             'success' => $result['success'],
@@ -114,11 +118,11 @@ class AIController extends Controller
             'niveau' => 'nullable|string|max:50',
         ]);
 
-        $result = $this->ai->tutorStudent(
+        $result = $this->safeAiCall(fn () => $this->ai->tutorStudent(
             $validated['question'],
             $validated['matiere'],
             $validated['niveau'] ?? null,
-        );
+        ));
 
         return response()->json([
             'success' => $result['success'],
@@ -137,10 +141,10 @@ class AIController extends Controller
             'classe' => 'nullable|string|max:255',
         ]);
 
-        $result = $this->ai->parentChat($validated['question'], [
+        $result = $this->safeAiCall(fn () => $this->ai->parentChat($validated['question'], [
             'enfant_nom' => $validated['enfant_nom'] ?? null,
             'classe' => $validated['classe'] ?? null,
-        ]);
+        ]));
 
         return response()->json([
             'success' => $result['success'],
@@ -159,18 +163,24 @@ class AIController extends Controller
         ]);
 
         // Récupérer les notes
-        $notes = \App\Models\Notes::whereHas('eleve', fn($q) => $q->where('class_id', $validated['classe_id']))
-            ->when($validated['periode_id'], fn($q, $id) => $q->where('periode_id', $id))
-            ->with(['eleve', 'matiere'])
+        $notes = Notes::whereHas('eleve', fn ($q) => $q->where('classe_id', $validated['classe_id']))
+            ->when($validated['periode_id'], fn ($q, $id) => $q->where('periode', $id))
+            ->with(['eleve.user', 'matiere'])
             ->get()
             ->groupBy('eleve_id')
-            ->map(fn($eleveNotes) => [
-                'nom' => $eleveNotes->first()->eleve->nom . ' ' . $eleveNotes->first()->eleve->prenom,
-                'moyenne' => round($eleveNotes->avg('valeur'), 2),
-                'matieres' => $eleveNotes->groupBy('matiere.nom')
-                    ->map(fn($n) => round($n->avg('valeur'), 2))
-                    ->toArray(),
-            ]);
+            ->map(function ($eleveNotes) {
+                $premiereNote = $eleveNotes->first();
+                $user = $premiereNote->eleve?->user;
+                $nomComplet = trim(($user?->name ?? '').' '.($user?->prenom ?? ''));
+
+                return [
+                    'nom' => $nomComplet !== '' ? $nomComplet : 'Élève #'.$premiereNote->eleve_id,
+                    'moyenne' => round($eleveNotes->avg('note'), 2),
+                    'matieres' => $eleveNotes->groupBy('matiere.nom')
+                        ->map(fn ($n) => round($n->avg('note'), 2))
+                        ->toArray(),
+                ];
+            });
 
         $stats = [
             'total_eleves' => $notes->count(),
@@ -185,7 +195,7 @@ class AIController extends Controller
             ],
         ];
 
-        $result = $this->ai->analyseAcademicResults($stats);
+        $result = $this->safeAiCall(fn () => $this->ai->analyseAcademicResults($stats));
 
         return response()->json([
             'success' => true,
@@ -200,15 +210,20 @@ class AIController extends Controller
      */
     protected function getDashboardStats(?int $periodeId): array
     {
-        $elevesCount = \App\Models\Eleve::count();
-        $enseignantsCount = \App\Models\User::where('role', 'like', '%enseignant%')->count();
-        $classesCount = \App\Models\Classes::count();
+        $elevesCount = Eleve::count();
+        $enseignantsCount = User::query()
+            ->where('ecole_id', Eleve::currentEcoleId())
+            ->where('role', 'like', '%enseignant%')
+            ->count();
+        $classesCount = Classes::count();
 
-        $notesQuery = \App\Models\Notes::query();
-        if ($periodeId) $notesQuery->where('periode', $periodeId);
+        $notesQuery = Notes::query();
+        if ($periodeId) {
+            $notesQuery->where('periode', $periodeId);
+        }
         $moyenneGenerale = round($notesQuery->avg('note') ?? 0, 2);
 
-        $paiementsTotal = \App\Models\PaiementEleve::sum('montant');
+        $paiementsTotal = PaiementEleve::sum('montant');
 
         return [
             'periode' => $periodeId,
@@ -225,5 +240,21 @@ class AIController extends Controller
                 'total_collecte' => $paiementsTotal,
             ],
         ];
+    }
+
+    private function safeAiCall(callable $call): array
+    {
+        try {
+            return $call();
+        } catch (\Throwable $e) {
+            Log::error('Appel IA en échec', ['erreur' => $e->getMessage()]);
+
+            return [
+                'success' => false,
+                'content' => 'Service IA temporairement indisponible.',
+                'usage' => [],
+                'model' => 'fallback',
+            ];
+        }
     }
 }

@@ -15,8 +15,8 @@ class Examen extends Model
     ];
 
     protected $casts = [
-        'date_debut' => 'date',
-        'date_fin' => 'date',
+        'date_debut' => \App\Casts\JourCalendaire::class,
+        'date_fin' => \App\Casts\JourCalendaire::class,
         'classes' => 'array',
         'matieres' => 'array'
     ];

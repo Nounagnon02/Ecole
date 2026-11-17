@@ -90,12 +90,16 @@ class StaffDashboardContractTest extends TestCase
         $classe = $this->classe($school);
         $eleve  = $this->eleve($school, $classe);
 
+        // Montants explicites : depuis R-41 (16/11/2026) le taux de
+        // recouvrement est la part des MONTANTS dus déjà payés (comme la page
+        // Factures), plus la part des lignes soldées.
         PaiementEleve::factory()->count(3)->create([
             'eleve_id'      => $eleve->id,
             'ecole_id'      => $school->id,
             'date_paiement' => now(),
             'type_paiement' => 'Scolarité',
             'statut_global' => PaiementEleve::PAID,
+            'montant' => 10000, 'montant_total' => 10000, 'montant_paye' => 10000, 'montant_restant' => 0,
         ]);
         PaiementEleve::factory()->create([
             'eleve_id'      => $eleve->id,
@@ -103,6 +107,7 @@ class StaffDashboardContractTest extends TestCase
             'date_paiement' => now(),
             'type_paiement' => 'Scolarité',
             'statut_global' => PaiementEleve::PENDING,
+            'montant' => 10000, 'montant_total' => 10000, 'montant_paye' => 0, 'montant_restant' => 10000,
         ]);
         Depense::create([
             'ecole_id'    => $school->id,
@@ -130,11 +135,40 @@ class StaffDashboardContractTest extends TestCase
             ],
         ]);
 
+        $this->assertSame('75%', $response->json('data.stats.2.value'));
+
         $factures = $response->json('data.factures');
         $this->assertCount(4, $factures);
         $statuts = collect($factures)->pluck('statut');
         $this->assertContains('Payée', $statuts);
         $this->assertContains('En attente', $statuts);
+    }
+
+    /** @test */
+    public function comptable_recovery_rate_is_a_dash_when_nothing_is_due()
+    {
+        $school = $this->school();
+        $user   = $this->staff($school, 'comptable');
+        $eleve  = $this->eleve($school, $this->classe($school));
+
+        // Rien n'est dû : aucun taux à mesurer.
+        $this->assertSame('—', $this->actingAs($user, 'sanctum')
+            ->getJson('/api/dashboard/comptable')->assertStatus(200)->json('data.stats.2.value'));
+
+        // Depuis R-41, le taux porte sur toutes les échéances, plus sur le
+        // seul mois : une échéance soldée l'an dernier compte.
+        PaiementEleve::factory()->create([
+            'eleve_id'      => $eleve->id,
+            'ecole_id'      => $school->id,
+            'date_paiement' => now()->subYear(),
+            'type_paiement' => 'Scolarité',
+            'statut_global' => PaiementEleve::PAID,
+            'montant' => 10000, 'montant_total' => 10000, 'montant_paye' => 10000, 'montant_restant' => 0,
+        ]);
+        \Illuminate\Support\Facades\Cache::flush();
+
+        $this->assertSame('100%', $this->actingAs($user, 'sanctum')
+            ->getJson('/api/dashboard/comptable')->assertStatus(200)->json('data.stats.2.value'));
     }
 
     /* ─── Surveillant ───────────────────────────────────────────────── */

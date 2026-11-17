@@ -4,41 +4,29 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Users, GraduationCap, DollarSign,   Activity, School, MessageSquare,
-  Calendar, BarChart3, Download,
-  Search, RefreshCw
-} from 'lucide-react';
-import {
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart as RePieChart, Pie, Cell, Legend,
-  Area, AreaChart
-} from 'recharts';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
-import { cn } from '@/shared/lib/utils';
+import { motion } from 'framer-motion';
+import { Users, GraduationCap, Activity, School, Search, Wallet, UserX, ShieldAlert } from 'lucide-react';
 import { useDashboardStats } from '@/app/dashboards/hooks/useDashboardData';
+import DashboardShell from '@/app/dashboards/DashboardShell';
+import ADecider from './ADecider';
 import StatsCard from '@/shared/components/ui/StatsCard';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
-import Button from '@/shared/components/ui/Button';
 import Table from '@/shared/components/ui/Table';
 import Input from '@/shared/components/ui/Input';
 import { Skeleton } from '@/shared/components/ui/Skeleton';
+import { useTranslation } from '@/shared/i18n';
+import { formatCurrency } from '@/shared/lib/utils';
 
-const COLORS = ['var(--accent)', 'var(--green)', 'var(--amber)', 'var(--red)', 'var(--blue)', 'var(--primary)', 'var(--text-secondary)'];
-
+// Seuls les onglets qui s'affichent ici : ceux qui menaient vers une
+// autre page doublaient le menu (audit, recommandation B4).
 const TABS = [
   { id: 'apercu', label: 'Aperçu', icon: Activity },
-  { id: 'eleves', label: 'Élèves', icon: Users },
-  { id: 'performances', label: 'Performances', icon: BarChart3 },
-  { id: 'finances', label: 'Finances', icon: DollarSign },
-  { id: 'messages', label: 'Messages', icon: MessageSquare },
-  { id: 'calendrier', label: 'Calendrier', icon: Calendar },
 ];
 
 function StatCardsGrid({ stats, loading }) {
+  const { t } = useTranslation();
+
   if (loading) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
@@ -50,9 +38,9 @@ function StatCardsGrid({ stats, loading }) {
   }
 
   const cards = [
-    { title: 'Total Élèves', value: String(stats?.total_eleves ?? 0), icon: Users, color: 'primary' },
-    { title: 'Enseignants', value: String(stats?.total_enseignants ?? 0), icon: GraduationCap, color: 'emerald' },
-    { title: 'Classes', value: String(stats?.total_classes ?? 0), icon: School, color: 'amber' },
+    { title: t('dashboards.directeur.stats.total_eleves'), value: String(stats?.total_eleves ?? 0), icon: Users, color: 'primary' },
+    { title: t('dashboards.directeur.stats.enseignants'), value: String(stats?.total_enseignants ?? 0), icon: GraduationCap, color: 'emerald' },
+    { title: t('dashboards.directeur.stats.classes'), value: String(stats?.total_classes ?? 0), icon: School, color: 'amber' },
   ];
 
   return (
@@ -71,86 +59,32 @@ function StatCardsGrid({ stats, loading }) {
   );
 }
 
-function PerformanceChart({ data, loading }) {
-  const chartData = data?.evolution_effectifs ?? [];
-
+/**
+ * Argent à recouvrer et vie scolaire du jour : ce que l'API calcule déjà et
+ * que l'écran ne montrait pas (revue de pertinence, 15/11/2026). Une valeur
+ * absente s'affiche « — », jamais 0. Les « revenus du mois » de l'API ne
+ * comptent que les frais soldés (versements partiels exclus) : ils ne sont
+ * pas présentés comme un encaissement.
+ */
+function SuiviGrid({ data, loading }) {
+  const { t } = useTranslation();
+  if (loading) return null;
+  const nombre = (v) => (v === null || v === undefined ? '—' : String(v));
+  const impayes = data?.finances?.impayes;
+  const cards = [
+    { title: t('dashboards.directeur.stats.impayes'), value: impayes === null || impayes === undefined ? '—' : formatCurrency(impayes), icon: Wallet, color: 'amber' },
+    { title: t('dashboards.directeur.stats.absents_aujourdhui'), value: nombre(data?.assiduite?.absents_aujourdhui), icon: UserX, color: 'primary' },
+    { title: t('dashboards.directeur.stats.incidents_ouverts'), value: nombre(data?.alertes?.incidents_ouverts), icon: ShieldAlert, color: 'red' },
+  ];
   return (
-    <Card className="col-span-2">
-      <Card.Header>
-        <div className="flex items-center justify-between">
-          <div>
-            <Card.Title>Évolution des Effectifs</Card.Title>
-            <Card.Description>Inscriptions par mois</Card.Description>
-          </div>
-          <Button variant="ghost" size="sm">
-            <Download className="h-4 w-4 mr-1" />Exporter
-          </Button>
-        </div>
-      </Card.Header>
-      <Card.Body>
-        <div className="h-[300px]">
-          {loading ? <Skeleton className="h-full w-full rounded-xl" /> : (
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData}>
-                <defs>
-                  <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--accent)" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="var(--accent)" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                <XAxis dataKey="name" tick={{ fontSize: 12 }} stroke="var(--text-tertiary)" />
-                <YAxis tick={{ fontSize: 12 }} stroke="var(--text-tertiary)" />
-                <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid var(--border)' }} />
-                <Area type="monotone" dataKey="students" stroke="var(--accent)" fill="url(#grad)" strokeWidth={2} name="Élèves" />
-              </AreaChart>
-            </ResponsiveContainer>
-          )}
-        </div>
-      </Card.Body>
-    </Card>
-  );
-}
-
-function RepartitionPie({ data, loading }) {
-  const chartData = data?.repartition_notes ?? [];
-
-  return (
-    <Card>
-      <Card.Header>
-        <Card.Title>Répartition des Notes</Card.Title>
-        <Card.Description>Distribution par tranche</Card.Description>
-      </Card.Header>
-      <Card.Body>
-        <div className="h-[300px]">
-          {loading ? <Skeleton className="h-full w-full rounded-xl" /> : (
-            <ResponsiveContainer width="100%" height="100%">
-              <RePieChart>
-                <Pie
-                  data={chartData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={90}
-                  paddingAngle={3}
-                  dataKey="value"
-                >
-                  {chartData.map((_, i) => (
-                    <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid var(--border)' }} />
-                <Legend verticalAlign="bottom" height={36} />
-              </RePieChart>
-            </ResponsiveContainer>
-          )}
-        </div>
-      </Card.Body>
-    </Card>
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {cards.map((stat) => <StatsCard key={stat.title} {...stat} className="h-full" />)}
+    </div>
   );
 }
 
 function ClassesTable({ classes, loading }) {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const filtered = (classes ?? []).filter((c) =>
     !search || c.nom_classe?.toLowerCase().includes(search.toLowerCase())
@@ -159,16 +93,18 @@ function ClassesTable({ classes, loading }) {
   return (
     <Card className="col-span-2">
       <Card.Header>
-        <div className="flex items-center justify-between">
-          <div>
-            <Card.Title>Classes et Effectifs</Card.Title>
-            <Card.Description>Vue d'ensemble des classes actives</Card.Description>
+        {/* Retour à la ligne sur téléphone : titre et recherche côte à côte
+            débordaient à 360 px. */}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="min-w-0">
+            <Card.Title>{t('dashboards.directeur.classes_et_effectifs')}</Card.Title>
+            <Card.Description>{t('dashboards.directeur.vue_d_ensemble_des_classes_actives')}</Card.Description>
           </div>
           <Input
-            placeholder="Rechercher..."
+            placeholder={t('common.search_ellipsis')}
             size="sm"
             icon={Search}
-            className="w-48"
+            className="w-full sm:w-48"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -177,9 +113,9 @@ function ClassesTable({ classes, loading }) {
       <Card.Body className="p-0">
         <Table>
           <Table.Header>
-            <Table.Head>Classe</Table.Head>
-            <Table.Head>Effectif</Table.Head>
-            <Table.Head>Catégorie</Table.Head>
+            <Table.Head>{t('common.class')}</Table.Head>
+            <Table.Head>{t('dashboards.directeur.effectif')}</Table.Head>
+            <Table.Head>{t('dashboards.directeur.categorie')}</Table.Head>
           </Table.Header>
           <Table.Body>
             {loading && Array.from({ length: 4 }).map((_, i) => (
@@ -192,7 +128,7 @@ function ClassesTable({ classes, loading }) {
             {!loading && filtered.map((cl) => (
               <Table.Row key={cl.id}>
                 <Table.Cell>
-                  <span className="font-medium text-neutral-900 dark:text-white">{cl.nom_classe}</span>
+                  <span className="font-medium text-[var(--text-primary)] ">{cl.nom_classe}</span>
                 </Table.Cell>
                 <Table.Cell>{cl.effectif ?? cl.eleves_count ?? '—'}</Table.Cell>
                 <Table.Cell>
@@ -202,7 +138,7 @@ function ClassesTable({ classes, loading }) {
             ))}
             {!loading && filtered.length === 0 && (
               <Table.Row>
-                <td colSpan={3} className="p-6 text-center text-sm text-neutral-500">Aucune classe</td>
+                <td colSpan={3} className="p-6 text-center text-sm text-[var(--text-secondary)]">{t('dashboards.directeur.aucune_classe')}</td>
               </Table.Row>
             )}
           </Table.Body>
@@ -219,10 +155,9 @@ function ApercuSection({ data, loading }) {
   return (
     <div className="space-y-6">
       <StatCardsGrid stats={stats} loading={loading} />
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <PerformanceChart data={stats} loading={loading} />
-        <RepartitionPie data={stats} loading={loading} />
-      </div>
+      {/* Ce qui demande une action, avant les graphiques (audit, D8). */}
+      <ADecider />
+      <SuiviGrid data={data} loading={loading} />
       <ClassesTable classes={classes} loading={loading} />
     </div>
   );
@@ -230,6 +165,7 @@ function ApercuSection({ data, loading }) {
 
 export default function DirecteurDashboard() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('apercu');
   const { data, loading, error, refetch } = useDashboardStats('directeur');
 
@@ -257,68 +193,16 @@ export default function DirecteurDashboard() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <motion.h1
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="font-fraunces text-2xl font-bold text-neutral-900 dark:text-white"
-          >
-            Tableau de Bord
-          </motion.h1>
-          <p className="text-neutral-500 dark:text-neutral-400 mt-1">
-            {format(new Date(), 'EEEE d MMMM yyyy', { locale: fr })}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          {error && (
-            <span className="text-xs text-red-500">Erreur de chargement</span>
-          )}
-          <Button variant="ghost" size="sm" onClick={refetch} disabled={loading}>
-            <RefreshCw className={cn('h-4 w-4 mr-1', loading && 'animate-spin')} />
-            Actualiser
-          </Button>
-          <Button variant="ghost" size="sm">
-            <Download className="h-4 w-4 mr-1" />Rapport
-          </Button>
-        </div>
-      </div>
-
-      <div className="border-b border-neutral-200 dark:border-neutral-800">
-        <nav className="flex gap-1 overflow-x-auto -mb-px">
-          {TABS.map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => handleTabClick(tab.id)}
-                className={cn(
-                  'flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-all whitespace-nowrap',
-                  activeTab === tab.id
-                    ? 'border-[var(--accent)] text-[var(--accent)]'
-                    : 'border-transparent text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200'
-                )}
-              >
-                <Icon className="h-4 w-4" />
-                {tab.label}
-              </button>
-            );
-          })}
-        </nav>
-      </div>
-
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
-          transition={{ duration: 0.2 }}
-        >
-          {renderSection()}
-        </motion.div>
-      </AnimatePresence>
-    </div>
+    <DashboardShell
+      title={t('dashboards.directeur.title')}
+      tabs={TABS.map((tab) => ({ ...tab, label: t(`dashboards.directeur.tabs.${tab.id}`) }))}
+      activeTab={activeTab}
+      onTabChange={handleTabClick}
+      loading={loading}
+      error={error}
+      onRefresh={refetch}
+    >
+      {renderSection()}
+    </DashboardShell>
   );
 }

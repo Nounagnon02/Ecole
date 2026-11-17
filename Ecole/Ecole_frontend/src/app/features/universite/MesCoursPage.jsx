@@ -5,47 +5,47 @@
  * Données dynamiques via API /api/universite/mes-cours
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import { useApiQuery } from '@/shared/lib/api-client';
+import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
-  BookOpen, Search, Filter, Clock, Users, Calendar, GraduationCap,
-  FileText, Download, Eye, Video, MapPin, Loader2, AlertCircle,
+  BookOpen, Search, Clock, Users, Calendar, GraduationCap,
+  FileText, Eye, MapPin, Loader2, AlertCircle,
 } from 'lucide-react';
-import { cn, formatDate } from '@/shared/lib/utils';
+import { cn } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
-import { useApi } from '@/hooks/useApi';
+import { useTranslation } from '@/shared/i18n';
 
 export default function MesCoursPage() {
-  const { loading, error, get } = useApi();
-  const [cours, setCours] = useState([]);
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
 
-  useEffect(() => {
-    (async () => {
-      try {
-        // GET /api/universite/mes-cours — un étudiant y reçoit les matières de
-        // sa filière, un enseignant celles qu'il assure. Le serveur résout le
-        // profil via `etudiants.user_id` / `uni_enseignants.user_id`.
-        const res = await get('/universite/mes-cours');
-        const items = Array.isArray(res?.data?.data) ? res.data.data
-          : Array.isArray(res?.data) ? res.data
-          : Array.isArray(res) ? res
-          : [];
-        setCours(items.map(c => ({
+  // GET /api/universite/mes-cours — un étudiant y reçoit les matières de
+  // sa filière, un enseignant celles qu'il assure. Le serveur résout le
+  // profil via `etudiants.user_id` / `uni_enseignants.user_id`.
+  // Le chargement passait par un `useState` doublé d'un `useEffect` de
+  // premier rendu, sans cache ni déduplication : deux composants montés
+  // ensemble lançaient deux requêtes, et un retour sur la page rechargeait
+  // tout (cf. audit P4.1). `unwrapList` traverse les trois formes
+  // d'enveloppe que renvoient les contrôleurs.
+  const requete = useApiQuery(['universite-mes-cours'], '/universite/mes-cours');
+
+  const cours = useMemo(
+    () => (unwrapList(requete.data) ?? []).map(c => ({
           ...c,
           progression: c.progression || c.avancement || 0,
           prochainCours: c.prochain_cours || c.prochainCours || null,
           statut: c.statut || 'en_cours',
-        })));
-      } catch (e) {
-        console.error('Erreur chargement mes cours:', e);
-      }
-    })();
-  }, [get]);
+        })),
+    [requete.data],
+  );
+  const loading = requete.isPending;
+  const error = requete.isError ? (requete.error?.message ?? t('common.load_error')) : null;
 
   const stats = useMemo(() => ({
     total: cours.length,
@@ -65,14 +65,14 @@ export default function MesCoursPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--text-tertiary)]" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
+      <div className="flex flex-col items-center justify-center h-64 text-[var(--text-secondary)]">
         <AlertCircle className="h-8 w-8 mb-2 text-red-400" />
         <p className="text-sm">{error}</p>
       </div>
@@ -83,23 +83,23 @@ export default function MesCoursPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Mes Cours</h1>
-          <p className="text-sm text-neutral-500">Cours qui vous sont assignés</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.universite.mes_cours.title')}</h1>
+          <p className="text-sm text-[var(--text-secondary)]">{t('pages.universite.mes_cours.subtitle')}</p>
         </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-4">
-        <StatsCard title="Total" value={String(stats.total)} icon={BookOpen} color="primary" />
-        <StatsCard title="En cours" value={String(stats.enCours)} icon={Clock} color="emerald" />
-        <StatsCard title="Terminés" value={String(stats.termines)} icon={GraduationCap} color="sky" />
-        <StatsCard title="Étudiants" value={String(stats.totalEtudiants)} icon={Users} color="amber" />
+        <StatsCard title={t('common.total')} value={String(stats.total)} icon={BookOpen} color="primary" />
+        <StatsCard title={t('common.status.in_progress')} value={String(stats.enCours)} icon={Clock} color="emerald" />
+        <StatsCard title={t('common.finished')} value={String(stats.termines)} icon={GraduationCap} color="sky" />
+        <StatsCard title={t('common.students')} value={String(stats.totalEtudiants)} icon={Users} color="amber" />
       </div>
 
-      <Card>
+      <Card padding>
         <div className="relative max-w-sm">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
           <Input
-            placeholder="Rechercher un cours..."
+            placeholder={t('common.search_course')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
@@ -109,31 +109,31 @@ export default function MesCoursPage() {
 
       <div className="space-y-3">
         {filtered.length === 0 && (
-          <Card>
-            <div className="text-center py-8 text-neutral-500">
+          <Card padding>
+            <div className="text-center py-8 text-[var(--text-secondary)]">
               <BookOpen className="mx-auto h-8 w-8 mb-2" />
-              <p className="text-sm">Aucun cours trouvé</p>
+              <p className="text-sm">{t('common.no_course_found')}</p>
             </div>
           </Card>
         )}
         {filtered.map((c) => (
-          <Card key={c.id} hover>
+          <Card padding key={c.id} hover>
             <div className="flex items-start gap-4">
               <div className={cn(
                 'h-12 w-12 rounded-xl flex items-center justify-center shrink-0',
-                c.statut === 'termine' || c.statut === 'terminé' ? 'bg-neutral-100 dark:bg-neutral-800' : 'bg-[var(--primary-subtle)] bg-[var(--primary-subtle)]'
+                c.statut === 'termine' || c.statut === 'terminé' ? 'bg-[var(--surface-subtle)] ' : 'bg-[var(--primary-subtle)] bg-[var(--primary-subtle)]'
               )}>
-                <BookOpen className={cn('h-6 w-6', c.statut === 'termine' || c.statut === 'terminé' ? 'text-neutral-400' : 'text-[var(--accent)]')} />
+                <BookOpen className={cn('h-6 w-6', c.statut === 'termine' || c.statut === 'terminé' ? 'text-[var(--text-tertiary)]' : 'text-[var(--accent)]')} />
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-sm font-semibold text-neutral-900 dark:text-white">{c.intitule}</span>
+                  <span className="text-sm font-semibold text-[var(--text-primary)] ">{c.intitule}</span>
                   <Badge variant="outline" size="sm">{c.code}</Badge>
                   <Badge variant={c.statut === 'termine' || c.statut === 'terminé' ? 'outline' : 'primary'} size="sm">
-                    {c.statut === 'termine' || c.statut === 'terminé' ? 'Terminé' : 'En cours'}
+                    {c.statut === 'termine' || c.statut === 'terminé' ? t('pages.universite.mes_cours.termine') : t('common.status.in_progress')}
                   </Badge>
                 </div>
-                <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-neutral-500">
+                <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-[var(--text-secondary)]">
                   <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {c.horaire}</span>
                   <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> {c.salle}</span>
                   <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {c.etudiants} étudiants</span>
@@ -145,14 +145,14 @@ export default function MesCoursPage() {
                 {/* Barre de progression */}
                 <div className="mt-3">
                   <div className="flex items-center justify-between text-xs mb-1">
-                    <span className="text-neutral-500">Progression</span>
-                    <span className="font-medium text-neutral-700 dark:text-neutral-300">{c.progression}%</span>
+                    <span className="text-[var(--text-secondary)]">{t('pages.universite.mes_cours.progression')}</span>
+                    <span className="font-medium text-[var(--text-primary)] ">{c.progression}%</span>
                   </div>
-                  <div className="h-2 bg-neutral-200 dark:bg-neutral-700 rounded-full overflow-hidden">
+                  <div className="h-2 bg-[var(--surface-subtle)]  rounded-full overflow-hidden">
                     <div
                       className={cn(
                         'h-full rounded-full transition-all',
-                        c.progression === 100 ? 'bg-emerald-500' : 'bg-[var(--accent-subtle)]0'
+                        c.progression === 100 ? 'bg-emerald-500' : 'bg-[var(--action)]'
                       )}
                       style={{ width: `${c.progression}%` }}
                     />
@@ -160,8 +160,8 @@ export default function MesCoursPage() {
                 </div>
               </div>
               <div className="flex gap-1">
-                <Button variant="outline" size="sm" icon={<Eye />}>Détails</Button>
-                <Button variant="ghost" size="sm" icon={<FileText />}>Notes</Button>
+                <Button variant="outline" size="sm" icon={<Eye />}>{t('common.details')}</Button>
+                <Button variant="ghost" size="sm" icon={<FileText />}>{t('pages.universite.mes_cours.notes')}</Button>
               </div>
             </div>
           </Card>

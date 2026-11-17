@@ -13,7 +13,7 @@ use Illuminate\Validation\Rule;
 class SeriesController extends Controller
 {
     public function index(){
-        return Series::all();
+        return Series::paginate(50);
     }
 
     public function Classe_avec_series()
@@ -86,12 +86,19 @@ class SeriesController extends Controller
         }
 
         $validatedData = $request->validate([
-            'nom'=>'string|required'
+            'nom' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('series', 'nom')
+                    ->where('ecole_id', auth()->user()?->ecole_id)
+                    ->ignore($id)
+            ]
         ]);
 
         $serie->update($validatedData);
 
-        return response()->json($serie, 200);
+        return response()->json($serie);
     }
 
     // Supprime une serie spécifique
@@ -103,9 +110,22 @@ class SeriesController extends Controller
             return response()->json(['message' => 'Serie non trouvée'], 404);
         }
 
-        $serie->delete();
+        $hasEleves = $serie->eleves()->exists();
+        $hasMatieres = $serie->matieres()->exists();
 
-        return response()->json(['message' => 'Serie supprimée'], 200);
+        if ($hasEleves || $hasMatieres) {
+            return response()->json([
+                'message' => 'Impossible de supprimer : la série a des élèves ou des matières associées'
+            ], 422);
+        }
+
+        try {
+            $serie->delete();
+            return response()->json(['message' => 'Serie supprimée']);
+        } catch (\Exception $e) {
+            $this->rethrowIfMeaningful($e);
+            return response()->json(['message' => 'Erreur lors de la suppression', 'error' => $this->clientErrorMessage($e)], 500);
+        }
     }
 
     // Récupère les eleves d'une série spécifique

@@ -21,58 +21,28 @@ const HREFS_ECRANS: Record<string, string> = {
   ResetPassword: '/reset-password',
 };
 
-/** Dashboards réellement présents dans `app/(app)/`. */
-export const DASHBOARDS = [
-  'admin',
-  'bibliothecaire',
-  'censeur',
-  'comptable',
-  'directeur',
-  'eleve',
-  'enseignant',
-  'infirmier',
-  'parent',
-  'secretaire',
-  'surveillant',
-  'universite',
-] as const;
+/**
+ * Espaces du mobile, chacun présent dans `app/(app)/`. Périmètre décidé le
+ * 14/11/2026 (parents et enseignants), élargi le 16/11/2026 à l'université :
+ * professeurs et étudiants. L'administration (école et université) passe par
+ * le desktop ou le web, les élèves du secondaire par le web. Les anciens
+ * écrans administratifs ont été retirés : un lien profond vers eux ne mène
+ * nulle part.
+ */
+export const DASHBOARDS = ['enseignant', 'parent', 'professeur', 'etudiant'] as const;
 
 export type Dashboard = (typeof DASHBOARDS)[number];
 
-/**
- * Rôles émis par l'API Laravel → dashboard mobile.
- *
- * Les rôles universitaires (doyen, recteur, professeur, etudiant) partagent
- * l'espace « universite » : c'est le seul écran mobile qui couvre ce domaine.
- * `super-admin` retombe sur l'espace admin.
- */
 const DASHBOARD_PAR_ROLE: Record<string, Dashboard> = {
-  admin: 'admin',
-  'super-admin': 'admin',
-  bibliothecaire: 'bibliothecaire',
-  censeur: 'censeur',
-  comptable: 'comptable',
-  directeur: 'directeur',
-  eleve: 'eleve',
-  enseignant: 'enseignant',
-  infirmier: 'infirmier',
   parent: 'parent',
-  secretaire: 'secretaire',
-  surveillant: 'surveillant',
-  doyen: 'universite',
-  etudiant: 'universite',
-  professeur: 'universite',
-  recteur: 'universite',
-  universite: 'universite',
+  enseignant: 'enseignant',
+  enseignement: 'enseignant',
+  enseignementM: 'enseignant',
+  enseignementP: 'enseignant',
+  professeur: 'professeur',
+  etudiant: 'etudiant',
 };
 
-/**
- * Chemin expo-router du dashboard d'un rôle, ou `null` si l'application
- * mobile n'expose aucun écran pour ce rôle (ex. « personnel »).
- *
- * Renvoyer `null` plutôt qu'un chemin deviné évite d'envoyer l'utilisateur
- * sur l'écran « Unmatched Route » du routeur après une connexion réussie.
- */
 export function hrefDashboard(role?: string | null): string | null {
   if (!role) return null;
   const dashboard = DASHBOARD_PAR_ROLE[role];

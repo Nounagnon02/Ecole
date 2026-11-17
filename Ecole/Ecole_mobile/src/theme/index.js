@@ -86,11 +86,8 @@ export function ThemeProvider({ children }) {
     durations,
   }), [isDark]);
 
-  // Afficher un écran vide pendant le chargement du thème
-  if (!ready) {
-    return <>{children}</>;
-  }
-
+  // Toujours le même arbre : basculer d'un fragment au Provider une fois le
+  // thème lu remontait tous les écrans et effaçait leur état (saisie, choix).
   return (
     <ThemeContext.Provider value={theme}>
       {children}

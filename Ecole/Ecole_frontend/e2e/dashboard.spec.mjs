@@ -21,9 +21,11 @@ test.describe('Dashboard', () => {
   });
 
   test('protected routes redirect to login', async ({ page }) => {
-    await page.goto('/directeur/dashboard');
-    const url = page.url();
-    expect(url.includes('connexion') || url.includes('login') || url.includes('403') || url.includes('401')).toBeTruthy();
+    // Sans session, le garde interroge d'abord l'API (`/auth/me`) puis
+    // redirige : lire l'adresse dès le chargement la trouvait encore sur
+    // la route protégée (CI, 16/11/2026). On attend la redirection.
+    await page.goto('/directeur/dashboard', { waitUntil: 'domcontentloaded' });
+    await expect(page).toHaveURL(/connexion|login|403|401/, { timeout: 15000 });
   });
 
   test('error pages have correct status codes', async ({ page }) => {

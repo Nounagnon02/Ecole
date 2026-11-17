@@ -49,7 +49,10 @@ class DevoirController extends Controller
         }
 
         $devoirs = Devoir::with(['classe', 'matiere', 'enseignant'])
-            ->where('classe_id', $eleve->class_id)
+            // `class_id` n'existe pas sur `Eleve` (la colonne est `classe_id`) :
+            // le filtre résolvait toujours `null`, donc un élève ne voyait
+            // jamais aucun devoir publié pour sa classe, quelle qu'elle soit.
+            ->where('classe_id', $eleve->classe_id)
             ->where('publie', true)
             ->orderBy('date_limite', 'asc')
             ->get()
@@ -87,6 +90,12 @@ class DevoirController extends Controller
             return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
         }
 
+        // Un enseignant ne donne de devoir qu'à une classe qu'il enseigne (R-30).
+        if (\App\Support\Enseignement::estEnseignant($request->user())
+            && ! \App\Support\Enseignement::enseigneLaClasse($request->user(), (int) $request->classe_id)) {
+            return response()->json(['success' => false, 'message' => 'Cette classe ne vous est pas affectée.'], 403);
+        }
+
         $devoir = Devoir::create([
             'enseignant_id' => $request->user()->id,
             'classe_id' => $request->classe_id,
@@ -102,9 +111,12 @@ class DevoirController extends Controller
         // Associer automatiquement à tous les élèves de la classe
         if ($devoir->publie) {
             // whereHas('eleve') filtre la table `eleves`, dont la clé de
-            // classe est `class_id`.
+            // classe est `classe_id` (et non `class_id` — cette même faute
+            // rendait `indexEleve()` systématiquement vide, cf. plus bas).
+            // Avec `class_id`, aucun élève n'était jamais rattaché : la
+            // publication d'un devoir n'inscrivait personne.
             $eleves = User::whereHas('eleve', function ($q) use ($devoir) {
-                $q->where('class_id', $devoir->classe_id);
+                $q->where('classe_id', $devoir->classe_id);
             })->pluck('id');
 
             $devoir->eleves()->syncWithoutDetaching($eleves);
@@ -126,6 +138,10 @@ class DevoirController extends Controller
 
         if (!$devoir->publie) {
             return response()->json(['success' => false, 'message' => 'Ce devoir n\'est pas publié'], 403);
+        }
+
+        if ($devoir->date_limite && now()->greaterThan($devoir->date_limite)) {
+            return response()->json(['success' => false, 'message' => 'La date limite de soumission est dépassée'], 403);
         }
 
         $validator = Validator::make($request->all(), [
@@ -210,6 +226,24 @@ class DevoirController extends Controller
         $devoir = Devoir::with(['classe', 'matiere', 'enseignant', 'eleves' => function ($q) {
             $q->select('users.id', 'users.name', 'users.prenom');
         }])->findOrFail($id);
+
+        // Le détail (et la liste nominative des élèves) n'est ouvert qu'à
+        // l'auteur, à la direction, aux élèves de la classe et à leurs parents.
+        $user = auth()->user();
+        $autorise = match (true) {
+            $user->role === 'eleve' => (int) $user->eleve?->classe_id === (int) $devoir->classe_id,
+            $user->role === 'parent' => (bool) $user->parent?->eleves()->where('eleves.classe_id', $devoir->classe_id)->exists(),
+            \App\Support\Enseignement::estEnseignant($user) => (int) $devoir->enseignant_id === (int) $user->id
+                || \App\Support\Enseignement::enseigneLaClasse($user, (int) $devoir->classe_id),
+            default => true,
+        };
+        if (! $autorise) {
+            return response()->json(['success' => false, 'message' => 'Accès refusé'], 403);
+        }
+        // Une famille ne voit pas la liste des autres élèves.
+        if (in_array($user->role, ['eleve', 'parent'], true)) {
+            $devoir->unsetRelation('eleves');
+        }
 
         return response()->json([
             'success' => true,

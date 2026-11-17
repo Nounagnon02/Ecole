@@ -1,231 +1,217 @@
 /**
- * UtilisateursPage — Gestion des utilisateurs (Admin)
+ * UtilisateursPage — les comptes, gérés par l'administrateur.
  *
- * Module admin : vue d'ensemble des comptes utilisateurs / tenants.
- * Données dynamiques via API /api/v1/admin/tenants
+ * La page listait des écoles (`/v1/admin/tenants`) sous le nom
+ * d'utilisateurs, n'était ouverte qu'au super-administrateur, et ses boutons
+ * « Ajouter », « Désactiver », « Supprimer » ne faisaient rien (BUG-023,
+ * audit du 14/11). Elle lit maintenant `/admin/utilisateurs` : les comptes
+ * de son école pour un administrateur d'école, toute la plateforme pour le
+ * super-administrateur. L'administrateur d'école crée un compte du
+ * personnel et désactive ou réactive un compte ; la désactivation ferme
+ * aussi les sessions ouvertes de la personne.
  */
 
-import { useState, useEffect, useMemo } from 'react';
-import { motion } from 'framer-motion';
-import {
-  Users, Plus, Search, Shield, UserCog, UserCheck,
-  Clock, CheckCircle, XCircle, Eye, Ban, Trash2, Loader2, AlertCircle
-} from 'lucide-react';
-import { formatDate } from '@/shared/lib/utils';
-import Card from '@/shared/components/ui/Card';
+import { useMemo, useState } from 'react';
+import { CheckCircle, Loader2, Plus, Search, Users, XCircle } from 'lucide-react';
+import { toast } from 'sonner';
+import apiClient, { useApiQuery } from '@/shared/lib/api-client';
+import { unwrapList } from '@/shared/lib/unwrap';
+import { ROLE_LABELS } from '@/shared/types/roles';
+import { useTranslation } from '@/shared/i18n';
+import useAuthStore from '@/shared/stores/auth-store';
 import Badge from '@/shared/components/ui/Badge';
-import Avatar from '@/shared/components/ui/Avatar';
 import Button from '@/shared/components/ui/Button';
+import Card from '@/shared/components/ui/Card';
 import Input from '@/shared/components/ui/Input';
+import Modal from '@/shared/components/ui/Modal';
 import StatsCard from '@/shared/components/ui/StatsCard';
-import { useApi } from '@/hooks/useApi';
+import { AjoutDialog } from '@/app/features/personnel/PersonnelPage';
 
-const ROLES_DISPLAY = [
-  'Directeur', 'Enseignant', 'Élève', 'Parent',
-  'Comptable', 'Surveillant', 'Censeur', 'Infirmier',
-  'Bibliothécaire', 'Secrétaire',
-];
+const nomComplet = (c) => [c.nom, c.prenom].filter(Boolean).join(' ') || `#${c.id}`;
 
-const ROLE_ICONS = {
-  Directeur: Shield,
-  Enseignant: UserCheck,
-  Élève: Users,
-  Parent: Users,
-  Comptable: UserCog,
-  Surveillant: UserCheck,
-  Censeur: UserCheck,
-  Infirmier: UserCheck,
-  Bibliothécaire: UserCheck,
-  Secrétaire: UserCog
-};
+function ConfirmationDesactivation({ compte, onClose, onConfirm, envoi }) {
+  const { t } = useTranslation();
+  const u = (cle, valeurs) => t(`pages.admin.utilisateurs.${cle}`, valeurs);
+  return (
+    <Modal open={!!compte} onClose={() => { if (!envoi) onClose(); }} title={u('confirmer_titre')} size="sm">
+      {compte && (
+        <div className="space-y-4 p-5">
+          <p className="text-sm text-[var(--text-secondary)]">{u('confirmer_texte', { nom: nomComplet(compte) })}</p>
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button variant="outline" onClick={onClose} disabled={envoi}>{t('common.cancel')}</Button>
+            <Button variant="danger" onClick={onConfirm} loading={envoi}>{u('desactiver')}</Button>
+          </div>
+        </div>
+      )}
+    </Modal>
+  );
+}
 
 export default function UtilisateursPage() {
-  const { loading, error, get } = useApi();
-  const [utilisateurs, setUtilisateurs] = useState([]);
-  const [search, setSearch] = useState('');
-  const [filterRole, setFilterRole] = useState('');
-  const [filterStatut, setFilterStatut] = useState('');
+  const { t } = useTranslation();
+  const u = (cle, valeurs) => t(`pages.admin.utilisateurs.${cle}`, valeurs);
+  const moi = useAuthStore((etat) => etat.user);
+  const [recherche, setRecherche] = useState('');
+  const [filtreRole, setFiltreRole] = useState('');
+  const [filtreStatut, setFiltreStatut] = useState('');
+  const [ajout, setAjout] = useState(false);
+  const [aDesactiver, setADesactiver] = useState(null);
+  const [enCours, setEnCours] = useState(null);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await get('/v1/admin/tenants');
-        const items = Array.isArray(res?.data?.data) ? res.data.data
-          : Array.isArray(res?.data) ? res.data
-          : Array.isArray(res) ? res
-          : [];
-        setUtilisateurs(items.map((t) => ({
-          id: t.id,
-          nom: t.name || t.nom || '—',
-          email: t.email || '—',
-          role: t.plan?.name || 'Directeur',
-          ecole: t.name || t.nom || '—',
-          statut: t.status === 'active' || t.is_active ? 'actif' : 'inactif',
-          derniereConnexion: t.last_login_at || t.created_at,
-          dateCreation: t.created_at
-        })));
-      } catch (e) {
-        console.error('Erreur chargement utilisateurs:', e);
-      }
-    })();
-  }, []);
+  const requete = useApiQuery(['admin-utilisateurs'], '/admin/utilisateurs', { config: { params: { per_page: 200 } } });
+  const comptes = useMemo(() => unwrapList(requete.data) ?? [], [requete.data]);
 
-  const stats = useMemo(() => ({
-    total: utilisateurs.length,
-    actifs: utilisateurs.filter((u) => u.statut === 'actif').length,
-    inactifs: utilisateurs.filter((u) => u.statut === 'inactif').length,
-    roles: new Set(utilisateurs.map((u) => u.role)).size
-  }), [utilisateurs]);
+  const roles = useMemo(() => [...new Set(comptes.map((c) => c.role))].sort(), [comptes]);
+  const visibles = useMemo(() => {
+    const q = recherche.trim().toLowerCase();
+    return comptes.filter((c) => {
+      if (filtreRole && c.role !== filtreRole) return false;
+      if (filtreStatut === 'actif' && !c.active) return false;
+      if (filtreStatut === 'inactif' && c.active) return false;
+      return !q || `${nomComplet(c)} ${c.email ?? ''} ${c.telephone ?? ''}`.toLowerCase().includes(q);
+    });
+  }, [comptes, recherche, filtreRole, filtreStatut]);
 
-  const filtered = useMemo(() =>
-    utilisateurs.filter((u) => {
-      if (search && !u.nom.toLowerCase().includes(search.toLowerCase()) && !u.email.toLowerCase().includes(search.toLowerCase())) return false;
-      if (filterRole && u.role !== filterRole) return false;
-      if (filterStatut && u.statut !== filterStatut) return false;
-      return true;
-    }),
-    [search, filterRole, filterStatut, utilisateurs]
-  );
+  const actifs = comptes.filter((c) => c.active).length;
+  // Un compte se crée dans une école : le super-administrateur sans école
+  // passe par la création d'école.
+  const peutCreer = !!moi?.ecole_id;
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
-        <AlertCircle className="h-8 w-8 mb-2 text-red-400" />
-        <p className="text-sm">{error}</p>
-      </div>
-    );
-  }
+  const basculer = async (compte) => {
+    setEnCours(compte.id);
+    try {
+      await apiClient.post(`/admin/utilisateurs/${compte.id}/toggle-status`);
+      toast.success(u(compte.active ? 'desactive_ok' : 'reactive_ok', { nom: nomComplet(compte) }));
+      setADesactiver(null);
+      requete.refetch();
+    } catch (err) {
+      toast.error(err?.message ?? u('echec_action'));
+    } finally {
+      setEnCours(null);
+    }
+  };
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+    <div className="space-y-6">
+      <AjoutDialog open={ajout} onClose={() => setAjout(false)} onDone={() => requete.refetch()} endpoint="/admin/utilisateurs" />
+      <ConfirmationDesactivation
+        compte={aDesactiver}
+        onClose={() => setADesactiver(null)}
+        onConfirm={() => basculer(aDesactiver)}
+        envoi={enCours !== null}
+      />
+
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Utilisateurs</h1>
-          <p className="text-sm text-neutral-500">Gestion des comptes et accès</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)]">{u('title')}</h1>
+          <p className="text-sm text-[var(--text-secondary)]">{u('subtitle')}</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" icon={<Ban />}>Désactiver</Button>
-          <Button size="sm" icon={<Plus />}>Ajouter</Button>
-        </div>
+        {peutCreer && <Button icon={<Plus size={18} />} onClick={() => setAjout(true)}>{u('ajouter')}</Button>}
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-4">
-        <StatsCard title="Total" value={String(stats.total)} icon={Users} color="primary" />
-        <StatsCard title="Actifs" value={String(stats.actifs)} icon={CheckCircle} color="emerald" />
-        <StatsCard title="Inactifs" value={String(stats.inactifs)} icon={XCircle} color="red" />
-        <StatsCard title="Établissements" value={String(stats.roles)} icon={Shield} color="amber" />
+      <div className="grid gap-4 sm:grid-cols-3">
+        <StatsCard title={t('common.total')} value={String(comptes.length)} icon={Users} color="primary" />
+        <StatsCard title={u('actifs')} value={String(actifs)} icon={CheckCircle} color="emerald" />
+        <StatsCard title={u('inactifs')} value={String(comptes.length - actifs)} icon={XCircle} color="red" />
       </div>
 
-      <Card>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+      <Card padding>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="relative flex-1 sm:max-w-sm">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" aria-hidden="true" />
             <Input
-              placeholder="Rechercher un utilisateur..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
+              aria-label={u('rechercher_un_utilisateur')}
+              placeholder={u('rechercher_un_utilisateur')}
+              value={recherche}
+              onChange={(e) => setRecherche(e.target.value)}
             />
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row">
             <select
-              value={filterRole}
-              onChange={(e) => setFilterRole(e.target.value)}
-              className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+              value={filtreRole}
+              onChange={(e) => setFiltreRole(e.target.value)}
+              aria-label={u('filtrer_par_role')}
+              className="h-11 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--accent)]/40"
             >
-              <option value="">Tous les rôles</option>
-              {ROLES_DISPLAY.map((r) => (
-                <option key={r} value={r}>{r}</option>
-              ))}
+              <option value="">{u('tous_les_roles')}</option>
+              {roles.map((r) => <option key={r} value={r}>{ROLE_LABELS[r] ?? r}</option>)}
             </select>
             <select
-              value={filterStatut}
-              onChange={(e) => setFilterStatut(e.target.value)}
-              className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+              value={filtreStatut}
+              onChange={(e) => setFiltreStatut(e.target.value)}
+              aria-label={t('common.filter_by_status')}
+              className="h-11 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--accent)]/40"
             >
-              <option value="">Tous les statuts</option>
-              <option value="actif">Actif</option>
-              <option value="inactif">Inactif</option>
+              <option value="">{t('common.all_statuses')}</option>
+              <option value="actif">{u('actif')}</option>
+              <option value="inactif">{u('inactif')}</option>
             </select>
           </div>
         </div>
       </Card>
 
-      <Card>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-neutral-200 dark:border-neutral-700 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                <th className="pb-3 pr-4">Utilisateur</th>
-                <th className="pb-3 pr-4">Rôle</th>
-                <th className="pb-3 pr-4">Établissement</th>
-                <th className="pb-3 pr-4">Statut</th>
-                <th className="pb-3 pr-4">Dernière connexion</th>
-                <th className="pb-3 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="py-8 text-center text-sm text-neutral-500">
-                    Aucun utilisateur trouvé
-                  </td>
+      <Card padding>
+        {requete.isPending ? (
+          <div className="flex h-32 items-center justify-center" role="status" aria-label={t('common.loading')}>
+            <Loader2 className="h-6 w-6 animate-spin text-[var(--text-tertiary)]" />
+          </div>
+        ) : requete.isError ? (
+          <div className="py-8 text-center">
+            <p className="text-sm text-[var(--text-secondary)]">{requete.error?.message ?? t('common.load_error')}</p>
+            <Button className="mt-3" variant="outline" onClick={() => requete.refetch()}>{t('common.retry')}</Button>
+          </div>
+        ) : visibles.length === 0 ? (
+          <p className="py-8 text-center text-sm text-[var(--text-secondary)]">{u('aucun_utilisateur_trouve')}</p>
+        ) : (
+          <div className="overflow-x-auto" role="region" aria-label={t('common.tableau_defilant')} tabIndex={0}>
+            <table className="w-full text-sm">
+              <caption className="sr-only">{u('title')}</caption>
+              <thead>
+                <tr className="border-b border-[var(--border)] text-left text-[var(--text-secondary)]">
+                  <th scope="col" className="px-3 py-2 font-medium">{u('utilisateur')}</th>
+                  <th scope="col" className="px-3 py-2 font-medium">{u('role')}</th>
+                  <th scope="col" className="px-3 py-2 font-medium">{t('common.school')}</th>
+                  <th scope="col" className="px-3 py-2 font-medium">{t('common.status_label')}</th>
+                  <th scope="col" className="px-3 py-2 text-right font-medium">{t('common.actions')}</th>
                 </tr>
-              )}
-              {filtered.map((u) => {
-                const RoleIcon = ROLE_ICONS[u.role] || Users;
-                return (
-                  <tr key={u.id} className="border-b border-neutral-100 dark:border-neutral-800">
-                    <td className="py-3 pr-4">
-                      <div className="flex items-center gap-3">
-                        <Avatar name={u.nom} size="sm" />
-                        <div>
-                          <span className="text-sm font-medium text-neutral-900 dark:text-white block">{u.nom}</span>
-                          <span className="text-xs text-neutral-500">{u.email}</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-3 pr-4">
-                      <Badge variant="outline" size="sm" className="capitalize flex items-center gap-1 w-fit">
-                        <RoleIcon className="h-3 w-3" /> {u.role}
-                      </Badge>
-                    </td>
-                    <td className="py-3 pr-4 text-sm text-neutral-600 dark:text-neutral-400">{u.ecole}</td>
-                    <td className="py-3 pr-4">
-                      <Badge variant={u.statut === 'actif' ? 'primary' : 'outline'} size="sm">
-                        {u.statut === 'actif' ? 'Actif' : 'Inactif'}
-                      </Badge>
-                    </td>
-                    <td className="py-3 pr-4 text-sm text-neutral-600 dark:text-neutral-400">
-                      {u.derniereConnexion ? (
-                        <span className="flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          {formatDate(u.derniereConnexion)}
-                        </span>
-                      ) : '—'}
-                    </td>
-                    <td className="py-3 text-right">
-                      <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="sm" icon={<Eye />} title="Voir" />
-                        <Button variant="ghost" size="sm" icon={<Ban />} title="Désactiver" />
-                        <Button variant="ghost" size="sm" icon={<Trash2 />} title="Supprimer" className="text-red-500 hover:text-red-600" />
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {visibles.map((c) => {
+                  const nom = nomComplet(c);
+                  const soiMeme = c.id === moi?.id;
+                  return (
+                    <tr key={c.id} className="border-b border-[var(--border-light)]">
+                      <td className="px-3 py-2">
+                        <span className="block font-medium text-[var(--text-primary)]">{nom}</span>
+                        <span className="text-xs text-[var(--text-secondary)]">{c.telephone || c.email || ''}</span>
+                      </td>
+                      <td className="px-3 py-2 text-[var(--text-secondary)]">{ROLE_LABELS[c.role] ?? c.role}</td>
+                      <td className="px-3 py-2 text-[var(--text-secondary)]">{c.ecole?.nom ?? ''}</td>
+                      <td className="px-3 py-2">
+                        <Badge variant={c.active ? 'success' : 'default'} size="sm">{c.active ? u('actif') : u('inactif')}</Badge>
+                      </td>
+                      <td className="px-3 py-2 text-right">
+                        {!soiMeme && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            aria-label={`${u(c.active ? 'desactiver' : 'reactiver')} ${nom}`}
+                            loading={enCours === c.id}
+                            onClick={() => (c.active ? setADesactiver(c) : basculer(c))}
+                          >
+                            {u(c.active ? 'desactiver' : 'reactiver')}
+                          </Button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </Card>
-    </motion.div>
+    </div>
   );
 }

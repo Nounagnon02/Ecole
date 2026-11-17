@@ -30,6 +30,10 @@ yarn-error.*
 *.pem
 
 # local env files
+# Un `.env` réel était versionné : son contenu était anodin (URL localhost),
+# mais le motif ne l'est pas — tout secret ajouté au fichier serait committé
+# automatiquement. Seul `.env.example` reste suivi.
+.env
 .env*.local
 
 # typescript

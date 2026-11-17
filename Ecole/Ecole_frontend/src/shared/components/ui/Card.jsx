@@ -18,14 +18,18 @@ const variantStyles = {
   flat: 'bg-[var(--surface-subtle)]',
 };
 
-function Card({ children, className, variant = 'default', hover = false, ...props }) {
+function Card({ children, className, variant = 'default', hover = false, padding, ...props }) {
   return (
     <div
       className={cn(
-        'rounded-xl transition-all duration-200',
+        'rounded-lg transition-colors duration-150',
         variantStyles[variant] || variantStyles.default,
         hover &&
           'cursor-pointer hover:shadow-[var(--shadow-4)]',
+        // Marge pour une carte sans Card.Header/Card.Body (filtre, résumé,
+        // élément de liste). La prop était ignorée : le contenu touchait le
+        // bord. Pas de marge par défaut, Header et Body ont la leur.
+        padding === true && 'p-4 sm:p-5',
         className
       )}
       {...props}
@@ -35,17 +39,22 @@ function Card({ children, className, variant = 'default', hover = false, ...prop
   );
 }
 
-Card.Header = forwardRef(function CardHeader({ children, className, action, padding = true }, ref) {
+// `title` est le raccourci des huit `<Card.Header title="…" />` de la page
+// Paramètres : la prop était ignorée, donc aucun de ces titres ne s'affichait.
+Card.Header = forwardRef(function CardHeader({ children, title, className, action, padding = true }, ref) {
   return (
     <div
       ref={ref}
       className={cn(
-        'flex items-center justify-between gap-4',
+        'flex flex-wrap items-center justify-between gap-4',
         padding && 'px-5 pt-5 lg:px-6 lg:pt-6',
         className
       )}
     >
-      <div className="min-w-0 flex-1">{children}</div>
+      <div className="min-w-0 flex-1">
+        {title && <Card.Title>{title}</Card.Title>}
+        {children}
+      </div>
       {action && <div className="shrink-0">{action}</div>}
     </div>
   );
@@ -64,7 +73,7 @@ Card.Footer = forwardRef(function CardFooter({ children, className, padding = tr
     <div
       ref={ref}
       className={cn(
-        'flex items-center gap-3',
+        'flex flex-wrap items-center gap-3',
         padding && 'px-5 pb-5 pt-0 lg:px-6 lg:pb-6',
         className
       )}
@@ -78,7 +87,7 @@ Card.Title = forwardRef(function CardTitle({ children, className, as: Component 
   return (
     <Component
       ref={ref}
-      className={cn('font-fraunces text-lg font-semibold leading-tight text-[var(--text-primary)]', className)}
+      className={cn('font-heading text-lg font-semibold leading-tight text-[var(--text-primary)]', className)}
     >
       {children}
     </Component>

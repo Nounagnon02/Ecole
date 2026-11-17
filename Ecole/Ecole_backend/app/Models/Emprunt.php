@@ -17,9 +17,9 @@ class Emprunt extends Model
     protected $appends = ['penalite', 'jours_retard'];
 
     protected $casts = [
-        'date_emprunt' => 'date',
-        'date_retour_prevue' => 'date',
-        'date_retour_effective' => 'date'
+        'date_emprunt' => \App\Casts\JourCalendaire::class,
+        'date_retour_prevue' => \App\Casts\JourCalendaire::class,
+        'date_retour_effective' => \App\Casts\JourCalendaire::class
     ];
 
     public function livre()

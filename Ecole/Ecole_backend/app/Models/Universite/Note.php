@@ -20,6 +20,13 @@ class Note extends Model
         'ecole_id',
     ];
 
+    protected $casts = [
+        'note' => 'decimal:2',
+        'date_evaluation' => \App\Casts\JourCalendaire::class,
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
+
     public function etudiant()
     {
         return $this->belongsTo(Etudiant::class);

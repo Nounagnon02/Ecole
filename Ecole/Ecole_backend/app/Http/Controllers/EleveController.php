@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Rules\BeninPhoneNumber;
+use App\Support\Inscription;
 use App\Models\{CahierDeTexte, EmploiDuTemps, Eleve, User, Classes};
 use App\Services\BulletinService;
 use Illuminate\Http\Request;
@@ -54,6 +56,10 @@ class EleveController extends Controller
         // Paginé : la liste complète des élèves d'un établissement peut peser
         // plusieurs milliers de lignes avec leurs relations (cf. audit P3).
         $eleves = Eleve::with('user:id,name,prenom,email', 'classe:id,nom_classe', 'serie:id,nom')
+            // `q` : recherche globale (BUG-007), ignorée jusqu'ici.
+            ->tap(fn ($requete) => \App\Support\Recherche::appliquer($requete, request()->input('q'), fn ($ou, $motif) => $ou
+                ->where('numero_matricule', 'like', $motif)
+                ->orWhereHas('user', fn ($u) => $u->where('name', 'like', $motif)->orWhere('prenom', 'like', $motif))))
             ->orderBy('id')
             ->paginate((int) request()->input('per_page', 50));
 
@@ -65,38 +71,42 @@ class EleveController extends Controller
      */
     public function store(Request $request)
     {
+        $this->authorize('create', Eleve::class);
+
+        // L'agent d'inscription saisit qui est l'élève et où il va. Le
+        // matricule, l'identifiant et le mot de passe sont produits ici :
+        // les lui demander, c'était trois champs à inventer par dossier.
         $validated = $request->validate([
-            'name' => 'required|string',
-            'prenom' => 'required|string',
-            'identifiant' => 'required|string|unique:users,identifiant',
-            'password' => 'required|string|min:6',
-            'ecole_id' => 'required|exists:ecoles,id',
-            'numero_matricule' => 'required|string|unique:eleves,numero_matricule',
+            'name' => 'required|string|max:255',
+            'prenom' => 'required|string|max:255',
+            'identifiant' => 'nullable|string|max:255|unique:users,identifiant',
+            'password' => 'nullable|string|min:8',
+            'numero_matricule' => 'nullable|string|max:50|unique:eleves,numero_matricule',
             'classe_id' => 'required|school_exists:classes,id',
             'serie_id' => 'nullable|school_exists:series,id',
             'email' => 'nullable|email|unique:users,email',
+            'date_naissance' => 'nullable|date|before:today',
+            'lieu_naissance' => 'nullable|string|max:255',
+            'sexe' => 'nullable|in:M,F',
+            'parent' => 'nullable|array',
+            'parent.name' => 'required_with:parent|string|max:255',
+            'parent.prenom' => 'nullable|string|max:255',
+            'parent.telephone' => ['required_with:parent', 'string', new BeninPhoneNumber],
         ]);
 
         try {
             return DB::transaction(function () use ($validated) {
-                $user = User::create([
-                    'name' => $validated['name'],
-                    'prenom' => $validated['prenom'],
-                    'identifiant' => $validated['identifiant'],
-                    'password' => Hash::make($validated['password']),
-                    'role' => 'eleve',
-                    'ecole_id' => $validated['ecole_id'],
-                    'email' => $validated['email'],
-                ]);
+                $ecoleId = auth()->user()->ecole_id;
+                $inscription = Inscription::inscrireEleve($validated, (int) $ecoleId);
 
-                $eleve = Eleve::create([
-                    'user_id' => $user->id,
-                    'numero_matricule' => $validated['numero_matricule'],
-                    'classe_id' => $validated['classe_id'],
-                    'serie_id' => $validated['serie_id'],
-                ]);
+                \Cache::forget('dashboard_directeur_' . ($ecoleId ?? 'global'));
 
-                return response()->json($eleve->load('user'), 201);
+                // Les mots de passe provisoires ne sont lisibles qu'ici, une
+                // fois : ils ne sont stockés que hachés.
+                return response()->json(
+                    $inscription['eleve']->load('user', 'classe')->toArray() + ['acces' => $inscription['acces']],
+                    201
+                );
             });
         } catch (\Exception $e) {
             $this->rethrowIfMeaningful($e);
@@ -112,6 +122,61 @@ class EleveController extends Controller
         }
         $this->authorize('view', $eleve);
         return response()->json($eleve);
+    }
+
+    /**
+     * Fiche de l'élève : identité, parents, et un résumé de sa scolarité.
+     *
+     * La liste ne montrait qu'un nom et une classe ; pour joindre un parent ou
+     * savoir où en est un élève, il fallait ouvrir trois autres pages, dont
+     * certaines refusées au rôle. Les montants ne sont rendus qu'aux rôles qui
+     * tiennent ou règlent la scolarité.
+     */
+    public function fiche($id)
+    {
+        $eleve = Eleve::with(['user:id,name,prenom,email,identifiant', 'classe:id,nom_classe', 'parents.user:id,name,prenom,telephone'])->findOrFail($id);
+        $this->authorize('view', $eleve);
+
+        $role = auth()->user()->role;
+        $notes = \App\Models\Notes::where('eleve_id', $eleve->id)->where('note_sur', '>', 0)->get(['note', 'note_sur']);
+        $absences = \App\Models\Absence::where('eleve_id', $eleve->id)->get(['justifiee']);
+        $voitLesMontants = \App\Support\Roles::satisfies($role, ['directeur', 'comptable', 'secretaire']) || $role === 'parent';
+        $echeances = $voitLesMontants ? \App\Models\PaiementEleve::where('eleve_id', $eleve->id)->get(['montant_total', 'montant_paye', 'montant_restant']) : null;
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'eleve' => [
+                    'id' => $eleve->id,
+                    'name' => $eleve->user?->name,
+                    'prenom' => $eleve->user?->prenom,
+                    'identifiant' => $eleve->user?->identifiant,
+                    'numero_matricule' => $eleve->numero_matricule,
+                    'statut' => $eleve->statut,
+                    'sexe' => $eleve->sexe,
+                    'date_naissance' => $eleve->date_naissance ? \Illuminate\Support\Carbon::parse($eleve->date_naissance)->toDateString() : null,
+                    'classe' => $eleve->classe ? ['id' => $eleve->classe->id, 'nom' => $eleve->classe->nom_classe] : null,
+                ],
+                'parents' => $eleve->parents->map(fn ($parent) => [
+                    'nom' => trim(($parent->user?->name ?? '').' '.($parent->user?->prenom ?? '')),
+                    'telephone' => $parent->user?->telephone,
+                    'principal' => (bool) $parent->pivot->is_primary,
+                ])->sortByDesc('principal')->values(),
+                'scolarite' => [
+                    'notes' => $notes->count(),
+                    // Moyenne simple des notes ramenées sur 20 : un repère, pas
+                    // la moyenne pondérée du bulletin.
+                    'moyenne' => $notes->isEmpty() ? null : round($notes->avg(fn ($n) => (float) $n->note / (float) $n->note_sur * 20), 2),
+                    'absences' => $absences->count(),
+                    'absences_non_justifiees' => $absences->where('justifiee', false)->count(),
+                ],
+                'paiements' => $echeances === null ? null : [
+                    'total_du' => (float) $echeances->sum('montant_total'),
+                    'total_paye' => (float) $echeances->sum('montant_paye'),
+                    'reste' => (float) $echeances->sum('montant_restant'),
+                ],
+            ],
+        ]);
     }
 
     public function update(Request $request, $id)
@@ -135,6 +200,8 @@ class EleveController extends Controller
         // On n'écrit que les champs effectivement validés et présents.
         $user->update(array_intersect_key($validated, array_flip(['name', 'prenom', 'email'])));
         $eleve->update(array_intersect_key($validated, array_flip(['classe_id', 'serie_id', 'numero_matricule'])));
+
+        \Cache::forget('dashboard_directeur_' . (auth()->user()->ecole_id ?? 'global'));
 
         return response()->json($eleve->load('user'));
     }
@@ -182,6 +249,8 @@ class EleveController extends Controller
         // silence et la désactivation ne coupait rien.
         $this->setAccountAccess($eleve, false);
 
+        \Cache::forget('dashboard_directeur_' . (auth()->user()->ecole_id ?? 'global'));
+
         return response()->json([
             'success' => true,
             'message' => 'Élève retiré des effectifs. Son dossier reste consultable.',
@@ -198,6 +267,8 @@ class EleveController extends Controller
 
         $eleve->update(['statut' => Eleve::ACTIVE]);
         $this->setAccountAccess($eleve, true);
+
+        \Cache::forget('dashboard_directeur_' . (auth()->user()->ecole_id ?? 'global'));
 
         return response()->json([
             'success' => true,
@@ -279,7 +350,11 @@ class EleveController extends Controller
         }
 
         $emploi = EmploiDuTemps::with(['matiere:id,nom', 'enseignant.user:id,name,prenom'])
-            ->where('classe_id', $eleve->class_id)
+// `class_id` n'existe pas sur `Eleve` (la colonne est `classe_id`,
+            // comme partout ailleurs dans ce contrôleur) : le filtre résolvait
+            // toujours `null`, donc cette route ne renvoyait jamais l'emploi du
+            // temps réel de l'élève, quelle que soit sa classe.
+            ->where('classe_id', $eleve->classe_id)
             ->orderBy('jour')
             ->orderBy('heure_debut')
             ->get();

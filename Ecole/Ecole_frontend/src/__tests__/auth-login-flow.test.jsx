@@ -40,7 +40,7 @@ function renderLogin() {
 // `^Mot de passe` : sans l'ancre, le bouton « Afficher le mot de passe »
 // du composant Input matche aussi et la requête devient ambiguë.
 const passwordField = () => screen.getByLabelText(/^Mot de passe/);
-const emailField = () => screen.getByLabelText(/^Email ou identifiant/);
+const emailField = () => screen.getByLabelText(/^Téléphone, e-mail ou identifiant/);
 
 function fillCredentials({ email = 'directeur@ecole.bj', password = 'secret123' } = {}) {
   fireEvent.change(emailField(), { target: { value: email } });
@@ -147,7 +147,7 @@ describe('connexion réussie', () => {
     [ROLES.RECTEUR, '/universite/dashboard'],
     [ROLES.DOYEN, '/universite/dashboard'],
     [ROLES.PROFESSEUR, '/universite/dashboard'],
-    [ROLES.ETUDIANT, '/universite/dashboard'],
+    [ROLES.ETUDIANT, '/universite/mes-cours'],
     [ROLES.PERSONNEL, '/universite/dashboard'],
     [ROLES.ADMIN, '/admin/dashboard'],
     [ROLES.SUPER_ADMIN, '/admin/dashboard'],
@@ -340,6 +340,72 @@ describe('utilisateur rattaché à plusieurs écoles', () => {
   });
 });
 
+describe('compte avec la double authentification activée', () => {
+  it('affiche l’écran de code au lieu de rediriger', async () => {
+    http.onPost('/auth/login').reply(200, {
+      requires_2fa: true,
+      token: 'pending-2fa-token',
+      token_type: 'Bearer',
+    });
+
+    renderLogin();
+    fillCredentials();
+    submit();
+
+    await waitFor(() =>
+      expect(screen.getByText(/Vérification en deux étapes/i)).toBeInTheDocument()
+    );
+    expect(currentUrl()).toBe('/connexion');
+    expect(useAuthStore.getState().isAuthenticated).toBe(false);
+  });
+
+  it('finalise la connexion sur un code valide et redirige selon le rôle', async () => {
+    http.onPost('/auth/login').reply(200, {
+      requires_2fa: true,
+      token: 'pending-2fa-token',
+      token_type: 'Bearer',
+    });
+    http.onPost('/auth/2fa/verify-login').reply(200, {
+      token: 'full-token',
+      user: { id: 5, name: 'Directeur', role: ROLES.DIRECTEUR },
+      role: ROLES.DIRECTEUR,
+    });
+
+    renderLogin();
+    fillCredentials();
+    submit();
+    await waitFor(() => expect(screen.getByPlaceholderText('000000')).toBeInTheDocument());
+
+    fireEvent.change(screen.getByPlaceholderText('000000'), { target: { value: '123456' } });
+    fireEvent.click(screen.getByRole('button', { name: /Vérifier/i }));
+
+    await waitFor(() => expect(currentUrl()).toBe(ROLE_REDIRECT_MAP[ROLES.DIRECTEUR]));
+    expect(http.callsTo('post', '/auth/2fa/verify-login')[0].body).toEqual({ code: '123456' });
+    expect(useAuthStore.getState().isAuthenticated).toBe(true);
+  });
+
+  it('affiche l’erreur sur un code invalide, sans quitter l’écran ni s’authentifier', async () => {
+    http.onPost('/auth/login').reply(200, {
+      requires_2fa: true,
+      token: 'pending-2fa-token',
+      token_type: 'Bearer',
+    });
+    http.onPost('/auth/2fa/verify-login').reply(422, { message: 'Code 2FA invalide' });
+
+    renderLogin();
+    fillCredentials();
+    submit();
+    await waitFor(() => expect(screen.getByPlaceholderText('000000')).toBeInTheDocument());
+
+    fireEvent.change(screen.getByPlaceholderText('000000'), { target: { value: '000000' } });
+    fireEvent.click(screen.getByRole('button', { name: /Vérifier/i }));
+
+    await waitFor(() => expect(screen.getByText('Code 2FA invalide')).toBeInTheDocument());
+    expect(currentUrl()).toBe('/connexion');
+    expect(useAuthStore.getState().isAuthenticated).toBe(false);
+  });
+});
+
 describe('store — initialize / logout', () => {
   it('initialize() restaure la session depuis le cookie', async () => {
     http.onGet('/auth/me').reply(200, { user: { id: 5, name: 'Rose', role: ROLES.SECRETAIRE } });
@@ -384,5 +450,30 @@ describe('store — initialize / logout', () => {
 
     expect(useAuthStore.getState().isAuthenticated).toBe(false);
     expect(useAuthStore.getState().user).toBeNull();
+  });
+
+  // Audit du 14/11, N-07 : sur un téléphone partagé, l'enseignant suivant
+  // retrouvait préremplies les notes non envoyées du précédent (et pouvait
+  // les envoyer sous son nom) ; l'appel en cours restait aussi.
+  it('logout() et clearSession() effacent les brouillons de notes et d’appel, pas les préférences', async () => {
+    const remplir = () => {
+      localStorage.setItem('ecole:brouillon-notes:10:1:Devoir1:T1:', '{"5":"12"}');
+      localStorage.setItem('ecole:brouillon-appel:10:2026-11-14', '{"5":"absent"}');
+      localStorage.setItem('ecole.aide', '{"nom":"CEG"}');
+      localStorage.setItem('ecole-ui-storage', '{"state":{"theme":"dark"}}');
+    };
+    remplir();
+    http.onPost('/auth/logout').reply(200, {});
+    await useAuthStore.getState().logout();
+
+    expect(localStorage.getItem('ecole:brouillon-notes:10:1:Devoir1:T1:')).toBeNull();
+    expect(localStorage.getItem('ecole:brouillon-appel:10:2026-11-14')).toBeNull();
+    expect(localStorage.getItem('ecole.aide')).not.toBeNull();
+    expect(localStorage.getItem('ecole-ui-storage')).not.toBeNull();
+
+    remplir();
+    useAuthStore.getState().clearSession();
+    expect(localStorage.getItem('ecole:brouillon-notes:10:1:Devoir1:T1:')).toBeNull();
+    expect(localStorage.getItem('ecole:brouillon-appel:10:2026-11-14')).toBeNull();
   });
 });

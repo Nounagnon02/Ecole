@@ -30,6 +30,12 @@ export const api = axios.create({
  */
 api.interceptors.request.use(
   async (config) => {
+    if (!config.baseURL) {
+      // Construction sans EXPO_PUBLIC_API_URL : aucun serveur par défaut.
+      const erreur = new Error('Application non configurée : l’adresse du serveur de l’école manque. Contactez l’école.');
+      erreur.code = 'API_NON_CONFIGUREE';
+      throw erreur;
+    }
     const token = await getToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -66,8 +72,13 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // Retry sur erreur réseau ou 5xx (max 3)
+    // Erreur survenue avant l'envoi (ex. adresse non configurée) : rien à rejouer.
+    if (!originalRequest) return Promise.reject(error);
+
+    // Retry sur erreur réseau ou 5xx (max 3), lectures seulement : rejouer un
+    // POST (message, paiement) risquerait de le faire deux fois.
     if (
+      String(originalRequest.method || 'get').toLowerCase() === 'get' &&
       (!error.response || error.response.status >= 500) &&
       (!originalRequest._retryCount || originalRequest._retryCount < 3)
     ) {

@@ -5,7 +5,11 @@
  * Données dynamiques via API /secretaire/dossiers-eleves
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import { useApiQuery } from '@/shared/lib/api-client';
+import InscriptionDialog from '@/app/features/eleves/InscriptionDialog';
+import FicheDialog from '@/app/features/eleves/FicheDialog';
+import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
   UserPlus, Search, Plus, Calendar, CheckCircle, XCircle,
@@ -18,28 +22,27 @@ import Avatar from '@/shared/components/ui/Avatar';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
-import { useApi } from '@/hooks/useApi';
+import { useTranslation } from '@/shared/i18n';
 
 export default function InscriptionsPage() {
-  const { loading, error, get } = useApi();
-  const [inscriptions, setInscriptions] = useState([]);
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [filterStatut, setFilterStatut] = useState('');
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await get('/secretaire/dossiers-eleves');
-        const items = Array.isArray(res?.data?.data) ? res.data.data
-          : Array.isArray(res?.data) ? res.data
-          : Array.isArray(res) ? res
-          : [];
-        setInscriptions(items);
-      } catch (e) {
-        console.error('Erreur chargement inscriptions:', e);
-      }
-    })();
-  }, []);
+  // Le chargement passait par un `useState` doublé d'un `useEffect` de
+  // premier rendu, sans cache ni déduplication : deux composants montés
+  // ensemble lançaient deux requêtes, et un retour sur la page rechargeait
+  // tout (cf. audit P4.1). `unwrapList` traverse les trois formes
+  // d'enveloppe que renvoient les contrôleurs.
+  const requete = useApiQuery(['secretaire-dossiers-eleves'], '/secretaire/dossiers-eleves');
+  const [inscription, setInscription] = useState(false);
+  const [ficheId, setFicheId] = useState(null);
+  // Nom et prénom de l'élève vivent sur son compte (`eleve.user`).
+  const nomEleve = (i) => `${i.eleve?.user?.name ?? ''} ${i.eleve?.user?.prenom ?? ''}`.trim();
+
+  const inscriptions = useMemo(() => unwrapList(requete.data) ?? [], [requete.data]);
+  const loading = requete.isPending;
+  const error = requete.isError ? (requete.error?.message ?? t('common.load_error')) : null;
 
   const stats = useMemo(() => ({
     total: inscriptions.length,
@@ -51,8 +54,8 @@ export default function InscriptionsPage() {
     inscriptions.filter((i) => {
       const q = search.toLowerCase();
       if (search) {
-        const nom = `${i.eleve?.prenom || ''} ${i.eleve?.nom || ''}`;
-        const nomPere = (i.nom_pere || '').toLowerCase();
+        const nom = nomEleve(i);
+        const nomPere = (i.nom_parent || '').toLowerCase();
         if (!nom.toLowerCase().includes(q) && !nomPere.includes(q)) return false;
       }
       if (filterStatut === 'complete' && !i.dossier_complet) return false;
@@ -65,14 +68,14 @@ export default function InscriptionsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--text-tertiary)]" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
+      <div className="flex flex-col items-center justify-center h-64 text-[var(--text-secondary)]">
         <AlertCircle className="h-8 w-8 mb-2 text-red-400" />
         <p className="text-sm">{error}</p>
       </div>
@@ -83,26 +86,28 @@ export default function InscriptionsPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Inscriptions</h1>
-          <p className="text-sm text-neutral-500">Gestion des inscriptions des nouveaux élèves</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.secretaire.inscriptions.title')}</h1>
+          <p className="text-sm text-[var(--text-secondary)]">{t('pages.secretaire.inscriptions.subtitle')}</p>
         </div>
-        <Button size="sm" icon={<Plus />}>Nouvelle inscription</Button>
+        <Button size="sm" icon={<Plus />} onClick={() => setInscription(true)}>{t('pages.secretaire.inscriptions.nouvelle_inscription')}</Button>
       </div>
+      <InscriptionDialog open={inscription} onClose={() => setInscription(false)} onDone={() => requete.refetch()} />
+      <FicheDialog eleveId={ficheId} peutModifier onClose={() => setFicheId(null)} onChanged={() => requete.refetch()} />
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-3">
-        <StatsCard title="Total" value={String(stats.total)} icon={UserPlus} color="primary" />
-        <StatsCard title="Complets" value={String(stats.complets)} icon={CheckCircle} color="emerald" />
-        <StatsCard title="Incomplets" value={String(stats.incomplets)} icon={Clock} color="amber" />
+        <StatsCard title={t('common.total')} value={String(stats.total)} icon={UserPlus} color="primary" />
+        <StatsCard title={t('pages.secretaire.inscriptions.complets')} value={String(stats.complets)} icon={CheckCircle} color="emerald" />
+        <StatsCard title={t('pages.secretaire.inscriptions.incomplets')} value={String(stats.incomplets)} icon={Clock} color="amber" />
       </div>
 
       {/* Filtres */}
-      <Card>
+      <Card padding>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
             <Input
-              placeholder="Rechercher un élève..."
+              placeholder={t('common.search_student')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
@@ -111,11 +116,12 @@ export default function InscriptionsPage() {
           <select
             value={filterStatut}
             onChange={(e) => setFilterStatut(e.target.value)}
-            className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+            aria-label={t('common.filter_by_status')}
+            className="h-10 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40   "
           >
-            <option value="">Tous les statuts</option>
-            <option value="complete">Complet</option>
-            <option value="incomplete">Incomplet</option>
+            <option value="">{t('common.all_statuses')}</option>
+            <option value="complete">{t('pages.secretaire.inscriptions.complet')}</option>
+            <option value="incomplete">{t('pages.secretaire.inscriptions.incomplet')}</option>
           </select>
         </div>
       </Card>
@@ -123,34 +129,34 @@ export default function InscriptionsPage() {
       {/* Liste */}
       <div className="space-y-3">
         {filtered.length === 0 && (
-          <Card>
-            <div className="text-center py-8 text-neutral-500">
+          <Card padding>
+            <div className="text-center py-8 text-[var(--text-secondary)]">
               <UserPlus className="mx-auto h-8 w-8 mb-2" />
-              <p className="text-sm">Aucune inscription trouvée</p>
+              <p className="text-sm">{t('pages.secretaire.inscriptions.aucune_inscription_trouvee')}</p>
             </div>
           </Card>
         )}
         {filtered.map((ins) => (
-          <Card key={ins.id || ins.eleve?.id} hover>
+          <Card padding key={ins.id || ins.eleve?.id} hover>
             <div className="flex items-start gap-4">
-              <Avatar name={`${ins.eleve?.prenom || ''} ${ins.eleve?.nom || ''}`} size="md" />
+              <Avatar name={nomEleve(ins)} size="md" />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-sm font-semibold text-neutral-900 dark:text-white">
-                    {ins.eleve?.prenom} {ins.eleve?.nom}
+                  <span className="text-sm font-semibold text-[var(--text-primary)] ">
+                    {nomEleve(ins)}
                   </span>
                   <Badge variant={ins.dossier_complet ? 'primary' : 'warning'} size="sm">
-                    {ins.dossier_complet ? 'Complet' : 'Incomplet'}
+                    {ins.dossier_complet ? t('pages.secretaire.inscriptions.complet') : t('pages.secretaire.inscriptions.incomplet')}
                   </Badge>
                   {ins.eleve?.classe?.nom_classe && (
                     <Badge variant="outline" size="sm">{ins.eleve.classe.nom_classe}</Badge>
                   )}
                 </div>
-                <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-neutral-500">
-                  {ins.nom_pere && (
+                <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-[var(--text-secondary)]">
+                  {ins.nom_parent && (
                     <span className="flex items-center gap-1">
                       <UserCheck className="h-3 w-3" />
-                      {ins.nom_pere}
+                      {ins.nom_parent}
                     </span>
                   )}
                   {ins.eleve?.created_at && (
@@ -167,20 +173,22 @@ export default function InscriptionsPage() {
                 {/* Dossier status */}
                 <div className="mt-3 flex flex-wrap gap-2">
                   <span className={cn(
-                    'inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full',
+                    // Jetons du thème (contraste ≥ 5:1 clair et sombre) ; 12 px au
+                    // lieu de 10, illisibles sur un petit écran.
+                    'inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full',
                     ins.dossier_complet
-                      ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400'
-                      : 'bg-neutral-100 text-neutral-400 dark:bg-neutral-800 dark:text-neutral-500'
+                      ? 'bg-[var(--green-subtle)] text-[var(--green)]'
+                      : 'bg-[var(--surface-subtle)] text-[var(--text-secondary)]'
                   )}>
                     {ins.dossier_complet ? <CheckCircle className="h-2.5 w-2.5" /> : <XCircle className="h-2.5 w-2.5" />}
-                    {ins.dossier_complet ? 'Dossier complet' : 'Dossier incomplet'}
+                    {ins.dossier_complet ? t('pages.secretaire.inscriptions.dossier_complet') : t('pages.secretaire.inscriptions.dossier_incomplet')}
                   </span>
                 </div>
               </div>
               <div className="flex gap-1">
-                <Button variant="ghost" size="sm" icon={<Eye />} title="Voir" />
+                <Button variant="ghost" size="sm" icon={<Eye />} title={t('common.view')} aria-label={`${t('common.view')} ${nomEleve(ins)}`} onClick={() => setFicheId(ins.eleve?.id ?? ins.id)} />
                 {!ins.dossier_complet && (
-                  <Button variant="outline" size="sm">Compléter</Button>
+                  <Button variant="outline" size="sm" onClick={() => setFicheId(ins.eleve?.id ?? ins.id)}>{t('pages.secretaire.inscriptions.completer')}</Button>
                 )}
               </div>
             </div>

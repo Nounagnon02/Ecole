@@ -9,6 +9,7 @@
  */
 
 import { useEffect } from 'react';
+import { useFonts } from 'expo-font';
 import { Stack, SplashScreen } from 'expo-router';
 import { StatusBar } from 'react-native';
 import { ThemeProvider, useTheme } from '../src/theme';
@@ -46,12 +47,27 @@ function RootLayoutInner() {
         name="reset-password"
         options={{ title: 'Réinitialisation', animation: 'slide_from_bottom' }}
       />
+      <Stack.Screen name="paiement-retour" options={{ title: 'Paiement' }} />
       <Stack.Screen name="(app)" options={{ headerShown: false }} />
     </Stack>
   );
 }
 
+/* Proposition C : Figtree, livrée avec l'application (assets/fonts, OFL). */
+const POLICES = {
+  'Figtree-Regular': require('../assets/fonts/Figtree-Regular.ttf'),
+  'Figtree-Medium': require('../assets/fonts/Figtree-Medium.ttf'),
+  'Figtree-SemiBold': require('../assets/fonts/Figtree-SemiBold.ttf'),
+  'Figtree-Bold': require('../assets/fonts/Figtree-Bold.ttf'),
+};
+
 export default function RootLayout() {
+  // Sans police chargée, le texte s'afficherait dans la police système puis
+  // basculerait : l'écran de démarrage reste affiché jusqu'au chargement
+  // (ou jusqu'à l'échec, auquel cas la police système prend le relais).
+  const [policesPretes, erreurPolices] = useFonts(POLICES);
+  if (!policesPretes && !erreurPolices) return null;
+
   return (
     <ThemeProvider>
       <AuthProvider>

@@ -4,7 +4,6 @@ namespace Tests\Feature\Api;
 
 use App\Models\Absence;
 use App\Models\Classes;
-use App\Models\Coefficients;
 use App\Models\ConsultationMedicale;
 use App\Models\Ecole;
 use App\Models\Eleve;
@@ -84,6 +83,13 @@ class DashboardMetricsRegressionTest extends TestCase
     /** @test */
     public function evolution_effectifs_suit_l_annee_scolaire_et_pas_l_annee_civile()
     {
+        // Date figée : le cas distingue « inscrit en septembre » de « inscrit ce
+        // mois-ci ». Exécuté un jour de septembre, les deux se confondent et le
+        // premier mois en comptait 3 au lieu de 2 — le test échouait tous les
+        // septembres, sans rapport avec le code testé. Un point fixe au milieu
+        // de l'année scolaire garde les deux mois distincts toute l'année.
+        \Illuminate\Support\Carbon::setTestNow('2026-01-15 09:00:00');
+
         $school = $this->school();
         $directeur = User::factory()->create(['role' => 'directeur', 'ecole_id' => $school->id]);
 
@@ -109,6 +115,8 @@ class DashboardMetricsRegressionTest extends TestCase
         $this->assertSame('Sept', $evolution[0]['name']);
         $this->assertSame(2, $evolution[0]['students']);
         $this->assertSame(3, collect($evolution)->sum('students'));
+
+        \Illuminate\Support\Carbon::setTestNow();
     }
 
     /* ─── surveillant : élèves distincts ─────────────────────────────── */
@@ -172,7 +180,10 @@ class DashboardMetricsRegressionTest extends TestCase
         ]);
 
         $matiere = Matieres::factory()->create(['ecole_id' => $school->id]);
-        Coefficients::create([
+        // Coefficient lu à la source du bulletin (`serie_matieres`) depuis le
+        // 16/11/2026 : `coefficient_matieres` est vide en recette, et le
+        // tableau de bord n'affichait donc jamais le coefficient du bulletin.
+        \Illuminate\Support\Facades\DB::table('serie_matieres')->insert([
             'matiere_id'  => $matiere->id,
             'classe_id'   => $classe->id,
             'serie_id'    => $serie->id,

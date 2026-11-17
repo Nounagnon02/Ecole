@@ -19,7 +19,11 @@ class BulletinService
     public function bulletinMaternellePrimaire($eleveId, $periode)
     {
         $eleve = Eleve::with(['classe', 'notes.matiere'])->findOrFail($eleveId);
-        $notes = $eleve->notes()->where('periode', $periode)->with('matiere')->get();
+        // `eleve` est chargé avec : `calculerRang()` lit `$note->eleve->classe_id`
+        // pour borner le classement à la classe. Sans cet eager load, chaque note
+        // déclenchait sa propre requête — un N+1 que `preventLazyLoading` a mis
+        // au jour (cf. audit P2.6).
+        $notes = $eleve->notes()->where('periode', $periode)->with(['matiere', 'eleve'])->get();
 
         $evaluations = $notes->groupBy('matiere.nom')->map(function ($notesMatiere, $matiere) {
             $evaluationsMatiere = [];
@@ -46,7 +50,11 @@ class BulletinService
     public function bulletinSecondaire($eleveId, $periode)
     {
         $eleve = Eleve::with(['classe', 'notes.matiere'])->findOrFail($eleveId);
-        $notes = $eleve->notes()->where('periode', $periode)->with('matiere')->get();
+        // `eleve` est chargé avec : `calculerRang()` lit `$note->eleve->classe_id`
+        // pour borner le classement à la classe. Sans cet eager load, chaque note
+        // déclenchait sa propre requête — un N+1 que `preventLazyLoading` a mis
+        // au jour (cf. audit P2.6).
+        $notes = $eleve->notes()->where('periode', $periode)->with(['matiere', 'eleve'])->get();
 
         $moyennesParMatiere = $notes->groupBy('matiere_id')->map(function ($notesMatiere) use ($eleve) {
             $matiere = $notesMatiere->first()->matiere;
@@ -118,11 +126,13 @@ class BulletinService
      */
     private function moyenneMatiere($subjectMarks): float
     {
-        $devoir1 = $this->moyenneType($subjectMarks, 'Devoir1');
-        $devoir2 = $this->moyenneType($subjectMarks, 'Devoir2');
-        $interrogations = $this->moyenneType($subjectMarks, 'Interrogation');
-
-        return collect([$devoir1, $devoir2, $interrogations])
+        // Chaque type d'évaluation présent pèse autant : pour le secondaire,
+        // (Devoir 1 + Devoir 2 + moyenne des interrogations) / 3. Seuls ces
+        // trois types étaient lus : une note saisie en « 1ère evaluation »,
+        // « 2ème evaluation »… était ignorée, et la matière tombait à 0 sur le
+        // bulletin alors que l'élève avait une note.
+        return $subjectMarks->pluck('type_evaluation')->unique()
+            ->map(fn ($type) => $this->moyenneType($subjectMarks, $type))
             ->filter(fn ($v) => $v !== null)
             ->avg() ?? 0;
     }
@@ -154,6 +164,48 @@ class BulletinService
         });
 
         return $totalCoeff > 0 ? $totalPoints / $totalCoeff : 0.0;
+    }
+
+    /**
+     * Moyennes provisoires d'un élève sur sa dernière période notée, avec les
+     * règles du bulletin : moyenne de matière par type d'évaluation ramenée
+     * sur 20, moyenne générale pondérée par les coefficients du bulletin.
+     *
+     * Le tableau de bord de l'élève affichait la moyenne brute de toutes ses
+     * notes de l'année, sans coefficient ni période (revue du 16/11/2026).
+     *
+     * @return array{periode: ?string, moyenne_generale: ?float, matieres: array<int, array{name: string, note: float, coeff: float}>}
+     */
+    public function moyennesProvisoires(Eleve $eleve): array
+    {
+        $notes = $eleve->notes()->with('matiere')->get();
+        $derniere = $notes->sortBy([['date_evaluation', 'desc'], ['id', 'desc']])->first();
+
+        if (! $derniere) {
+            return ['periode' => null, 'moyenne_generale' => null, 'matieres' => []];
+        }
+
+        $totalPoints = 0.0;
+        $totalCoeff = 0.0;
+        $matieres = [];
+
+        foreach ($notes->where('periode', $derniere->periode)->groupBy('matiere_id') as $notesMatiere) {
+            $matiere = $notesMatiere->first()->matiere;
+            if (! $matiere) {
+                continue;
+            }
+            $moyenne = $this->moyenneMatiere($notesMatiere);
+            $coeff = $this->getCoefficient($matiere->id, $eleve->classe_id, $eleve->serie_id);
+            $totalPoints += $moyenne * $coeff;
+            $totalCoeff += $coeff;
+            $matieres[] = ['name' => $matiere->nom, 'note' => round($moyenne, 2), 'coeff' => $coeff];
+        }
+
+        return [
+            'periode' => $derniere->periode,
+            'moyenne_generale' => $totalCoeff > 0 ? round($totalPoints / $totalCoeff, 2) : null,
+            'matieres' => $matieres,
+        ];
     }
 
     /**
@@ -307,9 +359,15 @@ class BulletinService
     {
         $anneeScolaire ??= AnneeScolaire::courante();
 
+        // Un élève retiré des effectifs, ou sans aucune note sur la période,
+        // n'a pas de bulletin : le classer avec une moyenne de 0 le mettait
+        // dernier et faussait le rang de toute la classe.
         $eleves = Eleve::with(['notes.matiere'])
             ->where('classe_id', $classeId)
-            ->get();
+            ->where('statut', '!=', 'inactive')
+            ->get()
+            ->filter(fn ($pupil) => $pupil->notes->where('periode', $periode)->isNotEmpty())
+            ->values();
 
         if ($eleves->isEmpty()) {
             return [];
@@ -485,7 +543,7 @@ class BulletinService
             Bulletin::where('classe_id', $classeId)
                 ->where('periode', $periode)
                 ->where('annee_scolaire', $anneeScolaire)
-                ->delete();
+                ->forceDelete();
 
             Bulletin::insert($bulletins);
 

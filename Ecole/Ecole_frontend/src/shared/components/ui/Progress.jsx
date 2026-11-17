@@ -12,7 +12,7 @@ function Progress({ value = 0, max = 100, variant = 'default', size = 'md', show
   const percent = Math.min(Math.max((value / max) * 100, 0), 100);
 
   const variants = {
-    default: 'bg-[var(--accent)]',
+    default: 'bg-[var(--action)]',
     success: 'bg-emerald-500',
     warning: 'bg-amber-500',
     danger: 'bg-red-500',
@@ -28,7 +28,7 @@ function Progress({ value = 0, max = 100, variant = 'default', size = 'md', show
     <div className={cn('w-full', className)}>
       <div
         className={cn(
-          'w-full overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-800',
+          'w-full overflow-hidden rounded-full bg-[var(--surface-subtle)] ',
           sizes[size]
         )}
         role="progressbar"
@@ -41,7 +41,7 @@ function Progress({ value = 0, max = 100, variant = 'default', size = 'md', show
             'h-full rounded-full transition-all duration-500 ease-out-expo',
             variants[variant],
             animated && percent > 0 && 'animate-pulse-subtle',
-            variant === 'default' && 'bg-[var(--accent)]'
+            variant === 'default' && 'bg-[var(--action)]'
           )}
           style={{ width: `${percent}%` }}
         >
@@ -53,7 +53,7 @@ function Progress({ value = 0, max = 100, variant = 'default', size = 'md', show
         </div>
       </div>
       {showValue && size !== 'lg' && (
-        <p className="mt-1 text-right text-xs text-neutral-500">{Math.round(percent)}%</p>
+        <p className="mt-1 text-right text-xs text-[var(--text-secondary)]">{Math.round(percent)}%</p>
       )}
     </div>
   );

@@ -9,14 +9,11 @@ use App\Http\Controllers\EleveController;
 use App\Http\Controllers\EmploiDuTempsController;
 use App\Http\Controllers\MatieresController;
 use App\Http\Controllers\MoyennesController;
-use App\Http\Controllers\Notes\{
-    NotesAutoSaveController,
-    NotesCrudController,
-    NotesImportController,
-    NotesStatsController,
-    NotesQueryController,
-};
-use App\Http\Controllers\periodesController;
+use App\Http\Controllers\Notes\NotesAutoSaveController;
+use App\Http\Controllers\Notes\NotesCrudController;
+use App\Http\Controllers\Notes\NotesImportController;
+use App\Http\Controllers\Notes\NotesStatsController;
+use App\Http\Controllers\PeriodesController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -54,14 +51,25 @@ Route::middleware('auth:sanctum')->group(function () {
             ->middleware('role:directeur,enseignant,censeur,surveillant,secretaire,infirmier,bibliothecaire');
         Route::get('/{id}/enseignants', [ClassesController::class, 'getEnseignants'])
             ->middleware('role:directeur,enseignant,censeur,secretaire');
+        // Programme de la classe : séries, matières, coefficients (N-08).
+        Route::get('/{id}/programme', [\App\Http\Controllers\Series\SeriesMatieresController::class, 'programmeClasse'])
+            ->middleware('role:directeur,admin');
     });
 
     // ============ ÉLÈVES ============
     Route::prefix('eleves')->group(function () {
-        Route::get('/', [EleveController::class, 'index'])->middleware('role:directeur,enseignant');
-        Route::post('/store', [EleveController::class, 'store'])->middleware('role:directeur');
+        // Le secrétariat (inscriptions), la comptabilité (échéanciers), la
+        // surveillance (appel) et le censorat (discipline) ont chacun une page
+        // qui part de la liste des élèves : la leur refuser rendait ces pages
+        // inutilisables (audit BUG-003, BUG-006).
+        // L'infirmerie et la bibliothèque choisissent un élève dans leurs
+        // formulaires (consultation, prêt) : la liste leur est ouverte en lecture.
+        Route::get('/', [EleveController::class, 'index'])->middleware('role:directeur,enseignant,secretaire,comptable,surveillant,censeur,infirmier,bibliothecaire');
+        // L'inscription est le travail du secrétariat (ElevePolicy::create).
+        Route::post('/store', [EleveController::class, 'store'])->middleware('role:directeur,secretaire');
+        Route::get('/{id}/fiche', [EleveController::class, 'fiche']); // ElevePolicy::view
         Route::get('/{id}', [EleveController::class, 'show']); // ElevePolicy::view appliquée dans le contrôleur
-        Route::put('/update/{id}', [EleveController::class, 'update'])->middleware('role:directeur');
+        Route::put('/update/{id}', [EleveController::class, 'update'])->middleware('role:directeur,secretaire');
 
         // Sortie et retour dans les effectifs. Il n'y a volontairement pas de
         // DELETE ici : un dossier d'élève ne se supprime pas (cf.
@@ -78,12 +86,13 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // ============ NOTES ============
-    Route::prefix('notes')->group(function () {
+    Route::prefix('notes')->middleware('throttle:60,1,notes')->group(function () {
         Route::get('/eleve/{eleveId?}', [NotesCrudController::class, 'index']);
         Route::post('/store', [NotesCrudController::class, 'store'])->middleware('role:directeur,enseignant');
         Route::post('/auto-save', [NotesAutoSaveController::class, 'save'])->middleware('role:directeur,enseignant');
-        Route::post('/import', [NotesImportController::class, 'import'])->middleware(['role:directeur,enseignant', 'throttle:5,1']);
-        Route::post('/import-csv', [NotesImportController::class, 'importCsv'])->middleware(['role:directeur,enseignant', 'throttle:5,1']);
+        // Un compteur pour les deux formats : 5 imports par minute au total.
+        Route::post('/import', [NotesImportController::class, 'import'])->middleware(['role:directeur,enseignant', 'throttle:5,1,notes-import']);
+        Route::post('/import-csv', [NotesImportController::class, 'importCsv'])->middleware(['role:directeur,enseignant', 'throttle:5,1,notes-import']);
         Route::post('/bulk', [NotesCrudController::class, 'bulkStore'])->middleware('role:directeur,enseignant');
         Route::get('/grille/{classeId}', [NotesCrudController::class, 'grilleSaisie'])->middleware('role:directeur,enseignant');
         Route::get('/export', [NotesImportController::class, 'export'])->middleware('role:directeur,enseignant');
@@ -114,8 +123,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('bulletins')->group(function () {
         Route::get('/', [BulletinsController::class, 'index'])
             ->middleware('role:directeur,enseignant,censeur,parent,eleve');
+        // Arrêter les bulletins d'une classe est un acte de la direction (ou du
+        // censeur), pas de chaque enseignant.
         Route::post('/verrouiller', [BulletinsController::class, 'verrouiller'])
-            ->middleware('role:directeur,enseignant,censeur');
+            ->middleware('role:directeur,censeur');
     });
 
     // ============ PÉRIODES ============
@@ -124,17 +135,18 @@ Route::middleware('auth:sanctum')->group(function () {
     // existent : deux pages du frontend appelaient GET /periodes dans le vide
     // (cf. ECARTS_FRONT_BACK.md).
     Route::prefix('periodes')->group(function () {
-        Route::get('/', [periodesController::class, 'Index']);
-        Route::get('/active', [periodesController::class, 'getActive']);
-        Route::get('/classe/{classeId}', [periodesController::class, 'getPeriodesByClasse']);
-        Route::get('/categorie/{categorie}', [periodesController::class, 'getPeriodesByCategorie']);
-        Route::get('/categorie/{categorie}/active', [periodesController::class, 'getActivePeriodesByCategorie']);
-        Route::post('/store', [periodesController::class, 'store'])->middleware('role:directeur');
-        Route::post('/{id}/active', [periodesController::class, 'setActive'])->middleware('role:directeur');
+        Route::get('/', [PeriodesController::class, 'index']);
+        Route::get('/active', [PeriodesController::class, 'getActive']);
+        Route::get('/classe/{classeId}', [PeriodesController::class, 'getPeriodesByClasse']);
+        Route::get('/categorie/{categorie}', [PeriodesController::class, 'getPeriodesByCategorie']);
+        Route::get('/categorie/{categorie}/active', [PeriodesController::class, 'getActivePeriodesByCategorie']);
+        Route::post('/store', [PeriodesController::class, 'store'])->middleware('role:directeur');
+        Route::post('/{id}/active', [PeriodesController::class, 'setActive'])->middleware('role:directeur');
     });
 
     // ============ BULLETINS ============
-    Route::get('/bulletins/eleve/{eleveId}/{periode}', [BulletinController::class, 'getBulletin'])->middleware('role:directeur,parent,eleve');
+    Route::get('/bulletins/eleve/{eleveId}/{periode}', [BulletinController::class, 'getBulletin'])
+        ->middleware(['role:directeur,parent,eleve', 'throttle:60,1,bulletins']);
 
     // ============ CAHIER DE TEXTE ============
     Route::prefix('cahier-texte')->group(function () {

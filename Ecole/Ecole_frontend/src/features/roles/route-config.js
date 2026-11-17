@@ -16,6 +16,15 @@ const lazy = (importFn) => importFn;
 /* ─── Route config ──────────────────────────────────────────────────── */
 export const ROUTE_CONFIG = {
   // ─── PUBLIQUES ────────────────────────────────────────────────────────
+  // `home` et `connexion` ont `roles: null`, ce qui les range dans
+  // PUBLIC_ROUTES — or `App.jsx` ne génère que PROTECTED_ROUTES et câble `/`
+  // en dur sur `<AuthRedirect />`. Ces deux entrées sont donc inertes :
+  // `LandingPage` (536 l.) n'est jamais rendue, bien qu'elle soit compilée
+  // dans son propre chunk.
+  //
+  // Décision produit en suspens : ouvrir `/` sur la landing pour les visiteurs
+  // non authentifiés, ou retirer la page. Laissée en l'état volontairement —
+  // supprimer une page d'accueil déjà écrite n'est pas un nettoyage.
   home: {
     path: '/',
     component: lazy(() => import('@/app/landing/LandingPage')),
@@ -92,28 +101,43 @@ export const ROUTE_CONFIG = {
   eleves: {
     path: '/eleves',
     component: lazy(() => import('@/app/features/eleves/ElevesPage')),
+    // Les rôles d'une page sont ceux que l'API sert réellement. L'audit a
+    // compté 44 couples (rôle, page) ouverts par le menu puis refusés par
+    // l'API (403) : ils sont retirés ici, ou ouverts côté API quand la page
+    // est le travail du rôle (BUG-006).
     roles: [
       ...ROLE_GROUPS.DIRECTION,
       ...ROLE_GROUPS.ENSEIGNANTS,
-      ...ROLE_GROUPS.STAFF,
-      ROLES.PARENT,
+      ROLES.SECRETAIRE,
+      ROLES.COMPTABLE,
+      ROLES.SURVEILLANT,
+      ROLES.CENSEUR,
     ],
   },
   notes: {
     path: '/notes',
     component: lazy(() => import('@/app/features/notes/NotesPage')),
-    roles: ROLES_ALL,
+    roles: [...ROLE_GROUPS.DIRECTION, ...ROLE_GROUPS.ENSEIGNANTS, ROLES.CENSEUR, ROLES.ELEVE, ROLES.PARENT],
+  },
+  // Grille de saisie : mêmes rôles que `POST /notes/bulk`.
+  notesSaisie: {
+    path: '/notes/saisie',
+    component: lazy(() => import('@/app/features/notes/SaisieNotesPage')),
+    roles: [...ROLE_GROUPS.DIRECTION, ...ROLE_GROUPS.ENSEIGNANTS],
+  },
+  // Mêmes rôles que `GET /bulletins` ; l'arrêt est filtré dans la page.
+  bulletins: {
+    path: '/bulletins',
+    component: lazy(() => import('@/app/features/bulletins/BulletinsPage')),
+    roles: [...ROLE_GROUPS.DIRECTION, ...ROLE_GROUPS.ENSEIGNANTS, ROLES.CENSEUR, ROLES.PARENT, ROLES.ELEVE],
   },
   paiements: {
     path: '/paiements',
     component: lazy(() => import('@/app/features/paiements/PaiementsPage')),
-    roles: [
-      ...ROLE_GROUPS.DIRECTION,
-      ROLES.COMPTABLE,
-      ROLES.ELEVE,
-      ROLES.PARENT,
-      ROLES.SECRETAIRE,
-    ],
+    // Parents, élèves et secrétariat recevaient « Unauthorized » : la page lit
+    // les routes de la comptabilité. Ils y reviendront avec une page à eux
+    // (lot 3 du plan de correction).
+    roles: [...ROLE_GROUPS.DIRECTION, ROLES.COMPTABLE],
   },
   communications: {
     path: '/communications',
@@ -123,7 +147,15 @@ export const ROUTE_CONFIG = {
   emploiDuTemps: {
     path: '/emploi-du-temps',
     component: lazy(() => import('@/app/features/emploi-du-temps/EmploiDuTempsPage')),
-    roles: ROLES_ALL,
+    roles: [
+      ...ROLE_GROUPS.DIRECTION,
+      ...ROLE_GROUPS.ENSEIGNANTS,
+      ROLES.CENSEUR,
+      ROLES.SURVEILLANT,
+      ROLES.SECRETAIRE,
+      ROLES.ELEVE,
+      ROLES.PARENT,
+    ],
   },
   parametres: {
     path: '/parametres',
@@ -148,10 +180,31 @@ export const ROUTE_CONFIG = {
     roles: [...ROLE_GROUPS.ENSEIGNANTS],
   },
 
+  // ─── PERSONNEL (direction) ───────────────────────────────────────────
+  personnel: {
+    path: '/personnel',
+    component: lazy(() => import('@/app/features/personnel/PersonnelPage')),
+    roles: [...ROLE_GROUPS.DIRECTION],
+  },
+
+  // Programme des classes : séries, matières, coefficients (N-08).
+  programme: {
+    path: '/programme',
+    component: lazy(() => import('@/app/features/programme/ProgrammePage')),
+    roles: [...ROLE_GROUPS.DIRECTION, ROLES.ADMIN],
+  },
+
   // ─── FEATURES PARENT ─────────────────────────────────────────────────
   parentEnfants: {
     path: '/parent/enfants',
     component: lazy(() => import('@/app/features/parent/EnfantsPage')),
+    roles: [ROLES.PARENT],
+  },
+  // Ce que le parent doit et le paiement en ligne, sur ses propres routes
+  // d'API — pas sur celles de la comptabilité, qui lui répondent 403.
+  parentPaiements: {
+    path: '/parent/paiements',
+    component: lazy(() => import('@/app/features/parent/MesPaiementsPage')),
     roles: [ROLES.PARENT],
   },
 
@@ -159,7 +212,7 @@ export const ROUTE_CONFIG = {
   eleveCours: {
     path: '/eleve/cours',
     component: lazy(() => import('@/app/features/eleve/CoursPage')),
-    roles: [ROLES.ELEVE, ROLES.ETUDIANT],
+    roles: [ROLES.ELEVE],
   },
 
   // ─── STAFF ───────────────────────────────────────────────────────────
@@ -181,7 +234,8 @@ export const ROUTE_CONFIG = {
   surveillantPresences: {
     path: '/surveillant/presences',
     component: lazy(() => import('@/app/features/surveillant/PresencesPage')),
-    roles: [ROLES.SURVEILLANT],
+    // Mêmes rôles que `POST /surveillant/appel`.
+    roles: [ROLES.SURVEILLANT, ROLES.CENSEUR, ...ROLE_GROUPS.DIRECTION],
   },
   censeurDiscipline: {
     path: '/censeur/discipline',
@@ -221,7 +275,8 @@ export const ROUTE_CONFIG = {
   secretairePlanning: {
     path: '/secretaire/planning',
     component: lazy(() => import('@/app/features/secretaire/PlanningPage')),
-    roles: [ROLES.SECRETAIRE],
+    // Mêmes rôles que `/secretaire/evenements`.
+    roles: [ROLES.SECRETAIRE, ...ROLE_GROUPS.DIRECTION],
   },
   secretaireDocuments: {
     path: '/secretaire/documents',
@@ -248,7 +303,7 @@ export const ROUTE_CONFIG = {
   universiteEnseignants: {
     path: '/universite/enseignants',
     component: lazy(() => import('@/app/features/universite/EnseignantsPage')),
-    roles: [ROLES.RECTEUR, ROLES.DOYEN, ROLES.PROFESSEUR],
+    roles: [ROLES.RECTEUR, ROLES.DOYEN],
   },
   universiteCours: {
     path: '/universite/cours',
@@ -260,10 +315,17 @@ export const ROUTE_CONFIG = {
     component: lazy(() => import('@/app/features/universite/MesCoursPage')),
     roles: [ROLES.PROFESSEUR, ROLES.ETUDIANT],
   },
+  // Relevé de l'étudiant (17/11/2026) : « Notes » ci-dessous est la page du
+  // professeur ; l'étudiant n'avait aucune page de notes sur le web.
+  universiteMesNotes: {
+    path: '/universite/mes-notes',
+    component: lazy(() => import('@/app/features/universite/MesNotesPage')),
+    roles: [ROLES.ETUDIANT],
+  },
   universiteNotes: {
     path: '/universite/notes',
     component: lazy(() => import('@/app/features/universite/NotesPage')),
-    roles: [ROLES.PROFESSEUR, ROLES.ETUDIANT],
+    roles: [ROLES.PROFESSEUR],
   },
   universiteTaches: {
     path: '/universite/taches',
@@ -278,41 +340,30 @@ export const ROUTE_CONFIG = {
   universiteDashboard: {
     path: '/universite/dashboard',
     component: lazy(() => import('@/app/dashboards/universite')),
-    roles: [ROLES.RECTEUR, ROLES.DOYEN, ROLES.PROFESSEUR, ROLES.ETUDIANT, ROLES.PERSONNEL],
+    // Sans l'étudiant : effectifs de l'université et noms des derniers
+    // inscrits ne le concernent pas (revue web du 16/11/2026).
+    roles: [ROLES.RECTEUR, ROLES.DOYEN, ROLES.PROFESSEUR, ROLES.PERSONNEL],
   },
 
   // ─── PAIEMENT EN LIGNE ────────────────────────────────────────────────
   paiementCallback: {
     path: '/paiement/callback',
     component: lazy(() => import('@/app/features/paiements/PaiementCallbackPage')),
-    roles: [
-      ...ROLE_GROUPS.DIRECTION,
-      ROLES.COMPTABLE,
-      ROLES.ELEVE,
-      ROLES.PARENT,
-      ROLES.SECRETAIRE,
-    ],
+    roles: [...ROLE_GROUPS.DIRECTION, ROLES.COMPTABLE],
   },
-  directeurAiInsights: {
-    path: '/directeur/ai-insights',
-    component: lazy(() => import('@/app/features/ai/AiInsightsPage')),
-    roles: [ROLES.DIRECTEUR],
+  // Retour du navigateur après la passerelle (PaymentController::callback) :
+  // ouvert à quiconque peut ouvrir un paiement.
+  paiementRetour: {
+    path: '/paiement/retour',
+    component: lazy(() => import('@/app/features/paiements/PaiementRetourPage')),
+    roles: [...ROLE_GROUPS.DIRECTION, ROLES.COMPTABLE, ROLES.SECRETAIRE, ROLES.PARENT, ROLES.ELEVE],
   },
-  enseignantAiAssistant: {
-    path: '/enseignant/ai-assistant',
-    component: lazy(() => import('@/app/features/ai/AiInsightsPage')),
-    roles: [ROLES.ENSEIGNANT],
-  },
-  parentAiReport: {
-    path: '/parent/ai-report',
-    component: lazy(() => import('@/app/features/ai/AiInsightsPage')),
-    roles: [ROLES.PARENT],
-  },
-  eleveAiTutor: {
-    path: '/eleve/tutor',
-    component: lazy(() => import('@/app/features/ai/AiInsightsPage')),
-    roles: [ROLES.ELEVE],
-  },
+  // Assistant IA : hors plan, masqué (plan de correction, « Hors plan »).
+  // Ses routes /directeur/ai-insights, /enseignant/ai-assistant,
+  // /parent/ai-report et /eleve/tutor menaient toutes à
+  // app/features/ai/AiInsightsPage, conservée pour une reprise : il suffira de
+  // les rétablir ici, avec leurs libellés dans navigation-config (LABELS) et
+  // leurs entrées dans CommandPalette.
 
   // ─── ADMIN ───────────────────────────────────────────────────────────
   adminEcoles: {
@@ -323,6 +374,7 @@ export const ROUTE_CONFIG = {
   adminUtilisateurs: {
     path: '/admin/utilisateurs',
     component: lazy(() => import('@/app/features/admin/UtilisateursPage')),
+    // L'administrateur d'école gère les comptes de son école (BUG-023).
     roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
   },
   adminStatistiques: {
@@ -334,6 +386,11 @@ export const ROUTE_CONFIG = {
     path: '/admin/configuration',
     component: lazy(() => import('@/app/features/admin/ConfigurationPage')),
     roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
+  },
+  auditLog: {
+    path: '/admin/journal-audit',
+    component: lazy(() => import('@/app/features/admin/AuditLogPage')),
+    roles: [...ROLE_GROUPS.ADMIN],
   },
   adminPlans: {
     path: '/admin/plans',
@@ -382,7 +439,7 @@ const BASE_ROLE_REDIRECTS = {
   [ROLES.RECTEUR]: '/universite/dashboard',
   [ROLES.DOYEN]: '/universite/dashboard',
   [ROLES.PROFESSEUR]: '/universite/dashboard',
-  [ROLES.ETUDIANT]: '/universite/dashboard',
+  [ROLES.ETUDIANT]: '/universite/mes-cours',
   [ROLES.PERSONNEL]: '/universite/dashboard',
   [ROLES.SUPER_ADMIN]: '/admin/dashboard',
   [ROLES.ADMIN]: '/admin/dashboard',

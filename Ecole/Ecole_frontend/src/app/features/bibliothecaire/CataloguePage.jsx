@@ -5,11 +5,15 @@
  * Données dynamiques via API /bibliothecaire/livres
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import apiClient, { useApiQuery } from '@/shared/lib/api-client';
+import FormDialog from '@/shared/components/ui/FormDialog';
+import PretDialog from './PretDialog';
+import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
   BookOpen, Plus, Search, BookMarked, Book, BookX,
-  Eye, Loader2, AlertCircle,
+  Loader2, AlertCircle,
 } from 'lucide-react';
 import { cn } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
@@ -17,33 +21,38 @@ import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
-import { useApi } from '@/hooks/useApi';
+import { useTranslation } from '@/shared/i18n';
 
 export default function CataloguePage() {
-  const { loading, error, get } = useApi();
-  const [ouvrages, setOuvrages] = useState([]);
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [filterCategorie, setFilterCategorie] = useState('');
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await get('/bibliothecaire/livres');
-        const items = Array.isArray(res?.data?.data) ? res.data.data
-          : Array.isArray(res?.data) ? res.data
-          : Array.isArray(res) ? res
-          : [];
-        setOuvrages(items);
-      } catch (e) {
-        console.error('Erreur chargement catalogue:', e);
-      }
-    })();
-  }, []);
+  // Le chargement passait par un `useState` doublé d'un `useEffect` de
+  // premier rendu, sans cache ni déduplication : deux composants montés
+  // ensemble lançaient deux requêtes, et un retour sur la page rechargeait
+  // tout (cf. audit P4.1). `unwrapList` traverse les trois formes
+  // d'enveloppe que renvoient les contrôleurs.
+  const requete = useApiQuery(['bibliothecaire-livres'], '/bibliothecaire/livres');
+  const [ajout, setAjout] = useState(false);
+  const [pretLivre, setPretLivre] = useState(null);
+  const f = (cle) => t(`pages.bibliothecaire.ouvrage.${cle}`);
+  const ajouter = async (v) => {
+    await apiClient.post('/bibliothecaire/livres', v);
+    requete.refetch();
+  };
+  // Exemplaires encore en rayon : `disponible` seul disait « épuisé » dès le
+  // premier prêt d'un titre possédé en plusieurs exemplaires.
+  const enRayon = (o) => o.exemplaires_disponibles ?? (o.disponible ? 1 : 0);
+
+  const ouvrages = useMemo(() => unwrapList(requete.data) ?? [], [requete.data]);
+  const loading = requete.isPending;
+  const error = requete.isError ? (requete.error?.message ?? t('common.load_error')) : null;
 
   const stats = useMemo(() => ({
     total: ouvrages.length,
-    disponibles: ouvrages.filter((o) => o.disponible).length,
-    empruntes: ouvrages.filter((o) => !o.disponible).length,
+    disponibles: ouvrages.filter((o) => (o.exemplaires_disponibles ?? (o.disponible ? 1 : 0)) > 0).length,
+    empruntes: ouvrages.filter((o) => (o.exemplaires_disponibles ?? (o.disponible ? 1 : 0)) === 0).length,
     categories: new Set(ouvrages.map((o) => o.categorie)).size,
   }), [ouvrages]);
 
@@ -65,14 +74,14 @@ export default function CataloguePage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--text-tertiary)]" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
+      <div className="flex flex-col items-center justify-center h-64 text-[var(--text-secondary)]">
         <AlertCircle className="h-8 w-8 mb-2 text-red-400" />
         <p className="text-sm">{error}</p>
       </div>
@@ -83,27 +92,43 @@ export default function CataloguePage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Catalogue</h1>
-          <p className="text-sm text-neutral-500">Gestion des ouvrages et ressources de la bibliothèque</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.bibliothecaire.catalogue.title')}</h1>
+          <p className="text-sm text-[var(--text-secondary)]">{t('pages.bibliothecaire.catalogue.subtitle')}</p>
         </div>
-        <Button size="sm" icon={<Plus />}>Ajouter un ouvrage</Button>
+        <Button size="sm" icon={<Plus />} onClick={() => setAjout(true)}>{t('pages.bibliothecaire.catalogue.ajouter_un_ouvrage')}</Button>
+        <PretDialog open={pretLivre !== null} livreId={pretLivre} onClose={() => setPretLivre(null)} onDone={() => requete.refetch()} />
+        <FormDialog
+          open={ajout}
+          title={t('pages.bibliothecaire.catalogue.ajouter_un_ouvrage')}
+          initial={{ nombre_exemplaires: '1' }}
+          fields={[
+            { name: 'titre', label: f('titre'), required: true },
+            { name: 'auteur', label: f('auteur'), required: true },
+            { name: 'isbn', label: 'ISBN', required: true },
+            { name: 'categorie', label: f('categorie'), required: true },
+            { name: 'annee_publication', label: f('annee'), type: 'number', required: true, min: 1450, max: new Date().getFullYear() },
+            { name: 'nombre_exemplaires', label: f('exemplaires'), type: 'number', min: 1 },
+          ]}
+          onSubmit={ajouter}
+          onClose={() => setAjout(false)}
+        />
       </div>
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-4">
-        <StatsCard title="Total Ouvrages" value={String(stats.total)} icon={BookOpen} color="primary" />
-        <StatsCard title="Disponibles" value={String(stats.disponibles)} icon={Book} color="emerald" />
-        <StatsCard title="Empruntés" value={String(stats.empruntes)} icon={BookMarked} color="amber" />
-        <StatsCard title="Catégories" value={String(stats.categories)} icon={BookX} color="sky" />
+        <StatsCard title={t('pages.bibliothecaire.catalogue.total_ouvrages')} value={String(stats.total)} icon={BookOpen} color="primary" />
+        <StatsCard title={t('pages.bibliothecaire.catalogue.disponibles')} value={String(stats.disponibles)} icon={Book} color="emerald" />
+        <StatsCard title={t('pages.bibliothecaire.catalogue.empruntes')} value={String(stats.empruntes)} icon={BookMarked} color="amber" />
+        <StatsCard title={t('pages.bibliothecaire.catalogue.categories')} value={String(stats.categories)} icon={BookX} color="sky" />
       </div>
 
       {/* Filtres */}
-      <Card>
+      <Card padding>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
             <Input
-              placeholder="Rechercher un titre ou un auteur..."
+              placeholder={t('pages.bibliothecaire.catalogue.rechercher_un_titre_ou_un_auteur')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
@@ -118,7 +143,7 @@ export default function CataloguePage() {
                   'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
                   filterCategorie === (cat === 'Toutes' ? '' : cat)
                     ? 'bg-[var(--primary-subtle)] text-[var(--accent)] dark:text-[var(--accent)]'
-                    : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700'
+                    : 'bg-[var(--surface-subtle)] text-[var(--text-secondary)] hover:bg-[var(--surface-subtle)]   '
                 )}
               >
                 {cat}
@@ -132,41 +157,40 @@ export default function CataloguePage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {filtered.length === 0 && (
           <div className="sm:col-span-2 lg:col-span-3">
-            <Card>
-              <div className="text-center py-8 text-neutral-500">
+            <Card padding>
+              <div className="text-center py-8 text-[var(--text-secondary)]">
                 <BookOpen className="mx-auto h-8 w-8 mb-2" />
-                <p className="text-sm">Aucun ouvrage trouvé</p>
+                <p className="text-sm">{t('pages.bibliothecaire.catalogue.aucun_ouvrage_trouve')}</p>
               </div>
             </Card>
           </div>
         )}
         {filtered.map((o) => (
-          <Card key={o.id} hover>
+          <Card padding key={o.id} hover>
             <div className="h-10 w-10 rounded-xl bg-[var(--primary-subtle)] flex items-center justify-center mb-3">
               <BookOpen className="h-5 w-5 text-[var(--accent)]" />
             </div>
-            <h3 className="font-semibold text-sm text-neutral-900 dark:text-white mb-1">{o.titre}</h3>
-            <p className="text-xs text-neutral-500 mb-2">par {o.auteur || 'Inconnu'}</p>
+            <h3 className="font-semibold text-sm text-[var(--text-primary)]  mb-1">{o.titre}</h3>
+            <p className="text-xs text-[var(--text-secondary)] mb-2">par {o.auteur || t('pages.bibliothecaire.catalogue.inconnu')}</p>
             <div className="flex items-center gap-2 mb-2">
               {o.categorie && <Badge variant="outline" size="sm">{o.categorie}</Badge>}
               {o.annee_publication && (
-                <span className="text-[10px] text-neutral-400">{o.annee_publication}</span>
+                <span className="text-[10px] text-[var(--text-tertiary)]">{o.annee_publication}</span>
               )}
             </div>
             <div className="flex items-center justify-between text-xs">
               <span className={cn(
                 'font-medium',
-                o.disponible ? 'text-emerald-600' : 'text-red-600'
+                enRayon(o) > 0 ? 'text-emerald-600' : 'text-red-600'
               )}>
-                {o.disponible ? 'Disponible' : 'Épuisé'}
-                {o.nombre_exemplaires ? ` (${o.nombre_exemplaires} ex.)` : ''}
+                {enRayon(o) > 0 ? t('pages.bibliothecaire.catalogue.disponible') : t('pages.bibliothecaire.catalogue.epuise')}
+                {o.nombre_exemplaires ? ` (${enRayon(o)}/${o.nombre_exemplaires} ex.)` : ''}
               </span>
-              {o.isbn && <span className="text-neutral-400">ISBN: {o.isbn.slice(-8)}</span>}
+              {o.isbn && <span className="text-[var(--text-tertiary)]">ISBN: {o.isbn.slice(-8)}</span>}
             </div>
-            <div className="mt-3 pt-3 border-t border-neutral-100 dark:border-neutral-800 flex gap-2">
-              <Button variant="outline" size="sm" icon={<Eye />}>Détails</Button>
-              <Button variant="ghost" size="sm" disabled={!o.disponible}>
-                Emprunter
+            <div className="mt-3 pt-3 border-t border-[var(--border-light)]  flex gap-2">
+              <Button variant="outline" size="sm" disabled={enRayon(o) === 0} onClick={() => setPretLivre(o.id)}>
+                {t('pages.bibliothecaire.catalogue.emprunter')}
               </Button>
             </div>
           </Card>

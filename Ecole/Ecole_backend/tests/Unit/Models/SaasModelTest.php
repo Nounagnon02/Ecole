@@ -141,3 +141,39 @@ test('module can be created with roles array cast', function () {
         ->toContain('directeur')
         ->toContain('enseignant');
 });
+
+/* ─── Provisionnement d'une base par tenant (régression) ────────────────── */
+
+test('creating a tenant does not attempt to provision a real database', function () {
+    // Le scaffold par défaut de stancl/tenancy câble `TenantCreated` sur un
+    // pipeline `CreateDatabase → MigrateDatabase`, exécuté de façon SYNCHRONE
+    // à chaque `Tenant::create()`. En production, ça créait une vraie base
+    // MySQL (ou plantait faute du droit `CREATE DATABASE`) pour une isolation
+    // que l'appli n'utilise pas : le cloisonnement réel se fait par
+    // `ecole_id`. En SQLite (les tests), créer une base ne coûte rien et ne
+    // demande aucun droit, donc l'ancien comportement passait ici sans
+    // jamais révéler le problème — même angle mort que A1/A2.
+    //
+    // TenancyServiceProvider::events() ne doit plus rien câbler sur ces
+    // événements : aucune base par tenant n'est provisionnée.
+    expect(\Illuminate\Support\Facades\Event::hasListeners(\Stancl\Tenancy\Events\TenantCreated::class))->toBeFalse()
+        ->and(\Illuminate\Support\Facades\Event::hasListeners(\Stancl\Tenancy\Events\TenantDeleted::class))->toBeFalse();
+
+    // Et le comportement observable : créer un tenant ne doit ouvrir aucune
+    // connexion de base de données supplémentaire.
+    $connectionsBefore = array_keys(app('db')->getConnections());
+
+    Tenant::create([
+        'id' => (string) \Illuminate\Support\Str::uuid(),
+        'data' => [],
+        'name' => 'Régression Provisioning',
+        'slug' => 'regression-provisioning',
+        'domain' => 'regression-provisioning.example.com',
+        'status' => 'trial',
+        'school_type' => 'primaire',
+    ]);
+
+    $connectionsAfter = array_keys(app('db')->getConnections());
+
+    expect($connectionsAfter)->toBe($connectionsBefore);
+});

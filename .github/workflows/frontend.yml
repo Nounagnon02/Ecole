@@ -48,6 +48,13 @@ jobs:
       - name: Run ESLint
         run: npm run lint
         continue-on-error: true
+      # Couvre uniquement le client API généré (openapi-typescript) et son
+      # enveloppe typée — voir tsconfig.json `include`, volontairement étroit.
+      # Ne type-vérifie aucune des pages .jsx existantes. Contrairement à
+      # ESLint ci-dessus, bloquant dès le départ : ces fichiers partent d'un
+      # état vérifié sans erreur, pas d'un passif à tolérer.
+      - name: Typecheck (generated API client)
+        run: npm run typecheck
       - name: Check build
         run: npm run build -- --logLevel error
         env:
@@ -68,6 +75,16 @@ jobs:
           cache-dependency-path: Ecole/Ecole_frontend/package-lock.json
       - name: Install dependencies
         run: npm ci
+      # `test` tourne dans un job isolé de `lint` (checkout et `npm ci`
+      # propres, sans les artefacts du job précédent) : sans ceci,
+      # `production-bundle.test.js` (le garde-fou contre la régression
+      # « page blanche » décrite dans vite.config.js) ne trouverait jamais de
+      # `build/` et se contenterait de passer en silence, sans jamais
+      # réellement vérifier quoi que ce soit.
+      - name: Build (pour le test du bundle de production)
+        run: npm run build -- --logLevel error
+        env:
+          CI: true
       - name: Run Vitest
         run: npm test
         env:
@@ -77,13 +94,43 @@ jobs:
       # Le rapport reste facultatif jusqu'à ce que le paquet soit déclaré.
       - name: Coverage report (non-blocking)
         continue-on-error: true
-        run: npx vitest run --coverage
+        run: npx vitest run --project unit --coverage
+        env:
+          CI: true
+
+  # Chaque story est rendue comme un test dans un vrai Chromium (pas jsdom) :
+  # un composant qui plante au rendu, ou une story cassée par un changement
+  # de props, échoue ici. Job séparé de `test` car il exige un navigateur
+  # installé et ne doit pas ralentir ni fragiliser la suite unitaire.
+  storybook:
+    runs-on: ubuntu-22.04
+    needs: lint
+    strategy:
+      matrix:
+        node-version: [20]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          cache-dependency-path: Ecole/Ecole_frontend/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Playwright
+        run: npx playwright install --with-deps chromium
+      - name: Run Storybook tests
+        run: npm run test:storybook
+        env:
+          CI: true
+      - name: Build Storybook
+        run: npm run build-storybook
         env:
           CI: true
 
   e2e:
     runs-on: ubuntu-22.04
-    needs: test
+    needs: [test, storybook]
     strategy:
       matrix:
         node-version: [20]
@@ -116,16 +163,21 @@ jobs:
       # `npx vite &` seul laissait le serveur attaché aux flux de l'étape :
       # ceux-ci sont fermés à la fin du `run`, ce qui pouvait tuer le serveur
       # avant l'étape d'attente.
+      # Le port 3002 est celui de `vite.config.js` et le défaut de `baseURL`
+      # dans `playwright.config.js`. La CI démarrait sur 3000 sans poser
+      # `PLAYWRIGHT_BASE_URL` : le serveur écoutait donc là où les tests
+      # n'allaient pas regarder.
       - name: Start dev server
-        run: nohup npx vite --port 3000 --strictPort > vite.log 2>&1 &
+        run: nohup npm start -- --port 3002 --strictPort > vite.log 2>&1 &
         env:
           CI: true
       - name: Wait for server
-        run: npx wait-on --timeout 120000 http://localhost:3000
+        run: npm exec -- wait-on --timeout 120000 http://localhost:3002
       - name: Run Playwright tests
-        run: npx playwright test
+        run: npm run test:e2e
         env:
           CI: true
+          PLAYWRIGHT_BASE_URL: http://localhost:3002
       - name: Upload Playwright report
         if: failure()
         uses: actions/upload-artifact@v4

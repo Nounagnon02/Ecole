@@ -7,22 +7,34 @@
  * et la route-config comme source unique des chemins.
  */
 
-import { useEffect, Suspense, lazy as reactLazy } from 'react';
+import { useEffect, useState, Suspense, lazy as reactLazy } from 'react';
 import { Routes, Route, Navigate, Link, ScrollRestoration } from 'react-router-dom';
-import { AnimatePresence } from 'framer-motion';
-import { Toaster } from 'sonner';
 import useAuthStore from '@/shared/stores/auth-store';
 import useCommandK from '@/shared/hooks/useCommandK';
-import AppShell from '@/shared/components/layout/AppShell';
-import CommandPalette from '@/shared/components/ui/CommandPalette';
-import ProtectedRoute from '@/shared/components/auth/ProtectedRoute';
+import ProtectedRoute, { TWO_FACTOR_SETUP_PATH, PASSWORD_CHANGE_PATH } from '@/shared/components/auth/ProtectedRoute';
 import LoginForm from '@/shared/components/auth/LoginForm';
-import ForgotPassword from '@/app/features/auth/ForgotPassword';
-import ResetPassword from '@/app/features/auth/ResetPassword';
 import ErrorBoundary from '@/shared/components/ui/ErrorBoundary';
+import { captureException } from '@/shared/lib/error-reporting';
 import { LoadingSpinner } from '@/shared/components/ui/Skeleton';
-import NotFoundPage from '@/app/error/NotFoundPage';
-import ForbiddenPage from '@/app/error/ForbiddenPage';
+import { useTranslation } from '@/shared/i18n';
+
+// Seule la page de connexion est dans le premier chargement : en 3G lente,
+// chaque kilo-octet de plus retarde le formulaire. La coque des pages
+// connectées (et framer-motion), la palette de commandes et les écrans
+// secondaires viennent à la demande.
+const AuthenticatedLayout = reactLazy(() => import('@/shared/components/layout/AuthenticatedLayout'));
+const CommandPalette = reactLazy(() => import('@/shared/components/ui/CommandPalette'));
+const PasswordChangePage = reactLazy(() => import('@/app/features/auth/PasswordChangePage'));
+const TwoFactorSetupPage = reactLazy(() => import('@/app/features/auth/TwoFactorSetupPage'));
+const ForgotPassword = reactLazy(() => import('@/app/features/auth/ForgotPassword'));
+const ResetPassword = reactLazy(() => import('@/app/features/auth/ResetPassword'));
+const ResetSmsPage = reactLazy(() => import('@/app/features/auth/ResetSmsPage'));
+const NotFoundPage = reactLazy(() => import('@/app/error/NotFoundPage'));
+const ForbiddenPage = reactLazy(() => import('@/app/error/ForbiddenPage'));
+// Le conteneur des notifications : la page de connexion n'en affiche pas, et
+// les pages qui en affichent sont chargées après lui.
+const Toaster = reactLazy(() => import('sonner').then((m) => ({ default: m.Toaster })));
+import TitreDocument from '@/shared/components/layout/TitreDocument';
 import {
   PROTECTED_ROUTES,
   ROLE_REDIRECT_MAP
@@ -30,6 +42,8 @@ import {
 
 /* ─── Page non autorisée ─────────────────────────────────────────────── */
 function UnauthorizedPage() {
+  const { t } = useTranslation();
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[var(--surface)] px-6 text-center">
       <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-[var(--red-subtle)] text-[var(--red)]">
@@ -37,30 +51,19 @@ function UnauthorizedPage() {
           <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
         </svg>
       </div>
-      <h1 className="font-fraunces text-2xl font-semibold text-[var(--text-primary)]">
-        Accès non autorisé
+      <h1 className="font-heading text-2xl font-semibold text-[var(--text-primary)]">
+        {t('error.unauthorized')}
       </h1>
       <p className="max-w-sm text-sm text-[var(--text-secondary)]">
-        Vous n&apos;avez pas les permissions nécessaires pour accéder à cette page.
+        {t('error.403.description')}
       </p>
       <Link
         to="/connexion"
-        className="mt-2 rounded-lg bg-[var(--accent)] px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[var(--accent-hover)]"
+        className="mt-2 rounded-lg bg-[var(--action)] px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[var(--action-hover)]"
       >
-        Retour à la connexion
+        {t('error.go_home')}
       </Link>
     </div>
-  );
-}
-
-/* ─── Authenticated layout wrapper ──────────────────────────────────── */
-function AuthenticatedLayout({ children }) {
-  return (
-    <AppShell>
-      <AnimatePresence mode="wait">
-        {children}
-      </AnimatePresence>
-    </AppShell>
   );
 }
 
@@ -80,6 +83,18 @@ function AuthRedirect() {
   return <Navigate to="/connexion" replace />;
 }
 
+/**
+ * Lance le chargement de la page en même temps que celui de la coque.
+ * Sans lui, la page (chargée à la demande dans la coque, elle aussi à la
+ * demande) ne commençait qu'une fois la coque arrivée : une attente en
+ * cascade, coûteuse en 3G lente. Le module est mis en cache par le
+ * navigateur : `React.lazy` le retrouve ensuite sans nouvelle requête.
+ */
+function PrechargerPage({ charger }) {
+  useState(() => { charger().catch(() => {}); });
+  return null;
+}
+
 /* ─── Route map builder ─────────────────────────────────────────────── */
 function buildProtectedRoutes() {
   return Object.entries(PROTECTED_ROUTES).map(([key, cfg]) => {
@@ -92,9 +107,10 @@ function buildProtectedRoutes() {
         path={cfg.path}
         element={
           <ProtectedRoute allowedRoles={cfg.roles}>
+            <PrechargerPage charger={cfg.component} />
             <AuthenticatedLayout>
               <Suspense fallback={<LoadingSpinner />}>
-                  <ErrorBoundary>
+                  <ErrorBoundary onError={(error, info) => captureException(error, info)}>
                     <Component />
                   </ErrorBoundary>
                 </Suspense>
@@ -109,20 +125,22 @@ function buildProtectedRoutes() {
 /* ─── Composant principal ────────────────────────────────────────────── */
 function App() {
   const initialize = useAuthStore((s) => s.initialize);
-  const isLoading = useAuthStore((s) => s.isLoading);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   useCommandK();
 
   useEffect(() => {
     initialize();
   }, [initialize]);
 
-  if (isLoading) {
-    return <LoadingSpinner />;
-  }
-
+  // Pas d'attente globale de /auth/me : la page de connexion s'affiche tout
+  // de suite (un aller-retour de moins en 3G lente). Les routes protégées et
+  // `/` attendent la session elles-mêmes (ProtectedRoute, AuthRedirect).
   return (
     <Suspense fallback={<LoadingSpinner />}>
-      <CommandPalette />
+      {/* Suspense propres : leur chargement ne doit pas cacher la page. La
+          palette (et ses icônes) ne se charge qu'une fois connecté. */}
+      <Suspense fallback={null}>
+      {isAuthenticated && <CommandPalette />}
       <Toaster
         position="top-right"
         aria-live="polite"
@@ -135,13 +153,17 @@ function App() {
         closeButton
         richColors={false}
       />
+      </Suspense>
       <ScrollRestoration getKey={(location) => location.pathname + location.search} />
+      {/* Le titre de l'onglet suit le titre de la page (BUG-026). */}
+      <TitreDocument />
       <Routes>
         {/* ─── Route publique — connexion ──────────────────────────────── */}
         <Route path="/connexion" element={<LoginForm />} />
 
         {/* ─── Routes publiques — mot de passe oublié ──────────────────── */}
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/mot-de-passe-oublie/sms" element={<ResetSmsPage />} />
         <Route path="/reset-password" element={<ResetPassword />} />
 
         {/* ─── Route publique — landing / redirect auth ────────────────── */}
@@ -152,6 +174,16 @@ function App() {
 
         {/* ─── 403 — Accès refusé ──────────────────────────────────────────── */}
         <Route path="/403" element={<ForbiddenPage />} />
+
+        {/* ─── Activation imposée de la 2FA — connecté, mais hors coque ─── */}
+        <Route
+          path={PASSWORD_CHANGE_PATH}
+          element={<ProtectedRoute><PasswordChangePage /></ProtectedRoute>}
+        />
+        <Route
+          path={TWO_FACTOR_SETUP_PATH}
+          element={<ProtectedRoute><TwoFactorSetupPage /></ProtectedRoute>}
+        />
 
         {/* ─── Routes protégées (dashboards) ───────────────────────────── */}
         {buildProtectedRoutes()}

@@ -9,11 +9,18 @@ use App\Models\User;
 use App\Models\Eleve;
 use App\Models\Parent as ParentModel;
 use App\Models\Ecole;
+use Database\Seeders\Concerns\RefusesInProduction;
 
 class BeninEducationSeeder extends Seeder
 {
+    use RefusesInProduction;
+
     public function run()
     {
+        if ($this->abortIfProduction()) {
+            return;
+        }
+
         // 0. Ecole par défaut
         $ecole = DB::table('ecoles')->insertGetId([
             'nom' => 'Complexe Scolaire Excellence',
@@ -64,19 +71,25 @@ class BeninEducationSeeder extends Seeder
             ]);
             $parentIds[] = DB::table('parents')->insertGetId([
                 'user_id' => $userId,
+                // Sans école, le filtre par établissement écarte la fiche : le
+                // parent de démonstration PAR001 voyait « Aucun enfant lié à
+                // votre compte » et un tableau de bord vide.
+                'ecole_id' => $ecole,
                 'created_at' => now(),
                 'updated_at' => now()
             ]);
         }
 
         // Series
+        // Sans école, une série est invisible : le modèle est cloisonné par
+        // établissement (audit BUG-009).
         DB::table('series')->insert([
-            ['nom' => 'Maternelle', 'created_at' => now(), 'updated_at' => now()],
-            ['nom' => 'Primaire', 'created_at' => now(), 'updated_at' => now()],
-            ['nom' => 'Collège', 'created_at' => now(), 'updated_at' => now()],
-            ['nom' => 'Série A', 'created_at' => now(), 'updated_at' => now()],
-            ['nom' => 'Série C', 'created_at' => now(), 'updated_at' => now()],
-            ['nom' => 'Série D', 'created_at' => now(), 'updated_at' => now()],
+            ['ecole_id' => $ecole, 'nom' => 'Maternelle', 'created_at' => now(), 'updated_at' => now()],
+            ['ecole_id' => $ecole, 'nom' => 'Primaire', 'created_at' => now(), 'updated_at' => now()],
+            ['ecole_id' => $ecole, 'nom' => 'Collège', 'created_at' => now(), 'updated_at' => now()],
+            ['ecole_id' => $ecole, 'nom' => 'Série A', 'created_at' => now(), 'updated_at' => now()],
+            ['ecole_id' => $ecole, 'nom' => 'Série C', 'created_at' => now(), 'updated_at' => now()],
+            ['ecole_id' => $ecole, 'nom' => 'Série D', 'created_at' => now(), 'updated_at' => now()],
         ]);
 
         // Matieres

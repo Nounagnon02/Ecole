@@ -1,33 +1,101 @@
-# École - Système de Gestion Scolaire Complet
+# École — plateforme de gestion scolaire
 
-Ce projet est une solution complète pour la gestion d'établissements scolaires, conçue pour simplifier l'administration et améliorer la communication entre les différentes parties prenantes de l'école.
+Gestion d'établissements scolaires multi-écoles (Bénin), du maternel au
+supérieur : élèves, notes et bulletins, paiements, bibliothèque, infirmerie,
+transport, messagerie. Quatre surfaces partagent une même API.
 
-##  Architecture du Projet
+Pour contribuer : [CONTRIBUTING.md](./CONTRIBUTING.md).
 
-Le système est construit sur une architecture modulaire composée de trois parties principales :
+## Les quatre surfaces
 
-### 1. Backend (Laravel)
+| Surface | Pile | Emplacement |
+|---|---|---|
+| **API** | Laravel 11 · PHP 8.2 · MySQL 8 | [`Ecole/Ecole_backend`](./Ecole/Ecole_backend) |
+| **Web** | React 18 · Vite 6 · Tailwind 4 · TanStack Query | [`Ecole/Ecole_frontend`](./Ecole/Ecole_frontend) |
+| **Mobile** | Expo 52 · React Native 0.76 · Expo Router | [`Ecole/Ecole_mobile`](./Ecole/Ecole_mobile) |
+| **Desktop** | Electron 28, enveloppe du build web | [`Ecole/Ecole_desktop`](./Ecole/Ecole_desktop) |
 
-Le cœur du système, construit avec le framework PHP **Laravel**. Il gère toute la logique métier, les interactions avec la base de données, l'authentification et fournit une API RESTful pour les applications frontend et mobile.
+## Démarrer
 
-- **Technologie** : PHP, Laravel
-- **Base de données** : MySQL, PostgreSQL (configurable)
-- **Pour plus de détails**, consultez le [README du backend](./Ecole/Ecole_backend/README.md).
+```bash
+# API — http://localhost:8000
+cd Ecole/Ecole_backend
+composer install
+cp .env.example .env && php artisan key:generate
+php artisan migrate --seed
+php artisan serve
 
-### 2. Frontend (React)
+# Web — http://localhost:3002 (proxy /api vers le port 8000)
+cd Ecole/Ecole_frontend
+npm ci
+npm start
+```
 
-Une application web riche et interactive développée avec **React**. Elle fournit une interface utilisateur intuitive pour les différents rôles au sein de l'école (directeur, enseignant, élève, etc.), chacun avec son propre tableau de bord et ses fonctionnalités dédiées.
+## Tests
 
-- **Technologie** : React, React Router, Axios
-- **Pour plus de détails**, consultez le [README du frontend](./Ecole/Ecole_frontend/README.md).
+```bash
+cd Ecole/Ecole_backend  && vendor/bin/pest          # 658 tests
+cd Ecole/Ecole_frontend && npm test                 # 465 tests
+cd Ecole/Ecole_frontend && npm run test:e2e         # 78 tests Playwright
+```
 
-### 3. Application Mobile (React Native)
+La suite backend tourne sur SQLite en mémoire par défaut. La CI la rejoue sur
+**MySQL 8**, parce que les deux moteurs ne se comportent pas pareil : types
+`decimal` rendus en chaîne, clés étrangères réellement appliquées, `YEAR`
+borné à 1901‑2155. Pour reproduire ce passage en local :
 
-Une application mobile multiplateforme (iOS et Android) construite avec **React Native**. Elle offre un accès en déplacement aux fonctionnalités clés du système, permettant aux utilisateurs de rester connectés et informés où qu'ils soient.
+```bash
+DB_CONNECTION=mysql DB_DATABASE=ecole_test vendor/bin/pest
+```
 
-- **Technologie** : React Native, Expo
-- **Pour plus de détails**, consultez le [README de l'application mobile](./Ecole/Ecole_mobile/README.md).
+## Ce qu'il faut savoir avant de toucher au code
 
-## Démarrage Rapide
+**Le cloisonnement par école est un scope global, pas un `where` manuel.**
+`app/Traits/BelongsToEcole.php` filtre 71 des 82 modèles sur `ecole_id` et,
+faute d'école résolue, bloque tout (`whereRaw('1 = 0')`) plutôt que de laisser
+passer. `User` en est exempté — la connexion doit trouver un compte avant de
+connaître son école — ce qui impose un filtrage manuel partout où l'on
+interroge `users`.
 
-Pour obtenir des instructions détaillées sur la configuration et le lancement de chaque partie de l'application, veuillez vous référer aux fichiers `README.md` respectifs liés ci-dessus.
+**Hors requête HTTP, il n'y a ni `auth()` ni session.** Un job en file, une
+commande Artisan, un webhook de paiement : tous perdent le contexte et le scope
+retombe sur « aucun résultat », silencieusement. Ces chemins doivent lier une
+école explicitement avec `App\Support\SchoolContext::for()`.
+
+**Les rôles sont une colonne `string` et un middleware maison**
+(`app/Http/Middleware/CheckRole.php`, alias `role:`), pas un paquet de
+permissions. Le référentiel des rôles vit dans `app/Support/Roles.php`.
+
+## Documentation
+
+| Chemin | Contenu |
+|---|---|
+| [`docs/production-secrets.md`](./docs/production-secrets.md) | Gestion des secrets et procédure de rotation — **à lire avant tout déploiement** |
+| [`docs/backups.md`](./docs/backups.md) | Sauvegardes chiffrées, restauration, exercice trimestriel |
+| [`docs/adr/`](./docs/adr) | Décisions d'architecture (pourquoi, pas seulement quoi) |
+| [`docs/reference/`](./docs/reference) | Conception du cloisonnement, API universitaire, structure des migrations |
+| [`docs/archive/`](./docs/archive) | Audits, plans et rapports historiques, conservés pour mémoire |
+
+## CI
+
+Cinq workflows sous [`.github/workflows/`](./.github/workflows), orchestrés par
+`ci.yml`, qui est le seul habilité à déclencher un déploiement. Le backend est
+testé deux fois — SQLite puis MySQL 8 — et le déploiement dépend des deux.
+
+`ci.yml` scanne aussi les secrets (gitleaks) sur les seuls commits introduits
+par le push ou la PR — jamais tout l'historique — et bloque le déploiement en
+cas de fuite détectée. Dependabot ([`.github/dependabot.yml`](./.github/dependabot.yml))
+ouvre une PR hebdomadaire par écosystème (composer, npm, github-actions) pour
+les mises à jour de sécurité.
+
+Pour attraper une fuite (ou une erreur de style) avant même de pousser :
+`git config core.hooksPath .githooks` (une fois, par dépôt local) active un
+hook de pre-commit qui lance le même scan de secrets sur ce qui est indexé,
+reformate les fichiers PHP indexés (Pint) et corrige ce qu'ESLint peut
+corriger sur les fichiers JS/JSX indexés — en ré-indexant le résultat. Un
+fichier indexé en partie (`git add -p`) n'est jamais corrigé ni ré-indexé
+(ESLint vérifie tout de même sa version indexée), et aucun fichier hors du
+commit n'est modifié. Aucune étape ne bloque si son outil n'est pas installé
+localement (secrets exceptés, si `gitleaks` en trouve un vrai), et le lint ne
+bloque que sur de vraies erreurs, jamais sur un simple avertissement — la CI
+reste le filet de sécurité pour tout le reste.

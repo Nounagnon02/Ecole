@@ -15,23 +15,27 @@ class ComptableDashboardController extends Controller
     public function comptable()
     {
         $data = Cache::remember('dashboard_comptable_' . (\App\Models\Eleve::currentEcoleId() ?? 'global'), 120, function () {
+            try {
             $moisActuel = now()->month;
             $anneeActuelle = now()->year;
 
-            $revenusMois = (float) \App\Models\PaiementEleve::whereMonth('date_paiement', $moisActuel)
-                ->whereYear('date_paiement', $anneeActuelle)
-                ->where('statut_global', \App\Models\PaiementEleve::PAID)
-                ->sum('montant');
+            // Encaissé du mois : versements approuvés (caisse) et paiements en
+            // ligne confirmés, comme pour le directeur (R-26). Les échéances
+            // soldées seules, lues dans `montant`, ignoraient tout versement
+            // partiel (R-41, 16/11/2026).
+            $revenusMois = \App\Support\Encaissements::entre(now()->startOfMonth(), now()->endOfMonth());
 
             $enAttente = \App\Models\PaiementEleve::whereIn('statut_global', [
                 \App\Models\PaiementEleve::PENDING,
                 \App\Models\PaiementEleve::PARTIAL,
             ])->count();
 
-            $totalPaiements = \App\Models\PaiementEleve::whereMonth('date_paiement', $moisActuel)->count();
-            $payes = \App\Models\PaiementEleve::whereMonth('date_paiement', $moisActuel)
-                ->where('statut_global', \App\Models\PaiementEleve::PAID)->count();
-            $tauxRecouvrement = $totalPaiements > 0 ? round(($payes / $totalPaiements) * 100) : 0;
+            // Part des MONTANTS dus déjà payés, sur toutes les échéances : la
+            // même mesure que la page Factures. L'ancienne part de LIGNES
+            // soldées du mois donnait 35 % quand Factures affichait 68 % (R-41).
+            $du = (float) \App\Models\PaiementEleve::sum('montant_total');
+            $paye = (float) \App\Models\PaiementEleve::sum('montant_paye');
+            $tauxRecouvrement = $du > 0 ? round(($paye / $du) * 100) . '%' : '—';
 
             $depensesMois = (float) \App\Models\Depense::whereMonth('date_depense', $moisActuel)
                 ->whereYear('date_depense', $anneeActuelle)->sum('montant');
@@ -39,12 +43,11 @@ class ComptableDashboardController extends Controller
             // Évolution des finances — 6 derniers mois (revenus + dépenses),
             // agrégée en SQL (cf. audit P4) : l'ancien code chargeait toutes les
             // lignes de la fenêtre puis les regroupait en PHP.
-            $revenusParMois = \App\Models\PaiementEleve::whereBetween('date_paiement', [
-                now()->startOfMonth()->subMonths(5), now()->endOfMonth(),
-            ])->where('statut_global', \App\Models\PaiementEleve::PAID)
-                ->selectRaw($this->monthExpression('date_paiement') . ' as mois, SUM(montant) as total')
-                ->groupBy('mois')
-                ->pluck('total', 'mois');
+            $revenusParMois = collect($this->sixDerniersMois())->map(function ($libelle, $cle) {
+                $debut = \Carbon\Carbon::createFromFormat('!Y-m', $cle)->startOfMonth();
+
+                return \App\Support\Encaissements::entre($debut, $debut->copy()->endOfMonth());
+            });
 
             $depensesParMois = \App\Models\Depense::whereBetween('date_depense', [
                 now()->startOfMonth()->subMonths(5), now()->endOfMonth(),
@@ -62,15 +65,15 @@ class ComptableDashboardController extends Controller
             }
 
             // Répartition par type de paiement (en %)
-            $types = \App\Models\PaiementEleve::select('type_paiement')
+            $typesRows = \App\Models\PaiementEleve::select('type_paiement', \DB::raw('COUNT(*) as total'))
                 ->whereNotNull('type_paiement')
-                ->get()
-                ->groupBy('type_paiement');
+                ->groupBy('type_paiement')
+                ->get();
 
-            $totalTypes = max($types->flatten()->count(), 1);
-            $repartition = $types->map(fn ($g, $nom) => [
-                'name' => $nom,
-                'value' => round(($g->count() / $totalTypes) * 100),
+            $totalTypes = max($typesRows->sum('total'), 1);
+            $repartition = $typesRows->map(fn ($row) => [
+                'name' => $row->type_paiement,
+                'value' => round(($row->total / $totalTypes) * 100),
             ])->values();
 
             $statutsFR = [
@@ -108,29 +111,28 @@ class ComptableDashboardController extends Controller
                 ]);
 
             // ─── Trésorerie du mois : encaissé (réellement versé) − dépenses.
-            $encaissementsMois = (float) \App\Models\PaiementEleve::whereMonth('date_paiement', $moisActuel)
-                ->whereYear('date_paiement', $anneeActuelle)
-                ->sum('montant_paye');
+            // Même mesure que « Revenus du mois » : le cumul payé des échéances
+            // touchées ce mois mêlait les versements des mois précédents (R-41).
+            $encaissementsMois = $revenusMois;
 
             // ─── Répartition des revenus par type (part du montant, pas du
             // nombre de lignes comme `repartition`).
-            $montantParType = \App\Models\PaiementEleve::select('type_paiement')
+            $montantRows = \App\Models\PaiementEleve::select('type_paiement', \DB::raw('SUM(montant_paye) as total_montant'))
                 ->whereNotNull('type_paiement')
-                ->get()
                 ->groupBy('type_paiement')
-                ->map(fn ($g) => (float) $g->sum('montant'));
-            $totalMontant = max($montantParType->sum(), 1);
-            $repartitionRevenus = $montantParType->map(fn ($montant, $nom) => [
-                'name' => $nom,
-                'value' => round(($montant / $totalMontant) * 100),
+                ->get();
+            $totalMontant = max($montantRows->sum('total_montant'), 1);
+            $repartitionRevenus = $montantRows->map(fn ($row) => [
+                'name' => $row->type_paiement,
+                'value' => round(((float) $row->total_montant / $totalMontant) * 100),
             ])->values();
 
             return [
                 'stats' => [
-                    ['title' => 'Revenus du Mois', 'value' => number_format($revenusMois, 0, ',', ' ') . ' F', 'trend' => 0, 'trendLabel' => 'ce mois'],
-                    ['title' => 'Factures en Attente', 'value' => (string) $enAttente, 'trend' => 0, 'trendLabel' => 'non soldées'],
-                    ['title' => 'Taux Recouvrement', 'value' => "{$tauxRecouvrement}%", 'trend' => 0, 'trendLabel' => 'ce mois'],
-                    ['title' => 'Dépenses du Mois', 'value' => number_format($depensesMois, 0, ',', ' ') . ' F', 'trend' => 0, 'trendLabel' => 'ce mois'],
+                    ['title' => 'Revenus du Mois', 'value' => number_format($revenusMois, 0, ',', ' ') . ' F', 'trendLabel' => 'ce mois'],
+                    ['title' => 'Factures en Attente', 'value' => (string) $enAttente, 'trendLabel' => 'non soldées'],
+                    ['title' => 'Taux Recouvrement', 'value' => $tauxRecouvrement, 'trendLabel' => 'des montants dus'],
+                    ['title' => 'Dépenses du Mois', 'value' => number_format($depensesMois, 0, ',', ' ') . ' F', 'trendLabel' => 'ce mois'],
                 ],
                 'donnes_ca' => $donneesMensuelles,
                 'repartition' => $repartition,
@@ -143,6 +145,27 @@ class ComptableDashboardController extends Controller
                     'solde' => $encaissementsMois - $depensesMois,
                 ],
             ];
+            } catch (\Exception $e) {
+                \Log::error('Dashboard Comptable error: ' . $e->getMessage());
+                return [
+                    'stats' => [
+                        ['title' => 'Revenus du Mois', 'value' => '0 F', 'trendLabel' => 'ce mois'],
+                        ['title' => 'Factures en Attente', 'value' => '0', 'trendLabel' => 'non soldées'],
+                        ['title' => 'Taux Recouvrement', 'value' => '—', 'trendLabel' => 'ce mois'],
+                        ['title' => 'Dépenses du Mois', 'value' => '0 F', 'trendLabel' => 'ce mois'],
+                    ],
+                    'donnes_ca' => [],
+                    'repartition' => [],
+                    'repartition_revenus' => [],
+                    'factures' => [],
+                    'impayes' => [],
+                    'tresorerie' => [
+                        'encaissements_mois' => 0,
+                        'depenses_mois' => 0,
+                        'solde' => 0,
+                    ],
+                ];
+            }
         });
 
         return response()->json(['success' => true, 'data' => $data]);

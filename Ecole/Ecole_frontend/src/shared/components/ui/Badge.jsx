@@ -6,6 +6,7 @@
  */
 
 import { cn } from '@/shared/lib/utils';
+import { useTranslation } from '@/shared/i18n';
 
 const variants = {
   default: 'bg-[var(--surface-subtle)] text-[var(--text-secondary)]',
@@ -24,12 +25,12 @@ const variants = {
 
 const dotColors = {
   default: 'bg-[var(--text-tertiary)]',
-  primary: 'bg-[var(--primary)]',
+  primary: 'bg-[var(--action)]',
   success: 'bg-[var(--green)]',
   warning: 'bg-[var(--amber)]',
   danger: 'bg-[var(--red)]',
   info: 'bg-[var(--blue)]',
-  accent: 'bg-[var(--accent)]',
+  accent: 'bg-[var(--action)]',
   emerald: 'bg-[var(--emerald)]',
   sky: 'bg-[var(--sky)]',
   purple: 'bg-[var(--purple)]',
@@ -37,7 +38,7 @@ const dotColors = {
 };
 
 const sizes = {
-  sm: 'px-1.5 py-0.5 text-[10px]',
+  sm: 'px-2 py-0.5 text-xs',
   md: 'px-2.5 py-1 text-xs',
   lg: 'px-3 py-1.5 text-sm',
 };
@@ -51,10 +52,11 @@ export default function Badge({
   removable,
   onRemove,
 }) {
+  const { t } = useTranslation();
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-full font-medium whitespace-nowrap',
+        'inline-flex items-center gap-1.5 rounded font-semibold whitespace-nowrap',
         variants[variant],
         sizes[size],
         className
@@ -68,7 +70,7 @@ export default function Badge({
         <button
           onClick={onRemove}
           className="ml-0.5 inline-flex h-3.5 w-3.5 items-center justify-center rounded-full opacity-60 transition-opacity hover:opacity-100"
-          aria-label="Supprimer"
+          aria-label={t('common.delete')}
         >
           <svg width="8" height="8" viewBox="0 0 8 8" fill="currentColor">
             <path d="M1 1l6 6M7 1l-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />

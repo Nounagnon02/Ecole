@@ -176,9 +176,8 @@ class MessagesContractTest extends TestCase
         $mine = Notification::create([
             'user_id' => $this->me->id,
             'type' => 'info',
-            'titre' => 'Mon annonce',
+            'title' => 'Mon annonce',
             'message' => 'Voir la suite',
-            'lu' => false,
             'ecole_id' => $this->school->id,
         ]);
 
@@ -186,21 +185,29 @@ class MessagesContractTest extends TestCase
         $foreign = Notification::create([
             'user_id' => $this->me->id,
             'type' => 'info',
-            'titre' => 'Intrusion',
+            'title' => 'Intrusion',
             'message' => 'Ne doit pas apparaître',
-            'lu' => false,
             'ecole_id' => $otherSchool->id,
         ]);
 
         $items = $this->getJson('/api/notifications')->assertOk()->json('data');
 
         $this->assertCount(1, $items);
-        $this->assertSame('Mon annonce', $items[0]['titre']);
+        $this->assertSame('Mon annonce', $items[0]['title']);
 
         $this->putJson('/api/notifications/' . $mine->id . '/read')->assertOk();
 
         // La notification d'un autre établissement, même adressée à moi,
         // reste inchangée : le scope école empêche l'update.
-        $this->assertSame(0, (int) DB::table('notifications')->where('id', $foreign->id)->value('lu'));
+        //
+        // La colonne est `read_at` depuis `align_notifications_with_frontend` ;
+        // ce test interrogeait encore `lu`. Sur SQLite, un identifiant inconnu
+        // entre guillemets devient une chaîne littérale : la requête rendait
+        // « lu », `(int) 'lu'` valait 0, et l'assertion passait sans rien
+        // vérifier. MySQL rejette la colonne et a révélé le trou.
+        $this->assertNull(
+            DB::table('notifications')->where('id', $foreign->id)->value('read_at'),
+            "La notification d'une autre école ne doit pas avoir été marquée lue."
+        );
     }
 }

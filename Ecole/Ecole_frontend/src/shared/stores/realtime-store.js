@@ -6,6 +6,7 @@
  */
 
 import { create } from 'zustand';
+import logger from '@/shared/lib/logger';
 import { devtools } from 'zustand/middleware';
 import { getEcho } from '@/shared/lib/echo';
 
@@ -33,12 +34,12 @@ const useRealtimeStore = create(
       latestPaiement: null,
 
       /* ─── Connection ────────────────────────────────────────────────────── */
-      connect: () => {
+      connect: async () => {
         const { connecting, connected } = get();
         if (connecting || connected) return;
 
         set({ connecting: true, error: null });
-        const echo = getEcho();
+        const echo = await getEcho();
 
         if (!echo) {
           set({ connecting: false, error: 'Echo not available' });
@@ -54,7 +55,7 @@ const useRealtimeStore = create(
         });
 
         echo.connector.pusher.connection.bind('error', (err) => {
-          console.warn('[Realtime] Error:', err);
+          logger.warn('[Realtime] Error:', err);
           set({ error: err.message || 'Connection error' });
         });
       },
@@ -73,13 +74,26 @@ const useRealtimeStore = create(
       },
 
       /* ─── Notifications ─────────────────────────────────────────────────── */
-      listenForNotifications: (userId) => {
+      // `AppShell` et `Header` appellent tous les deux `listenForNotifications`
+      // au montage pour le même canal. `getEcho()` étant asynchrone, la garde
+      // `if (subscriptions[ch]) return` ne suffit plus : les deux appels la
+      // liraient encore vide avant que le premier n'ait fini d'attendre. La
+      // réservation synchrone (avant l'`await`) ferme cette fenêtre.
+      listenForNotifications: async (userId) => {
         const { subscriptions } = get();
         const ch = `notifications.${userId}`;
         if (subscriptions[ch]) return;
 
-        const echo = getEcho();
-        if (!echo) return;
+        set((state) => ({ subscriptions: { ...state.subscriptions, [ch]: 'pending' } }));
+
+        const echo = await getEcho();
+        if (!echo) {
+          set((state) => {
+            const { [ch]: _removed, ...rest } = state.subscriptions;
+            return { subscriptions: rest };
+          });
+          return;
+        }
 
         const channel = echo.private(ch);
         channel.listen('.notification.pushed', (data) => {
@@ -94,13 +108,21 @@ const useRealtimeStore = create(
       },
 
       /* ─── Messaging ─────────────────────────────────────────────────────── */
-      listenForMessages: (userId) => {
+      listenForMessages: async (userId) => {
         const { subscriptions } = get();
         const ch = `messages.${userId}`;
         if (subscriptions[ch]) return;
 
-        const echo = getEcho();
-        if (!echo) return;
+        set((state) => ({ subscriptions: { ...state.subscriptions, [ch]: 'pending' } }));
+
+        const echo = await getEcho();
+        if (!echo) {
+          set((state) => {
+            const { [ch]: _removed, ...rest } = state.subscriptions;
+            return { subscriptions: rest };
+          });
+          return;
+        }
 
         const channel = echo.private(ch);
         channel.listen('.message.sent', (data) => {
@@ -112,13 +134,21 @@ const useRealtimeStore = create(
         }));
       },
 
-      listenForConversation: (conversationId) => {
+      listenForConversation: async (conversationId) => {
         const { subscriptions } = get();
         const ch = `conversations.${conversationId}`;
         if (subscriptions[ch]) return;
 
-        const echo = getEcho();
-        if (!echo) return;
+        set((state) => ({ subscriptions: { ...state.subscriptions, [ch]: 'pending' } }));
+
+        const echo = await getEcho();
+        if (!echo) {
+          set((state) => {
+            const { [ch]: _removed, ...rest } = state.subscriptions;
+            return { subscriptions: rest };
+          });
+          return;
+        }
 
         const channel = echo.private(ch);
         channel.listen('.message.sent', (data) => {
@@ -131,13 +161,21 @@ const useRealtimeStore = create(
       },
 
       /* ─── Grades ────────────────────────────────────────────────────────── */
-      listenForGradeUpdates: (classeId) => {
+      listenForGradeUpdates: async (classeId) => {
         const { subscriptions } = get();
         const ch = `grades.${classeId}`;
         if (subscriptions[ch]) return;
 
-        const echo = getEcho();
-        if (!echo) return;
+        set((state) => ({ subscriptions: { ...state.subscriptions, [ch]: 'pending' } }));
+
+        const echo = await getEcho();
+        if (!echo) {
+          set((state) => {
+            const { [ch]: _removed, ...rest } = state.subscriptions;
+            return { subscriptions: rest };
+          });
+          return;
+        }
 
         const channel = echo.private(ch);
         channel.listen('.grade.updated', (data) => {
@@ -150,15 +188,41 @@ const useRealtimeStore = create(
       },
 
       /* ─── Paiements ─────────────────────────────────────────────────────── */
-      listenForPaiements: (userId) => {
+      // Contrairement aux autres, cette méthode s'attache volontairement au
+      // canal `notifications.*` déjà ouvert par `listenForNotifications`
+      // plutôt que d'en ouvrir un second -- la réservation `'pending'` doit
+      // donc être traitée comme "pas encore prêt à recevoir un listener
+      // supplémentaire", pas comme "canal absent".
+      listenForPaiements: async (userId) => {
         const { subscriptions } = get();
         const ch = `notifications.${userId}`;
-        if (subscriptions[ch]) return; // already listening for notifications
 
-        const echo = getEcho();
-        if (!echo) return;
+        const existing = subscriptions[ch];
+        if (existing && existing !== 'pending') {
+          existing.listen('.paiement.confirmed', (data) => {
+            set({ latestPaiement: data });
+          });
+          return;
+        }
+        if (existing === 'pending') return;
+
+        set((state) => ({ subscriptions: { ...state.subscriptions, [ch]: 'pending' } }));
+
+        const echo = await getEcho();
+        if (!echo) {
+          set((state) => {
+            const { [ch]: _removed, ...rest } = state.subscriptions;
+            return { subscriptions: rest };
+          });
+          return;
+        }
 
         const channel = echo.private(ch);
+        channel.listen('.notification.pushed', (data) => {
+          set((state) => ({
+            notifications: [data, ...state.notifications].slice(0, 50),
+          }));
+        });
         channel.listen('.paiement.confirmed', (data) => {
           set({ latestPaiement: data });
         });

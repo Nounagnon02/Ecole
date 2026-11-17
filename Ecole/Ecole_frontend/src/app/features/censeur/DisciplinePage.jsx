@@ -5,7 +5,10 @@
  * Données via API /surveillant/incidents et /surveillant/statistiques
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import apiClient, { useApiQuery } from '@/shared/lib/api-client';
+import { IncidentDialog, SanctionsSection } from './DisciplineDialogs';
+import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
   Scale, AlertTriangle, Search, Plus,
@@ -18,7 +21,7 @@ import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
-import { useApi } from '@/hooks/useApi';
+import { useTranslation } from '@/shared/i18n';
 
 const getGraviteVariant = (g) => {
   switch (g) {
@@ -30,14 +33,11 @@ const getGraviteVariant = (g) => {
   }
 };
 
-const getGraviteLabel = (g) => {
-  switch (g) {
-    case 'legere':
-    case 'faible': return 'Légère';
-    case 'moyenne': return 'Moyenne';
-    case 'grave': return 'Grave';
-    default: return g || '--';
-  }
+const GRAVITE_LABEL_KEYS = {
+  legere: 'pages.censeur.discipline.legere',
+  faible: 'pages.censeur.discipline.legere',
+  moyenne: 'pages.censeur.discipline.moyenne',
+  grave: 'pages.censeur.discipline.grave',
 };
 
 const ALERT_ICONS = {
@@ -53,46 +53,50 @@ const ALERT_COLORS = {
 };
 
 export default function DisciplinePage() {
-  const { loading, error, get } = useApi();
-  const [incidents, setIncidents] = useState([]);
-  const [stats, setStats] = useState(null);
-  const [statsLoading, setStatsLoading] = useState(true);
+  const { t } = useTranslation();
+  const getGraviteLabel = (g) => (GRAVITE_LABEL_KEYS[g] ? t(GRAVITE_LABEL_KEYS[g]) : (g || '--'));
   const [search, setSearch] = useState('');
   const [filterGravite, setFilterGravite] = useState('');
   const [filterStatut, setFilterStatut] = useState('');
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const [incRes, statsRes] = await Promise.all([
-          get('/surveillant/incidents'),
-          get('/surveillant/statistiques'),
-        ]);
+  // Deux requêtes indépendantes plutôt qu'un `Promise.all` derrière un
+  // `useApi()` à l'état partagé : l'échec de l'une ne dit plus rien de
+  // l'autre, et chacune a son entrée de cache (cf. audit P4.1).
+  const requeteIncidents = useApiQuery(['surveillant-incidents'], '/surveillant/incidents');
+  const requeteStats = useApiQuery(['surveillant-statistiques'], '/surveillant/statistiques');
+  const [nouvelIncident, setNouvelIncident] = useState(false);
+  const changerStatut = async (incident) => {
+    const resolu = ['traitee', 'termine', 'résolu', 'resolu'].includes(incident.statut);
+    await apiClient.patch(`/surveillant/incidents/${incident.id}`, { statut: resolu ? 'en_cours' : 'resolu' });
+    requeteIncidents.refetch();
+    requeteStats.refetch();
+  };
 
-        const items = Array.isArray(incRes?.data?.data) ? incRes.data.data
-          : Array.isArray(incRes?.data) ? incRes.data
-          : Array.isArray(incRes) ? incRes
-          : [];
-        setIncidents(items.map((inc) => ({
-          ...inc,
-          type: inc.description || inc.type || 'Incident',
-          statut: inc.statut || 'en_cours',
-          rapportePar: '--'
-        })));
+  // La projection d'origine est conservée : la page affiche `type`, que le
+  // serveur ne renvoie pas toujours — il faut retomber sur la description.
+  const incidents = useMemo(
+    () => (unwrapList(requeteIncidents.data) ?? []).map((inc) => ({
+      ...inc,
+      type: inc.description || inc.type || 'Incident',
+      statut: inc.statut || 'en_cours',
+      rapportePar: '--',
+    })),
+    [requeteIncidents.data],
+  );
+  // `/surveillant/statistiques` renvoie un objet, pas une liste : pas de
+  // `unwrapList` ici, seulement le déballage de l'enveloppe.
+  const stats = requeteStats.data?.data ?? requeteStats.data ?? null;
+  const statsLoading = requeteStats.isPending;
 
-        setStats(statsRes?.data?.data ?? null);
-      } catch (e) {
-        console.error('Erreur chargement discipline:', e);
-      } finally {
-        setStatsLoading(false);
-      }
-    })();
-  }, [get]);
+  const loading = requeteIncidents.isPending;
+  const error = requeteIncidents.isError
+    ? (requeteIncidents.error?.message ?? t('common.load_error'))
+    : null;
 
   const incidentStats = useMemo(() => ({
     total: incidents.length,
     enCours: incidents.filter((i) => i.statut === 'en_cours' || i.statut === 'signalé').length,
-    traitees: incidents.filter((i) => i.statut === 'termine' || i.statut === 'résolu' || i.statut === 'traitee').length,
+    traitees: incidents.filter((i) => ['termine', 'résolu', 'resolu', 'traitee'].includes(i.statut)).length,
     graves: incidents.filter((i) => i.gravite === 'grave').length
   }), [incidents]);
 
@@ -102,8 +106,8 @@ export default function DisciplinePage() {
       if (search && !(i.type || '').toLowerCase().includes(q)) return false;
       if (filterGravite && i.gravite !== filterGravite) return false;
       if (filterStatut) {
-        if (filterStatut === 'en_cours' && (i.statut === 'termine' || i.statut === 'traitee' || i.statut === 'résolu')) return false;
-        if (filterStatut === 'traitee' && i.statut !== 'termine' && i.statut !== 'traitee' && i.statut !== 'résolu') return false;
+        if (filterStatut === 'en_cours' && ['termine', 'traitee', 'résolu', 'resolu'].includes(i.statut)) return false;
+        if (filterStatut === 'traitee' && !['termine', 'traitee', 'résolu', 'resolu'].includes(i.statut)) return false;
       }
       return true;
     }),
@@ -113,21 +117,21 @@ export default function DisciplinePage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--text-tertiary)]" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
+      <div className="flex flex-col items-center justify-center h-64 text-[var(--text-secondary)]">
         <AlertTriangle className="h-8 w-8 mb-2 text-red-400" />
         <p className="text-sm">{error}</p>
         <button
           onClick={() => window.location.reload()}
           className="mt-4 inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors"
         >
-          Réessayer
+          {t('common.retry')}
         </button>
       </div>
     );
@@ -136,16 +140,16 @@ export default function DisciplinePage() {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Discipline</h1>
-        <p className="text-sm text-neutral-500">Gestion des incidents, sanctions et tendances disciplinaires</p>
+        <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.censeur.discipline.title')}</h1>
+        <p className="text-sm text-[var(--text-secondary)]">{t('pages.censeur.discipline.subtitle')}</p>
       </div>
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-4">
-        <StatsCard title="Total Incidents" value={String(incidentStats.total)} icon={AlertTriangle} color="primary" />
-        <StatsCard title="En cours" value={String(incidentStats.enCours)} icon={Clock} color="amber" />
-        <StatsCard title="Traités" value={String(incidentStats.traitees)} icon={CheckCircle} color="emerald" />
-        <StatsCard title="Cas graves" value={String(incidentStats.graves)} icon={Scale} color="red" />
+        <StatsCard title={t('pages.censeur.discipline.total_incidents')} value={String(incidentStats.total)} icon={AlertTriangle} color="primary" />
+        <StatsCard title={t('common.status.in_progress')} value={String(incidentStats.enCours)} icon={Clock} color="amber" />
+        <StatsCard title={t('pages.censeur.discipline.traites')} value={String(incidentStats.traitees)} icon={CheckCircle} color="emerald" />
+        <StatsCard title={t('pages.censeur.discipline.cas_graves')} value={String(incidentStats.graves)} icon={Scale} color="red" />
       </div>
 
       {/* Tendances + Alertes */}
@@ -153,51 +157,51 @@ export default function DisciplinePage() {
         {/* Tendances */}
         <Card>
           <div className="p-4">
-            <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-3">
-              <TrendingUp className="h-4 w-4 inline mr-1.5 text-neutral-400" />
-              Tendances du mois
+            <h3 className="text-sm font-semibold text-[var(--text-primary)]  mb-3">
+              <TrendingUp className="h-4 w-4 inline mr-1.5 text-[var(--text-tertiary)]" />
+              {t('pages.censeur.discipline.tendances_du_mois')}
             </h3>
             {statsLoading ? (
               <div className="space-y-2">
                 {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="h-5 bg-neutral-100 dark:bg-neutral-800 rounded animate-pulse" />
+                  <div key={i} className="h-5 bg-[var(--surface-subtle)]  rounded animate-pulse" />
                 ))}
               </div>
             ) : !stats ? (
-              <p className="text-sm text-neutral-400">Statistiques non disponibles</p>
+              <p className="text-sm text-[var(--text-tertiary)]">{t('pages.censeur.discipline.statistiques_non_disponibles')}</p>
             ) : (
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-neutral-600 dark:text-neutral-400">Incidents ce mois</span>
-                  <span className="text-lg font-bold text-neutral-900 dark:text-white">{stats.mois_courant}</span>
+                  <span className="text-sm text-[var(--text-secondary)] ">{t('pages.censeur.discipline.incidents_ce_mois')}</span>
+                  <span className="text-lg font-bold text-[var(--text-primary)] ">{stats.mois_courant}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-neutral-600 dark:text-neutral-400">Évolution vs mois dernier</span>
+                  <span className="text-sm text-[var(--text-secondary)] ">{t('pages.censeur.discipline.evolution_vs_mois_dernier')}</span>
                   <span className={cn(
                     'inline-flex items-center gap-1 text-sm font-medium',
-                    stats.evolution > 0 ? 'text-red-500' : stats.evolution < 0 ? 'text-emerald-500' : 'text-neutral-500'
+                    stats.evolution > 0 ? 'text-red-500' : stats.evolution < 0 ? 'text-emerald-500' : 'text-[var(--text-secondary)]'
                   )}>
                     {stats.evolution > 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
                     {stats.evolution > 0 ? '+' : ''}{stats.evolution}%
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-neutral-600 dark:text-neutral-400">Total sanctions</span>
-                  <span className="text-lg font-bold text-neutral-900 dark:text-white">{stats.total_sanctions}</span>
+                  <span className="text-sm text-[var(--text-secondary)] ">{t('pages.censeur.discipline.total_sanctions')}</span>
+                  <span className="text-lg font-bold text-[var(--text-primary)] ">{stats.total_sanctions}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-neutral-600 dark:text-neutral-400">Total absences</span>
-                  <span className="text-lg font-bold text-neutral-900 dark:text-white">{stats.total_absences}</span>
+                  <span className="text-sm text-[var(--text-secondary)] ">{t('pages.censeur.discipline.total_absences')}</span>
+                  <span className="text-lg font-bold text-[var(--text-primary)] ">{stats.total_absences}</span>
                 </div>
                 {/* Répartition par gravité */}
                 {stats.par_gravite && (
-                  <div className="pt-2 border-t border-neutral-100 dark:border-neutral-800">
-                    <p className="text-xs text-neutral-500 mb-2">Répartition par gravité</p>
+                  <div className="pt-2 border-t border-[var(--border-light)] ">
+                    <p className="text-xs text-[var(--text-secondary)] mb-2">{t('pages.censeur.discipline.repartition_par_gravite')}</p>
                     <div className="flex gap-2">
                       {Object.entries(stats.par_gravite).map(([key, val]) => (
-                        <div key={key} className="flex-1 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 p-2 text-center">
-                          <p className="text-lg font-bold text-neutral-900 dark:text-white">{val}</p>
-                          <p className="text-[10px] text-neutral-500 capitalize">{key}</p>
+                        <div key={key} className="flex-1 rounded-lg bg-[var(--surface)]  p-2 text-center">
+                          <p className="text-lg font-bold text-[var(--text-primary)] ">{val}</p>
+                          <p className="text-[10px] text-[var(--text-secondary)] capitalize">{key}</p>
                         </div>
                       ))}
                     </div>
@@ -211,20 +215,20 @@ export default function DisciplinePage() {
         {/* Alertes */}
         <Card>
           <div className="p-4">
-            <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-3">
+            <h3 className="text-sm font-semibold text-[var(--text-primary)]  mb-3">
               <AlertTriangle className="h-4 w-4 inline mr-1.5 text-amber-500" />
-              Alertes automatiques
+              {t('pages.censeur.discipline.alertes_automatiques')}
             </h3>
             {statsLoading ? (
               <div className="space-y-2">
                 {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="h-16 bg-neutral-100 dark:bg-neutral-800 rounded animate-pulse" />
+                  <div key={i} className="h-16 bg-[var(--surface-subtle)]  rounded animate-pulse" />
                 ))}
               </div>
             ) : !stats?.alertes || stats.alertes.length === 0 ? (
-              <div className="py-8 text-center text-sm text-neutral-400">
+              <div className="py-8 text-center text-sm text-[var(--text-tertiary)]">
                 <CheckCircle className="h-8 w-8 mx-auto mb-2 text-emerald-400" />
-                <p>Aucune alerte pour le moment</p>
+                <p>{t('pages.censeur.discipline.aucune_alerte_pour_le_moment')}</p>
               </div>
             ) : (
               <div className="space-y-2">
@@ -247,12 +251,12 @@ export default function DisciplinePage() {
       </div>
 
       {/* Filtres */}
-      <Card>
+      <Card padding>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
             <Input
-              placeholder="Rechercher un incident..."
+              placeholder={t('pages.censeur.discipline.rechercher_un_incident')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
@@ -262,73 +266,81 @@ export default function DisciplinePage() {
             <select
               value={filterGravite}
               onChange={(e) => setFilterGravite(e.target.value)}
-              className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+              aria-label={t('pages.censeur.discipline.filtrer_par_gravite')}
+              className="h-10 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40   "
             >
-              <option value="">Toutes les gravités</option>
-              <option value="faible">Faible</option>
-              <option value="moyenne">Moyenne</option>
-              <option value="grave">Grave</option>
+              <option value="">{t('pages.censeur.discipline.toutes_les_gravites')}</option>
+              <option value="faible">{t('pages.censeur.discipline.faible')}</option>
+              <option value="moyenne">{t('common.average')}</option>
+              <option value="grave">{t('pages.censeur.discipline.grave')}</option>
             </select>
             <select
               value={filterStatut}
               onChange={(e) => setFilterStatut(e.target.value)}
-              className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+              aria-label={t('common.filter_by_status')}
+              className="h-10 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40   "
             >
-              <option value="">Tous les statuts</option>
-              <option value="en_cours">En cours</option>
-              <option value="traitee">Traitée</option>
+              <option value="">{t('common.all_statuses')}</option>
+              <option value="en_cours">{t('common.status.in_progress')}</option>
+              <option value="traitee">{t('pages.censeur.discipline.traitee')}</option>
             </select>
-            <Button size="sm" icon={<Plus />}>Nouvel incident</Button>
+            <Button size="sm" icon={<Plus />} onClick={() => setNouvelIncident(true)}>{t('pages.censeur.discipline.nouvel_incident')}</Button>
           </div>
         </div>
       </Card>
 
+      <IncidentDialog open={nouvelIncident} onClose={() => setNouvelIncident(false)} onDone={() => { requeteIncidents.refetch(); requeteStats.refetch(); }} />
+
       {/* Liste des incidents */}
       <div className="space-y-3">
         {filtered.length === 0 && (
-          <Card>
-            <div className="text-center py-8 text-neutral-500">
+          <Card padding>
+            <div className="text-center py-8 text-[var(--text-secondary)]">
               <Scale className="mx-auto h-8 w-8 mb-2" />
-              <p className="text-sm">Aucun incident trouvé</p>
+              <p className="text-sm">{t('pages.censeur.discipline.aucun_incident_trouve')}</p>
             </div>
           </Card>
         )}
         {filtered.map((incident) => (
-          <Card key={incident.id} hover>
+          <Card padding key={incident.id} hover>
             <div className="flex items-start gap-4">
               <div className={cn(
                 'h-12 w-12 rounded-xl flex items-center justify-center shrink-0',
                 incident.gravite === 'grave' ? 'bg-red-100 dark:bg-red-900/20' :
                 incident.gravite === 'moyenne' ? 'bg-amber-100 dark:bg-amber-900/20' :
-                'bg-neutral-100 dark:bg-neutral-800'
+                'bg-[var(--surface-subtle)] '
               )}>
                 <AlertTriangle className={cn(
                   'h-6 w-6',
                   incident.gravite === 'grave' ? 'text-red-500' :
                   incident.gravite === 'moyenne' ? 'text-amber-500' :
-                  'text-neutral-400'
+                  'text-[var(--text-tertiary)]'
                 )} />
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-sm font-semibold text-neutral-900 dark:text-white">{incident.type}</span>
+                  <span className="text-sm font-semibold text-[var(--text-primary)] ">{incident.type}</span>
                   <Badge variant={getGraviteVariant(incident.gravite)} size="sm">{getGraviteLabel(incident.gravite)}</Badge>
-                  <Badge variant={incident.statut === 'traitee' || incident.statut === 'termine' || incident.statut === 'résolu' ? 'primary' : 'warning'} size="sm">
-                    {incident.statut === 'traitee' || incident.statut === 'termine' || incident.statut === 'résolu' ? 'Traitée' : 'En cours'}
+                  <Badge variant={['traitee', 'termine', 'résolu', 'resolu'].includes(incident.statut) ? 'primary' : 'warning'} size="sm">
+                    {['traitee', 'termine', 'résolu', 'resolu'].includes(incident.statut) ? t('pages.censeur.discipline.traitee') : t('common.status.in_progress')}
                   </Badge>
                 </div>
-                <div className="mt-2 flex flex-wrap items-center gap-4 text-xs text-neutral-500">
+                <div className="mt-2 flex flex-wrap items-center gap-4 text-xs text-[var(--text-secondary)]">
                   <span className="flex items-center gap-1">
                     <Clock className="h-3 w-3" />
                     {incident.date ? formatDate(incident.date) : '--'}
                   </span>
                 </div>
               </div>
-              <Button variant="ghost" size="sm">Détails</Button>
+              <Button variant="outline" size="sm" onClick={() => changerStatut(incident)}>
+                {['traitee', 'termine', 'résolu', 'resolu'].includes(incident.statut) ? t('pages.censeur.vie_scolaire.rouvrir') : t('pages.censeur.vie_scolaire.marquer_resolu')}
+              </Button>
             </div>
           </Card>
         ))}
       </div>
+
+      <SanctionsSection />
     </motion.div>
   );
 }

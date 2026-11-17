@@ -5,7 +5,10 @@
  * Données dynamiques via API /comptable/paiements
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import { useApiQuery } from '@/shared/lib/api-client';
+import { aujourdhuiIso, telechargerCsv, telechargerRecu } from '@/shared/lib/telecharger';
+import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
   DollarSign, TrendingUp, TrendingDown, ArrowUpRight,   Search, Download, Eye, FileText, Loader2, AlertCircle
@@ -16,7 +19,7 @@ import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import StatsCard from '@/shared/components/ui/StatsCard';
-import { useApi } from '@/hooks/useApi';
+import { useTranslation } from '@/shared/i18n';
 
 const getStatutColor = (statut) => {
   switch (statut) {
@@ -25,48 +28,43 @@ const getStatutColor = (statut) => {
     case 'en_attente':
     case 'partiel': return 'warning';
     case 'echec': return 'danger';
-    case 'rembourse': return 'ghost';
-    default: return 'outline';
+    case 'rembourse': return 'info';
+    default: return 'default';
   }
 };
 
-const getStatutLabel = (statut) => {
-  switch (statut) {
-    case 'paye':
-    case 'payee': return 'Payée';
-    case 'en_attente': return 'En attente';
-    case 'partiel': return 'Partielle';
-    case 'echec': return 'Échec';
-    case 'rembourse': return 'Remboursé';
-    default: return statut || '—';
-  }
+const STATUT_LABEL_KEYS = {
+  paye: 'pages.comptable.transactions.payee',
+  payee: 'pages.comptable.transactions.payee',
+  en_attente: 'common.status.pending',
+  partiel: 'pages.comptable.transactions.partielle',
+  echec: 'pages.comptable.transactions.echec',
+  rembourse: 'pages.comptable.transactions.rembourse',
 };
 
 export default function TransactionsPage() {
-  const { loading, error, get } = useApi();
-  const [transactions, setTransactions] = useState([]);
+  const { t } = useTranslation();
+  const statutLabel = (v) => (STATUT_LABEL_KEYS[v] ? t(STATUT_LABEL_KEYS[v]) : (v || '—'));
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState('');
   const [filterStatut, setFilterStatut] = useState('');
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await get('/comptable/paiements');
-        const items = Array.isArray(res?.data?.data) ? res.data.data
-          : Array.isArray(res?.data) ? res.data
-          : Array.isArray(res) ? res
-          : [];
-        setTransactions(items);
-      } catch (e) {
-        console.error('Erreur chargement transactions:', e);
-      }
-    })();
-  }, []);
+  // Le chargement passait par un `useState` doublé d'un `useEffect` de
+  // premier rendu, sans cache ni déduplication : deux composants montés
+  // ensemble lançaient deux requêtes, et un retour sur la page rechargeait
+  // tout (cf. audit P4.1). `unwrapList` traverse les trois formes
+  // d'enveloppe que renvoient les contrôleurs.
+  const requete = useApiQuery(['comptable-paiements'], '/comptable/paiements');
+
+  const transactions = useMemo(() => unwrapList(requete.data) ?? [], [requete.data]);
+  const loading = requete.isPending;
+  const error = requete.isError ? (requete.error?.message ?? t('common.load_error')) : null;
 
   const stats = useMemo(() => {
-    const recettes = transactions.filter((t) => t.statut === 'paye' || t.statut === 'payee');
-    const totalRecettes = recettes.reduce((s, t) => s + Number(t.montant || 0), 0);
+    // Recettes = ce qui a réellement été payé (`montant_paye`). La somme de
+    // `montant` sur les lignes payées ou partielles comptait des montants
+    // jamais versés : 4 625 595 contre 4 497 554 FCFA payés (R-41, 16/11/2026).
+    const totalRecettes = transactions.reduce((s, t) => s + Number(t.montant_paye ?? 0), 0);
     return {
       totalRecettes,
       totalDepenses: 0,
@@ -95,21 +93,21 @@ export default function TransactionsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--text-tertiary)]" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
+      <div className="flex flex-col items-center justify-center h-64 text-[var(--text-secondary)]">
         <AlertCircle className="h-8 w-8 mb-2 text-red-400" />
         <p className="text-sm">{error}</p>
         <button
           onClick={() => window.location.reload()}
           className="mt-4 inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors"
         >
-          Réessayer
+          {t('common.retry')}
         </button>
       </div>
     );
@@ -118,25 +116,25 @@ export default function TransactionsPage() {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Transactions</h1>
-        <p className="text-sm text-neutral-500">Toutes les transactions financières de l'établissement</p>
+        <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.comptable.transactions.title')}</h1>
+        <p className="text-sm text-[var(--text-secondary)]">{t('pages.comptable.transactions.subtitle')}</p>
       </div>
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-4">
-        <StatsCard title="Recettes" value={formatCurrency(stats.totalRecettes)} icon={TrendingUp} color="emerald" />
-        <StatsCard title="Dépenses" value={formatCurrency(stats.totalDepenses)} icon={TrendingDown} color="red" />
-        <StatsCard title="Solde" value={formatCurrency(stats.solde)} icon={DollarSign} color={stats.solde >= 0 ? 'primary' : 'red'} />
-        <StatsCard title="Transactions" value={formatNumber(stats.transactions)} icon={FileText} color="sky" />
+        <StatsCard title={t('pages.comptable.transactions.recettes')} value={formatCurrency(stats.totalRecettes)} icon={TrendingUp} color="emerald" />
+        <StatsCard title={t('pages.comptable.transactions.depenses')} value={formatCurrency(stats.totalDepenses)} icon={TrendingDown} color="red" />
+        <StatsCard title={t('common.balance')} value={formatCurrency(stats.solde)} icon={DollarSign} color={stats.solde >= 0 ? 'primary' : 'red'} />
+        <StatsCard title={t('pages.comptable.transactions.transactions')} value={formatNumber(stats.transactions)} icon={FileText} color="sky" />
       </div>
 
       {/* Filtres */}
-      <Card>
+      <Card padding>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
             <Input
-              placeholder="Rechercher une transaction..."
+              placeholder={t('pages.comptable.transactions.rechercher_une_transaction')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
@@ -146,71 +144,81 @@ export default function TransactionsPage() {
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
-              className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+              aria-label={t('pages.comptable.transactions.filtrer_par_type')}
+              className="h-10 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40   "
             >
-              <option value="">Tous les types</option>
-              <option value="scolarite">Scolarité</option>
-              <option value="cantine">Cantine</option>
-              <option value="transport">Transport</option>
-              <option value="inscription">Inscription</option>
-              <option value="bibliotheque">Bibliothèque</option>
+              <option value="">{t('common.all_types')}</option>
+              <option value="scolarite">{t('pages.comptable.transactions.scolarite')}</option>
+              <option value="cantine">{t('pages.comptable.transactions.cantine')}</option>
+              <option value="transport">{t('pages.comptable.transactions.transport')}</option>
+              <option value="inscription">{t('pages.comptable.transactions.inscription')}</option>
+              <option value="bibliotheque">{t('pages.comptable.transactions.bibliotheque')}</option>
             </select>
             <select
               value={filterStatut}
               onChange={(e) => setFilterStatut(e.target.value)}
-              className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+              aria-label={t('common.filter_by_status')}
+              className="h-10 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40   "
             >
-              <option value="">Tous les statuts</option>
-              <option value="paye">Payée</option>
-              <option value="en_attente">En attente</option>
-              <option value="echec">Échec</option>
+              <option value="">{t('common.all_statuses')}</option>
+              <option value="paye">{t('pages.comptable.transactions.payee')}</option>
+              <option value="en_attente">{t('common.status.pending')}</option>
+              <option value="echec">{t('pages.comptable.transactions.echec')}</option>
             </select>
-            <Button variant="outline" size="sm" icon={<Download />}>Exporter</Button>
+            <Button variant="outline" size="sm" icon={<Download />} disabled={filtered.length === 0} onClick={() => telechargerCsv(`transactions-${aujourdhuiIso()}.csv`, [
+              ['Référence', 'Élève', 'Libellé', 'Montant', 'Mode', 'Date', 'Statut'],
+              ...filtered.map((x) => [x.reference, x.client, x.motif, x.montant_paye ?? x.montant, x.mode_paiement, x.date_paiement, x.statut_label ?? x.statut]),
+            ])}>{t('common.export')}</Button>
           </div>
         </div>
       </Card>
 
       {/* Tableau */}
-      <Card>
-        <div className="overflow-x-auto">
+      <Card padding>
+        <div className="overflow-x-auto" role="region" aria-label={t('common.tableau_defilant')} tabIndex={0}>
           <table className="w-full">
             <thead>
-              <tr className="border-b border-neutral-200 dark:border-neutral-700 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                <th className="pb-3 pr-4">Référence</th>
-                <th className="pb-3 pr-4">Élève</th>
-                <th className="pb-3 pr-4">Montant</th>
-                <th className="pb-3 pr-4">Type</th>
-                <th className="pb-3 pr-4">Méthode</th>
-                <th className="pb-3 pr-4">Date</th>
-                <th className="pb-3 pr-4">Statut</th>
-                <th className="pb-3 text-right">Actions</th>
+              <tr className="border-b border-[var(--border)]  text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
+                <th scope="col" className="pb-3 pr-4">{t('pages.comptable.transactions.reference')}</th>
+                <th scope="col" className="pb-3 pr-4">{t('common.student')}</th>
+                <th scope="col" className="pb-3 pr-4">{t('common.amount')}</th>
+                <th scope="col" className="pb-3 pr-4">{t('common.type')}</th>
+                <th scope="col" className="pb-3 pr-4">{t('pages.comptable.transactions.methode')}</th>
+                <th scope="col" className="pb-3 pr-4">{t('common.date')}</th>
+                <th scope="col" className="pb-3 pr-4">{t('common.status_label')}</th>
+                <th scope="col" className="pb-3 text-right">{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="py-8 text-center text-sm text-neutral-500">
-                    Aucune transaction trouvée
+                  <td colSpan={8} className="py-8 text-center text-sm text-[var(--text-secondary)]">
+                    {t('pages.comptable.transactions.aucune_transaction_trouvee')}
                   </td>
                 </tr>
               )}
               {filtered.map((trx) => (
-                <tr key={trx.id} className="border-b border-neutral-100 dark:border-neutral-800">
+                <tr key={trx.id} className="border-b border-[var(--border-light)] ">
                   <td className="py-3 pr-4">
-                    <span className="text-xs font-mono text-neutral-500">{trx.reference || `#${trx.id}`}</span>
+                    <span className="text-xs font-mono text-[var(--text-secondary)]">{trx.reference || `#${trx.id}`}</span>
                   </td>
                   <td className="py-3 pr-4">
-                    <span className="text-sm font-medium text-neutral-900 dark:text-white">
+                    <span className="text-sm font-medium text-[var(--text-primary)] ">
                       {trx.eleve?.prenom} {trx.eleve?.nom}
                     </span>
                     {trx.eleve?.classe?.nom_classe && (
-                      <span className="text-xs text-neutral-400 ml-1">({trx.eleve.classe.nom_classe})</span>
+                      <span className="text-xs text-[var(--text-tertiary)] ml-1">({trx.eleve.classe.nom_classe})</span>
                     )}
                   </td>
                   <td className="py-3 pr-4">
                     <span className="text-sm font-semibold text-emerald-600">
-                      {formatCurrency(trx.montant)}
+                      {formatCurrency(Number(trx.montant_paye ?? 0))}
                     </span>
+                    {Number(trx.montant_total) > Number(trx.montant_paye ?? 0) && (
+                      <span className="block text-xs text-[var(--text-tertiary)]">
+                        {t('pages.paiements.paiements.sur_montant', { total: formatCurrency(Number(trx.montant_total)) })}
+                      </span>
+                    )}
                   </td>
                   <td className="py-3 pr-4">
                     <span className={cn(
@@ -218,22 +226,22 @@ export default function TransactionsPage() {
                       'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400'
                     )}>
                       <ArrowUpRight className="h-3 w-3" />
-                      {trx.type_paiement || 'Paiement'}
+                      {trx.type_paiement || t('pages.comptable.transactions.paiement')}
                     </span>
                   </td>
                   <td className="py-3 pr-4">
-                    <span className="text-sm text-neutral-600 dark:text-neutral-400">{trx.mode_paiement || trx.methode_paiement || '—'}</span>
+                    <span className="text-sm text-[var(--text-secondary)] ">{trx.mode_paiement || trx.methode_paiement || '—'}</span>
                   </td>
                   <td className="py-3 pr-4">
-                    <span className="text-sm text-neutral-600 dark:text-neutral-400">
+                    <span className="text-sm text-[var(--text-secondary)] ">
                       {trx.date_paiement ? formatDate(trx.date_paiement) : '—'}
                     </span>
                   </td>
                   <td className="py-3 pr-4">
-                    <Badge variant={getStatutColor(trx.statut)} size="sm">{getStatutLabel(trx.statut)}</Badge>
+                    <Badge variant={getStatutColor(trx.statut)} size="sm">{statutLabel(trx.statut)}</Badge>
                   </td>
                   <td className="py-3 text-right">
-                    <Button variant="ghost" size="sm" icon={<Eye />} />
+                    <Button variant="ghost" size="sm" icon={<Eye />} aria-label={`${t('pages.comptable.echeances.recu')} ${trx.reference}`} title={t('pages.comptable.echeances.recu')} onClick={() => telechargerRecu(trx.id, trx.reference).catch(() => {})} />
                   </td>
                 </tr>
               ))}

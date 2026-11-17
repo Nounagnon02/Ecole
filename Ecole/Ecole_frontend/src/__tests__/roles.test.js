@@ -139,10 +139,13 @@ describe('ROLE_REDIRECT_MAP', () => {
     }
   });
 
-  it('envoie les rôles universitaires sur le dashboard université', () => {
-    for (const role of ROLE_GROUPS.UNIV) {
+  it('envoie les rôles universitaires sur le dashboard université, sauf l’étudiant', () => {
+    for (const role of ROLE_GROUPS.UNIV.filter((r) => r !== 'etudiant')) {
       expect(ROLE_REDIRECT_MAP[role]).toBe('/universite/dashboard');
     }
+    // Effectifs de l'université et noms des derniers inscrits ne concernent
+    // pas l'étudiant : il arrive sur ses cours (16/11/2026).
+    expect(ROLE_REDIRECT_MAP.etudiant).toBe('/universite/mes-cours');
   });
 });
 

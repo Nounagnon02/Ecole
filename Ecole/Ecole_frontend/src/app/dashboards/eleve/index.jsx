@@ -4,65 +4,107 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
   Clock, ClipboardList,
   TrendingUp, Award, BarChart3, DollarSign,
-  AlertCircle, RefreshCw
+  AlertCircle
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip,
   ResponsiveContainer } from 'recharts';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
 import { cn } from '@/shared/lib/utils';
 import { useDashboardStats } from '@/app/dashboards/hooks/useDashboardData';
+import DashboardShell from '@/app/dashboards/DashboardShell';
 import StatsCard from '@/shared/components/ui/StatsCard';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
-import Button from '@/shared/components/ui/Button';
 import Table from '@/shared/components/ui/Table';
 import { Skeleton } from '@/shared/components/ui/Skeleton';
+import { useTranslation } from '@/shared/i18n';
 
+// Seuls les onglets qui s'affichent ici : ceux qui menaient vers une
+// autre page doublaient le menu (audit, recommandation B4).
 const TABS = [
   { id: 'apercu', label: 'Aperçu', icon: BarChart3 },
   { id: 'notes', label: 'Mes Notes', icon: ClipboardList },
-  { id: 'emploi', label: 'Emploi du Temps', icon: Clock },
-  { id: 'paiements', label: 'Paiements', icon: DollarSign },
 ];
 
+/** « trimestre2 », « Trimestre 2 » → « trimestre 2 » ; autre libellé inchangé. */
+export function libellePeriode(periode) {
+  const m = String(periode ?? '').match(/^(trimestre|semestre)\s*(\d)$/i);
+  return m ? `${m[1].toLowerCase()} ${m[2]}` : periode;
+}
+
+const JOURS = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
+const minutes = (heure) => {
+  const [h, m] = String(heure ?? '').split(':').map(Number);
+  return Number.isFinite(h) ? h * 60 + (Number.isFinite(m) ? m : 0) : 0;
+};
+
+/**
+ * Cours rangés à partir de maintenant : ceux d'aujourd'hui pas encore
+ * commencés, puis les jours suivants, puis ceux de la semaine prochaine.
+ * L'API rangeait les jours par ordre alphabétique (revue du 16/11/2026).
+ */
+export function prochainsCours(emploi, maintenant = new Date()) {
+  const aujourdhui = (maintenant.getDay() + 6) % 7;
+  const instant = aujourdhui * 1440 + maintenant.getHours() * 60 + maintenant.getMinutes();
+  const semaine = 7 * 1440;
+  return emploi
+    .map((cours) => {
+      const jour = JOURS.indexOf(String(cours.jour ?? '').toLowerCase());
+      if (jour < 0) return { cours, delai: Infinity };
+      const ecart = jour * 1440 + minutes(cours.heure_debut) - instant;
+      return { cours, delai: ecart < 0 ? ecart + semaine : ecart };
+    })
+    .sort((a, b) => a.delai - b.delai)
+    .map(({ cours }) => cours);
+}
+
 function ApercuSection({ data, loading }) {
+  const { t } = useTranslation();
   const eleve = data?.eleve ?? {};
   const stats = data?.stats ?? {};
   const matieres = data?.matieres ?? [];
-  const emploi = data?.emploi_du_temps ?? [];
+  const emploi = prochainsCours(data?.emploi_du_temps ?? []);
 
+  // Moyenne de la dernière période notée, calculée comme au bulletin mais
+  // avant l'arrêt du bulletin : dite « provisoire », avec sa période.
   const statsCards = [
     {
-      title: 'Moyenne Générale',
+      title: stats.periode
+        ? t('dashboards.eleve.stats.moyenne_periode', { periode: libellePeriode(stats.periode) })
+        : t('dashboards.eleve.stats.moyenne_provisoire'),
       value: stats.moyenne_generale ? `${stats.moyenne_generale}/20` : '—',
       icon: TrendingUp,
       color: 'emerald'
     },
     {
-      title: 'Total Notes',
+      title: t('dashboards.eleve.stats.total_notes'),
       value: String(stats.total_notes ?? 0),
       icon: Award,
       color: 'primary'
     },
     {
-      title: 'Absences ce Mois',
+      title: t('dashboards.eleve.stats.absences_ce_mois'),
       value: String(stats.absences_mois ?? 0),
       icon: AlertCircle,
+      color: 'amber'
+    },
+    {
+      title: t('dashboards.eleve.stats.retards_ce_mois'),
+      value: String(stats.retards_mois ?? 0),
+      icon: Clock,
       color: 'amber'
     },
   ];
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {loading
-          ? Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-28 rounded-2xl" />)
+          ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-28 rounded-2xl" />)
           : statsCards.map((s, i) => (
               <motion.div key={s.title} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}>
                 <StatsCard {...s} className="h-full" />
@@ -71,13 +113,13 @@ function ApercuSection({ data, loading }) {
         }
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2">
           <Card.Header>
             <div className="flex items-center justify-between">
               <div>
-                <Card.Title>Notes par Matière</Card.Title>
-                <Card.Description>Moyennes par matière</Card.Description>
+                <Card.Title>{t('dashboards.eleve.notes_par_matiere')}</Card.Title>
+                <Card.Description>{t('dashboards.eleve.moyennes_par_matiere')}</Card.Description>
               </div>
               {stats.moyenne_generale && (
                 <Badge variant="primary" size="sm">Moy: {stats.moyenne_generale}/20</Badge>
@@ -101,10 +143,10 @@ function ApercuSection({ data, loading }) {
           </Card.Body>
         </Card>
 
-        <Card>
+        <Card data-testid="prochains-cours">
           <Card.Header>
-            <Card.Title>Prochains Cours</Card.Title>
-            <Card.Description>Emploi du temps</Card.Description>
+            <Card.Title>{t('dashboards.eleve.prochains_cours')}</Card.Title>
+            <Card.Description>{t('dashboards.eleve.emploi_du_temps')}</Card.Description>
           </Card.Header>
           <Card.Body className="p-0">
             {loading ? (
@@ -112,20 +154,20 @@ function ApercuSection({ data, loading }) {
                 {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-12 rounded-lg" />)}
               </div>
             ) : emploi.length === 0 ? (
-              <p className="p-6 text-center text-sm text-neutral-400">Aucun cours planifié</p>
+              <p className="p-6 text-center text-sm text-[var(--text-tertiary)]">{t('dashboards.eleve.aucun_cours_planifie')}</p>
             ) : (
-              <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
+              <div className="divide-y divide-[var(--border-light)] ">
                 {emploi.slice(0, 5).map((cours, i) => (
-                  <div key={i} className="flex items-center gap-4 px-6 py-3.5 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors">
+                  <div key={i} className="flex items-center gap-4 px-6 py-3.5 hover:bg-[var(--surface)]  transition-colors">
                     <div className="flex flex-col items-center w-12">
                       <span className="text-xs font-semibold text-[var(--accent)]">{cours.heure_debut}</span>
-                      <span className="text-[10px] text-neutral-400">{cours.heure_fin}</span>
+                      <span className="text-[10px] text-[var(--text-tertiary)]">{cours.heure_fin}</span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-neutral-900 dark:text-white">{cours.matiere?.nom}</p>
-                      <p className="text-xs text-neutral-500">{cours.enseignant?.user?.name} · {cours.salle}</p>
+                      <p className="text-sm font-medium text-[var(--text-primary)] ">{cours.matiere?.nom}</p>
+                      <p className="text-xs text-[var(--text-secondary)]">{cours.enseignant?.user?.name} · {cours.salle}</p>
                     </div>
-                    <span className="text-xs text-neutral-400">{cours.jour}</span>
+                    <span className="text-xs text-[var(--text-tertiary)]">{cours.jour}</span>
                   </div>
                 ))}
               </div>
@@ -138,17 +180,18 @@ function ApercuSection({ data, loading }) {
 }
 
 function NotesSection({ data, loading }) {
+  const { t } = useTranslation();
   const matieres = data?.matieres ?? [];
 
   return (
     <div className="space-y-6">
-      <h2 className="font-fraunces text-xl font-semibold text-neutral-900 dark:text-white">Mes Notes</h2>
+      <h2 className="font-heading text-xl font-semibold text-[var(--text-primary)] ">{t('dashboards.eleve.mes_notes')}</h2>
       <Card padding={false}>
         <Table>
           <Table.Header>
-            <Table.Head>Matière</Table.Head>
-            <Table.Head>Note</Table.Head>
-            <Table.Head>Coefficient</Table.Head>
+            <Table.Head>{t('common.subject')}</Table.Head>
+            <Table.Head>{t('common.grade')}</Table.Head>
+            <Table.Head>{t('dashboards.eleve.coefficient')}</Table.Head>
           </Table.Header>
           <Table.Body>
             {loading && Array.from({ length: 5 }).map((_, i) => (
@@ -158,7 +201,7 @@ function NotesSection({ data, loading }) {
             ))}
             {!loading && matieres.length === 0 && (
               <Table.Row>
-                <td colSpan={3} className="p-8 text-center text-sm text-neutral-500">Aucune note disponible</td>
+                <td colSpan={3} className="p-8 text-center text-sm text-[var(--text-secondary)]">{t('dashboards.eleve.aucune_note_disponible')}</td>
               </Table.Row>
             )}
             {!loading && matieres.map((m, i) => (
@@ -172,7 +215,7 @@ function NotesSection({ data, loading }) {
                     {m.note}/20
                   </span>
                 </Table.Cell>
-                <Table.Cell className="text-neutral-500">×{m.coeff}</Table.Cell>
+                <Table.Cell className="text-[var(--text-secondary)]">×{m.coeff}</Table.Cell>
               </Table.Row>
             ))}
           </Table.Body>
@@ -184,6 +227,7 @@ function NotesSection({ data, loading }) {
 
 export default function EleveDashboard() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('apercu');
   const { data, loading, error, refetch } = useDashboardStats('eleve');
 
@@ -205,67 +249,17 @@ export default function EleveDashboard() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <motion.h1
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="font-fraunces text-2xl font-bold text-neutral-900 dark:text-white"
-          >
-            Mon Espace Élève
-          </motion.h1>
-          <p className="text-neutral-500 dark:text-neutral-400 mt-1">
-            {eleve.classe ? `Classe de ${eleve.classe} — ` : ''}
-            {format(new Date(), 'EEEE d MMMM yyyy', { locale: fr })}
-          </p>
-        </div>
-        <Button variant="ghost" size="sm" onClick={refetch} disabled={loading}>
-          <RefreshCw className={cn('h-4 w-4 mr-1', loading && 'animate-spin')} />
-          Actualiser
-        </Button>
-      </div>
-
-      {error && (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
-          Erreur de chargement : {error}
-        </div>
-      )}
-
-      <div className="border-b border-neutral-200 dark:border-neutral-800">
-        <nav className="flex gap-1 overflow-x-auto -mb-px">
-          {TABS.map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => handleTabClick(tab.id)}
-                className={cn(
-                  'flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-all whitespace-nowrap',
-                  activeTab === tab.id
-                    ? 'border-[var(--accent)] text-[var(--accent)]'
-                    : 'border-transparent text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200'
-                )}
-              >
-                <Icon className="h-4 w-4" />
-                {tab.label}
-              </button>
-            );
-          })}
-        </nav>
-      </div>
-
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
-          transition={{ duration: 0.2 }}
-        >
-          {renderSection()}
-        </motion.div>
-      </AnimatePresence>
-    </div>
+    <DashboardShell
+      title={t('dashboards.eleve.title')}
+      subtitle={eleve.classe ? t('dashboards.eleve.subtitle_classe', { classe: eleve.classe }) : null}
+      tabs={TABS.map((tab) => ({ ...tab, label: t(`dashboards.eleve.tabs.${tab.id}`) }))}
+      activeTab={activeTab}
+      onTabChange={handleTabClick}
+      loading={loading}
+      error={error}
+      onRefresh={refetch}
+    >
+      {renderSection()}
+    </DashboardShell>
   );
 }

@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Models\Classe;
+use App\Support\Reglement;
+use App\Support\Sql;
 use App\Models\PaiementEleve;
 use Illuminate\Support\Facades\DB;
 
@@ -22,7 +24,13 @@ class PaiementService extends BaseService
             'eleve_id' => 'required|school_exists:eleves,id',
             'montant' => 'required|numeric|min:0',
             'type' => 'required|in:frais_scolarite,inscription,tenue,transport,autre',
-            'mode_paiement' => 'required|in:espece,cheque,virement,mobile_money,carte',
+            // Ce service validait `espece,cheque,virement,mobile_money,carte`
+            // en minuscule singulier, quand `ComptableController`, la factory
+            // et les seeders écrivent `ESPECES`, `MOBILE_MONEY`, `VIREMENT`…
+            // Deux vocabulaires pour la même colonne : un paiement créé par
+            // ce chemin était invisible de tout filtre écrit sur l'autre
+            // (cf. audit P4.4).
+            'mode_paiement' => Reglement::regleMode(),
             'reference' => 'nullable|string|max:255',
             'date_paiement' => 'required|date',
             'notes' => 'nullable|string',
@@ -64,8 +72,8 @@ class PaiementService extends BaseService
                 ->get()
                 ->toArray(),
             'recettes_mensuelles' => (clone $query)
-                ->select(DB::raw('MONTH(date_paiement) as mois'), DB::raw('SUM(montant) as total'))
-                ->groupBy(DB::raw('MONTH(date_paiement)'))
+                ->select(DB::raw(Sql::mois('date_paiement') . ' as mois'), DB::raw('SUM(montant) as total'))
+                ->groupBy(DB::raw(Sql::mois('date_paiement')))
                 ->orderBy('mois')
                 ->get()
                 ->toArray(),

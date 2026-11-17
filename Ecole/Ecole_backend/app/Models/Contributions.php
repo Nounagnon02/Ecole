@@ -23,9 +23,9 @@ class Contributions extends Model
     ];
 
     protected $casts = [
-        'date_fin_premiere_tranche' => 'date',
-        'date_fin_deuxieme_tranche' => 'date',
-        'date_fin_troisieme_tranche' => 'date',
+        'date_fin_premiere_tranche' => \App\Casts\JourCalendaire::class,
+        'date_fin_deuxieme_tranche' => \App\Casts\JourCalendaire::class,
+        'date_fin_troisieme_tranche' => \App\Casts\JourCalendaire::class,
     ];
     public function classe()
     {

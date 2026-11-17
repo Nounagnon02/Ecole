@@ -17,6 +17,8 @@ import { ChevronRight, LayoutDashboard } from 'lucide-react';
 import useAuthStore from '@/shared/stores/auth-store';
 import { ROUTE_CONFIG, ROLE_REDIRECT_MAP } from '@/features/roles/route-config';
 import { cn } from '@/shared/lib/utils';
+import { hasRole } from '@/shared/types/roles';
+import { useTranslation } from '@/shared/i18n';
 
 /* ─── Mapping route-key → label lisible ──────────────────────────── */
 const ROUTE_KEY_LABELS = {
@@ -37,10 +39,10 @@ const ROUTE_KEY_LABELS = {
   eleves: 'Élèves',
   notes: 'Notes',
   paiements: 'Paiements',
-  communications: 'Communications',
+  communications: 'Annonces',
   emploiDuTemps: 'Emploi du Temps',
   parametres: 'Paramètres',
-  messagerie: 'Messagerie',
+  messagerie: 'Messages',
   enseignantClasses: 'Mes Classes',
   parentEnfants: 'Mes Enfants',
   eleveCours: 'Mes Cours',
@@ -63,6 +65,7 @@ const ROUTE_KEY_LABELS = {
   universiteCours: 'Cours',
   universiteMesCours: 'Mes Cours',
   universiteNotes: 'Notes',
+  universiteMesNotes: 'Mes notes',
   universiteTaches: 'Tâches',
   universitePlanning: 'Planning',
   universiteDashboard: 'Dashboard',
@@ -80,6 +83,16 @@ const PATH_LABEL_MAP = Object.entries(ROUTE_CONFIG).reduce((map, [key, cfg]) => 
 
 /* ─── Segments ignorés ───────────────────────────────────────────── */
 const IGNORE_SEGMENTS = new Set(['dashboard']);
+
+/* ─── Adresses qui existent réellement, avec les rôles qui les ouvrent ── */
+const ROLES_PAR_ROUTE = new Map(Object.values(ROUTE_CONFIG).map((route) => [route.path, route.roles]));
+
+/** Le compte peut-il ouvrir cette adresse ? (même règle que le menu) */
+function ouvrable(chemin, role) {
+  if (!ROLES_PAR_ROUTE.has(chemin)) return false;
+  const roles = ROLES_PAR_ROUTE.get(chemin);
+  return !roles || hasRole(role, roles);
+}
 
 /* ─── Extraire le premier segment comme qualifiant de groupe ─────── */
 function inferGroupLabel(segment) {
@@ -108,6 +121,7 @@ function segmentToLabel(seg) {
 }
 
 export default function Breadcrumb({ items: propItems, className }) {
+  const { t } = useTranslation();
   const location = useLocation();
   const user = useAuthStore((s) => s.user);
 
@@ -119,7 +133,7 @@ export default function Breadcrumb({ items: propItems, className }) {
     if (segments.length === 0) return [];
 
     const homePath = user?.role ? ROLE_REDIRECT_MAP[user.role] : '/connexion';
-    const items = [{ label: 'Accueil', href: homePath }];
+    const items = [{ label: t('components.breadcrumb.accueil'), href: homePath }];
 
     let accumulated = '';
     for (let i = 0; i < segments.length; i++) {
@@ -137,21 +151,32 @@ export default function Breadcrumb({ items: propItems, className }) {
         (i === 0 ? inferGroupLabel(seg) : null) ||
         segmentToLabel(seg);
 
+      // Un niveau intermédiaire n'est un lien que s'il mène quelque part :
+      // `/parent`, `/directeur`, `/admin`… ne sont pas des pages et renvoyaient
+      // vers la page 404. Le groupe pointe vers son tableau de bord quand il
+      // existe ET que le compte peut l'ouvrir : l'étudiant voyait « Université »
+      // mener au tableau de bord universitaire, le directeur « Surveillance »
+      // à celui du surveillant (17/11/2026). Sinon, simple texte.
+      const role = user?.role;
+      const cible = ouvrable(accumulated, role)
+        ? accumulated
+        : ouvrable(`${accumulated}/dashboard`, role) ? `${accumulated}/dashboard` : undefined;
+
       items.push({
         label,
-        href: isLast ? undefined : accumulated,
+        href: isLast ? undefined : cible,
       });
     }
 
     return items;
-  }, [location.pathname, propItems, user?.role]);
+  }, [location.pathname, propItems, user?.role, t]);
 
   const items = propItems || autoItems || [];
 
   if (items.length === 0) return null;
 
   return (
-    <nav aria-label="Fil d'Ariane" className={cn('mb-4', className)}>
+    <nav aria-label={t('components.breadcrumb.fil_d_ariane')} className={cn('mb-4', className)}>
       <motion.ol
         initial={{ opacity: 0, y: -6 }}
         animate={{ opacity: 1, y: 0 }}
@@ -165,25 +190,26 @@ export default function Breadcrumb({ items: propItems, className }) {
             <li key={`${item.label}-${index}`} className="flex items-center gap-1">
               {index > 0 && (
                 <ChevronRight
-                  className="h-3.5 w-3.5 shrink-0 text-neutral-500"
+                  className="h-3.5 w-3.5 shrink-0 text-[var(--text-secondary)]"
                   aria-hidden="true"
                 />
               )}
 
               {isLast || !item.href ? (
                 <span
-                  className="truncate font-medium text-neutral-900 dark:text-white"
+                  className="truncate font-medium text-[var(--text-primary)] "
                   aria-current={isLast ? 'page' : undefined}
                 >
                   {index === 0 && (
-                    <LayoutDashboard className="mr-1.5 inline h-3.5 w-3.5 text-neutral-400" />
+                    <LayoutDashboard className="mr-1.5 inline h-3.5 w-3.5 text-[var(--text-tertiary)]" />
                   )}
                   {item.label}
                 </span>
               ) : (
                 <Link
                   to={item.href}
-                  className="truncate text-neutral-500 transition-colors hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200"
+                  // 44 px de haut au doigt (BUG-020) ; compact à la souris.
+                  className="inline-flex min-h-11 min-w-11 items-center truncate text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] sm:min-h-0"
                 >
                   {item.label}
                 </Link>

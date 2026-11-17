@@ -7,13 +7,14 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { render, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import apiClient from '@/shared/lib/api-client';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import App from '@/App';
 import useAuthStore from '@/shared/stores/auth-store';
 import { ROLES } from '@/shared/types/roles';
-import { clearDashboardCache } from '@/shared/lib/dashboard-cache';
+import { clearDashboardCache } from '@/shared/lib/query-client';
 import { installHttpMock } from './helpers/http-mock';
 import { makeQueryClient, resetAuth } from './helpers/render';
 
@@ -96,6 +97,20 @@ describe('visiteur non authentifié', () => {
   });
 });
 
+describe('premier affichage en réseau lent', () => {
+  it('montre le formulaire de connexion sans attendre la réponse de /auth/me', async () => {
+    // /auth/me ne répond jamais : en 3G lente, c'est un aller-retour de plus
+    // avant que la personne puisse seulement taper son identifiant.
+    const adaptateur = apiClient.defaults.adapter;
+    apiClient.defaults.adapter = (config) =>
+      config.url?.includes('/auth/me') ? new Promise(() => {}) : adaptateur(config);
+
+    renderApp(['/connexion']);
+
+    expect(await screen.findByLabelText(/^Téléphone, e-mail ou identifiant/)).toBeInTheDocument();
+  });
+});
+
 describe('session restaurée au démarrage', () => {
   it('recharge le profil depuis le cookie et pose l’utilisateur en session', async () => {
     serverSession(ROLES.SECRETAIRE);
@@ -113,7 +128,8 @@ describe('session restaurée au démarrage', () => {
     [ROLES.COMPTABLE, '/comptable/dashboard'],
     [ROLES.ADMIN, '/admin/dashboard'],
     [ROLES.SUPER_ADMIN, '/admin/dashboard'],
-    [ROLES.ETUDIANT, '/universite/dashboard'],
+    // L'étudiant n'a pas le tableau de bord de l'université (16/11/2026).
+    [ROLES.ETUDIANT, '/universite/mes-cours'],
   ])('depuis /, le rôle %s arrive sur %s', async (role, expected) => {
     serverSession(role);
     const router = renderApp(['/']);

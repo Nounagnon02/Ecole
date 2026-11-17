@@ -12,7 +12,7 @@
  * rattachée à la série de la classe (cascade classe -> série -> matière).
  */
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { GraduationCap, Trash2, Plus, Users, Loader2, RefreshCw, BookOpen } from 'lucide-react';
 import Card from '@/shared/components/ui/Card';
@@ -20,28 +20,29 @@ import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
 import Select from '@/shared/components/ui/Select';
 import { Tabs } from '@/shared/components/ui/Tabs';
-import { useApi } from '@/hooks/useApi';
+import { api } from '@/shared/services/api';
+import { useApiQuery } from '@/shared/lib/api-client';
+import { unwrapList } from '@/shared/lib/unwrap';
+import { useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from '@/shared/i18n';
 
-/** Normalise { success, data } | tableau nu | tableau. */
-function unwrap(res) {
-  return Array.isArray(res?.data?.data) ? res.data.data
-    : Array.isArray(res?.data) ? res.data
-    : Array.isArray(res) ? res
-    : [];
+/**
+ * Normalise { success, data } | paginateur | tableau nu.
+ *
+ * `unwrap` prenait une réponse axios ; react-query livre déjà `response.data`,
+ * d'où ce nom distinct et l'appui sur le helper partagé.
+ */
+function unwrapPayload(payload) {
+  return unwrapList(payload);
 }
 
 const NOM_ENSEIGNANT = (e) =>
   [e?.user?.name, e?.user?.prenom].filter(Boolean).join(' ').trim() || 'Enseignant';
 
 export default function AffectationsPage() {
-  const { loading, error, clearError, get, post, delete: del } = useApi();
-
-  const [teachers, setTeachers] = useState([]);
-  const [classes, setClasses] = useState([]);
-  const [mpTeachers, setMpTeachers] = useState([]);
+  const { t } = useTranslation();
 
   const [selectedTeacherId, setSelectedTeacherId] = useState('');
-  const [affectations, setAffectations] = useState([]);
 
   const [classeId, setClasseId] = useState('');
   const [serieId, setSerieId] = useState('');
@@ -50,65 +51,104 @@ export default function AffectationsPage() {
   const [saving, setSaving] = useState(false);
   const [actionError, setActionError] = useState(null);
 
-  const loadAll = useCallback(async () => {
-    clearError();
-    try {
-      const [tRes, cRes, mRes] = await Promise.all([
-        get('/enseignants'),
-        get('/classes', { params: { with_matieres: 1 } }),
-        get('/enseignants-mp'),
-      ]);
-      setTeachers(unwrap(tRes));
-      setClasses(unwrap(cRes));
-      setMpTeachers(unwrap(mRes));
-    } catch (e) {
-      /* l'erreur est déjà exposée par useApi */
-    }
-  }, [get, clearError]);
+  // Trois référentiels indépendants, puis les affectations de l'enseignant
+  // sélectionné. `useApi()` exposait un `loading` et un `error` partagés :
+  // l'échec de l'un masquait l'état des autres, et rien n'était mis en cache
+  // entre deux visites (cf. audit P4.1).
+  const requeteEnseignants = useApiQuery(['enseignants'], '/enseignants');
+  const requeteClasses = useApiQuery(['classes', 'avec-matieres'], '/classes', {
+    config: { params: { with_matieres: 1 } },
+  });
+  const requeteMp = useApiQuery(['enseignants-mp'], '/enseignants-mp');
 
-  useEffect(() => {
-    loadAll();
-  }, [loadAll]);
+  const teachers = useMemo(() => unwrapPayload(requeteEnseignants.data), [requeteEnseignants.data]);
+  const classes = useMemo(() => unwrapPayload(requeteClasses.data), [requeteClasses.data]);
+  const mpTeachers = useMemo(() => unwrapPayload(requeteMp.data), [requeteMp.data]);
+
+  const loading = requeteEnseignants.isPending || requeteClasses.isPending;
+  const error = requeteEnseignants.isError
+    ? (requeteEnseignants.error?.message ?? t('common.load_error'))
+    : requeteClasses.isError
+      ? (requeteClasses.error?.message ?? t('common.load_error'))
+      : null;
 
   const selectedTeacher = useMemo(
     () => teachers.find((t) => String(t.id) === String(selectedTeacherId)) || null,
     [teachers, selectedTeacherId]
   );
 
-  const loadAffectations = useCallback(async (teacherId) => {
-    try {
-      const res = await get(`/enseignants/${teacherId}/affectations`);
-      setAffectations(unwrap(res));
-    } catch (e) {
-      setAffectations([]);
-    }
-  }, [get]);
+  // Requête dépendante : `enabled` remplace le garde impératif, et la clé
+  // porte l'enseignant — changer de sélection change d'entrée de cache au
+  // lieu d'écraser la précédente.
+  const requeteAffectations = useApiQuery(
+    ['affectations', selectedTeacherId],
+    `/enseignants/${selectedTeacherId}/affectations`,
+    { queryOptions: { enabled: !!selectedTeacherId } },
+  );
 
-  useEffect(() => {
-    if (!selectedTeacherId) {
-      setAffectations([]);
-      return;
-    }
-    loadAffectations(selectedTeacherId);
-  }, [selectedTeacherId, loadAffectations]);
+  const affectations = useMemo(
+    () => (selectedTeacherId ? unwrapPayload(requeteAffectations.data) : []),
+    [requeteAffectations.data, selectedTeacherId],
+  );
+
+  const queryClient = useQueryClient();
+
+  /** Relance les trois référentiels — le bouton « Réessayer ». */
+  const loadAll = () => {
+    queryClient.invalidateQueries({ queryKey: ['enseignants'] });
+    queryClient.invalidateQueries({ queryKey: ['classes'] });
+    queryClient.invalidateQueries({ queryKey: ['enseignants-mp'] });
+  };
+
+  /**
+   * `clearError` vidait l'erreur partagée de `useApi()`. Chaque requête porte
+   * désormais la sienne ; seule l'erreur d'action reste à effacer.
+   */
+  const clearError = () => setActionError(null);
+
+  /**
+   * Les écritures renvoient la liste à jour : on la pose directement dans le
+   * cache plutôt que de relancer un aller-retour.
+   */
+  const setAffectations = (liste) => {
+    queryClient.setQueryData(['affectations', selectedTeacherId], { data: liste });
+  };
 
   /* Cascade classe -> série -> matière */
   const currentClasse = useMemo(
     () => classes.find((c) => String(c.id) === String(classeId)) || null,
     [classes, classeId]
   );
+  // L'API passe par le pivot `serie_matieres` : la série revient une fois par
+  // matière de la classe, et porte les matières de toutes ses classes
+  // (`pivot.classe_id`). On dédoublonne, et on ne garde que cette classe.
+  const seriesDeLaClasse = useMemo(() => {
+    const vues = new Map();
+    (currentClasse?.series ?? []).forEach((s) => { if (!vues.has(s.id)) vues.set(s.id, s); });
+    return [...vues.values()];
+  }, [currentClasse]);
   const seriesOptions = useMemo(
-    () => (currentClasse?.series ?? []).map((s) => ({ value: s.id, label: s.nom })),
-    [currentClasse]
+    () => seriesDeLaClasse.map((s) => ({ value: s.id, label: s.nom })),
+    [seriesDeLaClasse]
   );
   const currentSerie = useMemo(
-    () => (currentClasse?.series ?? []).find((s) => String(s.id) === String(serieId)) || null,
-    [currentClasse, serieId]
+    () => seriesDeLaClasse.find((s) => String(s.id) === String(serieId)) || null,
+    [seriesDeLaClasse, serieId]
   );
-  const matieresOptions = useMemo(
-    () => (currentSerie?.matieres ?? []).map((m) => ({ value: m.id, label: m.nom })),
-    [currentSerie]
-  );
+  const matieresOptions = useMemo(() => {
+    const vues = new Map();
+    (currentSerie?.matieres ?? [])
+      .filter((m) => m.pivot?.classe_id == null || String(m.pivot.classe_id) === String(classeId))
+      .forEach((m) => { if (!vues.has(m.id)) vues.set(m.id, { value: m.id, label: m.nom }); });
+    return [...vues.values()];
+  }, [currentSerie, classeId]);
+  const classeSansSerie = Boolean(currentClasse) && seriesDeLaClasse.length === 0;
+
+  // Avant la seconde, une classe n'a qu'une série (son cycle) : la demander
+  // serait une question sans choix.
+  useEffect(() => {
+    if (seriesDeLaClasse.length === 1 && !serieId) setSerieId(String(seriesDeLaClasse[0].id));
+  }, [seriesDeLaClasse, serieId]);
 
   const canAdd = Boolean(selectedTeacher && classeId && serieId && matiereId);
 
@@ -117,7 +157,7 @@ export default function AffectationsPage() {
     setSaving(true);
     setActionError(null);
     try {
-      const res = await post(`/enseignants/${selectedTeacherId}/affectations`, {
+      const res = await api.post(`/enseignants/${selectedTeacherId}/affectations`, {
         affectations: [
           {
             classe_id: Number(classeId),
@@ -126,13 +166,13 @@ export default function AffectationsPage() {
           },
         ],
       });
-      setAffectations(unwrap(res));
+      setAffectations(unwrapPayload(res?.data));
       setClasseId('');
       setSerieId('');
       setMatiereId('');
     } catch (e) {
       clearError();
-      setActionError(e.response?.data?.message || e.message || "L'affectation a été refusée");
+      setActionError(e.response?.data?.message || e.message || t('pages.affectations.affectations.l_affectation_a_ete_refusee'));
     } finally {
       setSaving(false);
     }
@@ -142,11 +182,11 @@ export default function AffectationsPage() {
     if (!selectedTeacher) return;
     setActionError(null);
     try {
-      const res = await del(`/enseignants/${selectedTeacherId}/affectations/${affectationId}`);
-      setAffectations(unwrap(res));
+      const res = await api.delete(`/enseignants/${selectedTeacherId}/affectations/${affectationId}`);
+      setAffectations(unwrapPayload(res?.data));
     } catch (e) {
       clearError();
-      setActionError(e.response?.data?.message || e.message || 'Le retrait a échoué');
+      setActionError(e.response?.data?.message || e.message || t('pages.affectations.affectations.le_retrait_a_echoue'));
     }
   };
 
@@ -154,34 +194,39 @@ export default function AffectationsPage() {
     if (!newClassId) return;
     setActionError(null);
     try {
-      const res = await post(`/enseignants-mp/${mpTeacherId}/affectation`, {
+      const res = await api.post(`/enseignants-mp/${mpTeacherId}/affectation`, {
         classe_id: Number(newClassId),
       });
-      const updated = res?.data?.data ?? unwrap(res);
-      setMpTeachers((prev) =>
-        prev.map((t) => (String(t.id) === String(mpTeacherId) ? { ...t, ...updated } : t))
-      );
+      const updated = res?.data?.data ?? res?.data ?? {};
+      // Le serveur renvoie l'enseignant mis à jour : on l'insère dans le
+      // cache plutôt que de relancer un aller-retour (cf. audit P4.1).
+      queryClient.setQueryData(['enseignants-mp'], (ancien) => {
+        const liste = unwrapPayload(ancien);
+        return {
+          data: liste.map((t) => (String(t.id) === String(mpTeacherId) ? { ...t, ...updated } : t)),
+        };
+      });
     } catch (e) {
       clearError();
-      setActionError(e.response?.data?.message || e.message || "L'affectation a été refusée");
+      setActionError(e.response?.data?.message || e.message || t('pages.affectations.affectations.l_affectation_a_ete_refusee'));
     }
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--text-tertiary)]" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
+      <div className="flex flex-col items-center justify-center h-64 text-[var(--text-secondary)]">
         <RefreshCw className="h-8 w-8 mb-2 text-red-400" />
         <p className="text-sm">{error}</p>
         <Button variant="outline" size="sm" className="mt-4" onClick={loadAll}>
-          Réessayer
+          {t('common.retry')}
         </Button>
       </div>
     );
@@ -200,11 +245,11 @@ export default function AffectationsPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">
-            Affectations des enseignants
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] ">
+            {t('pages.affectations.affectations.title')}
           </h1>
-          <p className="text-sm text-neutral-500">
-            Attribuez les classes, séries et matières à chaque enseignant
+          <p className="text-sm text-[var(--text-secondary)]">
+            {t('pages.affectations.affectations.subtitle')}
           </p>
         </div>
       </div>
@@ -217,8 +262,8 @@ export default function AffectationsPage() {
 
       <Tabs defaultValue="secondaire">
         <Tabs.List variant="pills">
-          <Tabs.Trigger value="secondaire">Secondaire</Tabs.Trigger>
-          <Tabs.Trigger value="mp">Maternelle &amp; Primaire</Tabs.Trigger>
+          <Tabs.Trigger value="secondaire">{t('pages.affectations.affectations.secondaire')}</Tabs.Trigger>
+          <Tabs.Trigger value="mp">{t('pages.affectations.affectations.maternelle_et_primaire')}</Tabs.Trigger>
         </Tabs.List>
 
         {/* ─── Secondaire : triplet classe × série × matière ─────────── */}
@@ -226,30 +271,30 @@ export default function AffectationsPage() {
           <div className="grid gap-6 lg:grid-cols-2">
             <Card>
               <Card.Header>
-                <Card.Title>Enseignants</Card.Title>
-                <Card.Description>Sélectionnez un enseignant pour voir ses cours</Card.Description>
+                <Card.Title>{t('pages.affectations.affectations.enseignants_title')}</Card.Title>
+                <Card.Description>{t('pages.affectations.affectations.selectionnez_un_enseignant_pour_voir_ses_cours')}</Card.Description>
               </Card.Header>
               <Card.Body>
                 <Select
-                  aria-label="Enseignant"
-                  label="Enseignant"
-                  placeholder="Choisir un enseignant"
+                  aria-label={t('pages.affectations.affectations.enseignant')}
+                  label={t('pages.affectations.affectations.enseignant')}
+                  placeholder={t('pages.affectations.affectations.choisir_un_enseignant')}
                   options={teacherOptions}
                   value={selectedTeacherId}
                   onChange={(e) => setSelectedTeacherId(e.target.value)}
                 />
 
                 {selectedTeacher && (
-                  <div className="mt-4 flex items-center gap-3 rounded-xl border border-neutral-200 p-4 dark:border-neutral-700">
+                  <div className="mt-4 flex items-center gap-3 rounded-xl border border-[var(--border)] p-4 ">
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--accent-subtle)] text-[var(--accent)]">
                       <GraduationCap className="h-5 w-5" />
                     </div>
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-neutral-900 dark:text-white">
+                      <p className="truncate text-sm font-semibold text-[var(--text-primary)] ">
                         {NOM_ENSEIGNANT(selectedTeacher)}
                       </p>
-                      <p className="text-xs text-neutral-500">
-                        {selectedTeacher.specialite || selectedTeacher.grade || 'Enseignant'}
+                      <p className="text-xs text-[var(--text-secondary)]">
+                        {selectedTeacher.specialite || selectedTeacher.grade || t('pages.affectations.affectations.enseignant')}
                       </p>
                     </div>
                   </div>
@@ -259,16 +304,16 @@ export default function AffectationsPage() {
 
             <Card>
               <Card.Header>
-                <Card.Title>Affecter un cours</Card.Title>
+                <Card.Title>{t('pages.affectations.affectations.affecter_un_cours')}</Card.Title>
                 <Card.Description>
-                  Classe → série → matière (la matière doit appartenir à la série)
+                  {t('pages.affectations.affectations.classe_serie_matiere_cascade')}
                 </Card.Description>
               </Card.Header>
               <Card.Body className="space-y-4">
                 <Select
-                  aria-label="Classe"
-                  label="Classe"
-                  placeholder="Choisir une classe"
+                  aria-label={t('pages.affectations.affectations.classe_label')}
+                  label={t('pages.affectations.affectations.classe_label')}
+                  placeholder={t('pages.affectations.affectations.choisir_une_classe')}
                   options={classeOptions}
                   value={classeId}
                   onChange={(e) => {
@@ -278,9 +323,9 @@ export default function AffectationsPage() {
                   }}
                 />
                 <Select
-                  aria-label="Série"
-                  label="Série"
-                  placeholder={classeId ? 'Choisir une série' : 'Choisissez d\u2019abord une classe'}
+                  aria-label={t('pages.affectations.affectations.serie_label')}
+                  label={t('pages.affectations.affectations.serie_label')}
+                  placeholder={classeId ? t('pages.affectations.affectations.choisir_une_serie') : t('pages.affectations.affectations.choisissez_d_abord_une_classe')}
                   options={seriesOptions}
                   value={serieId}
                   disabled={!classeId}
@@ -289,10 +334,15 @@ export default function AffectationsPage() {
                     setMatiereId('');
                   }}
                 />
+                {classeSansSerie && (
+                  <p role="status" className="rounded-md border border-[var(--border)] bg-[var(--surface-subtle)] p-3 text-sm text-[var(--text-secondary)]">
+                    {t('pages.affectations.affectations.classe_sans_serie')}
+                  </p>
+                )}
                 <Select
-                  aria-label="Matière"
-                  label="Matière"
-                  placeholder={serieId ? 'Choisir une matière' : 'Choisissez d\u2019abord une série'}
+                  aria-label={t('pages.affectations.affectations.matiere_label')}
+                  label={t('pages.affectations.affectations.matiere_label')}
+                  placeholder={serieId ? t('pages.affectations.affectations.choisir_une_matiere') : t('pages.affectations.affectations.choisissez_d_abord_une_serie')}
                   options={matieresOptions}
                   value={matiereId}
                   disabled={!serieId}
@@ -305,7 +355,7 @@ export default function AffectationsPage() {
                   icon={<Plus className="h-4 w-4" />}
                   className="w-full"
                 >
-                  Affecter
+                  {t('pages.affectations.affectations.affecter')}
                 </Button>
               </Card.Body>
             </Card>
@@ -313,37 +363,42 @@ export default function AffectationsPage() {
 
           <Card className="mt-6">
             <Card.Header>
-              <Card.Title>Cours de {selectedTeacher ? NOM_ENSEIGNANT(selectedTeacher) : 'l’enseignant'}</Card.Title>
+              <Card.Title>{t('pages.affectations.affectations.cours_de')} {selectedTeacher ? NOM_ENSEIGNANT(selectedTeacher) : t('pages.affectations.affectations.l_enseignant')}</Card.Title>
               <Card.Description>
-                {affectations.length} affectation{affectations.length > 1 ? 's' : ''}
+                {t(
+                  affectations.length > 1
+                    ? 'pages.affectations.affectations.affectation_count_plural'
+                    : 'pages.affectations.affectations.affectation_count_singular',
+                  { n: affectations.length },
+                )}
               </Card.Description>
             </Card.Header>
             <Card.Body className="p-0">
               {!selectedTeacher ? (
-                <div className="py-10 text-center text-sm text-neutral-500">
-                  Sélectionnez un enseignant pour afficher ses affectations
+                <div className="py-10 text-center text-sm text-[var(--text-secondary)]">
+                  {t('pages.affectations.affectations.selectionnez_un_enseignant_pour_afficher_ses_affectations')}
                 </div>
               ) : affectations.length === 0 ? (
-                <div className="py-10 text-center text-sm text-neutral-500">
+                <div className="py-10 text-center text-sm text-[var(--text-secondary)]">
                   <Users className="mx-auto h-8 w-8 mb-2" />
-                  Aucune affectation pour cet enseignant
+                  {t('pages.affectations.affectations.aucune_affectation_pour_cet_enseignant')}
                 </div>
               ) : (
-                <ul className="divide-y divide-neutral-100 dark:divide-neutral-800">
+                <ul className="divide-y divide-[var(--border-light)] ">
                   {affectations.map((a) => (
                     <li
                       key={a.id}
                       className="flex items-center gap-4 px-4 py-3"
                     >
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-neutral-100 text-neutral-500 dark:bg-neutral-800">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--surface-subtle)] text-[var(--text-secondary)] ">
                         <BookOpen className="h-4 w-4" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-neutral-900 dark:text-white">
-                          {a.matiere?.nom || 'Matière'}
+                        <p className="truncate text-sm font-medium text-[var(--text-primary)] ">
+                          {a.matiere?.nom || t('common.subject')}
                         </p>
-                        <p className="truncate text-xs text-neutral-500">
-                          {a.classe?.nom_classe || 'Classe'}
+                        <p className="truncate text-xs text-[var(--text-secondary)]">
+                          {a.classe?.nom_classe || t('common.class')}
                           {a.serie?.nom ? ` · ${a.serie.nom}` : ''}
                         </p>
                       </div>
@@ -353,7 +408,7 @@ export default function AffectationsPage() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        aria-label={`Retirer ${a.matiere?.nom || 'cette matière'} en ${a.classe?.nom_classe || 'classe'}`}
+                        aria-label={`${t('pages.affectations.affectations.retirer')} ${a.matiere?.nom || t('pages.affectations.affectations.cette_matiere')} ${t('pages.affectations.affectations.en')} ${a.classe?.nom_classe || t('pages.affectations.affectations.classe_label')}`}
                         onClick={() => handleDelete(a.id)}
                       >
                         <Trash2 className="h-4 w-4 text-red-500" />
@@ -370,40 +425,40 @@ export default function AffectationsPage() {
         <Tabs.Content value="mp">
           <Card>
             <Card.Header>
-              <Card.Title>Enseignants Maternelle &amp; Primaire</Card.Title>
+              <Card.Title>{t('pages.affectations.affectations.enseignants_maternelle_et_primaire')}</Card.Title>
               <Card.Description>
-                Chaque enseignant couvre une classe entière — changez sa classe ici
+                {t('pages.affectations.affectations.chaque_enseignant_couvre_une_classe')}
               </Card.Description>
             </Card.Header>
             <Card.Body className="p-0">
               {mpTeachers.length === 0 ? (
-                <div className="py-10 text-center text-sm text-neutral-500">
+                <div className="py-10 text-center text-sm text-[var(--text-secondary)]">
                   <Users className="mx-auto h-8 w-8 mb-2" />
-                  Aucun enseignant Maternelle / Primaire
+                  {t('pages.affectations.affectations.aucun_enseignant_mp')}
                 </div>
               ) : (
-                <ul className="divide-y divide-neutral-100 dark:divide-neutral-800">
-                  {mpTeachers.map((t) => (
-                    <li key={t.id} className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center">
+                <ul className="divide-y divide-[var(--border-light)] ">
+                  {mpTeachers.map((enseignant) => (
+                    <li key={enseignant.id} className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center">
                       <div className="flex items-center gap-3">
                         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--accent-subtle)] text-[var(--accent)]">
                           <GraduationCap className="h-4 w-4" />
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-neutral-900 dark:text-white">
-                            {NOM_ENSEIGNANT(t)}
+                          <p className="text-sm font-medium text-[var(--text-primary)] ">
+                            {NOM_ENSEIGNANT(enseignant)}
                           </p>
-                          <p className="text-xs text-neutral-500">
-                            {t.classe?.categorie_classe || 'Maternelle / Primaire'}
+                          <p className="text-xs text-[var(--text-secondary)]">
+                            {enseignant.classe?.categorie_classe || t('pages.affectations.affectations.maternelle_primaire')}
                           </p>
                         </div>
                       </div>
                       <Select
-                        aria-label={`Classe de ${NOM_ENSEIGNANT(t)}`}
-                        label="Classe"
+                        aria-label={`${t('pages.affectations.affectations.classe_de')} ${NOM_ENSEIGNANT(enseignant)}`}
+                        label={t('common.class')}
                         options={classeOptions}
-                        value={t.classe?.id ? String(t.classe.id) : ''}
-                        onChange={(e) => handleMpChange(t.id, e.target.value)}
+                        value={enseignant.classe?.id ? String(enseignant.classe.id) : ''}
+                        onChange={(e) => handleMpChange(enseignant.id, e.target.value)}
                         className="sm:ml-auto sm:w-72"
                       />
                     </li>

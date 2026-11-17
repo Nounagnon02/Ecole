@@ -1,0 +1,92 @@
+[
+ {
+  "id": "P1",
+  "titre": "Parent (avec enfant) : tableau de bord",
+  "statut": "OBSERVÉ",
+  "detail": "arrivée /parent/dashboard ; Accueil Parent Espace parent Suivi de vos enfants — mercredi 11 novembre 2026 Actualiser Aperçu Notes Emploi du temps Paiements Échanges Enfants scolarisés 1 Moyenne générale 11.39 Assiduité 100% Solde 171 934 FCFA Évolution des notes Suivi trimestriel Koffi Juin Juil Août Sep Oct Nov 9 10 11 12 13 Mes enfants Vue rapide A ADJOVI Koffi Petite Section père Contact princi"
+ },
+ {
+  "id": "P2-Notes",
+  "titre": "Parent : onglet « Notes » du tableau de bord",
+  "statut": "OBSERVÉ",
+  "detail": "nt Bulletins Toutes les classes Toutes les matières ÉLÈVE CLASSE MATIÈRE NOTE TYPE PÉRIODE DATE STATUT ACTION Aucune note trouvée ; erreurs API: aucune ; BOUTONS: ∅ | Exporter | Importer | Nouvelle note | Notes | Classement | Bulletins || CHAMPS: input#:rb:[Rechercher un élève...] | select#[Filtrer par classe] | select#[Filtrer par matière]"
+ },
+ {
+  "id": "P2-Emploi du temps",
+  "titre": "Parent : onglet « Emploi du temps » du tableau de bord",
+  "statut": "ERREUR",
+  "detail": "locator.click: Timeout 30000ms exceeded."
+ },
+ {
+  "id": "P2-Paiements",
+  "titre": "Parent : onglet « Paiements » du tableau de bord",
+  "statut": "ERREUR",
+  "detail": "locator.click: Timeout 30000ms exceeded."
+ },
+ {
+  "id": "P2-Échanges",
+  "titre": "Parent : onglet « Échanges » du tableau de bord",
+  "statut": "ERREUR",
+  "detail": "locator.click: Timeout 30000ms exceeded."
+ },
+ {
+  "id": "P3",
+  "titre": "Parent : « Mes enfants »",
+  "statut": "VALIDÉ",
+  "detail": "Accueil Parent Mes Enfants Mes enfants Suivez la scolarité de vos enfants A ADJOVI Petite Section 0.0 Rang: 1e Moyenne générale 0.0 Rang 1e Absences 0 Frais scolarité — Notes Emploi du temps Absences Paiements Mathématiques 1ère evaluation 8/20 Moy. classe: — Mathématiques 2ème evaluation 11.2/20 Moy. classe: — Mathématiques 2ème evaluation 7.2/20 Moy. classe: — Français Devoir ; erreurs API: aucu"
+ },
+ {
+  "id": "P4",
+  "titre": "Parent : page « Paiements » et échéancier",
+  "statut": "ÉCHEC",
+  "detail": "LISTE: Accueil Paiements Paiements Gestion des transactions financières Factures Exporter Nouveau paiement Revenus encaissés 0 F CFA Transactions 0 Taux d'Encaisse 0% Impayés 100% Paiements Échéancier Tous les statuts Payé Partiel En attente Erreur : Unauthorized - Role required: directeur, comptable RÉFÉRENCE ÉLÈVE TYPE MONTANT DATE STATUT REÇU Aucun paiement trouvé ; ÉCHÉANCIER: Accueil Paiement"
+ },
+ {
+  "id": "P5",
+  "titre": "Parent : page « Notes »",
+  "statut": "OBSERVÉ",
+  "detail": "Accueil Notes Notes Consultez et gérez les notes des élèves Exporter Importer Nouvelle note Moyenne générale —/20 Total évaluations 0 Taux de réussite 0% Échecs 100% Notes Classement Bulletins Toutes les classes Toutes les matières ÉLÈVE CLASSE MATIÈRE NOTE TYPE PÉRIODE DATE STATUT ACTION Aucune note trouvée ; lignes: 1 ; erreurs API: aucune"
+ },
+ {
+  "id": "P6",
+  "titre": "Parent : assistant IA",
+  "statut": "OBSERVÉ",
+  "detail": "Accueil Parent Ai report Assistant parental Suivi intelligent de la scolarité Chat IA Analyses EduPilot IA Posez une question ou choisissez une suggestion ci-dessous Rapport de mon enfant Progrès récents Conseil éducatif Objectifs trimestre ; erreurs API: aucune ; BOUTONS: Chat IA | Analyses | Rapport de mon enfant | Progrès récents | Conseil éducatif | Objectifs trimestre | ∅ || CHAMPS: input#[Po"
+ },
+ {
+  "id": "C4",
+  "titre": "Recherche globale (Ctrl+K)",
+  "statut": "ERREUR",
+  "detail": "locator.innerText: Timeout 30000ms exceeded."
+ },
+ {
+  "id": "C5",
+  "titre": "Notifications et menu du compte",
+  "statut": "ERREUR",
+  "detail": "locator.click: Timeout 4000ms exceeded."
+ },
+ {
+  "id": "H2",
+  "titre": "Élèves : état affiché de l’élève retiré (DJOKO Yvette)",
+  "statut": "ÉCHEC",
+  "detail": "en base: statut = inactive ; ligne affichée: « DY DJOKO Yvette 4ème SCO2025030 actif » ; actions proposées: | "
+ },
+ {
+  "id": "K1",
+  "titre": "Affectations : affecter un enseignant",
+  "statut": "BLOQUÉ",
+  "detail": "listes: Enseignant: 11 choix ; Classe: 20 choix ; Série: 0 choix ; Matière: 0 choix ; bouton « Affecter » désactivé ; API: aucun appel d’écriture ; message: « » ; ection Moyenne Section Grande Section CP CE1 CE2 CM1 CM2 6ème 5ème 4ème 2nde A 2nde C 1ère A 1ère C 1ère D Tle A Tle C Tle D Série Choisir une série Matière Choisissez d’abord une série Affecter Cours de Enseignant Complexe Scolaire Exce"
+ },
+ {
+  "id": "N1",
+  "titre": "Directeur : page « Notes » (volume de données)",
+  "statut": "OBSERVÉ",
+  "detail": "Accueil Notes Notes Consultez et gérez les notes des élèves Exporter Importer Nouvelle note Moyenne générale —/20 Total évaluations 0 Taux de réussite 0% Échecs 100% Notes Classement Bulletins Toutes les classes Toutes les matières ÉLÈVE CLASSE MATIÈRE NOTE TYPE PÉRIODE DATE STATUT ACTION Aucune note trouvée ; lignes: 1 (641 notes en base)"
+ },
+ {
+  "id": "I2",
+  "titre": "Enseignant : onglet « Notes » et saisie",
+  "statut": "OBSERVÉ",
+  "detail": "élément: BUTTON ; après clic → /enseignant/dashboard ; dialogue: 0 ; aucun appel d’écriture ; BOUTONS: Actualiser | Aperçu | Ma classe | Notes | Cahier de textes | Emploi du temps | Messages | Saisir des notes || CHAMPS: input#:rd:[Rechercher...] ; APRÈS: BOUTONS: Actualiser | Aperçu | Ma classe | Notes | Cahier de textes | Emploi du temps | Messages | Saisir des notes || CHAMPS: input#:rd:[Recher"
+ }
+]

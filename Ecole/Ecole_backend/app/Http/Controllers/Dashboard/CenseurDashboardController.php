@@ -15,6 +15,7 @@ class CenseurDashboardController extends Controller
     public function censeur()
     {
         $data = Cache::remember('dashboard_censeur_' . (\App\Models\Eleve::currentEcoleId() ?? 'global'), 120, function () {
+            try {
             $totalEleves = \App\Models\Eleve::count();
             $sanctionsMois = \App\Models\Sanction::whereMonth('date', now()->month)
                 ->whereYear('date', now()->year)->count();
@@ -51,11 +52,13 @@ class CenseurDashboardController extends Controller
             }
 
             // Répartition par type de sanction (en %)
-            $types = \App\Models\Sanction::select('type_sanction')->get()->groupBy('type_sanction');
-            $totalTypes = max($types->flatten()->count(), 1);
-            $typesSanctions = $types->map(fn ($g, $nom) => [
-                'name' => $nom,
-                'value' => round(($g->count() / $totalTypes) * 100),
+            $typesRows = \App\Models\Sanction::select('type_sanction', \DB::raw('COUNT(*) as total'))
+                ->groupBy('type_sanction')
+                ->get();
+            $totalTypes = max($typesRows->sum('total'), 1);
+            $typesSanctions = $typesRows->map(fn ($row) => [
+                'name' => $row->type_sanction,
+                'value' => round(($row->total / $totalTypes) * 100),
             ])->values();
 
             $statutsFR = [
@@ -108,22 +111,25 @@ class CenseurDashboardController extends Controller
                 ]);
 
             // ─── Récidivistes : élèves ayant reçu au moins deux sanctions.
-            $recidivistes = \App\Models\Sanction::with(['eleve.user', 'eleve.classe'])
-                ->get()
+            $recidivistes = \App\Models\Sanction::select('eleve_id', \DB::raw('COUNT(*) as sanctions'))
+                ->with(['eleve.user', 'eleve.classe'])
                 ->groupBy('eleve_id')
-                ->filter(fn ($g) => $g->count() >= 2)
-                ->map(fn ($g) => [
-                    'eleve' => $this->nomEleve($g->first()->eleve),
-                    'classe' => $g->first()->eleve?->classe?->nom_classe,
-                    'sanctions' => $g->count(),
-                ])->sortByDesc('sanctions')->take(5)->values();
+                ->having('sanctions', '>=', 2)
+                ->orderByDesc('sanctions')
+                ->limit(5)
+                ->get()
+                ->map(fn ($row) => [
+                    'eleve' => $this->nomEleve($row->eleve),
+                    'classe' => $row->eleve?->classe?->nom_classe,
+                    'sanctions' => $row->sanctions,
+                ]);
 
             return [
                 'stats' => [
-                    ['title' => 'Total Élèves', 'value' => (string) $totalEleves, 'trend' => 0],
-                    ['title' => 'Sanctions du Mois', 'value' => (string) $sanctionsMois, 'trend' => 0],
-                    ['title' => 'Absences Non Justifiées', 'value' => (string) $absencesNonJustifiees, 'trend' => 0],
-                    ['title' => 'Avertissements', 'value' => (string) $avertissements, 'trend' => 0],
+                    ['title' => 'Total Élèves', 'value' => (string) $totalEleves],
+                    ['title' => 'Sanctions du Mois', 'value' => (string) $sanctionsMois],
+                    ['title' => 'Absences Non Justifiées', 'value' => (string) $absencesNonJustifiees],
+                    ['title' => 'Avertissements', 'value' => (string) $avertissements],
                 ],
                 'evolution' => $evolution,
                 'types_sanctions' => $typesSanctions,
@@ -132,6 +138,23 @@ class CenseurDashboardController extends Controller
                 'sanctions_attente' => $sanctionsAttente,
                 'recidivistes' => $recidivistes,
             ];
+            } catch (\Exception $e) {
+                \Log::error('Dashboard Censeur error: ' . $e->getMessage());
+                return [
+                    'stats' => [
+                        ['title' => 'Total Élèves', 'value' => '0'],
+                        ['title' => 'Sanctions du Mois', 'value' => '0'],
+                        ['title' => 'Absences Non Justifiées', 'value' => '0'],
+                        ['title' => 'Avertissements', 'value' => '0'],
+                    ],
+                    'evolution' => [],
+                    'types_sanctions' => [],
+                    'sanctions' => [],
+                    'absences_par_classe' => [],
+                    'sanctions_attente' => [],
+                    'recidivistes' => [],
+                ];
+            }
         });
 
         return response()->json(['success' => true, 'data' => $data]);

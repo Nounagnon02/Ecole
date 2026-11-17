@@ -16,6 +16,7 @@
 
 import React, { useMemo } from 'react';
 import { Pressable, Text, View, StyleSheet, ActivityIndicator } from 'react-native';
+import { fonts } from '../theme/typography';
 import { useTheme } from '../theme';
 
 /* ─── Configurations par variant ─────────────────────────────────────────── */
@@ -99,6 +100,10 @@ export default function EruditButton({
   accessibilityLabel,
   ...props
 }) {
+  // Une icône en chaîne (« 🔑 ») doit être dans un Text : Android refuse tout
+  // texte hors d'un <Text> et l'écran plantait (recette du 15/11/2026).
+  const iconeRendue = typeof icon === 'string' || typeof icon === 'number' ? <Text>{icon}</Text> : icon;
+
   const config = useButtonConfig(variant, size);
   // useButtonConfig expose les métriques sous la clé `size`, pas `s`.
   const { size: s, colors: vc } = config;
@@ -125,11 +130,11 @@ export default function EruditButton({
         <ActivityIndicator size="small" color={vc.text} />
       ) : (
         <>
-          {icon && iconPosition === 'left' ? <View>{icon}</View> : null}
+          {icon && iconPosition === 'left' ? <View>{iconeRendue}</View> : null}
           {children ? (
             <Text
               style={{
-                fontFamily: 'System',
+                fontFamily: fonts.semibold,
                 fontSize: s.fontSize,
                 fontWeight: '500',
                 color: vc.text,
@@ -138,10 +143,8 @@ export default function EruditButton({
             >
               {children}
             </Text>
-          ) : icon ? (
-            <View>{icon}</View>
-          ) : null}
-          {icon && iconPosition === 'right' ? <View>{icon}</View> : null}
+          ) : null /* icône seule : déjà rendue à gauche ou à droite, pas une seconde fois */}
+          {icon && iconPosition === 'right' ? <View>{iconeRendue}</View> : null}
         </>
       )}
     </>

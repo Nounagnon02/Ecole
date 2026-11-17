@@ -1,43 +1,49 @@
 /**
- * (app) Layout — Protected routes Érudit v4
+ * (app) Layout — routes authentifiées du mobile.
  *
- * Groupe de routes authentifiées.
- * Redirige vers la connexion si non authentifié.
- * Chaque dashboard de rôle est une route Stack.
+ * Périmètre : parents et enseignants (14/11/2026), professeurs et étudiants
+ * d'université (16/11/2026). Un compte d'un autre rôle est déconnecté (jeton révoqué, stockage purgé) ; un parent qui
+ * ouvrirait l'espace enseignant par lien profond, ou l'inverse, est renvoyé
+ * vers le sien. Les droits réels restent vérifiés par l'API à chaque appel.
  */
 
 import { useEffect } from 'react';
 import { View, ActivityIndicator } from 'react-native';
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import { useAuth } from '../../src/context/AuthContext';
 import { useTheme } from '../../src/theme';
+import { DASHBOARDS, hrefDashboard } from '../../src/navigation/routerBridge';
+import MotDePasseImpose from '../../src/espaces/MotDePasseImpose';
+import { Logo } from '../../src/espaces/Icone';
 
-const DASHBOARD_ROUTES = [
-  { name: 'directeur', title: 'Directeur' },
-  { name: 'enseignant', title: 'Enseignant' },
-  { name: 'eleve', title: 'Élève' },
-  { name: 'parent', title: 'Parent' },
-  { name: 'comptable', title: 'Comptable' },
-  { name: 'surveillant', title: 'Surveillant' },
-  { name: 'censeur', title: 'Censeur' },
-  { name: 'infirmier', title: 'Infirmier' },
-  { name: 'bibliothecaire', title: 'Bibliothécaire' },
-  { name: 'secretaire', title: 'Secrétaire' },
-  { name: 'universite', title: 'Université' },
-  { name: 'admin', title: 'Admin' },
-];
+const TITRES = { parent: 'Parent', enseignant: 'Enseignant', professeur: 'Enseignant (université)', etudiant: 'Étudiant' };
 
 export default function AppLayout() {
-  const { user, loading } = useAuth();
+  const { user, loading, logout } = useAuth();
   const router = useRouter();
+  const segments = useSegments();
   const { colors } = useTheme();
+  const espace = hrefDashboard(user?.role);
 
-  // Garde : pas d'accès sans auth
   useEffect(() => {
-    if (!loading && !user) {
+    if (loading) return;
+    if (!user) {
       router.replace('/');
+      return;
     }
-  }, [user, loading]);
+    if (!espace) {
+      // Session restaurée d'un compte hors périmètre : on la ferme.
+      logout().finally(() => router.replace('/'));
+      return;
+    }
+    // Seuls les écrans du groupe sont des espaces : un écran de la racine
+    // ouvert par-dessus (retour de paiement) n'est pas à rediriger.
+    if (segments[0] !== '(app)') return;
+    const ecran = segments[segments.length - 1];
+    if (ecran && `/(app)/${ecran}` !== espace) {
+      router.replace(espace);
+    }
+  }, [user, loading, espace, segments]);
 
   if (loading) {
     return (
@@ -45,28 +51,24 @@ export default function AppLayout() {
         flex: 1, justifyContent: 'center', alignItems: 'center',
         backgroundColor: colors.surface,
       }}>
-        <View style={{
-          width: 64, height: 64, borderRadius: 16, marginBottom: 16,
-          backgroundColor: colors.primary,
-          alignItems: 'center', justifyContent: 'center',
-          shadowColor: colors.primary, shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.3, shadowRadius: 8, elevation: 6,
-        }}>
-          <ActivityIndicator size="large" color="#FFFFFF" />
-        </View>
+        <Logo taille={72} couleur={colors.accent} reliure={colors.surface} />
+        <ActivityIndicator size="large" color={colors.accent} style={{ marginTop: 16 }} accessibilityLabel="Chargement" />
       </View>
     );
   }
 
-  if (!user) return null;
+  if (!user || !espace) return null;
+
+  // Mot de passe provisoire : à remplacer avant tout écran (l'API refuse le reste).
+  if (user.password_change_required) return <MotDePasseImpose />;
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      {DASHBOARD_ROUTES.map((screen) => (
+      {DASHBOARDS.map((nom) => (
         <Stack.Screen
-          key={screen.name}
-          name={screen.name}
-          options={{ title: screen.title }}
+          key={nom}
+          name={nom}
+          options={{ title: TITRES[nom] }}
         />
       ))}
     </Stack>

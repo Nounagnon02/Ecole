@@ -6,76 +6,24 @@ use App\Http\Controllers\Controller;
 use App\Models\Notes;
 use App\Models\Eleve;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class BulletinController extends Controller
 {
     use BulletinCalculation;
 
-    public function GenerateFile(Request $request)
-    {
-        try {
-            Log::debug('GenerateFile', ['keys' => array_keys($request->all())]);
-
-            $classe_id = $request->query('classe_id');
-            $serie_id = $request->query('serie_id');
-            $matiere_id = $request->query('matiere_id');
-            $periode = $request->query('periode');
-            $categorie_id = $request->query('categorie_id');
-
-            $query = Eleve::with('user:id,name,prenom');
-
-            if ($classe_id) {
-                $query->where('class_id', $classe_id);
-            }
-            if ($serie_id) {
-                $query->where('serie_id', $serie_id);
-            }
-            
-            if ($categorie_id) {
-                $query->whereHas('classe', function($q) use ($categorie_id) {
-                    $q->where('categorie_classe', $categorie_id);
-                });
-            }
-
-
-            $eleves = $query->get();
-            
-
-            $data = [];
-            foreach ($eleves as $eleve) {
-                $moyenneInterrogations = $this->calculerMoyenneInterrogations($eleve->id, $matiere_id, $periode);
-                $moyenneDevoirs = $this->getNotesDevoirs($eleve->id, $matiere_id, $periode);
-                $data[] = [
-                    'eleve_id' => $eleve->id,
-                    'nom' => $eleve->user->name ?? '',
-                    'prenom' => $eleve->user->prenom ?? '',
-                    'numero_matricule' => $eleve->numero_matricule,
-                    'moyenne_interrogations' => $moyenneInterrogations,
-                    'Devoirs' => $moyenneDevoirs,
-                    'periode' => $periode
-                ];
-            }
-
-            return response()->json([
-                'success' => true,
-                'data' => $data
-            ]);
-
-        } catch (\Exception $e) {
-            $this->rethrowIfMeaningful($e);
-            Log::error('Error in GenerateFile: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString()
-            ]);
-            return response()->json([
-                'success' => false,
-                'message' => 'An internal server error occurred.'
-            ], 500);
-        }
-    }
-
     public function getBulletin($eleveId, Request $request)
     {
+        // Audit du 14/11, N-05 : aucun contrôle d'appartenance — tout parent
+        // de l'école lisait le bulletin de n'importe quel élève — et un élève
+        // inconnu ou sans série donnait 500. Élève cherché dans l'école de
+        // l'utilisateur (404 sinon), puis même règle que la fiche élève.
+        $eleve = Eleve::find(is_numeric($eleveId) ? (int) $eleveId : 0);
+        abort_if($eleve === null, 404, 'Élève introuvable.');
+        $this->authorize('view', $eleve);
+        abort_if($eleve->serie_id === null || $eleve->serie === null, 404, 'Bulletin indisponible : cet élève n’a pas de série.');
+
         try {
             // Validation de la période
             $periode = $request->get('periode', 'Trimestre 1');
@@ -127,153 +75,132 @@ class BulletinController extends Controller
                 })->toArray()
             ]);
 
-            
+            // Clé de cache basée sur l'élève, la période et l'année scolaire
+            $anneeScolaire = now()->year;
+            $cacheKey = "bulletin_{$eleveId}_{$periode}_{$anneeScolaire}";
 
+            $result = Cache::remember($cacheKey, 300, function () use ($eleve, $eleveId, $periode) {
+                // Récupérer la catégorie de la classe
+                $categorie = $eleve->classe->categorie_classe ?? '';
 
-            // Récupérer la catégorie de la classe
-            $categorie = $eleve->classe->categorie_classe ?? '';
+                // --- Bloc d'adaptation selon la catégorie ---
+                if ($categorie === 'maternelle') {
+                    
+                    $evaluations = [];
+                    $types = ['1ère évaluation','2ème évaluation','3ème évaluation','4ème évaluation','5ème évaluation'];
+                    foreach ($eleve->serie->matieres as $matiere) {
+                        $evals = [];
+                        foreach ($types as $type) {
+                            $note = $this->getNote($eleveId, $matiere->id, $periode, $type);
+                            $moye = $this->calculerMoyenneMatiere($eleveId, $matiere->id, $periode);
+                            // Rang par matière pour cette évaluation
+                            $rangEval = $this->calculateRankEvaluation($eleveId, $matiere->id, $eleve->classe_id, $periode, $type);
+                            // Rang général pour cette évaluation (toutes matières confondues)
+                            //$rangGeneralEval = $this->calculateRankGeneralEvaluation($eleveId, $eleve->classe_id, $periode, $type, $eleve->serie->matieres);
 
-            // --- Bloc d'adaptation selon la catégorie ---
-            if ($categorie === 'maternelle') {
-                
-                $evaluations = [];
-                $types = ['1ère évaluation','2ème évaluation','3ème évaluation','4ème évaluation','5ème évaluation'];
-                foreach ($eleve->serie->matieres as $matiere) {
-                    $evals = [];
-                    foreach ($types as $type) {
-                        $note = $this->getNote($eleveId, $matiere->id, $periode, $type);
-                        $moye = $this->calculerMoyenneMatiere($eleveId, $matiere->id, $periode);
-                        // Rang par matière pour cette évaluation
-                        $rangEval = $this->calculateRankEvaluation($eleveId, $matiere->id, $eleve->classe_id, $periode, $type);
-                        // Rang général pour cette évaluation (toutes matières confondues)
-                        //$rangGeneralEval = $this->calculateRankGeneralEvaluation($eleveId, $eleve->classe_id, $periode, $type, $eleve->serie->matieres);
-
-                        $evals[] = [
-                            'type' => $type,
-                            'note' => $note,
-                            'rang' => $rangEval,
-                            //'rang_general' => $rangGeneralEval
+                            $evals[] = [
+                                'type' => $type,
+                                'note' => $note,
+                                'rang' => $rangEval,
+                                //'rang_general' => $rangGeneralEval
+                            ];
+                        }
+                        $evaluations[] = [
+                            'matiere' => $matiere->nom,
+                            'evaluations' => $evals
                         ];
                     }
-                    $evaluations[] = [
-                        'matiere' => $matiere->nom,
-                        'evaluations' => $evals
-                    ];
+                    return response()->json([
+                        'success' => true,
+                        'data' => [
+                            'eleve' => $this->formatEleveData($eleve, $categorie),
+                            'periode' => $periode,
+                            'evaluations' => $evaluations,
+                            'rang' => $this->calculateRank($eleveId, $eleve->classe_id,$eleve->serie_id, $periode),
+                        ]
+                    ]);
                 }
-                return response()->json([
-                    'success' => true,
-                    'data' => [
-                        'eleve' => $this->formatEleveData($eleve, $categorie),
-                        'periode' => $periode,
-                        'evaluations' => $evaluations,
-                        'rang' => $this->calculateRank($eleveId, $eleve->classe_id,$eleve->serie_id, $periode),
-                    ]
-                ]);
-            }
 
 
-            // Fin bloc maternelle
+                // Fin bloc maternelle
 
-            // Bloc Primaire 
-            if ($categorie === 'primaire') {
-                
-                $evaluations = [];
-                $types = ['1ère évaluation','2ème évaluation','3ème évaluation','4ème évaluation','5ème évaluation'];
-                foreach ($eleve->serie->matieres as $matiere) {
-                    $evals = [];
-                    foreach ($types as $type) {
-                        $note = $this->getNote($eleveId, $matiere->id, $periode, $type);
-                        $moye = $this->calculerMoyenneMatiere($eleveId, $matiere->id, $periode);
-                        // Rang par matière pour cette évaluation
-                        $rangEval = $this->calculateRankEvaluation($eleveId, $matiere->id, $eleve->classe_id, $periode, $type);
-                        // Rang général pour cette évaluation (toutes matières confondues)
-                        //$rangGeneralEval = $this->calculateRankGeneralEvaluation($eleveId, $eleve->classe_id, $periode, $type, $eleve->serie->matieres);
+                // Bloc Primaire 
+                if ($categorie === 'primaire') {
+                    
+                    $evaluations = [];
+                    $types = ['1ère évaluation','2ème évaluation','3ème évaluation','4ème évaluation','5ème évaluation'];
+                    foreach ($eleve->serie->matieres as $matiere) {
+                        $evals = [];
+                        foreach ($types as $type) {
+                            $note = $this->getNote($eleveId, $matiere->id, $periode, $type);
+                            $moye = $this->calculerMoyenneMatiere($eleveId, $matiere->id, $periode);
+                            // Rang par matière pour cette évaluation
+                            $rangEval = $this->calculateRankEvaluation($eleveId, $matiere->id, $eleve->classe_id, $periode, $type);
+                            // Rang général pour cette évaluation (toutes matières confondues)
+                            //$rangGeneralEval = $this->calculateRankGeneralEvaluation($eleveId, $eleve->classe_id, $periode, $type, $eleve->serie->matieres);
 
-                        $evals[] = [
-                            'type' => $type,
-                            'note' => $note,
-                            'rang' => $rangEval,
-                            //'rang_general' => $rangGeneralEval
+                            $evals[] = [
+                                'type' => $type,
+                                'note' => $note,
+                                'rang' => $rangEval,
+                                //'rang_general' => $rangGeneralEval
+                            ];
+                        }
+                        $evaluations[] = [
+                            'matiere' => $matiere->nom,
+                            'evaluations' => $evals
                         ];
                     }
-                    $evaluations[] = [
-                        'matiere' => $matiere->nom,
-                        'evaluations' => $evals
-                    ];
+                    return response()->json([
+                        'success' => true,
+                        'data' => [
+                            'eleve' => $this->formatEleveData($eleve, $categorie),
+                            'periode' => $periode,
+                            'evaluations' => $evaluations,
+                            'rang' => $this->calculateRank($eleveId, $eleve->classe_id,$eleve->serie_id, $periode),
+                        ]
+                    ]);
                 }
-                return response()->json([
-                    'success' => true,
-                    'data' => [
-                        'eleve' => $this->formatEleveData($eleve, $categorie),
-                        'periode' => $periode,
-                        'evaluations' => $evaluations,
-                        'rang' => $this->calculateRank($eleveId, $eleve->classe_id,$eleve->serie_id, $periode),
-                    ]
-                ]);
-            }
-            //  Fin bloc primaire 
-            // Calcul des moyennes
-            $moyennesParMatiere = [];
-            $moyenneGenerale = 0;
-            $totalCoefficients = 0;
-            $rangsParMatiere = [];
+                //  Fin bloc primaire 
+                // Calcul des moyennes
+                $moyennesParMatiere = [];
+                $moyenneGenerale = 0;
+                $totalCoefficients = 0;
+                $rangsParMatiere = [];
 
-            foreach ($eleve->serie->matieres as $matiere) {
-                $moyenne = $this->calculerMoyenneMatiere($eleveId, $matiere->id, $periode);
+                foreach ($eleve->serie->matieres as $matiere) {
+                    $moyenne = $this->calculerMoyenneMatiere($eleveId, $matiere->id, $periode);
+                    
+                    // Utiliser le coefficient spécifique à la classe
+                    $coefficient = $matiere->pivot->coefficient;
+                    $rangMatiere = $this->calculateRankMatiere($eleveId, $matiere->id, $eleve->classe_id,$eleve->serie_id, $periode);
+
+                    
+                    $moyennesParMatiere[] = [
+                        'matiere' => $matiere->nom,
+                        'coefficient' => $coefficient,
+                        'moyenne' => $moyenne,
+                        'moyenne_ponderee' => round($moyenne * $coefficient, 2),
+                        'details' => [
+                            'moyenne_interrogations' => $this->calculerMoyenneInterrogations($eleveId, $matiere->id, $periode),
+                            'devoir1' => $this->getNote($eleveId, $matiere->id, $periode, 'Devoir1'),
+                            'devoir2' => $this->getNote($eleveId, $matiere->id, $periode, 'Devoir2')
+                        ],
+                        'rang' => $rangMatiere
+                    ];
+                    
+                    $moyenneGenerale += ($moyenne * $coefficient);
+                    $totalCoefficients += $coefficient;
+                }
+
                 
-                // Utiliser le coefficient spécifique à la classe
-                $coefficient = $matiere->pivot->coefficient;
-                $rangMatiere = $this->calculateRankMatiere($eleveId, $matiere->id, $eleve->classe_id,$eleve->serie_id, $periode);
 
-                
-                $moyennesParMatiere[] = [
-                    'matiere' => $matiere->nom,
-                    'coefficient' => $coefficient,
-                    'moyenne' => $moyenne,
-                    'moyenne_ponderee' => round($moyenne * $coefficient, 2),
-                    'details' => [
-                        'moyenne_interrogations' => $this->calculerMoyenneInterrogations($eleveId, $matiere->id, $periode),
-                        'devoir1' => $this->getNote($eleveId, $matiere->id, $periode, 'Devoir1'),
-                        'devoir2' => $this->getNote($eleveId, $matiere->id, $periode, 'Devoir2')
-                    ],
-                    'rang' => $rangMatiere
-                ];
-                
-                $moyenneGenerale += ($moyenne * $coefficient);
-                $totalCoefficients += $coefficient;
-            }
+                // Calcul de la moyenne générale
+                $moyenneGenerale = $totalCoefficients > 0 ? round($moyenneGenerale / $totalCoefficients, 2) : 0;
+                // Calcul du rang général
+                $rangGeneral = $this->calculateRank($eleveId, $eleve->classe_id,$eleve->serie_id, $periode);
 
-            
-
-            // Calcul de la moyenne générale
-            $moyenneGenerale = $totalCoefficients > 0 ? round($moyenneGenerale / $totalCoefficients, 2) : 0;
-            // Calcul du rang général
-            $rangGeneral = $this->calculateRank($eleveId, $eleve->classe_id,$eleve->serie_id, $periode);
-
-            /*return response()->json([
-                'success' => true,
-                'data' => [
-                    'eleve' => [
-                        'nom' => $eleve->nom,
-                        'prenom' => $eleve->prenom,
-                        'matricule' => $eleve->numero_matricule,
-                        'classe' => $eleve->classe->nom_classe,
-                        'serie' => $eleve->serie->nom
-                    ],
-                    'rang' => $this->calculateRank($eleveId,$eleve->classe_id,$periode),
-                    'periode' => $periode,
-                    'moyennes_par_matiere' => $moyennesParMatiere,
-                    'moyenne_generale' => $moyenneGenerale,
-                    'debug_info' => [
-                        'total_matieres' => count($moyennesParMatiere),
-                        'total_coefficients' => $totalCoefficients
-                    ]
-                ]
-            ]);*/
-
-            return response()->json([
-                'success' => true,
-                'data' => [
+                return [
                     'eleve' => [
                         'nom' => $eleve->user->name ?? '',
                         'prenom' => $eleve->user->prenom ?? '',
@@ -292,7 +219,17 @@ class BulletinController extends Controller
                         'total_coefficients' => $totalCoefficients,
                         //'calculation_details' => $calculationDetails // Add any specific calculation details
                     ]
-                ]
+                ];
+            });
+
+            // Si le cache retourne déjà une réponse (maternelle/primaire), la renvoyer directement
+            if ($result instanceof \Illuminate\Http\JsonResponse) {
+                return $result;
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => $result,
             ]);
 
         } catch (\Exception $e) {
@@ -305,25 +242,4 @@ class BulletinController extends Controller
         }
     }
 
-    // Méthode pour débugger les données d'un élève
-    public function debugEleve($eleveId, Request $request)
-    {
-        $periode = $request->get('periode', 'Trimestre 1');
-        
-        // Récupérer toutes les notes de l'élève
-        $notes = Notes::where('eleve_id', $eleveId)
-                    ->where('periode', $periode)
-                    ->with(['matiere'])
-                    ->get();
-        
-        // Récupérer les informations de l'élève
-        $eleve = Eleve::with(['classe', 'serie.matieres'])->find($eleveId);
-        
-        return response()->json([
-            'eleve' => $eleve,
-            'notes' => $notes,
-            'periode' => $periode,
-            'total_notes' => $notes->count()
-        ]);
-    }
 }

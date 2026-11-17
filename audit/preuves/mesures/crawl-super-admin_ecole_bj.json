@@ -1,0 +1,1321 @@
+{
+ "compte": "super-admin@ecole.bj",
+ "accueilAttendu": "/admin/dashboard",
+ "login": {
+  "deuxFacteurs": "code saisi",
+  "arrivee": "/admin/dashboard",
+  "ok": true,
+  "ms": 12257,
+  "erreur": ""
+ },
+ "nav": [
+  {
+   "href": "/admin/ecoles",
+   "texte": "Écoles"
+  },
+  {
+   "href": "/admin/dashboard",
+   "texte": "Tableau de bord"
+  },
+  {
+   "href": "/admin/utilisateurs",
+   "texte": "Utilisateurs"
+  },
+  {
+   "href": "/admin/statistiques",
+   "texte": "Statistiques"
+  },
+  {
+   "href": "/admin/plans",
+   "texte": "Abonnements"
+  },
+  {
+   "href": "/admin/billing",
+   "texte": "Facturation"
+  },
+  {
+   "href": "/admin/modules",
+   "texte": "Modules"
+  },
+  {
+   "href": "/admin/white-label",
+   "texte": "Identité visuelle"
+  },
+  {
+   "href": "/admin/configuration",
+   "texte": "Configuration"
+  },
+  {
+   "href": "/messagerie",
+   "texte": "Messagerie"
+  },
+  {
+   "href": "/parametres",
+   "texte": "Paramètres"
+  },
+  {
+   "href": "/communications",
+   "texte": "Annonces"
+  }
+ ],
+ "pages": [
+  {
+   "route": "/directeur/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/enseignant/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/eleve/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/parent/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/admin/dashboard",
+   "arrivee": "/admin/dashboard",
+   "acces": "autorisé",
+   "ms": 3625,
+   "h1": "Administration système",
+   "nbH1": 1,
+   "boutons": 10,
+   "onglets": 5,
+   "liens": [
+    "/admin/dashboard"
+   ],
+   "champs": 0,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 0,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": false,
+   "alerte": [],
+   "debord1280": -4,
+   "apiErreurs": [],
+   "apiAppels": 4,
+   "console": [],
+   "debord390": 539,
+   "vues": [
+    {
+     "onglet": "Aperçu",
+     "clics": [
+      {
+       "bouton": "Actualiser",
+       "effet": "api 200 GET /api/dashboard/admin"
+      },
+      {
+       "bouton": "Alertes",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Paramètres",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Actualiser",
+       "effet": "api 200 GET /api/dashboard/admin"
+      },
+      {
+       "bouton": "Voir tous les logs",
+       "effet": "AUCUN EFFET VISIBLE"
+      }
+     ],
+     "apiErreurs": [],
+     "console": [],
+     "debord": -4,
+     "boutonsVus": 5
+    },
+    {
+     "onglet": "Utilisateurs",
+     "clics": [
+      {
+       "bouton": "Désactiver",
+       "effet": "navigation /admin/utilisateurs"
+      },
+      {
+       "bouton": "Ajouter",
+       "effet": "navigation /admin/utilisateurs"
+      }
+     ],
+     "apiErreurs": [],
+     "console": [],
+     "debord": 0,
+     "boutonsVus": 2
+    },
+    {
+     "onglet": "",
+     "clics": [
+      {
+       "bouton": "Désactiver",
+       "effet": "navigation /admin/utilisateurs"
+      },
+      {
+       "bouton": "Général Paramètres généraux de l'application",
+       "effet": "navigation /admin/configuration"
+      }
+     ],
+     "erreur": "locator.click: Timeout 2000ms exceeded.\nCall log:\n  - waiting for locator('#main",
+     "apiErreurs": [],
+     "console": [],
+     "debord": 0,
+     "boutonsVus": 2
+    },
+    {
+     "onglet": "",
+     "clics": [
+      {
+       "bouton": "Enregistrer",
+       "effet": "navigation /admin/configuration"
+      },
+      {
+       "bouton": "Alertes",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Paramètres",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Exporter",
+       "effet": "impression (window.print)"
+      },
+      {
+       "bouton": "Tous",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "INFO",
+       "effet": "AUCUN EFFET VISIBLE"
+      }
+     ],
+     "erreur": "locator.click: Timeout 2000ms exceeded.\nCall log:\n  - waiting for locator('#main",
+     "apiErreurs": [],
+     "console": [],
+     "debord": 0,
+     "boutonsVus": 12
+    },
+    {
+     "onglet": "Sauvegardes",
+     "clics": [
+      {
+       "bouton": "Actualiser",
+       "effet": "api 200 GET /api/dashboard/admin"
+      },
+      {
+       "bouton": "Alertes",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Paramètres",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Sauvegarder",
+       "effet": "AUCUN EFFET VISIBLE"
+      }
+     ],
+     "apiErreurs": [],
+     "console": [],
+     "debord": 0,
+     "boutonsVus": 4
+    }
+   ]
+  },
+  {
+   "route": "/comptable/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/surveillant/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/censeur/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/infirmier/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/bibliothecaire/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/secretaire/dashboard",
+   "arrivee": "/secretaire/dashboard",
+   "acces": "autorisé",
+   "ms": 2377,
+   "h1": "",
+   "nbH1": 0,
+   "boutons": 0,
+   "onglets": 0,
+   "liens": [],
+   "champs": 0,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 0,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": false,
+   "alerte": [],
+   "debord1280": 0,
+   "apiErreurs": [],
+   "apiAppels": 1,
+   "console": [],
+   "debord390": 0,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [],
+     "boutonsVus": 0
+    }
+   ]
+  },
+  {
+   "route": "/eleves",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/notes",
+   "arrivee": "/notes",
+   "acces": "autorisé",
+   "ms": 1565,
+   "h1": "Notes",
+   "nbH1": 1,
+   "boutons": 7,
+   "onglets": 0,
+   "liens": [
+    "/admin/dashboard"
+   ],
+   "champs": 3,
+   "tableaux": 1,
+   "lignes": 1,
+   "boutonsSansNom": 1,
+   "champsSansLabel": 1,
+   "imagesSansAlt": 0,
+   "petitesCibles": 3,
+   "clesNonTraduites": [],
+   "texteVide": true,
+   "alerte": [],
+   "debord1280": -4,
+   "apiErreurs": [
+    "403 GET /api/notes/eleve"
+   ],
+   "apiAppels": 4,
+   "console": [
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+   ],
+   "debord390": 23,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [
+      {
+       "bouton": "(sans nom)",
+       "console": [
+        "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+       ],
+       "effet": "api 403 GET /api/notes/eleve"
+      },
+      {
+       "bouton": "Exporter",
+       "effet": "popup: http://localhost:3002/api/notes/export"
+      },
+      {
+       "bouton": "Importer",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Nouvelle note",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Notes",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Classement",
+       "effet": "changement d’affichage"
+      },
+      {
+       "bouton": "Bulletins",
+       "effet": "changement d’affichage"
+      }
+     ],
+     "boutonsVus": 7
+    }
+   ]
+  },
+  {
+   "route": "/paiements",
+   "arrivee": "/paiements",
+   "acces": "autorisé",
+   "ms": 7944,
+   "h1": "",
+   "nbH1": 0,
+   "boutons": 0,
+   "onglets": 0,
+   "liens": [],
+   "champs": 0,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 0,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": false,
+   "alerte": [],
+   "debord1280": 0,
+   "apiErreurs": [],
+   "apiAppels": 1,
+   "console": [],
+   "debord390": -4,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [],
+     "boutonsVus": 0
+    }
+   ]
+  },
+  {
+   "route": "/communications",
+   "arrivee": "/communications",
+   "acces": "autorisé",
+   "ms": 5646,
+   "h1": "",
+   "nbH1": 0,
+   "boutons": 0,
+   "onglets": 0,
+   "liens": [],
+   "champs": 0,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 0,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": false,
+   "alerte": [],
+   "debord1280": 0,
+   "apiErreurs": [],
+   "apiAppels": 0,
+   "console": [],
+   "debord390": 0,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [],
+     "boutonsVus": 0
+    }
+   ]
+  },
+  {
+   "route": "/emploi-du-temps",
+   "arrivee": "/emploi-du-temps",
+   "acces": "autorisé",
+   "ms": 9258,
+   "h1": "",
+   "nbH1": 0,
+   "boutons": 0,
+   "onglets": 0,
+   "liens": [],
+   "champs": 0,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 0,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": false,
+   "alerte": [],
+   "debord1280": 0,
+   "apiErreurs": [],
+   "apiAppels": 0,
+   "console": [],
+   "debord390": 0,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [],
+     "boutonsVus": 0
+    }
+   ]
+  },
+  {
+   "route": "/parametres",
+   "arrivee": "/parametres",
+   "acces": "autorisé",
+   "ms": 2133,
+   "h1": "Paramètres",
+   "nbH1": 1,
+   "boutons": 6,
+   "onglets": 0,
+   "liens": [
+    "/admin/dashboard"
+   ],
+   "champs": 5,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 4,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": false,
+   "alerte": [],
+   "debord1280": 0,
+   "apiErreurs": [],
+   "apiAppels": 3,
+   "console": [],
+   "debord390": -4,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [
+      {
+       "bouton": "Profil",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Notifications",
+       "effet": "changement d’affichage"
+      },
+      {
+       "bouton": "Sécurité",
+       "effet": "changement d’affichage"
+      },
+      {
+       "bouton": "Apparence",
+       "effet": "changement d’affichage"
+      },
+      {
+       "bouton": "Préférences",
+       "effet": "changement d’affichage"
+      }
+     ],
+     "boutonsVus": 6
+    }
+   ]
+  },
+  {
+   "route": "/messagerie",
+   "arrivee": "/messagerie",
+   "acces": "autorisé",
+   "ms": 1869,
+   "h1": "",
+   "nbH1": 0,
+   "boutons": 4,
+   "onglets": 0,
+   "liens": [
+    "/admin/dashboard"
+   ],
+   "champs": 1,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 1,
+   "imagesSansAlt": 0,
+   "petitesCibles": 3,
+   "clesNonTraduites": [],
+   "texteVide": true,
+   "alerte": [],
+   "debord1280": -4,
+   "apiErreurs": [],
+   "apiAppels": 4,
+   "console": [],
+   "debord390": 0,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [
+      {
+       "bouton": "Boîte",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Favoris",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Archive",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Nouvelle conversation",
+       "effet": "api 200 GET /api/messages/contacts"
+      }
+     ],
+     "boutonsVus": 4
+    }
+   ]
+  },
+  {
+   "route": "/affectations",
+   "arrivee": "/unauthorized",
+   "acces": "refusé",
+   "redirectionTardive": true
+  },
+  {
+   "route": "/enseignant/classes",
+   "arrivee": "/unauthorized",
+   "acces": "refusé",
+   "redirectionTardive": true
+  },
+  {
+   "route": "/parent/enfants",
+   "arrivee": "/parent/enfants",
+   "acces": "autorisé",
+   "ms": 5620,
+   "h1": "",
+   "nbH1": 0,
+   "boutons": 0,
+   "onglets": 0,
+   "liens": [],
+   "champs": 0,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 0,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": false,
+   "alerte": [],
+   "debord1280": 0,
+   "apiErreurs": [],
+   "apiAppels": 0,
+   "console": [],
+   "debord390": 0,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [],
+     "boutonsVus": 0
+    }
+   ]
+  },
+  {
+   "route": "/eleve/cours",
+   "arrivee": "/eleve/cours",
+   "acces": "autorisé",
+   "ms": 12332,
+   "h1": "",
+   "nbH1": 0,
+   "boutons": 0,
+   "onglets": 0,
+   "liens": [],
+   "champs": 0,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 0,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": false,
+   "alerte": [],
+   "debord1280": 0,
+   "apiErreurs": [],
+   "apiAppels": 0,
+   "console": [],
+   "debord390": 0,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [],
+     "boutonsVus": 0
+    }
+   ]
+  },
+  {
+   "route": "/comptable/transactions",
+   "arrivee": "/unauthorized",
+   "acces": "refusé",
+   "redirectionTardive": true
+  },
+  {
+   "route": "/comptable/factures",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/surveillant/surveillance",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/surveillant/presences",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/censeur/discipline",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/censeur/absences",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/infirmier/soins",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/infirmier/dossiers",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/bibliothecaire/catalogue",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/bibliothecaire/emprunts",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/secretaire/inscriptions",
+   "arrivee": "/unauthorized",
+   "acces": "refusé",
+   "redirectionTardive": true
+  },
+  {
+   "route": "/secretaire/planning",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/secretaire/documents",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/universite/facultes",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/universite/departements",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/universite/etudiants",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/universite/enseignants",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/universite/cours",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/universite/mes-cours",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/universite/notes",
+   "arrivee": "/universite/notes",
+   "acces": "autorisé",
+   "ms": 2631,
+   "h1": "",
+   "nbH1": 0,
+   "boutons": 0,
+   "onglets": 0,
+   "liens": [],
+   "champs": 0,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 0,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": false,
+   "alerte": [],
+   "debord1280": 0,
+   "apiErreurs": [],
+   "apiAppels": 1,
+   "console": [],
+   "debord390": 0,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [],
+     "boutonsVus": 0
+    }
+   ]
+  },
+  {
+   "route": "/universite/taches",
+   "arrivee": "/unauthorized",
+   "acces": "refusé",
+   "redirectionTardive": true
+  },
+  {
+   "route": "/universite/planning",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/universite/dashboard",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/paiement/callback",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/directeur/ai-insights",
+   "arrivee": "/unauthorized",
+   "acces": "refusé"
+  },
+  {
+   "route": "/enseignant/ai-assistant",
+   "arrivee": "/enseignant/ai-assistant",
+   "acces": "autorisé",
+   "ms": 7066,
+   "h1": "",
+   "nbH1": 0,
+   "boutons": 0,
+   "onglets": 0,
+   "liens": [],
+   "champs": 0,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 0,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": false,
+   "alerte": [],
+   "debord1280": 0,
+   "apiErreurs": [],
+   "apiAppels": 1,
+   "console": [],
+   "debord390": 0,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [],
+     "boutonsVus": 0
+    }
+   ]
+  },
+  {
+   "route": "/parent/ai-report",
+   "arrivee": "/unauthorized",
+   "acces": "refusé",
+   "redirectionTardive": true
+  },
+  {
+   "route": "/eleve/tutor",
+   "arrivee": "/unauthorized",
+   "acces": "refusé",
+   "redirectionTardive": true
+  },
+  {
+   "route": "/admin/ecoles",
+   "arrivee": "/admin/ecoles",
+   "acces": "autorisé",
+   "ms": 1793,
+   "h1": "Écoles",
+   "nbH1": 1,
+   "boutons": 4,
+   "onglets": 0,
+   "liens": [
+    "/admin/dashboard",
+    "/admin"
+   ],
+   "champs": 2,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 1,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": false,
+   "alerte": [],
+   "debord1280": 0,
+   "apiErreurs": [],
+   "apiAppels": 4,
+   "console": [],
+   "debord390": -4,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [
+      {
+       "bouton": "Provisionner",
+       "dialogue": {
+        "titre": "Provisionner une école",
+        "champs": 6
+       },
+       "effet": "dialogue"
+      },
+      {
+       "bouton": "Ajouter une école",
+       "dialogue": {
+        "titre": "Ajouter une école",
+        "champs": 5
+       },
+       "effet": "dialogue"
+      },
+      {
+       "bouton": "Actualiser",
+       "effet": "api 200 GET /api/ecoles"
+      },
+      {
+       "bouton": "Voir",
+       "effet": "AUCUN EFFET VISIBLE"
+      }
+     ],
+     "boutonsVus": 4
+    }
+   ]
+  },
+  {
+   "route": "/admin/utilisateurs",
+   "arrivee": "/admin/utilisateurs",
+   "acces": "autorisé",
+   "ms": 1542,
+   "h1": "Utilisateurs",
+   "nbH1": 1,
+   "boutons": 2,
+   "onglets": 0,
+   "liens": [
+    "/admin/dashboard",
+    "/admin"
+   ],
+   "champs": 3,
+   "tableaux": 1,
+   "lignes": 1,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 1,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": true,
+   "alerte": [],
+   "debord1280": 0,
+   "apiErreurs": [],
+   "apiAppels": 4,
+   "console": [],
+   "debord390": -4,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [
+      {
+       "bouton": "Désactiver",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Ajouter",
+       "effet": "AUCUN EFFET VISIBLE"
+      }
+     ],
+     "boutonsVus": 2
+    }
+   ]
+  },
+  {
+   "route": "/admin/statistiques",
+   "arrivee": "/admin/statistiques",
+   "acces": "autorisé",
+   "ms": 1594,
+   "h1": "Statistiques",
+   "nbH1": 1,
+   "boutons": 0,
+   "onglets": 0,
+   "liens": [
+    "/admin/dashboard",
+    "/admin"
+   ],
+   "champs": 0,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 0,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": true,
+   "alerte": [],
+   "debord1280": 0,
+   "apiErreurs": [],
+   "apiAppels": 4,
+   "console": [],
+   "debord390": -4,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [],
+     "boutonsVus": 0
+    }
+   ]
+  },
+  {
+   "route": "/admin/configuration",
+   "arrivee": "/admin/configuration",
+   "acces": "autorisé",
+   "ms": 1478,
+   "h1": "Configuration",
+   "nbH1": 1,
+   "boutons": 12,
+   "onglets": 0,
+   "liens": [
+    "/admin/dashboard",
+    "/admin"
+   ],
+   "champs": 0,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 0,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": false,
+   "alerte": [],
+   "debord1280": 0,
+   "apiErreurs": [],
+   "apiAppels": 3,
+   "console": [],
+   "debord390": -4,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [
+      {
+       "bouton": "Enregistrer",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Général Paramètres généraux de l'application",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Scolarité Configuration des cycles et niveaux",
+       "effet": "changement d’affichage"
+      },
+      {
+       "bouton": "Notifications Configuration des alertes et rappels",
+       "effet": "changement d’affichage"
+      },
+      {
+       "bouton": "Sécurité Politiques de sécurité et d'accès",
+       "effet": "changement d’affichage"
+      },
+      {
+       "bouton": "Paiements Configuration des moyens de paiement",
+       "effet": "changement d’affichage"
+      },
+      {
+       "bouton": "Modifier",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "(sans nom)",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Modifier",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Modifier",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Réinitialiser",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Enregistrer",
+       "effet": "AUCUN EFFET VISIBLE"
+      }
+     ],
+     "boutonsVus": 12
+    }
+   ]
+  },
+  {
+   "route": "/admin/journal-audit",
+   "arrivee": "/admin/journal-audit",
+   "acces": "autorisé",
+   "ms": 1744,
+   "h1": "Journal d'audit",
+   "nbH1": 1,
+   "boutons": 1,
+   "onglets": 0,
+   "liens": [
+    "/admin/dashboard",
+    "/admin"
+   ],
+   "champs": 4,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 0,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": true,
+   "alerte": [],
+   "debord1280": 0,
+   "apiErreurs": [],
+   "apiAppels": 4,
+   "console": [],
+   "debord390": -4,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [
+      {
+       "bouton": "Réinitialiser les filtres",
+       "effet": "AUCUN EFFET VISIBLE"
+      }
+     ],
+     "boutonsVus": 1
+    }
+   ]
+  },
+  {
+   "route": "/admin/plans",
+   "arrivee": "/admin/plans",
+   "acces": "autorisé",
+   "ms": 1602,
+   "h1": "Plans d'abonnement",
+   "nbH1": 1,
+   "boutons": 1,
+   "onglets": 0,
+   "liens": [
+    "/admin/dashboard",
+    "/admin"
+   ],
+   "champs": 0,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 0,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": true,
+   "alerte": [],
+   "debord1280": 0,
+   "apiErreurs": [],
+   "apiAppels": 4,
+   "console": [],
+   "debord390": 0,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [
+      {
+       "bouton": "Nouveau plan",
+       "effet": "AUCUN EFFET VISIBLE"
+      }
+     ],
+     "boutonsVus": 1
+    }
+   ]
+  },
+  {
+   "route": "/admin/billing",
+   "arrivee": "/admin/billing",
+   "acces": "autorisé",
+   "ms": 1841,
+   "h1": "Facturation",
+   "nbH1": 1,
+   "boutons": 1,
+   "onglets": 0,
+   "liens": [
+    "/admin/dashboard",
+    "/admin"
+   ],
+   "champs": 1,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 1,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": true,
+   "alerte": [],
+   "debord1280": -4,
+   "apiErreurs": [],
+   "apiAppels": 5,
+   "console": [],
+   "debord390": 18,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [
+      {
+       "bouton": "Exporter",
+       "effet": "AUCUN EFFET VISIBLE"
+      }
+     ],
+     "boutonsVus": 1
+    }
+   ]
+  },
+  {
+   "route": "/admin/modules",
+   "arrivee": "/admin/modules",
+   "acces": "autorisé",
+   "ms": 2450,
+   "h1": "Modules",
+   "nbH1": 1,
+   "boutons": 1,
+   "onglets": 0,
+   "liens": [
+    "/admin/dashboard",
+    "/admin"
+   ],
+   "champs": 0,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 0,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": true,
+   "alerte": [],
+   "debord1280": 0,
+   "apiErreurs": [],
+   "apiAppels": 4,
+   "console": [],
+   "debord390": 0,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [
+      {
+       "bouton": "Nouveau module",
+       "effet": "AUCUN EFFET VISIBLE"
+      }
+     ],
+     "boutonsVus": 1
+    }
+   ]
+  },
+  {
+   "route": "/admin/white-label",
+   "arrivee": "/admin/white-label",
+   "acces": "autorisé",
+   "ms": 16960,
+   "h1": "White-Label",
+   "nbH1": 1,
+   "boutons": 9,
+   "onglets": 0,
+   "liens": [
+    "/admin/dashboard",
+    "/admin"
+   ],
+   "champs": 4,
+   "tableaux": 0,
+   "lignes": 0,
+   "boutonsSansNom": 0,
+   "champsSansLabel": 4,
+   "imagesSansAlt": 0,
+   "petitesCibles": 0,
+   "clesNonTraduites": [],
+   "texteVide": false,
+   "alerte": [],
+   "debord1280": -4,
+   "apiErreurs": [],
+   "apiAppels": 4,
+   "console": [],
+   "debord390": -4,
+   "vues": [
+    {
+     "onglet": "vue initiale",
+     "clics": [
+      {
+       "bouton": "Enregistrer",
+       "effet": "désactivé"
+      },
+      {
+       "bouton": "Indigo",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Emerald",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Rose",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Amber",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Sky",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Violet",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Choisir un fichier",
+       "effet": "AUCUN EFFET VISIBLE"
+      },
+      {
+       "bouton": "Choisir un fichier",
+       "effet": "AUCUN EFFET VISIBLE"
+      }
+     ],
+     "boutonsVus": 9
+    }
+   ]
+  }
+ ],
+ "termine": true
+}

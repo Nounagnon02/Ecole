@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Message;
 use App\Models\User;
+use App\Support\MessagingContacts;
 use Illuminate\Http\Request;
 
 /**
@@ -122,7 +123,9 @@ class MessageController extends Controller
         $validated = $request->validate([
             'destinataire' => 'required|string',
             'sujet'        => 'nullable|string|max:255',
-            'contenu'      => 'required|string|max:10000',
+            'contenu'      => 'required_without:piece_jointe|nullable|string|max:10000',
+            // R-31 : une pièce jointe, types bornés, 5 Mo au plus.
+            'piece_jointe' => 'nullable|file|max:5120|mimes:pdf,doc,docx,odt,txt,jpg,jpeg,png,webp',
         ]);
 
         // Le destinataire doit exister et appartenir à la même école.
@@ -137,15 +140,53 @@ class MessageController extends Controller
             ], 422);
         }
 
+        // Même règle que la liste des contacts : masquer un destinataire dans
+        // l'interface sans refuser l'envoi ne protégerait personne.
+        if (! MessagingContacts::canWrite(auth()->user(), $destinataire)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Vous ne pouvez pas écrire à cette personne.',
+            ], 403);
+        }
+
+        $piece = [];
+        if ($fichier = $request->file('piece_jointe')) {
+            $piece = [
+                'piece_jointe_chemin' => $fichier->store('messages/'.(auth()->user()->ecole_id ?? 'sans-ecole'), 'local'),
+                'piece_jointe_nom' => mb_substr($fichier->getClientOriginalName(), 0, 200),
+                'piece_jointe_type' => $fichier->getMimeType(),
+                'piece_jointe_taille' => $fichier->getSize(),
+            ];
+        }
+
         $message = Message::create([
             'expediteur'   => $this->currentUserId(),
             'destinataire' => (string) $destinataire->id,
             'sujet'        => $validated['sujet'] ?? '(sans objet)',
-            'contenu'      => $validated['contenu'],
+            'contenu'      => $validated['contenu'] ?? '',
             'lu'           => false,
-        ]);
+        ] + $piece);
 
         return response()->json(['success' => true, 'data' => ['id' => $message->id]], 201);
+    }
+
+    /**
+     * Téléchargement de la pièce jointe d'un message (R-31) : seuls
+     * l'expéditeur et le destinataire y ont accès.
+     */
+    public function pieceJointe($id)
+    {
+        $message = Message::findOrFail($id);
+        $moi = $this->currentUserId();
+
+        if ($message->expediteur !== $moi && $message->destinataire !== $moi) {
+            return response()->json(['success' => false, 'message' => 'Accès refusé'], 403);
+        }
+        if (! $message->piece_jointe_chemin || ! \Illuminate\Support\Facades\Storage::disk('local')->exists($message->piece_jointe_chemin)) {
+            return response()->json(['success' => false, 'message' => 'Pièce jointe introuvable'], 404);
+        }
+
+        return \Illuminate\Support\Facades\Storage::disk('local')->download($message->piece_jointe_chemin, $message->piece_jointe_nom);
     }
 
     /**
@@ -181,9 +222,8 @@ class MessageController extends Controller
      */
     public function getUsers()
     {
-        $users = User::where('ecole_id', auth()->user()?->ecole_id)
-            ->where('is_active', true)
-            ->where('id', '!=', auth()->id())
+        // Les contacts dépendent du rôle : voir MessagingContacts.
+        $users = MessagingContacts::query(auth()->user())
             ->orderBy('name')
             ->get(['id', 'name', 'prenom', 'role'])
             ->map(fn($u) => [
@@ -235,6 +275,10 @@ class MessageController extends Controller
 
             $c->id = (int) $c->contact_id;
             $c->contact_id = (int) $c->contact_id;
+            // `SUM(...)` revient en chaîne sur MySQL et en entier sur SQLite :
+            // l'API livrait « 1 » en production et 1 en test. Le compte est un
+            // entier, ici comme là (cf. audit P2.1).
+            $c->non_lus = (int) $c->non_lus;
             $c->contact_nom = $contact['nom'];
             $c->role = $contact['role'];
             $c->dernier_message = $dernier ? mb_strimwidth($dernier->contenu, 0, 120, '…') : null;
@@ -266,6 +310,11 @@ class MessageController extends Controller
         $messages->getCollection()->transform(function ($m) use ($noms) {
             $m->expediteur_nom = $noms[$m->expediteur] ?? 'Utilisateur ' . $m->expediteur;
             $m->destinataire_nom = $noms[$m->destinataire] ?? 'Utilisateur ' . $m->destinataire;
+            // R-31 : description de la pièce jointe (le chemin reste caché).
+            $m->piece_jointe = $m->piece_jointe_chemin
+                ? ['nom' => $m->piece_jointe_nom, 'type' => $m->piece_jointe_type, 'taille' => (int) $m->piece_jointe_taille]
+                : null;
+            $m->makeHidden(['piece_jointe_nom', 'piece_jointe_type', 'piece_jointe_taille']);
             return $m;
         });
 

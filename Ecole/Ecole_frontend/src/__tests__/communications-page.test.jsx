@@ -17,6 +17,8 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { makeQueryClient, signIn, resetAuth } from './helpers/render';
 import { MemoryRouter } from 'react-router-dom';
 import CommunicationsPage from '@/app/features/communications/CommunicationsPage';
 import { installHttpMock } from './helpers/http-mock';
@@ -59,16 +61,20 @@ afterEach(() => {
 
 function renderPage() {
   return render(
-    <MemoryRouter>
-      <CommunicationsPage />
-    </MemoryRouter>
+    // La page passe par react-query : un QueryClient neuf par test,
+    // pour qu'aucune réponse ne survive d'un cas au suivant.
+    <QueryClientProvider client={makeQueryClient()}>
+      <MemoryRouter>
+        <CommunicationsPage />
+      </MemoryRouter>
+    </QueryClientProvider>
   );
 }
 
 /** Ouvre le formulaire de rédaction et rend le `<form>`. */
 async function openForm() {
-  fireEvent.click(screen.getByRole('button', { name: /Nouvelle Publication/i }));
-  return screen.getByRole('form', { name: 'Nouvelle publication' });
+  fireEvent.click(screen.getByRole('button', { name: /Nouvelle annonce/i }));
+  return screen.getByRole('form', { name: 'Nouvelle annonce' });
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -93,7 +99,7 @@ describe('CommunicationsPage — lecture', () => {
     expect(screen.getByText('Les cours reprennent le 15 septembre.')).toBeInTheDocument();
     expect(screen.getByText('rentrée')).toBeInTheDocument();
     expect(screen.getByText('calendrier')).toBeInTheDocument();
-    expect(screen.queryByText('Aucune communication trouvée')).not.toBeInTheDocument();
+    expect(screen.queryByText('Aucune annonce')).not.toBeInTheDocument();
   });
 
   it('accepte aussi un tableau nu', async () => {
@@ -145,10 +151,11 @@ describe('CommunicationsPage — lecture', () => {
 
     renderPage();
 
-    await waitFor(() => expect(screen.getByText('Aucune communication trouvée')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Aucune annonce')).toBeInTheDocument());
     // Un fil vide reste un fil : l'en-tête et les filtres sont là, et
     // aucun bouton de reprise n'est proposé.
-    expect(screen.getByText('Communications')).toBeInTheDocument();
+    // Même mot que le menu : « Annonces ».
+    expect(screen.getByRole('heading', { name: 'Annonces' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Réessayer' })).not.toBeInTheDocument();
   });
 
@@ -165,7 +172,7 @@ describe('CommunicationsPage — lecture', () => {
     expect(screen.getByRole('button', { name: 'Réessayer' })).toBeInTheDocument();
     // Le cœur du test : « le serveur a refusé » ne doit pas se déguiser en
     // « il n'y a aucune communication ».
-    expect(screen.queryByText('Aucune communication trouvée')).not.toBeInTheDocument();
+    expect(screen.queryByText('Aucune annonce')).not.toBeInTheDocument();
     expect(screen.queryByText('Rentrée 2026')).not.toBeInTheDocument();
   });
 
@@ -174,8 +181,8 @@ describe('CommunicationsPage — lecture', () => {
 
     renderPage();
 
-    await waitFor(() => expect(screen.getByText('Network Error')).toBeInTheDocument());
-    expect(screen.queryByText('Aucune communication trouvée')).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText(/Pas de connexion au serveur/)).toBeInTheDocument());
+    expect(screen.queryByText('Aucune annonce')).not.toBeInTheDocument();
   });
 
   it('affiche un indicateur de chargement avant la réponse', async () => {
@@ -184,7 +191,7 @@ describe('CommunicationsPage — lecture', () => {
     const { container } = renderPage();
 
     expect(container.querySelector('.animate-spin')).not.toBeNull();
-    expect(screen.queryByText('Aucune communication trouvée')).not.toBeInTheDocument();
+    expect(screen.queryByText('Aucune annonce')).not.toBeInTheDocument();
 
     await waitFor(() => expect(screen.getByText('Rentrée 2026')).toBeInTheDocument());
     expect(container.querySelector('.animate-spin')).toBeNull();
@@ -214,8 +221,12 @@ describe('CommunicationsPage — lecture', () => {
  * ═══════════════════════════════════════════════════════════════════ */
 describe('CommunicationsPage — écriture', () => {
   beforeEach(() => {
+    // Seuls les rôles éditeurs voient le bouton de publication.
+    signIn('directeur');
     http.onGet(PATH).reply(200, envelope([ANNONCE]));
   });
+
+  afterEach(() => resetAuth());
 
   async function readyWithForm() {
     renderPage();
@@ -227,13 +238,13 @@ describe('CommunicationsPage — écriture', () => {
     renderPage();
     await waitFor(() => expect(screen.getByText('Rentrée 2026')).toBeInTheDocument());
 
-    expect(screen.queryByRole('form', { name: 'Nouvelle publication' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('form', { name: 'Nouvelle annonce' })).not.toBeInTheDocument();
 
     await openForm();
-    expect(screen.getByRole('form', { name: 'Nouvelle publication' })).toBeInTheDocument();
+    expect(screen.getByRole('form', { name: 'Nouvelle annonce' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Annuler' }));
-    expect(screen.queryByRole('form', { name: 'Nouvelle publication' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('form', { name: 'Nouvelle annonce' })).not.toBeInTheDocument();
   });
 
   it('envoie exactement titre, contenu et catégorie en POST', async () => {
@@ -295,7 +306,7 @@ describe('CommunicationsPage — écriture', () => {
     expect(screen.getAllByText('Rose Adjovi').length).toBe(2);
     // Le fil déjà chargé reste en place.
     expect(screen.getByText('Rentrée 2026')).toBeInTheDocument();
-    expect(screen.queryByRole('form', { name: 'Nouvelle publication' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('form', { name: 'Nouvelle annonce' })).not.toBeInTheDocument();
   });
 
   it('rend les erreurs de validation 422 champ par champ, sans perdre le fil', async () => {
@@ -321,7 +332,7 @@ describe('CommunicationsPage — écriture', () => {
 
     // Et surtout : un refus de validation ne remplace pas la page par
     // l'écran d'erreur. Le formulaire reste ouvert, le fil reste lisible.
-    expect(screen.getByRole('form', { name: 'Nouvelle publication' })).toBeInTheDocument();
+    expect(screen.getByRole('form', { name: 'Nouvelle annonce' })).toBeInTheDocument();
     expect(screen.getByText('Rentrée 2026')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Réessayer' })).not.toBeInTheDocument();
   });
@@ -368,7 +379,7 @@ describe('CommunicationsPage — écriture', () => {
     fireEvent.click(screen.getByRole('button', { name: /Publier/i }));
 
     await waitFor(() => expect(screen.getByText(message)).toBeInTheDocument());
-    expect(screen.getByRole('form', { name: 'Nouvelle publication' })).toBeInTheDocument();
+    expect(screen.getByRole('form', { name: 'Nouvelle annonce' })).toBeInTheDocument();
     expect(screen.getByText('Rentrée 2026')).toBeInTheDocument();
   });
 
@@ -378,7 +389,7 @@ describe('CommunicationsPage — écriture', () => {
     await readyWithForm();
     fireEvent.click(screen.getByRole('button', { name: /Publier/i }));
 
-    await waitFor(() => expect(screen.getByText('Network Error')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/Pas de connexion au serveur/)).toBeInTheDocument());
     expect(screen.getByText('Rentrée 2026')).toBeInTheDocument();
   });
 
@@ -409,4 +420,30 @@ describe('CommunicationsPage — écriture', () => {
     expect(screen.queryByText('Obligatoire.')).not.toBeInTheDocument();
     expect(screen.queryByText('Invalide')).not.toBeInTheDocument();
   });
+});
+
+describe('CommunicationsPage — qui peut publier', () => {
+  beforeEach(() => {
+    http.onGet(PATH).reply(200, envelope([ANNONCE]));
+  });
+
+  it.each(['parent', 'eleve', 'enseignant', 'comptable', 'infirmier'])(
+    'ne propose pas de publier à un %s, que l’API refuserait',
+    async (role) => {
+      signIn(role);
+      renderPage();
+      await waitFor(() => expect(screen.getByText('Rentrée 2026')).toBeInTheDocument());
+      expect(screen.queryByRole('button', { name: /nouvelle annonce/i })).not.toBeInTheDocument();
+    },
+  );
+
+  it.each(['directeur', 'directeurP', 'censeur', 'secretaire', 'super-admin'])(
+    'propose de publier à un %s',
+    async (role) => {
+      signIn(role);
+      renderPage();
+      await waitFor(() => expect(screen.getByText('Rentrée 2026')).toBeInTheDocument());
+      expect(screen.getByRole('button', { name: /nouvelle annonce/i })).toBeInTheDocument();
+    },
+  );
 });

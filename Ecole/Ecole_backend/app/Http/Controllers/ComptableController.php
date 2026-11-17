@@ -2,41 +2,26 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{PaiementEleve, Bourse, Depense, Eleve, TransactionPaiement};
+use App\Http\Requests\Comptable\EncaisserEcheanceRequest;
+use App\Http\Requests\Comptable\StoreBourseRequest;
+use App\Http\Requests\Comptable\StoreDepenseRequest;
+use App\Http\Requests\Comptable\StorePaiementRequest;
+use App\Models\Bourse;
+use App\Models\Depense;
+use App\Models\Eleve;
+use App\Models\PaiementEleve;
+use App\Models\TransactionPaiement;
+use App\Services\Comptabilite\RecuService;
 use App\Services\FedaPayService;
+use App\Support\AvisParents;
+use App\Support\Reglement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class ComptableController extends Controller
 {
-    /** Modes de règlement acceptés. */
-    private const PAYMENT_MODES = ['ESPECES', 'MOBILE_MONEY', 'VIREMENT', 'CHEQUE', 'CARTE'];
-
-    /**
-     * Statut en slug et en libellé à partir de `statut_global`.
-     *
-     * La table porte les constantes du modèle depuis la migration de
-     * normalisation : l'ancien repli d'accents (`'payé'` → `PAYE`) n'a plus de
-     * raison d'être.
-     */
-    private function statutSlug(?string $global): string
-    {
-        return match ($global) {
-            PaiementEleve::PAID => 'payee',
-            PaiementEleve::PARTIAL => 'partiel',
-            default => 'en_attente',
-        };
-    }
-
-    private function statutLabel(?string $global): string
-    {
-        return match ($global) {
-            PaiementEleve::PAID => 'Payée',
-            PaiementEleve::PARTIAL => 'Partielle',
-            default => 'En attente',
-        };
-    }
+    public function __construct(private RecuService $recus) {}
 
     /**
      * Liste des paiements pour le portail comptable.
@@ -52,7 +37,7 @@ class ComptableController extends Controller
             ->latest('date_paiement')
             ->get()
             ->map(function (PaiementEleve $p) {
-                $reference = $p->reference ?? ('PAY-' . str_pad((string) $p->id, 6, '0', STR_PAD_LEFT));
+                $reference = $p->reference ?? ('PAY-'.str_pad((string) $p->id, 6, '0', STR_PAD_LEFT));
                 $eleve = $p->eleve;
 
                 return [
@@ -68,17 +53,18 @@ class ComptableController extends Controller
                         ],
                         'matricule' => $eleve?->numero_matricule,
                     ],
-                    'client' => trim(($eleve?->user?->name ?? '') . ' ' . ($eleve?->user?->prenom ?? '')) ?: '—',
+                    'client' => trim(($eleve?->user?->name ?? '').' '.($eleve?->user?->prenom ?? '')) ?: '—',
                     'classe' => $eleve?->classe?->nom_classe,
                     'motif' => $p->type_paiement ?: 'Frais de scolarité',
                     'type_paiement' => $p->type_paiement,
                     'montant' => (float) $p->montant,
+                    'montant_total' => (float) ($p->montant_total ?? 0),
                     'montant_paye' => (float) ($p->montant_paye ?? 0),
                     'montant_restant' => (float) ($p->montant_restant ?? 0),
                     'date_paiement' => $p->date_paiement?->format('Y-m-d'),
                     'mode_paiement' => $p->mode_paiement,
-                    'statut' => $this->statutSlug($p->statut_global),
-                    'statut_label' => $this->statutLabel($p->statut_global),
+                    'statut' => Reglement::slug($p->statut_global),
+                    'statut_label' => Reglement::libelle($p->statut_global),
                     'created_at' => $p->created_at?->toISOString(),
                 ];
             });
@@ -111,8 +97,8 @@ class ComptableController extends Controller
         $chart = [
             'labels' => ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Juil', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'],
             'datasets' => [[
-                'data' => collect(range(1, 12))->map(fn($m) => $revenusParMois->get((string) $m, 0))->values()
-            ]]
+                'data' => collect(range(1, 12))->map(fn ($m) => $revenusParMois->get((string) $m, 0))->values(),
+            ]],
         ];
 
         return response()->json([
@@ -143,16 +129,11 @@ class ComptableController extends Controller
         return response()->json(['success' => true, 'data' => $items]);
     }
 
-    public function storeDepense(Request $request)
+    public function storeDepense(StoreDepenseRequest $request)
     {
-        $validated = $request->validate([
-            'categorie' => 'required|string|max:255',
-            'description' => 'required|string|max:1000',
-            'montant' => 'required|numeric|min:0.01',
-            'date_depense' => 'required|date',
-        ]);
+        $depense = Depense::create($request->validated());
 
-        $depense = Depense::create($validated);
+        \Cache::forget('dashboard_directeur_'.(auth()->user()->ecole_id ?? 'global'));
 
         return response()->json(['success' => true, 'data' => $depense], 201);
     }
@@ -177,32 +158,22 @@ class ComptableController extends Controller
      * exige. Aucune interface ne l'appelle encore, donc rien ne dépendait du
      * contrat incomplet — il est ici complété plutôt que contourné.
      */
-    public function storePaiement(Request $request)
+    public function storePaiement(StorePaiementRequest $request)
     {
-        $validated = $request->validate([
-            'eleve_id'      => 'required|school_exists:eleves,id',
-            'montant'       => 'required|numeric|min:0',
-            'type_paiement' => 'required|string|max:255',
-            // NOT NULL en base, et une écriture comptable sans mode de
-            // règlement n'est pas rapprochable.
-            'mode_paiement' => 'required|string|in:' . implode(',', self::PAYMENT_MODES),
-            'date_paiement' => 'required|date',
-            'reference'     => 'nullable|string|max:255',
-            'parents_id'    => 'nullable|school_exists:parents,id',
-        ]);
+        $validated = $request->validated();
 
         // Le solde est dérivé, pas saisi : le laisser null rendait
         // `montant_restant` illisible pour tout ce qui calcule un reste à payer.
         $montant = (float) $validated['montant'];
 
-        $eleve = \App\Models\Eleve::findOrFail($validated['eleve_id']);
+        $eleve = Eleve::findOrFail($validated['eleve_id']);
 
         // `paiements.parents_id` doit nommer le parent responsable *réellement
         // lié* à l'élève : accepter n'importe quel parent permettrait
         // d'imputer un règlement à une autre famille (ou un autre
         // établissement). S'il est fourni, on vérifie la filiation ; sinon on
         // dérive du premier parent du dossier.
-        if (!empty($validated['parents_id'])) {
+        if (! empty($validated['parents_id'])) {
             abort_unless(
                 $eleve->parents()->where('parents.id', $validated['parents_id'])->exists(),
                 422,
@@ -213,12 +184,14 @@ class ComptableController extends Controller
         }
 
         $paiement = PaiementEleve::create($validated + [
-            'montant_total'   => $montant,
-            'montant_paye'    => $montant,
+            'montant_total' => $montant,
+            'montant_paye' => $montant,
             'montant_restant' => 0,
-            'statut_global'   => PaiementEleve::PAID,
-            'reference'       => $validated['reference'] ?? $this->nextReference(),
+            'statut_global' => PaiementEleve::PAID,
+            'reference' => $validated['reference'] ?? Reglement::nouvelleReference(),
         ]);
+
+        \Cache::forget('dashboard_directeur_'.(auth()->user()->ecole_id ?? 'global'));
 
         return response()->json(['success' => true, 'data' => $paiement], 201);
     }
@@ -229,22 +202,66 @@ class ComptableController extends Controller
      * `paiements.reference` est unique par école depuis que les identifiants
      * émis par l'établissement ont été sortis de l'unicité plateforme.
      */
-    private function nextReference(): string
+    /**
+     * Créer une échéance due (frais d'inscription, tranche de scolarité…)
+     * pour un élève, ou pour chaque élève inscrit d'une classe.
+     *
+     * Le comptable ne pouvait enregistrer qu'une ligne déjà soldée
+     * (`storePaiement`) : rien ne permettait de dire ce qu'une famille doit,
+     * donc ni le parent ni le guichet n'avaient d'échéance à régler. Un élève
+     * qui a déjà une échéance du même libellé n'en reçoit pas une seconde.
+     */
+    public function storeEcheances(Request $request)
     {
-        return 'PAY-' . now()->format('Ymd') . '-' . strtoupper(\Illuminate\Support\Str::random(6));
-    }
-
-    public function storeBourse(Request $request)
-    {
-        $validated = $request->validate([
-            'eleve_id' => 'required|school_exists:eleves,id',
-            'type_bourse' => 'required|string',
-            'montant' => 'required|numeric',
-            'pourcentage' => 'required|integer',
-            'periode' => 'required|string'
+        $donnees = $request->validate([
+            'eleve_id' => 'required_without:classe_id|nullable|school_exists:eleves,id',
+            'classe_id' => 'required_without:eleve_id|nullable|school_exists:classes,id',
+            'type_paiement' => 'required|string|max:255',
+            'montant_total' => 'required|numeric|min:1',
+            'date_paiement' => 'required|date',
         ]);
 
-        return Bourse::create($validated);
+        $eleves = isset($donnees['eleve_id'])
+            ? Eleve::whereKey($donnees['eleve_id'])->get()
+            : Eleve::where('classe_id', $donnees['classe_id'])->where('statut', '!=', 'inactive')->get();
+
+        $crees = 0;
+        $dejaFacturees = 0;
+
+        DB::transaction(function () use ($eleves, $donnees, &$crees, &$dejaFacturees) {
+            foreach ($eleves as $eleve) {
+                if (PaiementEleve::where('eleve_id', $eleve->id)->where('type_paiement', $donnees['type_paiement'])->exists()) {
+                    $dejaFacturees++;
+
+                    continue;
+                }
+
+                PaiementEleve::create([
+                    'eleve_id' => $eleve->id,
+                    'parents_id' => $eleve->responsibleParent()?->id,
+                    'type_paiement' => $donnees['type_paiement'],
+                    'montant' => 0,
+                    'montant_total' => $donnees['montant_total'],
+                    'montant_paye' => 0,
+                    'montant_restant' => $donnees['montant_total'],
+                    'statut_global' => PaiementEleve::PENDING,
+                    // Colonne obligatoire ; le mode réel est noté à l'encaissement.
+                    'mode_paiement' => 'ESPECES',
+                    'date_paiement' => $donnees['date_paiement'],
+                    'reference' => Reglement::nouvelleReference(),
+                ]);
+                $crees++;
+            }
+        });
+
+        \Cache::forget('dashboard_directeur_'.(auth()->user()->ecole_id ?? 'global'));
+
+        return response()->json(['success' => true, 'crees' => $crees, 'deja_facturees' => $dejaFacturees], $crees > 0 ? 201 : 200);
+    }
+
+    public function storeBourse(StoreBourseRequest $request)
+    {
+        return Bourse::create($request->validated());
     }
 
     /**
@@ -253,67 +270,22 @@ class ComptableController extends Controller
     public function recu($id)
     {
         $paiement = PaiementEleve::with(['eleve.user', 'eleve.classe', 'contribution'])->findOrFail($id);
-        $ecole = auth()->user()?->ecole;
 
-        // `statut` n'existe pas sur `paiements` — la colonne est
-        // `statut_global`. Lire `$paiement->statut` renvoyait null : le
-        // badge et le libellé étaient « En attente »/vide sur chaque reçu.
-        $statutGlobal = $paiement->statut_global;
-        $estPaye = $statutGlobal === PaiementEleve::PAID;
-        $statutLabel = $this->statutLabel($statutGlobal);
+        return response($this->recus->html($paiement, auth()->user()?->ecole), 200, [
+            'Content-Type' => 'text/html',
+        ]);
+    }
 
-        $html = '<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <title>Reçu de Paiement</title>
-    <style>
-        body { font-family: "Helvetica Neue", Arial, sans-serif; font-size: 14px; color: #1f2937; max-width: 700px; margin: 40px auto; padding: 0 20px; }
-        .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 20px; }
-        .header h1 { margin: 0; font-size: 24px; }
-        .header p { margin: 4px 0; color: #6b7280; font-size: 13px; }
-        .recu-title { text-align: center; font-size: 18px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; margin: 20px 0; }
-        .info-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-        .info-table td { padding: 6px 12px; }
-        .info-table td:first-child { font-weight: 600; width: 160px; color: #6b7280; }
-        .amount { font-size: 24px; font-weight: bold; text-align: center; color: #059669; margin: 20px 0; padding: 16px; background: #f0fdf4; border-radius: 8px; }
-        .footer { margin-top: 30px; padding-top: 16px; border-top: 1px solid #e5e7eb; font-size: 12px; color: #9ca3af; text-align: center; }
-        .badge { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; }
-        .badge.paye { background: #d1fae5; color: #065f46; }
-        .badge.en_attente { background: #fef3c7; color: #92400e; }
-        @media print { body { margin: 0; padding: 0; } }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h1>' . e($ecole?->nom ?? 'Établissement Scolaire') . '</h1>
-        <p>' . e($ecole?->adresse ?? '') . ' · ' . e($ecole?->ville ?? '') . ' ' . e($ecole?->pays ?? '') . '</p>
-        <p>Tél : ' . e($ecole?->telephone ?? '') . ' · Email : ' . e($ecole?->email ?? '') . '</p>
-    </div>
+    /**
+     * Reçu d'un versement précis (audit du 14/11, N-02) : le montant remis
+     * ce jour-là, et la situation de l'échéance juste après lui.
+     */
+    public function recuVersement($id)
+    {
+        $versement = TransactionPaiement::with(['paiementEleve.eleve.user', 'paiementEleve.eleve.classe'])->findOrFail($id);
+        abort_unless($versement->paiementEleve, 404);
 
-    <div class="recu-title">Reçu de Paiement</div>
-
-    <p style="text-align:right;font-size:13px;color:#6b7280;">N° ' . e($paiement->reference ?? 'PAY-' . $paiement->id) . '</p>
-
-    <table class="info-table">
-        <tr><td>Élève</td><td>' . e($paiement->eleve?->user?->name ?? '') . ' ' . e($paiement->eleve?->user?->prenom ?? '') . '</td></tr>
-        <tr><td>Classe</td><td>' . e($paiement->eleve?->classe?->nom_classe ?? '—') . '</td></tr>
-        <tr><td>Type</td><td>' . e($paiement->type_paiement ?? '—') . '</td></tr>
-        <tr><td>Date</td><td>' . e($paiement->date_paiement?->format('d/m/Y') ?? '—') . '</td></tr>
-        <tr><td>Mode</td><td>' . e($paiement->mode_paiement ?? '—') . '</td></tr>
-        <tr><td>Statut</td><td><span class="badge ' . ($estPaye ? 'paye' : 'en_attente') . '">' . e($statutLabel) . '</span></td></tr>
-    </table>
-
-    <div class="amount">' . number_format((float) $paiement->montant, 0, ',', ' ') . ' FCFA</div>
-
-    <div class="footer">
-        <p>Reçu généré le ' . now()->format('d/m/Y à H:i') . '</p>
-        <p>Ce document fait office de reçu officiel</p>
-    </div>
-</body>
-</html>';
-
-        return response($html, 200, [
+        return response($this->recus->versementHtml($versement, auth()->user()?->ecole), 200, [
             'Content-Type' => 'text/html',
         ]);
     }
@@ -343,7 +315,7 @@ class ComptableController extends Controller
             'data' => [
                 'eleve' => [
                     'id' => $eleve->id,
-                    'nom' => trim(($eleve->user->name ?? '') . ' ' . ($eleve->user->prenom ?? '')),
+                    'nom' => trim(($eleve->user->name ?? '').' '.($eleve->user->prenom ?? '')),
                     'classe' => $eleve->classe->nom_classe ?? '—',
                     'matricule' => $eleve->numero_matricule ?? '—',
                 ],
@@ -359,17 +331,135 @@ class ComptableController extends Controller
                 'echeances' => $paiements->map(function ($p) {
                     return [
                         'id' => $p->id,
-                        'reference' => $p->reference ?? 'PAY-' . $p->id,
+                        'reference' => $p->reference ?? 'PAY-'.$p->id,
                         'type' => $p->type_paiement ?: $p->mode_paiement,
                         'montant' => (float) $p->montant,
+                        'montant_total' => (float) $p->montant_total,
+                        'montant_paye' => (float) $p->montant_paye,
+                        'reste' => (float) $p->montant_restant,
                         'date' => $p->date_paiement?->format('d/m/Y'),
-                        'statut' => $this->statutSlug($p->statut_global),
-                        'statut_label' => $this->statutLabel($p->statut_global),
+                        'statut' => Reglement::slug($p->statut_global),
+                        'statut_label' => Reglement::libelle($p->statut_global),
                         'mode' => $p->mode_paiement,
                     ];
                 }),
             ],
         ]);
+    }
+
+    /**
+     * Encaisser au guichet un versement sur une échéance (espèces, chèque,
+     * virement, mobile money constaté).
+     *
+     * Jusqu'ici, « Payer » sur une échéance n'ouvrait que la passerelle en
+     * ligne, et `storePaiement` crée une ligne soldée de plus sans toucher au
+     * reste dû : un élève qui réglait en espèces restait débiteur.
+     *
+     * L'échéance est relue sous verrou : deux agents qui encaissent en même
+     * temps ne peuvent pas, à eux deux, dépasser le reste dû.
+     */
+    public function encaisserEcheance(EncaisserEcheanceRequest $request, $paiementId)
+    {
+        $donnees = $request->validated();
+        $montant = (float) $donnees['montant'];
+
+        return DB::transaction(function () use ($donnees, $montant, $paiementId) {
+            $echeance = PaiementEleve::lockForUpdate()->findOrFail($paiementId);
+
+            // Doublons (audit du 14/11, N-01) : deux envois du même versement
+            // créditaient deux fois. L'échéance étant verrouillée, le second
+            // envoi attend la fin du premier puis le retrouve ici.
+            if ($deja = $this->versementDejaEnregistre($echeance, $montant, $donnees)) {
+                return $this->reponseVersement($deja, $echeance, 'Ce versement était déjà enregistré.', 200, true);
+            }
+
+            $reste = (float) $echeance->montant_restant;
+
+            if ($reste <= 0) {
+                return response()->json(['success' => false, 'message' => 'Cette échéance est déjà soldée.'], 422);
+            }
+
+            if ($montant > $reste) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Le versement dépasse le reste dû de cette échéance ('.number_format($reste, 0, ',', ' ').' FCFA).',
+                ], 422);
+            }
+
+            // `forceFill` : la clé n'est pas assignable en masse, elle ne
+            // doit venir que d'ici.
+            $versement = (new TransactionPaiement)->forceFill([
+                'id_paiement_eleve' => $echeance->id,
+                'ecole_id' => $echeance->ecole_id,
+                'tranche' => $echeance->type_paiement,
+                'montant_paye' => $montant,
+                'date_paiement' => $donnees['date_paiement'] ?? now(),
+                'statut' => TransactionPaiement::APPROUVE,
+                'methode_paiement' => $donnees['mode_paiement'],
+                'reference_transaction' => $donnees['reference'] ?? Reglement::nouvelleReference(),
+                'cle_idempotence' => $donnees['cle_idempotence'] ?? null,
+                'recu_par' => auth()->id(),
+                'observation' => $donnees['observation'] ?? null,
+            ]);
+            $versement->save();
+
+            $echeance->mode_paiement = $donnees['mode_paiement'];
+            $echeance->credit($montant);
+
+            if ($eleve = Eleve::with('user:id,name,prenom')->find($echeance->eleve_id)) {
+                AvisParents::envoyer($eleve, 'recu', [
+                    'montant' => AvisParents::fcfa($montant), 'libelle' => $echeance->type_paiement ?? 'scolarité',
+                    'reste' => AvisParents::fcfa((float) $echeance->montant_restant), 'reference' => $versement->reference_transaction,
+                ]);
+            }
+
+            \Cache::forget('dashboard_directeur_'.(auth()->user()->ecole_id ?? 'global'));
+
+            return $this->reponseVersement($versement, $echeance, 'Versement enregistré.', 201);
+        });
+    }
+
+    /**
+     * Le versement que cet envoi répète, s'il existe : même clé du guichet ;
+     * sans clé (ancien client, appel direct), même échéance, même montant,
+     * même mode et même agent dans les 10 dernières secondes. Deux vrais
+     * versements identiques coup sur coup restent possibles au-delà.
+     */
+    private function versementDejaEnregistre(PaiementEleve $echeance, float $montant, array $donnees): ?TransactionPaiement
+    {
+        $versements = TransactionPaiement::where('id_paiement_eleve', $echeance->id);
+
+        if (! empty($donnees['cle_idempotence'])) {
+            return $versements->where('cle_idempotence', $donnees['cle_idempotence'])->first();
+        }
+
+        return $versements
+            ->where('montant_paye', $montant)
+            ->where('methode_paiement', $donnees['mode_paiement'])
+            ->where('recu_par', auth()->id())
+            ->where('created_at', '>=', now()->subSeconds(10))
+            ->latest('id')
+            ->first();
+    }
+
+    private function reponseVersement(TransactionPaiement $versement, PaiementEleve $echeance, string $message, int $statut, bool $deja = false)
+    {
+        return response()->json([
+            'success' => true,
+            'message' => $message,
+            'deja_enregistre' => $deja,
+            'data' => [
+                'reference' => $versement->reference_transaction,
+                'versement_id' => $versement->id,
+                'echeance' => [
+                    'id' => $echeance->id,
+                    'montant_total' => (float) $echeance->montant_total,
+                    'montant_paye' => (float) $echeance->montant_paye,
+                    'reste' => (float) $echeance->montant_restant,
+                    'statut' => Reglement::slug($echeance->statut_global),
+                ],
+            ],
+        ], $statut);
     }
 
     /**
@@ -398,7 +488,7 @@ class ComptableController extends Controller
         }
 
         // Générer une référence unique pour Fedapay
-        $reference = 'TX-' . $paiement->reference . '-' . now()->format('YmdHis');
+        $reference = 'TX-'.$paiement->reference.'-'.now()->format('YmdHis');
 
         $eleve = $paiement->eleve;
         $parent = $eleve?->responsibleParent();
@@ -436,10 +526,12 @@ class ComptableController extends Controller
                 'transaction_id' => $result['transaction']->id,
             ]);
         } catch (\Exception $e) {
-            Log::error('Init paiement echeance failed: ' . $e->getMessage());
+            $this->rethrowIfMeaningful($e);
+            Log::error('Init paiement echeance failed: '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
-                'message' => 'Erreur lors de l\'initialisation du paiement : ' . $e->getMessage(),
+                'message' => 'Erreur lors de l\'initialisation du paiement : '.$this->clientErrorMessage($e),
             ], 500);
         }
     }
@@ -447,17 +539,29 @@ class ComptableController extends Controller
     /**
      * Callback FedaPay (retour navigateur après paiement).
      *
-     * FedaPay redirige l'utilisateur vers cette URL après paiement.
-     * On vérifie le statut côté serveur et on met à jour la transaction.
-     * Ensuite on redirige vers l'interface frontend (échéancier).
+     * FedaPay redirige l'utilisateur vers cette URL après paiement. On met à
+     * jour la transaction locale si elle est approuvée, puis on redirige
+     * vers `PaiementCallbackPage` (frontend React, route `/paiement/callback`)
+     * en lui passant le `transaction_id` : cette page re-vérifie elle-même le
+     * statut via `GET /comptable/paiement/verifier/{id}` et l'affiche — elle
+     * ne lit ni ne peut lire un flash Laravel (`->with(...)`), puisque le
+     * frontend est une SPA découplée, pas une vue Blade.
+     *
+     * Corrigé : `route('frontend.echeancier')` ne correspondait à AUCUNE
+     * route Laravel nommée nulle part dans le dépôt (le frontend n'est pas
+     * routé par Laravel) — chaque appel, succès ou échec, levait
+     * `RouteNotFoundException` et renvoyait une 500 au navigateur de
+     * l'utilisateur. Le paiement était bien crédité côté serveur (l'update
+     * et `credit()` s'exécutent avant l'appel qui plante), mais l'utilisateur
+     * ne voyait jamais la confirmation.
      */
     public function paiementCallback(Request $request)
     {
         $transactionId = $request->query('transaction_id');
+        $frontendCallbackUrl = rtrim(config('app.frontend_url'), '/').'/paiement/callback';
 
-        if (!$transactionId) {
-            return redirect()->route('frontend.echeancier')
-                ->with('error', 'Transaction introuvable.');
+        if (! $transactionId) {
+            return redirect($frontendCallbackUrl);
         }
 
         try {
@@ -465,13 +569,19 @@ class ComptableController extends Controller
             $result = $fedapay->verifyTransaction($transactionId);
 
             if ($result && $result->status === 'approved') {
-                // Mettre à jour la transaction locale
+                // Mettre à jour la transaction locale — mais seulement si
+                // elle n'est pas déjà approuvée : FedaPay peut renvoyer le
+                // navigateur deux fois vers cette URL (retour + rafraîchissement
+                // de la page), et `credit()` est purement additif. Sans cette
+                // garde (le même principe que `payments.status === 'completed'`
+                // ailleurs dans ce contrôleur), un rejeu créditait le compte
+                // une seconde fois pour un seul paiement réel.
                 $tx = TransactionPaiement::where('reference_transaction', $transactionId)->first();
-                if ($tx) {
+                if ($tx && $tx->statut !== TransactionPaiement::APPROUVE) {
                     $tx->update([
                         'statut' => TransactionPaiement::APPROUVE,
                         'date_paiement' => now(),
-                        'observation' => $tx->observation . ' | Confirmé via callback Fedapay (' . now()->format('d/m/Y H:i') . ')',
+                        'observation' => $tx->observation.' | Confirmé via callback Fedapay ('.now()->format('d/m/Y H:i').')',
                     ]);
 
                     // Recalculer le paiement élève — écriture comptable unique
@@ -482,16 +592,14 @@ class ComptableController extends Controller
                         $paiement->credit((float) $tx->montant_paye);
                     }
                 }
-
-                return redirect()->route('frontend.echeancier')
-                    ->with('success', 'Paiement confirmé avec succès !');
             }
         } catch (\Exception $e) {
-            Log::error('FedaPay callback error: ' . $e->getMessage());
+            Log::error('FedaPay callback error: '.$e->getMessage());
         }
 
-        return redirect()->route('frontend.echeancier')
-            ->with('error', 'Le paiement n\'a pas pu être confirmé. Veuillez réessayer.');
+        // Toujours vers la même page, avec le transaction_id : elle affiche
+        // elle-même le succès/échec/attente en re-vérifiant côté serveur.
+        return redirect($frontendCallbackUrl.'?transaction_id='.$transactionId);
     }
 
     /**
@@ -506,7 +614,7 @@ class ComptableController extends Controller
             $fedapay = app(FedaPayService::class);
             $result = $fedapay->verifyTransaction($transactionId);
 
-            if (!$result) {
+            if (! $result) {
                 return response()->json([
                     'success' => false,
                     'status' => 'inconnu',
@@ -519,7 +627,8 @@ class ComptableController extends Controller
                 'status' => $result->status, // 'approved', 'pending', 'failed'
             ]);
         } catch (\Exception $e) {
-            Log::error('Vérification paiement failed: ' . $e->getMessage());
+            Log::error('Vérification paiement failed: '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'status' => 'erreur',

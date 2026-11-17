@@ -42,8 +42,11 @@ export default function StatsCard({
   return (
     <div
       onClick={onClick}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={onClick ? e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(e); } } : undefined}
       className={cn(
-        'group relative overflow-hidden rounded-xl border border-[var(--border-light)] bg-[var(--surface-raised)] shadow-[var(--shadow-1)] transition-all duration-200',
+        'group relative overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface-raised)] shadow-[var(--shadow-1)] transition-all duration-200',
         onClick && 'cursor-pointer hover:shadow-[var(--shadow-3)]',
         className
       )}
@@ -65,8 +68,8 @@ export default function StatsCard({
           )}
         </div>
 
-        <div className="mt-2 flex items-baseline gap-3">
-          <span className="font-fraunces text-3xl font-bold leading-tight text-[var(--text-primary)] tabular-nums">
+        <div className="mt-2 flex flex-wrap items-baseline gap-3">
+          <span className="font-heading text-3xl font-bold break-words leading-tight text-[var(--text-primary)] tabular-nums">
             {value}
           </span>
 

@@ -35,6 +35,7 @@ class TransactionPaiement extends Model
 
     protected $casts = [
         'date_paiement' => 'datetime',
+        'montant_paye' => 'decimal:2',
     ];
 
     /*

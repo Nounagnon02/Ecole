@@ -2,57 +2,77 @@
  * CoursPage — Mes cours pour les élèves
  *
  * L'élève consulte ses cours, devoirs et ressources pédagogiques.
- * Données dynamiques via API /eleve/cours
+ * Données : cahier de textes (/eleves/me/cours) et devoirs (/devoirs/eleve).
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import { useApiQuery } from '@/shared/lib/api-client';
+import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
-  BookOpen, FileText, Clock, Download, Eye,
+  BookOpen, FileText, Clock, Download,
   Play, Search, Calendar,
   CheckCircle, AlertCircle, Loader2
 } from 'lucide-react';
 import { cn, formatDate } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
-import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
-import { useApi } from '@/hooks/useApi';
+import { useTranslation } from '@/shared/i18n';
+
+const COURTE = { day: '2-digit', month: '2-digit', year: 'numeric' };
 
 export default function CoursPage() {
-  const { loading, error, get } = useApi();
-  const [cours, setCours] = useState([]);
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [filterMatiere, setFilterMatiere] = useState('');
   const [filterType, setFilterType] = useState('');
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await get('/eleves/me/cours');
-        const items = Array.isArray(res?.data?.data) ? res.data.data
-          : Array.isArray(res?.data) ? res.data
-          : Array.isArray(res) ? res
-          : [];
-        setCours(items.map(c => ({
+  // Le chargement passait par un `useState` doublé d'un `useEffect` de
+  // premier rendu, sans cache ni déduplication : deux composants montés
+  // ensemble lançaient deux requêtes, et un retour sur la page rechargeait
+  // tout (cf. audit P4.1). `unwrapList` traverse les trois formes
+  // d'enveloppe que renvoient les contrôleurs.
+  const requete = useApiQuery(['eleves-me-cours'], '/eleves/me/cours');
+  // Devoirs publiés pour la classe : la page les annonçait mais ne lisait que
+  // le cahier de textes, si bien que l'élève ne voyait jamais ses devoirs sur
+  // le web, alors que son parent les recevait sur le téléphone (16/11/2026).
+  const devoirsRequete = useApiQuery(['devoirs-eleve'], '/devoirs/eleve');
+
+  const cours = useMemo(
+    () => [
+      ...(unwrapList(devoirsRequete.data) ?? []).map((d) => ({
+        id: `devoir-${d.id}`,
+        type: 'devoir',
+        titre: d.titre,
+        resume: d.description || '',
+        matiere: d.matiere,
+        echeance: d.date_limite,
+        status: d.rendu ? 'rendu' : 'a_rendre',
+        note: d.note,
+        ressources: [],
+      })),
+      ...(unwrapList(requete.data) ?? []).map(c => ({
           ...c,
           type: c.type || 'cours',
           status: c.status || c.statut || 'prevue',
-          duree: c.duree || '—',
           resume: c.resume || c.description || '',
           ressources: c.ressources || c.documents || []
-        })));
-      } catch (e) {
-        console.error('Erreur chargement cours:', e);
-      }
-    })();
-  }, [get]);
+        })),
+    ],
+    [requete.data, devoirsRequete.data],
+  );
+  const loading = requete.isPending || devoirsRequete.isPending;
+  const enErreur = requete.isError ? requete : devoirsRequete.isError ? devoirsRequete : null;
+  const error = enErreur ? (enErreur.error?.message ?? t('common.load_error')) : null;
 
   const matieres = useMemo(() => [...new Set(cours.map((c) => c.matiere?.nom || c.matiere).filter(Boolean))], [cours]);
 
   const filtered = useMemo(() =>
     cours.filter((c) => {
-      if (search && !c.chapitre?.toLowerCase().includes(search.toLowerCase()) && !(c.matiere?.nom || c.matiere || '').toLowerCase().includes(search.toLowerCase())) return false;
+      const cherche = search.toLowerCase();
+      const titre = String(c.chapitre || c.intitule || c.titre || '').toLowerCase();
+      if (search && !titre.includes(cherche) && !(c.matiere?.nom || c.matiere || '').toLowerCase().includes(cherche)) return false;
       if (filterMatiere && (c.matiere?.nom || c.matiere) !== filterMatiere) return false;
       if (filterType && c.type !== filterType) return false;
       return true;
@@ -76,12 +96,12 @@ export default function CoursPage() {
   const getStatusLabel = (status) => {
     switch (status) {
       case 'termine':
-      case 'terminé': return 'Terminé';
+      case 'terminé': return t('pages.bibliothecaire.emprunts.termine');
       case 'prevue':
-      case 'a_venir': return 'À venir';
-      case 'rendu': return 'Rendu';
+      case 'a_venir': return t('pages.eleve.cours.a_venir');
+      case 'rendu': return t('pages.eleve.cours.rendu');
       case 'a_rendre':
-      case 'en_retard': return 'À rendre';
+      case 'en_retard': return t('pages.eleve.cours.a_rendre');
       default: return status;
     }
   };
@@ -89,14 +109,14 @@ export default function CoursPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--text-tertiary)]" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
+      <div className="flex flex-col items-center justify-center h-64 text-[var(--text-secondary)]">
         <AlertCircle className="h-8 w-8 mb-2 text-red-400" />
         <p className="text-sm">{error}</p>
       </div>
@@ -106,17 +126,17 @@ export default function CoursPage() {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Mes Cours</h1>
-        <p className="text-sm text-neutral-500">Consultez vos cours, devoirs et ressources</p>
+        <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.eleve.cours.title')}</h1>
+        <p className="text-sm text-[var(--text-secondary)]">{t('pages.eleve.cours.subtitle')}</p>
       </div>
 
       {/* Filtres */}
-      <Card>
+      <Card padding>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
             <Input
-              placeholder="Rechercher un cours..."
+              placeholder={t('common.search_course')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
@@ -125,19 +145,21 @@ export default function CoursPage() {
           <select
             value={filterMatiere}
             onChange={(e) => setFilterMatiere(e.target.value)}
-            className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+            aria-label={t('common.filter_by_subject')}
+            className="h-10 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40   "
           >
-            <option value="">Toutes les matières</option>
+            <option value="">{t('pages.eleve.cours.toutes_les_matieres')}</option>
             {matieres.map((m) => <option key={m} value={m}>{m}</option>)}
           </select>
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+            aria-label={t('pages.eleve.cours.filtrer_par_type')}
+            className="h-10 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40   "
           >
-            <option value="">Tous les types</option>
-            <option value="cours">Cours</option>
-            <option value="devoir">Devoir</option>
+            <option value="">{t('common.all_types')}</option>
+            <option value="cours">{t('common.courses')}</option>
+            <option value="devoir">{t('pages.eleve.cours.devoir')}</option>
             <option value="tp">TP</option>
           </select>
         </div>
@@ -146,10 +168,10 @@ export default function CoursPage() {
       {/* Liste des cours */}
       <div className="space-y-3">
         {filtered.length === 0 && (
-          <Card>
-            <div className="text-center py-8 text-neutral-500">
+          <Card padding>
+            <div className="text-center py-8 text-[var(--text-secondary)]">
               <BookOpen className="mx-auto h-8 w-8 mb-2" />
-              <p className="text-sm">Aucun cours trouvé</p>
+              <p className="text-sm">{t('common.no_course_found')}</p>
             </div>
           </Card>
         )}
@@ -159,7 +181,7 @@ export default function CoursPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <Card hover>
+            <Card padding hover>
               <div className="flex items-start gap-4">
                 {/* Icône matière */}
                 <div className={cn(
@@ -175,34 +197,43 @@ export default function CoursPage() {
 
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <Badge variant="primary" size="sm">{c.matiere?.nom || c.matiere || 'Matière'}</Badge>
-                    <span className="text-xs text-neutral-500 capitalize">
+                    {c.matiere?.nom || (typeof c.matiere === 'string' && c.matiere) ? (
+                      <Badge variant="primary" size="sm">{c.matiere?.nom || c.matiere}</Badge>
+                    ) : null}
+                    <span className="text-xs text-[var(--text-secondary)] capitalize">
                       {c.type === 'tp' ? 'TP' : c.type}
                     </span>
-                    <div className="flex items-center gap-1 text-xs text-neutral-400">
-                      <Clock className="h-3 w-3" />
-                      {c.duree}
-                    </div>
+                    {c.duree ? (
+                      <div className="flex items-center gap-1 text-xs text-[var(--text-tertiary)]">
+                        <Clock className="h-3 w-3" />
+                        {c.duree}
+                      </div>
+                    ) : null}
                   </div>
-                  <h3 className="mt-1 text-base font-semibold text-neutral-900 dark:text-white">
-                    {c.chapitre || c.intitule || c.titre || 'Cours'}
+                  <h3 className="mt-1 text-base font-semibold text-[var(--text-primary)] ">
+                    {c.chapitre || c.intitule || c.titre || t('common.courses')}
                   </h3>
-                  <p className="mt-1 text-sm text-neutral-500">{c.resume}</p>
+                  <p className="mt-1 text-sm text-[var(--text-secondary)]">{c.resume}</p>
 
                   <div className="mt-3 flex items-center gap-4">
-                    <span className="text-xs text-neutral-500 flex items-center gap-1">
+                    <span className="text-xs text-[var(--text-secondary)] flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
-                      {c.date > new Date() ? 'Prévu le ' : 'Le '}
-                      {formatDate(c.date)}
+                      {c.type === 'devoir'
+                        ? (c.echeance
+                          ? t('pages.eleve.cours.a_rendre_le', { date: formatDate(c.echeance, COURTE) })
+                          : t('pages.eleve.cours.sans_date_limite'))
+                        : c.date ? t('pages.eleve.cours.le', { date: formatDate(c.date, COURTE) }) : null}
                     </span>
-                    <span className="text-xs text-neutral-500">{c.prof || c.enseignant || '—'}</span>
+                    {c.prof || c.enseignant ? (
+                      <span className="text-xs text-[var(--text-secondary)]">{c.prof || c.enseignant}</span>
+                    ) : null}
                   </div>
 
                   {/* Ressources */}
                   {c.ressources?.length > 0 && (
                     <div className="mt-3 flex flex-wrap gap-2">
                       {c.ressources.map((r) => (
-                        <button key={r} className="inline-flex items-center gap-1 rounded-lg bg-neutral-100 dark:bg-neutral-800 px-2.5 py-1 text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:bg-[var(--accent-subtle)] hover:text-[var(--accent)] hover:bg-[var(--accent-subtle)] dark:hover:text-[var(--accent)] transition-colors">
+                        <button key={r} className="inline-flex items-center gap-1 rounded-lg bg-[var(--surface-subtle)]  px-2.5 py-1 text-xs font-medium text-[var(--text-secondary)]  hover:bg-[var(--accent-subtle)] hover:text-[var(--accent)] hover:bg-[var(--accent-subtle)] dark:hover:text-[var(--accent)] transition-colors">
                           <Download className="h-3 w-3" />
                           {r}
                         </button>
@@ -224,12 +255,9 @@ export default function CoursPage() {
                       {getStatusLabel(c.status)}
                     </span>
                   </div>
-                  {c.note && (
+                  {c.note !== null && c.note !== undefined && (
                     <span className="text-lg font-bold text-[var(--accent)]">{c.note}/20</span>
                   )}
-                  <Button variant="ghost" size="sm" icon={<Eye />}>
-                    Voir
-                  </Button>
                 </div>
               </div>
             </Card>

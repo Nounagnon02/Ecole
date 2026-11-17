@@ -5,7 +5,9 @@
  * Animé avec pulse simple (opacité), sans shimmer
  */
 
+import { useEffect, useState } from 'react';
 import { cn } from '@/shared/lib/utils';
+import { useTranslation } from '@/shared/i18n';
 
 function Skeleton({ className, variant = 'text' }) {
   const variants = {
@@ -35,7 +37,30 @@ function Skeleton({ className, variant = 'text' }) {
 }
 
 /* ─── LoadingSpinner ────────────────────────────────────────────────────── */
+/** Après 5 s : on dit que la connexion est lente ; après 15 s : on propose de réessayer (lot 9.2). */
+export const DELAI_LENT_MS = 5000;
+export const DELAI_REESSAYER_MS = 15000;
+
 function LoadingSpinner({ message, variant = 'fullscreen', size = 'md' }) {
+  const { t } = useTranslation();
+  // En 3G lente, l'indicateur tournait sans fin et sans un mot : on ne
+  // savait pas s'il fallait attendre ou recharger.
+  const [etape, setEtape] = useState(0);
+  useEffect(() => {
+    const lent = setTimeout(() => setEtape(1), DELAI_LENT_MS);
+    const long = setTimeout(() => setEtape(2), DELAI_REESSAYER_MS);
+    return () => { clearTimeout(lent); clearTimeout(long); };
+  }, []);
+  const attente = etape > 0 && (
+    <div className="flex flex-col items-center gap-2 text-center">
+      <p className="text-sm text-[var(--text-secondary)]">{t('components.skeleton.connexion_lente')}</p>
+      {etape > 1 && (
+        <button type="button" className="min-h-11 rounded-md border border-[var(--border)] px-4 text-sm font-medium text-[var(--text-primary)]" onClick={() => window.location.reload()}>
+          {t('common.retry')}
+        </button>
+      )}
+    </div>
+  );
   const sizes = {
     sm: 'h-5 w-5 border-2',
     md: 'h-8 w-8 border-[3px]',
@@ -53,10 +78,11 @@ function LoadingSpinner({ message, variant = 'fullscreen', size = 'md' }) {
 
   if (variant === 'inline') {
     return (
-      <div className="flex items-center justify-center gap-3 py-8" role="status" aria-label="Chargement">
+      <div className="flex items-center justify-center gap-3 py-8" role="status" aria-label={t('components.skeleton.chargement')}>
         {spinner}
         {message && <span className="text-sm text-[var(--text-secondary)]">{message}</span>}
-        <span className="sr-only">Chargement en cours…</span>
+        {attente}
+        <span className="sr-only">{t('components.skeleton.chargement_en_cours')}</span>
       </div>
     );
   }
@@ -65,11 +91,12 @@ function LoadingSpinner({ message, variant = 'fullscreen', size = 'md' }) {
     <div
       className="flex h-screen w-full flex-col items-center justify-center gap-4"
       role="status"
-      aria-label="Chargement"
+      aria-label={t('components.skeleton.chargement')}
     >
       {spinner}
       {message && <p className="text-sm text-[var(--text-secondary)]">{message}</p>}
-      <span className="sr-only">Chargement en cours…</span>
+      {attente}
+      <span className="sr-only">{t('components.skeleton.chargement_en_cours')}</span>
     </div>
   );
 }
@@ -77,8 +104,9 @@ function LoadingSpinner({ message, variant = 'fullscreen', size = 'md' }) {
 /* ─── Compositions squelettes ───────────────────────────────────────────── */
 
 function SkeletonPage({ sections = 2 }) {
+  const { t } = useTranslation();
   return (
-    <div className="space-y-6 p-6" aria-label="Contenu en chargement">
+    <div className="space-y-6 p-6" aria-label={t('components.skeleton.contenu_en_chargement')}>
       <div className="flex items-center justify-between">
         <Skeleton variant="title" className="!h-8 !w-64" />
         <Skeleton variant="button" />
@@ -109,8 +137,9 @@ function SkeletonCard({ rows = 3 }) {
 }
 
 function SkeletonTable({ rows = 5, cols = 4 }) {
+  const { t } = useTranslation();
   return (
-    <div className="space-y-1" role="progressbar" aria-label="Tableau en chargement">
+    <div className="space-y-1" role="progressbar" aria-label={t('components.skeleton.tableau_en_chargement')}>
       <div className="flex gap-4 px-4 py-3">
         {Array.from({ length: cols }, (_, i) => (
           <Skeleton key={i} variant="text" className={i === 0 ? '!w-1/4' : '!w-1/6'} />

@@ -14,7 +14,9 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, within } from '@testing-library/react';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { makeQueryClient } from './helpers/render';
 import { MemoryRouter } from 'react-router-dom';
 import AffectationsPage from '@/app/features/affectations/AffectationsPage';
 import { installHttpMock } from './helpers/http-mock';
@@ -86,10 +88,14 @@ afterEach(() => {
 });
 
 function renderPage() {
+  // La page passe par react-query : un QueryClient neuf à chaque test, pour
+  // qu'aucune réponse ne survive d'un cas au suivant.
   return render(
-    <MemoryRouter>
-      <AffectationsPage />
-    </MemoryRouter>
+    <QueryClientProvider client={makeQueryClient()}>
+      <MemoryRouter>
+        <AffectationsPage />
+      </MemoryRouter>
+    </QueryClientProvider>
   );
 }
 
@@ -133,7 +139,7 @@ describe('AffectationsPage — lecture', () => {
     await waitFor(() => expect(screen.getByText('Erreur interne du serveur.')).toBeInTheDocument());
     expect(screen.getByRole('button', { name: 'Réessayer' })).toBeInTheDocument();
     // Jamais un état vide déguisé en succès.
-    expect(screen.queryByText('Aucun enseignant Maternelle / Primaire')).not.toBeInTheDocument();
+    expect(screen.queryByText('Aucun enseignant maternelle / primaire')).not.toBeInTheDocument();
   });
 });
 
@@ -224,7 +230,7 @@ describe('AffectationsPage — Maternelle & Primaire', () => {
   async function openMpTab() {
     renderPage();
     await waitFor(() => expect(screen.getByText('Adjovi Rose')).toBeInTheDocument());
-    fireEvent.click(screen.getByRole('button', { name: 'Maternelle & Primaire' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Maternelle & primaire' }));
     await waitFor(() => expect(screen.getByText('Dossou Aline')).toBeInTheDocument());
   }
 
@@ -247,5 +253,49 @@ describe('AffectationsPage — Maternelle & Primaire', () => {
     await waitFor(() => expect(http.callsTo('post', '/enseignants-mp/7/affectation')).toHaveLength(1));
     expect(http.callsTo('post', '/enseignants-mp/7/affectation')[0].body).toEqual({ classe_id: 4 });
     await waitFor(() => expect(screen.getByText('CE1')).toBeInTheDocument());
+  });
+});
+
+/* ══════════════════════════════════════════════════════════════════════
+ *  Forme réelle de l'API (audit BUG-009)
+ *
+ *  `GET /classes?with_matieres=1` passe par le pivot `serie_matieres` : la
+ *  série revient une fois par matière de la classe, et chacune porte toutes
+ *  les matières de la série, toutes classes confondues, avec la classe dans
+ *  `pivot.classe_id`.
+ * ═══════════════════════════════════════════════════════════════════ */
+describe('AffectationsPage — réponse réelle de l’API', () => {
+  const matiere = (id, nom, classe) => ({ id, nom, pivot: { serie_id: 3, matiere_id: id, classe_id: classe } });
+  const college = () => ({
+    id: 3, nom: 'Collège',
+    matieres: [matiere(100, 'Mathématiques', 1), matiere(101, 'Français', 1), matiere(100, 'Mathématiques', 2), matiere(102, 'Latin', 2)],
+  });
+
+  it('ne répète pas la série, la choisit quand elle est seule, et ne propose que les matières de la classe', async () => {
+    http.onGet('/classes').reply(200, [
+      { id: 1, nom_classe: '6ème', series: [college(), college()] },
+      { id: 2, nom_classe: '5ème', series: [college(), college()] },
+    ]);
+    await selectTeacher();
+
+    fireEvent.change(screen.getByLabelText('Classe'), { target: { value: '1' } });
+
+    const serie = screen.getByLabelText('Série');
+    await waitFor(() => expect(serie).toHaveValue('3'));
+    expect(within(serie).getAllByRole('option', { name: 'Collège' })).toHaveLength(1);
+
+    const noms = within(screen.getByLabelText('Matière')).getAllByRole('option').map((o) => o.textContent);
+    expect(noms).toContain('Français');
+    expect(noms).not.toContain('Latin');
+    expect(noms.filter((n) => n === 'Mathématiques')).toHaveLength(1);
+  });
+
+  it('explique pourquoi on ne peut rien affecter à une classe sans série', async () => {
+    http.onGet('/classes').reply(200, [{ id: 1, nom_classe: '6ème', series: [] }]);
+    await selectTeacher();
+
+    fireEvent.change(screen.getByLabelText('Classe'), { target: { value: '1' } });
+
+    expect(await screen.findByText(/Aucune série n’est rattachée à cette classe/)).toBeInTheDocument();
   });
 });

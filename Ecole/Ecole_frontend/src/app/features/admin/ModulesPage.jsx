@@ -5,7 +5,10 @@
  * Données dynamiques via API /api/v1/admin/modules
  */
 
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
+import { useApiQuery } from '@/shared/lib/api-client';
+import { useTranslation } from '@/shared/i18n';
+import { unwrapList } from '@/shared/lib/unwrap';
 import { motion } from 'framer-motion';
 import {
   Puzzle, ToggleLeft, ToggleRight,
@@ -15,7 +18,6 @@ import {
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Button from '@/shared/components/ui/Button';
-import { useApi } from '@/hooks/useApi';
 
 const MODULE_ICONS = {
   core: Shield,
@@ -44,35 +46,29 @@ const MODULE_COLORS = {
 };
 
 export default function ModulesPage() {
-  const { loading, error, get } = useApi();
-  const [modules, setModules] = useState([]);
+  const { t } = useTranslation();
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await get('/v1/admin/modules');
-        const items = Array.isArray(res?.data?.data) ? res.data.data
-          : Array.isArray(res?.data) ? res.data
-          : Array.isArray(res) ? res
-          : [];
-        setModules(items);
-      } catch (e) {
-        console.error('Erreur chargement modules:', e);
-      }
-    })();
-  }, []);
+  const requete = useApiQuery(['modules'], '/v1/admin/modules');
+
+  // La page tenait un `useState` de données doublé d'un `useEffect` de premier
+  // rendu — le motif répété sur trente-neuf pages, sans cache ni
+  // déduplication (cf. audit P4.1). `unwrapList` traverse les trois formes
+  // d'enveloppe que renvoient les contrôleurs.
+  const modules = useMemo(() => unwrapList(requete.data) ?? [], [requete.data]);
+  const loading = requete.isPending;
+  const error = requete.isError ? (requete.error?.message ?? t('common.load_error')) : null;
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--text-tertiary)]" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
+      <div className="flex flex-col items-center justify-center h-64 text-[var(--text-secondary)]">
         <AlertCircle className="h-8 w-8 mb-2 text-red-400" />
         <p className="text-sm">{error}</p>
       </div>
@@ -83,19 +79,19 @@ export default function ModulesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Modules</h1>
-          <p className="text-sm text-neutral-500 mt-1">Marketplace de fonctionnalités</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.admin.modules.title')}</h1>
+          <p className="text-sm text-[var(--text-secondary)] mt-1">{t('pages.admin.modules.subtitle')}</p>
         </div>
-        <Button icon={<Puzzle className="h-4 w-4" />}>Nouveau module</Button>
+        <Button icon={<Puzzle className="h-4 w-4" />}>{t('pages.admin.modules.nouveau_module')}</Button>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {modules.length === 0 && (
           <div className="sm:col-span-2 lg:col-span-3">
-            <Card>
-              <div className="text-center py-8 text-neutral-500">
+            <Card padding>
+              <div className="text-center py-8 text-[var(--text-secondary)]">
                 <Puzzle className="mx-auto h-8 w-8 mb-2" />
-                <p className="text-sm">Aucun module disponible</p>
+                <p className="text-sm">{t('pages.admin.modules.aucun_module_disponible')}</p>
               </div>
             </Card>
           </div>
@@ -118,17 +114,17 @@ export default function ModulesPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold text-neutral-900 dark:text-white">{mod.name}</h3>
+                        <h3 className="font-semibold text-[var(--text-primary)] ">{mod.name}</h3>
                         {mod.is_core && (
-                          <Badge variant="primary" size="sm">Core</Badge>
+                          <Badge variant="primary" size="sm">{t('pages.admin.modules.core')}</Badge>
                         )}
                       </div>
-                      <p className="text-xs text-neutral-500 mb-3">{mod.description}</p>
+                      <p className="text-xs text-[var(--text-secondary)] mb-3">{mod.description}</p>
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-neutral-400">{mod.tenants_count ?? mod.tenants ?? 0} tenant(s)</span>
-                        <button className={`inline-flex items-center gap-1 text-xs font-medium ${mod.is_active ? 'text-emerald-600' : 'text-neutral-400'}`}>
+                        <span className="text-xs text-[var(--text-tertiary)]">{mod.tenants_count ?? mod.tenants ?? 0} tenant(s)</span>
+                        <button className={`inline-flex items-center gap-1 text-xs font-medium ${mod.is_active ? 'text-emerald-600' : 'text-[var(--text-tertiary)]'}`}>
                           {mod.is_active ? <ToggleRight className="h-4 w-4" /> : <ToggleLeft className="h-4 w-4" />}
-                          {mod.is_active ? 'Activé' : 'Désactivé'}
+                          {mod.is_active ? t('pages.admin.modules.active') : t('pages.admin.modules.desactive')}
                         </button>
                       </div>
                     </div>

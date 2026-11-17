@@ -10,7 +10,7 @@ class ElevePolicy
 {
     public function viewAny(User $user): bool
     {
-        return Roles::satisfies($user->role, ['directeur', 'enseignant', 'censeur', 'surveillant', 'infirmier', 'bibliothecaire', 'secretaire']);
+        return Roles::satisfies($user->role, ['directeur', 'enseignant', 'censeur', 'surveillant', 'infirmier', 'bibliothecaire', 'secretaire', 'comptable']);
     }
 
     public function view(User $user, Eleve $eleve): bool
@@ -29,7 +29,8 @@ class ElevePolicy
         }
         // Élève voit lui-même
         if ($user->role === 'eleve') return $user->eleve?->id === $eleve->id;
-        return in_array($user->role, ['censeur', 'surveillant', 'infirmier', 'secretaire'], true);
+        // Le comptable part de la liste des élèves pour ouvrir un échéancier.
+        return in_array($user->role, ['censeur', 'surveillant', 'infirmier', 'secretaire', 'comptable'], true);
     }
 
     public function create(User $user): bool

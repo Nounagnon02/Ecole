@@ -72,6 +72,22 @@ test('analytics overview returns required fields', function () {
     }
 });
 
+// `revenue` groupait par `YEAR()`/`MONTH()`, propres à MySQL : la route
+// échouait sous SQLite, où tourne la suite de la CI (R-47, 16/11/2026).
+test('analytics revenue groups subscriptions by year and month, without canceled ones', function () {
+    $this->actingAs(User::factory()->create(['role' => 'super-admin']));
+
+    \App\Models\SaaS\Subscription::factory()->active()->create(['amount' => 30000]);
+    \App\Models\SaaS\Subscription::factory()->active()->create(['amount' => 20000]);
+    \App\Models\SaaS\Subscription::factory()->canceled()->create(['amount' => 99000]);
+
+    $lignes = collect($this->getJson('/api/v1/admin/analytics/revenue')->assertOk()->json())
+        ->map(fn ($l) => ['year' => (int) $l['year'], 'month' => (int) $l['month'], 'total' => (float) $l['total'], 'count' => (int) $l['count']])
+        ->all();
+
+    expect($lignes)->toBe([['year' => (int) now()->year, 'month' => (int) now()->month, 'total' => 50000.0, 'count' => 2]]);
+});
+
 /* ─── Module toggling ──────────────────────────────────────────────────── */
 
 test('can toggle module for tenant', function () {

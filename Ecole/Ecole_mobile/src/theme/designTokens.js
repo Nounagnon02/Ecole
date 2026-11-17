@@ -32,56 +32,57 @@ export const spacing = {
 };
 
 /* ─── Palette Lumière (Light Mode) ──────────────────────────────────────── */
+/* Proposition C (14/11/2026) : mêmes jetons que le web (design-tokens.css). */
 export const light = {
   /* Surface & Texture */
-  surface: '#F6F3EE',
-  surfaceRaised: '#FCFAF6',
-  surfaceHover: '#F2EDE6',
-  surfaceSubtle: '#EDE8E0',
+  surface: '#F4F0E8',
+  surfaceRaised: '#FFFDF8',
+  surfaceHover: '#EEE9DE',
+  surfaceSubtle: '#ECE6D8',
 
   /* Bordures */
-  border: '#E5DFD4',
-  borderLight: '#EDE8E0',
-  borderHeavy: '#D0C8BA',
+  border: '#DDD5C5',
+  borderLight: '#E8E1D5',
+  borderHeavy: '#8A928D',
 
   /* Texte */
-  textPrimary: '#1F1C19',
-  textSecondary: '#787066',
-  textTertiary: '#AAA096',
-  textDisabled: '#C8C0B6',
+  textPrimary: '#17302E',
+  textSecondary: '#56625D',
+  textTertiary: '#657069',
+  textDisabled: '#9AA19C',
 
   /* Accent — Cinabre (sceau de cire) */
-  accent: '#B8562E',
-  accentHover: '#A64A24',
-  accentActive: '#943E1E',
-  accentSubtle: '#F5E6DE',       // fond clair (RGBA non supporté partout en RN)
-  accentLight: '#F5E6DE',
-  accentRing: '#B8562E',          // fallback opaque pour RN (RGBA 0.35)
+  accent: '#0F5C4A',
+  accentHover: '#0B4A3B',
+  accentActive: '#083B30',
+  accentSubtle: '#E4EFE8',       // fond clair (RGBA non supporté partout en RN)
+  accentLight: '#E4EFE8',
+  accentRing: '#0F5C4A',          // fallback opaque pour RN (RGBA 0.35)
 
   /* Primary — Teal profond (bronze patiné) */
-  primary: '#1A3A3C',
-  primaryHover: '#152E30',
-  primaryActive: '#102426',
-  primarySubtle: '#E8EDEA',
-  primaryLight: '#E8EDEA',
+  primary: '#0F5C4A',
+  primaryHover: '#0B4A3B',
+  primaryActive: '#083B30',
+  primarySubtle: '#E4EFE8',
+  primaryLight: '#E4EFE8',
 
   /* Sémantique */
-  green: '#5A7A63',
-  greenHover: '#4D6A56',
-  greenSubtle: '#EAF0EA',
-  greenLight: '#EAF0EA',
+  green: '#246447',
+  greenHover: '#1C5139',
+  greenSubtle: '#E4EFE8',
+  greenLight: '#E4EFE8',
 
-  red: '#BA4A4A',
-  redHover: '#A63E3E',
-  redSubtle: '#F5E8E6',
-  redLight: '#F5E8E6',
+  red: '#A63D2A',
+  redHover: '#8D2F20',
+  redSubtle: '#FAE7DF',
+  redLight: '#FAE7DF',
 
-  amber: '#C4943A',
-  amberHover: '#B08430',
-  amberSubtle: '#F5F0E0',
-  amberLight: '#F5F0E0',
+  amber: '#795300',
+  amberHover: '#634400',
+  amberSubtle: '#FBE9BD',
+  amberLight: '#FBE9BD',
 
-  blue: '#4A6A8A',
+  blue: '#285C79',
   blueHover: '#3E5E7A',
   blueSubtle: '#E8EEF2',
   blueLight: '#E8EEF2',
@@ -108,13 +109,13 @@ export const light = {
   violetLight: '#EFE8F1',
 
   /* Aliases */
-  info: '#4A6A8A',
-  success: '#5A7A63',
-  warning: '#C4943A',
-  error: '#BA4A4A',
+  info: '#285C79',
+  success: '#246447',
+  warning: '#795300',
+  error: '#A63D2A',
 
   /* Ombres (en RN on utilise elevation + shadowColor) */
-  shadowColor: '#1F1C19',
+  shadowColor: '#17302E',
   shadowOpacity0: 0,
   shadowOpacity1: 0.04,
   shadowOpacity2: 0.05,
@@ -135,52 +136,52 @@ export const light = {
 
 /* ─── Palette Sombre (Dark Mode) ────────────────────────────────────────── */
 export const dark = {
-  surface: '#131518',
-  surfaceRaised: '#1B1D23',
-  surfaceHover: '#23252B',
-  surfaceSubtle: '#2B2D33',
+  surface: '#101E19',
+  surfaceRaised: '#192A23',
+  surfaceHover: '#24392F',
+  surfaceSubtle: '#22362C',
 
-  border: '#2A2C33',
-  borderLight: '#32343B',
-  borderHeavy: '#3E4048',
+  border: '#3C5145',
+  borderLight: '#30483A',
+  borderHeavy: '#789484',
 
-  textPrimary: '#EBE7E2',
-  textSecondary: '#88827A',
-  textTertiary: '#6A645C',
+  textPrimary: '#F4F0E8',
+  textSecondary: '#BCCBC0',
+  textTertiary: '#A8BCAE',
   textDisabled: '#4A443E',
 
-  accent: '#D46A3E',
-  accentHover: '#C85A2E',
-  accentActive: '#B84E22',
-  accentSubtle: '#2E1E16',
-  accentLight: '#2E1E16',
-  accentRing: '#D46A3E',
+  accent: '#8BD4B5',
+  accentHover: '#A4E4C8',
+  accentActive: '#B9EBD5',
+  accentSubtle: '#223E30',
+  accentLight: '#223E30',
+  accentRing: '#8BD4B5',
 
-  primary: '#2A5A5C',
-  primaryHover: '#1E4A4C',
-  primaryActive: '#163A3C',
-  primarySubtle: '#1A2A28',
-  primaryLight: '#1A2A28',
+  primary: '#8BD4B5',
+  primaryHover: '#A4E4C8',
+  primaryActive: '#B9EBD5',
+  primarySubtle: '#223E30',
+  primaryLight: '#223E30',
 
-  green: '#6A9A73',
+  green: '#9BD4AC',
   greenHover: '#5A8A63',
-  greenSubtle: '#1A2A1E',
-  greenLight: '#1A2A1E',
+  greenSubtle: '#203B2B',
+  greenLight: '#203B2B',
 
-  red: '#CC5A5A',
-  redHover: '#BA4A4A',
-  redSubtle: '#2E1A1A',
-  redLight: '#2E1A1A',
+  red: '#FFAF99',
+  redHover: '#FFC3B2',
+  redSubtle: '#43281F',
+  redLight: '#43281F',
 
-  amber: '#D4A44A',
-  amberHover: '#C4943A',
-  amberSubtle: '#2E2816',
-  amberLight: '#2E2816',
+  amber: '#F1C66A',
+  amberHover: '#F7D890',
+  amberSubtle: '#3C321C',
+  amberLight: '#3C321C',
 
-  blue: '#5A8AAA',
+  blue: '#A1CCE1',
   blueHover: '#4A7A9A',
-  blueSubtle: '#16222E',
-  blueLight: '#16222E',
+  blueSubtle: '#203740',
+  blueLight: '#203740',
 
   emerald: '#6A9A7B',
   emeraldHover: '#5A8A6B',

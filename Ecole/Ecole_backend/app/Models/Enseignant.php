@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Traits\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Enseignant extends Model
 {
-    use HasFactory, BelongsToEcole;
+    use HasFactory, BelongsToEcole, SoftDeletes;
 
     protected $fillable = [
         'user_id',
@@ -18,6 +19,13 @@ class Enseignant extends Model
         'lieu_naissance',
         'sexe',
         'ecole_id',
+    ];
+
+    protected $casts = [
+        'date_naissance' => \App\Casts\JourCalendaire::class,
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'deleted_at' => 'datetime',
     ];
 
     public function user()

@@ -510,7 +510,7 @@ class CommunicationsTest extends TestCase
             ->deleteJson("/api/communications/{$notice->id}")
             ->assertStatus(200);
 
-        $this->assertDatabaseMissing('communications', ['id' => $notice->id]);
+        $this->assertSoftDeleted('communications', ['id' => $notice->id]);
     }
 
     /* ─── Tenant isolation ────────────────────────────────────────────── */

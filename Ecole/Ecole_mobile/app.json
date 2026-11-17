@@ -1,16 +1,16 @@
 {
   "expo": {
-    "name": "Érudit",
+    "name": "École",
     "slug": "erudit-mobile",
     "version": "4.0.0",
-    "scheme": "erudit",
+    "scheme": "ecole",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#F6F3EE"
+      "backgroundColor": "#F4F0E8"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -23,8 +23,16 @@
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png",
-        "backgroundColor": "#F6F3EE"
-      }
+        "backgroundColor": "#F4F0E8"
+      },
+      "package": "com.ecole.mobile",
+      "blockedPermissions": [
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT"
+      ]
     },
     "web": {
       "bundler": "metro",

@@ -5,20 +5,33 @@
  * Données dynamiques via API /api/communications
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import { useApiQuery } from '@/shared/lib/api-client';
+import { unwrapList } from '@/shared/lib/unwrap';
+import { useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import {
   MessageSquare, Send, Bell, Megaphone, Calendar,
-  Pin, Clock, Eye, Heart, MessageCircle, Share2,
-  Plus, Filter, Loader2, AlertCircle,
+  Pin, Heart, MessageCircle, Share2,
+  Plus, Loader2, AlertCircle,
 } from 'lucide-react';
-import { formatDate, formatRelativeTime } from '@/shared/lib/utils';
+import { formatRelativeTime } from '@/shared/lib/utils';
 import Card from '@/shared/components/ui/Card';
 import Badge from '@/shared/components/ui/Badge';
 import Avatar from '@/shared/components/ui/Avatar';
 import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
-import { useApi } from '@/hooks/useApi';
+import { api } from '@/shared/services/api';
+import { useTranslation } from '@/shared/i18n';
+import useAuthStore from '@/shared/stores/auth-store';
+import { ROLES, ROLE_GROUPS } from '@/shared/types/roles';
+
+/**
+ * Rôles que l'API autorise à publier (CommunicationPolicy::isEditor).
+ * Le bouton était proposé à tous : un parent ou un enseignant rédigeait son
+ * annonce, puis recevait un refus et la perdait.
+ */
+const ROLES_EDITEURS = [...ROLE_GROUPS.DIRECTION, ROLES.CENSEUR, ROLES.SECRETAIRE, ROLES.SUPER_ADMIN];
 
 const CATEGORY_CONFIG = {
   all: { label: 'Tout', icon: MessageSquare },
@@ -68,42 +81,45 @@ function normalizePost(p) {
 }
 
 export default function CommunicationsPage() {
-  const { loading, error, get } = useApi();
-  // Deuxième instance, volontairement : `useApi` porte un `loading` et un
-  // `error` uniques. Partagée avec la lecture, une écriture qui échoue
-  // remplacerait tout le fil par l'écran d'erreur — un champ mal rempli
-  // ferait donc disparaître les annonces déjà affichées.
-  const { post, loading: submitting } = useApi();
-  const [posts, setPosts] = useState([]);
+  const { t } = useTranslation();
+  const peutPublier = useAuthStore((st) => st.hasAnyRole(ROLES_EDITEURS));
+  const [submitting, setSubmitting] = useState(false);
   const [activeCategory, setActiveCategory] = useState('all');
-  const [loadingPosts, setLoadingPosts] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
   const [fieldErrors, setFieldErrors] = useState({});
   const [submitError, setSubmitError] = useState(null);
 
-  useEffect(() => {
-    const loadPosts = async () => {
-      setLoadingPosts(true);
-      try {
-        // GET /api/communications — le serveur ne renvoie que les annonces qui
-        // s'adressent au lecteur (école, cycle, classe ou rôle) et qui sont dans
-        // leur fenêtre de validité. Le tri épinglé-puis-récent vient aussi du
-        // serveur ; le tri local ci-dessous n'est qu'un filet.
-        const res = await get('/communications');
-        const items = Array.isArray(res?.data?.data) ? res.data.data
-          : Array.isArray(res?.data) ? res.data
-          : Array.isArray(res) ? res
-          : [];
-        setPosts(items.map(normalizePost));
-      } catch (e) {
-        console.error('Erreur chargement communications:', e);
-      } finally {
-        setLoadingPosts(false);
-      }
-    };
-    loadPosts();
-  }, [get]);
+  // GET /api/communications — le serveur ne renvoie que les annonces qui
+  // s'adressent au lecteur (école, cycle, classe ou rôle) et qui sont dans
+  // leur fenêtre de validité. Le tri épinglé-puis-récent vient aussi du
+  // serveur ; le tri local plus bas n'est qu'un filet.
+  //
+  // Le chargement passait par un `useState` doublé d'un `useEffect`, sans
+  // cache ni déduplication (cf. audit P4.1).
+  const requete = useApiQuery(['communications'], '/communications');
+  const queryClient = useQueryClient();
+
+  const posts = useMemo(
+    () => (unwrapList(requete.data) ?? []).map(normalizePost),
+    [requete.data],
+  );
+  const loadingPosts = requete.isPending;
+  const loading = requete.isPending;
+  const error = requete.isError ? (requete.error?.message ?? t('common.load_error')) : null;
+
+  /**
+   * Insérer l'annonce créée en tête du cache, sans recharger le fil.
+   *
+   * Le serveur renvoie l'objet créé ; le fil n'a pas besoin d'un aller-retour
+   * pour l'afficher.
+   */
+  const prependPost = (brut) => {
+    queryClient.setQueryData(['communications'], (ancien) => {
+      const liste = unwrapList(ancien) ?? [];
+      return { data: [brut, ...liste] };
+    });
+  };
 
   const filtered = useMemo(() =>
     activeCategory === 'all' ? posts : posts.filter((p) => p.category === activeCategory),
@@ -143,11 +159,12 @@ export default function CommunicationsPage() {
     e.preventDefault();
     setFieldErrors({});
     setSubmitError(null);
+    setSubmitting(true);
 
     try {
       // POST /api/communications — l'auteur, l'école et la date de publication
       // sont posés par le serveur ; le client n'envoie que la rédaction.
-      const res = await post('/communications', {
+      const res = await api.post('/communications', {
         titre: form.titre,
         contenu: form.contenu,
         categorie: form.categorie,
@@ -157,7 +174,7 @@ export default function CommunicationsPage() {
       // recharger le fil, mais normalisée comme les autres.
       const created = res?.data?.data ?? res?.data ?? null;
       if (created && typeof created === 'object' && !Array.isArray(created)) {
-        setPosts((prev) => [normalizePost(created), ...prev]);
+        prependPost(created);
       }
       setForm(EMPTY_FORM);
       setFormOpen(false);
@@ -165,28 +182,30 @@ export default function CommunicationsPage() {
       // 422 Laravel : { message, errors: { champ: [message] } }. L'intercepteur
       // conserve les deux — le message général et le détail par champ.
       setFieldErrors(err?.errors || err?.response?.data?.errors || {});
-      setSubmitError(err?.message || 'La publication a échoué.');
+      setSubmitError(err?.message || t('pages.communications.communications.la_publication_a_echoue'));
+    } finally {
+      setSubmitting(false);
     }
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--text-tertiary)]" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
+      <div className="flex flex-col items-center justify-center h-64 text-[var(--text-secondary)]">
         <AlertCircle className="h-8 w-8 mb-2 text-red-400" />
         <p className="text-sm">{error}</p>
         <button
           onClick={() => window.location.reload()}
           className="mt-4 inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors"
         >
-          Réessayer
+          {t('common.retry')}
         </button>
       </div>
     );
@@ -196,25 +215,27 @@ export default function CommunicationsPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Communications</h1>
-          <p className="text-sm text-neutral-500">Restez informé des actualités de l'établissement</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.communications.communications.title')}</h1>
+          <p className="text-sm text-[var(--text-secondary)]">{t('pages.communications.communications.subtitle')}</p>
         </div>
-        <Button size="sm" icon={<Plus />} onClick={toggleForm} aria-expanded={formOpen}>
-          Nouvelle Publication
-        </Button>
+        {peutPublier && (
+          <Button size="sm" icon={<Plus />} onClick={toggleForm} aria-expanded={formOpen}>
+            {t('pages.communications.communications.nouvelle_publication')}
+          </Button>
+        )}
       </div>
 
       {/* Rédaction */}
       {formOpen && (
-        <Card>
-          <form onSubmit={handleCreatePost} aria-label="Nouvelle publication" className="space-y-4">
+        <Card padding>
+          <form onSubmit={handleCreatePost} aria-label={t('pages.communications.communications.nouvelle_publication_2')} className="space-y-4">
             <Input
-              label="Titre"
+              label={t('pages.communications.communications.titre')}
               name="titre"
               value={form.titre}
               onChange={handleField}
               error={fieldError('titre')}
-              placeholder="Titre de la publication"
+              placeholder={t('pages.communications.communications.titre_de_la_publication')}
             />
 
             <div className="space-y-1.5">
@@ -222,7 +243,7 @@ export default function CommunicationsPage() {
                 htmlFor="communication-contenu"
                 className="block text-sm font-medium text-[var(--text-primary)]"
               >
-                Contenu
+                {t('pages.communications.communications.contenu')}
               </label>
               <textarea
                 id="communication-contenu"
@@ -230,7 +251,7 @@ export default function CommunicationsPage() {
                 rows={4}
                 value={form.contenu}
                 onChange={handleField}
-                placeholder="Que souhaitez-vous annoncer ?"
+                placeholder={t('pages.communications.communications.que_souhaitez_vous_annoncer')}
                 aria-invalid={fieldError('contenu') ? 'true' : undefined}
                 className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface-raised)] p-3 text-sm text-[var(--text-primary)] outline-none focus-visible:border-[var(--accent)] focus-visible:ring-2 focus-visible:ring-[var(--accent-ring)]"
               />
@@ -246,7 +267,7 @@ export default function CommunicationsPage() {
                 htmlFor="communication-categorie"
                 className="block text-sm font-medium text-[var(--text-primary)]"
               >
-                Catégorie
+                {t('pages.communications.communications.categorie')}
               </label>
               <select
                 id="communication-categorie"
@@ -277,10 +298,10 @@ export default function CommunicationsPage() {
 
             <div className="flex items-center gap-2">
               <Button type="submit" size="sm" icon={<Send />} loading={submitting}>
-                Publier
+                {t('pages.communications.communications.publier')}
               </Button>
               <Button type="button" variant="ghost" size="sm" onClick={toggleForm}>
-                Annuler
+                {t('common.cancel')}
               </Button>
             </div>
           </form>
@@ -288,7 +309,7 @@ export default function CommunicationsPage() {
       )}
 
       {/* Categories */}
-      <Card>
+      <Card padding>
         <div className="flex flex-wrap gap-2">
           {Object.entries(CATEGORY_CONFIG).map(([id, cfg]) => (
             <button
@@ -296,8 +317,8 @@ export default function CommunicationsPage() {
               onClick={() => setActiveCategory(id)}
               className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all ${
                 activeCategory === id
-                  ? 'bg-[var(--accent-subtle)]0 text-white shadow-sm'
-                  : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700'
+                  ? 'bg-[var(--action)] text-white shadow-sm'
+                  : 'bg-[var(--surface-subtle)] text-[var(--text-secondary)] hover:bg-[var(--surface-subtle)]   '
               }`}
             >
               <cfg.icon className="h-4 w-4" />
@@ -312,13 +333,13 @@ export default function CommunicationsPage() {
         {loadingPosts && (
           <div className="space-y-4">
             {Array.from({ length: 3 }).map((_, i) => (
-              <Card key={i}>
+              <Card padding key={i}>
                 <div className="flex items-start gap-4">
-                  <div className="h-10 w-10 rounded-full bg-neutral-200 animate-pulse dark:bg-neutral-700" />
+                  <div className="h-10 w-10 rounded-full bg-[var(--surface-subtle)] animate-pulse " />
                   <div className="flex-1 space-y-2">
-                    <div className="h-4 w-1/4 bg-neutral-200 animate-pulse dark:bg-neutral-700 rounded" />
-                    <div className="h-4 w-3/4 bg-neutral-200 animate-pulse dark:bg-neutral-700 rounded" />
-                    <div className="h-4 w-1/2 bg-neutral-200 animate-pulse dark:bg-neutral-700 rounded" />
+                    <div className="h-4 w-1/4 bg-[var(--surface-subtle)] animate-pulse  rounded" />
+                    <div className="h-4 w-3/4 bg-[var(--surface-subtle)] animate-pulse  rounded" />
+                    <div className="h-4 w-1/2 bg-[var(--surface-subtle)] animate-pulse  rounded" />
                   </div>
                 </div>
               </Card>
@@ -326,10 +347,10 @@ export default function CommunicationsPage() {
           </div>
         )}
         {!loadingPosts && sorted.length === 0 && (
-          <Card>
-            <div className="text-center py-8 text-neutral-500">
+          <Card padding>
+            <div className="text-center py-8 text-[var(--text-secondary)]">
               <MessageSquare className="mx-auto h-8 w-8 mb-2" />
-              <p className="text-sm">Aucune communication trouvée</p>
+              <p className="text-sm">{t('pages.communications.communications.aucune_communication_trouvee')}</p>
             </div>
           </Card>
         )}
@@ -339,29 +360,29 @@ export default function CommunicationsPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <Card hover>
+            <Card padding hover>
               {post.pinned && (
                 <div className="mb-3 flex items-center gap-2 text-xs font-medium text-[var(--accent)]">
                   <Pin className="h-3 w-3" />
-                  Épinglé
+                  {t('pages.communications.communications.epingle')}
                 </div>
               )}
               <div className="flex items-start gap-4">
                 <Avatar name={post.auteur} size="md" />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-neutral-900 dark:text-white">
+                    <span className="text-sm font-semibold text-[var(--text-primary)] ">
                       {post.auteur}
                     </span>
                     <Badge variant="ghost" className="text-xs">{post.role}</Badge>
-                    <span className="text-xs text-neutral-500">
+                    <span className="text-xs text-[var(--text-secondary)]">
                       {formatRelativeTime(post.date)}
                     </span>
                   </div>
-                  <h3 className="mt-1 text-base font-semibold text-neutral-900 dark:text-white">
+                  <h3 className="mt-1 text-base font-semibold text-[var(--text-primary)] ">
                     {post.title}
                   </h3>
-                  <p className="mt-2 text-sm text-neutral-600 leading-relaxed dark:text-neutral-400">
+                  <p className="mt-2 text-sm text-[var(--text-secondary)] leading-relaxed ">
                     {post.content}
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2">
@@ -369,7 +390,7 @@ export default function CommunicationsPage() {
                       <Badge key={tag} variant="outline" size="sm">{tag}</Badge>
                     ))}
                   </div>
-                  <div className="mt-4 flex items-center gap-4 text-xs text-neutral-500">
+                  <div className="mt-4 flex items-center gap-4 text-xs text-[var(--text-secondary)]">
                     <button className="inline-flex items-center gap-1.5 hover:text-[var(--accent)] transition-colors">
                       <Heart className="h-4 w-4" />
                       {post.likes}
@@ -380,7 +401,7 @@ export default function CommunicationsPage() {
                     </button>
                     <button className="inline-flex items-center gap-1.5 hover:text-[var(--accent)] transition-colors">
                       <Share2 className="h-4 w-4" />
-                      Partager
+                      {t('pages.communications.communications.partager')}
                     </button>
                   </div>
                 </div>

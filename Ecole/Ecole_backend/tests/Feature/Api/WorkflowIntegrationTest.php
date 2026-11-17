@@ -95,13 +95,21 @@ it('returns children of a parent', function () {
 });
 
 it('returns student timetable', function () {
+    // Régression : `emploiDuTemps()` filtrait sur `$eleve->class_id`, un
+    // attribut qui n'existe pas (la colonne est `classe_id`) — la requête
+    // résolvait toujours `null` et la réponse était systématiquement vide,
+    // quelle que soit la classe de l'élève. `assertJsonStructure(['data' =>
+    // []])` valide la FORME, vide ou non : c'est pour ça que le bug n'était
+    // jamais remonté. On vérifie ici que la ligne créée est bien présente.
     $ecole = Ecole::factory()->create();
     $user = User::factory()->create(['role' => 'eleve', 'ecole_id' => $ecole->id]);
     $eleve = Eleve::factory()->create(['user_id' => $user->id, 'ecole_id' => $ecole->id]);
     $classe = Classes::factory()->create(['ecole_id' => $ecole->id]);
     $eleve->update(['classe_id' => $classe->id]);
 
-    EmploiDuTemps::factory()->create(['classe_id' => $classe->id, 'ecole_id' => $ecole->id]);
+    $creneau = EmploiDuTemps::factory()->create(['classe_id' => $classe->id, 'ecole_id' => $ecole->id]);
+    // Bruit : une autre classe ne doit jamais apparaître dans la réponse.
+    EmploiDuTemps::factory()->create(['ecole_id' => $ecole->id]);
 
     $this->actingAs($user);
 
@@ -109,6 +117,10 @@ it('returns student timetable', function () {
 
     $response->assertOk()
         ->assertJsonStructure(['success', 'data' => []]);
+
+    $data = $response->json('data');
+    expect($data)->toHaveCount(1);
+    expect($data[0]['id'])->toBe($creneau->id);
 });
 
 it('returns 404 for student timetable when no profile', function () {
@@ -205,7 +217,7 @@ it('secretaire routes are registered and accessible', function () {
     $response->assertStatus(501);
 });
 
-it('secretaire courrier route is registered', function () {
+it('secretaire courrier route records the mail', function () {
     $ecole = Ecole::factory()->create();
     $user = User::factory()->create(['role' => 'secretaire', 'ecole_id' => $ecole->id]);
     $this->actingAs($user);
@@ -218,7 +230,8 @@ it('secretaire courrier route is registered', function () {
         'date_reception' => now()->toDateString(),
     ]);
 
-    $response->assertStatus(501);
+    // Le registre du courrier existe désormais (table `courriers`).
+    $response->assertCreated();
 });
 
 it('secretaire visiteur route is registered', function () {
@@ -236,7 +249,7 @@ it('secretaire visiteur route is registered', function () {
     $response->assertStatus(501);
 });
 
-it('stub secretariat methods are wired and return not-implemented', function () {
+it('remaining stub secretariat methods are wired and return not-implemented', function () {
     $ecole = Ecole::factory()->create();
     $classe = Classes::factory()->create(['ecole_id' => $ecole->id]);
     $user = User::factory()->create(['role' => 'secretaire', 'ecole_id' => $ecole->id]);
@@ -250,11 +263,7 @@ it('stub secretariat methods are wired and return not-implemented', function () 
     $r1 = $this->postJson('/api/secretaire/dossiers', $payload);
     $r1->assertStatus(501);
 
-    $r2 = $this->postJson('/api/secretaire/courriers', array_merge($payload, [
-        'expediteur' => 'Mairie', 'destinataire' => 'Direction',
-        'objet' => 'Test', 'type' => 'entrant', 'date_reception' => now()->toDateString(),
-    ]));
-    $r2->assertStatus(501);
+    // Le courrier n'est plus un bouchon : voir « secretaire courrier route records the mail ».
 
     $r3 = $this->postJson('/api/secretaire/visiteurs', array_merge($payload, [
         'nom_visiteur' => 'M. X', 'motif' => 'RDV', 'heure_arrivee' => '10:00', 'date_visite' => now()->toDateString(),

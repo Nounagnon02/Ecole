@@ -1,235 +1,122 @@
 /**
- * E2E — Authenticated dashboard access per role
+ * Tableaux de bord par rôle — TESTS D'INTERFACE À API SIMULÉE.
  *
- * For each role, this test logs in through the UI and verifies the
- * corresponding dashboard is reachable and renders content.
+ * Ce fichier charge la vraie application (composants, routeur, gardes) et
+ * simule uniquement l'API (`/api/**`). Il prouve que chaque rôle atteint son
+ * tableau de bord réel, que les gardes redirigent et que les erreurs
+ * s'affichent. Il ne prouve PAS l'intégration avec Laravel ni les données :
+ * les parcours réels (API et base de test) sont dans `e2e/parcours-reels*`
+ * et dans les contrôles de `audit/`.
  *
- * The API responses are mocked at the network layer so the tests
- * remain hermetic and do not depend on a running backend.
+ * Correction du 14/11/2026 : la version précédente remplaçait la page de
+ * chaque tableau de bord par du HTML écrit dans le test (`<h1>… Dashboard</h1>`)
+ * et ne vérifiait que « la page n'est pas vide » : elle passait sans jamais
+ * charger l'application.
  */
 
 import { test, expect } from '@playwright/test';
 
 const ROLE_DASHBOARD = {
-  'directeur':      '/directeur/dashboard',
-  'enseignant':     '/enseignant/dashboard',
-  'eleve':          '/eleve/dashboard',
-  'parent':         '/parent/dashboard',
-  'comptable':      '/comptable/dashboard',
-  'surveillant':    '/surveillant/dashboard',
-  'censeur':        '/censeur/dashboard',
-  'infirmier':      '/infirmier/dashboard',
-  'bibliothecaire': '/bibliothecaire/dashboard',
-  'secretaire':     '/secretaire/dashboard',
-  'recteur':        '/universite/dashboard',
-  'doyen':          '/universite/dashboard',
-  'professeur':     '/universite/dashboard',
-  'etudiant':       '/universite/dashboard',
-  'personnel':      '/universite/dashboard',
-  'super-admin':    '/admin/dashboard',
-  'admin':          '/admin/dashboard',
+  directeur: '/directeur/dashboard',
+  enseignant: '/enseignant/dashboard',
+  eleve: '/eleve/dashboard',
+  parent: '/parent/dashboard',
+  comptable: '/comptable/dashboard',
+  surveillant: '/surveillant/dashboard',
+  censeur: '/censeur/dashboard',
+  infirmier: '/infirmier/dashboard',
+  bibliothecaire: '/bibliothecaire/dashboard',
+  secretaire: '/secretaire/dashboard',
+  recteur: '/universite/dashboard',
+  doyen: '/universite/dashboard',
+  professeur: '/universite/dashboard',
+  // L'étudiant n'a pas le tableau de bord de la direction universitaire :
+  // son accueil est « Mes cours » (8316500, 16/11/2026).
+  etudiant: '/universite/mes-cours',
+  personnel: '/universite/dashboard',
+  'super-admin': '/admin/dashboard',
+  admin: '/admin/dashboard',
 };
 
-const ROLE_LABELS = {
-  'directeur':      'Directeur',
-  'enseignant':     'Enseignant',
-  'eleve':          'Élève',
-  'parent':         'Parent',
-  'comptable':      'Comptable',
-  'surveillant':    'Surveillant',
-  'censeur':        'Censeur',
-  'infirmier':      'Infirmier',
-  'bibliothecaire': 'Bibliothécaire',
-  'secretaire':     'Secrétaire',
-  'recteur':        'Recteur',
-  'doyen':          'Doyen',
-  'professeur':     'Professeur',
-  'etudiant':       'Étudiant',
-  'personnel':      'Personnel',
-  'super-admin':    'Super Admin',
-  'admin':          'Admin',
-};
-
-function mockApiForRole(page, role) {
-  const label = ROLE_LABELS[role] || role;
-  const dashboardPath = ROLE_DASHBOARD[role] || '/';
-
-  page.route('**/api/auth/login', async (route) => {
-    const body = await route.request().postDataJSON();
-    if (body && body.password === 'password') {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          token: `mock-token-${role}-${Date.now()}`,
-          user: {
-            id: 1,
-            name: label,
-            prenom: label,
-            role,
-            ecole_id: 1,
-            email: `${role.toLowerCase()}@ecole.test`,
-          },
-        }),
-      });
-    } else {
-      await route.fulfill({
-        status: 401,
-        contentType: 'application/json',
-        body: JSON.stringify({ message: 'Invalid credentials' }),
-      });
+/** API simulée : session du rôle, et réponses vides (états vides réels) pour le reste. */
+async function simulerApi(page, role) {
+  const user = { id: 1, name: 'Test', prenom: 'Recette', email: `${role}@ecole.test`, role, ecole_id: 1 };
+  let connecte = false;
+  await page.route('**/api/**', async (route) => {
+    const url = route.request().url();
+    if (url.includes('/api/auth/login')) {
+      connecte = true;
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ user, redirect_to: ROLE_DASHBOARD[role] }) });
     }
-  });
-
-  page.route('**/api/auth/me', async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        success: true,
-        user: {
-          id: 1,
-          name: label,
-          prenom: label,
-          role,
-          ecole_id: 1,
-          email: `${role.toLowerCase()}@ecole.test`,
-        },
-      }),
-    });
-  });
-
-  page.route(`${dashboardPath}*`, async (route) => {
-    if (route.request().method() === 'GET') {
-      await route.fulfill({
-        status: 200,
-        contentType: 'text/html',
-        body: `<!DOCTYPE html><html><head><title>${label} Dashboard</title></head><body><div id="root"><h1>${label} Dashboard</h1><p>Welcome ${label}</p></div></body></html>`,
-      });
-    } else {
-      await route.continue();
+    if (url.includes('/api/auth/me')) {
+      return connecte
+        ? route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ user }) })
+        : route.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ message: 'Unauthenticated.' }) });
     }
+    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, data: [] }) });
   });
-
-  page.route('**/api/dashboard/*', async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        success: true,
-        data: {
-          role,
-          label,
-          stats: { total: 42, active: 38, pending: 4 },
-        },
-      }),
-    });
-  });
+  await page.route('**/sanctum/csrf-cookie', (route) => route.fulfill({ status: 204, body: '' }));
 }
 
-test.describe('Authenticated Dashboard per Role', () => {
-  const testRoles = [
-    'directeur', 'enseignant', 'eleve', 'parent',
-    'comptable', 'surveillant', 'censeur', 'infirmier',
-    'bibliothecaire', 'secretaire',
-    'recteur', 'doyen', 'professeur', 'etudiant', 'personnel',
-    'super-admin', 'admin',
-  ];
+async function seConnecter(page, role) {
+  await page.goto('/connexion');
+  await page.locator('#login-email').fill(`${role}@ecole.test`);
+  await page.locator('#login-password').fill('password');
+  await page.getByRole('button', { name: /se connecter/i }).click();
+}
 
-  for (const role of testRoles) {
-    const label = ROLE_LABELS[role] || role;
-    const dashboardPath = ROLE_DASHBOARD[role] || '/';
+test.describe('Tableau de bord réel de chaque rôle (API simulée)', () => {
+  for (const [role, chemin] of Object.entries(ROLE_DASHBOARD)) {
+    test(`${role} se connecte et atteint son vrai tableau de bord`, async ({ page }) => {
+      await simulerApi(page, role);
+      await seConnecter(page, role);
 
-    test(`${label} logs in and reaches their dashboard`, async ({ page }) => {
-      mockApiForRole(page, role);
-
-      await page.goto('/connexion');
-
-      const emailInput = page.locator('input#login-email, input[name="email"], input[type="text"]').first();
-      const passwordInput = page.locator('input#login-password, input[name="password"], input[type="password"]').first();
-
-      await emailInput.fill(`${role.toLowerCase()}@ecole.test`);
-      await passwordInput.fill('password');
-
-      await page.click('button[type="submit"], button:has-text("Se connecter")');
-
-      await page.waitForTimeout(1500);
-
-      await page.goto(dashboardPath);
-
-      await expect(page.locator('body')).not.toBeEmpty();
-      const content = await page.locator('body').innerText();
-      expect(content.length).toBeGreaterThan(0);
+      await expect(page).toHaveURL(new RegExp(`${chemin.replace(/\//g, '\\/')}$`), { timeout: 15000 });
+      // Le contenu vient des composants de l'application : zone principale et titre réels.
+      const principal = page.locator('#main-content');
+      await expect(principal).toBeVisible({ timeout: 15000 });
+      await expect(principal.locator('h1').first()).toBeVisible({ timeout: 15000 });
+      await expect(page.getByText('Accès non autorisé')).toHaveCount(0);
+      // La page d'erreur de l'application a, elle aussi, une zone principale
+      // et un titre : sans ce contrôle, un tableau de bord qui plante passait.
+      await expect(page.getByRole('heading', { name: 'Erreur serveur' })).toHaveCount(0);
     });
   }
+});
 
-  test.describe('Protected routes without auth', () => {
-    const protectedRoutes = [
-      '/directeur/dashboard',
-      '/enseignant/dashboard',
-      '/eleve/dashboard',
-      '/parent/dashboard',
-      '/admin/dashboard',
-      '/comptable/dashboard',
-      '/universite/dashboard',
-    ];
+test.describe('Routes protégées sans session', () => {
+  const routes = ['/directeur/dashboard', '/enseignant/dashboard', '/eleve/dashboard', '/parent/dashboard',
+    '/admin/dashboard', '/comptable/dashboard', '/universite/dashboard'];
 
-    for (const route of protectedRoutes) {
-      test(`unauthenticated access to ${route} redirects to login`, async ({ page }) => {
-        await page.goto(route);
-        const url = page.url();
-        expect(url.includes('connexion') || url.includes('login') || url.includes('403')).toBeTruthy();
-      });
-    }
+  for (const route of routes) {
+    test(`${route} renvoie vers la connexion`, async ({ page }) => {
+      await page.route('**/api/auth/me', (r) => r.fulfill({ status: 401, contentType: 'application/json', body: '{"message":"Unauthenticated."}' }));
+      await page.goto(route, { waitUntil: 'domcontentloaded' });
+      await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
+      await expect(page).toHaveURL(/\/connexion/, { timeout: 15000 });
+      await expect(page.locator('#login-email')).toBeVisible();
+    });
+  }
+});
+
+test.describe('Formulaire de connexion (API simulée)', () => {
+  test('identifiants refusés : le message de l’API s’affiche et on reste sur la connexion', async ({ page }) => {
+    await page.route('**/sanctum/csrf-cookie', (r) => r.fulfill({ status: 204, body: '' }));
+    await page.route('**/api/auth/me', (r) => r.fulfill({ status: 401, contentType: 'application/json', body: '{"message":"Unauthenticated."}' }));
+    await page.route('**/api/auth/login', (r) => r.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ message: 'Identifiants invalides' }) }));
+    await seConnecter(page, 'inconnu');
+    await expect(page.getByText('Identifiants invalides')).toBeVisible({ timeout: 10000 });
+    await expect(page).toHaveURL(/\/connexion/);
   });
+});
 
-  test.describe('Login form validation', () => {
-    test('empty form shows validation feedback', async ({ page }) => {
-      await page.goto('/connexion');
-      await page.click('button[type="submit"], button:has-text("Se connecter")');
-      await expect(page.locator('body')).not.toBeEmpty();
-    });
-
-    test('invalid credentials show error', async ({ page }) => {
-      await page.goto('/connexion');
-
-      const emailInput = page.locator('input#login-email, input[name="email"], input[type="text"]').first();
-      const passwordInput = page.locator('input#login-password, input[name="password"], input[type="password"]').first();
-
-      await emailInput.fill('wrong@user.test');
-      await passwordInput.fill('wrongpassword');
-
-      page.route('**/api/auth/login', async (route) => {
-        await route.fulfill({
-          status: 401,
-          contentType: 'application/json',
-          body: JSON.stringify({ message: 'Invalid credentials' }),
-        });
-      });
-
-      await page.click('button[type="submit"], button:has-text("Se connecter")');
-      await page.waitForTimeout(1000);
-      await expect(page.locator('body')).not.toBeEmpty();
-    });
-  });
-
-  test.describe('Session persistence', () => {
-    test('authenticated user stays on dashboard after page reload', async ({ page }) => {
-      mockApiForRole(page, 'directeur');
-
-      await page.goto('/connexion');
-      const emailInput = page.locator('input#login-email, input[name="email"], input[type="text"]').first();
-      const passwordInput = page.locator('input#login-password, input[name="password"], input[type="password"]').first();
-      await emailInput.fill('directeur@ecole.test');
-      await passwordInput.fill('password');
-      await page.click('button[type="submit"], button:has-text("Se connecter")');
-      await page.waitForTimeout(1500);
-
-      await page.goto('/directeur/dashboard');
-      await expect(page.locator('body')).not.toBeEmpty();
-
-      await page.reload();
-      await expect(page.locator('body')).not.toBeEmpty();
-    });
+test.describe('Persistance de session (API simulée)', () => {
+  test('après rechargement, le directeur reste sur son tableau de bord', async ({ page }) => {
+    await simulerApi(page, 'directeur');
+    await seConnecter(page, 'directeur');
+    await expect(page).toHaveURL(/\/directeur\/dashboard$/, { timeout: 15000 });
+    await page.reload();
+    await expect(page).toHaveURL(/\/directeur\/dashboard$/, { timeout: 15000 });
+    await expect(page.locator('#main-content h1').first()).toBeVisible({ timeout: 15000 });
   });
 });

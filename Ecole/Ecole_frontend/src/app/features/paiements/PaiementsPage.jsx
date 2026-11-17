@@ -4,8 +4,11 @@
  * Fonctions : liste, filtre, stats, reçu PDF, échéancier élèves
  */
 
-import { useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import useAuthStore from '@/shared/stores/auth-store';
+import { ROLES } from '@/shared/types/roles';
 import {
   DollarSign, Search, Download, Plus, CreditCard,
   TrendingUp, TrendingDown, Receipt, RefreshCw, Calendar, Eye,
@@ -14,6 +17,7 @@ import {
 import { cn } from '@/shared/lib/utils';
 import { formatCurrency } from '@/shared/lib/utils';
 import { useApiQuery, api } from '@/shared/lib/api-client';
+import logger from '@/shared/lib/logger';
 import StatsCard from '@/shared/components/ui/StatsCard';
 import Card from '@/shared/components/ui/Card';
 import Button from '@/shared/components/ui/Button';
@@ -21,6 +25,9 @@ import Table from '@/shared/components/ui/Table';
 import Input from '@/shared/components/ui/Input';
 import { Skeleton } from '@/shared/components/ui/Skeleton';
 import { toast } from 'sonner';
+import { useTranslation } from '@/shared/i18n';
+import EncaissementDialog from './EncaissementDialog';
+import { aujourdhuiIso, telechargerCsv, telechargerRecuVersement } from '@/shared/lib/telecharger';
 
 const STATUT_COLORS = {
   payee: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400',
@@ -30,29 +37,57 @@ const STATUT_COLORS = {
   en_attente: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400',
   'en attente': 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400',
   echec: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400',
-  remboursé: 'bg-neutral-100 text-neutral-700 dark:bg-neutral-500/20 dark:text-neutral-400',
+  remboursé: 'bg-[var(--surface-subtle)] text-[var(--text-primary)]  ',
 };
 
+/**
+ * Nom de l'élève d'un paiement. L'API (ComptableController::paiements) donne
+ * `eleve: { nom, prenom }` et `client` ; la page lisait `eleve.user.name`,
+ * absent de cette réponse : aucun nom ne s'affichait, la recherche par élève
+ * ne trouvait rien et l'échéancier listait « Aucun élève trouvé » — le
+ * comptable ne pouvait plus encaisser par ce chemin (constaté le 17/11/2026).
+ */
+export function nomEleve(p) {
+  const e = p?.eleve ?? {};
+  const nom = [e.nom ?? e.user?.name, e.prenom ?? e.user?.prenom].filter(Boolean).join(' ').trim();
+  return nom || (p?.client && p.client !== '—' ? p.client : '');
+}
+
 export default function PaiementsPage() {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [filterStatut, setFilterStatut] = useState('');
-  const [tab, setTab] = useState('paiements'); // 'paiements' | 'echeancier'
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = searchParams.get('tab') === 'echeancier' ? 'echeancier' : 'paiements';
+  // « Nouveau paiement » : curseur dans la recherche d'élève une fois l'onglet
+  // Échéancier affiché (un simple délai partait avant son rendu, 17/11/2026).
+  const [focusRecherche, setFocusRecherche] = useState(false);
+  useEffect(() => {
+    if (!focusRecherche || tab !== 'echeancier') return;
+    const champ = document.getElementById('recherche-eleve-echeancier');
+    if (champ) { champ.focus(); setFocusRecherche(false); }
+  });
+  const setTab = value => setSearchParams(previous => { const next = new URLSearchParams(previous); next.set('tab', value); return next; }); // 'paiements' | 'echeancier'
   const [echeanceSearch, setEcheanceSearch] = useState('');
   const [echeanceEleve, setEcheanceEleve] = useState(null);
   const [echeanceData, setEcheanceData] = useState(null);
   const [echeanceLoading, setEcheanceLoading] = useState(false);
+  const [aEncaisser, setAEncaisser] = useState(null);
+  const navigate = useNavigate();
+  const estComptable = useAuthStore((s) => s.user?.role) === ROLES.COMPTABLE;
 
   const { data: paiementsData, isLoading, error, refetch } = useApiQuery(
     ['paiements'],
     '/comptable/paiements',
   );
 
-  const paiements = paiementsData?.data ?? paiementsData ?? [];
+  const paiements = Array.isArray(paiementsData?.data) ? paiementsData.data
+    : Array.isArray(paiementsData) ? paiementsData : [];
 
   const filtered = useMemo(() =>
     paiements.filter((p) => {
-      const nomEleve = `${p.eleve?.user?.name ?? ''} ${p.eleve?.user?.prenom ?? ''}`.toLowerCase();
-      if (search && !nomEleve.includes(search.toLowerCase())) return false;
+      const nom = nomEleve(p).toLowerCase();
+      if (search && !nom.includes(search.toLowerCase())) return false;
       if (filterStatut && p.statut !== filterStatut) return false;
       return true;
     }),
@@ -64,16 +99,39 @@ export default function PaiementsPage() {
   // à zéro tant que la page testait les mauvaises clés.
   const paye = (p) => p.statut === 'payee';
 
-  const totalPaye = paiements
-    .filter(paye)
-    .reduce((a, p) => a + parseFloat(p.montant ?? 0), 0);
+  // Revue de pertinence (15/11/2026) : l'encaissé ne comptait que les lignes
+  // soldées (les versements partiels en étaient exclus), et « taux » et
+  // « impayés » étaient des parts de LIGNES soldées, affichées comme des
+  // pourcentages d'argent. Tout est maintenant calculé sur les montants.
+  const nombre = (v) => (v === null || v === undefined || v === '' ? null : parseFloat(v));
+  const payeDe = (p) => nombre(p.montant_paye) ?? (paye(p) ? nombre(p.montant) ?? 0 : 0);
+  const totalDe = (p) => nombre(p.montant_total) ?? nombre(p.montant) ?? 0;
+  const totalPaye = paiements.reduce((a, p) => a + payeDe(p), 0);
+  const totalDu = paiements.reduce((a, p) => a + totalDe(p), 0);
+  const resteAEncaisser = paiements.reduce((a, p) => a + (nombre(p.montant_restant) ?? Math.max(0, totalDe(p) - payeDe(p))), 0);
 
   const totalTransactions = paiements.length;
-  const payes = paiements.filter(paye).length;
-  const tauxEncaisse = totalTransactions > 0 ? Math.round((payes / totalTransactions) * 100) : 0;
+  // Sans paiement, il n'y a rien à mesurer : « — », pas « 0 % » / « 100 % ».
+  const tauxEncaisse = totalDu > 0 ? Math.round((totalPaye / totalDu) * 100) : null;
 
-  const handleRecu = (id) => {
-    window.open(`/api/comptable/paiements/${id}/recu`, '_blank');
+  // Le reçu s'ouvrait dans un nouvel onglet sur `/api/…` : sans nom de
+  // fichier, et sur téléphone l'utilisateur quittait l'application (BUG-029).
+  // Il est maintenant téléchargé sous un nom lisible.
+  const handleRecu = async (id, reference) => {
+    try {
+      const res = await api.get(`/comptable/paiements/${id}/recu`, { responseType: 'blob' });
+      const url = URL.createObjectURL(new Blob([res.data], { type: 'text/html' }));
+      const lien = document.createElement('a');
+      lien.href = url;
+      lien.download = `recu-${String(reference ?? id).replace(/[^\w-]+/g, '_')}.html`;
+      document.body.appendChild(lien);
+      lien.click();
+      lien.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      logger.error('Erreur reçu:', err);
+      toast.error(t('pages.paiements.paiements.recu_indisponible'));
+    }
   };
 
   // Liste unique des élèves pour l'échéancier
@@ -81,7 +139,7 @@ export default function PaiementsPage() {
     const map = new Map();
     paiements.forEach((p) => {
       const id = p.eleve?.id;
-      const name = `${p.eleve?.user?.name ?? ''} ${p.eleve?.user?.prenom ?? ''}`.trim();
+      const name = nomEleve(p);
       if (id && name) map.set(id, { id, name, classe: p.eleve?.classe?.nom_classe ?? '' });
     });
     return [...map.values()].sort((a, b) => a.name.localeCompare(b.name));
@@ -107,17 +165,44 @@ export default function PaiementsPage() {
     }
   };
 
+  const versementEnregistre = (resultat) => {
+    setAEncaisser(null);
+    const message = resultat?.deja_enregistre ? 'pages.paiements.encaissement.deja' : 'pages.paiements.encaissement.succes';
+    // Le reçu remis au parent est celui du versement (N-02), pas la
+    // situation de l'échéance.
+    toast.success(t(message, { reference: resultat?.reference ?? '' }), resultat?.versement_id ? {
+      action: {
+        label: t('pages.paiements.encaissement.recu'),
+        onClick: () => telechargerRecuVersement(resultat.versement_id, resultat.reference)
+          .catch(() => toast.error(t('pages.paiements.paiements.recu_indisponible'))),
+      },
+    } : undefined);
+    if (echeanceEleve) loadEcheancier(echeanceEleve);
+    refetch();
+  };
+
   const handlePaiement = async (echeanceId) => {
     try {
       const res = await api.post(`/comptable/echeancier/${echeanceId}/initier-paiement`);
       if (res.data?.success && res.data?.payment_url) {
+        const ALLOWED_HOSTS = ['fedapay.com', 'checkout.fedapay.com'];
+        try {
+          const url = new URL(res.data.payment_url);
+          if (url.protocol !== 'https:' || !ALLOWED_HOSTS.some(h => url.hostname === h || url.hostname.endsWith('.' + h))) {
+            toast.error(t('pages.paiements.paiements.url_de_paiement_invalide'));
+            return;
+          }
+        } catch {
+          toast.error(t('pages.paiements.paiements.url_de_paiement_invalide'));
+          return;
+        }
         window.location.href = res.data.payment_url;
       } else {
-        toast.error(res.data?.message || 'Impossible d\'initialiser le paiement');
+        toast.error(res.data?.message || t('pages.paiements.paiements.impossible_d_initialiser_le_paiement'));
       }
     } catch (err) {
-      console.error('Erreur initiation paiement:', err);
-      toast.error('Erreur lors de l\'initialisation du paiement');
+      logger.error('Erreur initiation paiement:', err);
+      toast.error(t('pages.paiements.paiements.erreur_lors_de_l_initialisation_du_paiement'));
     }
   };
 
@@ -126,40 +211,52 @@ export default function PaiementsPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Paiements</h1>
-          <p className="text-sm text-neutral-500">Gestion des transactions financières</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.paiements.paiements.title')}</h1>
+          <p className="text-sm text-[var(--text-secondary)]">{t('pages.paiements.paiements.subtitle')}</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={refetch} disabled={isLoading}>
+          <Button variant="ghost" size="sm" aria-label={t('common.refresh')} title={t('common.refresh')} onClick={refetch} disabled={isLoading}>
             <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} />
           </Button>
-          <Button variant="outline" size="sm" icon={<Receipt />}>Factures</Button>
-          <Button variant="outline" size="sm" icon={<Download />}>Exporter</Button>
-          <Button size="sm" icon={<Plus />}>Nouveau Paiement</Button>
+          {/* Ces trois boutons ne faisaient rien (constaté le 17/11/2026). Les
+              factures ne sont ouvertes qu'au comptable : le lien n'est proposé
+              qu'à lui. Un paiement s'encaisse sur l'échéancier d'un élève. */}
+          {estComptable ? (
+            <Button variant="outline" size="sm" icon={<Receipt />} onClick={() => navigate('/comptable/factures')}>{t('pages.paiements.paiements.factures')}</Button>
+          ) : null}
+          <Button variant="outline" size="sm" icon={<Download />} disabled={filtered.length === 0}
+            onClick={() => telechargerCsv(`paiements-${aujourdhuiIso()}.csv`, [
+              ['Référence', 'Élève', 'Classe', 'Type', 'Payé (FCFA)', 'Montant dû (FCFA)', 'Date', 'Statut'],
+              ...filtered.map((p) => [p.reference, nomEleve(p), p.eleve?.classe?.nom_classe,
+                p.type_paiement, payeDe(p), totalDe(p), p.date_paiement, p.statut_label ?? p.statut]),
+            ])}>{t('common.export')}</Button>
+          <Button size="sm" icon={<Plus />} onClick={() => { setTab('echeancier'); setFocusRecherche(true); }}>
+            {t('pages.paiements.paiements.nouveau_paiement')}
+          </Button>
         </div>
       </div>
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatsCard title="Revenus Encaissés" value={formatCurrency(totalPaye)} icon={DollarSign} color="primary" />
-        <StatsCard title="Transactions" value={String(totalTransactions)} icon={CreditCard} color="emerald" />
-        <StatsCard title="Taux d'Encaisse" value={`${tauxEncaisse}%`} icon={TrendingUp} color="sky" />
-        <StatsCard title="Impayés" value={`${100 - tauxEncaisse}%`} icon={TrendingDown} color="red" />
+        <StatsCard title={t('pages.paiements.paiements.revenus_encaisses')} value={formatCurrency(totalPaye)} icon={DollarSign} color="primary" />
+        <StatsCard title={t('pages.paiements.paiements.transactions')} value={String(totalTransactions)} icon={CreditCard} color="emerald" />
+        <StatsCard title={t('pages.paiements.paiements.taux_d_encaisse')} value={tauxEncaisse === null ? '—' : `${tauxEncaisse}%`} icon={TrendingUp} color="sky" />
+        <StatsCard title={t('pages.paiements.paiements.impayes')} value={totalTransactions === 0 ? '—' : formatCurrency(resteAEncaisser)} icon={TrendingDown} color="red" />
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-4 border-b border-neutral-200 dark:border-neutral-800">
+      <div className="flex gap-4 border-b border-[var(--border)] ">
         <button
           onClick={() => setTab('paiements')}
           className={cn(
             'pb-2 text-sm font-medium border-b-2 transition-colors',
             tab === 'paiements'
               ? 'border-[var(--accent)] text-[var(--accent)]'
-              : 'border-transparent text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'
+              : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] '
           )}
         >
           <CreditCard className="h-4 w-4 inline mr-1.5" />
-          Paiements
+          {t('pages.paiements.paiements.paiements')}
         </button>
         <button
           onClick={() => setTab('echeancier')}
@@ -167,11 +264,11 @@ export default function PaiementsPage() {
             'pb-2 text-sm font-medium border-b-2 transition-colors',
             tab === 'echeancier'
               ? 'border-[var(--accent)] text-[var(--accent)]'
-              : 'border-transparent text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'
+              : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] '
           )}
         >
           <Calendar className="h-4 w-4 inline mr-1.5" />
-          Échéancier
+          {t('pages.paiements.paiements.echeancier')}
         </button>
       </div>
 
@@ -179,12 +276,12 @@ export default function PaiementsPage() {
       {tab === 'paiements' && (
         <>
           {/* Filters */}
-          <Card>
+          <Card padding>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               <div className="relative flex-1 max-w-sm">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
                 <Input
-                  placeholder="Rechercher un élève..."
+                  placeholder={t('common.search_student')}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="pl-9"
@@ -193,12 +290,13 @@ export default function PaiementsPage() {
               <select
                 value={filterStatut}
                 onChange={(e) => setFilterStatut(e.target.value)}
-                className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+                aria-label={t('common.filter_by_status')}
+                className="h-10 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40   "
               >
-                <option value="">Tous les statuts</option>
-                <option value="payee">Payé</option>
-                <option value="partiel">Partiel</option>
-                <option value="en_attente">En attente</option>
+                <option value="">{t('common.all_statuses')}</option>
+                <option value="payee">{t('pages.paiements.paiements.paye')}</option>
+                <option value="partiel">{t('pages.paiements.paiements.partiel')}</option>
+                <option value="en_attente">{t('common.status.pending')}</option>
               </select>
             </div>
           </Card>
@@ -207,18 +305,18 @@ export default function PaiementsPage() {
           <Card padding={false}>
             {error && (
               <div className="p-6 text-center text-sm text-red-500">
-                Erreur : {error.message ?? 'Impossible de récupérer les paiements'}
+                Erreur : {error.message ?? t('pages.paiements.paiements.impossible_de_recuperer_les_paiements')}
               </div>
             )}
             <Table>
               <Table.Header>
-                <Table.Head>Référence</Table.Head>
-                <Table.Head>Élève</Table.Head>
-                <Table.Head>Type</Table.Head>
-                <Table.Head>Montant</Table.Head>
-                <Table.Head>Date</Table.Head>
-                <Table.Head>Statut</Table.Head>
-                <Table.Head className="text-right">Reçu</Table.Head>
+                <Table.Head>{t('pages.paiements.paiements.reference')}</Table.Head>
+                <Table.Head>{t('common.student')}</Table.Head>
+                <Table.Head>{t('common.type')}</Table.Head>
+                <Table.Head>{t('common.amount')}</Table.Head>
+                <Table.Head>{t('common.date')}</Table.Head>
+                <Table.Head>{t('common.status_label')}</Table.Head>
+                <Table.Head className="text-right">{t('pages.paiements.paiements.recu')}</Table.Head>
               </Table.Header>
               <Table.Body>
                 {isLoading && Array.from({ length: 5 }).map((_, i) => (
@@ -230,31 +328,34 @@ export default function PaiementsPage() {
                 ))}
                 {!isLoading && filtered.length === 0 && (
                   <Table.Row>
-                    <td colSpan={7} className="p-8 text-center text-sm text-neutral-500">
-                      Aucun paiement trouvé
+                    <td colSpan={7} className="p-8 text-center text-sm text-[var(--text-secondary)]">
+                      {t('pages.paiements.paiements.aucun_paiement_trouve')}
                     </td>
                   </Table.Row>
                 )}
                 {!isLoading && filtered.map((p) => (
                   <Table.Row key={p.id}>
-                    <Table.Cell className="text-xs font-mono text-neutral-500">
+                    <Table.Cell className="text-xs font-mono text-[var(--text-secondary)]">
                       {p.reference ?? `PAY-${p.id}`}
                     </Table.Cell>
                     <Table.Cell>
-                      <span className="font-medium text-neutral-900 dark:text-white">
-                        {p.eleve?.user?.name} {p.eleve?.user?.prenom}
+                      <span className="font-medium text-[var(--text-primary)] ">
+                        {nomEleve(p) || '—'}
                       </span>
-                      <span className="ml-2 text-xs text-neutral-500">
+                      <span className="ml-2 text-xs text-[var(--text-secondary)]">
                         {p.eleve?.classe?.nom_classe}
                       </span>
                     </Table.Cell>
                     <Table.Cell>{p.type_paiement}</Table.Cell>
                     <Table.Cell>
-                      <span className="font-semibold text-neutral-900 dark:text-white">
-                        {formatCurrency(p.montant)}
+                      <span className="font-semibold text-[var(--text-primary)] ">
+                        {formatCurrency(payeDe(p))}
                       </span>
+                      {totalDe(p) > payeDe(p) && (
+                        <span className="block text-xs text-[var(--text-secondary)]">{t('pages.paiements.paiements.sur_montant', { total: formatCurrency(totalDe(p)) })}</span>
+                      )}
                     </Table.Cell>
-                    <Table.Cell className="text-xs text-neutral-500">{p.date_paiement}</Table.Cell>
+                    <Table.Cell className="text-xs text-[var(--text-secondary)]">{p.date_paiement}</Table.Cell>
                     <Table.Cell>
                       <span className={cn(
                         'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium',
@@ -265,9 +366,10 @@ export default function PaiementsPage() {
                     </Table.Cell>
                     <Table.Cell className="text-right">
                       <button
-                        onClick={() => handleRecu(p.id)}
-                        className="p-1.5 rounded-lg text-neutral-400 hover:text-[var(--accent)] hover:bg-[var(--accent-subtle)] transition-colors"
-                        title="Voir le reçu"
+                        onClick={() => handleRecu(p.id, p.reference)}
+                        className="p-1.5 rounded-lg text-[var(--text-tertiary)] hover:text-[var(--accent)] hover:bg-[var(--accent-subtle)] transition-colors"
+                        title={t('pages.paiements.paiements.voir_le_recu')}
+                        aria-label={t('pages.paiements.paiements.voir_le_recu')}
                       >
                         <Eye className="h-4 w-4" />
                       </button>
@@ -287,9 +389,11 @@ export default function PaiementsPage() {
           <Card>
             <div className="p-4 space-y-3">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
                 <Input
-                  placeholder="Rechercher un élève..."
+                  id="recherche-eleve-echeancier"
+                  aria-label={t('common.search_student')}
+                  placeholder={t('common.search_student')}
                   value={echeanceSearch}
                   onChange={(e) => setEcheanceSearch(e.target.value)}
                   className="pl-9"
@@ -304,15 +408,15 @@ export default function PaiementsPage() {
                       'w-full text-left px-3 py-2 rounded-lg text-sm transition-colors',
                       echeanceEleve === e.id
                         ? 'bg-[var(--accent-subtle)] text-[var(--accent)] font-medium'
-                        : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800'
+                        : 'text-[var(--text-primary)]  hover:bg-[var(--surface-subtle)] '
                     )}
                   >
                     {e.name}
-                    <span className="ml-2 text-xs text-neutral-400">{e.classe}</span>
+                    <span className="ml-2 text-xs text-[var(--text-tertiary)]">{e.classe}</span>
                   </button>
                 ))}
                 {filteredEleves.length === 0 && (
-                  <p className="text-sm text-neutral-500 text-center py-4">Aucun élève trouvé</p>
+                  <p className="text-sm text-[var(--text-secondary)] text-center py-4">{t('common.no_student_found')}</p>
                 )}
               </div>
             </div>
@@ -322,8 +426,8 @@ export default function PaiementsPage() {
           <Card>
             <div className="p-4">
               {!echeanceEleve && (
-                <div className="py-16 text-center text-sm text-neutral-500">
-                  Sélectionnez un élève pour voir son échéancier
+                <div className="py-16 text-center text-sm text-[var(--text-secondary)]">
+                  {t('pages.paiements.paiements.selectionnez_un_eleve_pour_voir_son_echeancier')}
                 </div>
               )}
 
@@ -339,27 +443,27 @@ export default function PaiementsPage() {
                 <div className="space-y-4">
                   {/* Résumé */}
                   <div className="flex flex-wrap gap-4">
-                    <div className="flex-1 min-w-[140px] rounded-xl border border-neutral-200 dark:border-neutral-800 p-3">
-                      <p className="text-xs text-neutral-500">Total dû</p>
-                      <p className="text-lg font-bold text-neutral-900 dark:text-white">
+                    <div className="flex-1 min-w-[140px] rounded-xl border border-[var(--border)]  p-3">
+                      <p className="text-xs text-[var(--text-secondary)]">{t('pages.paiements.paiements.total_du')}</p>
+                      <p className="text-lg font-bold text-[var(--text-primary)] ">
                         {formatCurrency(echeanceData.resume.total_du)}
                       </p>
                     </div>
                     <div className="flex-1 min-w-[140px] rounded-xl border border-emerald-200 dark:border-emerald-800 p-3">
-                      <p className="text-xs text-neutral-500">Payé</p>
+                      <p className="text-xs text-[var(--text-secondary)]">{t('pages.paiements.paiements.paye')}</p>
                       <p className="text-lg font-bold text-emerald-600">
                         {formatCurrency(echeanceData.resume.total_paye)}
                       </p>
                     </div>
                     <div className="flex-1 min-w-[140px] rounded-xl border border-amber-200 dark:border-amber-800 p-3">
-                      <p className="text-xs text-neutral-500">Solde</p>
+                      <p className="text-xs text-[var(--text-secondary)]">{t('common.balance')}</p>
                       <p className="text-lg font-bold text-amber-600">
                         {formatCurrency(echeanceData.resume.solde)}
                       </p>
                     </div>
-                    <div className="flex-1 min-w-[140px] rounded-xl border border-neutral-200 dark:border-neutral-800 p-3">
-                      <p className="text-xs text-neutral-500">Échéances</p>
-                      <p className="text-lg font-bold text-neutral-900 dark:text-white">
+                    <div className="flex-1 min-w-[140px] rounded-xl border border-[var(--border)]  p-3">
+                      <p className="text-xs text-[var(--text-secondary)]">{t('pages.paiements.paiements.echeances')}</p>
+                      <p className="text-lg font-bold text-[var(--text-primary)] ">
                         {echeanceData.resume.nb_payees}/{echeanceData.resume.nb_echeances}
                       </p>
                     </div>
@@ -367,39 +471,39 @@ export default function PaiementsPage() {
 
                   {/* Info élève */}
                   <div className="text-sm">
-                    <span className="font-medium text-neutral-900 dark:text-white">
+                    <span className="font-medium text-[var(--text-primary)] ">
                       {echeanceData.eleve.nom}
                     </span>
-                    <span className="ml-2 text-neutral-500">{echeanceData.eleve.classe}</span>
-                    <span className="ml-2 text-xs text-neutral-400 font-mono">· {echeanceData.eleve.matricule}</span>
+                    <span className="ml-2 text-[var(--text-secondary)]">{echeanceData.eleve.classe}</span>
+                    <span className="ml-2 text-xs text-[var(--text-tertiary)] font-mono">· {echeanceData.eleve.matricule}</span>
                   </div>
 
                   {/* Tableau des échéances */}
                   <Table>
                     <Table.Header>
-                      <Table.Head>Référence</Table.Head>
-                      <Table.Head>Type</Table.Head>
-                      <Table.Head>Montant</Table.Head>
-                      <Table.Head>Date</Table.Head>
-                      <Table.Head>Statut</Table.Head>
-                      <Table.Head className="text-right">Action</Table.Head>
+                      <Table.Head>{t('pages.paiements.paiements.reference')}</Table.Head>
+                      <Table.Head>{t('common.type')}</Table.Head>
+                      <Table.Head>{t('common.amount')}</Table.Head>
+                      <Table.Head>{t('common.date')}</Table.Head>
+                      <Table.Head>{t('common.status_label')}</Table.Head>
+                      <Table.Head className="text-right">{t('pages.paiements.paiements.action')}</Table.Head>
                     </Table.Header>
                     <Table.Body>
-                      {echeanceData.echeances.length === 0 && (
+                      {(Array.isArray(echeanceData?.echeances) ? echeanceData.echeances : []).length === 0 && (
                         <Table.Row>
-                          <td colSpan={6} className="p-8 text-center text-sm text-neutral-500">
-                            Aucune échéance
+                          <td colSpan={6} className="p-8 text-center text-sm text-[var(--text-secondary)]">
+                            {t('pages.paiements.paiements.aucune_echeance')}
                           </td>
                         </Table.Row>
                       )}
-                      {echeanceData.echeances.map((e) => (
+                      {(Array.isArray(echeanceData?.echeances) ? echeanceData.echeances : []).map((e) => (
                         <Table.Row key={e.id}>
-                          <Table.Cell className="text-xs font-mono text-neutral-500">{e.reference}</Table.Cell>
+                          <Table.Cell className="text-xs font-mono text-[var(--text-secondary)]">{e.reference}</Table.Cell>
                           <Table.Cell>{e.type}</Table.Cell>
-                          <Table.Cell className="font-semibold text-neutral-900 dark:text-white">
+                          <Table.Cell className="font-semibold text-[var(--text-primary)] ">
                             {formatCurrency(e.montant)}
                           </Table.Cell>
-                          <Table.Cell className="text-xs text-neutral-500">{e.date}</Table.Cell>
+                          <Table.Cell className="text-xs text-[var(--text-secondary)]">{e.date}</Table.Cell>
                           <Table.Cell>
                             <span className={cn(
                               'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium',
@@ -410,6 +514,11 @@ export default function PaiementsPage() {
                           </Table.Cell>
                           <Table.Cell className="text-right">
                             <div className="flex items-center justify-end gap-2">
+                              {['en_attente', 'partiel'].includes(e.statut) && Number(e.reste ?? 0) > 0 && (
+                                <Button size="sm" variant="outline" onClick={() => setAEncaisser(e)}>
+                                  {t('pages.paiements.encaissement.encaisser')}
+                                </Button>
+                              )}
                               {['en_attente', 'partiel'].includes(e.statut) && (
                                 <Button
                                   size="sm"
@@ -417,13 +526,14 @@ export default function PaiementsPage() {
                                   icon={<ExternalLink className="h-3.5 w-3.5" />}
                                   onClick={() => handlePaiement(e.id)}
                                 >
-                                  Payer
+                                  {t('pages.paiements.paiements.payer')}
                                 </Button>
                               )}
                               <button
-                                onClick={() => handleRecu(e.id)}
-                                className="p-1.5 rounded-lg text-neutral-400 hover:text-[var(--accent)] hover:bg-[var(--accent-subtle)] transition-colors"
-                                title="Voir le reçu"
+                                onClick={() => handleRecu(e.id, e.reference)}
+                                className="p-1.5 rounded-lg text-[var(--text-tertiary)] hover:text-[var(--accent)] hover:bg-[var(--accent-subtle)] transition-colors"
+                                title={t('pages.paiements.paiements.voir_le_recu')}
+                                aria-label={t('pages.paiements.paiements.voir_le_recu')}
                               >
                                 <Eye className="h-4 w-4" />
                               </button>
@@ -439,6 +549,8 @@ export default function PaiementsPage() {
           </Card>
         </div>
       )}
+
+      <EncaissementDialog echeance={aEncaisser} onClose={() => setAEncaisser(null)} onDone={versementEnregistre} />
     </motion.div>
   );
 }

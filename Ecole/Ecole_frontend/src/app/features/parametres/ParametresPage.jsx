@@ -4,8 +4,9 @@
  * Préférences, notifications, sécurité et configuration du profil.
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
+import TwoFactorSetupForm from '@/shared/components/auth/TwoFactorSetupForm';
 import {
   User, Bell, Shield, Palette, Globe, Smartphone,
   Moon, Sun, Save, CheckCircle2, Plus, Trash2, Briefcase
@@ -15,10 +16,13 @@ import Button from '@/shared/components/ui/Button';
 import Input from '@/shared/components/ui/Input';
 import Badge from '@/shared/components/ui/Badge';
 import Avatar from '@/shared/components/ui/Avatar';
-import { useApi } from '@/hooks/useApi';
+import { api } from '@/shared/services/api';
+import { useApiQuery } from '@/shared/lib/api-client';
+import { unwrapList } from '@/shared/lib/unwrap';
 import { toast } from 'sonner';
 import useAuthStore from '@/shared/stores/auth-store';
 import { ROLE_GROUPS, hasRole } from '@/shared/types/roles';
+import { LOCALES, useTranslation } from '@/shared/i18n';
 
 const SECTIONS = [
   { id: 'profil', label: 'Profil', icon: User },
@@ -29,14 +33,16 @@ const SECTIONS = [
 ];
 
 export default function ParametresPage() {
+  const { t } = useTranslation();
   const { user, updateUser } = useAuthStore();
-  const { loading, error, put } = useApi();
+  const [saving, setSaving] = useState(false);
   const [activeSection, setActiveSection] = useState('profil');
   const [saved, setSaved] = useState(false);
 
   const handleSaveProfile = async (e, extra = {}) => {
     e.preventDefault();
     setSaved(false);
+    setSaving(true);
     try {
       const form = e.target;
       const data = {
@@ -46,22 +52,24 @@ export default function ParametresPage() {
         telephone: form.querySelector('[name="telephone"]')?.value,
         ...extra,
       };
-      const res = await put('/auth/profile', data);
+      const res = await api.put('/auth/profile', data);
       if (res?.data?.success) {
         updateUser(res.data.user);
         setSaved(true);
-        toast.success('Profil mis à jour');
+        toast.success(t('pages.parametres.parametres.profil_mis_a_jour'));
         setTimeout(() => setSaved(false), 3000);
       }
     } catch (err) {
-      toast.error(err?.message || 'Erreur lors de la mise à jour');
+      toast.error(err?.message || t('pages.parametres.parametres.erreur_lors_de_la_mise_a_jour'));
+    } finally {
+      setSaving(false);
     }
   };
 
   const renderSection = () => {
     switch (activeSection) {
       case 'profil':
-        return <ProfilSection user={user} onSave={handleSaveProfile} saving={loading} saved={saved} />;
+        return <ProfilSection user={user} onSave={handleSaveProfile} saving={saving} saved={saved} />;
       case 'notifications':
         return <NotificationsSection />;
       case 'securite':
@@ -78,22 +86,22 @@ export default function ParametresPage() {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Paramètres</h1>
-        <p className="text-sm text-neutral-500">Gérez vos préférences et la configuration de votre compte</p>
+        <h1 className="text-2xl font-bold text-[var(--text-primary)] ">{t('pages.parametres.parametres.title')}</h1>
+        <p className="text-sm text-[var(--text-secondary)]">{t('pages.parametres.parametres.subtitle')}</p>
       </div>
 
       <div className="flex flex-col gap-6 lg:flex-row">
         {/* Sidebar de navigation */}
-        <Card className="lg:w-56 shrink-0 h-fit">
+        <Card padding className="lg:w-56 shrink-0 h-fit">
           <nav className="flex flex-col gap-1">
             {SECTIONS.map((section) => (
               <button
                 key={section.id}
                 onClick={() => setActiveSection(section.id)}
-                className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
+                className={`flex min-h-11 items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
                   activeSection === section.id
-                    ? 'bg-[var(--accent-subtle)] text-[var(--accent)] dark:bg-[var(--accent-subtle)]0/10 dark:text-[var(--accent)]'
-                    : 'text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800'
+                    ? 'bg-[var(--accent-subtle)] text-[var(--accent)] dark:bg-[var(--action)]/10 dark:text-[var(--accent)]'
+                    : 'text-[var(--text-secondary)] hover:bg-[var(--surface-subtle)]  '
                 }`}
               >
                 <section.icon className="h-4 w-4" />
@@ -114,11 +122,10 @@ export default function ParametresPage() {
 
 /* ─── Profil ──────────────────────────────────────────────────────── */
 function ProfilSection({ user, onSave, saving, saved }) {
+  const { t } = useTranslation();
   const isTeacher = hasRole(user?.role, ROLE_GROUPS.ENSEIGNANTS);
-  const { get } = useApi();
 
   const [avatarDraft, setAvatarDraft] = useState(null);
-  const [matieres, setMatieres] = useState([]);
   const [selectedMatieres, setSelectedMatieres] = useState(
     () => user?.profil?.matieres_maitrisees?.map((m) => m.id) || []
   );
@@ -126,25 +133,18 @@ function ProfilSection({ user, onSave, saving, saved }) {
     () => user?.profil?.experiences || []
   );
 
-  useEffect(() => {
-    if (!isTeacher || matieres.length > 0) return;
-    get('/matieres')
-      .then((res) => {
-        const list = Array.isArray(res?.data?.data)
-          ? res.data.data
-          : Array.isArray(res?.data)
-            ? res.data
-            : Array.isArray(res) ? res : [];
-        setMatieres(list);
-      })
-      .catch(() => {});
-  }, [isTeacher]);
+  // Chargée une seule fois pour les enseignants — `enabled` remplace le garde
+  // impératif de l'ancien `useEffect` (cf. audit P4.1).
+  const requeteMatieres = useApiQuery(['matieres'], '/matieres', {
+    queryOptions: { enabled: isTeacher },
+  });
+  const matieres = useMemo(() => unwrapList(requeteMatieres.data) ?? [], [requeteMatieres.data]);
 
   const handleAvatarChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 2 * 1024 * 1024) {
-      toast.error('Image trop lourde (max 2 Mo)');
+      toast.error(t('pages.parametres.parametres.image_trop_lourde_max_2_mo'));
       return;
     }
     const reader = new FileReader();
@@ -185,13 +185,14 @@ function ProfilSection({ user, onSave, saving, saved }) {
   return (
     <div className="space-y-4">
       <Card>
-        <Card.Header title="Photo de profil" />
+        <Card.Header title={t('pages.parametres.parametres.photo_de_profil')} />
+        <Card.Body>
         <div className="flex items-center gap-4">
           <Avatar src={avatarDraft || user?.avatar || null} name={user?.name || 'User'} size="xl" />
           <div className="space-y-1">
             <label className="inline-block">
-              <span className="inline-flex cursor-pointer items-center justify-center rounded-xl border border-neutral-200 px-4 h-9 text-sm font-medium text-neutral-700 transition hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800">
-                Changer la photo
+              <span className="inline-flex cursor-pointer items-center justify-center rounded-xl border border-[var(--border)] px-4 h-9 text-sm font-medium text-[var(--text-primary)] transition hover:bg-[var(--surface)]   ">
+                {t('pages.parametres.parametres.changer_la_photo')}
               </span>
               <input
                 type="file"
@@ -202,33 +203,31 @@ function ProfilSection({ user, onSave, saving, saved }) {
             </label>
             {avatarDraft && (
               <Button size="sm" variant="ghost" onClick={() => setAvatarDraft(null)}>
-                Annuler
+                {t('common.cancel')}
               </Button>
             )}
-            <p className="text-xs text-neutral-500">PNG, JPG. Max 2 Mo.</p>
+            <p className="text-xs text-[var(--text-secondary)]">{t('pages.parametres.parametres.png_jpg_max_2_mo')}</p>
           </div>
         </div>
+        </Card.Body>
       </Card>
 
       <Card>
-        <Card.Header title="Informations personnelles" />
+        <Card.Header title={t('pages.parametres.parametres.informations_personnelles')} />
+        <Card.Body>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Prénom</label>
-              <Input name="prenom" defaultValue={user?.prenom || ''} />
+              <Input label={t('pages.parametres.parametres.prenom')} name="prenom" defaultValue={user?.prenom || ''} />
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Nom</label>
-              <Input name="name" defaultValue={user?.name || ''} />
+              <Input label={t('pages.parametres.parametres.nom')} name="name" defaultValue={user?.name || ''} />
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Email</label>
-              <Input type="email" name="email" defaultValue={user?.email || ''} />
+              <Input type="email" label={t('pages.parametres.parametres.email')} name="email" defaultValue={user?.email || ''} />
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Téléphone</label>
-              <Input name="telephone" defaultValue={user?.telephone || ''} />
+              <Input label={t('pages.parametres.parametres.telephone')} name="telephone" defaultValue={user?.telephone || ''} />
             </div>
           </div>
 
@@ -236,18 +235,16 @@ function ProfilSection({ user, onSave, saving, saved }) {
             <>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Spécialité</label>
-                  <Input name="specialite" defaultValue={user?.profil?.specialite || ''} />
+                  <Input label={t('pages.parametres.parametres.specialite')} name="specialite" defaultValue={user?.profil?.specialite || ''} />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Grade</label>
-                  <Input name="grade" defaultValue={user?.profil?.grade || ''} />
+                  <Input label={t('pages.parametres.parametres.grade')} name="grade" defaultValue={user?.profil?.grade || ''} />
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                  Matières maîtrisées
+                <label className="text-sm font-medium text-[var(--text-primary)] ">
+                  {t('pages.parametres.parametres.matieres_maitrisees')}
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {matieres.map((m) => {
@@ -260,7 +257,7 @@ function ProfilSection({ user, onSave, saving, saved }) {
                         className={`rounded-full border px-3 py-1 text-sm transition-all ${
                           active
                             ? 'border-[var(--accent)] bg-[var(--accent-subtle)] text-[var(--accent)]'
-                            : 'border-neutral-200 text-neutral-600 hover:border-neutral-300 dark:border-neutral-700 dark:text-neutral-400'
+                            : 'border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--border-heavy)]  '
                         }`}
                       >
                         {m.nom}
@@ -268,44 +265,44 @@ function ProfilSection({ user, onSave, saving, saved }) {
                     );
                   })}
                   {matieres.length === 0 && (
-                    <p className="text-xs text-neutral-500">Chargement des matières…</p>
+                    <p className="text-xs text-[var(--text-secondary)]">{t('pages.parametres.parametres.chargement_des_matieres')}</p>
                   )}
                 </div>
               </div>
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <label className="flex items-center gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                    <Briefcase className="h-4 w-4" /> Expériences professionnelles
+                  <label className="flex items-center gap-2 text-sm font-medium text-[var(--text-primary)] ">
+                    <Briefcase className="h-4 w-4" /> {t('pages.parametres.parametres.experiences_professionnelles')}
                   </label>
                   <Button type="button" size="sm" variant="outline" onClick={addExperience} icon={<Plus className="h-4 w-4" />}>
-                    Ajouter
+                    {t('pages.parametres.parametres.ajouter')}
                   </Button>
                 </div>
                 {experiences.length === 0 && (
-                  <p className="text-xs text-neutral-500">Aucune expérience renseignée.</p>
+                  <p className="text-xs text-[var(--text-secondary)]">{t('pages.parametres.parametres.aucune_experience_renseignee')}</p>
                 )}
                 {experiences.map((exp, i) => (
-                  <div key={i} className="rounded-xl border border-neutral-200 p-3 space-y-3 dark:border-neutral-700">
+                  <div key={i} className="rounded-xl border border-[var(--border)] p-3 space-y-3 ">
                     <div className="grid gap-3 sm:grid-cols-2">
                       <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-neutral-500">Poste</label>
+                        <label className="text-xs font-medium text-[var(--text-secondary)]">{t('pages.parametres.parametres.poste')}</label>
                         <Input
                           value={exp.poste}
                           onChange={(e) => updateExperience(i, 'poste', e.target.value)}
-                          placeholder="Professeur de mathématiques"
+                          placeholder={t('pages.parametres.parametres.professeur_de_mathematiques')}
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-neutral-500">Établissement</label>
+                        <label className="text-xs font-medium text-[var(--text-secondary)]">{t('common.school')}</label>
                         <Input
                           value={exp.etablissement}
                           onChange={(e) => updateExperience(i, 'etablissement', e.target.value)}
-                          placeholder="Lycée public"
+                          placeholder={t('pages.parametres.parametres.lycee_public')}
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-neutral-500">Début</label>
+                        <label className="text-xs font-medium text-[var(--text-secondary)]">{t('pages.parametres.parametres.debut')}</label>
                         <Input
                           type="date"
                           value={exp.date_debut}
@@ -313,7 +310,7 @@ function ProfilSection({ user, onSave, saving, saved }) {
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-neutral-500">Fin (optionnel)</label>
+                        <label className="text-xs font-medium text-[var(--text-secondary)]">{t('pages.parametres.parametres.fin_optionnel')}</label>
                         <Input
                           type="date"
                           value={exp.date_fin}
@@ -322,18 +319,18 @@ function ProfilSection({ user, onSave, saving, saved }) {
                       </div>
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-xs font-medium text-neutral-500">Description (optionnel)</label>
+                      <label className="text-xs font-medium text-[var(--text-secondary)]">{t('pages.parametres.parametres.description_optionnel')}</label>
                       <textarea
                         value={exp.description}
                         onChange={(e) => updateExperience(i, 'description', e.target.value)}
                         rows={2}
-                        className="w-full rounded-xl border border-neutral-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
-                        placeholder="Missions, classes encadrées…"
+                        className="w-full rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40   "
+                        placeholder={t('pages.parametres.parametres.missions_classes_encadrees')}
                       />
                     </div>
                     <div className="flex justify-end">
                       <Button type="button" size="sm" variant="ghost" onClick={() => removeExperience(i)} icon={<Trash2 className="h-4 w-4" />}>
-                        Retirer
+                        {t('pages.parametres.parametres.retirer')}
                       </Button>
                     </div>
                   </div>
@@ -344,146 +341,323 @@ function ProfilSection({ user, onSave, saving, saved }) {
 
           <div className="flex items-center gap-3">
             <Button type="submit" loading={saving} icon={<Save className="h-4 w-4" />}>
-              Enregistrer
+              {t('pages.parametres.parametres.enregistrer')}
             </Button>
             {saved && (
               <span className="inline-flex items-center gap-1.5 text-sm text-emerald-600">
-                <CheckCircle2 className="h-4 w-4" /> Enregistré
+                <CheckCircle2 className="h-4 w-4" /> {t('pages.parametres.parametres.enregistre')}
               </span>
             )}
           </div>
         </form>
+        </Card.Body>
       </Card>
     </div>
   );
 }
 
 /* ─── Notifications ───────────────────────────────────────────────── */
+/**
+ * Les interrupteurs affichés ici n'enregistraient rien. Les seuls avis réels
+ * sont les SMS envoyés aux parents (absence, bulletin, reçu, échéance,
+ * convocation) : le parent les règle ici, le reste du personnel n'a rien à
+ * régler.
+ */
+const AVIS = ['absences', 'notes', 'echeances', 'recus', 'convocations'];
+
 function NotificationsSection() {
-  const toggles = [
-    { label: 'Notifications push', desc: 'Recevoir les notifications sur votre appareil', enabled: true },
-    { label: 'Email', desc: 'Recevoir un résumé par email', enabled: true },
-    { label: 'Communications importantes', desc: 'Alertes de la direction', enabled: true },
-    { label: 'Notes et évaluations', desc: 'Quand une note est publiée', enabled: false },
-    { label: 'Paiements', desc: 'Confirmation de paiement et rappels', enabled: true },
-    { label: 'Emploi du temps', desc: 'Changements dans l\'emploi du temps', enabled: false },
-  ];
+  const { t } = useTranslation();
+  const p = (cle) => t(`pages.parametres.avis_sms.${cle}`);
+  const estParent = useAuthStore((s) => s.user?.role === 'parent');
+  const requete = useApiQuery(['parent-preferences'], '/parent/preferences', { queryOptions: { enabled: estParent } });
+  const prefs = requete.data?.data;
+  const [envoi, setEnvoi] = useState(false);
+
+  const changer = async (modif) => {
+    setEnvoi(true);
+    try {
+      await api.put('/parent/preferences', { ...prefs, ...modif });
+      await requete.refetch();
+      toast.success(p('enregistre'));
+    } catch (e) {
+      toast.error(e?.message ?? t('common.erreur_enregistrement'));
+    } finally {
+      setEnvoi(false);
+    }
+  };
+
+  if (!estParent) {
+    return (
+      <Card>
+        <Card.Header title={t('pages.parametres.parametres.preferences_de_notifications')} />
+        <Card.Body>
+        <p className="text-sm text-[var(--text-secondary)]">{p('personnel')}</p>
+        </Card.Body>
+      </Card>
+    );
+  }
 
   return (
     <Card>
-      <Card.Header title="Préférences de notifications" />
-      <div className="space-y-4">
-        {toggles.map((item) => (
-          <div key={item.label} className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-neutral-900 dark:text-white">{item.label}</p>
-              <p className="text-xs text-neutral-500">{item.desc}</p>
-            </div>
-            <label className="relative inline-flex cursor-pointer items-center">
-              <input type="checkbox" defaultChecked={item.enabled} className="peer sr-only" />
-              <div className="h-6 w-11 rounded-full bg-neutral-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all peer-checked:bg-[var(--accent-subtle)]0 peer-checked:after:translate-x-full dark:bg-neutral-700" />
+      <Card.Header title={p('titre')} />
+      <Card.Body>
+      <p className="mb-4 text-sm text-[var(--text-secondary)]">{p('intro')}</p>
+      {!prefs ? (
+        <p role="status" className="text-sm text-[var(--text-secondary)]">{t('common.loading')}</p>
+      ) : (
+        <div className="space-y-4">
+          {AVIS.map((cle) => (
+            <label key={cle} className="flex min-h-11 items-center justify-between gap-4">
+              <span>
+                <span className="block text-sm font-medium text-[var(--text-primary)]">{p(`${cle}.titre`)}</span>
+                <span className="block text-xs text-[var(--text-secondary)]">{p(`${cle}.desc`)}</span>
+              </span>
+              <input type="checkbox" className="h-5 w-5" checked={!!prefs[cle]} disabled={envoi} onChange={(e) => changer({ [cle]: e.target.checked })} />
             </label>
-          </div>
-        ))}
-      </div>
+          ))}
+          <label className="flex min-h-11 items-center justify-between gap-4">
+            <span className="text-sm font-medium text-[var(--text-primary)]">{p('langue')}</span>
+            <select className="min-h-11 rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 text-sm" value={prefs.langue} disabled={envoi} onChange={(e) => changer({ langue: e.target.value })}>
+              <option value="fr">Français</option>
+              <option value="en">English</option>
+            </select>
+          </label>
+        </div>
+      )}
+      </Card.Body>
     </Card>
   );
 }
 
 /* ─── Sécurité ────────────────────────────────────────────────────── */
+/**
+ * TwoFactorCard — activation/désactivation de la 2FA pour le compte connecté.
+ *
+ * `updateUser()` (auth-store) reflète l'état localement : sans ça, le badge
+ * de statut resterait sur l'ancien état jusqu'au prochain `checkSession()`
+ * (jusqu'à 5 min, voir SESSION_CHECK_INTERVAL) après une activation réussie.
+ */
+function TwoFactorCard() {
+  const { t } = useTranslation();
+  const user = useAuthStore((s) => s.user);
+  const updateUser = useAuthStore((s) => s.updateUser);
+  const isEnabled = !!user?.two_factor_enabled;
+
+  const [step, setStep] = useState('idle'); // 'idle' | 'setup' | 'disable'
+  const [code, setCode] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const reset = () => {
+    setStep('idle');
+    setCode('');
+    setError('');
+  };
+
+  const onActivated = () => {
+    toast.success(t('pages.parametres.parametres.2fa_activee_avec_succes'));
+    reset();
+  };
+
+  const confirmDisable = async () => {
+    if (code.length !== 6) return;
+    setLoading(true);
+    setError('');
+    try {
+      await api.post('/auth/2fa/disable', { code });
+      updateUser({ two_factor_enabled: false });
+      toast.success(t('pages.parametres.parametres.2fa_desactivee'));
+      reset();
+    } catch (e) {
+      setError(e.message || t('pages.parametres.parametres.code_invalide'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Card>
+      <Card.Header
+        title={t('pages.parametres.parametres.authentification_a_deux_facteurs')}
+        action={
+          step === 'idle' ? (
+            <Badge variant={isEnabled ? 'success' : 'default'}>
+              {isEnabled ? t('pages.parametres.parametres.activee') : t('pages.parametres.parametres.desactivee')}
+            </Badge>
+          ) : null
+        }
+      />
+      <Card.Body>
+
+      {step === 'idle' && (
+        <div className="space-y-4">
+          <p className="text-sm text-[var(--text-secondary)] ">
+            {t('pages.parametres.parametres.protegez_votre_compte_avec_un_second_facteur')}
+          </p>
+          {isEnabled ? (
+            <Button variant="danger" onClick={() => setStep('disable')}>
+              {t('pages.parametres.parametres.desactiver_la_2fa')}
+            </Button>
+          ) : (
+            <Button onClick={() => setStep('setup')}>
+              {t('pages.parametres.parametres.activer_la_2fa')}
+            </Button>
+          )}
+        </div>
+      )}
+
+      {step === 'setup' && <TwoFactorSetupForm onActivated={onActivated} onCancel={reset} />}
+
+      {step === 'disable' && (
+        <div className="space-y-4">
+          <p className="text-sm text-[var(--text-secondary)] ">
+            {t('pages.parametres.parametres.entrez_un_code_pour_desactiver_la_2fa')}
+          </p>
+          <Input
+            type="text"
+            inputMode="numeric"
+            maxLength={6}
+            value={code}
+            onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+            placeholder="000000"
+          />
+          {error && <p className="text-sm text-red-600">{error}</p>}
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={reset}>{t('pages.parametres.parametres.annuler')}</Button>
+            <Button variant="danger" onClick={confirmDisable} disabled={loading || code.length !== 6}>
+              {t('pages.parametres.parametres.desactiver')}
+            </Button>
+          </div>
+        </div>
+      )}
+      </Card.Body>
+    </Card>
+  );
+}
+
 function SecuriteSection() {
+  const { t } = useTranslation();
+  const [loading, setLoading] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+
+  const handleChangePassword = async () => {
+    setPasswordError('');
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setPasswordError(t('pages.parametres.parametres.tous_les_champs_sont_requis'));
+      return;
+    }
+    if (newPassword.length < 8) {
+      setPasswordError(t('pages.parametres.parametres.le_nouveau_mot_de_passe_doit_faire_au_moins_8'));
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError(t('pages.parametres.parametres.les_mots_de_passe_ne_correspondent_pas'));
+      return;
+    }
+    setLoading(true);
+    try {
+      await api.post('/auth/change-password', {
+        current_password: currentPassword,
+        password: newPassword,
+        password_confirmation: confirmPassword,
+      });
+      toast.success(t('pages.parametres.parametres.mot_de_passe_mis_a_jour_avec_succes'));
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (e) {
+      setPasswordError(e.response?.data?.message || t('pages.parametres.parametres.erreur_lors_du_changement_de_mot_de_passe'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <Card>
-        <Card.Header title="Mot de passe" />
+        <Card.Header title={t('pages.parametres.parametres.mot_de_passe')} />
+        <Card.Body>
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Mot de passe actuel</label>
-            <Input type="password" placeholder="••••••••" />
+            <label className="text-sm font-medium text-[var(--text-primary)] ">{t('pages.parametres.parametres.mot_de_passe_actuel')}</label>
+            <Input type="password" placeholder="••••••••" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Nouveau mot de passe</label>
-              <Input type="password" placeholder="••••••••" />
+              <label className="text-sm font-medium text-[var(--text-primary)] ">{t('pages.parametres.parametres.nouveau_mot_de_passe')}</label>
+              <Input type="password" placeholder="••••••••" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Confirmer</label>
-              <Input type="password" placeholder="••••••••" />
+              <label className="text-sm font-medium text-[var(--text-primary)] ">{t('pages.parametres.parametres.confirmer')}</label>
+              <Input type="password" placeholder="••••••••" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
             </div>
           </div>
+          {passwordError && <p className="text-sm text-red-600">{passwordError}</p>}
           <div className="flex justify-end">
-            <Button>Mettre à jour</Button>
+            <Button onClick={handleChangePassword} disabled={loading}>
+              {loading ? t('pages.parametres.parametres.mise_a_jour') : t('pages.parametres.parametres.mettre_a_jour')}
+            </Button>
           </div>
         </div>
+        </Card.Body>
       </Card>
 
-      <Card>
-        <Card.Header title="Sessions actives" />
-        <div className="space-y-3">
-          <div className="flex items-center justify-between rounded-lg border border-neutral-200 p-3 dark:border-neutral-700">
-            <div className="flex items-center gap-3">
-              <Smartphone className="h-5 w-5 text-neutral-400" />
-              <div>
-                <p className="text-sm font-medium text-neutral-900 dark:text-white">Chrome sur Windows</p>
-                <p className="text-xs text-neutral-500">IP: 192.168.1.42 · Dernière activité: il y a 2 min</p>
-              </div>
-            </div>
-            <Badge variant="outline" className="text-emerald-600">Active</Badge>
-          </div>
-          <div className="flex items-center justify-between rounded-lg border border-neutral-200 p-3 dark:border-neutral-700">
-            <div className="flex items-center gap-3">
-              <Smartphone className="h-5 w-5 text-neutral-400" />
-              <div>
-                <p className="text-sm font-medium text-neutral-900 dark:text-white">Safari sur macOS</p>
-                <p className="text-xs text-neutral-500">IP: 10.0.0.15 · Dernière activité: il y a 3 jours</p>
-              </div>
-            </div>
-            <Button variant="ghost" size="sm">Révoquer</Button>
-          </div>
-        </div>
-      </Card>
+      <TwoFactorCard />
+
+      {/* La carte « Sessions actives » montrait deux sessions inventées
+          (« Safari sur macOS, IP 10.0.0.15… ») et un bouton « Révoquer » sans
+          effet : l'API ne liste pas les sessions. Retirée le 17/11/2026 ; la
+          gestion des sessions des autres appareils reste à construire. */}
     </div>
   );
 }
 
 /* ─── Apparence ───────────────────────────────────────────────────── */
 function ApparenceSection() {
+  const { t } = useTranslation();
   return (
     <div className="space-y-4">
       <Card>
-        <Card.Header title="Thème" />
+        <Card.Header title={t('pages.parametres.parametres.theme')} />
+        <Card.Body>
         <div className="grid grid-cols-3 gap-3">
           {[
-            { id: 'light', label: 'Clair', icon: Sun, desc: 'Thème clair' },
-            { id: 'dark', label: 'Sombre', icon: Moon, desc: 'Thème sombre' },
-            { id: 'system', label: 'Système', icon: Smartphone, desc: 'Suit votre appareil' },
+            { id: 'light', label: t('pages.parametres.parametres.clair'), icon: Sun, desc: t('pages.parametres.parametres.theme_clair') },
+            { id: 'dark', label: t('pages.parametres.parametres.sombre'), icon: Moon, desc: t('pages.parametres.parametres.theme_sombre') },
+            { id: 'system', label: t('pages.parametres.parametres.systeme'), icon: Smartphone, desc: t('pages.parametres.parametres.suit_votre_appareil') },
           ].map((theme) => (
             <button
               key={theme.id}
-              className="flex flex-col items-center gap-2 rounded-xl border-2 border-neutral-200 p-4 hover:border-[var(--accent)]/30 transition-all dark:border-neutral-700 dark:hover:border-[var(--accent)]"
+              className="flex flex-col items-center gap-2 rounded-xl border-2 border-[var(--border)] p-4 hover:border-[var(--accent)]/30 transition-all  dark:hover:border-[var(--accent)]"
             >
-              <theme.icon className="h-6 w-6 text-neutral-600 dark:text-neutral-400" />
-              <span className="text-sm font-medium text-neutral-900 dark:text-white">{theme.label}</span>
-              <span className="text-xs text-neutral-500">{theme.desc}</span>
+              <theme.icon className="h-6 w-6 text-[var(--text-secondary)] " />
+              <span className="text-sm font-medium text-[var(--text-primary)] ">{theme.label}</span>
+              <span className="text-xs text-[var(--text-secondary)]">{theme.desc}</span>
             </button>
           ))}
         </div>
+        </Card.Body>
       </Card>
 
       <Card>
-        <Card.Header title="Police" />
+        <Card.Header title={t('pages.parametres.parametres.police')} />
+        <Card.Body>
         <div className="flex items-center gap-4">
-          <select className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300">
-            <option>Inter (par défaut)</option>
+          <select className="h-10 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40   ">
+            <option>{t('pages.parametres.parametres.inter_par_defaut')}</option>
             <option>Plus Jakarta Sans</option>
             <option>Roboto</option>
           </select>
-          <select className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300">
-            <option>Normale</option>
-            <option>Grande</option>
-            <option>Très grande</option>
+          <select className="h-10 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40   ">
+            <option>{t('pages.parametres.parametres.normale')}</option>
+            <option>{t('pages.parametres.parametres.grande')}</option>
+            <option>{t('pages.parametres.parametres.tres_grande')}</option>
           </select>
         </div>
+        </Card.Body>
       </Card>
     </div>
   );
@@ -491,36 +665,46 @@ function ApparenceSection() {
 
 /* ─── Préférences ─────────────────────────────────────────────────── */
 function PreferencesSection() {
+  const { t, locale, setLocale } = useTranslation();
   return (
     <Card>
-      <Card.Header title="Préférences générales" />
+      <Card.Header title={t('pages.parametres.parametres.preferences_generales')} />
+      <Card.Body>
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-neutral-900 dark:text-white">Langue</p>
-            <p className="text-xs text-neutral-500">Langue de l'interface</p>
+            <p className="text-sm font-medium text-[var(--text-primary)] ">{t('pages.parametres.parametres.langue')}</p>
+            <p className="text-xs text-[var(--text-secondary)]">{t('pages.parametres.parametres.langue_de_l_interface')}</p>
           </div>
-          <select className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300">
-            <option>Français</option>
-            <option>English</option>
+          {/* Seul réglage de cette section réellement branché : la locale vit
+              dans le provider i18n, qui la mémorise et fixe `lang`/`dir`. */}
+          <select
+            value={locale}
+            onChange={(e) => setLocale(e.target.value)}
+            aria-label={t('pages.parametres.parametres.langue')}
+            className="h-10 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40   "
+          >
+            {LOCALES.map(({ code, label }) => (
+              <option key={code} value={code}>{label}</option>
+            ))}
           </select>
         </div>
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-neutral-900 dark:text-white">Fuseau horaire</p>
-            <p className="text-xs text-neutral-500">UTC+0 (Abidjan, GMT)</p>
+            <p className="text-sm font-medium text-[var(--text-primary)] ">{t('pages.parametres.parametres.fuseau_horaire')}</p>
+            <p className="text-xs text-[var(--text-secondary)]">UTC+0 (Abidjan, GMT)</p>
           </div>
-          <select className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300">
+          <select className="h-10 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40   ">
             <option>UTC+0 (Abidjan)</option>
             <option>UTC+1 (Paris)</option>
           </select>
         </div>
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-neutral-900 dark:text-white">Format de date</p>
-            <p className="text-xs text-neutral-500">JJ/MM/AAAA</p>
+            <p className="text-sm font-medium text-[var(--text-primary)] ">{t('pages.parametres.parametres.format_de_date')}</p>
+            <p className="text-xs text-[var(--text-secondary)]">JJ/MM/AAAA</p>
           </div>
-          <select className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300">
+          <select className="h-10 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40   ">
             <option>JJ/MM/AAAA</option>
             <option>MM/JJ/AAAA</option>
             <option>AAAA-MM-JJ</option>
@@ -528,16 +712,17 @@ function PreferencesSection() {
         </div>
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-neutral-900 dark:text-white">Devise</p>
-            <p className="text-xs text-neutral-500">Format d'affichage des montants</p>
+            <p className="text-sm font-medium text-[var(--text-primary)] ">{t('pages.parametres.parametres.devise')}</p>
+            <p className="text-xs text-[var(--text-secondary)]">{t('pages.parametres.parametres.format_d_affichage_des_montants')}</p>
           </div>
-          <select className="h-10 rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300">
+          <select className="h-10 rounded-xl border border-[var(--border-heavy)] bg-[var(--surface-raised)] px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/40   ">
             <option>XOF (CFA)</option>
             <option>EUR (€)</option>
             <option>USD ($)</option>
           </select>
         </div>
       </div>
+      </Card.Body>
     </Card>
   );
 }

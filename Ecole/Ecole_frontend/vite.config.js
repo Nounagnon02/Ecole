@@ -1,11 +1,20 @@
+/// <reference types="vitest/config" />
 /// <reference types="vitest" />
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { storybookTest } from '@storybook/addon-vitest/vitest-plugin';
+import { playwright } from '@vitest/browser-playwright';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Configurable : à l'intérieur de docker-compose, `localhost` désigne le
+// conteneur frontend lui-même, pas le backend. `VITE_DEV_API_TARGET` permet
+// de viser le service `backend` sans toucher au code pour qui lance le
+// serveur de dev nativement (le défaut ne change pas).
+const devApiTarget = process.env.VITE_DEV_API_TARGET || 'http://localhost:8000';
 
 export default defineConfig({
   plugins: [
@@ -15,8 +24,30 @@ export default defineConfig({
     tailwindcss(),
   ],
   server: {
-    port: 3000,
-    open: true,
+    port: 3002,
+    // Pas d'ouverture de navigateur en CI : le conteneur est sans affichage et
+    // `open` y lance un `xdg-open` qui n'aboutit pas.
+    open: !process.env.CI,
+    proxy: {
+      '/api': {
+        target: devApiTarget,
+        changeOrigin: true,
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq) => {
+            proxyReq.setHeader('Origin', 'http://localhost:3002');
+          });
+        },
+      },
+      '/sanctum': {
+        target: devApiTarget,
+        changeOrigin: true,
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq) => {
+            proxyReq.setHeader('Origin', 'http://localhost:3002');
+          });
+        },
+      },
+    },
   },
   build: {
     outDir: 'build',
@@ -44,7 +75,25 @@ export default defineConfig({
     // rediscuter — avec, cette fois, une vérification sur le bundle *construit*
     // (voir `src/__tests__/production-bundle.test.js`).
     rollupOptions: {
-      output: {},
+      output: {
+        // Fusionne les morceaux de moins de 10 Ko (une icône, un utilitaire)
+        // dans ceux qui les utilisent. Sans cela, une page demandait des
+        // dizaines de fichiers minuscules : en 3G lente, chaque requête coûte
+        // 400 ms. Contrairement à `manualChunks`, Rollup ne fusionne que si
+        // l'ordre d'initialisation reste le même.
+        experimentalMinChunkSize: 10_000,
+        // Les icônes (lucide-react) en un seul fichier plutôt qu'une par
+        // fichier : un tableau de bord en demandait une trentaine. React a
+        // son propre fichier pour que le graphe reste sans cycle (les icônes
+        // dépendent de React, jamais l'inverse). Chemins exacts, pas de
+        // sous-chaîne : c'est le classement approximatif de l'ancien
+        // `manualChunks` qui avait créé le cycle et la page blanche.
+        manualChunks(id) {
+          if (/[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/.test(id)) return 'react';
+          if (/[\\/]node_modules[\\/]lucide-react[\\/]/.test(id)) return 'icones';
+          return undefined;
+        },
+      },
     },
 
     chunkSizeWarningLimit: 250,
@@ -65,18 +114,50 @@ export default defineConfig({
     },
   },
   test: {
-    globals: true,
-    environment: 'jsdom',
-    setupFiles: './src/setupTests.js',
-    css: true,
-    include: ['src/**/*.{test,spec}.{js,jsx}'],
-    deps: {
-      inline: [/shared/],
-      esbuild: {
-        loader: {
-          '.js': 'jsx',
+    projects: [
+      {
+        // Suite existante (Vitest + jsdom), inchangée hormis son nom. `npm test`
+        // ne lance que ce projet (`--project unit`) : hermétique, sans
+        // navigateur à installer, et sans le démarrage à froid de Chromium qui
+        // faisait dépasser les timeouts des tests jsdom lancés en parallèle.
+        extends: true,
+        test: {
+          name: 'unit',
+          globals: true,
+          environment: 'jsdom',
+          setupFiles: './src/setupTests.js',
+          css: true,
+          include: ['src/**/*.{test,spec}.{js,jsx}'],
+          deps: {
+            inline: [/shared/],
+            esbuild: {
+              loader: {
+                '.js': 'jsx',
+              },
+            },
+          },
         },
       },
-    },
+      {
+        // Fait tourner chaque story comme un test (rendu réel dans Chromium
+        // headless via Playwright, pas jsdom). Lancé à part via
+        // `npm run test:storybook` : exige `npx playwright install chromium`.
+        extends: true,
+        plugins: [
+          storybookTest({
+            configDir: path.join(__dirname, '.storybook'),
+          }),
+        ],
+        test: {
+          name: 'storybook',
+          browser: {
+            enabled: true,
+            headless: true,
+            provider: playwright({}),
+            instances: [{ browser: 'chromium' }],
+          },
+        },
+      },
+    ],
   },
 });

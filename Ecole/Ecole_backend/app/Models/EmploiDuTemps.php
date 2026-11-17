@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Traits\BelongsToEcole;
 use App\Traits\ScopedToCycle;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -9,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class EmploiDuTemps extends Model
 {
-    use HasFactory, BelongsToEcole, ScopedToCycle;
+    use HasFactory, BelongsToEcole, ScopedToCycle, SoftDeletes;
 
     /**
      * Un créneau appartient à une classe, donc à son cycle.
@@ -27,7 +28,7 @@ class EmploiDuTemps extends Model
      * bien qu'aucune création par assignation de masse ne pouvait aboutir —
      * `class_id` visait une colonne absente, et `classe_id`, hors de cette
      * liste, était silencieusement écarté. Les deux lecteurs du modèle
-     * (ParentController, DashboardController) interrogent déjà `classe_id`.
+     * (EspaceParentController, DashboardController) interrogent déjà `classe_id`.
      */
     protected $fillable = [
         'classe_id', 'matiere_id', 'enseignant_id', 'jour', 'heure_debut', 'heure_fin', 'salle', 'ecole_id'

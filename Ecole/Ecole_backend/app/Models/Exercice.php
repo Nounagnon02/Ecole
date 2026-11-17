@@ -21,7 +21,7 @@ class Exercice extends Model
     ];
 
     protected $casts = [
-        'date_limite' => 'date',
+        'date_limite' => \App\Casts\JourCalendaire::class,
     ];
 
     public function classe(): BelongsTo

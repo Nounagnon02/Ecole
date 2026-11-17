@@ -1,0 +1,53 @@
+{
+ "comptes": 20,
+ "comptesTermines": 20,
+ "connexionsOk": 20,
+ "routes": 1180,
+ "pagesAutorisees": 196,
+ "pagesRefusees": 901,
+ "pagesRedirigees": 1,
+ "pagesAvecErreurApi": 40,
+ "boutonsVus": 2286,
+ "clics": 1363,
+ "liens": 262,
+ "champs": 324,
+ "onglets": 94,
+ "parVerdict": {
+  "réagit": 677,
+  "SANS EFFET": 611,
+  "ÉCHEC API": 54,
+  "non exécuté (désactivé)": 21
+ },
+ "dialogues": 2,
+ "formulairesEnvoiVide": 0,
+ "chargementsNonAboutis": 82,
+ "pagesUniques": 57,
+ "boutonsUniques": 274,
+ "liensUniques": 27,
+ "boutonsUniquesParVerdict": {
+  "réagit": 142,
+  "SANS EFFET": 111,
+  "ÉCHEC API": 13,
+  "non exécuté (désactivé)": 8
+ },
+ "boutonsNonCliques": 923,
+ "parcours": {
+  "total": 61,
+  "parStatut": {
+   "VALIDÉ": 23,
+   "PARTIEL": 4,
+   "ÉCHEC": 17,
+   "ERREUR": 4,
+   "OBSERVÉ": 11,
+   "BLOQUÉ": 2
+  }
+ },
+ "matrice": {
+  "comptes": 20,
+  "routes": 59,
+  "autorisees": 210,
+  "autoriseesRefusApi": 44,
+  "refusees": 970,
+  "autres": 0
+ }
+}
