@@ -17,6 +17,7 @@ import { ChevronRight, LayoutDashboard } from 'lucide-react';
 import useAuthStore from '@/shared/stores/auth-store';
 import { ROUTE_CONFIG, ROLE_REDIRECT_MAP } from '@/features/roles/route-config';
 import { cn } from '@/shared/lib/utils';
+import { hasRole } from '@/shared/types/roles';
 import { useTranslation } from '@/shared/i18n';
 
 /* ─── Mapping route-key → label lisible ──────────────────────────── */
@@ -82,8 +83,15 @@ const PATH_LABEL_MAP = Object.entries(ROUTE_CONFIG).reduce((map, [key, cfg]) => 
 /* ─── Segments ignorés ───────────────────────────────────────────── */
 const IGNORE_SEGMENTS = new Set(['dashboard']);
 
-/* ─── Adresses qui existent réellement dans l'application ───────── */
-const ROUTES_CONNUES = new Set(Object.values(ROUTE_CONFIG).map((route) => route.path));
+/* ─── Adresses qui existent réellement, avec les rôles qui les ouvrent ── */
+const ROLES_PAR_ROUTE = new Map(Object.values(ROUTE_CONFIG).map((route) => [route.path, route.roles]));
+
+/** Le compte peut-il ouvrir cette adresse ? (même règle que le menu) */
+function ouvrable(chemin, role) {
+  if (!ROLES_PAR_ROUTE.has(chemin)) return false;
+  const roles = ROLES_PAR_ROUTE.get(chemin);
+  return !roles || hasRole(role, roles);
+}
 
 /* ─── Extraire le premier segment comme qualifiant de groupe ─────── */
 function inferGroupLabel(segment) {
@@ -145,10 +153,13 @@ export default function Breadcrumb({ items: propItems, className }) {
       // Un niveau intermédiaire n'est un lien que s'il mène quelque part :
       // `/parent`, `/directeur`, `/admin`… ne sont pas des pages et renvoyaient
       // vers la page 404. Le groupe pointe vers son tableau de bord quand il
-      // existe ; sinon il reste un simple texte.
-      const cible = ROUTES_CONNUES.has(accumulated)
+      // existe ET que le compte peut l'ouvrir : l'étudiant voyait « Université »
+      // mener au tableau de bord universitaire, le directeur « Surveillance »
+      // à celui du surveillant (17/11/2026). Sinon, simple texte.
+      const role = user?.role;
+      const cible = ouvrable(accumulated, role)
         ? accumulated
-        : ROUTES_CONNUES.has(`${accumulated}/dashboard`) ? `${accumulated}/dashboard` : undefined;
+        : ouvrable(`${accumulated}/dashboard`, role) ? `${accumulated}/dashboard` : undefined;
 
       items.push({
         label,
