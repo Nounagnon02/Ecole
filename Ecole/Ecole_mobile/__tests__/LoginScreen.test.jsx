@@ -141,6 +141,28 @@ describe('LoginScreen', () => {
     expect(await getToken()).toBeNull();
   });
 
+  // Constaté sur l'émulateur (17/11/2026) : sans réponse du serveur, l'écran
+  // disait « Identifiants incorrects » — l'utilisateur croit son mot de passe
+  // faux alors que le réseau est en cause.
+  it('sans réseau, dit que le serveur est injoignable, pas que les identifiants sont faux', async () => {
+    const alerte = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    api.post.mockRejectedValue(Object.assign(new Error('Network Error'), { code: 'ERR_NETWORK' }));
+    await afficherConnexion({ replace: jest.fn() });
+    fireEvent.changeText(screen.getByPlaceholderText('exemple@ecole.bj'), 'p@ecole.bj');
+    fireEvent.changeText(screen.getByPlaceholderText('••••••••'), 'secret123');
+    fireEvent.press(screen.getByText('Se connecter'));
+    await waitFor(() => expect(alerte).toHaveBeenCalledWith('Erreur', expect.stringContaining('Pas de connexion au serveur')));
+    expect(alerte).not.toHaveBeenCalledWith('Erreur', expect.stringContaining('Identifiants'));
+  });
+
+  it('traduit les refus sans message utile : trop de tentatives, panne du serveur', () => {
+    const { messageConnexion } = require('../src/context/AuthContext');
+    expect(messageConnexion({ response: { status: 429, data: { message: 'Too Many Attempts.' } } })).toBe('Trop de tentatives de connexion. Patientez une minute puis réessayez.');
+    expect(messageConnexion({ response: { status: 500, data: { message: 'Server Error' } } })).toMatch(/ne répond pas correctement/);
+    expect(messageConnexion({ response: { status: 401, data: { message: 'Identifiants incorrects' } } })).toBe('Identifiants incorrects');
+    expect(messageConnexion({ response: { status: 403, data: { message: 'Votre compte est désactivé' } } })).toBe('Votre compte est désactivé');
+  });
+
   it('retient qu’un mot de passe provisoire doit être changé', async () => {
     api.post.mockResolvedValue({ data: { token: 't', requires_password_change: true, user: { id: 4, role: 'parent' } } });
     const navigation = { replace: jest.fn() };

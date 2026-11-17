@@ -17,6 +17,21 @@ import { setToken, getToken, setUser as persistUser, getUser, clearAll } from '.
 
 const AuthContext = createContext();
 
+/**
+ * Message d'un échec de connexion. Sans réponse du serveur, le réseau est en
+ * cause : dire « identifiants incorrects » ferait croire à un mot de passe
+ * faux (constaté sur l'émulateur, 17/11/2026). Trop de tentatives et panne du
+ * serveur ont leur propre message, en français.
+ */
+export function messageConnexion(err) {
+  if (err?.code === 'API_NON_CONFIGUREE') return err.message;
+  const statut = err?.response?.status;
+  if (!err?.response) return 'Pas de connexion au serveur. Vérifiez le réseau puis réessayez.';
+  if (statut === 429) return 'Trop de tentatives de connexion. Patientez une minute puis réessayez.';
+  if (statut >= 500) return 'Le serveur de l’école ne répond pas correctement. Réessayez plus tard.';
+  return err.response.data?.message || err.response.data?.error || 'Identifiants incorrects. Veuillez réessayer.';
+}
+
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
@@ -76,10 +91,7 @@ export const AuthProvider = ({ children }) => {
       setUser(userData);
       return userData;
     } catch (err) {
-      const message =
-        err.response?.data?.message ||
-        err.response?.data?.error ||
-        (err.code === 'API_NON_CONFIGUREE' ? err.message : 'Identifiants incorrects. Veuillez réessayer.');
+      const message = messageConnexion(err);
       setError(message);
       throw new Error(message);
     }
