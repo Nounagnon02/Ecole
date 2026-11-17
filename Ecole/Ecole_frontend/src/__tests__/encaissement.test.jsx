@@ -45,7 +45,7 @@ beforeEach(() => {
   vi.spyOn(console, 'error').mockImplementation(() => {});
   signIn('comptable');
   http.onGet('/comptable/paiements').reply(200, { success: true, data: [{
-    id: 2, reference: 'PAY-2026-0001', eleve: { id: 12, user: { name: 'Mensah', prenom: 'Kofi' }, classe: { nom_classe: 'CM1' } },
+    id: 2, reference: 'PAY-2026-0001', eleve: { id: 12, nom: 'Mensah', prenom: 'Kofi', classe: { nom_classe: 'CM1' } },
     montant: 50000, statut: 'partiel', statut_label: 'Partielle', mode_paiement: 'ESPECES', date_paiement: '2026-08-03',
   }] });
   http.onGet('/comptable/echeancier/12').reply(200, echeancier(25000));

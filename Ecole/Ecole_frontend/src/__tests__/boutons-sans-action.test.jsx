@@ -90,7 +90,7 @@ beforeEach(() => { http = installHttpMock(); vi.spyOn(console, 'error').mockImpl
 afterEach(() => { http.restore(); vi.restoreAllMocks(); });
 
 const PAIEMENT = {
-  id: 1, reference: 'PAY-2026-0002', eleve: { id: 11, user: { name: 'Adjovi', prenom: 'Rose' }, classe: { nom_classe: '6A' } },
+  id: 1, reference: 'PAY-2026-0002', eleve: { id: 11, nom: 'Adjovi', prenom: 'Rose', classe: { nom_classe: '6A' } },
   type_paiement: 'Inscription', montant: 25000, montant_paye: 25000, date_paiement: '2026-08-04', statut: 'payee', statut_label: 'Payée',
 };
 

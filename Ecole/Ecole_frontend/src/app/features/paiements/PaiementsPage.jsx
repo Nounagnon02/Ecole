@@ -4,7 +4,7 @@
  * Fonctions : liste, filtre, stats, reçu PDF, échéancier élèves
  */
 
-import { useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import useAuthStore from '@/shared/stores/auth-store';
@@ -40,12 +40,33 @@ const STATUT_COLORS = {
   remboursé: 'bg-[var(--surface-subtle)] text-[var(--text-primary)]  ',
 };
 
+/**
+ * Nom de l'élève d'un paiement. L'API (ComptableController::paiements) donne
+ * `eleve: { nom, prenom }` et `client` ; la page lisait `eleve.user.name`,
+ * absent de cette réponse : aucun nom ne s'affichait, la recherche par élève
+ * ne trouvait rien et l'échéancier listait « Aucun élève trouvé » — le
+ * comptable ne pouvait plus encaisser par ce chemin (constaté le 17/11/2026).
+ */
+export function nomEleve(p) {
+  const e = p?.eleve ?? {};
+  const nom = [e.nom ?? e.user?.name, e.prenom ?? e.user?.prenom].filter(Boolean).join(' ').trim();
+  return nom || (p?.client && p.client !== '—' ? p.client : '');
+}
+
 export default function PaiementsPage() {
   const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [filterStatut, setFilterStatut] = useState('');
   const [searchParams, setSearchParams] = useSearchParams();
   const tab = searchParams.get('tab') === 'echeancier' ? 'echeancier' : 'paiements';
+  // « Nouveau paiement » : curseur dans la recherche d'élève une fois l'onglet
+  // Échéancier affiché (un simple délai partait avant son rendu, 17/11/2026).
+  const [focusRecherche, setFocusRecherche] = useState(false);
+  useEffect(() => {
+    if (!focusRecherche || tab !== 'echeancier') return;
+    const champ = document.getElementById('recherche-eleve-echeancier');
+    if (champ) { champ.focus(); setFocusRecherche(false); }
+  });
   const setTab = value => setSearchParams(previous => { const next = new URLSearchParams(previous); next.set('tab', value); return next; }); // 'paiements' | 'echeancier'
   const [echeanceSearch, setEcheanceSearch] = useState('');
   const [echeanceEleve, setEcheanceEleve] = useState(null);
@@ -65,8 +86,8 @@ export default function PaiementsPage() {
 
   const filtered = useMemo(() =>
     paiements.filter((p) => {
-      const nomEleve = `${p.eleve?.user?.name ?? ''} ${p.eleve?.user?.prenom ?? ''}`.toLowerCase();
-      if (search && !nomEleve.includes(search.toLowerCase())) return false;
+      const nom = nomEleve(p).toLowerCase();
+      if (search && !nom.includes(search.toLowerCase())) return false;
       if (filterStatut && p.statut !== filterStatut) return false;
       return true;
     }),
@@ -118,7 +139,7 @@ export default function PaiementsPage() {
     const map = new Map();
     paiements.forEach((p) => {
       const id = p.eleve?.id;
-      const name = `${p.eleve?.user?.name ?? ''} ${p.eleve?.user?.prenom ?? ''}`.trim();
+      const name = nomEleve(p);
       if (id && name) map.set(id, { id, name, classe: p.eleve?.classe?.nom_classe ?? '' });
     });
     return [...map.values()].sort((a, b) => a.name.localeCompare(b.name));
@@ -206,10 +227,10 @@ export default function PaiementsPage() {
           <Button variant="outline" size="sm" icon={<Download />} disabled={filtered.length === 0}
             onClick={() => telechargerCsv(`paiements-${aujourdhuiIso()}.csv`, [
               ['Référence', 'Élève', 'Classe', 'Type', 'Payé (FCFA)', 'Montant dû (FCFA)', 'Date', 'Statut'],
-              ...filtered.map((p) => [p.reference, [p.eleve?.user?.name, p.eleve?.user?.prenom].filter(Boolean).join(' '), p.eleve?.classe?.nom_classe,
+              ...filtered.map((p) => [p.reference, nomEleve(p), p.eleve?.classe?.nom_classe,
                 p.type_paiement, payeDe(p), totalDe(p), p.date_paiement, p.statut_label ?? p.statut]),
             ])}>{t('common.export')}</Button>
-          <Button size="sm" icon={<Plus />} onClick={() => { setTab('echeancier'); setTimeout(() => document.getElementById('recherche-eleve-echeancier')?.focus(), 0); }}>
+          <Button size="sm" icon={<Plus />} onClick={() => { setTab('echeancier'); setFocusRecherche(true); }}>
             {t('pages.paiements.paiements.nouveau_paiement')}
           </Button>
         </div>
@@ -319,7 +340,7 @@ export default function PaiementsPage() {
                     </Table.Cell>
                     <Table.Cell>
                       <span className="font-medium text-[var(--text-primary)] ">
-                        {p.eleve?.user?.name} {p.eleve?.user?.prenom}
+                        {nomEleve(p) || '—'}
                       </span>
                       <span className="ml-2 text-xs text-[var(--text-secondary)]">
                         {p.eleve?.classe?.nom_classe}
